@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <GDT_BUILD>GDT_PUBLIC</GDT_BUILD>
+    <CommonSrcDir>$(ProjectDir)..\..\..\Common\Src</CommonSrcDir>
+    <CommonLibDir>$(ProjectDir)..\..\..\Common\Lib\</CommonLibDir>
+    <CommonDir>$(ProjectDir)..\..\..\Common</CommonDir>
+    <RGADir>$(ProjectDir)..\..\</RGADir>
+    <RGABackendDir>$(ProjectDir)..\..\RadeonGPUAnalyzerBackend</RGABackendDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutDir>$(AMDTOutputDir)\$(Configuration)\bin\</OutDir>
+    <IntDir>$(AMDTOutputDir)\$(Configuration)\obj\$(ProjectName)\$(Platform)$(GDTBuildSuffix)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>NOMINMAX;$(GDT_BUILD);GDT_PUBLIC;AMDT_PUBLIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>MAX</UndefinePreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(AMDTOutputDir)\$(Configuration)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="GDT_BUILD">
+      <Value>$(GDT_BUILD)</Value>
+    </BuildMacro>
+    <BuildMacro Include="CommonSrcDir">
+      <Value>$(CommonSrcDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="CommonLibDir">
+      <Value>$(CommonLibDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="CommonDir">
+      <Value>$(CommonDir)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

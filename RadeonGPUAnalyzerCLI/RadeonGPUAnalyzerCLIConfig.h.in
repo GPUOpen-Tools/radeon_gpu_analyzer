@@ -1,0 +1,3 @@
+// the configured options and settings for the project
+#define RadeonGPUAnalyzerCLI_VERSION_MAJOR @RadeonGPUAnalyzerCLI_VERSION_MAJOR@
+#define RadeonGPUAnalyzerCLI_VERSION_MINOR @RadeonGPUAnalyzerCLI_VERSION_MINOR@

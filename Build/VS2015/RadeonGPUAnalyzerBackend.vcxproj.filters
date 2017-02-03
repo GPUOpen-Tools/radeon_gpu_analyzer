@@ -1,0 +1,241 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Emulator">
+      <UniqueIdentifier>{79db8483-cac8-45cf-adec-9dc58c876f59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Parser">
+      <UniqueIdentifier>{68aea01b-5742-44ef-84d8-bf8513f1dc3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Parser\include">
+      <UniqueIdentifier>{912fecee-bcad-42dd-bd4b-fd284b5e7ff2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Parser\src">
+      <UniqueIdentifier>{c0376349-24cd-482a-b609-b2a0b9f318a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Scheduler">
+      <UniqueIdentifier>{b8e96047-4075-436b-b3fa-89df7281f47f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Scheduler\include">
+      <UniqueIdentifier>{cde72656-5da4-45f1-abf8-68ec44c97c12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Scheduler\src">
+      <UniqueIdentifier>{b5b7f086-f04f-4efe-88ca-2ce40b567e7c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beUtils.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beBackend.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beD3DIncludeManager.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beDriverUtils.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilder.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderDX.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderOpenCL.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderOpenGL.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderVulkan.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beStaticIsaAnalyzer.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\Instruction.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIVINTRP.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIVOP.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISOPP.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISOPK.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISOPC.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISOP1.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISOP2.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISMRD.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIMUBUF.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIMTBUF.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIMIMG.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIEXP.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIDS.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSI.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ISAProgramGraph.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ISAParser.cpp">
+      <Filter>Emulator\Parser\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Common\Src\ADLUtil\ADLUtil.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\DeviceInfo\DeviceInfoUtils.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\CElf\Src\CElf.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\CElf\Src\CElfSection.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\CElf\Src\CElfStringTable.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\CElf\Src\CElfSymbolTable.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\ACLModuleManager\ACLModuleManager.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\DynamicLibraryModule\ACLModule.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\DynamicLibraryModule\CALModule.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\DynamicLibraryModule\DXXModule.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\ShaderUtils\DX10\D3D10ShaderObject.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\ShaderUtils\DX10\D3D10ShaderUtils.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\AMDTMutex\AMDTMutex.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\DynamicLibraryModule\DynamicLibraryModule.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\DynamicLibraryModule\OpenCLModule.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\ShaderUtils\StringUtils.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\Misc\GDT_Memory.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\ShaderUtils\DX10\DXBCChecksum.cpp" />
+    <ClCompile Include="..\..\..\Common\Src\ShaderUtils\DX10\IBlob.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beBackend.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beD3DIncludeManager.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beDataTypes.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beDriverUtils.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beInclude.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilder.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderDX.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderOpenCL.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderOpenGL.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderVulkan.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beRGADllBuild.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beStaticIsaAnalyzer.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beStringConstants.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beUtils.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\gtDefinitions.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\Common\AmdDxGsaCompile.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\Instruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ISAParser.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\VINTRPInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\VOPInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ScalarInstructionFields.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\SOPPInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\SOPCInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\SOPKInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\SOP1Instruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\SOP2Instruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIVOP.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\SMRDInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIVINTRP.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISOPP.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISOPC.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISOPK.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISOP2.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISOP1.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSISMRD.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIMTBUF.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIMUBUF.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIMIMG.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIEXP.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIDS.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSI.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\MUBUFInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\MIMGInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\MTBUFInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ISAProgramGraph.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\GenericInstructionFields1.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\GenericInstructionFields2.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\DSInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\EXPInstruction.h">
+      <Filter>Emulator\Parser\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Src\ADLUtil\ADLUtil.h" />
+    <ClInclude Include="..\..\..\Common\Src\DeviceInfo\DeviceInfoUtils.h" />
+    <ClInclude Include="..\..\..\Common\Src\CElf\Include\CElf.h" />
+    <ClInclude Include="..\..\..\Common\Src\ACLModuleManager\ACLModuleManager.h" />
+    <ClInclude Include="..\..\..\Common\Src\DynamicLibraryModule\ACLModule.h" />
+    <ClInclude Include="..\..\..\Common\Src\DynamicLibraryModule\CALModule.h" />
+    <ClInclude Include="..\..\..\Common\Src\DynamicLibraryModule\DXXModule.h" />
+    <ClInclude Include="..\..\..\Common\Src\ShaderUtils\DX10\D3D10ShaderObject.h" />
+    <ClInclude Include="..\..\..\Common\Src\ShaderUtils\DX10\D3D10ShaderUtils.h" />
+    <ClInclude Include="..\..\..\Common\Src\AMDTMutex\AMDTMutex.h" />
+    <ClInclude Include="..\..\..\Common\Src\DynamicLibraryModule\DynamicLibraryModule.h" />
+    <ClInclude Include="..\..\..\Common\Src\DynamicLibraryModule\OpenCLModule.h" />
+    <ClInclude Include="..\..\..\Common\Src\ShaderUtils\StringUtils.h" />
+    <ClInclude Include="..\..\..\Common\Src\Misc\GDT_Memory.h" />
+    <ClInclude Include="..\..\..\Common\Src\ShaderUtils\DX10\DXBCChecksum.h" />
+    <ClInclude Include="..\..\..\Common\Src\ShaderUtils\DX10\IBlob.h" />
+  </ItemGroup>
+</Project>

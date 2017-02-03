@@ -1,0 +1,3 @@
+# This script launches the rga executable after configuring the environment.
+export LD_LIBRARY_PATH=./$LD_LIBRARY_PATH
+./rga-bin $@

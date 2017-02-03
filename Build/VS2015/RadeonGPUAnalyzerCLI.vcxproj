@@ -1,0 +1,385 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug_Static|Win32">
+      <Configuration>Debug_Static</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_Static|x64">
+      <Configuration>Debug_Static</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Static|Win32">
+      <Configuration>Release_Static</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Static|x64">
+      <Configuration>Release_Static</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{CE48E449-AEDB-430E-877D-DBB68976CC81}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>RadeonGPUAnalyzerCLI</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="ShaderAnalyzerCore.props" />
+    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="ShaderAnalyzerCore.props" />
+    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="ShaderAnalyzerCore.props" />
+    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="ShaderAnalyzerCore.props" />
+    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="ShaderAnalyzerCore.props" />
+    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="ShaderAnalyzerCore.props" />
+    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="ShaderAnalyzerCore.props" />
+    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="ShaderAnalyzerCore.props" />
+    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>rga-d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>rga-d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>rga-x64-d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>rga-x64-d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>rga</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>rga</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>rga-x64</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>rga-x64</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>RGA_BACKEND_STATIC;AMDTBASETOOLS_STATIC;AMDTOSWRAPPERS_STATIC;AMDTOSAPIWRAPPERS_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>RGA_BACKEND_STATIC;AMDTBASETOOLS_STATIC;AMDTOSWRAPPERS_STATIC;AMDTOSAPIWRAPPERS_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>RGA_BACKEND_STATIC;AMDTBASETOOLS_STATIC;AMDTOSWRAPPERS_STATIC;AMDTOSAPIWRAPPERS_STATIC;NDEBUG;AMDT_PUBLIC</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>RGA_BACKEND_STATIC;AMDTBASETOOLS_STATIC;AMDTOSWRAPPERS_STATIC;AMDTOSAPIWRAPPERS_STATIC;NDEBUG;AMDT_PUBLIC</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
+      <ShowIncludes>false</ShowIncludes>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Src\AMDTBaseTools\AMDTBaseToolsVS14.vcxproj">
+      <Project>{11221a7f-3883-418f-b286-b0ea1e28ef10}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Common\Src\AMDTOSAPIWrappers\AMDTOSAPIWrappersVS14.vcxproj">
+      <Project>{f401aa0f-e7e4-44aa-bd84-a2b1d5719b32}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Common\Src\AMDTOSWrappers\AMDTOSWrappersVS14.vcxproj">
+      <Project>{5d9222ac-39fb-4123-9497-78cea5be58ad}</Project>
+    </ProjectReference>
+    <ProjectReference Include="RadeonGPUAnalyzerBackend.vcxproj">
+      <Project>{c1f67d19-dd6e-4946-b16d-f4f4d125424b}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\Common\Src\DeviceInfo\DeviceInfoUtils.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderCL.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderDX.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderOpenGL.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderVulkan.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcConfig.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcFiles.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcMain.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcOpenGLStatisticsParser.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcParseCmdLine.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcUtils.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcVulkanStatisticsParser.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommander.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderCL.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderDX.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderOpenGL.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderVulkan.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcCliStringConstants.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcConfig.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcDataTypes.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcFiles.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcIStatisticsParser.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcOpenGLStatisticsParser.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcParseCmdLine.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcUtils.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcVulkanStatisticsParser.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
