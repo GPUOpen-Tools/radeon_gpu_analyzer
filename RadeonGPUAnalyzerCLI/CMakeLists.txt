@@ -114,8 +114,8 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         set(Boost_USE_MULTITHREADED ON)  
         set(Boost_USE_STATIC_RUNTIME OFF)
 
-        # We use 1.58 as the minimum version
-        find_package(Boost 1.58.0 COMPONENTS filesystem system regex program_options) 
+        # We use 1.55 as the minimum version
+        find_package(Boost 1.55.0 COMPONENTS filesystem system regex program_options) 
 
         if(Boost_FOUND)
             include_directories(${Boost_INCLUDE_DIRS}) 
