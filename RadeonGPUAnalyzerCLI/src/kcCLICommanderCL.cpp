@@ -723,7 +723,7 @@ void kcCLICommanderCL::GetISAText(const Config& config)
 
                             // Call the kcUtils routine to analyze <generatedFileName> and write
                             // the analysis file.
-                            kcUtils::PerformLiveRegisterAnalysis(isaOutputFileName, cfgOutputFileName,
+                            kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName,
                                                                  m_LogCallback);
                         }
                     }
