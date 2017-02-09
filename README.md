@@ -37,6 +37,8 @@ There are two ways to build RGA on Windows:
 
 1. Using the RadeonGPUAnalyzer.sln file that can be found under Build\VS2015.
 
+   Before using the solution file, run the UpdateCommon.py script, which fetches the solution's dependencies.
+
 2. Using CMake. To generate the solution and project files for an x86 build, use:
 
    cmake.exe –DCMAKE_BUILD_TYPE=Release (or: Debug) <full path to the RGA-Temp repo>
