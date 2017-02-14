@@ -221,7 +221,7 @@ beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOption
         {
             // Build the command for invoking amdspv.
             std::stringstream cmd;
-            cmd << ambdbilPath << " -Dall -l -gfxip " << deviceGfxIp << " -set ";
+            cmd << ambdbilPath << " -set spirvDasmLegacyFormat=1 -Dall -l -gfxip " << deviceGfxIp << " -set ";
 
             // Flags for each pipeline stage that specify if its shader is present.
             // We will need them throughout this process.
