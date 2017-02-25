@@ -38,6 +38,12 @@ bool kcUtils::ValidateShaderOutputDir(const std::string& outputFileName, std::st
     osFilePath shaderFile(shaderFileNameAsGtStr);
     osDirectory outputDir;
     shaderFile.getFileDirectory(outputDir);
+    if(outputDir.IsEmpty())
+    {
+        // If the directory is empty then we assume the output directory is the active directory which should exist.
+        return true;
+    }
+
     isShaderOutputDirValid = outputDir.exists();
 
     if (!isShaderOutputDirValid)
