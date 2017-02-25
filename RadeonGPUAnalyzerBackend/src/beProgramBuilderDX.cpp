@@ -287,6 +287,16 @@ beKA::beStatus beProgramBuilderDX::Initialize(const string& msD3DCompilerModuleT
             }
         }
 
+        // If this is empty then odds are you are not using AMD hardware.
+        if(m_DXDeviceTable.empty())
+        {
+            m_DXDeviceTable.reserve(gs_cardInfoSize);
+            for(size_t i = 0ULL; i < gs_cardInfoSize; ++i)
+            {
+                m_DXDeviceTable.push_back(gs_cardInfo[i]);
+            }
+        }
+
         std::sort(m_DXDeviceTable.begin(), m_DXDeviceTable.end(), beUtils::GfxCardInfoSortPredicate);
     }
 
