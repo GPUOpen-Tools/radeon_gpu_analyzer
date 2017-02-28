@@ -80,7 +80,7 @@ beKA::beStatus Backend::Initialize(BuiltProgramKind ProgramKind, LoggingCallBack
     }
 
 
-    if (m_beOpenCL == NULL)
+    if (m_beOpenCL == NULL && ProgramKind == BuiltProgramKind_OpenCL)
     {
         m_beOpenCL = new beProgramBuilderOpenCL();
     }
