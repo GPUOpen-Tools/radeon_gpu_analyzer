@@ -15,7 +15,7 @@ This product can be used to produce the following output:
 * DX ASM for D3D shaders
 * Compiled binaries
 * Performance statistics
-* Live register analysis
+* Live register analysis (for more info about this feature, please see http://gpuopen.com/live-vgpr-analysis-radeon-gpu-analyzer/)
 
 The supported platforms are:
 * D3D11
