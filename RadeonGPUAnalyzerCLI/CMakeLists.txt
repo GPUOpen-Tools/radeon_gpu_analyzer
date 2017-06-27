@@ -3,7 +3,12 @@ project (RadeonGPUAnalyzerCLI)
 
 # The version number
 set (RadeonGPUAnalyzerCLI_VERSION_MAJOR 1)
-set (RadeonGPUAnalyzerCLI_VERSION_MINOR 0)
+set (RadeonGPUAnalyzerCLI_VERSION_MINOR 1)
+
+# Pass the build number
+if (NOT "$ENV{BUILD_NUMBER}" STREQUAL "")
+    add_definitions(-DRGA_BUILD_NUMBER=$ENV{BUILD_NUMBER})
+endif()
 
 # Windows-specific preprocessor directives
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -59,13 +64,6 @@ endif()
 file(GLOB COMMON_SRC
     "src/*.cpp"
     "src/*.h"
-    "${PROJECT_SOURCE_DIR}/../../Common/Src/DeviceInfo/DeviceInfoUtils.cpp"
-)
-
-# Linux-specific source files
-file(GLOB LINUX_SRC
-    "src/linux/*.h"
-    "src/linux/*.cpp"
 )
 
 # Pick up the source files that are relevant to the platform
@@ -103,9 +101,9 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         endif()
     endif()
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-
-    # Do this for all distributions    
-    add_executable(RadeonGPUAnalyzerCLI ${COMMON_SRC} ${LINUX_SRC})
+    # DeviceInfoLib objects are defined in RadeonGPUAnalyzerBackend/CMakeLists.txt
+    add_executable(RadeonGPUAnalyzerCLI ${COMMON_SRC} ${LINUX_SRC} $<TARGET_OBJECTS:DeviceInfoLib>)
+    set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES ENABLE_EXPORTS ON)
 
     if(IsDebian)
         # Debian-specific
@@ -130,11 +128,20 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 endif()
 
 # Set the name of the executable
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga)
-elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    # On Linux we have a launch script that configures the environment prior to launching the executable.
-    set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga-bin)
+if(AMD_INTERNAL)
+    if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+        set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga-internal)
+    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+        # On Linux we have a launch script that configures the environment prior to launching the executable.
+        set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga-bin-internal)
+    endif()
+else()
+    if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+        set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga)
+    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+        # On Linux we have a launch script that configures the environment prior to launching the executable.
+        set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga-bin)
+    endif()
 endif()
 
 # Set binary suffix
@@ -148,10 +155,15 @@ target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSAPIWr
 endif()
 
 # Configure the post-build actions.
+set(INTERNAL_ARG "")
+if(AMD_INTERNAL)
+    set(INTERNAL_ARG "-internal")
+endif()
+
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
             POST_BUILD
-            COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/linux/copy_post_build.sh
+            COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/linux/copy_post_build.sh ${INTERNAL_ARG}
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/linux
             )
 endif()

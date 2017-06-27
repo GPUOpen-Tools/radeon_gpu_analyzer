@@ -149,11 +149,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>rga-x64-d</TargetName>
+    <TargetName>rga-d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>rga-x64-d</TargetName>
+    <TargetName>rga-d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -165,11 +165,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>rga-x64</TargetName>
+    <TargetName>rga</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>rga-x64</TargetName>
+    <TargetName>rga</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -178,15 +178,18 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(BUILD_NUMBER)'!=''">RGA_BUILD_NUMBER=$(BUILD_NUMBER);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration) 1</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|Win32'">
@@ -196,15 +199,18 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>RGA_BACKEND_STATIC;AMDTBASETOOLS_STATIC;AMDTOSWRAPPERS_STATIC;AMDTOSAPIWRAPPERS_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(BUILD_NUMBER)'!=''">RGA_BUILD_NUMBER=$(BUILD_NUMBER);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration) 1</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -214,15 +220,18 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(BUILD_NUMBER)'!=''">RGA_BUILD_NUMBER=$(BUILD_NUMBER);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration) 1</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|x64'">
@@ -232,15 +241,18 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>RGA_BACKEND_STATIC;AMDTBASETOOLS_STATIC;AMDTOSWRAPPERS_STATIC;AMDTOSAPIWRAPPERS_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(BUILD_NUMBER)'!=''">RGA_BUILD_NUMBER=$(BUILD_NUMBER);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration) 1</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -252,6 +264,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(BUILD_NUMBER)'!=''">RGA_BUILD_NUMBER=$(BUILD_NUMBER);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -260,9 +273,11 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+	  <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration) 1</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|Win32'">
@@ -274,6 +289,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>RGA_BACKEND_STATIC;AMDTBASETOOLS_STATIC;AMDTOSWRAPPERS_STATIC;AMDTOSAPIWRAPPERS_STATIC;NDEBUG;AMDT_PUBLIC</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(BUILD_NUMBER)'!=''">RGA_BUILD_NUMBER=$(BUILD_NUMBER);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -282,9 +298,11 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
+	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration) 1</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -296,6 +314,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(BUILD_NUMBER)'!=''">RGA_BUILD_NUMBER=$(BUILD_NUMBER);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -304,9 +323,11 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration) 1</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|x64'">
@@ -318,6 +339,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>RGA_BACKEND_STATIC;AMDTBASETOOLS_STATIC;AMDTOSWRAPPERS_STATIC;AMDTOSAPIWRAPPERS_STATIC;NDEBUG;AMDT_PUBLIC</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(BUILD_NUMBER)'!=''">RGA_BUILD_NUMBER=$(BUILD_NUMBER);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CommonSrcDir)\CElf\Include;$(ProjectDir)\..\..\;$(ProjectDir)..\..\RadeonGPUAnalyzerBackend\include\common;$(CommonSrcDir)\DynamicLibraryModule;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir);$(CommonLibDir)\Ext\Boost\boost_1_59_0</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
     </ClCompile>
@@ -327,9 +349,11 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CommonLibDir)\Ext\Boost\boost_1_59_0\lib\VC14\$(AMDTPlatformExt)</AdditionalLibraryDirectories>
+	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
+	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration) 1</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

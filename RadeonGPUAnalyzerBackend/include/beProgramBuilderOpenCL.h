@@ -200,11 +200,6 @@ private:
     /// \returns true/false if module loaded or not
     bool isOpenClModuleLoaded();
 
-    /// Add devices that have been validated against the driver-supplied list
-    /// \param[in] cardList the list of devices to validate
-    /// \param[out] uniqueNamesOfPublishedDevices the validated lists of devices -- only devices reported by the driver will appear here
-    void AddValidatedDevices(const std::vector<GDT_GfxCardInfo>& cardList, std::set<string>& uniqueNamesOfPublishedDevices);
-
     beKA::beStatus GetAnalysisInternal(cl_program& program, const std::string& device, const std::string& kernel, beKA::AnalysisData* analysis);
 
     /// Get statistics parameter value using.

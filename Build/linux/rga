@@ -1,3 +1,38 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------------------------------------------------------------------------
 # This script launches the rga executable after configuring the environment.
-export LD_LIBRARY_PATH=./$LD_LIBRARY_PATH
-./rga-bin $@
+# (c) 2017 Advanced Micro Devices Inc. All Rights Reserved.
+# ----------------------------------------------------------------------------------------------------------------------------------
+
+if echo "$0" | grep '^/' ; then
+	thisScriptFullPath="$0"
+else
+	thisScriptFullPath=`pwd`/$0
+fi
+
+# Enable the use of symbolic links to the script
+if [ -h ${thisScriptFullPath} ]
+then
+    LINKTARGET=`readlink -f "$thisScriptFullPath"`
+    thisScriptFullPath=${LINKTARGET}
+fi
+
+RGA_BIN_PATH=`dirname "$thisScriptFullPath"`
+
+# Add RGA's binaries directory to PATH:
+export PATH="${RGA_BIN_PATH}:$PATH"
+
+# Add RGA's binaries directory to LD_LIBRARY_PATH:
+if [ -z "$LD_LIBRARY_PATH" ]; then
+    export LD_LIBRARY_PATH="${RGA_BIN_PATH}"
+else
+    export LD_LIBRARY_PATH="${RGA_BIN_PATH}:$LD_LIBRARY_PATH"
+fi
+
+# Call RGA executable
+if [ -e $RGA_BIN_PATH/rga-bin-internal ]; then
+    $RGA_BIN_PATH/rga-bin-internal "$@"
+else
+    $RGA_BIN_PATH/rga-bin "$@"
+fi

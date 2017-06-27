@@ -31,6 +31,7 @@
 
 #include <RadeonGPUAnalyzerCLI/src/kcConfig.h>
 #include <RadeonGPUAnalyzerCLI/src/kcParseCmdLine.h>
+#include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
 #include <VersionInfo/VersionInfo.h>
 
 namespace po = boost::program_options;
@@ -57,11 +58,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         genericOpt.add_options()
         // The next two options here can be repeated, so they are vectors.
         ("csv-separator", po::value< string >(&config.m_CSVSeparator), "Override to default separator for analysis items.")
-        ("list-asics,l", "List known ASIC targets. Supported device may vary according to the source you are trying to compile.\n"
-         "By default, will show supported ASICS for OpenCL.\n"
-         "use '-s HLSL -l' to view supported ASICS for HLSL")
+        ("list-asics,l", "List the known GPU codenames, architecture names and variant names.\nTo target a specific GPU, use its codename as the argument to the \"-c\" command line switch.")
         ("asic,c", po::value< vector<string> >(&config.m_ASICs), "Which ASIC to target.  Repeatable.")
-        ("verbose", "List extra information.  (With: --list-asics).")
         ("version", "Print version string.")
         ("help,h", "Produce this help message.")
         ("analysis,a", po::value<string>(&config.m_AnalysisFile), "Path to output analysis file.")
@@ -151,12 +149,6 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         if (vm.count("list-asics"))
         {
             config.m_RequestedCommand = Config::ccListAsics;
-        }
-
-        // Verbose only affects list-ASICs right now.
-        if (vm.count("verbose"))
-        {
-            config.m_bVerbose = true;
         }
 
         if (vm.count("intrinsics"))
@@ -256,6 +248,14 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.m_SourceLanguage = SourceLanguage_GLSL_Vulkan;
         }
+        else if ((boost::iequals(config.m_SourceKind, Config::sourceKindSpirvBin)))
+        {
+            config.m_SourceLanguage = SourceLanguage_SPIRV_Vulkan;
+        }
+        else if ((boost::iequals(config.m_SourceKind, Config::sourceKindSpirvTxt)))
+        {
+            config.m_SourceLanguage = SourceLanguage_SPIRVTXT_Vulkan;
+        }
         else
         {
             config.m_SourceLanguage = SourceLanguage_Invalid;
@@ -298,10 +298,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             std::string productVersion;
 #ifndef CMAKE_BUILD
-            productVersion = "1.0.0.0";
+            productVersion = "1.1.";
+            productVersion += STR_RGA_BUILD_NUM;
 #else
             std::stringstream versionString;
-            versionString << RadeonGPUAnalyzerCLI_VERSION_MAJOR << "." << RadeonGPUAnalyzerCLI_VERSION_MINOR << ".0.0";
+            versionString << RadeonGPUAnalyzerCLI_VERSION_MAJOR << "." << RadeonGPUAnalyzerCLI_VERSION_MINOR << "." << STR_RGA_BUILD_NUM;
             productVersion = versionString.str();
 #endif // !CMAKE_BUILD
             cout << programName << " version: " << productVersion << std::endl;
@@ -312,7 +313,9 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << ", OpenGL and Vulkan" << std::endl;
             cout << "To view help for OpenCL: -h -s cl" << std::endl;
             cout << "To view help for OpenGL: -h -s opengl" << endl;
-            cout << "To view help for Vulkan: -h -s vulkan" << endl;
+            cout << "To view help for Vulkan (GLSL): -h -s vulkan" << endl;
+            cout << "To view help for Vulkan (SPIR-V binary input): -h -s vulkan-spv" << endl;
+            cout << "To view help for Vulkan (SPIR-V textual input): -h -s vulkan-spv-txt" << endl;
 #if _WIN32
             cout << "To view help for DirectX: -h -s hlsl" << std::endl;
             cout << "To view help for AMDIL: -h -s amdil" << std::endl;
@@ -371,7 +374,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << " Generate ISA and performance statistics from AMDIL code: " << programName << " -s amdil --isa c:\\files\\isaFromAmdil.isa -a c:\\files\\statsFromAmdil.csv c:\\files\\myAmdilCode.amdil" << endl;
             cout << " Generate ISA from AMDIL code, and perform live register analysis: " << programName << " -s amdil --isa c:\\output\\myShader.isa --livereg c:\\output\\ c:\\files\\myAmdilCode.amdil" << endl;
         }
-        else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_GLSL_Vulkan))
+        else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_GLSL_Vulkan || 
+            config.m_SourceLanguage == SourceLanguage_SPIRV_Vulkan || config.m_SourceLanguage == SourceLanguage_SPIRVTXT_Vulkan))
         {
             cout << "*** Vulkan Instructions & Options ***" << endl;
             cout << "=================================" << endl;

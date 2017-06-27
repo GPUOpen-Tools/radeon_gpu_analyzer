@@ -8,6 +8,7 @@
 
 // Backend.
 #include <RadeonGPUAnalyzerBackend/include/beProgramBuilderDX.h>
+#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
 #include  <CElf.h>
 #include <DeviceInfoUtils.h>
 
@@ -31,107 +32,28 @@ kcCLICommanderDX::~kcCLICommanderDX(void)
 /// List the asics as got from device
 void kcCLICommanderDX::ListAsics(Config& config, LoggingCallBackFuncP callback)
 {
+    std::vector<GDT_GfxCardInfo> cardList;
+    std::set<std::string> supportedDeviceNames;
+    beUtils::GetAllGraphicsCards(cardList, supportedDeviceNames);
+
+    for (const std::string& device : supportedDeviceNames)
+    {
+        std::cout << device << std::endl;
+    }
+}
+
+
+void kcCLICommanderDX::Version(Config& config, LoggingCallBackFuncP callback)
+{
+    std::stringstream s_Log;
+    s_Log << STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM << std::endl;
+
     if (!Init(config, callback))
     {
-        return;
-    }
-
-    std::stringstream s_Log;
-
-    if (! config.m_bVerbose)
-    {
-        s_Log << "Devices:" << endl;
-        string calName;
-
-        for (vector<GDT_GfxCardInfo>::const_iterator it = m_dxDefaultAsicsList.begin(); it != m_dxDefaultAsicsList.end(); ++it)
-        {
-            calName = string(it->m_szCALName);
-            s_Log << "    " << calName << endl;
-        }
-    }
-    else
-    {
-        // Some headings:
-        s_Log << "Devices:" << endl;
-        s_Log << "-------------------------------------" << endl;
-        s_Log << "Hardware Generation:" << endl;
-        s_Log << "    ASIC name" << endl;
-        s_Log << "            DeviceID   Marketing Name" << endl;
-        s_Log << "-------------------------------------" << endl;
-
-        std::vector<GDT_GfxCardInfo> dxDeviceTable;
-        beStatus bRet = m_pBackEndHandler->theOpenDXBuilder()->GetDeviceTable(dxDeviceTable);
-
-        if (bRet == beStatus_SUCCESS)
-        {
-            GDT_HW_GENERATION gen = GDT_HW_GENERATION_NONE;
-            std::string calName;
-
-            for (const GDT_GfxCardInfo& gfxDevice : dxDeviceTable)
-            {
-                if (gen != gfxDevice.m_generation)
-                {
-                    gen = gfxDevice.m_generation;
-                    std::string sHwGenDisplayName;
-                    AMDTDeviceInfoUtils::Instance()->GetHardwareGenerationDisplayName(gen, sHwGenDisplayName);
-
-                    switch (gfxDevice.m_generation)
-                    {
-                        case GDT_HW_GENERATION_SOUTHERNISLAND:
-                            s_Log << sHwGenDisplayName << KA_STR_familyNameSICards ":" << endl;
-                            break;
-
-                        case GDT_HW_GENERATION_SEAISLAND:
-                            s_Log << sHwGenDisplayName << KA_STR_familyNameCICards ":" << endl;
-                            break;
-
-                        case GDT_HW_GENERATION_VOLCANICISLAND:
-                            s_Log << sHwGenDisplayName << KA_STR_familyNameVICards ":" << endl;
-                            break;
-
-                        default:
-                            GT_ASSERT_EX(false, L"Unknown hardware generation.");
-                            break;
-                    }
-                }
-
-                if (calName.compare(gfxDevice.m_szCALName) != 0)
-                {
-                    calName = std::string(gfxDevice.m_szCALName);
-                    s_Log << "    " << calName << endl;
-                }
-
-                std::stringstream ss;
-                ss << hex << gfxDevice.m_deviceID;
-                s_Log << "            " << ss.str() << "       " << string(gfxDevice.m_szMarketingName) << endl;
-
-            }
-        }
-        else
-        {
-            s_Log << "Could not generate device table.";
-        }
+        s_Log << STR_ERR_INITIALIZATION_FAILURE << std::endl;
     }
 
     LogCallBack(s_Log.str());
-}
-
-/// list the driver version
-void kcCLICommanderDX::Version(Config& config, LoggingCallBackFuncP callback)
-{
-    if (Init(config, callback))
-    {
-        std::string catalystVersion;
-        bool isOk = m_pBackEndHandler->GetDriverVersionInfo(catalystVersion);
-
-        if (isOk)
-        {
-            stringstream s_Log;
-            s_Log << "Installed Driver Version:" << endl;
-            s_Log << catalystVersion.c_str() << endl;
-            LogCallBack(s_Log.str());
-        }
-    }
 }
 
 
@@ -144,24 +66,26 @@ void kcCLICommanderDX::InitRequestedAsicList(const Config& config)
     {
         m_dxDefaultAsicsList.clear();
         std::vector<GDT_GfxCardInfo> dxDeviceTable;
-
-        if (m_pBackEndHandler->theOpenDXBuilder()->GetDeviceTable(dxDeviceTable) == beStatus_SUCCESS)
+        std::set<std::string> supportedDevices;
+        if (beUtils::GetAllGraphicsCards(dxDeviceTable, supportedDevices))
         {
             for (const std::string& gfxDevice : config.m_ASICs)
             {
                 bool isDeviceSupported = false;
-
-                // Both CAL and Marketing names are accepted (case-insensitive).
-                for (const GDT_GfxCardInfo& dxDevice : dxDeviceTable)
+                if (supportedDevices.find(gfxDevice) != supportedDevices.end())
                 {
-                    if ((boost::iequals(dxDevice.m_szCALName, gfxDevice)) ||
-                        (boost::iequals(dxDevice.m_szMarketingName, gfxDevice)))
+                    // Both CAL and Marketing names are accepted (case-insensitive).
+                    for (const GDT_GfxCardInfo& dxDevice : dxDeviceTable)
                     {
-                        isDeviceSupported = true;
-                        m_dxDefaultAsicsList.push_back(dxDevice);
+                        if ((boost::iequals(dxDevice.m_szCALName, gfxDevice)) ||
+                            (boost::iequals(dxDevice.m_szMarketingName, gfxDevice)))
+                        {
+                            isDeviceSupported = true;
+                            m_dxDefaultAsicsList.push_back(dxDevice);
 
-                        // We are done.
-                        break;
+                            // We are done.
+                            break;
+                        }
                     }
                 }
 
@@ -238,7 +162,6 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
             LogCallBack(s_Log.str());
         }
     }
-
 }
 
 void kcCLICommanderDX::ExtractIL(const std::string& deviceName, const Config& config)
@@ -670,7 +593,7 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
         if (beRet != beStatus_SUCCESS)
         {
             // the use must have got the asics spelled wrong- let him know and continue
-            s_Log << "Error: Couldn't find device named: " << sDevicenametoLog << ". Run \'-s HLSL -l --verbose\' to view available devices." << endl;
+            s_Log << "Error: Couldn't find device named: " << sDevicenametoLog << ". Run \'-s HLSL -l to view available devices." << endl;
             bRet = false;
         }
         else

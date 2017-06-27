@@ -27,7 +27,6 @@
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beUtils.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beBackend.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beD3DIncludeManager.cpp" />
-    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beDriverUtils.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilder.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderDX.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderOpenCL.cpp" />
@@ -85,7 +84,6 @@
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ISAParser.cpp">
       <Filter>Emulator\Parser\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Common\Src\ADLUtil\ADLUtil.cpp" />
     <ClCompile Include="..\..\..\Common\Src\DeviceInfo\DeviceInfoUtils.cpp" />
     <ClCompile Include="..\..\..\Common\Src\CElf\Src\CElf.cpp" />
     <ClCompile Include="..\..\..\Common\Src\CElf\Src\CElfSection.cpp" />
@@ -109,7 +107,6 @@
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beBackend.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beD3DIncludeManager.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beDataTypes.h" />
-    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beDriverUtils.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beInclude.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilder.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderDX.h" />
@@ -221,7 +218,6 @@
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\EXPInstruction.h">
       <Filter>Emulator\Parser\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Common\Src\ADLUtil\ADLUtil.h" />
     <ClInclude Include="..\..\..\Common\Src\DeviceInfo\DeviceInfoUtils.h" />
     <ClInclude Include="..\..\..\Common\Src\CElf\Include\CElf.h" />
     <ClInclude Include="..\..\..\Common\Src\ACLModuleManager\ACLModuleManager.h" />

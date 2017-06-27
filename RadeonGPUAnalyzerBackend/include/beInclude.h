@@ -46,14 +46,16 @@ static const CALuint64 CAL_ERR_Value_64 = (CALuint64) - 2;
 enum SourceLanguage
 {
     SourceLanguage_Invalid = 0,
-    SourceLanguage_OpenCL,      // cl source of OpenCL kernels.
-    SourceLanguage_GLSL,        // glsl input language for OpenGL (standalone, obsolete).
-    SourceLanguage_GLSL_OpenGL, // glsl input language for OpenGL Programs.
-    SourceLanguage_GLSL_Vulkan, // glsl input language for Vulkan Programs.
-    SourceLanguage_HLSL,        // D3D/DX input language.
-    SourceLanguage_AMDIL,       // AMDIL.
-    SourceLanguage_DXasm,       // The other D3D/DX input language.
-    SourceLanguage_DXasmT,      // D3D/DX Assembly as Text input language.
+    SourceLanguage_OpenCL,          // cl source of OpenCL kernels.
+    SourceLanguage_GLSL,            // glsl input language for OpenGL (standalone, obsolete).
+    SourceLanguage_GLSL_OpenGL,     // glsl input language for OpenGL Programs.
+    SourceLanguage_GLSL_Vulkan,     // glsl input language for Vulkan Programs.
+    SourceLanguage_SPIRV_Vulkan,    // Binary SPIR-V input for Vulkan Programs.
+    SourceLanguage_SPIRVTXT_Vulkan, // Textual SPIR-V input for Vulkan Programs.
+    SourceLanguage_HLSL,            // D3D/DX input language.
+    SourceLanguage_AMDIL,           // AMDIL.
+    SourceLanguage_DXasm,           // The other D3D/DX input language.
+    SourceLanguage_DXasmT,          // D3D/DX Assembly as Text input language.
 };
 
 enum BuiltProgramKind
@@ -74,14 +76,8 @@ enum beStatus
     beStatus_BACKEND_NOT_INITIALIZED,
     beStatus_BYTE_CODE_EXTRACT_FAILED,
     beStatus_CL_BUILD_PROGRAM_ICE,
-    beStatus_CALCL_MODULE_NOT_LOADED,
-    beStatus_CALRT_MODULE_NOT_LOADED,
-    beStatus_CL_DEVICE_NOT_SUPPORTED,
     beStatus_D3DCompile_MODULE_NOT_LOADED,
-    beStatus_D3DCompile_MODULE_NOT_SUPPORTED,
     beStatus_D3DCompile_FAILED,
-    beStatus_GSA_ONE_DEVICE_ONLY,
-    beStatus_MISSING_ARGUMENT,
     beStatus_NO_BINARY_FOR_DEVICE,
     beStatus_NO_DEVICE_FOUND,
     beStatus_NO_IL_FOR_DEVICE,
@@ -91,16 +87,10 @@ enum beStatus
     beStatus_NO_DEBUGIL_FOR_DEVICE,
     beStatus_NO_METADATA_FOR_DEVICE,
     beStatus_NO_SUCH_DEVICE,
-    beStatus_NYI,               ///< Not yet implemented (for me).
     beStatus_OpenCL_MODULE_NOT_LOADED,
     beStatus_OpenCL_MODULE_TOO_OLD,
-    beStatus_ACL_AND_CAL_MODULE_NOT_LOADED,
     beStatus_ACLCompile_FAILED,
     beStatus_ACLBinary_FAILED,
-    beStatus_UNSUPPORTED_LANGUAGE,
-    beStatus_UNSUPPORTED_OUTPUT_KIND,
-    beStatus_UNSUPPORTED_DEVICE_TABLE_KIND,
-    beStatus_clBuildProgram_FAILED,
     beStatus_clCreateContextFromType_FAILED,
     beStatus_clCreateProgramWithSource_FAILED,
     beStatus_clGetContextInfo_FAILED,
@@ -109,22 +99,11 @@ enum beStatus
     beStatus_clGetPlatformInfo_FAILED,
     beStatus_clGetProgramInfo_FAILED,
     beStatus_BuildOpenCLProgramWrapper_FAILED,
-    beStatus_ACL_MODULE_NOT_LOADED,
     beStatus_Create_Bolob_FromInput_Failed,
     beStatus_NoStatSectionInElfPossibleOldDxDriver,
-    beStatus_GLOpenGLModuleNotInitialized,
     beSattus_WrongKernelName,
-    beStatus_GLglCreateGLWindowFailed,
-    beStatus_GLInitWglAMDFailed,
-    beStatus_GLOpenGLModuleFailedToLoad,
-    beStatus_GLFailedGetAsicList,
-    beStatus_OpenGLModuleNotInitialized,
-    beStatus_GLOpenGLFunctionPointersNotLoaded,
-    beStatus_GLOpenGLXServerConnectionError,
-    beStatus_GLOpenGLXServerChooseVisualError,
     beStatus_GLOpenGLVirtualContextFailedToLaunch,
     beStatus_GLOpenGLBuildError,
-    beStatus_GLCannotDecodeCompiledElf,
     beStatus_GLUnknownHardwareFamily,
     beStatus_VulkanAmdspvLaunchFailure,
     beStatus_VulkanAmdspvCompilationFailure,

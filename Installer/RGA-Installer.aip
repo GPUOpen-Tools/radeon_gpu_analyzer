@@ -12,7 +12,7 @@
     <ROW Property="ProductCode" Value="1033:{2E71B8E9-E679-432E-9482-7BF1520FDD46} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="Radeon GPU Analyzer"/>
-    <ROW Property="ProductVersion" Value="1.0.0" Type="32"/>
+    <ROW Property="ProductVersion" Value="1.1.0" Type="32"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND"/>
     <ROW Property="UpgradeCode" Value="{72FDBDB3-E5E3-4772-9396-EB5196A89D80}"/>
     <ROW Property="WindowsType9X" MultiBuildValue="x64_Release_Static:Windows 9x/ME" ValueLocId="-"/>
@@ -52,7 +52,7 @@
     <ROW File="concrt140.dll" Component_="concrt140.dll" FileName="CONCRT~1.DLL|concrt140.dll" Attributes="1" SourcePath="..\BuildOutput\bin\concrt140.dll" SelfReg="false" NextFile="msvcp140.dll"/>
     <ROW File="d3dcompiler_47.dll" Component_="d3dcompiler_47.dll" FileName="D3DCOM~1.DLL|d3dcompiler_47.dll" Attributes="0" SourcePath="..\BuildOutput\bin\x64\d3dcompiler_47.dll" SelfReg="false"/>
     <ROW File="msvcp140.dll" Component_="msvcp140.dll" FileName="msvcp140.dll" Attributes="1" SourcePath="..\BuildOutput\bin\msvcp140.dll" SelfReg="false" NextFile="vccorlib140.dll"/>
-    <ROW File="rgax64.exe" Component_="rgax64.exe" FileName="rga.exe" Attributes="0" SourcePath="..\Build\Output\Release_Static\bin\rga-x64.exe" SelfReg="false" NextFile="amdspv.exe" DigSign="true"/>
+    <ROW File="rgax64.exe" Component_="rgax64.exe" FileName="rga.exe" Attributes="0" SourcePath="..\Build\Output\Release_Static\bin\rga.exe" SelfReg="false" NextFile="amdspv.exe" DigSign="true"/>
     <ROW File="shae.exe" Component_="shae.exe" FileName="shae.exe" Attributes="0" SourcePath="..\Build\Output\Release_Static\bin\x64\shae.exe" SelfReg="false" NextFile="spvgen.dll" DigSign="true"/>
     <ROW File="spvgen.dll" Component_="spvgen.dll" FileName="spvgen.dll" Attributes="0" SourcePath="..\Build\Output\Release_Static\bin\x64\spvgen.dll" SelfReg="false" NextFile="VirtualContext.exe"/>
     <ROW File="vccorlib140.dll" Component_="vccorlib140.dll" FileName="VCCORL~1.DLL|vccorlib140.dll" Attributes="1" SourcePath="..\BuildOutput\bin\vccorlib140.dll" SelfReg="false" NextFile="vcruntime140.dll"/>

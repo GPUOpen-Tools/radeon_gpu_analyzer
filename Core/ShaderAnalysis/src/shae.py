@@ -24,6 +24,7 @@ import argparse
 import sys
 import collections
 import operator
+import re
 
 def pairwise (iterable):
     a, b = tee (iterable)
@@ -62,6 +63,10 @@ class OpCode:
     def Class(self):
         return self.__instructionClass
 
+    @Class.setter
+    def Class(self, value):
+        self.__instructionClass = value
+
     @property
     def Written(self):
         return self.__operandsWritten
@@ -99,13 +104,22 @@ def MergeRegisterSets(registerSets):
 class Instruction:
     '''An instruction consists of an op-code, the arguments passed to it, and
     an optional label if the instruction is a jump target.'''
-    def __init__ (self, opcode, args, label = None):
+    def __init__ (self, binCode, opcode, args, label = None):
         import gcn
         self.__opcode = gcn.opcodes.get (opcode, OpCode (opcode, {}, {}, gcn.InstructionClass.Unknown, 0, None))
         self.__args = args
         self.__label = label
 
         self.__usedVGPRs = self.__ComputeUsedVGPRs()
+
+        # Some instructions have 2 possible encodings: VOP2 or VOP3. For these instructions, check
+        # the highest bit of binary code to find out the exact encoding type.
+        if self.__opcode.Class == gcn.InstructionClass.VOP2 or self.__opcode.Class == gcn.InstructionClass.VOP3:
+            hiCode = binCode.split(' ')[0]
+            if (int(hiCode, 16) & 0x80000000) == 0:
+                self.__opcode.Class = gcn.InstructionClass.VOP2
+            else:
+                self.__opcode.Class = gcn.InstructionClass.VOP3
 
     def SetLabel(self, label):
         assert label is not None
@@ -251,10 +265,20 @@ class _BaseIsaReader(IsaReader):
         for line in inputStream:
             line = line.strip ()
             comment = line.find ('//')
+            commentStr = ""
+            instItems = []
             if comment != -1:
+                # Split line into 2 parts: instruction & comment.
+                commentStr = line [comment+2 :]
                 line = line [:comment]
             if line:
-                lines.append (line.split ())
+                # Parse the comment. It should contain the instruction binary code.
+                binCodeStr = self.GetBinEncodingText(commentStr)
+                # Add the binary code and other instruction parts into "instItems"
+                if binCodeStr != "":
+                    instItems.append(binCodeStr)
+                instItems.extend(line.split())
+                lines.append (instItems)
 
         return lines
 
@@ -273,18 +297,31 @@ class _BaseIsaReader(IsaReader):
                 nextLabel = line[0][6:-1] # strip label_, :
                 continue
             
-            opCode = line [0]
+            binCode = line [0]
+            opCode  = line [1]
             args = []
 
             # Join everything after the opcode and separate at the comma again
-            for param in ' '.join (line [1:]).split (','):
+            for param in ' '.join (line [2:]).split (','):
                 paramElements = param.split ()
                 if paramElements:
                     args.append (paramElements[0])
 
-            result.append (Instruction (opCode, args, nextLabel))
+            result.append (Instruction (binCode, opCode, args, nextLabel))
             nextLabel = None
 
+        return result
+
+    # Tries to find binary code text in the "comment" string:
+    # 000000000130: D1190201 00000100
+    #              `--- bin code ---'
+    def GetBinEncodingText(self, comment):
+        result = ""
+        if  comment == "":
+            return result
+        foundBinCode = re.search(r' *[0-9a-fA-F]+: *([0-9a-fA-F]{8})( *[0-9a-fA-F]{8})?', comment)
+        if foundBinCode:
+            result = comment[comment.find(':')+1 :].lstrip(' ')
         return result
 
 class ShaderAnalyzerIsaReader(_BaseIsaReader):

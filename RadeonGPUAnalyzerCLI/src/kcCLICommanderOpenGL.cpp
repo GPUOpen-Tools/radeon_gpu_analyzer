@@ -70,47 +70,6 @@ kcCLICommanderOpenGL::~kcCLICommanderOpenGL()
     delete m_pOglBuilder;
 }
 
-bool kcCLICommanderOpenGL::GetSupportedDevices()
-{
-    if (m_pOglBuilder != nullptr)
-    {
-        std::vector<GDT_GfxCardInfo> availableDevices;
-
-        if (m_supportedDevicesCache.empty())
-        {
-            beKA::beStatus status = m_pOglBuilder->GetDeviceTable(availableDevices);
-
-            if (status == beKA::beStatus_SUCCESS && !availableDevices.empty())
-            {
-                // Filter out the duplicates.
-                for (const GDT_GfxCardInfo& device : availableDevices)
-                {
-                    if (device.m_szCALName != nullptr && strlen(device.m_szCALName) > 1)
-                    {
-                        // Cache device name.
-                        std::string deviceName = device.m_szCALName;
-                        m_supportedDevicesCache.insert(deviceName);
-
-                        // Cache device info if needed.
-                        OpenGLDeviceInfo deviceInfo;
-
-                        // Fetch the family and revision IDs from the backend.
-                        bool isSupportedDevice = m_pOglBuilder->GetDeviceGLInfo(deviceName, deviceInfo.m_deviceFamilyId, deviceInfo.m_deviceId);
-
-                        if (isSupportedDevice && (m_deviceInfo.find(deviceName) == m_deviceInfo.end()))
-                        {
-                            m_deviceInfo[deviceName] = deviceInfo;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return (!m_supportedDevicesCache.empty() && !m_deviceInfo.empty());
-}
-
-
 void kcCLICommanderOpenGL::ListAsics(Config& config, LoggingCallBackFunc_t callback)
 {
     GT_UNREFERENCED_PARAMETER(config);
@@ -118,14 +77,13 @@ void kcCLICommanderOpenGL::ListAsics(Config& config, LoggingCallBackFunc_t callb
     // Output message.
     std::stringstream logMsg;
 
-    // Todo: handle the verbose part.
     if (m_supportedDevicesCache.empty())
     {
         if (m_pOglBuilder != nullptr)
         {
-            bool isDeviceListExtracted = GetSupportedDevices();
+            bool isDeviceListExtracted = m_pOglBuilder->GetSupportedDevices(m_supportedDevicesCache);
 
-            if (!isDeviceListExtracted)
+            if (!isDeviceListExtracted || m_supportedDevicesCache.empty())
             {
                 logMsg << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
             }
@@ -319,57 +277,50 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
         m_pOglBuilder->SetLog(callback);
 
         // If the user did not specify any device, we should use all supported devices.
-        std::vector<std::string> targetDecives;
+        std::vector<std::string> targetDevices;
         bool shouldUseAlldevices = config.m_ASICs.empty();
-
-        if (m_supportedDevicesCache.empty() || m_deviceInfo.empty())
-        {
-            // We need to populate the list of supported devices.
-            bool isDeviceListExtracted = GetSupportedDevices();
-
-            if (!isDeviceListExtracted)
-            {
-                std::stringstream errMsg;
-                errMsg << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
-                shouldAbort = true;
-            }
-        }
 
         if (!shouldAbort)
         {
             if (!shouldUseAlldevices)
             {
                 // If the user specified a device, go with the user's choice.
-                targetDecives = config.m_ASICs;
+                targetDevices = config.m_ASICs;
             }
             else
             {
-                // Otherwise, use the cached list of all supported devices.
-                std::copy(m_supportedDevicesCache.begin(), m_supportedDevicesCache.end(), std::back_inserter(targetDecives));
+                if (m_supportedDevicesCache.empty())
+                {
+                    // We need to populate the list of supported devices.
+                    bool isDeviceListExtracted = m_pOglBuilder->GetSupportedDevices(m_supportedDevicesCache);
+
+                    if (!isDeviceListExtracted)
+                    {
+                        std::stringstream errMsg;
+                        errMsg << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
+                        shouldAbort = true;
+                    }
+                }
+
+                std::copy(m_supportedDevicesCache.begin(), m_supportedDevicesCache.end(), std::back_inserter(targetDevices));
             }
 
-            for (const std::string& device : targetDecives)
+            for (const std::string& device : targetDevices)
             {
+                if (!shouldAbort)
+                {
                 // Generate the output message.
                 logMsg << KA_CLI_STR_COMPILING << device;
 
                 // Set the target device info for the backend.
-                auto iter = m_deviceInfo.find(device);
+                bool isDeviceGlInfoExtracted = m_pOglBuilder->GetDeviceGLInfo(device, glOptions.m_chipFamily, glOptions.m_chipRevision);
 
-                if (iter != m_deviceInfo.end())
-                {
-                    OpenGLDeviceInfo& deviceInfo = iter->second;
-                    glOptions.m_chipRevision = deviceInfo.m_deviceId;
-                    glOptions.m_chipFamily = deviceInfo.m_deviceFamilyId;
-                }
-                else
+                if (!isDeviceGlInfoExtracted)
                 {
                     logMsg << STR_ERR_CANNOT_GET_DEVICE_INFO << device << std::endl;
                     continue;
                 }
 
-                if (!shouldAbort)
-                {
                     // Adjust the output file names to the device and shader type.
                     if (isIsaRequired)
                     {
@@ -399,6 +350,12 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                     {
                         glOptions.m_isAmdIsaBinariesRequired = true;
                         kcUtils::ConstructOutputFileName(config.m_BinaryOutputFile, KC_STR_DEFAULT_BIN_SUFFIX, "", device, glOptions.m_programBinaryFile);
+                    }
+                    else
+                    {
+                        // If binary file name is not provided, create a temp file.
+                        glOptions.m_programBinaryFile = kcUtils::ConstructTempFileName(L"rgaTempFile", L".bin");
+                        GT_ASSERT_EX(glOptions.m_programBinaryFile != L"", L"Cannot create a temp file.");
                     }
 
                     // A handle for canceling the build. Currently not in use.

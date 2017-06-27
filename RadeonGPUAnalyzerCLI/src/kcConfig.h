@@ -36,6 +36,8 @@ public:
     static std::string sourceKindGLSL;
     static std::string sourceKindOpenGL;
     static std::string sourceKindVulkan;
+    static std::string sourceKindSpirvBin;
+    static std::string sourceKindSpirvTxt;
 
     enum ConfigCommand
     {
@@ -66,7 +68,6 @@ public:
     std::vector<std::string> m_ASICs;            ///< Target GPUs for compilation.
     std::vector<std::string> m_SuppressSection;  ///< List of sections to suppress in generated binary files.
     std::vector<std::string> m_OpenCLOptions;    ///< Options to be added to OpenCL compile.
-    bool                     m_bVerbose;         ///< Be verbose.  (For now only adds to ListASICs.)
     std::vector<std::string> m_Defines;          ///< Macros to be added to compile.
     std::vector<std::string> m_IncludePath;       ///< Additional Include paths
     bool                     m_isRetainUserBinaryPath; ///< If true then CLI will not add the asic name to the generated binary output file

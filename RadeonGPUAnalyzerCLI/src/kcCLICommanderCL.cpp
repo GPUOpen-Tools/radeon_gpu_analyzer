@@ -190,7 +190,7 @@ bool kcCLICommanderCL::Compile(const Config& config)
 void kcCLICommanderCL::Version(Config& config, LoggingCallBackFunc_t callback)
 {
     std::stringstream s_Log;
-    s_Log << STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << std::endl;
+    s_Log << STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM << std::endl;
 
     if (!Init(config, callback))
     {
@@ -202,7 +202,7 @@ void kcCLICommanderCL::Version(Config& config, LoggingCallBackFunc_t callback)
 
 bool kcCLICommanderCL::InitRequestedAsicList(const Config& config)
 {
-    bool bRet = true;
+    bool bRet = (m_externalDevices.empty() ? false : true);
 
     if (!config.m_ASICs.empty())
     {
@@ -215,7 +215,7 @@ bool kcCLICommanderCL::InitRequestedAsicList(const Config& config)
         m_asics = m_externalDevices;
     }
 
-    if (!m_asics.empty())
+    if (!m_asics.empty() && !m_externalDevices.empty())
     {
         // Start by mapping DeviceID and Marketing Name to CAL name.
         // Do this in 2 steps: find the changes, make the changes.
@@ -301,131 +301,16 @@ void kcCLICommanderCL::ListAsics(Config& config, LoggingCallBackFunc_t callback)
         return;
     }
 
-    if (!config.m_bVerbose)
+    std::stringstream ss;
+    ss << "Devices:" << endl;
+    LogCallBack(ss.str());
+
+    for (set<string>::const_iterator devIter = m_externalDevices.begin(); devIter != m_externalDevices.end(); ++devIter)
     {
-        std::stringstream ss;
-        ss << "Devices:" << endl;
-        LogCallBack(ss.str());
-
-        for (set<string>::const_iterator devIter = m_externalDevices.begin(); devIter != m_externalDevices.end(); ++devIter)
-        {
-            std::stringstream sss;
-            sss << "   " << *devIter << endl;
-            LogCallBack(sss.str());
-        }
+        std::stringstream sss;
+        sss << "   " << *devIter << endl;
+        LogCallBack(sss.str());
     }
-    else
-    {
-        // Some headings:
-        std::stringstream s_Log;
-        s_Log << "Devices:" << endl;
-        s_Log << "-------------------------------------" << endl;
-        s_Log << "Hardware Generation:" << endl;
-        s_Log << "    ASIC name" << endl;
-        s_Log << "            DeviceID   Marketing Name" << endl;
-        s_Log << "-------------------------------------" << endl;
-
-        // emit the table.
-        GDT_HW_GENERATION gen = GDT_HW_GENERATION_NONE;
-        string calName;
-
-        for (vector<GDT_GfxCardInfo>::const_iterator it = m_table.begin(); it != m_table.end(); ++it)
-        {
-            if (gen != it->m_generation)
-            {
-                gen = it->m_generation;
-                std::string sHwGenDisplayName;
-                AMDTDeviceInfoUtils::Instance()->GetHardwareGenerationDisplayName(gen, sHwGenDisplayName);
-
-                switch (gen)
-                {
-                    case GDT_HW_GENERATION_SOUTHERNISLAND:
-                        s_Log << sHwGenDisplayName << KA_STR_familyNameSICards ":" << endl;
-                        break;
-
-                    case GDT_HW_GENERATION_SEAISLAND:
-                        s_Log << sHwGenDisplayName << KA_STR_familyNameCICards ":" << endl;
-                        break;
-
-                    case GDT_HW_GENERATION_VOLCANICISLAND:
-                        s_Log << sHwGenDisplayName << KA_STR_familyNameVICards ":" << endl;
-                        break;
-
-                    default:
-                        // You must have a new hardware generation.
-                        // Add code...
-                        GT_ASSERT_EX(false, L"Unknown hardware generation.");
-                        break;
-                }
-            }
-
-            if (calName != string(it->m_szCALName))
-            {
-                calName = string(it->m_szCALName);
-                s_Log << "    " << calName << endl;
-            }
-
-            ostringstream ss;
-            ss << hex << it->m_deviceID;
-            s_Log << "            " << ss.str() << "       " << string(it->m_szMarketingName) << endl;
-        }
-
-        bool foundNewAsic = false;
-
-        for (set<string>::const_iterator devIter = m_externalDevices.begin(); devIter != m_externalDevices.end(); ++devIter)
-        {
-            if (be->GetDeviceInfo(*devIter, NULL) == beStatus_SUCCESS)
-            {
-                // Already processed this one.
-                continue;
-            }
-
-            // Skip CPU devices here.
-            // We do them below.
-            cl_device_type deviceType;
-
-            if (be->theOpenCLBuilder()->GetDeviceType(*devIter, deviceType) == beStatus_SUCCESS &&
-                deviceType == CL_DEVICE_TYPE_CPU)
-            {
-                continue;
-            }
-
-            if (!foundNewAsic)
-            {
-                foundNewAsic = true;
-                s_Log << "New ASICs:" << endl
-                      << "(This happens when your AMD Radeon Software drivers are newer than this tool." << endl
-                      << " Please check for updates to AMD APP KernelAnalyzer2." << endl;
-            }
-
-            s_Log << "   " << *devIter << endl;
-        }
-
-        // Print out the CPU device
-        bool foundCPU = false;
-
-        for (set<string>::const_iterator devIter = m_externalDevices.begin(); devIter != m_externalDevices.end(); ++devIter)
-        {
-            cl_device_type deviceType;
-
-            if (be->theOpenCLBuilder()->GetDeviceType(*devIter, deviceType) == beStatus_SUCCESS &&
-                deviceType != CL_DEVICE_TYPE_CPU)
-            {
-                continue;
-            }
-
-            if (!foundCPU)
-            {
-                foundCPU = true;
-                s_Log << "CPU devices:" << endl;
-            }
-
-            s_Log << "   " << *devIter << endl;
-        }
-
-        LogCallBack(s_Log.str());
-    }
-
 }
 
 void kcCLICommanderCL::RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback)

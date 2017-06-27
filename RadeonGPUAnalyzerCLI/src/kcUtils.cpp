@@ -3,9 +3,11 @@
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osFile.h>
 #include <AMDTOSWrappers/Include/osDirectory.h>
+#include <AMDTOSWrappers/Include/osProcess.h>
 
 // Backend.
 #include <RadeonGPUAnalyzerBackend/include/beStaticIsaAnalyzer.h>
+#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
 
 // Local.
 #include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
@@ -438,6 +440,34 @@ void kcUtils::ConstructOutputFileName(const std::string& baseOutputFileName, con
 
     // Set the output string.
     generatedFileName = outputFilePath.asString();
+}
+
+gtString kcUtils::ConstructTempFileName(const gtString& prefix, const gtString & ext)
+{
+    const unsigned int  MAX_ATTEMPTS = 1024;
+    osFilePath tempFilePath(osFilePath::OS_TEMP_DIRECTORY);
+    gtString tempFileBaseName = prefix;
+    tempFileBaseName.appendUnsignedIntNumber(osGetCurrentProcessId());
+    gtString tempFileName = tempFileBaseName;
+    tempFileName.append(ext);
+    tempFilePath.setFileName(tempFileName);
+
+    uint32_t suffixNum = 0;
+    while (tempFilePath.exists() && suffixNum < MAX_ATTEMPTS)
+    {
+        tempFileName = tempFileBaseName;
+        tempFileName.appendUnsignedIntNumber(suffixNum++);
+        tempFileName.append(ext);
+        tempFilePath.setFileName(tempFileName);
+    }
+
+    return suffixNum < MAX_ATTEMPTS ? tempFilePath.asString() : L"";
+}
+
+bool kcUtils::GetMarketingNameToCodenameMapping(std::map<std::string, std::set<std::string>>& cardsMap)
+{
+    bool ret = beUtils::GetMarketingNameToCodenameMapping(cardsMap);
+    return ret;
 }
 
 kcUtils::kcUtils()

@@ -25,8 +25,6 @@ public:
     virtual void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback) override;
 
 private:
-    bool GetSupportedDevices();
-
     // The builder.
     beProgramBuilderOpenGL* m_pOglBuilder;
 
@@ -35,7 +33,6 @@ private:
 
     // An internal structure representing a target device's info.
     struct OpenGLDeviceInfo;
-    std::map<std::string, OpenGLDeviceInfo> m_deviceInfo;
 };
 
 #endif // kcCLICommanderOpenGL_h__

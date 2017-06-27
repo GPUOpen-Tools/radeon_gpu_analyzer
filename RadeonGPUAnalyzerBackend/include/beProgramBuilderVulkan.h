@@ -13,11 +13,11 @@
 
 struct VulkanOptions : public beKA::CompileOptions
 {
-    VulkanOptions() : m_isSpirvBinariesRequired(false), m_isAmdPalIlBinariesRequired(false),
+    VulkanOptions(beKA::SourceLanguage inputType) : m_isSpirvBinariesRequired(false), m_isAmdPalIlBinariesRequired(false),
         m_isAmdPalIlDisassemblyRequired(false), m_isAmdIsaBinariesRequired(false),
         m_isAmdIsaDisassemblyRequired(false), m_isScStatsRequired(false)
     {
-        CompileOptions::m_SourceLanguage = beKA::SourceLanguage_GLSL_Vulkan;
+        CompileOptions::m_SourceLanguage = inputType;
     }
 
     // The target devices.
@@ -101,14 +101,11 @@ public:
 
     beKA::beStatus Compile(const VulkanOptions& vulkanOptions, bool& cancelSignal, gtString& buildLog);
 
-    /// Sets the set of public device names.
-    void SetPublicDeviceNames(const std::set<std::string>& publicDeviceNames);
-
     /// Extracts the OpenGL version of the installed runtime.
     bool GetVulkanVersion(gtString& vkVersion);
 
-    /// Returns true iff the device is supported by the Vulkan backend.
-    bool IsSupportedDevice(const std::string& deviceName) const;
+    /// Retrieves the list of supported devices.
+    bool GetSupportedDevices(std::set<std::string>& deviceList);
 
 private:
 

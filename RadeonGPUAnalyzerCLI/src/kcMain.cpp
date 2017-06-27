@@ -31,12 +31,11 @@
 #include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
 #include <RadeonGPUAnalyzerCLI/src/kcCLICommanderOpenGL.h>
 #include <RadeonGPUAnalyzerCLI/src/kcCLICommanderVulkan.h>
+#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
 
 #ifdef _WIN32
     #include <RadeonGPUAnalyzerCLI/src/kcCLICommanderDX.h>
 #endif
-
-
 
 using namespace beKA;
 static std::ostream& s_Log = cout;
@@ -46,6 +45,36 @@ static void loggingCallback(const string& s)
     s_Log << s.c_str();
 }
 
+static void PrintAsicList()
+{
+    // We do not want to display names that contain these strings.
+    const char* FILTER_INDICATOR_1 = ":";
+    const char* FILTER_INDICATOR_2 = "Not Used";
+
+    std::map<std::string, std::set<std::string>> cardsMapping;
+    bool rc = kcUtils::GetMarketingNameToCodenameMapping(cardsMapping);
+    if (rc && !cardsMapping.empty())
+    {
+        for (const auto& pair : cardsMapping)
+        {
+            s_Log << pair.first << std::endl;
+            for (const std::string& card : pair.second)
+            {
+                // Filter out internal names.
+                if (card.find(FILTER_INDICATOR_1) == std::string::npos &&
+                    card.find(FILTER_INDICATOR_2) == std::string::npos)
+                {
+                    s_Log << "\t" << card << std::endl;
+                }
+            }
+        }
+    }
+    else
+    {
+        s_Log << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
+        exit(-1);
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -91,7 +120,9 @@ int main(int argc, char* argv[])
     {
         pMyCommander = reinterpret_cast<kcCLICommander*>(new kcCLICommanderOpenGL);
     }
-    else if (config.m_SourceLanguage == SourceLanguage_GLSL_Vulkan)
+    else if (config.m_SourceLanguage == SourceLanguage_GLSL_Vulkan || 
+        config.m_SourceLanguage == SourceLanguage_SPIRV_Vulkan ||
+        config.m_SourceLanguage == SourceLanguage_SPIRVTXT_Vulkan)
     {
         pMyCommander = reinterpret_cast<kcCLICommander*>(new kcCLICommanderVulkan);
     }
@@ -112,7 +143,7 @@ int main(int argc, char* argv[])
             break;
 
         case Config::ccListAsics:
-            pMyCommander->ListAsics(config, loggingCallback);
+            PrintAsicList();
             break;
 
         case Config::ccVersion:

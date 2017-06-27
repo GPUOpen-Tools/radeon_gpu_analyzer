@@ -14,13 +14,27 @@ using namespace beKA;
 
 static bool GetLiveRegAnalyzerPath(std::string& analyzerPath)
 {
+#ifdef AMD_INTERNAL
+
 #ifdef __linux
-    analyzerPath = "./shae";
+    analyzerPath = "shae-internal";
+#elif _WIN64
+    analyzerPath = "x64\\shae-internal.exe";
+#else
+    analyzerPath = "x86\\shae-internal.exe";
+#endif
+
+#else
+
+#ifdef __linux
+    analyzerPath = "shae";
 #elif _WIN64
     analyzerPath = "x64\\shae.exe";
 #else
     analyzerPath = "x86\\shae.exe";
 #endif
+
+#endif // AMD_INTERNAL
     return true;
 }
 
@@ -42,8 +56,8 @@ beKA::beStatus beKA::beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtSt
         {
             // Construct the command.
             std::stringstream cmd;
-            cmd << analyzerPath << " analyse-liveness " << isaFileName.asASCIICharArray()
-                << " " << outputFileName.asASCIICharArray();
+            cmd << analyzerPath << " analyse-liveness " << '"' << isaFileName.asASCIICharArray()
+                << "\" \"" << outputFileName.asASCIICharArray() << '"';
 
             // Cancel signal. Not in use for now.
             bool shouldCancel = false;

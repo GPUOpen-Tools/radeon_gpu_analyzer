@@ -8,8 +8,25 @@ cp ../../Core/OpenGL/VirtualContext/Release/lnx64/VirtualContext ../../output/bi
 chmod +x ../../output/bin/VirtualContext 
 
 # Copy the static analysis backend.
-cp ../../Core/ShaderAnalysis/Linux/x64/shae ../../output/bin/
-chmod +x ../../output/bin/shae
+if [ "$1" = "-internal" ]; then
+  cp ../../../RGA-Internal/Core/ShaderAnalysis/Linux/x64/shae-internal ../../output/bin/
+  chmod +x ../../output/bin/shae-internal
+  if [ -e ../../output/bin/shae ]; then
+    rm ../../output/bin/shae
+  fi
+  if [ -e ../../output/bin/rga-bin ]; then
+    rm ../../output/bin/rga-bin
+  fi
+else
+  cp ../../Core/ShaderAnalysis/Linux/x64/shae ../../output/bin/
+  chmod +x ../../output/bin/shae
+  if [ -e ../../output/bin/shae-internal ]; then
+    rm ../../output/bin/shae-internal
+  fi
+  if [ -e ../../output/bin/rga-bin-internal ]; then
+    rm ../../output/bin/rga-bin-internal
+  fi
+fi
 
 # Copy the launch script.
 cp ./rga ../../output/bin/

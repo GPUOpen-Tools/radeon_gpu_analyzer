@@ -99,29 +99,40 @@ enum {
     VI_BAFFIN_M_A0    = 90,
     VI_BAFFIN_M_A1    = 91,
 
+    VI_LEXA_V_A0     = 100,
+
     VI_UNKNOWN        = 0xFF
+};
+
+enum {
+    AI_GD_P0 = 1,
+    AI_GD_P1 = 2,
+
+    AI_UNKNOWN = 0xFF
 };
 
 #ifndef _ATIID_H
 #define _ATIID_H
 
 
-#define FAMILY_NI                      100          // Northern Islands: Ibiza, Cozumel, Kauai
-#define FAMILY_NORTHERNISLAND          FAMILY_NI    // Keeping the original name for backward compatibility.  FAMILY_NI follows the new naming convention
+#define FAMILY_NI                      100
+#define FAMILY_NORTHERNISLAND          FAMILY_NI
 
-#define FAMILY_SI                      110          // Southern Islands: Tahiti (P), Pitcairn (PM), Cape Verde (M), Bali (V)
+#define FAMILY_SI                      110
 
-#define FAMILY_TN                      105          // Fusion Trinity: Devastator - DVST (M), Scrapper (V)
+#define FAMILY_TN                      105
 
-#define FAMILY_CI                      120          // Sea Islands: Hawaii (P), Maui (P), Bonaire (M)
+#define FAMILY_CI                      120
 
-#define FAMILY_KV                      125          // Fusion Kaveri: Spectre, Spooky; Fusion Kabini: Kalindi
+#define FAMILY_KV                      125
 
-#define FAMILY_VI                      130          // Volcanic Islands: Iceland (V), Tonga (M)
+#define FAMILY_VI                      130
 
-#define FAMILY_CZ                      135          // Carrizo, Nolan, Amur
+#define FAMILY_CZ                      135
 
-#define FAMILY_PI                      140          // Pirate Islands
+#define FAMILY_PI                      140
+
+#define FAMILY_AI                      141
 
 #define ATI_VENDOR_ID                   0x1002
 

@@ -2,6 +2,10 @@
 #define beUtils_h__
 
 // Device info.
+#include <vector>
+#include <set>
+#include <string>
+#include <map>
 #include <DeviceInfo.h>
 #include <RadeonGPUAnalyzerBackend/include/beDataTypes.h>
 #include <AMDTBaseTools/Include/gtString.h>
@@ -18,6 +22,12 @@ public:
 
     // Predicate to be used for sorting HW devices.
     static bool GfxCardInfoSortPredicate(const GDT_GfxCardInfo& a, const GDT_GfxCardInfo& b);
+
+    // Gets all of the supported graphics cards.
+    static bool GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& cardList, std::set<std::string>& uniqueNamesOfPublishedDevices);
+
+    // Gets a mapping of the marketing names to the internal code names.
+    static bool GetMarketingNameToCodenameMapping(std::map<std::string, std::set<std::string>>& cardsMap);
 
     // Deletes the physical files from the file system.
     static void DeleteOutputFiles(const beProgramPipeline& outputFilePaths);

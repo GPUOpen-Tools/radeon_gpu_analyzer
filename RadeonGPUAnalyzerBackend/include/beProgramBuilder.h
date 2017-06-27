@@ -106,13 +106,6 @@ protected:
     /// This makes notepad and other Windows tools happier.
     virtual void UsePlatformNativeLineEndings(std::string& text);
 
-    void SetDriverVersion(std::string sDriverVersion) { m_DriverVersion = sDriverVersion; };
-    std::string GetDriverVersion() const { return m_DriverVersion; };
-    /// check if the device should be in public verion or not
-    bool IsPublishedDevice(const std::string& sDevice);
-    /// just make number 4 digit long by multiply with 0
-    void MakeNumber4Digit(int& iTheNumber);
-
     friend class Backend;
 
     std::string m_DriverVersion;

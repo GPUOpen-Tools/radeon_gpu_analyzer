@@ -29,6 +29,8 @@ std::string Config::sourceKindOpenCL = "CL";
 std::string Config::sourceKindGLSL = "GLSL";
 std::string Config::sourceKindOpenGL = "OPENGL";
 std::string Config::sourceKindVulkan = "VULKAN";
+std::string Config::sourceKindSpirvBin = "VULKAN-SPV";
+std::string Config::sourceKindSpirvTxt = "VULKAN-SPV-TXT";
 
 Config::Config() :
     m_SourceLanguage(SourceLanguage_Invalid),
@@ -46,7 +48,6 @@ Config::Config() :
     m_ASICs(),
     m_SuppressSection(),
     m_OpenCLOptions(),
-    m_bVerbose(false),
     m_Defines(),
     m_IncludePath(),
     m_isRetainUserBinaryPath(false),
@@ -78,7 +79,6 @@ Config::dump(ostream& out) const
     out << "m_SourceLanguage:       " << m_SourceLanguage << endl;
     out << "m_DebugILFile:          " << m_DebugILFile << endl;
     out << "m_MetadataFile:         " << m_MetadataFile << endl;
-    out << "m_bVerbose:              " << m_bVerbose << endl;
     out << "m_FXC:                  " << m_FXC << endl;
     out << "m_DumpMSIntermediate:   " << m_DumpMSIntermediate << endl;
     out << "m_EnableShaderIntrinsics:   " << m_EnableShaderIntrinsics << endl;

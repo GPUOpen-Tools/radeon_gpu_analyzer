@@ -87,14 +87,14 @@ public:
 
     beKA::beStatus Compile(const OpenGLOptions& vulkanOptions, bool& cancelSignal, gtString& compilerOutput);
 
-    /// Sets the set of public device names.
-    void SetPublicDeviceNames(const std::set<std::string>& publicDeviceNames);
-
     /// Extracts the OpenGL version of the installed runtime.
     bool GetOpenGLVersion(gtString& glVersion);
 
     /// Retrieve the device ID and Revision ID from the OpenGL backend.
     bool GetDeviceGLInfo(const std::string& deviceName, size_t& deviceFamilyId, size_t& deviceRevision) const;
+
+    /// Retrieves the list of supported devices.
+    bool GetSupportedDevices(std::set<std::string>& deviceList);
 
 private:
     std::set<std::string> m_publicDevices;

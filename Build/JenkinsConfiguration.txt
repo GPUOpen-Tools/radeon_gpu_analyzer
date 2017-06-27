@@ -1,6 +1,8 @@
 // RGA
 // "P4ROOT" is passed in to this build script from Jenkins
 // "SOLUTION" is passed in to this build script from Jenkins
+// "ARCH" is passed in to this build script from Jenkins (must be "x64" or "x86")
+
 Define "RGAPATH" "[P4ROOT]\RGA"
 Define "BUILDPATH" "[RGAPATH]\BuildOutput"
 Always
@@ -18,34 +20,24 @@ Clean
     BuildSln "[SOLUTION_PATH]" "" "Clean"   "Release_Static|x64"
 // Build the Public Version
 Debug
-    //BuildSln "[SOLUTION_PATH]" "" "Build"     "Debug_Static|x86"
-    BuildSln "[SOLUTION_PATH]" "" "Build"     "Debug_Static|x64"
+    BuildSln "[SOLUTION_PATH]" "" "Build"     "Debug_Static|[ARCH]"
     SendBuildErrors "[EMAIL]" "Radeon GPU Analyzer Debug Static Build Failed"
 Debug Release
-    //BuildSln "[SOLUTION_PATH]" "" "Clean"    "Debug_Static|x86"
-    BuildSln "[SOLUTION_PATH]" "" "Clean"    "Debug_Static|x64"
+    BuildSln "[SOLUTION_PATH]" "" "Clean"    "Debug_Static|[ARCH]"
 Release
-    //BuildSln "[SOLUTION_PATH]" "" "Build"   "Release_Static|x86"
-    BuildSln "[SOLUTION_PATH]" "" "Build"   "Release_Static|x64"
+    BuildSln "[SOLUTION_PATH]" "" "Build"   "Release_Static|[ARCH]"
     SendBuildErrors "[EMAIL]" "Radeon GPU Analyzer Release Static Build Failed"
 Image
-    // Copy release x86 binaries to the zip file dir
-    //XCopy "[OUTPUT_PATH]\Release_Static\bin\rga.exe" "[ZIPDIRRGA]\bin"
-	//XCopy "[OUTPUT_PATH]\Release_Static\bin\x86\VirtualContext.exe" "[ZIPDIRRGA]\bin\x86\VirtualContext.exe*"
-	//XCopy "[OUTPUT_PATH]\Release_Static\bin\x86\amdspv.exe" "[ZIPDIRRGA]\bin\x86\amdspv.exe*"
-	//XCopy "[OUTPUT_PATH]\Release_Static\bin\x86\spvgen.dll" "[ZIPDIRRGA]\bin\x86\spvgen.dll*"
-	//XCopy "[OUTPUT_PATH]\Release_Static\bin\x86\shae.exe" "[ZIPDIRRGA]\bin\x86\shae.exe*"
-	//XCopy "C:\Program Files (x86)\Windows Kits\10\bin\x86\d3dcompiler_47.dll" "[ZIPDIRRGA]\bin\x86\d3dcompiler_47.dll*"
-	// Copy release x64 binaries to the zip file dir
-    XCopy "[OUTPUT_PATH]\Release_Static\bin\rga-x64.exe" "[ZIPDIRRGA]\bin\rga.exe*"
-	XCopy "[OUTPUT_PATH]\Release_Static\bin\x64\VirtualContext.exe" "[ZIPDIRRGA]\bin\x64\VirtualContext.exe*"
-	XCopy "[OUTPUT_PATH]\Release_Static\bin\x64\amdspv.exe" "[ZIPDIRRGA]\bin\x64\amdspv.exe*"
-	XCopy "[OUTPUT_PATH]\Release_Static\bin\x64\spvgen.dll" "[ZIPDIRRGA]\bin\x64\spvgen.dll*"
-	XCopy "[OUTPUT_PATH]\Release_Static\bin\x64\shae.exe" "[ZIPDIRRGA]\bin\x64\shae.exe*"
-	XCopy "C:\Program Files (x86)\Windows Kits\10\bin\x64\d3dcompiler_47.dll" "[ZIPDIRRGA]\bin\x64\d3dcompiler_47.dll*"
-	// Copy the VC++ Redistributable package binaries
-	XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\x64\Microsoft.VC140.CRT\concrt140.dll" "[ZIPDIRRGA]\bin\concrt140.dll*"
-	XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\x64\Microsoft.VC140.CRT\msvcp140.dll" "[ZIPDIRRGA]\bin\msvcp140.dll*"
-	XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\x64\Microsoft.VC140.CRT\vccorlib140.dll" "[ZIPDIRRGA]\bin\vccorlib140.dll*"
-	XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\x64\Microsoft.VC140.CRT\vcruntime140.dll" "[ZIPDIRRGA]\bin\vcruntime140.dll*"
+    // Copy release binaries to the zip file dir
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\rga.exe" "[ZIPDIRRGA]\bin\rga.exe*"
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\[ARCH]\VirtualContext.exe" "[ZIPDIRRGA]\bin\[ARCH]\VirtualContext.exe*"
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\[ARCH]\amdspv.exe" "[ZIPDIRRGA]\bin\[ARCH]\amdspv.exe*"
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\[ARCH]\spvgen.dll" "[ZIPDIRRGA]\bin\[ARCH]\spvgen.dll*"
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\[ARCH]\shae.exe" "[ZIPDIRRGA]\bin\[ARCH]\shae.exe*"
+    XCopy "C:\Program Files (x86)\Windows Kits\10\bin\[ARCH]\d3dcompiler_47.dll" "[ZIPDIRRGA]\bin\[ARCH]\d3dcompiler_47.dll*"
+    // Copy the VC++ Redistributable package binaries
+    XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\[ARCH]\Microsoft.VC140.CRT\concrt140.dll" "[ZIPDIRRGA]\bin\concrt140.dll*"
+    XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\[ARCH]\Microsoft.VC140.CRT\msvcp140.dll" "[ZIPDIRRGA]\bin\msvcp140.dll*"
+    XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\[ARCH]\Microsoft.VC140.CRT\vccorlib140.dll" "[ZIPDIRRGA]\bin\vccorlib140.dll*"
+    XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\[ARCH]\Microsoft.VC140.CRT\vcruntime140.dll" "[ZIPDIRRGA]\bin\vcruntime140.dll*"
     Zip "[BUILDPATH]\RGA.[DATE].[BUILD].zip"                  "[ZIPDIRRGA]\bin"

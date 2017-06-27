@@ -1,10 +1,7 @@
 
 #include <CElf.h>
 #include <locale>
-// This is from ADL's include directory.
-#include <ADLUtil.h>
 #include <ACLModuleManager.h>
-#include <customer/oem_structures.h>
 #include <DeviceInfoUtils.h>
 
 #include <include/beProgramBuilderOpenCL.h>
@@ -209,20 +206,6 @@ bool beProgramBuilderOpenCL::IsInitialized()
     return m_IsIntialized;
 }
 
-void beProgramBuilderOpenCL::AddValidatedDevices(const std::vector<GDT_GfxCardInfo>& cardList, std::set<string>& uniqueNamesOfPublishedDevices)
-{
-    for (const GDT_GfxCardInfo& cardInfo : cardList)
-    {
-        // OpenCL team guarantees that formal driver releases do not expose unpublished devices
-        // so we do not double-check them and just push the device name into the devices collection
-        if (m_DeviceNames.find(cardInfo.m_szCALName) != m_DeviceNames.end())
-        {
-            m_OpenCLDeviceTable.push_back(cardInfo); // allow all devices in internal and NDA
-            uniqueNamesOfPublishedDevices.insert(cardInfo.m_szCALName);
-        }
-    }
-}
-
 beKA::beStatus beProgramBuilderOpenCL::Initialize(const string& sDllModule/* = ""*/)
 {
     (void)(sDllModule); // Unreferenced parameter
@@ -230,39 +213,13 @@ beKA::beStatus beProgramBuilderOpenCL::Initialize(const string& sDllModule/* = "
     beKA::beStatus retVal = beKA::beStatus_General_FAILED;
 
     retVal = InitializeOpenCL();
-    set<string> uniqueNamesOfPublishedDevices;
+    std::set<string> uniqueNamesOfPublishedDevices;
 
     if (retVal == beKA::beStatus_SUCCESS)
     {
-        // TODO: the asicInfoList is not used anywhere after being retrieved. Is this actually needed?  If not, suggest removing the next two lines
-        AsicInfoList asicInfoList;
-        AMDTADLUtils::Instance()->GetAsicInfoList(asicInfoList);
-
         // Populate the sorted device (card) info table.
-        std::vector<GDT_GfxCardInfo> cardList;
-
-        // DX support now only SI, CI and VI
-        if (AMDTDeviceInfoUtils::Instance()->GetAllCardsInHardwareGeneration(GDT_HW_GENERATION_SOUTHERNISLAND, cardList))
-        {
-            AddValidatedDevices(cardList, uniqueNamesOfPublishedDevices);
-        }
-
-        if (AMDTDeviceInfoUtils::Instance()->GetAllCardsInHardwareGeneration(GDT_HW_GENERATION_SEAISLAND, cardList))
-        {
-            AddValidatedDevices(cardList, uniqueNamesOfPublishedDevices);
-        }
-
-        if (AMDTDeviceInfoUtils::Instance()->GetAllCardsInHardwareGeneration(GDT_HW_GENERATION_VOLCANICISLAND, cardList))
-        {
-            AddValidatedDevices(cardList, uniqueNamesOfPublishedDevices);
-        }
-
-        sort(m_OpenCLDeviceTable.begin(), m_OpenCLDeviceTable.end(), beUtils::GfxCardInfoSortPredicate);
-
+        beUtils::GetAllGraphicsCards(m_OpenCLDeviceTable,uniqueNamesOfPublishedDevices);
     }
-
-    // Iterate through the device names that the OpenCL driver reported, and remove the names of devices that have not been published yet.
-    RemoveNamesOfUnpublishedDevices(uniqueNamesOfPublishedDevices);
 
     return retVal;
 }
@@ -298,10 +255,10 @@ beKA::beStatus beProgramBuilderOpenCL::InitializeOpenCL()
         // Get all the platforms and then pick the AMD one.
         status = m_TheOpenCLModule.GetPlatformIDs(0, NULL, &numPlatforms);
 
-        if (CL_SUCCESS != status)
+        if (CL_SUCCESS != status || numPlatforms == 0)
         {
             std::stringstream ss;
-            ss << "OpenCL Error: clGetPlatformIDs failed (" + GetCLErrorString(status) + ")." << endl;
+            ss << "Offline compilation of OpenCL code is currently not supported on this platform." << endl;
             LogCallBack(ss.str());
             retVal = beKA::beStatus_clGetPlatformIDs_FAILED;
         }

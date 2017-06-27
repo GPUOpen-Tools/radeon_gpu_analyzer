@@ -133,6 +133,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
+	  <PreprocessorDefinitions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">AMDT_INTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\Core\DX10ASM\Include;.;./Include/GL;./Include/Common;$(CommonSrcDir)\ShaderUtils;$(CommonSrcDir)\ShaderUtils\DX10;$(CommonSrcDir)\ShaderUtils\DX11;$(CommonSrcDir)\ACLModuleManager;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -142,6 +143,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(AMDTModuleType)'=='Dynamic'">
     <ClCompile>
+	  <PreprocessorDefinitions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">AMDT_INTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions>RGA_BACKEND_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
     </ClCompile>
@@ -159,6 +161,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(AMDTModuleType)'=='Static'">
     <ClCompile>
+	  <PreprocessorDefinitions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">AMDT_INTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions>RGA_BACKEND_STATIC;AMDTOSAPIWRAPPERS_STATIC;AMDTOSWRAPPERS_STATIC;AMDTBASETOOLS_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
@@ -170,6 +173,7 @@
   <ItemDefinitionGroup Condition="'$(AMDTConfiguration)'=='Debug'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
+	  <PreprocessorDefinitions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">AMDT_INTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
@@ -182,6 +186,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+	  <PreprocessorDefinitions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">AMDT_INTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -236,7 +241,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\Src\ACLModuleManager\ACLModuleManager.cpp" />
-    <ClCompile Include="..\..\..\Common\Src\ADLUtil\ADLUtil.cpp" />
     <ClCompile Include="..\..\..\Common\Src\AMDTMutex\AMDTMutex.cpp" />
     <ClCompile Include="..\..\..\Common\Src\CElf\Src\CElf.cpp" />
     <ClCompile Include="..\..\..\Common\Src\CElf\Src\CElfSection.cpp" />
@@ -254,6 +258,7 @@
     <ClCompile Include="..\..\..\Common\Src\ShaderUtils\DX10\DXBCChecksum.cpp" />
     <ClCompile Include="..\..\..\Common\Src\ShaderUtils\DX10\IBlob.cpp" />
     <ClCompile Include="..\..\..\Common\Src\ShaderUtils\StringUtils.cpp" />
+    <ClCompile Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'" Include="..\..\..\Common\Src\DeviceInfo-Internal\DeviceInfoInternal.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\Instruction.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ISAParser.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ISAProgramGraph.cpp" />
@@ -273,7 +278,6 @@
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\emulator\Parser\ParserSIVOP.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beBackend.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beD3DIncludeManager.cpp" />
-    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beDriverUtils.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilder.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderDX.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderOpenCL.cpp" />
@@ -284,7 +288,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\Common\Src\ACLModuleManager\ACLModuleManager.h" />
-    <ClInclude Include="..\..\..\Common\Src\ADLUtil\ADLUtil.h" />
     <ClInclude Include="..\..\..\Common\Src\AMDTMutex\AMDTMutex.h" />
     <ClInclude Include="..\..\..\Common\Src\CElf\Include\CElf.h" />
     <ClInclude Include="..\..\..\Common\Src\DeviceInfo\DeviceInfoUtils.h" />
@@ -335,7 +338,6 @@
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beBackend.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beD3DIncludeManager.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beDataTypes.h" />
-    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beDriverUtils.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beInclude.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilder.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderDX.h" />

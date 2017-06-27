@@ -35,7 +35,8 @@ public:
     {
         Status_SUCCESS,
         Status_32BitInstructionNotSupported,
-        Status_64BitInstructionNotSupported
+        Status_64BitInstructionNotSupported,
+        Status_UnexpectedHWGeneration
     };
 
     /// SI instruction`s encoding mask

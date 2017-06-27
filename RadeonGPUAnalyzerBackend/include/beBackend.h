@@ -106,23 +106,8 @@ public:
     /// \returns                 a status.
     static beKA::beStatus GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& tableEntry, unsigned int& chipFamily, unsigned int& chipRevision);
 
-    /// Get the version of the catalyst in the format of year.month as it is
-    // downloaded from the AMD website i.e 13.11
-    bool GetDriverVersionInfo(std::string& version) const;
-
     beProgramBuilderOpenCL* theOpenCLBuilder();
     beProgramBuilderGL* theOpenGLBuilder();
-
-    /// adds device name to list if its build was successful
-    /// \param device is the device name
-    void AddSuccessfulBuildDevice(const std::string& device);
-
-    /// return true if the  device name is in the list of successful builds
-    /// \param device is the device name
-    bool IsSuccessfulBuildForDevice(const std::string& device);
-
-    /// clear the successful build devices list
-    void ClearSuccessfulBuildDevicesList();
 
     /// Extract the list of supported, public, devices
     /// \param devices a set to be populated with the supported device names

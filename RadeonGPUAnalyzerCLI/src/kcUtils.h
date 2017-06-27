@@ -100,6 +100,15 @@ public:
     static void ConstructOutputFileName(const std::string& baseOutputFileName, const std::string& defaultExtension,
                                         const std::string& entryPointName, const std::string& deviceName, gtString& generatedFileName);
 
+    // Generates a name for a temporary file in the OS temp directory. Makes sure the file with generated name
+    // does not exist.
+    // The generated name starts with the "prefix" and ends with the "ext".
+    // Returns full path including the file name.
+    static gtString ConstructTempFileName(const gtString& prefix, const gtString& ext);
+
+    // Get all available graphics cards public names, grouped by the internal code name.
+    static bool GetMarketingNameToCodenameMapping(std::map<std::string, std::set<std::string>>& cardsMap);
+
 private:
     // This is a static class (no instances).
     kcUtils(const kcUtils& other);

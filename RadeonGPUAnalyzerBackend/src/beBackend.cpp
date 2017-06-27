@@ -26,11 +26,8 @@
 
 #define KA_BACKEND_DLL_EXPORT
 
-#include <ADLUtil.h>
 // This is from ADL's include directory.
-#include <customer/oem_structures.h>
 #include <DeviceInfoUtils.h>
-#include <ADLUtil.h>
 
 // Local.
 #include <include/beBackend.h>
@@ -46,10 +43,6 @@
 #include <AMDTOSWrappers/Include/osApplication.h>
 #include <AMDTOSAPIWrappers/Include/oaDriver.h>
 #include <AMDTOSWrappers/Include/osDebugLog.h>
-
-#define GL_VERSION                        0x1F02
-#define LAST_CATALYST_DRIVER_RELEASED     "14.50"
-#define NO_CATALYST_DRIVER_INSTALLED      "0.0"
 
 std::vector<std::string> Backend::m_customDxLoadPaths;
 
@@ -70,16 +63,6 @@ beKA::beStatus Backend::Initialize(BuiltProgramKind ProgramKind, LoggingCallBack
     beKA::beStatus retVal = beStatus_General_FAILED;
     m_LogCallback = callback;
 
-    // Get the driver version only once, unless failed.
-    static std::string s_driverVersion;
-    static bool s_isDriverVersionExtracted = false;
-
-    if (s_driverVersion.empty())
-    {
-        s_isDriverVersionExtracted = GetDriverVersionInfo(s_driverVersion) && !s_driverVersion.empty();
-    }
-
-
     if (m_beOpenCL == NULL && ProgramKind == BuiltProgramKind_OpenCL)
     {
         m_beOpenCL = new beProgramBuilderOpenCL();
@@ -88,12 +71,6 @@ beKA::beStatus Backend::Initialize(BuiltProgramKind ProgramKind, LoggingCallBack
     if (m_beOpenCL != NULL)
     {
         m_beOpenCL->SetLog(callback);
-
-        // Extract the driver version.
-        if (s_isDriverVersionExtracted)
-        {
-            m_beOpenCL->SetDriverVersion(s_driverVersion);
-        }
 
         retVal = m_beOpenCL->Initialize();
 
@@ -157,13 +134,6 @@ beKA::beStatus Backend::Initialize(BuiltProgramKind ProgramKind, LoggingCallBack
 
             // Initialize the DX backend.
             m_beDX->SetLog(callback);
-
-            // Extract the driver version.
-            if (s_isDriverVersionExtracted)
-            {
-                m_beDX->SetDriverVersion(s_driverVersion);
-            }
-
             retVal = m_beDX->Initialize(moduleToLoad);
         }
     }
@@ -261,6 +231,12 @@ beStatus Backend::GetDeviceChipFamilyRevision(
             retVal = beStatus_NO_DEVICE_FOUND;
             break;
 
+    case GDT_GFX9_0_0:
+        chipFamily = FAMILY_AI;
+        chipRevision = AI_GD_P0;
+        retVal = beStatus_SUCCESS;
+        break;
+
         case GDT_TAHITI_PRO:
         case GDT_TAHITI_XT:
             chipFamily = FAMILY_SI;
@@ -356,32 +332,15 @@ beStatus Backend::GetDeviceChipFamilyRevision(
             chipFamily = FAMILY_VI;
             chipRevision = VI_ELLESMERE_P_A0;
             break;
+
+        case GDT_GFX8_0_4:
+            chipFamily = FAMILY_VI;
+            chipRevision = VI_LEXA_V_A0;
+            break;            
     }
 
     return retVal; 
 } 
-
-bool Backend::GetDriverVersionInfo(std::string& version) const
-{
-    bool ret = false;
-    int errCode = 0;
-    gtString tmpVersion = oaGetDriverVersion(errCode);
-
-    if (!tmpVersion.isEmpty())
-    {
-        version = tmpVersion.asASCIICharArray();
-        ret = true;
-    }
-    else
-    {
-        gtString logMsg;
-        logMsg << L"Failed to extract driver version. Error code: " << errCode;
-        OS_OUTPUT_DEBUG_LOG(logMsg.asCharArray(), OS_DEBUG_LOG_ERROR);
-    }
-
-    return ret;
-}
-
 
 beProgramBuilderOpenCL* Backend::theOpenCLBuilder()
 {
@@ -411,32 +370,6 @@ void Backend::AddDxSearchDir(const std::string& dir)
 }
 
 #endif
-
-void Backend::AddSuccessfulBuildDevice(const std::string& device)
-{
-    if (std::find(m_successfulBuildDevices.begin(), m_successfulBuildDevices.end(), device) == m_successfulBuildDevices.end())
-    {
-        m_successfulBuildDevices.push_back(device);
-    }
-}
-
-bool Backend::IsSuccessfulBuildForDevice(const std::string& device)
-{
-    bool retVal = false;
-
-    // return true only if the device is in the successful build devices list
-    if (std::find(m_successfulBuildDevices.begin(), m_successfulBuildDevices.end(), device) != m_successfulBuildDevices.end())
-    {
-        retVal = true;
-    }
-
-    return retVal;
-}
-
-void Backend::ClearSuccessfulBuildDevicesList()
-{
-    m_successfulBuildDevices.clear();
-}
 
 bool Backend::GetSupportedPublicDevices(std::set<std::string>& devices)
 {

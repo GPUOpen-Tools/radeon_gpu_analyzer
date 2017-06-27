@@ -22,42 +22,12 @@ kcCLICommanderVulkan::~kcCLICommanderVulkan()
 
 bool kcCLICommanderVulkan::GetSupportedDevices()
 {
-    if (m_supportedDevicesCache.empty())
+    bool ret = !m_supportedDevicesCache.empty();
+    if (!ret)
     {
-        Backend* pBackend = Backend::Instance();
-
-        if (pBackend != nullptr)
-        {
-            pBackend->GetSupportedPublicDevices(m_supportedDevicesCache);
-
-            // This temporary set will contain the unsupported devices.
-            std::set<std::string> unsupportedDevices;
-
-            // Identify the unsupported devices.
-            for (const std::string& device : m_supportedDevicesCache)
-            {
-                if (!m_pVulkanBuilder->IsSupportedDevice(device))
-                {
-                    unsupportedDevices.insert(device);
-                }
-            }
-
-            // Remove the unsupported devices.
-            for (auto it = m_supportedDevicesCache.begin(); it != m_supportedDevicesCache.end();) 
-            {
-                if (unsupportedDevices.find(*it) != unsupportedDevices.end()) 
-                {
-                    m_supportedDevicesCache.erase(it++);
-                }
-                else 
-                {
-                    ++it;
-                }
-            }
-        }
+        ret = m_pVulkanBuilder->GetSupportedDevices(m_supportedDevicesCache);
     }
-
-    return !m_supportedDevicesCache.empty();
+    return (ret && !m_supportedDevicesCache.empty());
 }
 
 
@@ -96,6 +66,9 @@ void kcCLICommanderVulkan::Version(Config& config, LoggingCallBackFunc_t callbac
 {
     GT_UNREFERENCED_PARAMETER(config);
 
+    std::stringstream logMsg;
+    logMsg<< STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM << std::endl;
+
     if (m_pVulkanBuilder != nullptr)
     {
         gtString vkVersion;
@@ -104,15 +77,15 @@ void kcCLICommanderVulkan::Version(Config& config, LoggingCallBackFunc_t callbac
         if (rc && !vkVersion.isEmpty())
         {
             vkVersion << L"\n";
-            callback(vkVersion.asASCIICharArray());
+            logMsg << vkVersion.asASCIICharArray();
         }
         else
         {
-            std::stringstream logMsg;
             logMsg << STR_ERR_CANNOT_EXTRACT_OPENGL_VERSION << std::endl;
-            callback(logMsg.str());
         }
     }
+
+    callback(logMsg.str());
 }
 
 
@@ -152,8 +125,17 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
         shouldAbort = true;
     }
 
+    // Make sure that the input type is valid for Vulkan mode.
+    if (config.m_SourceLanguage != SourceLanguage_GLSL_Vulkan &&
+        config.m_SourceLanguage != SourceLanguage_SPIRV_Vulkan &&
+        config.m_SourceLanguage != SourceLanguage_SPIRVTXT_Vulkan)
+    {
+        logMsg << STR_ERR_INVALID_INPUT_TYPE << std::endl;
+        shouldAbort = true;
+    }
+
     // Options to be passed to the backend.
-    VulkanOptions vulkanOptions;
+    VulkanOptions vulkanOptions(config.m_SourceLanguage);
 
     // Validate the input shaders.
     if (!shouldAbort && isVertexShaderPresent)

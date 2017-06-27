@@ -16,7 +16,7 @@
 static bool GetAmdspvPath(std::string& amdspvPath)
 {
 #ifdef __linux
-    amdspvPath = "./amdspv";
+    amdspvPath = "amdspv";
 #elif _WIN64
     amdspvPath = "x64\\amdspv.exe";
 #elif _WIN32
@@ -60,6 +60,30 @@ static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* pDeviceInfo, const VulkanOpti
         }
     }
 
+    return ret;
+}
+
+// An internal auxiliary function that returns the correct input prefix for the backend invocation,
+// according to the input type. If the input type is GLSL, it simply returns the given GLSL prefix.
+// Otherwise, it returns the relevant, fixed, prefix.
+static std::string GetInputPrefix(const VulkanOptions& vulkanOptions, const std::string& glslPrefix)
+{
+    const char* SPIRV_BIN_INPUT_PREFIX = "in.spv=\"";
+    const char* SPIRV_TXT_INPUT_PREFIX = "in.spvText=\"";
+
+    std::string ret;
+    if (vulkanOptions.m_SourceLanguage == beKA::SourceLanguage_GLSL_Vulkan)
+    {
+        ret = glslPrefix;
+    }
+    else if (vulkanOptions.m_SourceLanguage == beKA::SourceLanguage_SPIRV_Vulkan)
+    {
+        ret = SPIRV_BIN_INPUT_PREFIX;
+    }
+    else if (vulkanOptions.m_SourceLanguage == beKA::SourceLanguage_SPIRVTXT_Vulkan)
+    {
+        ret = SPIRV_TXT_INPUT_PREFIX;
+    }
     return ret;
 }
 
@@ -141,41 +165,8 @@ void beProgramBuilderVulkan::ReleaseProgram()
 
 beKA::beStatus beProgramBuilderVulkan::GetDeviceTable(std::vector<GDT_GfxCardInfo>& table)
 {
-    beKA::beStatus ret = beKA::beStatus_General_FAILED;
-    table.clear();
-
-    // Go through the list of public devices, as received from the OpenCL runtime.
-    std::vector<GDT_GfxCardInfo> cardList;
-    AMDTDeviceInfoUtils* pDeviceInfo = AMDTDeviceInfoUtils::Instance();
-    
-    if (pDeviceInfo != nullptr)
-    {
-        for (const std::string& publicDevice : m_publicDevices)
-        {
-            if (pDeviceInfo->GetDeviceInfo(publicDevice.c_str(), cardList))
-            {
-                // Verify that this device is supported by the Vulkan backend.
-                VulkanOptions vulkanOptions;
-                vulkanOptions.m_targetDeviceName = publicDevice;
-                std::string deviceGfxIp;
-                bool isDeviceHwGenExtracted = GetGfxIpForVulkan(pDeviceInfo, vulkanOptions, deviceGfxIp);
-
-                if (isDeviceHwGenExtracted && !deviceGfxIp.empty())
-                {
-                    table.insert(table.end(), cardList.begin(), cardList.end());
-                    cardList.clear();
-                }
-            }
-        }
-
-        if (!table.empty())
-        {
-            std::sort(table.begin(), table.end(), beUtils::GfxCardInfoSortPredicate);
-            ret = beKA::beStatus_SUCCESS;
-        }
-    }
-
-    return ret;
+    (void)table;
+    return beKA::beStatus_Invalid;
 }
 
 bool beProgramBuilderVulkan::CompileOK(std::string& device)
@@ -240,42 +231,48 @@ beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOption
                 if (!vulkanOptions.m_pipelineShaders.m_vertexShader.isEmpty())
                 {
                     isVertShaderPresent = true;
-                    cmd << "in.vert.glsl=\"" << vulkanOptions.m_pipelineShaders.m_vertexShader.asASCIICharArray() << "\" ";
+                    cmd << GetInputPrefix(vulkanOptions, "in.vert.glsl=\"") << 
+                        vulkanOptions.m_pipelineShaders.m_vertexShader.asASCIICharArray() << "\" ";
                 }
 
                 // Tessellation control shader.
                 if (!vulkanOptions.m_pipelineShaders.m_tessControlShader.isEmpty())
                 {
                     isTescShaderPresent = true;
-                    cmd << "in.tesc.glsl=\"" << vulkanOptions.m_pipelineShaders.m_tessControlShader.asASCIICharArray() << "\" ";
+                    cmd << GetInputPrefix(vulkanOptions, "in.tesc.glsl=\"") << 
+                        vulkanOptions.m_pipelineShaders.m_tessControlShader.asASCIICharArray() << "\" ";
                 }
 
                 // Tessellation evaluation shader.
                 if (!vulkanOptions.m_pipelineShaders.m_tessEvaluationShader.isEmpty())
                 {
                     isTeseShaderPresent = true;
-                    cmd << "in.tese.glsl=\"" << vulkanOptions.m_pipelineShaders.m_tessEvaluationShader.asASCIICharArray() << "\" ";
+                    cmd << GetInputPrefix(vulkanOptions, "in.tese.glsl=\"") <<
+                        vulkanOptions.m_pipelineShaders.m_tessEvaluationShader.asASCIICharArray() << "\" ";
                 }
 
                 // Geometry shader.
                 if (!vulkanOptions.m_pipelineShaders.m_geometryShader.isEmpty())
                 {
                     isGeomShaderPresent = true;
-                    cmd << "in.geom.glsl=\"" << vulkanOptions.m_pipelineShaders.m_geometryShader.asASCIICharArray() << "\" ";
+                    cmd << GetInputPrefix(vulkanOptions, "in.geom.glsl=\"") << 
+                        vulkanOptions.m_pipelineShaders.m_geometryShader.asASCIICharArray() << "\" ";
                 }
 
                 // Fragment shader.
                 if (!vulkanOptions.m_pipelineShaders.m_fragmentShader.isEmpty())
                 {
                     isFragShaderPresent = true;
-                    cmd << "in.frag.glsl=\"" << vulkanOptions.m_pipelineShaders.m_fragmentShader.asASCIICharArray() << "\" ";
+                    cmd << GetInputPrefix(vulkanOptions, "in.frag.glsl=\"") << 
+                        vulkanOptions.m_pipelineShaders.m_fragmentShader.asASCIICharArray() << "\" ";
                 }
             }
             else
             {
                 // Compute shader.
                 isCompShaderPresent = true;
-                cmd << "in.comp.glsl=\"" << vulkanOptions.m_pipelineShaders.m_computeShader.asASCIICharArray() << "\" ";
+                cmd << GetInputPrefix(vulkanOptions, "in.comp.glsl=\"") <<
+                    vulkanOptions.m_pipelineShaders.m_computeShader.asASCIICharArray() << "\" ";
             }
 
             // SPIR-V binaries generation.
@@ -595,10 +592,6 @@ beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOption
     return ret;
 }
 
-void beProgramBuilderVulkan::SetPublicDeviceNames(const std::set<std::string>& publicDeviceNames)
-{
-    m_publicDevices = publicDeviceNames;
-}
 
 bool beProgramBuilderVulkan::GetVulkanVersion(gtString& vkVersion)
 {
@@ -606,21 +599,9 @@ bool beProgramBuilderVulkan::GetVulkanVersion(gtString& vkVersion)
     return true;
 }
 
-bool beProgramBuilderVulkan::IsSupportedDevice(const std::string& deviceName) const
+bool beProgramBuilderVulkan::GetSupportedDevices(std::set<std::string>& deviceList)
 {
-    bool ret = false;
-    AMDTDeviceInfoUtils* pDeviceInfo = AMDTDeviceInfoUtils::Instance();
-    if (pDeviceInfo != nullptr)
-    {
-        size_t deviceGfxIp = 0;
-        GDT_HW_GENERATION hwGeneration;
-        bool isDeviceHwGenExtracted = pDeviceInfo->GetHardwareGeneration(deviceName.c_str(), hwGeneration) &&
-            beUtils::GdtHwGenToNumericValue(hwGeneration, deviceGfxIp);
-
-        if (isDeviceHwGenExtracted && deviceGfxIp > 0)
-        {
-            ret = true;
-        }
-    }
+    std::vector<GDT_GfxCardInfo> tmpCardList;
+    bool ret = beUtils::GetAllGraphicsCards(tmpCardList, deviceList);
     return ret;
 }

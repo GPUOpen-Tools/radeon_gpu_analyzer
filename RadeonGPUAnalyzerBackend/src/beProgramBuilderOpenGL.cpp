@@ -18,7 +18,7 @@
 static bool GetVirtualContextPath(std::string& virtualContextPath)
 {
 #ifdef __linux
-    virtualContextPath = "./VirtualContext";
+    virtualContextPath = "VirtualContext";
 #elif _WIN64
     virtualContextPath = "x64\\VirtualContext.exe";
 #else
@@ -106,40 +106,8 @@ void beProgramBuilderOpenGL::ReleaseProgram()
 
 beKA::beStatus beProgramBuilderOpenGL::GetDeviceTable(std::vector<GDT_GfxCardInfo>& table)
 {
-    beKA::beStatus ret = beKA::beStatus_General_FAILED;
-    table.clear();
-
-    // Get the list of public device names.
-    if (m_publicDevices.empty())
-    {
-        Backend* pBackend = Backend::Instance();
-
-        if (pBackend != nullptr)
-        {
-            pBackend->GetSupportedPublicDevices(m_publicDevices);
-        }
-    }
-
-    // Go through the list of public devices, as received from the OpenCL runtime.
-    std::vector<GDT_GfxCardInfo> cardList;
-
-    for (const std::string& publicDevice : m_publicDevices)
-    {
-        if (AMDTDeviceInfoUtils::Instance()->GetDeviceInfo(publicDevice.c_str(), cardList))
-        {
-            table.insert(table.end(), cardList.begin(), cardList.end());
-            cardList.clear();
-        }
-    }
-
-    std::sort(table.begin(), table.end(), beUtils::GfxCardInfoSortPredicate);
-
-    if (!table.empty())
-    {
-        ret = beKA::beStatus_SUCCESS;
-    }
-
-    return ret;
+    (void)table;
+    return beKA::beStatus_Invalid;
 }
 
 bool beProgramBuilderOpenGL::CompileOK(std::string& device)
@@ -253,11 +221,6 @@ beKA::beStatus beProgramBuilderOpenGL::Compile(const OpenGLOptions& glOptions, b
     return ret;
 }
 
-void beProgramBuilderOpenGL::SetPublicDeviceNames(const std::set<std::string>& publicDeviceNames)
-{
-    m_publicDevices = publicDeviceNames;
-}
-
 bool beProgramBuilderOpenGL::GetOpenGLVersion(gtString& glVersion)
 {
     // Get VC's path.
@@ -285,6 +248,7 @@ bool beProgramBuilderOpenGL::GetDeviceGLInfo(const std::string& deviceName, size
     {
         // Fill in the values if that's the first time.
         glBackendValues["Bonaire"] = std::pair<int, int>(120, 20);
+        glBackendValues["Bristol Ridge"] = std::pair<int, int>(130, 10);
         glBackendValues["Capeverde"] = std::pair<int, int>(110, 40);
         glBackendValues["Carrizo"] = std::pair<int, int>(130, 1);
         glBackendValues["Fiji"] = std::pair<int, int>(130, 60);
@@ -302,6 +266,8 @@ bool beProgramBuilderOpenGL::GetDeviceGLInfo(const std::string& deviceName, size
         glBackendValues["Tonga"] = std::pair<int, int>(130, 20);
         glBackendValues["Baffin"] = std::pair<int, int>(130, 91);
         glBackendValues["Ellesmere"] = std::pair<int, int>(130, 89);
+        glBackendValues["gfx804"] = std::pair<int, int>(130, 100);
+        glBackendValues["gfx900"] = std::pair<int, int>(141, 1);
     }
 
     // Fetch the relevant value.
@@ -313,5 +279,12 @@ bool beProgramBuilderOpenGL::GetDeviceGLInfo(const std::string& deviceName, size
         ret = true;
     }
 
+    return ret;
+}
+
+bool beProgramBuilderOpenGL::GetSupportedDevices(std::set<std::string>& deviceList)
+{
+    std::vector<GDT_GfxCardInfo> tmpCardList;
+    bool ret = beUtils::GetAllGraphicsCards(tmpCardList, deviceList);
     return ret;
 }

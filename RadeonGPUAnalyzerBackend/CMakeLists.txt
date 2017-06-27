@@ -16,6 +16,12 @@ endif()
 # Add these definitions if static linkage is used with the other projects
 add_definitions(-DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC -DAMDTOSAPIWRAPPERS_STATIC)
  
+# Identify if this script runs on a Debian system
+set (IsDebian FALSE)
+if(EXISTS "/etc/debian_version")
+    set(IsDebian TRUE)
+endif()
+ 
 # Configure a header file to pass some of the CMake settings
 # to the source code
 configure_file (
@@ -30,7 +36,6 @@ include_directories("${PROJECT_SOURCE_DIR}/include/Common")
 include_directories("${PROJECT_SOURCE_DIR}/emulator/Parser")
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src")
-include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/ADLUtil")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/CElf/Include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/DeviceInfo")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/DynamicLibraryModule")
@@ -38,14 +43,15 @@ include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/AMDTMutex")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/TSingleton")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/Misc")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/ACLModuleManager")
-include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/ADL/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/DX10ASM")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/CAL/8.95")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/CAL/8.95/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/ACL/TOT/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/APPSDK/3-0/include")
-include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0")
 
+if (NOT IsDebian)
+include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0")
+endif()
     
 # Windows-specific include files
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -80,14 +86,12 @@ file(GLOB COMMON_SRC
     "${PROJECT_SOURCE_DIR}/../../Common/Src/DynamicLibraryModule/DynamicLibraryModule.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/DynamicLibraryModule/ACLModule.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/ACLModuleManager/ACLModuleManager.cpp"
-    "${PROJECT_SOURCE_DIR}/../../Common/Src/ADLUtil/ADLUtil.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/AMDTMutex/AMDTMutex.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/DynamicLibraryModule/CALModule.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/CElf/Src/CElf.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/CElf/Src/CElfSection.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/CElf/Src/CElfStringTable.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/CElf/Src/CElfSymbolTable.cpp"
-    "${PROJECT_SOURCE_DIR}/../../Common/Src/DeviceInfo/DeviceInfoUtils.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/Misc/GDT_Memory.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/DynamicLibraryModule/OpenCLModule.cpp"
 )
@@ -102,15 +106,23 @@ file(GLOB WINDOWS_SRC
     "${PROJECT_SOURCE_DIR}/../../Common/Src/ShaderUtils/StringUtils.cpp"
 )
 
-# Linux-specific source files
-file(GLOB LINUX_SRC
-    "src/linux/*.h"
-    "src/linux/*.cpp"
+# Device Info lib sources
+file(GLOB  DEVICE_INFO_SRC
+    "${PROJECT_SOURCE_DIR}/../../Common/Src/DeviceInfo/DeviceInfoUtils.cpp"
 )
 
+if(AMD_INTERNAL)
+    file(GLOB  DEVICE_INFO_SRC
+         "${PROJECT_SOURCE_DIR}/../../Common/Src/DeviceInfo-Internal/DeviceInfoInternal.cpp"
+         ${DEVICE_INFO_SRC}
+    )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAMD_INTERNAL -DAMDT_INTERNAL")
+endif()
+
+ 
 # Pick up the source files that are relevant to the platform
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    add_library(RadeonGPUAnalyzerBackend STATIC ${COMMON_SRC} ${WINDOWS_SRC})
+    add_library(RadeonGPUAnalyzerBackend STATIC ${COMMON_SRC} ${WINDOWS_SRC} ${DEVICE_INFO_SRC})
     if (CMAKE_BUILD_TYPE STREQUAL "Release")
         # Release Build
         if (CMAKE_64BIT_TARGET)
@@ -132,6 +144,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     endif()
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     add_library(RadeonGPUAnalyzerBackend STATIC ${COMMON_SRC} ${LINUX_SRC})
+    add_library(DeviceInfoLib OBJECT ${DEVICE_INFO_SRC})
 endif()
 
 # set binary suffix
@@ -143,5 +156,6 @@ if (CMAKE_64BIT_TARGET)
 else()
     link_directories(${PROJECT_SOURCE_DIR}/../../Lib/Ext/zlib/1.2.8/contrib/vstudio/vc14/x86/ZlibStatRelease)
 endif()
-target_link_libraries (RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools AMDTOSAPIWrappers)
 
+# Link libraries
+target_link_libraries(RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools AMDTOSAPIWrappers)

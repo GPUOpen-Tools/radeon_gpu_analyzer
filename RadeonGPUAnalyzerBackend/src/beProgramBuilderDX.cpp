@@ -10,15 +10,9 @@
 #include <RadeonGPUAnalyzerBackend/include/beD3DIncludeManager.h>
 #include <RadeonGPUAnalyzerBackend/include/beProgramBuilderDX.h>
 #include <RadeonGPUAnalyzerBackend/include/beUtils.h>
-
 #include <DX10AsmInterface.h>
 #include <DX10AsmBuffer.h>
-
-// This is from ADL's include directory.
-#include <ADLUtil.h>
-#include <customer/oem_structures.h>
 #include <DeviceInfoUtils.h>
-
 #include <D3D10ShaderObject.h>
 
 // Infra.
@@ -275,25 +269,12 @@ beKA::beStatus beProgramBuilderDX::Initialize(const string& msD3DCompilerModuleT
 
     if (beRet == beStatus_SUCCESS)
     {
-        // Go through the list of public devices, as received from the OpenCL runtime.
-        std::vector<GDT_GfxCardInfo> cardList;
-
-        for (const std::string& publicDevice : m_publicDeviceNames)
+        std::set<std::string> uniqueNamesOfPublishedDevices;
+        m_bIsInitialized = beUtils::GetAllGraphicsCards(m_DXDeviceTable, uniqueNamesOfPublishedDevices);
+        if (!m_bIsInitialized)
         {
-            if (AMDTDeviceInfoUtils::Instance()->GetDeviceInfo(publicDevice.c_str(), cardList))
-            {
-                m_DXDeviceTable.insert(m_DXDeviceTable.end(), cardList.begin(), cardList.end());
-                cardList.clear();
-            }
+            beRet = beStatus_NO_DEVICE_FOUND;
         }
-
-        // If this is empty then odds are you are not using AMD hardware.
-        if(m_DXDeviceTable.empty())
-        {
-            AMDTDeviceInfoUtils::Instance()->GetAllCards(m_DXDeviceTable);
-        }
-
-        std::sort(m_DXDeviceTable.begin(), m_DXDeviceTable.end(), beUtils::GfxCardInfoSortPredicate);
     }
 
     if (beRet == beStatus_SUCCESS)
@@ -1038,7 +1019,7 @@ bool beProgramBuilderDX::GetIsaSize(const string& isaAsText, size_t& sizeInBytes
                 posFirst32BitEnd += 2;
 
                 // Find the end of the final instruction line.
-                size_t posEnd = isaAsText.find("\r\n", posBegin);
+                size_t posEnd = isaAsText.find("\n", posBegin);
 
                 if (posEnd != string::npos && posFirst32BitEnd < posEnd)
                 {

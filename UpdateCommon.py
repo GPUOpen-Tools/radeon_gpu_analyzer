@@ -11,7 +11,6 @@ scriptRoot = os.path.dirname(os.path.realpath(__file__))
 # To allow for future updates where we may have cloned the project somewhere other than github, store the root of the repo
 # in a variable. In future, we can automatically calculate this based on the git config
 gitRoot = "https://github.com/GPUOpen-Tools/"
-#gitRoot = "ssh://git.amd.com:29418/DevTools/ec/"
 
 # Define a set of dependencies that exist as separate git projects.
 gitMapping = {
@@ -34,7 +33,7 @@ gitMapping = {
 	"common-src-AMDTOSWrappers.git"       : "../Common/Src/AMDTOSWrappers",
     "common-src-AMDTMutex.git"            : "../Common/Src/AMDTMutex",
 	"common-src-CElf.git"       		  : "../Common/Src/CElf",
-    "common-src-DeviceInfo.git"           : "../Common/Src/DeviceInfo",
+	"common-src-DeviceInfo.git"           : "../Common/Src/DeviceInfo",
     "common-src-DynamicLibraryModule.git" : "../Common/Src/DynamicLibraryModule",
     "common-src-SCons.git"      		  : "../Common/Src/SCons",
 	"common-src-ShaderUtils.git"      	  : "../Common/Src/ShaderUtils",

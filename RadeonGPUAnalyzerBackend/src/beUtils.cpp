@@ -1,5 +1,6 @@
 // C++.
-#include <string>
+#include <algorithm>
+#include <sstream>
 
 // Infra.
 #include <AMDTBaseTools/Include/gtAssert.h>
@@ -8,12 +9,35 @@
 
 // Local.
 #include <RadeonGPUAnalyzerBackend/include/beUtils.h>
+#include <DeviceInfoUtils.h>
+#include <DeviceInfo.h>
+
+// *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - BEGIN ***
+
+// Retrieves the list of devices according to the given HW generation.
+static void AddGenerationDevices(GDT_HW_GENERATION hwGen, std::vector<GDT_GfxCardInfo>& cardList,
+    std::set<std::string> &uniqueNamesOfPublishedDevices)
+{
+    std::vector<GDT_GfxCardInfo> cardListBuffer;
+    if (AMDTDeviceInfoUtils::Instance()->GetAllCardsInHardwareGeneration(hwGen, cardListBuffer))
+    {
+        cardList.insert(cardList.end(), cardListBuffer.begin(), cardListBuffer.end());
+
+        for (const GDT_GfxCardInfo& cardInfo : cardList)
+        {
+            uniqueNamesOfPublishedDevices.insert(cardInfo.m_szCALName);
+        }
+    }
+}
+
+// *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - END ***
 
 bool beUtils::GdtHwGenToNumericValue(GDT_HW_GENERATION hwGen, size_t& gfxIp)
 {
     const size_t BE_GFX_IP_6 = 6;
     const size_t BE_GFX_IP_7 = 7;
     const size_t BE_GFX_IP_8 = 8;
+    const size_t BE_GFX_IP_9 = 9;
 
     bool ret = true;
 
@@ -29,6 +53,10 @@ bool beUtils::GdtHwGenToNumericValue(GDT_HW_GENERATION hwGen, size_t& gfxIp)
 
         case GDT_HW_GENERATION_VOLCANICISLAND:
             gfxIp = BE_GFX_IP_8;
+            break;
+        
+        case GDT_HW_GENERATION_GFX9:
+            gfxIp = BE_GFX_IP_9;
             break;
 
         case GDT_HW_GENERATION_NONE:
@@ -102,6 +130,57 @@ bool beUtils::GfxCardInfoSortPredicate(const GDT_GfxCardInfo& a, const GDT_GfxCa
 
     // DeviceID last.
     return a.m_deviceID < b.m_deviceID;
+}
+
+bool beUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& cardList, std::set<std::string>& uniqueNamesOfPublishedDevices)
+{
+    bool ret = true;
+
+    // Retrieve the list of devices for every relevant hardware generations.
+    AddGenerationDevices(GDT_HW_GENERATION_SOUTHERNISLAND, cardList, uniqueNamesOfPublishedDevices);
+    AddGenerationDevices(GDT_HW_GENERATION_SEAISLAND, cardList, uniqueNamesOfPublishedDevices);
+    AddGenerationDevices(GDT_HW_GENERATION_VOLCANICISLAND, cardList, uniqueNamesOfPublishedDevices);
+    AddGenerationDevices(GDT_HW_GENERATION_GFX9, cardList, uniqueNamesOfPublishedDevices);
+
+    // Sort the data.
+    std::sort(cardList.begin(), cardList.end(), beUtils::GfxCardInfoSortPredicate);
+
+    return ret;
+}
+
+bool beUtils::GetMarketingNameToCodenameMapping(std::map<std::string, std::set<std::string>>& cardsMap)
+{
+    std::vector<GDT_GfxCardInfo> cardList;
+    std::set<std::string> uniqueNames;
+
+    // Retrieve the list of all supported cards.
+    bool ret = GetAllGraphicsCards(cardList, uniqueNames);
+
+    if (ret)
+    {
+        for (const GDT_GfxCardInfo& card : cardList)
+        {
+            if (card.m_szMarketingName != nullptr &&
+                card.m_szCALName != nullptr &&
+                (strlen(card.m_szMarketingName) > 1) &&
+                (strlen(card.m_szCALName) > 1))
+            {
+                // Create the key string.
+                std::string displayName;
+                ret = AMDTDeviceInfoUtils::Instance()->GetHardwareGenerationDisplayName(card.m_generation, displayName);
+                if (ret)
+                {
+                    std::stringstream nameBuilder;
+                    nameBuilder << card.m_szCALName << " (" << displayName << ")";
+
+                    // Add this item to the relevant container in the map.
+                    cardsMap[nameBuilder.str()].insert(card.m_szMarketingName);
+                }
+            }
+        }
+    }
+
+    return ret;
 }
 
 void beUtils::DeleteOutputFiles(const beProgramPipeline& outputFilePaths)
