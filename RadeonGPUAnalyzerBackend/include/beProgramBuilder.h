@@ -1,6 +1,9 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef _BEPROGRAMBUILDER_H_
 #define _BEPROGRAMBUILDER_H_
-
 
 // Disable warning:
 #pragma warning( disable : 4996 )

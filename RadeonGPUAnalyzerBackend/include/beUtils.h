@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef beUtils_h__
 #define beUtils_h__
 

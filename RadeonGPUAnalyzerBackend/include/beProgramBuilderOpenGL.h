@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef __beProgramBuilderOpenGL_h
 #define __beProgramBuilderOpenGL_h
 

@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 // Infra.
 #include <AMDTBaseTools/Include/gtString.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>

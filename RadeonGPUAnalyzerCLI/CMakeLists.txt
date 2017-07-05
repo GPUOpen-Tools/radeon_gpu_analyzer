@@ -160,7 +160,19 @@ if(AMD_INTERNAL)
     set(INTERNAL_ARG "-internal")
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    if (CMAKE_64BIT_TARGET)
+        set(COPY_SCRIPT_NAME "rga_copy_x64.bat")
+    else()
+        set(COPY_SCRIPT_NAME "rga_copy_x86.bat")
+    endif()
+
+    add_custom_command(TARGET RadeonGPUAnalyzerCLI
+            POST_BUILD
+            COMMAND ${PROJECT_SOURCE_DIR}/../Build/VS2015/${COPY_SCRIPT_NAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${INTERNAL_ARG}
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/VS2015
+            )
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
             POST_BUILD
             COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/linux/copy_post_build.sh ${INTERNAL_ARG}

@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef __beStringConstants_h
 #define __beStringConstants_h
 

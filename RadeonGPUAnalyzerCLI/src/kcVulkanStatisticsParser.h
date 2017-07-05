@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef kcVulkanStatisticsParser_h__
 #define kcVulkanStatisticsParser_h__
 

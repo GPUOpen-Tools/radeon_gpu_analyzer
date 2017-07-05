@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef beStaticIsaAnalyzer_h__
 #define beStaticIsaAnalyzer_h__
 

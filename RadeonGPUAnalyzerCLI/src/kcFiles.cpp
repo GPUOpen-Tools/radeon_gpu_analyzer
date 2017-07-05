@@ -1,17 +1,6 @@
-//=====================================================================
-// Copyright 2012 Advanced Micro Devices, Inc. All rights reserved.
-//
-/// \author  GPU Developer Tools
-/// \file    $File: //devtools/main/CodeXL/Components/ShaderAnalyzer/AMDTKernelAnalyzerCLI/src/kcFiles.cpp $
-/// \version $Revision: #2 $
-/// \brief   File read/write/&c. utilities.
-//
-//=====================================================================
-// $Id: //devtools/main/CodeXL/Components/ShaderAnalyzer/AMDTKernelAnalyzerCLI/src/kcFiles.cpp#2 $
-// Last checkin:   $DateTime: 2016/04/18 06:02:03 $
-// Last edited by: $Author: salgrana $
-// Change list:    $Change: 569613 $
-//=====================================================================
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
 
 // C++.
 #include <sstream>

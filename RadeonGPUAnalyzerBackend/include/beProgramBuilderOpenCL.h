@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef _BEPROGRAMBUILDEROPENCL_H_
 #define _BEPROGRAMBUILDEROPENCL_H_
 

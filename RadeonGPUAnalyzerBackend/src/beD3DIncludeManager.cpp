@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifdef _WIN32
 #include <Include/beD3DIncludeManager.h>
 #include <fstream>

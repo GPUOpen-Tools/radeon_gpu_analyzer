@@ -1,17 +1,6 @@
-// -*- C++ -*-
-//=====================================================================
-// Copyright 2011 Advanced Micro Devices, Inc. All rights reserved.
-//
-/// \author GPU Developer Tools
-/// \version $Revision: #1 $
-/// \brief  The entry point for the KernelAnalyzer backend.
-//
-//=====================================================================
-// $Id: //devtools/main/CodeXL/Components/ShaderAnalyzer/RadeonGPUAnalyzerBackend/include/beBackend.h#1 $
-// Last checkin:   $DateTime: 2016/02/28 16:32:28 $
-// Last edited by: $Author: igal $
-// Change list:    $Change: 561710 $
-//=====================================================================
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
 
 #ifndef _BACKEND_H_
 #define _BACKEND_H_

@@ -188,8 +188,8 @@
 	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
-	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration) 1</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(TargetDir)</Command>
+      <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(TargetDir) -internal</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|Win32'">
@@ -209,8 +209,8 @@
 	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
-	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration) 1</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(TargetDir)</Command>
+      <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(TargetDir) -internal</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -230,8 +230,8 @@
 	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
-	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration) 1</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(TargetDir)</Command>
+      <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(TargetDir) -internal</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Static|x64'">
@@ -251,8 +251,8 @@
 	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
-	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration) 1</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(TargetDir)</Command>
+      <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(TargetDir) -internal</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -276,8 +276,8 @@
 	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-	  <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
-	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration) 1</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(TargetDir)</Command>
+      <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(TargetDir) -internal</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|Win32'">
@@ -301,8 +301,8 @@
 	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration)</Command>
-	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(Configuration) 1</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(TargetDir)</Command>
+      <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x86.bat $(TargetDir) -internal</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -326,8 +326,8 @@
 	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
-	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration) 1</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(TargetDir)</Command>
+      <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(TargetDir) -internal</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|x64'">
@@ -352,8 +352,8 @@
 	  <AdditionalOptions Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">/EXPORT:InitInternalDeviceInfo %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration)</Command>
-	  <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(Configuration) 1</Command>
+      <Command Condition="'$(SolutionName)'!='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(TargetDir)</Command>
+      <Command Condition="'$(SolutionName)'=='RadeonGPUAnalyzer-Internal'">$(ProjectDir)rga_copy_x64.bat $(TargetDir) -internal</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

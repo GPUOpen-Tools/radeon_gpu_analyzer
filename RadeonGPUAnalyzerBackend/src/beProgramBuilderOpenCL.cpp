@@ -1,3 +1,6 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
 
 #include <CElf.h>
 #include <locale>

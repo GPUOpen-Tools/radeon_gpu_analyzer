@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #include "beRGADllBuild.h"
 #ifndef __beDataTypes_h
 #define __beDataTypes_h

@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef __kcCLICommanderVulkan_h
 #define __kcCLICommanderVulkan_h
 

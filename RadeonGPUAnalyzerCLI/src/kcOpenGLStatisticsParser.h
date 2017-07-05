@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef kcOpenGLStatisticsParser_h__
 #define kcOpenGLStatisticsParser_h__
 

@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifdef _WIN32
 #ifndef _kcCLICommanderDX_H_
 #define _kcCLICommanderDX_H_

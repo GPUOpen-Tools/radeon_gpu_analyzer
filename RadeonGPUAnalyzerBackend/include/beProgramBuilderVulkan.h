@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef beProgramBuilderVulkan_h__
 #define beProgramBuilderVulkan_h__
 

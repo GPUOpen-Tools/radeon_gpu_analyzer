@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef _kcCLICommanderCL_H_
 #define _kcCLICommanderCL_H_
 

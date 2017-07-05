@@ -1,3 +1,7 @@
+//=================================================================
+// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=================================================================
+
 #ifndef kcCLICommanderOpenGL_h__
 #define kcCLICommanderOpenGL_h__
 
