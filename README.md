@@ -99,7 +99,8 @@ Run the rga executable.
 * Usage: 
   * General: rga -h
   * DirectX: rga -s hlsl -h
-        * RGA's HLSL mode requires Microsoft's D3D Compiler DLL in runtime. If you copy the relevant D3D Compiler DLL to the relevant (x64 or x86) subdirectory under the executable's directory, RGA will use that DLL in runtime. The default D3D compiler that RGA public releases ship with is d3dcompiler_47.dll.
+        
+		* RGA's HLSL mode requires Microsoft's D3D Compiler DLL in runtime. If you copy the relevant D3D Compiler DLL to the relevant (x64 or x86) subdirectory under the executable's directory, RGA will use that DLL in runtime. The default D3D compiler that RGA public releases ship with is d3dcompiler_47.dll.
   * OpenGL:  rga -s opengl -h
   * OpenCL:  rga -s cl -h
   * Vulkan - glsl:  rga -s vulkan -h
