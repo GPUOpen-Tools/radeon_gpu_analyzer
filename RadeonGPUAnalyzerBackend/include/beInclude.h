@@ -111,9 +111,13 @@ enum beStatus
     beStatus_GLUnknownHardwareFamily,
     beStatus_VulkanAmdspvLaunchFailure,
     beStatus_VulkanAmdspvCompilationFailure,
+    beStatus_VulkanNoInputFile,
+    beStatus_FailedOutputVerification,
+    beStatus_VulkanMixedInputFiles,
     beStatus_shaeCannotLocateAnalyzer,
     beStatus_shaeIsaFileNotFound,
     beStatus_shaeFailedToLaunch,
+    beStatus_dxDriverLaunchFailure,
     beStatus_General_FAILED,
 };
 

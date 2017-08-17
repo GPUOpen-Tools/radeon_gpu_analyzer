@@ -47,7 +47,7 @@ public:
     //
     // Public member functions
     //
-    beStatus Initialize(BuiltProgramKind ProgramKind, LoggingCallBackFuncP callback, const string& sDllModule = "");
+    beStatus Initialize(BuiltProgramKind ProgramKind, LoggingCallBackFuncP callback);
 
     /// dtor
     /// If a Log stream is available, unreleased built programs may be diagnosed.

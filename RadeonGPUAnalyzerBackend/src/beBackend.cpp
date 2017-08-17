@@ -30,7 +30,6 @@
 // Infra.
 #include <AMDTOSAPIWrappers/Include/oaOpenGLRenderContext.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
-#include <AMDTOSWrappers/Include/osApplication.h>
 #include <AMDTOSAPIWrappers/Include/oaDriver.h>
 #include <AMDTOSWrappers/Include/osDebugLog.h>
 
@@ -45,11 +44,8 @@ Backend::Backend() : m_supportedPublicDevices()
     m_driverVersionInfo.clear();
 }
 
-beKA::beStatus Backend::Initialize(BuiltProgramKind ProgramKind, LoggingCallBackFuncP callback, const string& sDllModule)
+beKA::beStatus Backend::Initialize(BuiltProgramKind ProgramKind, LoggingCallBackFuncP callback)
 {
-#ifndef _WIN32
-    GT_UNREFERENCED_PARAMETER(sDllModule);
-#endif
     beKA::beStatus retVal = beStatus_General_FAILED;
     m_LogCallback = callback;
 
@@ -71,7 +67,6 @@ beKA::beStatus Backend::Initialize(BuiltProgramKind ProgramKind, LoggingCallBack
     }
 
 #ifdef _WIN32
-
     if (ProgramKind == BuiltProgramKind_DX)
     {
         // Initialize the DX backend.
@@ -92,42 +87,7 @@ beKA::beStatus Backend::Initialize(BuiltProgramKind ProgramKind, LoggingCallBack
                 m_beDX->AddDxSearchDir(dir);
             }
         }
-
-        if (m_beDX != NULL)
-        {
-            // Set the name of the module to be loaded.
-            std::string moduleToLoad;
-
-            if (sDllModule.empty())
-            {
-                // This solves the VS extension issue where devenv.exe looked for the D3D compiler
-                // at its own directory, instead of looking for it at CodeXL's binaries directory.
-                osFilePath defaultCompilerFilePath;
-
-                // Get CodeXL's binaries directory. Both the 32 and 64-bit versions of d3dcompiler are bundled with CodeXL.
-                // We use the 32-bit version by default
-                bool isOk = osGetCurrentApplicationDllsPath(defaultCompilerFilePath, OS_I386_ARCHITECTURE);
-
-                if (isOk)
-                {
-                    // Create the full path to the default D3D compiler.
-                    defaultCompilerFilePath.setFileName(SA_BE_STR_HLSL_optionsDefaultCompilerFileName);
-                    defaultCompilerFilePath.setFileExtension(SA_BE_STR_HLSL_optionsDefaultCompilerFileExtension);
-                    moduleToLoad = defaultCompilerFilePath.asString().asASCIICharArray();
-                }
-            }
-            else
-            {
-                // Use the given name.
-                moduleToLoad = sDllModule;
-            }
-
-            // Initialize the DX backend.
-            m_beDX->SetLog(callback);
-            retVal = m_beDX->Initialize(moduleToLoad);
-        }
     }
-
 #endif
 
     return retVal;

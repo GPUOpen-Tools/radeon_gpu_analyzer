@@ -5,6 +5,7 @@
 // C++.
 #include <algorithm>
 #include <sstream>
+#include <fstream>
 
 // Infra.
 #include <AMDTBaseTools/Include/gtAssert.h>
@@ -208,10 +209,20 @@ void beUtils::DeleteFile(const gtString& filePath)
     }
 }
 
+bool  beUtils::isFilePresent(const std::string& fileName, bool required)
+{
+    bool  ret = true;
+    if (required && !fileName.empty())
+    {
+        std::ifstream file(fileName);
+        ret = (file.good() && file.peek() != std::ifstream::traits_type::eof());
+    }
+    return ret;
+}
+
 beUtils::beUtils()
 {
 }
-
 
 beUtils::~beUtils()
 {

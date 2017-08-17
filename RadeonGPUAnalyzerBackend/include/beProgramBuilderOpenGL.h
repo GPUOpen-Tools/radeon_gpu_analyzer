@@ -16,8 +16,8 @@
 
 struct OpenGLOptions : public beKA::CompileOptions
 {
-    OpenGLOptions() : m_chipFamily(0), m_chipRevision(0), m_isAmdIsaBinariesRequired(true),
-        m_isAmdIsaDisassemblyRequired(true), m_isScStatsRequired(true)
+    OpenGLOptions() : m_chipFamily(0), m_chipRevision(0), m_isAmdIsaBinariesRequired(false),
+        m_isAmdIsaDisassemblyRequired(false), m_isScStatsRequired(false), m_isCfgRequired(false), m_isLiveRegisterAnalysisRequired(false)
     {
         CompileOptions::m_SourceLanguage = beKA::SourceLanguage_GLSL;
     }
@@ -87,7 +87,7 @@ public:
 
     virtual bool CompileOK(std::string& device) override;
 
-    virtual beKA::beStatus Initialize(const std::string& sDllModule = "") override;
+    beKA::beStatus Initialize(const std::string& sDllModule = "");
 
     beKA::beStatus Compile(const OpenGLOptions& vulkanOptions, bool& cancelSignal, gtString& compilerOutput);
 

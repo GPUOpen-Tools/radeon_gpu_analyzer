@@ -36,7 +36,6 @@ public:
 private: // functions
 
     bool Init(const Config& config, LoggingCallBackFunc_t callback);
-    bool InitRequestedAsicList(const Config& config);
     bool Compile(const Config& config);
 
     /// output for all commands that requires compilation
@@ -54,10 +53,9 @@ private: // functions
     void InitRequiredKernels(const Config& config, const std::set<std::string>& requiredDevices, std::vector<std::string>& requiredKernels);
 
 private: //members
-    std::set<string> m_devices;
-    std::set<string> m_externalDevices;
+    std::set<string>             m_externalDevices;
     std::vector<GDT_GfxCardInfo> m_table;
-    std::set<std::string> m_asics;
+    std::set<std::string>        m_asics;
 
     // Holds the name of the kernels to be built.
     std::vector<std::string> m_requiredKernels;

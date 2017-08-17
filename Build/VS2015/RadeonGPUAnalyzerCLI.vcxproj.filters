@@ -54,6 +54,9 @@
     <ClCompile Include="..\..\..\Common\Src\DeviceInfo\DeviceInfoUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommander.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcConfig.h">

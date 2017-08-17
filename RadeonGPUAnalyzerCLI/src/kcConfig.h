@@ -23,7 +23,7 @@ public:
     static std::string sourceKindOpenCL;
     static std::string sourceKindGLSL;
     static std::string sourceKindOpenGL;
-    static std::string sourceKindVulkan;
+    static std::string sourceKindGLSLVulkan;
     static std::string sourceKindSpirvBin;
     static std::string sourceKindSpirvTxt;
 
@@ -34,6 +34,7 @@ public:
         ccListKernels,
         ccHelp,
         ccListAsics,
+        ccListAdapters,
         ccVersion,
     };
 
@@ -61,16 +62,16 @@ public:
     bool                     m_isRetainUserBinaryPath; ///< If true then CLI will not add the asic name to the generated binary output file
 
     // DX/GL
-    std::string              m_SourceKind;       ///< Kind of source HLSL or GLSL (maybe more later like ASM kinds).
-    std::string              m_Profile;          ///< Profile used with GSA compilations. Target in DX
-    unsigned int             m_DXFlags;          ///< Flags to pass to D3DCompile.
-    std::string              m_DXLocation;       ///< D3DCompiler dll location
-    std::string              m_FXC;               ///< FXC path and arguments
-    std::string              m_DumpMSIntermediate; /// the location where to save the ms blob as text
+    std::string              m_SourceKind;             ///< Kind of source HLSL or GLSL (maybe more later like ASM kinds).
+    std::string              m_Profile;                ///< Profile used with GSA compilations. Target in DX
+    int                      m_DXAdapter;              ///< ID of GPU adapter to use for DX.
+    unsigned int             m_DXFlags;                ///< Flags to pass to D3DCompile.
+    std::string              m_DXLocation;             ///< D3DCompiler dll location
+    std::string              m_FXC;                    ///< FXC path and arguments
+    std::string              m_DumpMSIntermediate;     /// the location where to save the ms blob as text
     bool                     m_EnableShaderIntrinsics; /// true to enable DX shader intrinsics.
-    bool                     m_AMDILInput; /// true when the input language is AMDIL rather than HLSL.
-    bool                     m_ListGraphicsAdapters; /// true to list all of the DX graphics adapters that are installed on the system.
-    int                      m_UAVSlot;               /// User-defined UAV slot for shader intrinsics.
+    bool                     m_AMDILInput;             /// true when the input language is AMDIL rather than HLSL.
+    int                      m_UAVSlot;                /// User-defined UAV slot for shader intrinsics.
 
 
     // Vulkan.

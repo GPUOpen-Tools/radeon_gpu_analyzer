@@ -3,7 +3,7 @@ project (RadeonGPUAnalyzerBackend)
 
 # The version number
 set (RadeonGPUAnalyzerBackend_VERSION_MAJOR 1)
-set (RadeonGPUAnalyzerBackend_VERSION_MINOR 0)
+set (RadeonGPUAnalyzerBackend_VERSION_MINOR 2)
 
 # Project-specific preprocessor directives
 add_definitions(-DRGA_BACKEND_EXPORTS)

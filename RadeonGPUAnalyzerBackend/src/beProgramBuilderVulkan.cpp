@@ -16,6 +16,28 @@
 #include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
 #include <DeviceInfoUtils.h>
 
+// *****************************************
+// *** INTERNALLY LINKED SYMBOLS - START ***
+// *****************************************
+
+static const std::string  STR_VERT_SPV_OUTPUT_FILE_NAME = "vert.spv";
+static const std::string  STR_TESC_SPV_OUTPUT_FILE_NAME = "tesc.spv";
+static const std::string  STR_TESE_SPV_OUTPUT_FILE_NAME = "tese.spv";
+static const std::string  STR_GEOM_SPV_OUTPUT_FILE_NAME = "geom.spv";
+static const std::string  STR_FRAG_SPV_OUTPUT_FILE_NAME = "frag.spv";
+static const std::string  STR_COMP_SPV_OUTPUT_FILE_NAME = "comp.spv";
+
+static const std::string  STR_VERT_PALIL_OUTPUT_FILE_NAME = "vert.palIl";
+static const std::string  STR_TESC_PALIL_OUTPUT_FILE_NAME = "tesc.palIl";
+static const std::string  STR_TESE_PALIL_OUTPUT_FILE_NAME = "tese.palIl";
+static const std::string  STR_GEOM_PALIL_OUTPUT_FILE_NAME = "geom.palIl";
+static const std::string  STR_FRAG_PALIL_OUTPUT_FILE_NAME = "frag.palIl";
+static const std::string  STR_COMP_PALIL_OUTPUT_FILE_NAME = "comp.palIl";
+
+// ***************************************
+// *** INTERNALLY LINKED SYMBOLS - END ***
+// ***************************************
+
 // Internally-linked utilities.
 static bool GetAmdspvPath(std::string& amdspvPath)
 {
@@ -89,6 +111,223 @@ static std::string GetInputPrefix(const VulkanOptions& vulkanOptions, const std:
         ret = SPIRV_TXT_INPUT_PREFIX;
     }
     return ret;
+}
+
+static beKA::beStatus  AddInputFileNames(const VulkanOptions& options, std::stringstream& cmd)
+{
+    beKA::beStatus  status = beKA::beStatus_SUCCESS;
+  
+    // Indicates that a stage-less input file name was provided.
+    bool  isNonStageInput = false; 
+
+    // Indicates that some of stage-specific file names was provided (--frag, --vert, etc.).
+    bool isStageInput = false;
+
+    if (options.m_SourceLanguage == beKA::SourceLanguage_SPIRV_Vulkan || options.m_SourceLanguage == beKA::SourceLanguage_SPIRVTXT_Vulkan)
+    {
+        if (!options.m_stagelessInputFile.empty())
+        {
+            cmd << GetInputPrefix(options, "") << options.m_stagelessInputFile << "\" ";
+            isNonStageInput = true;
+        }
+    }
+
+    // You cannot mix compute and non-compute shaders in Vulkan,
+    // so this has to be mutually exclusive.
+    if (options.m_pipelineShaders.m_computeShader.isEmpty())
+    {
+        // Vertex shader.
+        if (!options.m_pipelineShaders.m_vertexShader.isEmpty())
+        {
+            cmd << GetInputPrefix(options, "in.vert.glsl=\"") << options.m_pipelineShaders.m_vertexShader.asASCIICharArray() << "\" ";
+            isStageInput = true;
+        }
+
+        // Tessellation control shader.
+        if (!options.m_pipelineShaders.m_tessControlShader.isEmpty())
+        {
+            cmd << GetInputPrefix(options, "in.tesc.glsl=\"") << options.m_pipelineShaders.m_tessControlShader.asASCIICharArray() << "\" ";
+            isStageInput = true;
+        }
+
+        // Tessellation evaluation shader.
+        if (!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty())
+        {
+            cmd << GetInputPrefix(options, "in.tese.glsl=\"") << options.m_pipelineShaders.m_tessEvaluationShader.asASCIICharArray() << "\" ";
+            isStageInput = true;
+        }
+
+        // Geometry shader.
+        if (!options.m_pipelineShaders.m_geometryShader.isEmpty())
+        {
+            cmd << GetInputPrefix(options, "in.geom.glsl=\"") << options.m_pipelineShaders.m_geometryShader.asASCIICharArray() << "\" ";
+            isStageInput = true;
+        }
+
+        // Fragment shader.
+        if (!options.m_pipelineShaders.m_fragmentShader.isEmpty())
+        {
+            cmd << GetInputPrefix(options, "in.frag.glsl=\"") << options.m_pipelineShaders.m_fragmentShader.asASCIICharArray() << "\" ";
+            isStageInput = true;
+        }
+    }
+    else
+    {
+        // Compute shader.
+        cmd << GetInputPrefix(options, "in.comp.glsl=\"") << options.m_pipelineShaders.m_computeShader.asASCIICharArray() << "\" ";
+        isStageInput = true;
+    }
+
+    if (!isNonStageInput && !isStageInput)
+    {
+        status = beKA::beStatus_VulkanNoInputFile;
+    }
+    else if (isNonStageInput && isStageInput)
+    {
+        status = beKA::beStatus_VulkanMixedInputFiles;
+    }
+    
+    return status;
+}
+
+static void AddOutputFileNames(const VulkanOptions& options, std::stringstream& cmd)
+{
+    bool isSpv = (options.m_SourceLanguage == beKA::SourceLanguage_SPIRV_Vulkan ||
+                  options.m_SourceLanguage == beKA::SourceLanguage_SPIRVTXT_Vulkan);
+
+    auto  AddOutputFile = [&](bool flag, const std::string& option, const std::string& fileName)
+    {
+        if (flag || isSpv)
+        {
+            cmd << option << "\"" << fileName << "\"" << " ";
+        }
+    };
+
+    // SPIR-V binaries generation.
+    if (options.m_isSpirvBinariesRequired)
+    {
+        // Compute.
+        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.spv=", STR_COMP_SPV_OUTPUT_FILE_NAME);
+
+        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
+        {
+            // Vertex.
+            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.spv=", STR_VERT_SPV_OUTPUT_FILE_NAME);
+            // Tessellation control.
+            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.spv=", STR_TESC_SPV_OUTPUT_FILE_NAME);
+            // Tessellation evaluation.
+            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.spv=", STR_TESE_SPV_OUTPUT_FILE_NAME);
+            // Geometry.
+            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.spv=", STR_GEOM_SPV_OUTPUT_FILE_NAME);
+            // Fragment.
+            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.spv=", STR_FRAG_SPV_OUTPUT_FILE_NAME);
+        }
+    }
+
+    // AMD IL Binaries generation (for now we only support PAL IL).
+    if (options.m_isAmdPalIlBinariesRequired)
+    {
+        // Compute.
+        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.palIl=", STR_COMP_PALIL_OUTPUT_FILE_NAME);
+
+        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
+        {
+            // Vertex.
+            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.palIl=", STR_VERT_PALIL_OUTPUT_FILE_NAME);
+            // Tessellation control.
+            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.palIl=", STR_TESC_PALIL_OUTPUT_FILE_NAME);
+            // Tessellation evaluation.
+            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.palIl=", STR_TESE_PALIL_OUTPUT_FILE_NAME);
+            // Geometry.
+            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.palIl=", STR_GEOM_PALIL_OUTPUT_FILE_NAME);
+            // Fragment.
+            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.palIl=", STR_FRAG_PALIL_OUTPUT_FILE_NAME);
+        }
+    }
+
+    // AMD IL disassembly generation (for now we only support PAL IL).
+    if (options.m_isAmdPalIlDisassemblyRequired)
+    {
+        // Compute.
+        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_computeShader.asASCIICharArray());
+
+        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
+        {
+            // Vertex.
+            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_vertexShader.asASCIICharArray());
+            // Tessellation control.
+            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray());
+            // Tessellation evaluation.
+            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray());
+            // Geometry.
+            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_geometryShader.asASCIICharArray());
+            // Fragment.
+            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray());
+        }
+    }
+
+    // AMD ISA binary generation.
+    if (options.m_isAmdIsaBinariesRequired)
+    {
+        // Compute.
+        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.isa=", options.m_isaBinaryFiles.m_computeShader.asASCIICharArray());
+
+        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
+        {
+            // Vertex.
+            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.isa=", options.m_isaBinaryFiles.m_vertexShader.asASCIICharArray());
+            // Tessellation control.
+            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.isa=", options.m_isaBinaryFiles.m_tessControlShader.asASCIICharArray());
+            // Tessellation evaluation.
+            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.isa=", options.m_isaBinaryFiles.m_tessEvaluationShader.asASCIICharArray());
+            // Geometry.
+            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.isa=", options.m_isaBinaryFiles.m_geometryShader.asASCIICharArray());
+            // Fragment.
+            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.isa=", options.m_isaBinaryFiles.m_fragmentShader.asASCIICharArray());
+        }
+    }
+
+    // AMD ISA disassembly generation.
+    if (options.m_isAmdIsaDisassemblyRequired)
+    {
+        // Compute.
+        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.isaText=", options.m_isaDisassemblyOutputFiles.m_computeShader.asASCIICharArray());
+
+        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
+        {
+            // Vertex.
+            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.isaText=", options.m_isaDisassemblyOutputFiles.m_vertexShader.asASCIICharArray());
+            // Tessellation control.
+            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.isaText=", options.m_isaDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray());
+            // Tessellation evaluation.
+            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.isaText=", options.m_isaDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray());
+            // Geometry.
+            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.isaText=", options.m_isaDisassemblyOutputFiles.m_geometryShader.asASCIICharArray());
+            // Fragment.
+            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.isaText=", options.m_isaDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray());
+        }
+    }
+
+    // Shader compiler statistics disassembly generation.
+    if (options.m_isScStatsRequired)
+    {
+        // Compute.
+        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.isaInfo=", options.m_scStatisticsOutputFiles.m_computeShader.asASCIICharArray());
+
+        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
+        {
+            // Vertex.
+            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.isaInfo=", options.m_scStatisticsOutputFiles.m_vertexShader.asASCIICharArray());
+            // Tessellation control.
+            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.isaInfo=", options.m_scStatisticsOutputFiles.m_tessControlShader.asASCIICharArray());
+            // Tessellation evaluation.
+            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.isaInfo=", options.m_scStatisticsOutputFiles.m_tessEvaluationShader.asASCIICharArray());
+            // Geometry.
+            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.isaInfo=", options.m_scStatisticsOutputFiles.m_geometryShader.asASCIICharArray());
+            // Fragment.
+            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.isaInfo=", options.m_scStatisticsOutputFiles.m_fragmentShader.asASCIICharArray());
+        }
+    }
 }
 
 beProgramBuilderVulkan::beProgramBuilderVulkan()
@@ -191,6 +430,68 @@ beKA::beStatus beProgramBuilderVulkan::Initialize(const std::string& sDllModule 
     return beKA::beStatus_SUCCESS;
 }
 
+// Checks if the required output files are generated by the amdspv.
+// Only verifies the files requested in the "options.m_pipelineShaders" name list.
+static bool  VerifyAmdspvOutput(const VulkanOptions& options)
+{
+    bool  ret = true;
+    if (options.m_isAmdIsaDisassemblyRequired)
+    {
+        ret &= beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_computeShader.asASCIICharArray(),        !options.m_pipelineShaders.m_computeShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray(),       !options.m_pipelineShaders.m_fragmentShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_geometryShader.asASCIICharArray(),       !options.m_pipelineShaders.m_geometryShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray(),    !options.m_pipelineShaders.m_tessControlShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray(), !options.m_pipelineShaders.m_tessEvaluationShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_vertexShader.asASCIICharArray(),         !options.m_pipelineShaders.m_vertexShader.isEmpty());
+    }
+    if (ret && options.m_isAmdIsaBinariesRequired)
+    {
+        ret &= beUtils::isFilePresent(options.m_isaBinaryFiles.m_computeShader.asASCIICharArray(),        !options.m_pipelineShaders.m_computeShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_isaBinaryFiles.m_fragmentShader.asASCIICharArray(),       !options.m_pipelineShaders.m_fragmentShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_isaBinaryFiles.m_geometryShader.asASCIICharArray(),       !options.m_pipelineShaders.m_geometryShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_isaBinaryFiles.m_tessControlShader.asASCIICharArray(),    !options.m_pipelineShaders.m_tessControlShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_isaBinaryFiles.m_tessEvaluationShader.asASCIICharArray(), !options.m_pipelineShaders.m_tessEvaluationShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_isaBinaryFiles.m_vertexShader.asASCIICharArray(),         !options.m_pipelineShaders.m_vertexShader.isEmpty());
+    }
+    if (ret && options.m_isSpirvBinariesRequired)
+    {
+        ret &= beUtils::isFilePresent(STR_COMP_SPV_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_computeShader.isEmpty());
+        ret &= beUtils::isFilePresent(STR_FRAG_SPV_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_fragmentShader.isEmpty());
+        ret &= beUtils::isFilePresent(STR_GEOM_SPV_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_geometryShader.isEmpty());
+        ret &= beUtils::isFilePresent(STR_TESC_SPV_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_tessControlShader.isEmpty());
+        ret &= beUtils::isFilePresent(STR_TESE_SPV_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_tessEvaluationShader.isEmpty());
+        ret &= beUtils::isFilePresent(STR_VERT_SPV_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_vertexShader.isEmpty());
+    }
+    if (ret && options.m_isAmdPalIlBinariesRequired)
+    {
+        ret &= beUtils::isFilePresent(STR_COMP_PALIL_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_computeShader.isEmpty());
+        ret &= beUtils::isFilePresent(STR_FRAG_PALIL_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_fragmentShader.isEmpty());
+        ret &= beUtils::isFilePresent(STR_GEOM_PALIL_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_geometryShader.isEmpty());
+        ret &= beUtils::isFilePresent(STR_TESC_PALIL_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_tessControlShader.isEmpty());
+        ret &= beUtils::isFilePresent(STR_TESE_PALIL_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_tessEvaluationShader.isEmpty());
+        ret &= beUtils::isFilePresent(STR_VERT_PALIL_OUTPUT_FILE_NAME, !options.m_pipelineShaders.m_vertexShader.isEmpty());
+    }
+    if (ret && options.m_isAmdPalIlDisassemblyRequired)
+    {
+        ret &= beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_computeShader.asASCIICharArray(),        !options.m_pipelineShaders.m_computeShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray(),       !options.m_pipelineShaders.m_fragmentShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_geometryShader.asASCIICharArray(),       !options.m_pipelineShaders.m_geometryShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray(),    !options.m_pipelineShaders.m_tessControlShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray(), !options.m_pipelineShaders.m_tessEvaluationShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_vertexShader.asASCIICharArray(),         !options.m_pipelineShaders.m_vertexShader.isEmpty());
+    }
+    if (ret && options.m_isScStatsRequired)
+    {
+        ret &= beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_computeShader.asASCIICharArray(),        !options.m_pipelineShaders.m_computeShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_fragmentShader.asASCIICharArray(),       !options.m_pipelineShaders.m_fragmentShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_geometryShader.asASCIICharArray(),       !options.m_pipelineShaders.m_geometryShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_tessControlShader.asASCIICharArray(),    !options.m_pipelineShaders.m_tessControlShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_tessEvaluationShader.asASCIICharArray(), !options.m_pipelineShaders.m_tessEvaluationShader.isEmpty());
+        ret &= beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_vertexShader.asASCIICharArray(),         !options.m_pipelineShaders.m_vertexShader.isEmpty());
+    }
+
+    return ret;
+}
 
 beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOptions, bool& cancelSignal, gtString& buildLog)
 {
@@ -216,375 +517,75 @@ beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOption
         {
             // Build the command for invoking amdspv.
             std::stringstream cmd;
-            cmd << ambdbilPath << " -set spirvDasmLegacyFormat=1 -Dall -l -gfxip " << deviceGfxIp << " -set ";
+            cmd << ambdbilPath << " -Dall -l -gfxip " << deviceGfxIp << " -set ";
 
-            // Flags for each pipeline stage that specify if its shader is present.
-            // We will need them throughout this process.
-            bool isVertShaderPresent = false;
-            bool isTescShaderPresent = false;
-            bool isTeseShaderPresent = false;
-            bool isGeomShaderPresent = false;
-            bool isFragShaderPresent = false;
-            bool isCompShaderPresent = false;
-
-            // You cannot mix compute and non-compute shaders in Vulkan,
-            // so this has to be mutually exclusive.
-            if (vulkanOptions.m_pipelineShaders.m_computeShader.isEmpty())
+            if ((ret = AddInputFileNames(vulkanOptions, cmd)) == beKA::beStatus_SUCCESS)
             {
-                // Vertex shader.
-                if (!vulkanOptions.m_pipelineShaders.m_vertexShader.isEmpty())
+                AddOutputFileNames(vulkanOptions, cmd);
+
+                // Redirect build log to a temporary file.
+                std::string tmpFileAmdspv;
+                const gtString AMPSPV_TMP_OUTPUT_FILE = L"amdspvTempFile.txt";
+                osFilePath tmpFilePath(osFilePath::OS_TEMP_DIRECTORY);
+                tmpFilePath.setFileName(AMPSPV_TMP_OUTPUT_FILE);
+                cmd << "out.glslLog=\"" << tmpFilePath.asString().asASCIICharArray() << "\" ";
+
+                // No default output (only generate the output files that we explicitly specified).
+                cmd << "defaultOutput=0";
+
+                // Launch amdspv.
+                gtString amdspvOutput;
+                bool isLaunchSuccess = osExecAndGrabOutput(cmd.str().c_str(), cancelSignal, amdspvOutput);
+
+                if (isLaunchSuccess)
                 {
-                    isVertShaderPresent = true;
-                    cmd << GetInputPrefix(vulkanOptions, "in.vert.glsl=\"") << 
-                        vulkanOptions.m_pipelineShaders.m_vertexShader.asASCIICharArray() << "\" ";
-                }
+                    // This is how amdspv signals success.
+                    const gtString AMDSPV_SUCCESS_TOKEN = L"SUCCESS!";
 
-                // Tessellation control shader.
-                if (!vulkanOptions.m_pipelineShaders.m_tessControlShader.isEmpty())
-                {
-                    isTescShaderPresent = true;
-                    cmd << GetInputPrefix(vulkanOptions, "in.tesc.glsl=\"") << 
-                        vulkanOptions.m_pipelineShaders.m_tessControlShader.asASCIICharArray() << "\" ";
-                }
-
-                // Tessellation evaluation shader.
-                if (!vulkanOptions.m_pipelineShaders.m_tessEvaluationShader.isEmpty())
-                {
-                    isTeseShaderPresent = true;
-                    cmd << GetInputPrefix(vulkanOptions, "in.tese.glsl=\"") <<
-                        vulkanOptions.m_pipelineShaders.m_tessEvaluationShader.asASCIICharArray() << "\" ";
-                }
-
-                // Geometry shader.
-                if (!vulkanOptions.m_pipelineShaders.m_geometryShader.isEmpty())
-                {
-                    isGeomShaderPresent = true;
-                    cmd << GetInputPrefix(vulkanOptions, "in.geom.glsl=\"") << 
-                        vulkanOptions.m_pipelineShaders.m_geometryShader.asASCIICharArray() << "\" ";
-                }
-
-                // Fragment shader.
-                if (!vulkanOptions.m_pipelineShaders.m_fragmentShader.isEmpty())
-                {
-                    isFragShaderPresent = true;
-                    cmd << GetInputPrefix(vulkanOptions, "in.frag.glsl=\"") << 
-                        vulkanOptions.m_pipelineShaders.m_fragmentShader.asASCIICharArray() << "\" ";
-                }
-            }
-            else
-            {
-                // Compute shader.
-                isCompShaderPresent = true;
-                cmd << GetInputPrefix(vulkanOptions, "in.comp.glsl=\"") <<
-                    vulkanOptions.m_pipelineShaders.m_computeShader.asASCIICharArray() << "\" ";
-            }
-
-            // SPIR-V binaries generation.
-            if (vulkanOptions.m_isSpirvBinariesRequired)
-            {
-                // Compute.
-                if (!isCompShaderPresent)
-                {
-                    // Vertex.
-                    if (isVertShaderPresent)
+                    // Check if the output files were generated and amdspv returned "success".
+                    if (amdspvOutput.find(AMDSPV_SUCCESS_TOKEN) == std::string::npos)
                     {
-                        cmd << "out.vert.spv=vert.spv ";
-                    }
+                        ret = beKA::beStatus_VulkanAmdspvCompilationFailure;
 
-                    // Tessellation control.
-                    if (isTescShaderPresent)
-                    {
-                        cmd << "out.tesc.spv=tesc.spv ";
-                    }
-
-                    // Tessellation evaluation.
-                    if (isTeseShaderPresent)
-                    {
-                        cmd << "out.tese.spv=tese.spv ";
-                    }
-
-                    // Geometry.
-                    if (isGeomShaderPresent)
-                    {
-                        cmd << "out.geom.spv=geom.spv ";
-                    }
-
-                    // Fragment.
-                    if (isFragShaderPresent)
-                    {
-                        cmd << "out.frag.spv=frag.spv ";
-                    }
-                }
-                else
-                {
-                    // Compute.
-                    cmd << "out.comp.spv=comp.spv ";
-                }
-            }
-
-            // AMD IL Binaries generation (for now we only support PAL IL).
-            if (vulkanOptions.m_isAmdPalIlBinariesRequired)
-            {
-                // Compute.
-                if (!isCompShaderPresent)
-                {
-                    // Vertex.
-                    if (isVertShaderPresent)
-                    {
-                        cmd << "out.vert.palIl=vert.palIl ";
-                    }
-
-                    // Tessellation control.
-                    if (isTescShaderPresent)
-                    {
-                        cmd << "out.tesc.palIl=tesc.palIl ";
-                    }
-
-                    // Tessellation evaluation.
-                    if (isTeseShaderPresent)
-                    {
-                        cmd << "out.tese.palIl=tese.palIl ";
-                    }
-
-                    // Geometry.
-                    if (isGeomShaderPresent)
-                    {
-                        cmd << "out.geom.palIl=geom.palIl ";
-                    }
-
-                    // Fragment.
-                    if (isFragShaderPresent)
-                    {
-                        cmd << "out.frag.palIl=frag.palIl ";
-                    }
-                }
-                else
-                {
-                    // Compute.
-                    cmd << "out.comp.palIl=comp.palIl ";
-                }
-            }
-
-            // AMD IL disassembly generation (for now we only support PAL IL).
-            if (vulkanOptions.m_isAmdPalIlDisassemblyRequired)
-            {
-                // Compute.
-                if (!isCompShaderPresent)
-                {
-                    // Vertex.
-                    if (isVertShaderPresent)
-                    {
-                        cmd << "out.vert.palIlText=\"" << vulkanOptions.m_pailIlDisassemblyOutputFiles.m_vertexShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Tessellation control.
-                    if (isTescShaderPresent)
-                    {
-                        cmd << "out.tesc.palIlText=\"" << vulkanOptions.m_pailIlDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Tessellation evaluation.
-                    if (isTeseShaderPresent)
-                    {
-                        cmd << "out.tese.palIlText=\"" << vulkanOptions.m_pailIlDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Geometry.
-                    if (isGeomShaderPresent)
-                    {
-                        cmd << "out.geom.palIlText=\"" << vulkanOptions.m_pailIlDisassemblyOutputFiles.m_geometryShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Fragment.
-                    if (isFragShaderPresent)
-                    {
-                        cmd << "out.frag.palIlText=\"" << vulkanOptions.m_pailIlDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray() << "\" ";
-                    }
-                }
-                else
-                {
-                    // Compute.
-                    cmd << "out.comp.palIlText=\"" << vulkanOptions.m_pailIlDisassemblyOutputFiles.m_computeShader.asASCIICharArray() << "\" ";
-                }
-            }
-
-            // AMD ISA binary generation.
-            if (vulkanOptions.m_isAmdIsaBinariesRequired)
-            {
-                // Compute.
-                if (!isCompShaderPresent)
-                {
-                    // Vertex.
-                    if (isVertShaderPresent)
-                    {
-                        cmd << "out.vert.isa=\"" << vulkanOptions.m_isaBinaryFiles.m_vertexShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Tessellation control.
-                    if (isTescShaderPresent)
-                    {
-                        cmd << "out.tesc.isa=\"" << vulkanOptions.m_isaBinaryFiles.m_tessControlShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Tessellation evaluation.
-                    if (isTeseShaderPresent)
-                    {
-                        cmd << "out.tese.isa=\"" << vulkanOptions.m_isaBinaryFiles.m_tessEvaluationShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Geometry.
-                    if (isGeomShaderPresent)
-                    {
-                        cmd << "out.geom.isa=\"" << vulkanOptions.m_isaBinaryFiles.m_geometryShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Fragment.
-                    if (isFragShaderPresent)
-                    {
-                        cmd << "out.frag.isa=\"" << vulkanOptions.m_isaBinaryFiles.m_fragmentShader.asASCIICharArray() << "\" ";
-                    }
-                }
-                else
-                {
-                    // Compute.
-                    cmd << "out.comp.isa=\"" << vulkanOptions.m_isaBinaryFiles.m_computeShader.asASCIICharArray() << "\" ";
-                }
-            }
-
-            // AMD ISA disassembly generation.
-            if (vulkanOptions.m_isAmdIsaDisassemblyRequired)
-            {
-                // Compute.
-                if (!isCompShaderPresent)
-                {
-                    // Vertex.
-                    if (isVertShaderPresent)
-                    {
-                        cmd << "out.vert.isaText=\"" << vulkanOptions.m_isaDisassemblyOutputFiles.m_vertexShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Tessellation control.
-                    if (isTescShaderPresent)
-                    {
-                        cmd << "out.tesc.isaText=\"" << vulkanOptions.m_isaDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Tessellation evaluation.
-                    if (isTeseShaderPresent)
-                    {
-                        cmd << "out.tese.isaText=\"" << vulkanOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Geometry.
-                    if (isGeomShaderPresent)
-                    {
-                        cmd << "out.geom.isaText=\"" << vulkanOptions.m_isaDisassemblyOutputFiles.m_geometryShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Fragment.
-                    if (isFragShaderPresent)
-                    {
-                        cmd << "out.frag.isaText=\"" << vulkanOptions.m_isaDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray() << "\" ";
-                    }
-                }
-                else
-                {
-                    // Compute.
-                    cmd << "out.comp.isaText=\"" << vulkanOptions.m_isaDisassemblyOutputFiles.m_computeShader.asASCIICharArray() << "\" ";
-                }
-            }
-
-            // Shader compiler statistics disassembly generation.
-            if (vulkanOptions.m_isScStatsRequired)
-            {
-                // Compute.
-                if (!isCompShaderPresent)
-                {
-                    // Vertex.
-                    if (isVertShaderPresent)
-                    {
-                        cmd << "out.vert.isaInfo=\"" << vulkanOptions.m_scStatisticsOutputFiles.m_vertexShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Tessellation control.
-                    if (isTescShaderPresent)
-                    {
-                        cmd << "out.tesc.isaInfo=\"" << vulkanOptions.m_scStatisticsOutputFiles.m_tessControlShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Tessellation evaluation.
-                    if (isTeseShaderPresent)
-                    {
-                        cmd << "out.tese.isaInfo=\"" << vulkanOptions.m_scStatisticsOutputFiles.m_tessEvaluationShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Geometry.
-                    if (isGeomShaderPresent)
-                    {
-                        cmd << "out.geom.isaInfo=\"" << vulkanOptions.m_scStatisticsOutputFiles.m_geometryShader.asASCIICharArray() << "\" ";
-                    }
-
-                    // Fragment.
-                    if (isFragShaderPresent)
-                    {
-                        cmd << "out.frag.isaInfo=\"" << vulkanOptions.m_scStatisticsOutputFiles.m_fragmentShader.asASCIICharArray() << "\" ";
-                    }
-                }
-                else
-                {
-                    // Compute.
-                    cmd << "out.comp.isaInfo=\"" << vulkanOptions.m_scStatisticsOutputFiles.m_computeShader.asASCIICharArray() << "\" ";
-                }
-            }
-
-            // Redirect build log to a temporary file.
-            std::string tmpFileAmdspv;
-            const gtString AMPSPV_TMP_OUTPUT_FILE = L"amdspvTempFile.txt";
-            osFilePath tmpFilePath(osFilePath::OS_TEMP_DIRECTORY);
-            tmpFilePath.setFileName(AMPSPV_TMP_OUTPUT_FILE);
-            cmd << "out.glslLog=\"" << tmpFilePath.asString().asASCIICharArray() << "\" ";
-
-            // No default output (only generate the output files that we explicitly specified).
-            cmd << "defaultOutput=0";
-
-            // Launch amdspv.
-            gtString amdspvOutput;
-            bool isLaunchSuccess = osExecAndGrabOutput(cmd.str().c_str(), cancelSignal, amdspvOutput);
-
-            if (isLaunchSuccess)
-            {
-                // This is how amdspv signals success.
-                const gtString AMDSPV_SUCCESS_TOKEN = L"SUCCESS!";
-
-                if (amdspvOutput.find(AMDSPV_SUCCESS_TOKEN) != -1)
-                {
-                    ret = beKA::beStatus_SUCCESS;
-
-                    // Delete the ISA binaries.
-                    beUtils::DeleteOutputFiles(vulkanOptions.m_isaBinaryFiles);
-                }
-                else
-                {
-                    ret = beKA::beStatus_VulkanAmdspvCompilationFailure;
-
-                    // Read the build log.
-                    if (tmpFilePath.exists())
-                    {
                         // Read the build log.
-                        gtString compilerOutput;
-                        std::ifstream file(tmpFilePath.asString().asASCIICharArray());
-                        std::string tmpCmdOutput((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-                        buildLog << tmpCmdOutput.c_str();
+                        if (tmpFilePath.exists())
+                        {
+                            // Read the build log.
+                            gtString compilerOutput;
+                            std::ifstream file(tmpFilePath.asString().asASCIICharArray());
+                            std::string tmpCmdOutput((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+                            buildLog << tmpCmdOutput.c_str();
 
-                        // Delete the temporary file.
-                        osFile fileToDelete(tmpFilePath);
-                        fileToDelete.deleteFile();
+                            // Delete the temporary file.
+                            osFile fileToDelete(tmpFilePath);
+                            fileToDelete.deleteFile();
+                        }
+
+                        // Let's end the build log with the error that was provided by the backend.
+                        if (!amdspvOutput.isEmpty())
+                        {
+                            buildLog << "Error: " << amdspvOutput << L"\n";
+                        }
+                    }
+                    else if (!VerifyAmdspvOutput(vulkanOptions))
+                    {
+                        ret = beKA::beStatus_FailedOutputVerification;
+                    }
+                    else
+                    {
+                        ret = beKA::beStatus_SUCCESS;
+
+                        // Delete the ISA binaries if they are not required.
+                        if (!vulkanOptions.m_isAmdIsaBinariesRequired)
+                        {
+                            beUtils::DeleteOutputFiles(vulkanOptions.m_isaBinaryFiles);
+                        }
                     }
                 }
-            }
-            else
-            {
-                ret = beKA::beStatus_VulkanAmdspvLaunchFailure;
+                else
+                {
+                    ret = beKA::beStatus_VulkanAmdspvLaunchFailure;
+                }
             }
         }
         else

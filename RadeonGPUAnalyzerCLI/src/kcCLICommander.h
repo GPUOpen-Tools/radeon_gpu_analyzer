@@ -22,6 +22,9 @@ public:
     /// List the asics as got from device
     virtual void ListAsics(Config& config, LoggingCallBackFunc_t callback) = 0;
 
+    /// List the adapters installed on the system.
+    virtual void ListAdapters(Config& config, LoggingCallBackFunc_t callback);
+
     /// list the driver version
     virtual void Version(Config& config, LoggingCallBackFunc_t callback) = 0;
 
@@ -30,6 +33,10 @@ public:
 
 
 protected: // functions
+
+    /// Initialize the list of GPU targets.
+    bool InitRequestedAsicList(const Config& config, const std::set<std::string>& supportedDevices, std::set<std::string>& targets);
+
     LoggingCallBackFunc_t m_LogCallback;
 
     /// Logging callback type.

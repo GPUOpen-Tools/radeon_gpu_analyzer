@@ -375,6 +375,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\Src\DeviceInfo\DeviceInfoUtils.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommander.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderCL.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderDX.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderOpenGL.cpp" />

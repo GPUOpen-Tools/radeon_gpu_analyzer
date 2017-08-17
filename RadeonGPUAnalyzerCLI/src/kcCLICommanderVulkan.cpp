@@ -95,6 +95,9 @@ void kcCLICommanderVulkan::Version(Config& config, LoggingCallBackFunc_t callbac
 
 void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback)
 {
+    m_LogCallback = callback;
+    bool  status = true;
+
     // Output stream.
     std::stringstream logMsg;
 
@@ -140,6 +143,12 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
 
     // Options to be passed to the backend.
     VulkanOptions vulkanOptions(config.m_SourceLanguage);
+
+    if (!shouldAbort && !config.m_InputFile.empty())
+    {
+        shouldAbort = !kcUtils::ValidateShaderFileName("", config.m_InputFile, logMsg);
+        vulkanOptions.m_stagelessInputFile = config.m_InputFile;
+    }
 
     // Validate the input shaders.
     if (!shouldAbort && isVertexShaderPresent)
@@ -215,10 +224,9 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
         m_pVulkanBuilder->SetLog(callback);
 
         // If the user did not specify any device, we should use all supported devices.
-        std::vector<std::string> targetDecives;
-        bool shouldUseAlldevices = config.m_ASICs.empty();
+        std::set<std::string> targetDevices;
 
-        if (shouldUseAlldevices && m_supportedDevicesCache.empty())
+        if (m_supportedDevicesCache.empty())
         {
             // We need to populate the list of supported devices.
             bool isDeviceListExtracted = GetSupportedDevices();
@@ -233,18 +241,9 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
 
         if (!shouldAbort)
         {
-            if (!shouldUseAlldevices)
-            {
-                // If the user specified a device, go with the user's choice.
-                targetDecives = config.m_ASICs;
-            }
-            else
-            {
-                // Otherwise, use the cached list of all supported devices.
-                std::copy(m_supportedDevicesCache.begin(), m_supportedDevicesCache.end(), std::back_inserter(targetDecives));
-            }
+            InitRequestedAsicList(config, m_supportedDevicesCache, targetDevices);
 
-            for (const std::string& device : targetDecives)
+            for (const std::string& device : targetDevices)
             {
                 // Generate the output message.
                 logMsg << KA_CLI_STR_COMPILING << device;
@@ -257,34 +256,41 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                 {
                     // We must generate the ISA binaries (we will delete them in the end of the process).
                     vulkanOptions.m_isAmdIsaBinariesRequired = true;
-                    kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_BinaryOutputFile, device, vulkanOptions.m_isaBinaryFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_BinaryOutputFile, device, vulkanOptions.m_isaBinaryFiles);
 
                     vulkanOptions.m_isAmdIsaDisassemblyRequired = true;
-                    kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ISAFile, device, vulkanOptions.m_isaDisassemblyOutputFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ISAFile, device, vulkanOptions.m_isaDisassemblyOutputFiles);
                 }
 
                 if (isLiveRegAnalysisRequired)
                 {
                     vulkanOptions.m_isLiveRegisterAnalysisRequired = true;
-                    kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_LiveRegisterAnalysisFile, device, vulkanOptions.m_liveRegisterAnalysisOutputFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_LiveRegisterAnalysisFile, device, vulkanOptions.m_liveRegisterAnalysisOutputFiles);
                 }
 
                 if (isCfgRequired)
                 {
                     vulkanOptions.m_isControlFlowGraphRequired = true;
-                    kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ControlFlowGraphFile, device, vulkanOptions.m_controlFlowGraphOutputFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ControlFlowGraphFile, device, vulkanOptions.m_controlFlowGraphOutputFiles);
                 }
 
                 if (isIlRequired)
                 {
                     vulkanOptions.m_isAmdPalIlDisassemblyRequired = true;
-                    kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ILFile, device, vulkanOptions.m_pailIlDisassemblyOutputFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ILFile, device, vulkanOptions.m_pailIlDisassemblyOutputFiles);
                 }
 
                 if (isStatisticsRequired)
                 {
                     vulkanOptions.m_isScStatsRequired = true;
-                    kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_AnalysisFile, device, vulkanOptions.m_scStatisticsOutputFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_AnalysisFile, device, vulkanOptions.m_scStatisticsOutputFiles);
+                }
+
+                if (!status)
+                {
+                    logMsg << STR_ERR_FAILED_ADJUST_FILE_NAMES << std::endl;
+                    shouldAbort = true;
+                    break;
                 }
 
                 // A handle for canceling the build. Currently not in use.
@@ -403,15 +409,28 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                         }
                     }
                 }
-                else if (compilationStatus == beStatus_VulkanAmdspvCompilationFailure)
+                else
                 {
                     logMsg << KA_CLI_STR_STATUS_FAILURE << std::endl;
-                    logMsg << buildErrorLog.asASCIICharArray();
-                }
-                else if (compilationStatus == beStatus_VulkanAmdspvLaunchFailure)
-                {
-                    logMsg << KA_CLI_STR_STATUS_FAILURE << std::endl;
-                    logMsg << STR_ERR_CANNOT_INVOKE_COMPILER << std::endl;
+
+                    switch (compilationStatus)
+                    {
+                    case beStatus_VulkanAmdspvCompilationFailure:
+                        logMsg << buildErrorLog.asASCIICharArray();
+                        break;
+                    case beStatus_VulkanAmdspvLaunchFailure:
+                        logMsg << STR_ERR_CANNOT_INVOKE_COMPILER << std::endl;
+                        break;
+                    case beStatus_VulkanNoInputFile:
+                        logMsg << STR_ERR_NO_INPUT_FILE << std::endl;
+                        break;
+                    case beStatus_VulkanMixedInputFiles:
+                        logMsg << STR_ERR_MIXED_INPUT_FILES << std::endl;
+                        break;
+                    case beStatus_FailedOutputVerification:
+                        logMsg << STR_ERR_FAILED_OUTPUT_FILE_VERIFICATION << std::endl;
+                        break;
+                    }
                 }
 
                 // Print the message for the current device.

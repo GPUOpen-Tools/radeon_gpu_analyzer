@@ -136,6 +136,10 @@ int main(int argc, char* argv[])
             PrintAsicList();
             break;
 
+        case Config::ccListAdapters:
+            pMyCommander->ListAdapters(config, loggingCallback);
+            break;
+
         case Config::ccVersion:
             pMyCommander->Version(config, loggingCallback);
             break;

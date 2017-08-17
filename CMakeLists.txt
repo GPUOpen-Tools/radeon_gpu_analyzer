@@ -51,6 +51,12 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 
 endif()
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CONFIGURATION_TYPES "Debug")
+else()
+    set(CMAKE_CONFIGURATION_TYPES "Release")
+endif()
+
 # Continue to the following subdirectories
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTBaseTools CMAKE_CURRENT_BINARY_DIR}/../Common/Src/AMDTBaseTools)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTOSWrappers CMAKE_CURRENT_BINARY_DIR}/../Common/Src/AMDTOSWrappers)

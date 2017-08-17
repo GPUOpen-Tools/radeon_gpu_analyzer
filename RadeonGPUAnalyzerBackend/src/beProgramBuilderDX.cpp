@@ -14,6 +14,7 @@
 #include <RadeonGPUAnalyzerBackend/include/beD3DIncludeManager.h>
 #include <RadeonGPUAnalyzerBackend/include/beProgramBuilderDX.h>
 #include <RadeonGPUAnalyzerBackend/include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
 #include <DX10AsmInterface.h>
 #include <DX10AsmBuffer.h>
 #include <DeviceInfoUtils.h>
@@ -25,6 +26,8 @@
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osDirectory.h>
 #include <AMDTOSWrappers/Include/osModule.h>
+#include <AMDTOSWrappers/Include/osApplication.h>
+#include <AMDTOSWrappers/Include/osProcess.h>
 
 using namespace std;
 using namespace D3D10ShaderObject;
@@ -40,6 +43,12 @@ using namespace xlt;
 // device data and meta-data handling mechanism is revised.
 const char* DEVICE_NAME_TONGA    = "Tonga";
 const char* DEVICE_NAME_ICELAND  = "Iceland";
+
+const char* AMD_ADAPTER_TOKEN                = "AMD";
+const char* RGA_DX11_DRIVER_EXECUTABLE_PATH  = "x64\\RGADX11.exe";
+const char* RGA_DX11_DRIVER_GET_ADAPTERS_ARG = "--list-adapters";
+const char* RGA_DX11_DRIVER_GET_ADAPTER_INFO = "--get-adapter-info";
+const char* RGA_DX11_DRIVER_ERROR_TOKEN      = "Error";
 
 // This function returns true if the given device is
 // affected by the HW issue which forces an allocation of
@@ -155,14 +164,43 @@ beProgramBuilderDX::~beProgramBuilderDX(void)
     m_TheAMDDXXModule.UnloadModule();
 }
 
-beKA::beStatus beProgramBuilderDX::Initialize(const string& msD3DCompilerModuleToLoad/* = ""*/)
+beKA::beStatus beProgramBuilderDX::Initialize(const std::string& dxxModuleName, const std::string& compilerModuleName)
 {
     beStatus beRet = beStatus_SUCCESS;
+    std::string  compilerDllName = compilerModuleName;
+
+    if (compilerDllName.empty())
+    {
+        // This solves the VS extension issue where devenv.exe looked for the D3D compiler
+        // at its own directory, instead of looking for it at CodeXL's binaries directory.
+        osFilePath defaultCompilerFilePath;
+
+        // Get CodeXL's binaries directory. Both the 32 and 64-bit versions of d3dcompiler are bundled with CodeXL.
+        // We use the 32-bit version by default
+        bool isOk = osGetCurrentApplicationDllsPath(defaultCompilerFilePath, OS_I386_ARCHITECTURE);
+
+        if (isOk)
+        {
+            // Create the full path to the default D3D compiler.
+            defaultCompilerFilePath.setFileName(SA_BE_STR_HLSL_optionsDefaultCompilerFileName);
+            defaultCompilerFilePath.setFileExtension(SA_BE_STR_HLSL_optionsDefaultCompilerFileExtension);
+            compilerDllName = defaultCompilerFilePath.asString().asASCIICharArray();
+        }
+    }
 
     // Clear the outputs of former builds (if there are any).
     ClearFormerBuildOutputs();
 
-    // load AMD module
+    // load AMD DXX module
+    if (!dxxModuleName.empty())
+    {
+        if (m_TheAMDDXXModule.IsLoaded())
+        {
+            m_TheAMDDXXModule.UnloadModule();
+        }
+        m_TheAMDDXXModule.LoadModule(dxxModuleName);
+    }
+
     if (!m_TheAMDDXXModule.IsLoaded())
     {
         // Notice: This message receives an extra "\n", since later in the call chain, one is removed. We do want to remove them for
@@ -173,14 +211,14 @@ beKA::beStatus beProgramBuilderDX::Initialize(const string& msD3DCompilerModuleT
         beRet = beStatus_AMDDXX_MODULE_NOT_LOADED;
     }
 
-    // load ms module
+    // load D3D compiler module
     if (beRet == beStatus_SUCCESS)
     {
         bool isDllLoad = false;
         int errorCode = 0;
 
         // If the user did not specify a default D3D compiler, use the one in the sub-folder.
-        std::string fixedMsD3DModuleName = msD3DCompilerModuleToLoad;
+        std::string fixedMsD3DModuleName = compilerDllName;
         if (fixedMsD3DModuleName.empty())
         {
 #if _WIN64
@@ -235,8 +273,8 @@ beKA::beStatus beProgramBuilderDX::Initialize(const string& msD3DCompilerModuleT
             if (!isDllLoad)
             {
                 // Take the relevant module's name.
-                const char* pModuleName = (msD3DCompilerModuleToLoad.length() > 0) ?
-                                          msD3DCompilerModuleToLoad.c_str() : D3DCompileModule::s_DefaultModuleName;
+                const char* pModuleName = (compilerDllName.length() > 0) ?
+                                           compilerDllName.c_str() : D3DCompileModule::s_DefaultModuleName;
                 
                 // This flag will be true if the given D3D module's bitness is 64-bit, while
                 // this process' bitness is 32-bit.
@@ -1121,6 +1159,25 @@ bool beProgramBuilderDX::GetDeviceElfBinPair(const string& deviceName, CelfBinar
     return result;
 }
 
+static beKA::beStatus  InvokeDX11Driver(const std::string & args, std::string& output)
+{
+    beKA::beStatus  status = beStatus_dxDriverLaunchFailure;
+    std::stringstream  cmdLine;
+    bool  cancelSignal = false;
+    gtString  gtOutput;
+    cmdLine << RGA_DX11_DRIVER_EXECUTABLE_PATH << " " << args;
+
+    bool  result = osExecAndGrabOutput(cmdLine.str().c_str(), cancelSignal, gtOutput);
+
+    if (result)
+    {
+        status = beStatus_SUCCESS;
+        output = gtOutput.asASCIICharArray();
+    }
+    
+    return status;
+}
+
 CElf* beProgramBuilderDX::GetDeviceElf(const string& deviceName) const
 {
     CElf* pRet = nullptr;
@@ -1150,5 +1207,64 @@ vector<char> beProgramBuilderDX::GetDeviceBinaryElf(const string& deviceName) co
 void beProgramBuilderDX::SetPublicDeviceNames(const std::set<std::string>& publicDeviceNames)
 {
     m_publicDeviceNames = publicDeviceNames;
+}
+
+bool beProgramBuilderDX::GetSupportedDisplayAdapterNames(std::vector<std::string>& adapterNames)
+{
+    bool  result = false;
+    std::string  driverOut;
+
+    beKA::beStatus  status = InvokeDX11Driver(RGA_DX11_DRIVER_GET_ADAPTERS_ARG, driverOut);
+
+    result = (status == beKA::beStatus_SUCCESS && !driverOut.empty());
+
+    if (result)
+    {
+        if (driverOut.find(RGA_DX11_DRIVER_ERROR_TOKEN) == std::string::npos)
+        {
+            std::stringstream  outStream;
+            std::string  adapterName;
+            outStream << driverOut;
+            while (std::getline(outStream, adapterName, '\n'))
+            {
+                adapterNames.push_back(adapterName);
+            }
+        }
+        else
+        {
+            result = false;
+        }
+    }
+
+    return result;
+}
+
+bool beProgramBuilderDX::GetDXXModulePathForAdapter(int adapterID, std::string& adapterName, std::string& dxxModulePath)
+{
+    bool  result = false;
+    std::string  driverOut;
+    std::stringstream  args;
+    args << RGA_DX11_DRIVER_GET_ADAPTER_INFO << " " << adapterID;
+
+    beKA::beStatus  status = InvokeDX11Driver(args.str().c_str(), driverOut);
+
+    result = (status == beKA::beStatus_SUCCESS && !driverOut.empty());
+
+    if (result)
+    {
+        if (driverOut.find(RGA_DX11_DRIVER_ERROR_TOKEN) == std::string::npos)
+        {
+            std::stringstream  outStream;
+            outStream << driverOut;
+
+            result = (std::getline(outStream, adapterName, '\n') && std::getline(outStream, dxxModulePath));
+        }
+        else
+        {
+            result = false;
+        }
+    }
+
+    return result;
 }
 #endif

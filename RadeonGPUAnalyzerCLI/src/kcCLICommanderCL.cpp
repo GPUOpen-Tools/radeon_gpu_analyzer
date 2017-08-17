@@ -28,6 +28,18 @@
 // Backend.
 #include <DeviceInfoUtils.h>
 
+// *****************************************
+// *** INTERNALLY LINKED SYMBOLS - START ***
+// *****************************************
+
+static const std::string  STR_GFX804_TARGET_NAME = "gfx804";
+
+static const std::set<std::string>  UnsupportedTargets = { STR_GFX804_TARGET_NAME };
+
+// ***************************************
+// *** INTERNALLY LINKED SYMBOLS - END ***
+// ***************************************
+
 kcCLICommanderCL::kcCLICommanderCL() : m_isAllKernels(false)
 {
 
@@ -112,7 +124,8 @@ bool kcCLICommanderCL::Init(const Config& config, LoggingCallBackFunc_t callback
     if (ret)
     {
         // Initialize the devices list.
-        beRet = be->theOpenCLBuilder()->GetDevices(m_devices);
+        std::set<std::string>  devices;
+        beRet = be->theOpenCLBuilder()->GetDevices(devices);
         ret = (beRet == beKA::beStatus_SUCCESS);
 
         // Only external (non-placeholder) and based on CXL version devices should be used.
@@ -125,7 +138,7 @@ bool kcCLICommanderCL::Init(const Config& config, LoggingCallBackFunc_t callback
             {
                 for (vector<GDT_GfxCardInfo>::const_iterator it = m_table.begin(); it != m_table.end(); ++it)
                 {
-                    if ((m_devices.find(it->m_szCALName) != m_devices.end()))
+                    if ((devices.find(it->m_szCALName) != devices.end()) && UnsupportedTargets.count(it->m_szCALName) == 0)
                     {
                         m_externalDevices.insert(it->m_szCALName);
                     }
@@ -204,100 +217,6 @@ void kcCLICommanderCL::Version(Config& config, LoggingCallBackFunc_t callback)
     LogCallBack(s_Log.str());
 }
 
-bool kcCLICommanderCL::InitRequestedAsicList(const Config& config)
-{
-    bool bRet = (m_externalDevices.empty() ? false : true);
-
-    if (!config.m_ASICs.empty())
-    {
-        // Take the devices which the user selected.
-        m_asics = std::set<std::string>(config.m_ASICs.begin(), config.m_ASICs.end());
-    }
-    else
-    {
-        // Take all public devices.
-        m_asics = m_externalDevices;
-    }
-
-    if (!m_asics.empty() && !m_externalDevices.empty())
-    {
-        // Start by mapping DeviceID and Marketing Name to CAL name.
-        // Do this in 2 steps: find the changes, make the changes.
-        // Do this because STL iterators don't handle changes while iterating.
-        set<string> toBeAdded;
-        set<string> toBeErased;
-
-        for (set<string>::const_iterator asicIter = m_asics.begin(); asicIter != m_asics.end(); ++asicIter)
-        {
-            if (be->GetDeviceInfo(*asicIter, NULL) == beStatus_SUCCESS)
-            {
-                // this is a CAL name.
-                continue;
-            }
-
-            // Try to find a DeviceID
-            // First check for a valid hex number.
-            if (asicIter->find_first_not_of("0123456789abcdefABCDEF") == string::npos)
-            {
-                istringstream idStringStream(*asicIter);
-                size_t id;
-                idStringStream >> hex >> id;
-
-                GDT_GfxCardInfo info;
-
-                // TODO: should look up by device id/ rev id pair
-                if (be->GetDeviceInfo(id, info) == beStatus_SUCCESS)
-                {
-                    toBeErased.insert(*asicIter);
-                    toBeAdded.insert(info.m_szCALName);
-                    continue;
-                }
-            }
-
-            // There are duplicate marketing names with different ASICs.
-            // I think the right thing to do is add all of the possible ASICs.
-            vector<GDT_GfxCardInfo> cardInfo;
-
-            if (be->GetDeviceInfoMarketingName(*asicIter, cardInfo) == beStatus_SUCCESS)
-            {
-                toBeErased.insert(*asicIter);
-
-                for (vector<GDT_GfxCardInfo>::const_iterator infoIter = cardInfo.begin(); infoIter != cardInfo.end(); ++infoIter)
-                {
-                    toBeAdded.insert(infoIter->m_szCALName);
-                }
-
-                continue;
-            }
-        }
-
-        // Now that we have finished walking "asics", we can erase and add things.
-        for (set<string>::const_iterator asicIter = toBeErased.begin(); asicIter != toBeErased.end(); ++asicIter)
-        {
-            m_asics.erase(*asicIter);
-        }
-
-        for (set<string>::const_iterator asicIter = toBeAdded.begin(); asicIter != toBeAdded.end(); ++asicIter)
-        {
-            m_asics.insert(*asicIter);
-        }
-
-        for (set<string>::const_iterator asicIter = m_asics.begin(); asicIter != m_asics.end(); ++asicIter)
-        {
-            if (m_externalDevices.find(*asicIter) == m_externalDevices.end())
-            {
-                std::stringstream s_Log;
-                s_Log << "Error: '" << *asicIter << "' is not a known device ASIC." << endl;
-                s_Log << "  Use --list-asics option to find known device ASICs." << endl;
-                LogCallBack(s_Log.str());
-                bRet = false;
-            }
-        }
-    }
-
-    return bRet;
-}
-
 void kcCLICommanderCL::ListAsics(Config& config, LoggingCallBackFunc_t callback)
 {
     if (!Init(config, callback))
@@ -321,7 +240,7 @@ void kcCLICommanderCL::RunCompileCommands(const Config& config, LoggingCallBackF
 {
     if (Init(config, callback))
     {
-        if (InitRequestedAsicList(config))
+        if (InitRequestedAsicList(config, m_externalDevices, m_asics))
         {
             if (Compile(config))
             {
@@ -352,16 +271,18 @@ void kcCLICommanderCL::Analysis(const Config& config)
         return;
     }
 
-    if (config.m_Function.size() == 0)
+    if (m_requiredKernels.size() == 0)
     {
         std::stringstream s_Log;
-        s_Log << "Error: Must specify kernel name to get Analysis text" << endl;
+        s_Log << STR_ERR_NO_KERNELS_FOR_ANALYSIS << endl;
         LogCallBack(s_Log.str());
     }
 
     if ((config.m_SuppressSection.size() > 0) && (config.m_BinaryOutputFile.size() == 0))
     {
-        LogCallBack("Warning: --suppress option is valid only with output binary\n");
+        std::stringstream s_Log;
+        s_Log << STR_WRN_CL_SUPPRESS_WIHTOUT_BINARY << std::endl;
+        LogCallBack(s_Log.str());
     }
 
     // Get the separator for CSV list items.
@@ -540,7 +461,16 @@ void kcCLICommanderCL::GetILText(const Config& config)
                         {
                             // Inform the user.
                             std::stringstream msg;
-                            msg << STR_ERR_CANNOT_DISASSEMBLE_AMD_IL << " for " << deviceName << "(kernel: " << kernelName << ")." << std::endl;
+                            msg << STR_ERR_CANNOT_DISASSEMBLE_AMD_IL << " for " << deviceName;
+                            
+                            // If we have the kernel name - specify it in the error message.
+                            if (!kernelName.empty())
+                            {
+                                msg << " (kernel: " << kernelName << ")";
+                            }
+
+                            // Print the message.
+                            msg << "." << std::endl;
                             m_LogCallback(msg.str().c_str());
                         }
 
@@ -620,7 +550,16 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                     {
                         // Inform the user.
                         std::stringstream msg;
-                        msg << STR_ERR_CANNOT_DISASSEMBLE_ISA << " for " << deviceName << "(kernel: " << kernelName << ")." << std::endl;
+                        msg << STR_ERR_CANNOT_DISASSEMBLE_ISA << " for " << deviceName;
+
+                        // If we have the kernel name - specify it in the error message.
+                        if (!kernelName.empty())
+                        {
+                            msg << " (kernel: " << kernelName << ")";
+                        }
+
+                        // Print the message.
+                        msg << "." << std::endl;
                         m_LogCallback(msg.str().c_str());
                     }
 
@@ -775,7 +714,8 @@ void kcCLICommanderCL::InitRequiredKernels(const Config& config, const std::set<
         const std::string& deviceName = *firstDevice;
         std::string requestedKernel = config.m_Function;
         std::transform(requestedKernel.begin(), requestedKernel.end(), requestedKernel.begin(), ::tolower);
-        m_isAllKernels = (requestedKernel.compare("all") == 0);
+        // Process all kernels by default or if all kernels are explicitly requested.
+        m_isAllKernels = (requestedKernel.compare("all") == 0 || requestedKernel.empty());
         beProgramBuilderOpenCL* pClBuilder = be->theOpenCLBuilder();
 
         if (pClBuilder != NULL)

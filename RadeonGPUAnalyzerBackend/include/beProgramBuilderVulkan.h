@@ -27,6 +27,9 @@ struct VulkanOptions : public beKA::CompileOptions
     // The target devices.
     std::string m_targetDeviceName;
 
+    // The generic input file name.
+    std::string m_stagelessInputFile;
+
     // The input shader file names.
     beProgramPipeline m_pipelineShaders;
 
@@ -101,7 +104,7 @@ public:
 
     virtual bool CompileOK(std::string& device) override;
 
-    virtual beKA::beStatus Initialize(const std::string& sDllModule = "") override;
+    beKA::beStatus Initialize(const std::string& sDllModule = "");
 
     beKA::beStatus Compile(const VulkanOptions& vulkanOptions, bool& cancelSignal, gtString& buildLog);
 

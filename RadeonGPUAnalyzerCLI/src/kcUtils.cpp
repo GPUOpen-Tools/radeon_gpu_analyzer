@@ -20,6 +20,8 @@
 
 using namespace beKA;
 
+static bool GetRGATempDir(osDirectory & dir);
+
 bool kcUtils::ValidateShaderFileName(const char* shaderType, const std::string& shaderFileName, std::stringstream& logMsg)
 {
     bool isShaderNameValid = true;
@@ -57,7 +59,8 @@ bool kcUtils::ValidateShaderOutputDir(const std::string& outputFileName, std::st
 }
 
 
-void kcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& baseOutputFileName, const std::string& device, beProgramPipeline& pipelineFiles)
+bool kcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& baseOutputFileName,
+                                                     const std::string& device, beProgramPipeline& pipelineFiles)
 {
     // Clear the existing pipeline.
     pipelineFiles.ClearAll();
@@ -67,47 +70,69 @@ void kcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& baseOutp
     outputFileAsGtStr << baseOutputFileName.c_str();
     osFilePath outputFilePath(outputFileAsGtStr);
 
-    // Directory.
+    if (!baseOutputFileName.empty() && outputFilePath.isDirectory())
+    {
+        osDirectory outputDir(outputFileAsGtStr);
+        outputFilePath.setFileDirectory(outputDir);
+        outputFilePath.clearFileName();
+        outputFilePath.clearFileExtension();
+    }
+
     osDirectory outputDir;
-    outputFilePath.getFileDirectory(outputDir);
+    bool  status = true;
 
-    // File name.
-    gtString originalFileName;
-    outputFilePath.getFileName(originalFileName);
-
-    // File extension.
-    gtString originalFileExtension;
-    outputFilePath.getFileExtension(originalFileExtension);
-
-    // Make the adjustments.
-    gtString fixedFileName;
-    fixedFileName << outputDir.directoryPath().asString(true) << device.c_str() << "_";
-    pipelineFiles.m_vertexShader << fixedFileName << KA_CLI_STR_VERTEX_ABBREVIATION;
-    pipelineFiles.m_tessControlShader << fixedFileName << KA_CLI_STR_TESS_CTRL_ABBREVIATION;
-    pipelineFiles.m_tessEvaluationShader << fixedFileName << KA_CLI_STR_TESS_EVAL_ABBREVIATION;
-    pipelineFiles.m_geometryShader << fixedFileName << KA_CLI_STR_GEOMETRY_ABBREVIATION;
-    pipelineFiles.m_fragmentShader << fixedFileName << KA_CLI_STR_FRAGMENT_ABBREVIATION;
-    pipelineFiles.m_computeShader << fixedFileName << KA_CLI_STR_COMPUTE_ABBREVIATION;
-
-    if (!originalFileName.isEmpty())
+    // Use system temp folder if no path is provided by a user.
+    if (baseOutputFileName.empty())
     {
-        pipelineFiles.m_vertexShader << "_" << originalFileName.asASCIICharArray();
-        pipelineFiles.m_tessControlShader << "_" << originalFileName.asASCIICharArray();
-        pipelineFiles.m_tessEvaluationShader << "_" << originalFileName.asASCIICharArray();
-        pipelineFiles.m_geometryShader << "_" << originalFileName.asASCIICharArray();
-        pipelineFiles.m_fragmentShader << "_" << originalFileName.asASCIICharArray();
-        pipelineFiles.m_computeShader << "_" << originalFileName.asASCIICharArray();
+        status = GetRGATempDir(outputDir);
+    }
+    else
+    {
+        outputFilePath.getFileDirectory(outputDir);
     }
 
-    if (!originalFileExtension.isEmpty())
+    if (status)
     {
-        pipelineFiles.m_vertexShader << "." << originalFileExtension.asASCIICharArray();
-        pipelineFiles.m_tessControlShader << "." << originalFileExtension.asASCIICharArray();
-        pipelineFiles.m_tessEvaluationShader << "." << originalFileExtension.asASCIICharArray();
-        pipelineFiles.m_geometryShader << "." << originalFileExtension.asASCIICharArray();
-        pipelineFiles.m_fragmentShader << "." << originalFileExtension.asASCIICharArray();
-        pipelineFiles.m_computeShader << "." << originalFileExtension.asASCIICharArray();
+        // File name.
+        gtString originalFileName;
+        outputFilePath.getFileName(originalFileName);
+
+        // File extension.
+        gtString originalFileExtension;
+        outputFilePath.getFileExtension(originalFileExtension);
+
+        // Make the adjustments.
+        gtString fixedFileName;
+        fixedFileName << outputDir.directoryPath().asString(true) << device.c_str() << "_";
+        pipelineFiles.m_vertexShader << fixedFileName << KA_CLI_STR_VERTEX_ABBREVIATION;
+        pipelineFiles.m_tessControlShader << fixedFileName << KA_CLI_STR_TESS_CTRL_ABBREVIATION;
+        pipelineFiles.m_tessEvaluationShader << fixedFileName << KA_CLI_STR_TESS_EVAL_ABBREVIATION;
+        pipelineFiles.m_geometryShader << fixedFileName << KA_CLI_STR_GEOMETRY_ABBREVIATION;
+        pipelineFiles.m_fragmentShader << fixedFileName << KA_CLI_STR_FRAGMENT_ABBREVIATION;
+        pipelineFiles.m_computeShader << fixedFileName << KA_CLI_STR_COMPUTE_ABBREVIATION;
+
+        if (!originalFileName.isEmpty())
+        {
+            pipelineFiles.m_vertexShader << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_tessControlShader << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_tessEvaluationShader << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_geometryShader << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_fragmentShader << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_computeShader << "_" << originalFileName.asASCIICharArray();
+        }
+
+        if (!originalFileExtension.isEmpty())
+        {
+            pipelineFiles.m_vertexShader << "." << originalFileExtension.asASCIICharArray();
+            pipelineFiles.m_tessControlShader << "." << originalFileExtension.asASCIICharArray();
+            pipelineFiles.m_tessEvaluationShader << "." << originalFileExtension.asASCIICharArray();
+            pipelineFiles.m_geometryShader << "." << originalFileExtension.asASCIICharArray();
+            pipelineFiles.m_fragmentShader << "." << originalFileExtension.asASCIICharArray();
+            pipelineFiles.m_computeShader << "." << originalFileExtension.asASCIICharArray();
+        }
     }
+    
+    return status;
 }
 
 std::string kcUtils::DeviceStatisticsToCsvString(const Config& config, const std::string& device, const beKA::AnalysisData& statistics)
@@ -449,36 +474,200 @@ void kcUtils::ConstructOutputFileName(const std::string& baseOutputFileName, con
 gtString kcUtils::ConstructTempFileName(const gtString& prefix, const gtString & ext)
 {
     const unsigned int  MAX_ATTEMPTS = 1024;
-    osFilePath tempFilePath(osFilePath::OS_TEMP_DIRECTORY);
-    gtString tempFileBaseName = prefix;
-    tempFileBaseName.appendUnsignedIntNumber(osGetCurrentProcessId());
-    gtString tempFileName = tempFileBaseName;
-    tempFileName.append(ext);
-    tempFilePath.setFileName(tempFileName);
+    osDirectory  rgaTempDir;
+    gtString  ret = L"";
 
-    uint32_t suffixNum = 0;
-    while (tempFilePath.exists() && suffixNum < MAX_ATTEMPTS)
+    if (GetRGATempDir(rgaTempDir))
     {
-        tempFileName = tempFileBaseName;
-        tempFileName.appendUnsignedIntNumber(suffixNum++);
+        if (!rgaTempDir.exists())
+        {
+            rgaTempDir.create();
+        }
+
+        osFilePath tempFilePath;
+        tempFilePath.setFileDirectory(rgaTempDir);
+
+        gtString tempFileBaseName = prefix;
+        tempFileBaseName.appendUnsignedIntNumber(osGetCurrentProcessId());
+        gtString tempFileName = tempFileBaseName;
         tempFileName.append(ext);
         tempFilePath.setFileName(tempFileName);
+
+        uint32_t suffixNum = 0;
+        while (tempFilePath.exists() && suffixNum < MAX_ATTEMPTS)
+        {
+            tempFileName = tempFileBaseName;
+            tempFileName.appendUnsignedIntNumber(suffixNum++);
+            tempFileName.append(ext);
+            tempFilePath.setFileName(tempFileName);
+        }
+
+        ret = suffixNum < MAX_ATTEMPTS ? tempFilePath.asString() : L"";
     }
 
-    return suffixNum < MAX_ATTEMPTS ? tempFilePath.asString() : L"";
+    return ret;
 }
 
-bool kcUtils::GetMarketingNameToCodenameMapping(std::map<std::string, std::set<std::string>>& cardsMap)
+bool kcUtils::GetMarketingNameToCodenameMapping(DeviceNameMap& cardsMap)
 {
     bool ret = beUtils::GetMarketingNameToCodenameMapping(cardsMap);
     return ret;
 }
 
-kcUtils::kcUtils()
+// Converts "srcName" string to lowercase and removes all spaces and '-'.
+// Stores the result in "dstName".
+static void ReduceDeviceName(std::string& name)
 {
+    std::transform(name.begin(), name.end(), name.begin(), [](const char& c) {return std::tolower(c);});
+    name.erase(std::remove_if(name.begin(), name.end(), [](const char& c) {return (std::isspace(c) || c == '-');}), name.end());
 }
 
-
-kcUtils::~kcUtils()
+// Helper function that interprets the matched devices found by the "kcUtils::FindGPUArchName()".
+// Returns the message in "outMessage" string.
+static bool ResolveMatchedDevices(const kcUtils::DeviceNameMap& matchedDevices, const std::string& device, std::string& outMessage)
 {
+    bool  status = false;
+    std::stringstream  msg;
+
+    // Routine printing the architecture name and all its device names.
+    auto  PrintArchAndDevices = [&](const kcUtils::DeviceNameMap::value_type& arch)
+    {
+        msg << arch.first << std::endl;
+        for (const std::string& marketingName : arch.second)
+        {
+            msg << "\t" << marketingName << std::endl;
+        }
+    };
+
+    if (matchedDevices.size() == 0)
+    {
+        // No matching architectures found. Failure.
+        msg << STR_ERR_COULD_NOT_DETECT_TARGET << device << std::endl;
+    }
+    else if (matchedDevices.size() == 1)
+    {
+        // Found exactly one GPU architectire. Success.
+        msg << STR_TARGET_DETECTED << std::endl << std::endl;
+        PrintArchAndDevices(*(matchedDevices.begin()));
+        status = true;
+    }
+    else
+    {
+        // Found multiple GPU architectures. Failure.
+        msg << STR_ERR_AMBIGUOUS_TARGET << device << std::endl << std::endl;
+        for (auto& arch : matchedDevices)
+        {
+            PrintArchAndDevices(arch);
+        }
+    }
+    msg << std::endl;
+    outMessage = msg.str();
+
+    return status;
+}
+
+bool kcUtils::FindGPUArchName(const std::string & deviceName, std::string & archName, std::string& msg)
+{
+    bool  status = false;
+    const char* FILTER_INDICATOR_1 = ":";
+    const char* FILTER_INDICATOR_2 = "Not Used";
+
+    // Mappings  "architecture <--> marketing names"
+    DeviceNameMap  matchedDevices, cardsMapping;
+
+    // Transform the device name to lower case and remove spaces.
+    std::string  reducedName = deviceName;
+    ReduceDeviceName(reducedName);
+
+    bool rc = kcUtils::GetMarketingNameToCodenameMapping(cardsMapping);
+
+    // Walk over all known architectures and devices.
+    if (rc && !cardsMapping.empty())
+    {
+        for (const auto& pair : cardsMapping)
+        {
+            const std::string& archName = pair.first;
+            std::string  reducedArchName = archName;
+            ReduceDeviceName(reducedArchName);
+
+            // If we found a match with an arch name -- add it to the list of matched archs and continue.
+            // Otherwise, look at the marketing device names.
+            if (reducedArchName.find(reducedName) != std::string::npos)
+            {
+                // Put the found arch with an all its devices into the "matchedArchs" map.
+                // Filter out the devices with code names and unused names.
+                std::set<std::string>& deviceList = matchedDevices[archName];
+                for (const std::string& device : pair.second)
+                {
+                    if (device.find(FILTER_INDICATOR_1) == std::string::npos && device.find(FILTER_INDICATOR_2) == std::string::npos)
+                    {
+                        deviceList.emplace(device);
+                    }
+                }
+            }
+            else
+            {
+                bool  addedArch = false;
+
+                for (const std::string& marketingName : pair.second)
+                {
+                    // We do not want to display names that contain these strings.
+                    if (marketingName.find(FILTER_INDICATOR_1) == std::string::npos && marketingName.find(FILTER_INDICATOR_2) == std::string::npos)
+                    {
+                        std::string reducedMarketingName = marketingName;
+                        ReduceDeviceName(reducedMarketingName);
+
+                        if (reducedMarketingName.find(reducedName) != std::string::npos)
+                        {
+                            // Found a match with the marketing name -- add it to the device list corresponding to the "archName" architecture.
+                            if (!addedArch)
+                            {
+                                matchedDevices[archName] = std::set<std::string>();
+                                addedArch = true;
+                            }
+                            matchedDevices[archName].emplace(marketingName);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Interpret the matched names.
+    if (ResolveMatchedDevices(matchedDevices, deviceName, msg))
+    {
+        archName = (*(matchedDevices.begin())).first;
+        status = true;
+    }
+    
+    return status;
+}
+
+// Returns a subdirectory of the OS temp directory where RGA keeps all temporary files.
+// Creates the subdirectory if it does not exists.
+bool GetRGATempDir(osDirectory & dir)
+{
+    const gtString AMD_RGA_TEMP_DIR_1 = L"GPUOpen";
+    const gtString AMD_RGA_TEMP_DIR_2 = L"rga";
+    bool  ret = true;
+
+    osFilePath tempDirPath(osFilePath::OS_TEMP_DIRECTORY);
+    tempDirPath.appendSubDirectory(AMD_RGA_TEMP_DIR_1);
+    tempDirPath.getFileDirectory(dir);
+    if (!dir.exists())
+    {
+        ret = dir.create();
+    }
+
+    if (ret)
+    {
+        tempDirPath.appendSubDirectory(AMD_RGA_TEMP_DIR_2);
+        tempDirPath.getFileDirectory(dir);
+        if (!dir.exists())
+        {
+            ret = dir.create();
+        }
+    }
+    
+    return ret;
 }

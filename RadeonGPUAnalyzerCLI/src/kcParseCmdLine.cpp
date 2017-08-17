@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string>
+#include <algorithm>
 #ifdef _WIN32
     #pragma warning (push, 3) // disable warning level 4 for boost
 #endif
@@ -61,18 +62,22 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         ;
 
         // DX Options
+        std::string  adaptersDesc = "List all of the supported display adapters that are installed on the system.\n" + std::string(STR_DX_ADAPTERS_HELP_COMMON_TEXT);
+        std::string  setAdaptDesc = "Specify the id of the display adapter whose driver you would like RGA to use.\n" + std::string(STR_DX_ADAPTERS_HELP_COMMON_TEXT);
+
         po::options_description dxOpt("DirectX Shader Analyzer options");
         dxOpt.add_options()
-        ("function,f",     po::value<string>(&config.m_Function), "D3D shader to compile, DX ASM shader.")
+        ("function,f", po::value<string>(&config.m_Function), "D3D shader to compile, DX ASM shader.")
         ("profile,p", po::value<string>(&config.m_Profile), "Profile to use for compilation.  REQUIRED.\nFor example: vs_5_0, ps_5_0, etc.")
-        ("DXFlags",        po::value<unsigned int>(&config.m_DXFlags),                   "Flags to pass to D3DCompile.")
-        ("DXLocation",     po::value<string>(&config.m_DXLocation),                      "Location to the D3DCompiler Dll required for compilation. If none is specified, the default D3D compiler that is bundled with the Analyzer will be used.")
-        ("FXC",            po::value<string>(&config.m_FXC),                             "FXC Command Line. Use full path and specify all arguments in \"\". For example:\n"
-         "   rga.exe  -f VsMain1 -s DXAsm -p vs_5_0 <Path>\\vsBlob.obj  --isa <Path>\\vsTest.isa --FXC \"<Path>\\fxc.exe /E VsMain1 /T vs_5_0 /Fo <Path>\\vsBlob.obj <Path>\\vsTest.fx\"\n "
-         "   In order to use it, DXAsm must be specified. /Fo switch must be used and output file must be the same as the input file for rga.")
+        ("DXFlags", po::value<unsigned int>(&config.m_DXFlags), "Flags to pass to D3DCompile.")
+        ("DXLocation", po::value<string>(&config.m_DXLocation), "Location to the D3DCompiler Dll required for compilation. If none is specified, the default D3D compiler that is bundled with the Analyzer will be used.")
+        ("FXC", po::value<string>(&config.m_FXC), "FXC Command Line. Use full path and specify all arguments in \"\". For example:\n"
+            "   rga.exe  -f VsMain1 -s DXAsm -p vs_5_0 <Path>\\vsBlob.obj  --isa <Path>\\vsTest.isa --FXC \"<Path>\\fxc.exe /E VsMain1 /T vs_5_0 /Fo <Path>\\vsBlob.obj <Path>\\vsTest.fx\"\n "
+            "   In order to use it, DXAsm must be specified. /Fo switch must be used and output file must be the same as the input file for rga.")
         ("DumpMSIntermediate", po::value<string>(&config.m_DumpMSIntermediate), "Location to save the MS Blob as text. ")
         ("intrinsics", "Enable AMD D3D11 Shader Intrinsics extension.")
-        ("adapters", "List all of the graphics adapters that are installed on the system.")
+        ("adapters", adaptersDesc.c_str())
+        ("set-adapter",    po::value<int>(&config.m_DXAdapter), setAdaptDesc.c_str())
         ("UAVSlot", po::value<int>(&config.m_UAVSlot), "This value should be in the range of [0,63].\nThe driver will use the slot to track which UAV is being used to specify the intrinsic. The UAV slot that is selected cannot be used for any other purposes.\nThis option is only relevant when AMD D3D11 Shader Intrinsics is enabled (specify --intrinsics).")
         ;
 
@@ -90,13 +95,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         ("debugil",      po::value<string>(&config.m_DebugILFile),             "Path to output Debug IL file(s).")
         ("metadata",     po::value<string>(&config.m_MetadataFile),            "Path to output Metadata file(s).\n"
          "Requires --" KERNEL_OPTION ".")
-        ("kernel,k",     po::value<string>(&config.m_Function),                "Kernel to analyze or make IL or ISA.\n")
+        ("kernel,k",     po::value<string>(&config.m_Function),                "Kernel to be compiled and analyzed. If not specified, all kernels will be targeted.\n")
         ("binary,b",     po::value<string>(&config.m_BinaryOutputFile),        "Path to binary output file(s).")
         ("retain-user-filename",                                               "Retain the output path and name for the generated binary file as specified without adding the target asic name.")
         ("suppress",     po::value<vector<string> >(&config.m_SuppressSection), "Section to omit from binary output.  Repeatable. Available options: .source, .amdil, .debugil, .debug_info, .debug_abbrev, .debug_line, .debug_pubnames, .debug_pubtypes, .debug_loc, .debug_str, .llvmir, .text\nNote: Debug sections are valid only with \"-g\" compile option")
-        ("OpenCLoption", po::value< vector<string> >(&config.m_OpenCLOptions), "OpenCL compiler options.  Repeatable.\n"
-         "\tTo display a list of options use a command like:\n"
-         "\trga k.cl --OpenCLoption=-h --asic Cypress");
+        ("OpenCLoption", po::value< vector<string> >(&config.m_OpenCLOptions), "OpenCL compiler options.  Repeatable.");
 
         // Vulkan-specific.
         po::options_description pipelinedOpt("");
@@ -148,7 +151,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
         if (vm.count("adapters"))
         {
-            config.m_ListGraphicsAdapters = true;
+            config.m_RequestedCommand = Config::ccListAdapters;
         }
 
         if (vm.count("retain-user-filename"))
@@ -179,7 +182,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.m_RequestedCommand = Config::ccCompile;
         }
-        else if (config.m_LiveRegisterAnalysisFile.size() > 0)
+        else if (config.m_LiveRegisterAnalysisFile.size() > 0 &&
+            config.m_LiveRegisterAnalysisFile.compare(KC_STR_DEFAULT_LIVEREG_OUTPUT_FILE_NAME) != 0)
         {
             config.m_RequestedCommand = Config::ccCompile;
         }
@@ -234,7 +238,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.m_SourceLanguage = SourceLanguage_GLSL_OpenGL;
         }
-        else if ((boost::iequals(config.m_SourceKind, Config::sourceKindVulkan)))
+        else if ((boost::iequals(config.m_SourceKind, Config::sourceKindGLSLVulkan)))
         {
             config.m_SourceLanguage = SourceLanguage_GLSL_Vulkan;
         }
@@ -367,16 +371,57 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_GLSL_Vulkan || 
             config.m_SourceLanguage == SourceLanguage_SPIRV_Vulkan || config.m_SourceLanguage == SourceLanguage_SPIRVTXT_Vulkan))
         {
+            // Get the mode name, and the relevant file extensions. We will use it when constructing the example string.
+            const char* FILE_EXT_SPV = "spv";
+            const char* FILE_EXT_SPV_TXT = "txt";
+            std::string rgaModeName;
+            std::string vertExt;
+            std::string fragExt;
+            switch (config.m_SourceLanguage)
+            {
+            case SourceLanguage_GLSL_Vulkan:
+                rgaModeName = Config::sourceKindGLSLVulkan;
+                vertExt = "vert";
+                fragExt = "frag";
+                break;
+            case SourceLanguage_SPIRV_Vulkan:
+                rgaModeName = Config::sourceKindSpirvBin;
+                vertExt = FILE_EXT_SPV;
+                fragExt = FILE_EXT_SPV;
+                break;
+            case SourceLanguage_SPIRVTXT_Vulkan:
+                rgaModeName = Config::sourceKindSpirvTxt;
+                vertExt = FILE_EXT_SPV_TXT;
+                fragExt = FILE_EXT_SPV_TXT;
+                break;
+            }
+
+            // Convert the mode name string to lower case for presentation.
+            std::transform(rgaModeName.begin(), rgaModeName.end(), rgaModeName.begin(), ::tolower);
+
             cout << "*** Vulkan Instructions & Options ***" << endl;
             cout << "=================================" << endl;
-            cout << "Usage: " << programName << " [options]" << endl;
+            cout << "Usage: " << programName << " [options]";
+            if (config.m_SourceLanguage == SourceLanguage_SPIRV_Vulkan || config.m_SourceLanguage == SourceLanguage_SPIRVTXT_Vulkan)
+            {
+                cout << " [optional: spv_input_file]";
+            }
+            cout << endl << endl;
+            if (config.m_SourceLanguage == SourceLanguage_SPIRV_Vulkan || config.m_SourceLanguage == SourceLanguage_SPIRVTXT_Vulkan)
+            {
+                cout << "Notes:" << endl;
+                cout << " * The input file(s) must be specified in one of two ways:" << endl <<
+                    "   1) A single SPIR-V input file provided as \"spv_input_file\", or\n" <<
+                    "   2) One or more pipeline stage specific shader files specified by the pipeline stage options (--vert, --tesc, etc.)." << endl << endl;
+            }
             cout << genericOpt << endl;
             cout << pipelinedOpt << endl;
             cout << "Examples:" << endl;
-            cout << " Extract ISA, AMD IL and statistics for a Vulkan program that is comprised of a vertex shader and a fragment shader for all devices: " << programName << " -s vulkan --isa c:\\output\\vulkan_isa.isa --il c:\\output\\vulkan_il.amdil -a c:\\output\\vulkan_stats.stats --vert c:\\source\\myVertexShader.vert --frag c:\\source\\myFragmentShader.frag" << endl;
-            cout << " Extract ISA, AMD IL and statistics for a Vulkan program that is comprised of a vertex shader and a fragment shader for Iceland and Fiji: " << programName << " -s vulkan -c Iceland -c Fiji --isa c:\\output\\vulkan_isa.isa --il c:\\output\\vulkan_il.amdil -a c:\\output\\vulkan_stats.stats --vert c:\\source\\myVertexShader.vert --frag c:\\source\\myFragmentShader.frag" << endl;
-            cout << " Extract ISA and binaries for a Vulkan program that is comprised of a vertex shader and a fragment shader for all devices: " << programName << " -s vulkan --isa c:\\output\\vulkan_isa.isa -b c:\\output\\vulkan_bin.bin -a c:\\output\\vulkan_stats.stats --vert c:\\source\\myVertexShader.vert --frag c:\\source\\myFragmentShader.frag" << endl;
-            cout << " Extract ISA and perform live register analysis for a Vulkan program for all devices: " << programName << " -s vulkan --isa c:\\output\\vulkan_isa.isa --livereg c:\\output\\ --vert c:\\source\\myVertexShader.vert --frag c:\\source\\myFragmentShader.frag" << endl;
+            cout << " Extract ISA, AMD IL and statistics for a Vulkan program that is comprised of a vertex shader and a fragment shader for all devices: " << programName << " -s " << rgaModeName << " --isa c:\\output\\vulkan_isa.isa --il c:\\output\\vulkan_il.amdil -a c:\\output\\vulkan_stats.stats --vert c:\\source\\myVertexShader." << vertExt << " --frag c:\\source\\myFragmentShader." << fragExt << endl;
+            cout << " Extract ISA, AMD IL and statistics for a Vulkan program that is comprised of a vertex shader and a fragment shader for Iceland and Fiji: " << programName << " -s " << rgaModeName << " -c Iceland -c Fiji --isa c:\\output\\vulkan_isa.isa --il c:\\output\\vulkan_il.amdil -a c:\\output\\vulkan_stats.stats --vert c:\\source\\myVertexShader." << vertExt << " --frag c:\\source\\myFragmentShader." << fragExt << endl;
+            cout << " Extract ISA and binaries for a Vulkan program that is comprised of a vertex shader and a fragment shader for all devices: " << programName << " -s " << rgaModeName << " --isa c:\\output\\vulkan_isa.isa -b c:\\output\\vulkan_bin.bin -a c:\\output\\vulkan_stats.stats --vert c:\\source\\myVertexShader." << vertExt << " --frag c:\\source\\myFragmentShader." << fragExt << endl;
+            cout << " Extract ISA and perform live register analysis for a Vulkan program for all devices: " << programName << " -s " << rgaModeName << " --isa c:\\output\\vulkan_isa.isa --livereg c:\\output\\ --vert c:\\source\\myVertexShader." << vertExt << " --frag c:\\source\\myFragmentShader." << fragExt << endl;
+            cout << " Extract ISA for a single SPIR-V file, without specifying the pipeline stages: " << programName << " -s " << rgaModeName << " --isa c:\\output\\program.isa c:\\source\\program.spv" << endl;
         }
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_GLSL_OpenGL))
         {

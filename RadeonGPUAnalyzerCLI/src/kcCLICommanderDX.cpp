@@ -22,6 +22,10 @@
 #include <RadeonGPUAnalyzerCLI/src/kcFiles.h>
 #include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
 
+// Static constants.
+const int  DX_MAX_SUPPORTED_SHADER_MODEL_MAJOR = 5;
+const int  DX_MAX_SUPPORTED_SHADER_MODEL_MINOR = 0;
+
 kcCLICommanderDX::kcCLICommanderDX(void)
 {
     m_pBackEndHandler = nullptr;
@@ -46,6 +50,27 @@ void kcCLICommanderDX::ListAsics(Config& config, LoggingCallBackFuncP callback)
     }
 }
 
+void kcCLICommanderDX::ListAdapters(Config & config, LoggingCallBackFunc_t callback)
+{
+    std::vector<std::string> adapterNames;
+    stringstream  msg;
+
+    if (beProgramBuilderDX::GetSupportedDisplayAdapterNames(adapterNames))
+    {
+        msg << STR_FOUND_ADAPTERS << std::endl << std::endl;
+        for (size_t  i = 0; i < adapterNames.size(); i++)
+        {
+            msg << " " << i << "\t" << adapterNames[i] << std::endl;
+        }
+    }
+    else
+    {
+        msg << STR_ERR_LIST_ADAPTERS_FAILED << std::endl;
+    }
+
+    msg << std::endl;
+    callback(msg.str());
+}
 
 void kcCLICommanderDX::Version(Config& config, LoggingCallBackFuncP callback)
 {
@@ -61,7 +86,7 @@ void kcCLICommanderDX::Version(Config& config, LoggingCallBackFuncP callback)
 }
 
 
-void kcCLICommanderDX::InitRequestedAsicList(const Config& config)
+void kcCLICommanderDX::InitRequestedAsicListDX(const Config& config)
 {
     stringstream s_Log;
 
@@ -71,34 +96,22 @@ void kcCLICommanderDX::InitRequestedAsicList(const Config& config)
         m_dxDefaultAsicsList.clear();
         std::vector<GDT_GfxCardInfo> dxDeviceTable;
         std::set<std::string> supportedDevices;
+        std::set<std::string> matchedTargets;
+
         if (beUtils::GetAllGraphicsCards(dxDeviceTable, supportedDevices))
         {
-            for (const std::string& gfxDevice : config.m_ASICs)
+            if (InitRequestedAsicList(config, supportedDevices, matchedTargets))
             {
-                bool isDeviceSupported = false;
-                if (supportedDevices.find(gfxDevice) != supportedDevices.end())
+                for (const std::string& target : matchedTargets)
                 {
-                    // Both CAL and Marketing names are accepted (case-insensitive).
                     for (const GDT_GfxCardInfo& dxDevice : dxDeviceTable)
                     {
-                        if ((boost::iequals(dxDevice.m_szCALName, gfxDevice)) ||
-                            (boost::iequals(dxDevice.m_szMarketingName, gfxDevice)))
+                        if (boost::iequals(dxDevice.m_szCALName, target))
                         {
-                            isDeviceSupported = true;
                             m_dxDefaultAsicsList.push_back(dxDevice);
-
-                            // We are done.
                             break;
                         }
                     }
-                }
-
-                if (!isDeviceSupported)
-                {
-                    // Notify the user.
-                    std::stringstream msg;
-                    msg << KA_CLI_STR_ERR_D3D_COMPILATION_NOT_SUPPORTED_FOR_DEVICE << gfxDevice << ".\n";
-                    LogCallBack(msg.str().c_str());
                 }
             }
         }
@@ -350,7 +363,7 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         }
 
         // see if the user asked for specific asics
-        InitRequestedAsicList(config);
+        InitRequestedAsicListDX(config);
 
         // for logging purposes we will iterate through the requested ASICs, if input by user
         std::vector<string>::const_iterator asicIter;
@@ -529,67 +542,117 @@ bool kcCLICommanderDX::WriteAnalysisDataForDX(const Config& config, const std::v
     return true;
 }
 
+bool ParseProfileString(const std::string& profile, std::pair<int, int>& version)
+{
+    bool  result = false;
+    // profile string format: XX_N_N
+    if (!profile.empty())
+    {
+        size_t  minor, major = profile.find('_');
+        if (major != std::string::npos)
+        {
+            if ((minor = profile.find('_', ++major)) != std::string::npos)
+            {
+                try
+                {
+                    version = { std::stoi(profile.substr(major, minor)), std::stoi(profile.substr(++minor)) };
+                    result = true;
+                }
+                catch (...) {}
+            }
+        }
+    }
+    return result;
+}
 
 /// Output the ISA representative of the compilation
 bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxCardInfo, string sDevicenametoLog)
 {
-    bool bRet = false;
-    std::stringstream s_Log;
+    bool ret = true;
+    std::stringstream    s_Log;
+    std::pair<int, int>  version;
+    beProgramBuilderDX::DXOptions dxOptions;
 
-    /// basically, dx supports offline compilation of dx10/dx11. I will not fail this but will give a warning
-    if ((config.m_Profile.find("_3_") != string::npos) || (config.m_Profile.find("_2_") != string::npos) || (config.m_Profile.find("_1_") != string::npos)
-        || (config.m_Profile.find("level_9_") != string::npos))
+    if (config.m_SourceLanguage != SourceLanguage_AMDIL &&
+        !ParseProfileString(config.m_Profile, version))
     {
-        s_Log << STR_WRN_DX_MIN_SUPPORTED_VERSION << std::endl;
-
-        // Notify the user.
-        LogCallBack(s_Log.str());
-
-        // Clear the stream.
-        s_Log.str("");
+        s_Log << STR_ERR_PARSE_DX_SHADER_MODEL_FAILED << std::endl;
+        ret = false;
     }
 
-
-    //// prepare the options
-    beProgramBuilderDX::DXOptions dxOptions;
-    dxOptions.m_Entrypoint = config.m_Function;
-    dxOptions.m_Target = config.m_Profile;
-    dxOptions.m_DXFlags.flagsAsInt = config.m_DXFlags;
-    dxOptions.m_bDumpMSIntermediate = (config.m_DumpMSIntermediate.size() > 0 ? true : false);
-    dxOptions.m_isShaderIntrinsicsEnabled = config.m_EnableShaderIntrinsics;
-    dxOptions.m_UAVSlot = config.m_UAVSlot;
-
-    // Process config.m_Defines
-    // The interface for DX is different here.
-    // It is set up for the GUI.
-    // The CLI does some work here to translate.
-    for (vector<string>::const_iterator it = config.m_Defines.begin();
-         it != config.m_Defines.end();
-         ++it)
+    // Check the provided shader profile version.
+    if (ret)
     {
-        size_t equal_pos = it->find('=');
-
-        if (equal_pos == string::npos)
+        if (version.first > DX_MAX_SUPPORTED_SHADER_MODEL_MAJOR ||
+            (version.first == DX_MAX_SUPPORTED_SHADER_MODEL_MAJOR && version.second > DX_MAX_SUPPORTED_SHADER_MODEL_MINOR))
         {
-            dxOptions.m_defines.push_back(make_pair(*it, string("")));
+            s_Log << STR_ERR_UNSUPPORTED_DX_SHADER_MODEL_1 << config.m_Profile << ". "
+                << STR_ERR_UNSUPPORTED_DX_SHADER_MODEL_2 << DX_MAX_SUPPORTED_SHADER_MODEL_MAJOR << "." << DX_MAX_SUPPORTED_SHADER_MODEL_MINOR << " "
+                << STR_ERR_UNSUPPORTED_DX_SHADER_MODEL_3 << std::endl;
+            ret = false;
         }
-        else
+
+        if ((config.m_Profile.find("_3_") != string::npos) || (config.m_Profile.find("_2_") != string::npos) || (config.m_Profile.find("_1_") != string::npos)
+            || (config.m_Profile.find("level_9_") != string::npos))
         {
-            dxOptions.m_defines.push_back(make_pair(it->substr(0, equal_pos),
-                                                    it->substr(equal_pos + 1, string::npos)));
+            s_Log << STR_WRN_DX_MIN_SUPPORTED_VERSION << std::endl;
+        }
+    }
+
+    if (ret)
+    {
+        //// prepare the options
+        dxOptions.m_Entrypoint = config.m_Function;
+        dxOptions.m_Target = config.m_Profile;
+        dxOptions.m_DXFlags.flagsAsInt = config.m_DXFlags;
+        dxOptions.m_bDumpMSIntermediate = (config.m_DumpMSIntermediate.size() > 0 ? true : false);
+        dxOptions.m_isShaderIntrinsicsEnabled = config.m_EnableShaderIntrinsics;
+        dxOptions.m_UAVSlot = config.m_UAVSlot;
+
+        // Process config.m_Defines
+        // The interface for DX is different here.
+        // It is set up for the GUI.
+        // The CLI does some work here to translate.
+        for (vector<string>::const_iterator it = config.m_Defines.begin();
+            it != config.m_Defines.end();
+            ++it)
+        {
+            size_t equal_pos = it->find('=');
+
+            if (equal_pos == string::npos)
+            {
+                dxOptions.m_defines.push_back(make_pair(*it, string("")));
+            }
+            else
+            {
+                dxOptions.m_defines.push_back(make_pair(it->substr(0, equal_pos),
+                    it->substr(equal_pos + 1, string::npos)));
+            }
         }
     }
 
 
     // read the source
     string sSource;
-    bRet = KAUtils::ReadProgramSource(config.m_InputFile, sSource);
-
-    if (!bRet)
+    
+    if (ret)
     {
-        s_Log << "Error: Unable to read: \'" << config.m_InputFile << "\'." << endl;
+        if (!config.m_InputFile.empty())
+        {
+            ret = KAUtils::ReadProgramSource(config.m_InputFile, sSource);
+            if (!ret)
+            {
+                s_Log << STR_ERR_CANNOT_READ_FILE << config.m_InputFile << std::endl;
+            }
+        }
+        else
+        {
+            s_Log << STR_ERR_NO_INPUT_FILE << std::endl;
+            ret = false;
+        }
     }
-    else
+
+    if (ret)
     {
         // dx interface like the chip revision and family
         beStatus beRet = m_pBackEndHandler->GetDeviceChipFamilyRevision(gfxCardInfo, dxOptions.m_ChipFamily, dxOptions.m_ChipRevision);
@@ -598,7 +661,7 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
         {
             // the use must have got the asics spelled wrong- let him know and continue
             s_Log << "Error: Couldn't find device named: " << sDevicenametoLog << ". Run \'-s HLSL -l to view available devices." << endl;
-            bRet = false;
+            ret = false;
         }
         else
         {
@@ -619,24 +682,24 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
             if (beRet == beStatus_Create_Bolob_FromInput_Failed)
             {
                 s_Log << "Error reading DX ASM file. ";
-                bRet = false;
+                ret = false;
             }
 
             if (beRet != beStatus_SUCCESS)
             {
                 s_Log << KA_CLI_STR_COMPILING << sDevicenametoLog << KA_CLI_STR_STATUS_FAILURE << std::endl;
-                bRet = false;
+                ret = false;
             }
             else
             {
                 s_Log << KA_CLI_STR_COMPILING << sDevicenametoLog << KA_CLI_STR_STATUS_SUCCESS << std::endl;
-                bRet = true;
+                ret = true;
             }
         }
     }
 
     LogCallBack(s_Log.str());
-    return bRet;
+    return ret;
 }
 
 bool kcCLICommanderDX::Init(const Config& config, LoggingCallBackFuncP callback)
@@ -648,15 +711,41 @@ bool kcCLICommanderDX::Init(const Config& config, LoggingCallBackFuncP callback)
     // initialize backend
     m_pBackEndHandler = Backend::Instance();
 
-    if (!m_pBackEndHandler->Initialize(BuiltProgramKind_DX, callback, config.m_DXLocation))
+    if (!m_pBackEndHandler->Initialize(BuiltProgramKind_DX, callback))
     {
         bCont = false;
+    }
+
+    beProgramBuilderDX& dxBuilder = *(m_pBackEndHandler->theOpenDXBuilder());
+
+    if (bCont)
+    {
+        // Initialize the DX Builder
+        dxBuilder.SetLog(callback);
+
+        // If a particular GPU adapter is requested, choose corresponding driver.
+        std::string  adapterName = "", dxxModulePath;
+        if (config.m_DXAdapter != -1)
+        {
+            bCont = beProgramBuilderDX::GetDXXModulePathForAdapter(config.m_DXAdapter, adapterName, dxxModulePath);
+        }
+
+        if (bCont)
+        {
+            bCont = (dxBuilder.Initialize(dxxModulePath, config.m_DXLocation) == beKA::beStatus_SUCCESS);
+        }
+        else
+        {
+            std::stringstream  errMsg;
+            errMsg << STR_ERR_SET_ADAPTER_FAILED << std::endl;
+            callback(errMsg.str());
+        }
     }
 
     if (bCont)// init ASICs list
     {
         std::vector<GDT_GfxCardInfo> dxDeviceTable;
-        beStatus bRet = m_pBackEndHandler->theOpenDXBuilder()->GetDeviceTable(dxDeviceTable);
+        beStatus bRet = dxBuilder.GetDeviceTable(dxDeviceTable);
 
         if (bRet == beStatus_SUCCESS)
         {

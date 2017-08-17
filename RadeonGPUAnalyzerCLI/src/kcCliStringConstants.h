@@ -1,7 +1,7 @@
 #ifndef __kcCliStringConstantsh_h
     #define __kcCliStringConstantsh_h
 
-    const char* const STR_RGA_VERSION = "1.1";
+    const char* const STR_RGA_VERSION = "1.2";
 #ifdef RGA_BUILD_NUMBER
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -14,11 +14,17 @@
     const char* const STR_ERR_DRIVER_VERSION_EXTRACTION_FAILURE = "could not extract the driver version.";
     const char* const STR_ERR_INITIALIZATION_FAILURE = "Failed to initialize.";
     const char* const STR_ERR_OPENGL_VERSION_EXTRACTION_FAILURE = "Unable to extract the supported OpenGL version.\n";
+    const char* const STR_TARGET_DETECTED = "Target GPU detected:";
+    const char* const STR_FOUND_TARGETS = "Detected following target GPUs:";
+    const char* const STR_FOUND_ADAPTERS = "Found the following supported display adapters installed on this system:";
+    const char* const STR_DX_ADAPTERS_HELP_COMMON_TEXT = "This is only relevant if you have multiple display adapters installed on your system, and you would like RGA to use the driver which is associated with a non-primary display adapter.By default RGA will use the driver that is associated with the primary display adapter.";
 
     // Errors.
+    const char* const STR_ERR_ERROR = "Error: ";
     const char* const STR_ERR_INVALID_GLSL_SHADER_TYPE = "Error: The Specified profile is invalid. Possible options: Vertex, Fragment, Compute, Geometry, TessControl, TessEval.";
     const char* const STR_ERR_UNSUPPORTED_GL_RT_VERSION = "Unsupported OpenGL runtime version. Please install Catalyst driver version 15.20 or above.";
     const char* const STR_ERR_NO_VALID_CMD_DETECTED = "Error: No valid command. Please run -h for available commands.";
+    const char* const STR_ERR_COMMAND_NOT_SUPPORTED = "Error: the command is not supported for this mode.";
     const char* const STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST = "Error: Unable to extract the list of supported devices.";
     const char* const STR_ERR_MEMORY_ALLOC_FAILURE = "Error: memory allocation failure.";
     const char* const STR_ERR_RENDER_COMPUTE_MIX = "Error: cannot mix compute and non-compute shaders.";
@@ -27,6 +33,7 @@
     const char* const STR_ERR_CANNOT_FIND_OUTPUT_DIR = "Error: output directory does not exist: ";
     const char* const STR_ERR_CANNOT_INVOKE_COMPILER = "Error: unable to invoke the compiler.";
     const char* const STR_ERR_CANNOT_GET_DEVICE_INFO = "Error: cannot get device info for: ";
+    const char* const STR_ERR_CANNOT_READ_FILE = "Error: unable to read: ";
     const char* const STR_ERR_CANNOT_OPEN_FILE_FOR_WRITE_A = "Error: Unable to open ";
     const char* const STR_ERR_CANNOT_OPEN_FILE_FOR_WRITE_B =  " for write.";
     const char* const STR_ERR_CANNOT_LOCATE_LIVE_REG_ANALYZER = "Error: cannot locate the live register analyzer.";
@@ -42,6 +49,20 @@
     const char* const STR_ERR_GLSL_MODE_DEPRECATED = "Error: GLSL mode is no longer supported. Please use OpenGL mode to build OpenGL programs.";
     const char* const STR_ERR_CANNOT_EXTRACT_OPENGL_VERSION = "Error: unable to extract the OpenGL version.";
     const char* const STR_ERR_INVALID_INPUT_TYPE = "Error: invalid input type.";
+    const char* const STR_ERR_TARGET_IS_NOT_SUPPORTED = " offline compilation for the detected target GPU is not supported: ";
+    const char* const STR_ERR_COULD_NOT_DETECT_TARGET = "Error: could not detect target GPU -> ";
+    const char* const STR_ERR_AMBIGUOUS_TARGET = "Error: ambiguous target GPU name -> ";
+    const char* const STR_ERR_NO_KERNELS_FOR_ANALYSIS = "Error: No kernels provided for analysis.";
+    const char* const STR_ERR_LIST_ADAPTERS_FAILED = "Error: failed to get the list of supported display adapters installed on this system.";
+    const char* const STR_ERR_SET_ADAPTER_FAILED = "Error: failed to set display adapter with provided ID.";
+    const char* const STR_ERR_PARSE_DX_SHADER_MODEL_FAILED = "Error: incorrect DX shader model provided.";
+    const char* const STR_ERR_UNSUPPORTED_DX_SHADER_MODEL_1 = "Error: unsupported Shader Model detected: ";
+    const char* const STR_ERR_UNSUPPORTED_DX_SHADER_MODEL_2 = "RGA supports Shader Model ";
+    const char* const STR_ERR_UNSUPPORTED_DX_SHADER_MODEL_3 = "and below.";
+    const char* const STR_ERR_FAILED_ADJUST_FILE_NAMES = "Error: failed to construct some of the output file names.";
+    const char* const STR_ERR_NO_INPUT_FILE = "Error: no input file provided.";
+    const char* const STR_ERR_MIXED_INPUT_FILES = "Error: cannot mix stage-specific input files (--vert, --tesc, --tese, --geom, --frag, --comp) with a stage-less SPIR-V input file.";
+    const char* const STR_ERR_FAILED_OUTPUT_FILE_VERIFICATION = "Error: failed to generate one or more output files.";
 
     // Warnings.
     #define STR_WRN_DX_MIN_SUPPORTED_VERSION "Warning: AMD DirectX driver supports DX10 and above."
@@ -111,6 +132,9 @@
 #define KC_STR_DEFAULT_DEBUG_IL_SUFFIX "amdDebugil"
 #define KC_STR_DEFAULT_DXASM_SUFFIX "dxasm"
 #define KC_STR_DEFAULT_STATISTICS_SUFFIX "csv"
+
+// Default file names.
+#define KC_STR_DEFAULT_LIVEREG_OUTPUT_FILE_NAME "livereg"
 
 // Front-End strings
 // Family names:

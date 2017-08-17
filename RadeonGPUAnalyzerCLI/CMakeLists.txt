@@ -3,7 +3,7 @@ project (RadeonGPUAnalyzerCLI)
 
 # The version number
 set (RadeonGPUAnalyzerCLI_VERSION_MAJOR 1)
-set (RadeonGPUAnalyzerCLI_VERSION_MINOR 1)
+set (RadeonGPUAnalyzerCLI_VERSION_MINOR 2)
 
 # Pass the build number
 if (NOT "$ENV{BUILD_NUMBER}" STREQUAL "")

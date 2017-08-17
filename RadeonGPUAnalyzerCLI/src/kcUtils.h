@@ -25,6 +25,9 @@
 class kcUtils
 {
 public:
+    // Map "architecture name <--> list of marketing device names".
+    typedef  std::map<std::string, std::set<std::string>>  DeviceNameMap;
+
     // Helper function to validate a shader's file name and generate the appropriate output message.
     // shaderType: the stage of the shader (vertex, tessellation control, tessellation evaluation, geometry, fragment or compute).
     // shaderFileName: the file name to be validated.
@@ -40,7 +43,8 @@ public:
 
     // Helper function to construct the output file name in Analyzer CLI's output format, which combines
     // the base output file name, the target device name and the rendering pipeline stage.
-    static void AdjustRenderingPipelineOutputFileNames(const std::string& baseOutputFileName,
+    // Returns true if succeeded and false in case of error.
+    static bool AdjustRenderingPipelineOutputFileNames(const std::string& baseOutputFileName,
                                                        const std::string& device, beProgramPipeline& pipelineFiles);
 
     // Creates the statistics file according to the user's configuration.
@@ -111,13 +115,18 @@ public:
     static gtString ConstructTempFileName(const gtString& prefix, const gtString& ext);
 
     // Get all available graphics cards public names, grouped by the internal code name.
-    static bool GetMarketingNameToCodenameMapping(std::map<std::string, std::set<std::string>>& cardsMap);
+    static bool GetMarketingNameToCodenameMapping(DeviceNameMap& cardsMap);
+
+    // Tries to find a GPU architecture name that corresponds to the user-provided device name.
+    // Returns "true" if corresponding arch is found, "false" otherwise.
+    // Returns matched architecture in "archName" (if succeeded) and text message in "msg" (if failed).
+    static bool FindGPUArchName(const std::string& deviceName, std::string& archName, std::string& msg);
 
 private:
     // This is a static class (no instances).
     kcUtils(const kcUtils& other);
-    kcUtils();
-    ~kcUtils();
+    kcUtils()  = default;
+    ~kcUtils() = default;
 };
 
 #endif // kcUtils_h__

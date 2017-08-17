@@ -8,6 +8,7 @@ if not exist %OUTPUT_DIR% mkdir %OUTPUT_DIR%
 rem Copy core files:
 XCopy /r /d /y "..\..\Core\OpenGL\VirtualContext\Release\win64\VirtualContext.exe" "%OUTPUT_DIR%\x64\"
 XCopy /r /d /y "..\..\Core\ShaderAnalysis\Windows\x86\shae.exe" "%OUTPUT_DIR%\x64\"
+XCopy /r /d /y "..\..\Core\DX\DX10\bin\RGADX11.exe" "%OUTPUT_DIR%\x64\"
 
 IF "%2"=="-internal" (
     ECHO Copying internal vulkan backend

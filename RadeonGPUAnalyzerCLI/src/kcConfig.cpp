@@ -7,6 +7,7 @@
 #endif
 
 #include <RadeonGPUAnalyzerCLI/src/kcConfig.h>
+#include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
 
 using namespace std;
 
@@ -17,7 +18,7 @@ std::string Config::sourceKindDXAsmT = "DXAsmTxt";
 std::string Config::sourceKindOpenCL = "CL";
 std::string Config::sourceKindGLSL = "GLSL";
 std::string Config::sourceKindOpenGL = "OPENGL";
-std::string Config::sourceKindVulkan = "VULKAN";
+std::string Config::sourceKindGLSLVulkan = "VULKAN";
 std::string Config::sourceKindSpirvBin = "VULKAN-SPV";
 std::string Config::sourceKindSpirvTxt = "VULKAN-SPV-TXT";
 
@@ -28,7 +29,7 @@ Config::Config() :
     m_AnalysisFile(),
     m_ILFile(),
     m_ISAFile(),
-    m_LiveRegisterAnalysisFile(),
+    m_LiveRegisterAnalysisFile(KC_STR_DEFAULT_LIVEREG_OUTPUT_FILE_NAME),
     m_BinaryOutputFile(),
     m_Function(),
     m_CSVSeparator(),
@@ -44,10 +45,10 @@ Config::Config() :
     m_Profile(),
     m_DXFlags(0),
     m_DXLocation(),
+    m_DXAdapter(-1),
     m_FXC(),
     m_DumpMSIntermediate(),
     m_EnableShaderIntrinsics(false),
-    m_ListGraphicsAdapters(false),
     m_UAVSlot(-1)
 {
 }
@@ -71,7 +72,6 @@ Config::dump(ostream& out) const
     out << "m_FXC:                  " << m_FXC << endl;
     out << "m_DumpMSIntermediate:   " << m_DumpMSIntermediate << endl;
     out << "m_EnableShaderIntrinsics:   " << m_EnableShaderIntrinsics << endl;
-    out << "m_ListGraphicsAdapters:   " << m_ListGraphicsAdapters << endl;
     out << "m_UAVSlot:   " << m_UAVSlot << endl;
 
     out << "m_ASICs:               ";

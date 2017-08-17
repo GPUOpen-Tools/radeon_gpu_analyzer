@@ -82,10 +82,6 @@ public:
     }
 
 protected:
-    /// Ctor
-    //virtual beProgramBuilder() = 0;
-
-    virtual beKA::beStatus Initialize(const std::string& sDllModule = "") = 0;
 
     /// Stream for diagnostic output. set externally.
     LoggingCallBackFuncP m_LogCallback;

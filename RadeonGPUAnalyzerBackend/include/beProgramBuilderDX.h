@@ -18,7 +18,7 @@ using namespace beKA;
 class CElf;
 class CElfSection;
 
-class RGA_BACKEND_DECLDIR beProgramBuilderDX : public beProgramBuilder
+class beProgramBuilderDX : public beProgramBuilder
 {
 public:
 
@@ -131,7 +131,14 @@ public: // inherited functions
     void ReleaseProgram();
     beKA::beStatus GetDeviceTable(std::vector<GDT_GfxCardInfo>& table) override;
     bool CompileOK(std::string& device);
+
 public:
+    /// Ctor
+    beProgramBuilderDX();
+
+    /// Initialize the Builder 
+    beKA::beStatus Initialize(const std::string& dxxModuleName, const std::string& compilerModuleName = "");
+
     /// compile the specified source file
     /// \param[in] sourceLanguage   specify the source language- can be HLSL or DXAsm
     /// \param[in] programSource    the string of the source code
@@ -188,10 +195,12 @@ public:
     /// Sets the set of public device names.
     void SetPublicDeviceNames(const std::set<std::string>& publicDeviceNames);
 
-protected:
-    /// Ctor
-    beProgramBuilderDX();
-    beKA::beStatus Initialize(const std::string& sDllModule = "");
+    /// Retrieves the list of names of AMD display adapters installed on the system.
+    static bool GetSupportedDisplayAdapterNames(std::vector<std::string>& adapterNames);
+
+    /// Gets the full path to AMD DXX library for GPU adapter specified by "adapterID".
+    /// Returns the adapter name in "adapterName" and DXX lib path in "dxxModulePath".
+    static bool GetDXXModulePathForAdapter(int adapterID, std::string& adapterName, std::string& dxxModulePath);
 
 private: // members
     /// Interface with atidxx{32,64}.dll
@@ -245,9 +254,6 @@ private: // functions
     void ClearFormerBuildOutputs();
     void SetDeviceElf(const std::string& deviceName, const AmdDxGsaCompileShaderOutput& shaderOutput);
     bool GetDeviceElfBinPair(const std::string& deviceName, CelfBinaryPair& elfBinPair) const;
-
-    // Friends.
-    friend class Backend;
 };
 
 #endif

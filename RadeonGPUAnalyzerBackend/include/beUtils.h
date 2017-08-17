@@ -39,6 +39,10 @@ public:
     // Deletes a physical file from the file system.
     static void DeleteFile(const gtString& filePath);
 
+    // If "required" is true, checks if the "fileName" file exists and is not empty.
+    // If "requierd" is false, returns "true" unconditionally.
+    static bool isFilePresent(const std::string& fileName, bool required);
+
 private:
     // No instances for this class, as this is a static utility class.
     beUtils();

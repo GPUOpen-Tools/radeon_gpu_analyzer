@@ -131,48 +131,54 @@ void kcCLICommanderOpenGL::Version(Config& config, LoggingCallBackFunc_t callbac
 }
 
 // Helper function to remove unnecessary file paths.
-static void GenerateRenderingPipelineOutputPaths(const Config& config, const std::string& baseOutputFileName, const std::string& device, beProgramPipeline& pipelineToAdjust)
+static bool GenerateRenderingPipelineOutputPaths(const Config& config, const std::string& baseOutputFileName,
+                                                 const std::string& device, beProgramPipeline& pipelineToAdjust)
 {
     // Generate the output file paths.
-    kcUtils::AdjustRenderingPipelineOutputFileNames(baseOutputFileName, device, pipelineToAdjust);
+    bool  ret = kcUtils::AdjustRenderingPipelineOutputFileNames(baseOutputFileName, device, pipelineToAdjust);
 
-    // Clear irrelevant paths.
-    bool isVertexShaderPresent = (!config.m_VertexShader.empty());
-    bool isTessControlShaderPresent = (!config.m_TessControlShader.empty());
-    bool isTessEvaluationShaderPresent = (!config.m_TessEvaluationShader.empty());
-    bool isGeometryexShaderPresent = (!config.m_GeometryShader.empty());
-    bool isFragmentShaderPresent = (!config.m_FragmentShader.empty());
-    bool isComputeShaderPresent = (!config.m_ComputeShader.empty());
-
-    if (!isVertexShaderPresent)
+    if (ret)
     {
-        pipelineToAdjust.m_vertexShader.makeEmpty();
+        // Clear irrelevant paths.
+        bool isVertexShaderPresent = (!config.m_VertexShader.empty());
+        bool isTessControlShaderPresent = (!config.m_TessControlShader.empty());
+        bool isTessEvaluationShaderPresent = (!config.m_TessEvaluationShader.empty());
+        bool isGeometryexShaderPresent = (!config.m_GeometryShader.empty());
+        bool isFragmentShaderPresent = (!config.m_FragmentShader.empty());
+        bool isComputeShaderPresent = (!config.m_ComputeShader.empty());
+
+        if (!isVertexShaderPresent)
+        {
+            pipelineToAdjust.m_vertexShader.makeEmpty();
+        }
+
+        if (!isTessControlShaderPresent)
+        {
+            pipelineToAdjust.m_tessControlShader.makeEmpty();
+        }
+
+        if (!isTessEvaluationShaderPresent)
+        {
+            pipelineToAdjust.m_tessEvaluationShader.makeEmpty();
+        }
+
+        if (!isGeometryexShaderPresent)
+        {
+            pipelineToAdjust.m_geometryShader.makeEmpty();
+        }
+
+        if (!isFragmentShaderPresent)
+        {
+            pipelineToAdjust.m_fragmentShader.makeEmpty();
+        }
+
+        if (!isComputeShaderPresent)
+        {
+            pipelineToAdjust.m_computeShader.makeEmpty();
+        }
     }
 
-    if (!isTessControlShaderPresent)
-    {
-        pipelineToAdjust.m_tessControlShader.makeEmpty();
-    }
-
-    if (!isTessEvaluationShaderPresent)
-    {
-        pipelineToAdjust.m_tessEvaluationShader.makeEmpty();
-    }
-
-    if (!isGeometryexShaderPresent)
-    {
-        pipelineToAdjust.m_geometryShader.makeEmpty();
-    }
-
-    if (!isFragmentShaderPresent)
-    {
-        pipelineToAdjust.m_fragmentShader.makeEmpty();
-    }
-
-    if (!isComputeShaderPresent)
-    {
-        pipelineToAdjust.m_computeShader.makeEmpty();
-    }
+    return ret;
 }
 
 void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback)
@@ -182,6 +188,7 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
 
     // Input validation.
     bool shouldAbort = false;
+    bool status = true;
     bool isVertexShaderPresent = (!config.m_VertexShader.empty());
     bool isTessControlShaderPresent = (!config.m_TessControlShader.empty());
     bool isTessEvaluationShaderPresent = (!config.m_TessEvaluationShader.empty());
@@ -278,76 +285,67 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
     if (!shouldAbort)
     {
         // Set the log callback for the backend.
+        m_LogCallback = callback;
         m_pOglBuilder->SetLog(callback);
 
-        // If the user did not specify any device, we should use all supported devices.
-        std::vector<std::string> targetDevices;
-        bool shouldUseAlldevices = config.m_ASICs.empty();
+        std::set<std::string> targetDevices;
+
+        if (m_supportedDevicesCache.empty())
+        {
+            // We need to populate the list of supported devices.
+            bool isDeviceListExtracted = m_pOglBuilder->GetSupportedDevices(m_supportedDevicesCache);
+
+            if (!isDeviceListExtracted)
+            {
+                std::stringstream errMsg;
+                errMsg << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
+                shouldAbort = true;
+            }
+        }
 
         if (!shouldAbort)
         {
-            if (!shouldUseAlldevices)
-            {
-                // If the user specified a device, go with the user's choice.
-                targetDevices = config.m_ASICs;
-            }
-            else
-            {
-                if (m_supportedDevicesCache.empty())
-                {
-                    // We need to populate the list of supported devices.
-                    bool isDeviceListExtracted = m_pOglBuilder->GetSupportedDevices(m_supportedDevicesCache);
-
-                    if (!isDeviceListExtracted)
-                    {
-                        std::stringstream errMsg;
-                        errMsg << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
-                        shouldAbort = true;
-                    }
-                }
-
-                std::copy(m_supportedDevicesCache.begin(), m_supportedDevicesCache.end(), std::back_inserter(targetDevices));
-            }
+            InitRequestedAsicList(config, m_supportedDevicesCache, targetDevices);
 
             for (const std::string& device : targetDevices)
             {
                 if (!shouldAbort)
                 {
-                // Generate the output message.
-                logMsg << KA_CLI_STR_COMPILING << device;
+                    // Generate the output message.
+                    logMsg << KA_CLI_STR_COMPILING << device;
 
-                // Set the target device info for the backend.
-                bool isDeviceGlInfoExtracted = m_pOglBuilder->GetDeviceGLInfo(device, glOptions.m_chipFamily, glOptions.m_chipRevision);
+                    // Set the target device info for the backend.
+                    bool isDeviceGlInfoExtracted = m_pOglBuilder->GetDeviceGLInfo(device, glOptions.m_chipFamily, glOptions.m_chipRevision);
 
-                if (!isDeviceGlInfoExtracted)
-                {
-                    logMsg << STR_ERR_CANNOT_GET_DEVICE_INFO << device << std::endl;
-                    continue;
-                }
+                    if (!isDeviceGlInfoExtracted)
+                    {
+                        logMsg << STR_ERR_CANNOT_GET_DEVICE_INFO << device << std::endl;
+                        continue;
+                    }
 
                     // Adjust the output file names to the device and shader type.
                     if (isIsaRequired)
                     {
                         glOptions.m_isAmdIsaDisassemblyRequired = true;
-                        GenerateRenderingPipelineOutputPaths(config, config.m_ISAFile, device, glOptions.m_isaDisassemblyOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_ISAFile, device, glOptions.m_isaDisassemblyOutputFiles);
                     }
 
                     if (isLiveRegAnalysisRequired)
                     {
                         glOptions.m_isLiveRegisterAnalysisRequired = true;
-                        GenerateRenderingPipelineOutputPaths(config, config.m_LiveRegisterAnalysisFile, device, glOptions.m_liveRegisterAnalysisOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_LiveRegisterAnalysisFile, device, glOptions.m_liveRegisterAnalysisOutputFiles);
                     }
 
                     if (isCfgRequired)
                     {
                         glOptions.m_isLiveRegisterAnalysisRequired = true;
-                        GenerateRenderingPipelineOutputPaths(config, config.m_ControlFlowGraphFile, device, glOptions.m_controlFlowGraphOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_ControlFlowGraphFile, device, glOptions.m_controlFlowGraphOutputFiles);
                     }
 
                     if (isStatisticsRequired)
                     {
                         glOptions.m_isScStatsRequired = true;
-                        GenerateRenderingPipelineOutputPaths(config, config.m_AnalysisFile, device, glOptions.m_scStatisticsOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_AnalysisFile, device, glOptions.m_scStatisticsOutputFiles);
                     }
 
                     if (isIsaBinary)
@@ -360,6 +358,13 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                         // If binary file name is not provided, create a temp file.
                         glOptions.m_programBinaryFile = kcUtils::ConstructTempFileName(L"rgaTempFile", L".bin");
                         GT_ASSERT_EX(glOptions.m_programBinaryFile != L"", L"Cannot create a temp file.");
+                    }
+
+                    if (!status)
+                    {
+                        logMsg << STR_ERR_FAILED_ADJUST_FILE_NAMES << std::endl;
+                        shouldAbort = true;
+                        break;
                     }
 
                     // A handle for canceling the build. Currently not in use.
@@ -485,6 +490,10 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                         if (buildStatus == beKA::beStatus_GLOpenGLVirtualContextFailedToLaunch)
                         {
                             logMsg << STR_ERR_CANNOT_INVOKE_COMPILER << std::endl;
+                        }
+                        else if (buildStatus == beKA::beStatus_FailedOutputVerification)
+                        {
+                            logMsg << STR_ERR_FAILED_OUTPUT_FILE_VERIFICATION << std::endl;
                         }
                     }
 

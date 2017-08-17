@@ -19,6 +19,9 @@ public:
     /// List the asics as got from device
     void ListAsics(Config& config, LoggingCallBackFunc_t callback);
 
+    /// List the adapters installed on the system.
+    void ListAdapters(Config& config, LoggingCallBackFunc_t callback) override;
+
     /// list the driver version
     void Version(Config& config, LoggingCallBackFunc_t callback);
 
@@ -27,7 +30,7 @@ public:
 private: //functions
     bool Init(const Config& config, LoggingCallBackFunc_t callback);
     bool ListGraphicsAdapters(const Config& config, LoggingCallBackFunc_t callback);
-    void InitRequestedAsicList(const Config& config);
+    void InitRequestedAsicListDX(const Config& config);
     bool Compile(const Config& config, const GDT_GfxCardInfo& gfxCardInfo, string sDevicenametoLog);
     bool WriteAnalysisDataForDX(const Config& config, const std::vector<AnalysisData>& AnalysisDataVec, const std::vector<string>& DeviceAnalysisDataVec,
                                 const std::string& sAnalysisFile, std::stringstream& log);
