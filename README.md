@@ -1,13 +1,9 @@
 ﻿# RGA (Radeon GPU Analyzer) Command Line Tool #
 
-RGA CLI is an offline compiler and a performance analysis tool for DirectX shaders, OpenGL shaders,
+RGA is an offline compiler and a performance analysis tool for DirectX shaders, OpenGL shaders,
 Vulkan shaders and OpenCL kernels. Using this product, you can compile source code for a variety of AMD GPUs and APUs,
 independent from the GPU/APU that is physically installed on your system, and generate AMD ISA disassembly, intermediate language disassembly, 
 performance statistics and static analysis reports for each target platform.
-
-RGA CLI replaces CodeXL Analyzer CLI, and maintains backward compatibility. All of the commands and functionality that
-used to be supported by CodeXL Analyzer CLI are still being supported by RGA. For a quick overview of those features,
-see http://gpuopen.com/up-and-running-with-codexl-analyzer-cli/
 
 This product can be used to produce the following output:
 * Build errors and warnings
