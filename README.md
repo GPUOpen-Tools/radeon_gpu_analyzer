@@ -1,4 +1,4 @@
-﻿# RGA (Radeon GPU Analyzer) Command Line Tool #
+﻿# RGA (Radeon GPU Analyzer) #
 
 RGA is an offline compiler and a performance analysis tool for DirectX shaders, OpenGL shaders,
 Vulkan shaders and OpenCL kernels. Using this product, you can compile source code for a variety of AMD GPUs and APUs,
@@ -109,7 +109,7 @@ Run the rga executable.
   * Vulkan - glsl:  rga -s vulkan -h
   * Vulkan - SPIR-V binary input:  rga -s vulkan-spv -h
   * Vulkan - SPIRV-V textual input:  rga -s vulkan-spv-txt -h
-  * AMDIL: rga -s amdil -h
+  * AMD IL: rga -s amdil -h
 
 ## Support ##
 For support, please visit the RGA repository github page: https://github.com/GPUOpen-Tools/RGA
