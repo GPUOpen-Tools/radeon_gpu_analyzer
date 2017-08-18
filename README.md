@@ -12,14 +12,16 @@ This product can be used to produce the following output:
 * Compiled binaries
 * Performance statistics
 * Live register analysis (for more info about this feature, please see http://gpuopen.com/live-vgpr-analysis-radeon-gpu-analyzer/)
+* Control-Flow graphs
 
 The supported platforms are:
 * D3D11
-* OpenGL
 * OpenCL
+* OpenGL
 * Vulkan - GLSL input
 * Vulkan - SPIR-V binary input
 * Vulkan - SPIR-V textual input
+* AMD IL
 
 ## System Requirements ##
 
@@ -107,6 +109,7 @@ Run the rga executable.
   * Vulkan - glsl:  rga -s vulkan -h
   * Vulkan - SPIR-V binary input:  rga -s vulkan-spv -h
   * Vulkan - SPIRV-V textual input:  rga -s vulkan-spv-txt -h
+  * AMDIL: rga -s amdil -h
 
 ## Support ##
 For support, please visit the RGA repository github page: https://github.com/GPUOpen-Tools/RGA
