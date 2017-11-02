@@ -19,7 +19,6 @@
 #include <RadeonGPUAnalyzerCLI/src/kcCLICommanderCL.h>
 #include <RadeonGPUAnalyzerBackend/include/beProgramBuilderOpenCL.h>
 #include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
-#include <RadeonGPUAnalyzerCLI/src/kcFiles.h>
 #include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
 
 // Analyzer
@@ -162,7 +161,7 @@ bool kcCLICommanderCL::Compile(const Config& config)
     else
     {
         string sSource;
-        bRet = KAUtils::ReadProgramSource(config.m_InputFile, sSource);
+        bRet = kcUtils::ReadProgramSource(config.m_InputFile, sSource);
 
         if (!bRet)
         {
@@ -202,19 +201,6 @@ bool kcCLICommanderCL::Compile(const Config& config)
     }
 
     return bRet;
-}
-
-void kcCLICommanderCL::Version(Config& config, LoggingCallBackFunc_t callback)
-{
-    std::stringstream s_Log;
-    s_Log << STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM << std::endl;
-
-    if (!Init(config, callback))
-    {
-        s_Log << STR_ERR_INITIALIZATION_FAILURE << std::endl;
-    }
-
-    LogCallBack(s_Log.str());
 }
 
 void kcCLICommanderCL::ListAsics(Config& config, LoggingCallBackFunc_t callback)
@@ -455,14 +441,14 @@ void kcCLICommanderCL::GetILText(const Config& config)
                             gtString ilOutputFileName;
                             kcUtils::ConstructOutputFileName(config.m_ILFile,
                                                              KC_STR_DEFAULT_AMD_IL_SUFFIX, kernelName, deviceName, ilOutputFileName);
-                            KAUtils::WriteTextFile(ilOutputFileName.asASCIICharArray(), ilTextBuffer, m_LogCallback);
+                            kcUtils::WriteTextFile(ilOutputFileName.asASCIICharArray(), ilTextBuffer, m_LogCallback);
                         }
                         else
                         {
                             // Inform the user.
                             std::stringstream msg;
                             msg << STR_ERR_CANNOT_DISASSEMBLE_AMD_IL << " for " << deviceName;
-                            
+
                             // If we have the kernel name - specify it in the error message.
                             if (!kernelName.empty())
                             {
@@ -514,7 +500,7 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                     {
                         gtString isaOutputFileName;
                         kcUtils::ConstructOutputFileName(config.m_ISAFile, KC_STR_DEFAULT_ISA_SUFFIX, kernelName, deviceName, isaOutputFileName);
-                        KAUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), sISAIL, m_LogCallback);
+                        kcUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), sISAIL, m_LogCallback);
 
                         // Perform live register analysis.
                         bool isRegLivenessRequired = !config.m_LiveRegisterAnalysisFile.empty();
@@ -594,7 +580,7 @@ void kcCLICommanderCL::GetBinary(const Config& config)
                     gtString binOutputFileName;
                     kcUtils::ConstructOutputFileName(config.m_BinaryOutputFile,
                                                      KC_STR_DEFAULT_BIN_SUFFIX, "", deviceName, binOutputFileName);
-                    KAUtils::WriteBinaryFile(binOutputFileName.asASCIICharArray(), binary, m_LogCallback);
+                    kcUtils::WriteBinaryFile(binOutputFileName.asASCIICharArray(), binary, m_LogCallback);
                 }
                 else
                 {
@@ -641,7 +627,7 @@ void kcCLICommanderCL::GetMetadata(const Config& config)
                         gtString metaDataOutputFileName;
                         kcUtils::ConstructOutputFileName(config.m_MetadataFile, KC_STR_DEFAULT_METADATA_SUFFIX,
                                                          kernelName, deviceName, metaDataOutputFileName);
-                        KAUtils::WriteTextFile(metaDataOutputFileName.asASCIICharArray(), metaDataText, m_LogCallback);
+                        kcUtils::WriteTextFile(metaDataOutputFileName.asASCIICharArray(), metaDataText, m_LogCallback);
                     }
                     else
                     {
@@ -688,7 +674,7 @@ void kcCLICommanderCL::GetDebugIL(const Config& config)
                         gtString debugIlOutputFileName;
                         kcUtils::ConstructOutputFileName(config.m_MetadataFile, KC_STR_DEFAULT_DEBUG_IL_SUFFIX,
                                                          kernelName, deviceName, debugIlOutputFileName);
-                        KAUtils::WriteTextFile(debugIlOutputFileName.asASCIICharArray(), text, m_LogCallback);
+                        kcUtils::WriteTextFile(debugIlOutputFileName.asASCIICharArray(), text, m_LogCallback);
                     }
                     else
                     {

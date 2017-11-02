@@ -1,0 +1,56 @@
+/// RGA
+
+// "P4ROOT" is passed in to this build script from Jenkins
+
+// "SOLUTION" is passed in to this build script from Jenkins
+
+// "ARCH" is passed in to this build script from Jenkins (must be "x64" or "x86")
+
+// "ARCHIVE_NAME" is passed in to this build script from Jenkins
+
+
+Define "RGAPATH" "[P4ROOT]\RGA"
+
+Define "BUILDPATH" "[RGAPATH]\BuildOutput"
+
+Always
+
+    Log "[P4ROOT]\RGA_Build.log"
+
+
+Image
+
+    // Make zip files for CodeXL bits
+
+    Define "ZIPDIRRGA" "[BUILDPATH]"
+
+    MKDIR "[ZIPDIRRGA]"
+
+    MKDIR "[ZIPDIRRGA]\bin"
+
+    // Copy release binaries to the zip file dir
+
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\rga.exe" "[ZIPDIRRGA]\bin\rga.exe*"
+
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\[ARCH]\VirtualContext.exe" "[ZIPDIRRGA]\bin\[ARCH]\VirtualContext.exe*"
+
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\[ARCH]\amdspv.exe" "[ZIPDIRRGA]\bin\[ARCH]\amdspv.exe*"
+
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\[ARCH]\spvgen.dll" "[ZIPDIRRGA]\bin\[ARCH]\spvgen.dll*"
+
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\[ARCH]\shae.exe" "[ZIPDIRRGA]\bin\[ARCH]\shae.exe*"
+
+    XCopy "[OUTPUT_PATH]\Release_Static\bin\[ARCH]\RGADX11.exe" "[ZIPDIRRGA]\bin\[ARCH]\RGADX11.exe*"
+
+    XCopy "C:\Program Files (x86)\Windows Kits\10\bin\[ARCH]\d3dcompiler_47.dll" "[ZIPDIRRGA]\bin\[ARCH]\d3dcompiler_47.dll*"
+
+    // Copy the VC++ Redistributable package binaries
+
+    XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\[ARCH]\Microsoft.VC140.CRT\concrt140.dll" "[ZIPDIRRGA]\bin\concrt140.dll*"
+
+    XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\[ARCH]\Microsoft.VC140.CRT\msvcp140.dll" "[ZIPDIRRGA]\bin\msvcp140.dll*"
+
+    XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\[ARCH]\Microsoft.VC140.CRT\vccorlib140.dll" "[ZIPDIRRGA]\bin\vccorlib140.dll*"
+    XCopy "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\redist\[ARCH]\Microsoft.VC140.CRT\vcruntime140.dll" "[ZIPDIRRGA]\bin\vcruntime140.dll*"
+
+    Zip "[BUILDPATH]\[ARCHIVE_NAME].[BUILD]_[DATE].zip"                  "[ZIPDIRRGA]\bin"

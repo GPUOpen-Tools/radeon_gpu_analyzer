@@ -26,9 +26,6 @@ public:
     /// List the asics as got from device
     void ListAsics(Config& config, LoggingCallBackFunc_t callback);
 
-    /// list the driver version
-    void Version(Config& config, LoggingCallBackFunc_t callback);
-
     /// Output multiple commands for all commands that requires compilation: GetBinary, GetIL, GetISA, GetAnlysis, GetMetadata, GetDebugIL,ListKernels
     void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback);
 

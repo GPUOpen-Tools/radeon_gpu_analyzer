@@ -71,7 +71,7 @@ void kcCLICommanderVulkan::Version(Config& config, LoggingCallBackFunc_t callbac
     GT_UNREFERENCED_PARAMETER(config);
 
     std::stringstream logMsg;
-    logMsg<< STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM << std::endl;
+    logMsg << STR_RGA_PRODUCT_NAME << " " << STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM << std::endl;
 
     if (m_pVulkanBuilder != nullptr)
     {
@@ -362,6 +362,12 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                                                                  vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_tessEvaluationShader, callback);
                         }
 
+                        if (isGeometryexShaderPresent)
+                        {
+                            kcUtils::PerformLiveRegisterAnalysis(vulkanOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
+                                                                 vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_geometryShader, callback);
+                        }
+
                         if (isFragmentShaderPresent)
                         {
                             kcUtils::PerformLiveRegisterAnalysis(vulkanOptions.m_isaDisassemblyOutputFiles.m_fragmentShader,
@@ -372,6 +378,24 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                         {
                             kcUtils::PerformLiveRegisterAnalysis(vulkanOptions.m_isaDisassemblyOutputFiles.m_computeShader,
                                                                  vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_computeShader, callback);
+                        }
+
+                        // Process stageless files.
+                        if (!vulkanOptions.m_stagelessInputFile.empty())
+                        {
+                            for (const auto& isaAndLiveReg : {
+                                   std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_vertexShader, vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_vertexShader},
+                                   std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_tessControlShader, vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_tessControlShader},
+                                   std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader, vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_tessEvaluationShader},
+                                   std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_geometryShader, vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_geometryShader},
+                                   std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_fragmentShader, vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_fragmentShader},
+                                   std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_computeShader, vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_computeShader} } )
+                            {
+                                if (kcUtils::FileNotEmpty(isaAndLiveReg.first.asASCIICharArray()))
+                                {
+                                    kcUtils::PerformLiveRegisterAnalysis(isaAndLiveReg.first, isaAndLiveReg.second, callback);
+                                }
+                            }
                         }
                     }
 

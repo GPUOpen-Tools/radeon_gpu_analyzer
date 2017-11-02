@@ -381,7 +381,6 @@
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderOpenGL.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderVulkan.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcConfig.cpp" />
-    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcFiles.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcMain.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcOpenGLStatisticsParser.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcParseCmdLine.cpp" />
@@ -397,7 +396,6 @@
     <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcCliStringConstants.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcConfig.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcDataTypes.h" />
-    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcFiles.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcIStatisticsParser.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcOpenGLStatisticsParser.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcParseCmdLine.h" />

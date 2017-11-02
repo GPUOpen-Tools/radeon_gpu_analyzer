@@ -29,7 +29,7 @@ Config::Config() :
     m_AnalysisFile(),
     m_ILFile(),
     m_ISAFile(),
-    m_LiveRegisterAnalysisFile(KC_STR_DEFAULT_LIVEREG_OUTPUT_FILE_NAME),
+    m_LiveRegisterAnalysisFile(),
     m_BinaryOutputFile(),
     m_Function(),
     m_CSVSeparator(),

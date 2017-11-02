@@ -159,6 +159,12 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.m_isRetainUserBinaryPath = true;
         }
 
+        // Set the default livereg output file name if not provided by a user.
+        if (vm.count("--livereg") && config.m_LiveRegisterAnalysisFile.empty())
+        {
+            config.m_LiveRegisterAnalysisFile = KC_STR_DEFAULT_LIVEREG_OUTPUT_FILE_NAME;
+        }
+
         if (vm.count("list-kernels"))
         {
             config.m_RequestedCommand = Config::ccListKernels;
@@ -182,8 +188,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.m_RequestedCommand = Config::ccCompile;
         }
-        else if (config.m_LiveRegisterAnalysisFile.size() > 0 &&
-            config.m_LiveRegisterAnalysisFile.compare(KC_STR_DEFAULT_LIVEREG_OUTPUT_FILE_NAME) != 0)
+        else if (config.m_LiveRegisterAnalysisFile.size() > 0)
         {
             config.m_RequestedCommand = Config::ccCompile;
         }
@@ -291,20 +296,13 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         if ((config.m_RequestedCommand == Config::ccHelp) && (bSourceSpecified))
         {
             std::string productVersion;
-#ifndef CMAKE_BUILD
-            productVersion = "1.1.";
-            productVersion += STR_RGA_BUILD_NUM;
-#else
-            std::stringstream versionString;
-            versionString << RadeonGPUAnalyzerCLI_VERSION_MAJOR << "." << RadeonGPUAnalyzerCLI_VERSION_MINOR << "." << STR_RGA_BUILD_NUM;
-            productVersion = versionString.str();
-#endif // !CMAKE_BUILD
-            cout << programName << " version: " << productVersion << std::endl;
-            cout << programName << " is an analysis tool for OpenCL";
+
+            cout << STR_RGA_PRODUCT_NAME << " " << STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM << std::endl;
+            cout << STR_RGA_PRODUCT_NAME << " is an analysis tool for OpenCL";
 #if _WIN32
             cout << ", DirectX";
 #endif
-            cout << ", OpenGL and Vulkan" << std::endl;
+            cout << ", OpenGL and Vulkan" << std::endl << std::endl;
             cout << "To view help for OpenCL: -h -s cl" << std::endl;
             cout << "To view help for OpenGL: -h -s opengl" << endl;
             cout << "To view help for Vulkan (GLSL): -h -s vulkan" << endl;
@@ -368,7 +366,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << " Generate ISA and performance statistics from AMDIL code: " << programName << " -s amdil --isa c:\\files\\isaFromAmdil.isa -a c:\\files\\statsFromAmdil.csv c:\\files\\myAmdilCode.amdil" << endl;
             cout << " Generate ISA from AMDIL code, and perform live register analysis: " << programName << " -s amdil --isa c:\\output\\myShader.isa --livereg c:\\output\\ c:\\files\\myAmdilCode.amdil" << endl;
         }
-        else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_GLSL_Vulkan || 
+        else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_GLSL_Vulkan ||
             config.m_SourceLanguage == SourceLanguage_SPIRV_Vulkan || config.m_SourceLanguage == SourceLanguage_SPIRVTXT_Vulkan))
         {
             // Get the mode name, and the relevant file extensions. We will use it when constructing the example string.

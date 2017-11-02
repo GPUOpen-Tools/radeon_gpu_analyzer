@@ -122,6 +122,29 @@ public:
     // Returns matched architecture in "archName" (if succeeded) and text message in "msg" (if failed).
     static bool FindGPUArchName(const std::string& deviceName, std::string& archName, std::string& msg);
 
+    /// Check if file exists and not empty.
+    /// \param[in]  fileName    name of file.
+    /// \returns                "true" if file exists and not empty, "false" otherwise.
+    static bool FileNotEmpty(const std::string fileName);
+
+    /// Read named file into a string.
+    /// \param[in]  inputFile     name of file.
+    /// \param[out] programSource content of file.
+    /// \returns                  success.
+    static bool ReadProgramSource(const std::string& inputFile, std::string& programSource);
+
+    /// Write a binary file.
+    /// \param[in]  fileName   the name of the file to be created
+    /// \param[in]  content    the contents
+    /// \param[in]  pCallback  callback for logging
+    static bool WriteBinaryFile(const std::string& fileName, const std::vector<char>& content, LoggingCallBackFunc_t pCallback);
+
+    /// Write a text file.
+    /// \param[in]  fileName   the name of the file to be created
+    /// \param[in]  content    the contents
+    /// \param[in]  pCallback  callback for logging
+    static bool WriteTextFile(const std::string& fileName, const std::string& content, LoggingCallBackFunc_t pCallback);
+
 private:
     // This is a static class (no instances).
     kcUtils(const kcUtils& other);

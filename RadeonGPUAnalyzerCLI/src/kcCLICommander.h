@@ -26,7 +26,7 @@ public:
     virtual void ListAdapters(Config& config, LoggingCallBackFunc_t callback);
 
     /// list the driver version
-    virtual void Version(Config& config, LoggingCallBackFunc_t callback) = 0;
+    virtual void Version(Config& config, LoggingCallBackFunc_t callback);
 
     /// Output multiple commands for all commands that requires compilation: GetBinary, GetIL, GetISA, GetAnlysis, GetMetadata, GetDebugIL,ListKernels
     virtual void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback) = 0;

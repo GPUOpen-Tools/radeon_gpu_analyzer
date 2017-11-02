@@ -43,7 +43,6 @@ gitMapping = {
     "common-src-Vsprops.git"              : "../Common/Src/Vsprops",
 	"common-src-Miniz.git"                : "../Common/Src/Miniz",
 	"common-src-Misc.git"                 : "../Common/Src/Misc",
-	"common-dk-Installer"                 : "../Common/DK/Installer",
 }
 
 # for each dependency - test if it has already been fetched - if not, then fetch it, otherwise update it to top of tree

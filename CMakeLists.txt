@@ -16,8 +16,9 @@ endif()
 # Linux specific configurations
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
-    # Compiler configuration
-    add_definitions(-std=c++11 -g -fmessage-length=0 -Wno-unknown-pragmas -pthread)
+    # Compiler & linker configuration
+    add_definitions(-std=c++11 -fmessage-length=0 -Wno-unknown-pragmas -pthread)
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc ${CMAKE_EXE_LINKER_FLAGS}")
 
     # Generic preprocessor directives
     add_definitions(-DLINUX)
@@ -25,7 +26,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
     # Debug-specific preprocessor directives
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        add_definitions(-D_DEBUG)
+        add_definitions(-g -D_DEBUG)
     endif()
 
     # Output directories

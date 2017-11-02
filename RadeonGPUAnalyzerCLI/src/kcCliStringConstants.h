@@ -1,7 +1,7 @@
 #ifndef __kcCliStringConstantsh_h
     #define __kcCliStringConstantsh_h
 
-    const char* const STR_RGA_VERSION = "1.2";
+    const char* const STR_RGA_VERSION = "1.3";
 #ifdef RGA_BUILD_NUMBER
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -9,7 +9,8 @@
 #else
     const char* const STR_RGA_BUILD_NUM = "0";
 #endif
-    const char* const STR_RGA_VERSION_PREFIX = "Radeon GPU Analyzer Version: ";
+    const char* const STR_RGA_PRODUCT_NAME = "Radeon GPU Analyzer";
+    const char* const STR_RGA_VERSION_PREFIX = "Version: ";
     const char* const STR_DRIVER_VERSION = "Driver version: ";
     const char* const STR_ERR_DRIVER_VERSION_EXTRACTION_FAILURE = "could not extract the driver version.";
     const char* const STR_ERR_INITIALIZATION_FAILURE = "Failed to initialize.";

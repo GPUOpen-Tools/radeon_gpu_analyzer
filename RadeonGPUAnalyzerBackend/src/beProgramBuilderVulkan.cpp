@@ -116,9 +116,9 @@ static std::string GetInputPrefix(const VulkanOptions& vulkanOptions, const std:
 static beKA::beStatus  AddInputFileNames(const VulkanOptions& options, std::stringstream& cmd)
 {
     beKA::beStatus  status = beKA::beStatus_SUCCESS;
-  
+
     // Indicates that a stage-less input file name was provided.
-    bool  isNonStageInput = false; 
+    bool  isNonStageInput = false;
 
     // Indicates that some of stage-specific file names was provided (--frag, --vert, etc.).
     bool isStageInput = false;
@@ -186,7 +186,7 @@ static beKA::beStatus  AddInputFileNames(const VulkanOptions& options, std::stri
     {
         status = beKA::beStatus_VulkanMixedInputFiles;
     }
-    
+
     return status;
 }
 
@@ -528,6 +528,14 @@ beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOption
                 const gtString AMPSPV_TMP_OUTPUT_FILE = L"amdspvTempFile.txt";
                 osFilePath tmpFilePath(osFilePath::OS_TEMP_DIRECTORY);
                 tmpFilePath.setFileName(AMPSPV_TMP_OUTPUT_FILE);
+
+                // Delete the log file if it already exists.
+                if (tmpFilePath.exists())
+                {
+                    osFile tmpLogFile(tmpFilePath);
+                    tmpLogFile.deleteFile();
+                }
+
                 cmd << "out.glslLog=\"" << tmpFilePath.asString().asASCIICharArray() << "\" ";
 
                 // No default output (only generate the output files that we explicitly specified).

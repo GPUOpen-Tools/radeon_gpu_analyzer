@@ -7,6 +7,12 @@
 #include <RadeonGPUAnalyzerCLI/src/kcCLICommander.h>
 
 
+void kcCLICommander::Version(Config& config, LoggingCallBackFunc_t callback)
+{
+    std::stringstream s_Log;
+    std::cout << STR_RGA_PRODUCT_NAME << " " << STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM << std::endl;
+}
+
 std::string  GetInpulLanguageString(beKA::SourceLanguage lang)
 {
     switch (lang)

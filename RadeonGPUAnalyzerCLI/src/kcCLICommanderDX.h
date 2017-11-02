@@ -22,9 +22,6 @@ public:
     /// List the adapters installed on the system.
     void ListAdapters(Config& config, LoggingCallBackFunc_t callback) override;
 
-    /// list the driver version
-    void Version(Config& config, LoggingCallBackFunc_t callback);
-
     void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback);
 
 private: //functions

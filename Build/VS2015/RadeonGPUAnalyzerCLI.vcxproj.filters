@@ -45,9 +45,6 @@
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcOpenGLStatisticsParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcFiles.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcConfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -81,9 +78,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcOpenGLStatisticsParser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcFiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderDX.h">

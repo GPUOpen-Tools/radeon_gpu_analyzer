@@ -19,7 +19,6 @@
 // Local.
 #include <RadeonGPUAnalyzerCLI/src/kcCLICommanderDX.h>
 #include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
-#include <RadeonGPUAnalyzerCLI/src/kcFiles.h>
 #include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
 
 // Static constants.
@@ -72,20 +71,6 @@ void kcCLICommanderDX::ListAdapters(Config & config, LoggingCallBackFunc_t callb
     callback(msg.str());
 }
 
-void kcCLICommanderDX::Version(Config& config, LoggingCallBackFuncP callback)
-{
-    std::stringstream s_Log;
-    s_Log << STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM << std::endl;
-
-    if (!Init(config, callback))
-    {
-        s_Log << STR_ERR_INITIALIZATION_FAILURE << std::endl;
-    }
-
-    LogCallBack(s_Log.str());
-}
-
-
 void kcCLICommanderDX::InitRequestedAsicListDX(const Config& config)
 {
     stringstream s_Log;
@@ -135,7 +120,7 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
             gtString isaOutputFileName;
             kcUtils::ConstructOutputFileName(config.m_ISAFile, KC_STR_DEFAULT_ISA_SUFFIX,
                                              config.m_Function, deviceName, isaOutputFileName);
-            KAUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), isaBuffer, m_LogCallback);
+            kcUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), isaBuffer, m_LogCallback);
 
             // Detect the ISA size.
             isIsaSizeDetected = pProgramBuilderDX->GetIsaSize(isaBuffer, isaSizeInBytes);
@@ -195,7 +180,7 @@ void kcCLICommanderDX::ExtractIL(const std::string& deviceName, const Config& co
             gtString ilOutputFileName;
             kcUtils::ConstructOutputFileName(config.m_ILFile, KC_STR_DEFAULT_AMD_IL_SUFFIX,
                 config.m_Function, deviceName, ilOutputFileName);
-            KAUtils::WriteTextFile(ilOutputFileName.asASCIICharArray(), ilBuffer, m_LogCallback);
+            kcUtils::WriteTextFile(ilOutputFileName.asASCIICharArray(), ilBuffer, m_LogCallback);
         }
 
         if (backendRet == beStatus_SUCCESS)
@@ -284,7 +269,7 @@ void kcCLICommanderDX::ExtractBinary(const std::string& deviceName, const Config
     {
         gtString binOutputFileName;
         kcUtils::ConstructOutputFileName(config.m_BinaryOutputFile, KC_STR_DEFAULT_BIN_SUFFIX, "", deviceName, binOutputFileName);
-        KAUtils::WriteBinaryFile(binOutputFileName.asASCIICharArray(), binary, m_LogCallback);
+        kcUtils::WriteBinaryFile(binOutputFileName.asASCIICharArray(), binary, m_LogCallback);
         std::stringstream s_Log;
         s_Log << KA_CLI_STR_EXTRACTING_BIN << deviceName << KA_CLI_STR_STATUS_SUCCESS << std::endl;
         LogCallBack(s_Log.str());
@@ -333,7 +318,7 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
             return;
         }
 
-        if ((config.m_SourceLanguage != SourceLanguage_HLSL)    && 
+        if ((config.m_SourceLanguage != SourceLanguage_HLSL)    &&
             (config.m_SourceLanguage != SourceLanguage_DXasm)   &&
             (config.m_SourceLanguage != SourceLanguage_DXasmT)  &&
             (config.m_SourceLanguage != SourceLanguage_AMDIL))
@@ -451,7 +436,7 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
 
                 gtString dxAsmOutputFileName;
                 kcUtils::ConstructOutputFileName(config.m_DumpMSIntermediate, KC_STR_DEFAULT_DXASM_SUFFIX, config.m_Function, "", dxAsmOutputFileName);
-                KAUtils::WriteTextFile(dxAsmOutputFileName.asASCIICharArray(), sDumpMSIntermediate, m_LogCallback);
+                kcUtils::WriteTextFile(dxAsmOutputFileName.asASCIICharArray(), sDumpMSIntermediate, m_LogCallback);
                 wasDxAsmDumped = true;
             }
             else
@@ -634,12 +619,12 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
 
     // read the source
     string sSource;
-    
+
     if (ret)
     {
         if (!config.m_InputFile.empty())
         {
-            ret = KAUtils::ReadProgramSource(config.m_InputFile, sSource);
+            ret = kcUtils::ReadProgramSource(config.m_InputFile, sSource);
             if (!ret)
             {
                 s_Log << STR_ERR_CANNOT_READ_FILE << config.m_InputFile << std::endl;

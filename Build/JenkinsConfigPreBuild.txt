@@ -1,0 +1,30 @@
+// RGA
+
+// "P4ROOT" is passed in to this build script from Jenkins
+
+// "SOLUTION" is passed in to this build script from Jenkins
+
+// "ARCH" is passed in to this build script from Jenkins (must be "x64" or "x86")
+
+// "ARCHIVE_NAME" is passed in to this build script from Jenkins
+
+
+Define "RGAPATH" "[P4ROOT]\RGA"
+
+Define "BUILDPATH" "[RGAPATH]\BuildOutput"
+
+Always
+
+    Log "[P4ROOT]\RGA_Build.log"
+
+Image
+
+    // Make zip files for CodeXL bits
+
+    Define "ZIPDIRRGA" "[BUILDPATH]"
+
+    MKDIR "[ZIPDIRRGA]"
+
+    MKDIR "[ZIPDIRRGA]\bin"
+
+
