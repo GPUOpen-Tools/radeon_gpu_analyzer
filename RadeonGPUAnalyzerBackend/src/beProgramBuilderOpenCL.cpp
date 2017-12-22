@@ -203,11 +203,6 @@ beProgramBuilderOpenCL::beProgramBuilderOpenCL() :
     m_isLegacyMode(false)
 {
 }
-// interface
-bool beProgramBuilderOpenCL::IsInitialized()
-{
-    return m_IsIntialized;
-}
 
 beKA::beStatus beProgramBuilderOpenCL::Initialize(const string& sDllModule/* = ""*/)
 {
@@ -549,7 +544,7 @@ beKA::beStatus beProgramBuilderOpenCL::GetKernels(const std::string& device, std
             const string kernelPrefixHsail("__OpenCL_&__OpenCL_");
             const string kernelSuffixHsail("_kernel_metadata");
 
-            // Apparently there is a new variant for the format of the ELF symbol name, 
+            // Apparently there is a new variant for the format of the ELF symbol name,
             // when AMDIL compilation path is used.
             const string kernelSuffixAmdilAlternative("_binary");
             const string kernelPrefixAmdilAlternative("__ISA_");
@@ -734,7 +729,7 @@ beKA::beStatus beProgramBuilderOpenCL::GetStatistics(const std::string& device, 
         }
         else
         {
-            bRet = beKA::beSattus_WrongKernelName;
+            bRet = beKA::beStatus_WrongKernelName;
         }
     }
     else
@@ -1019,7 +1014,7 @@ beKA::beStatus beProgramBuilderOpenCL::GetKernelILText(const std::string& device
                 // Retry with an alternative name.
                 amdilName = "__AMDIL_" + kernel + "_text";
                 ret = GetKernelSectionText(device, amdilName, il);
-                
+
                 if (ret != beKA::beStatus_SUCCESS && m_NameDeviceTypeMap[device] == CL_DEVICE_TYPE_GPU)
                 {
                     // Inform the user about the failure. CPUs are ignored.
@@ -1080,7 +1075,7 @@ beKA::beStatus beProgramBuilderOpenCL::GetKernelSectionText(const std::string& d
                 Elf64_Xword   size;
 
                 symtab.GetInfo(symIt, &name, &bind, &type, &other, &pSection, &value, &size);
-                
+
                 if (pSection != nullptr)
                 {
                     vector<char> sectionData(pSection->GetData());
@@ -1367,7 +1362,7 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
     const char* STR_LEGACY_FLAG = "-legacy";
 
     // Check if we are in legacy mode.
-    for (const std::string& opt : oclOptions.m_OpenCLCompileOptions)
+    for (const std::string& opt : oclOptions.m_openCLCompileOptions)
     {
         if (opt.compare(STR_LEGACY_FLAG) == 0)
         {
@@ -1407,8 +1402,8 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
         // Collect the -D options.
         string definesAndOptions;
 
-        for (vector<string>::const_iterator it = oclOptions.m_Defines.begin();
-             it != oclOptions.m_Defines.end();
+        for (vector<string>::const_iterator it = oclOptions.m_defines.begin();
+             it != oclOptions.m_defines.end();
              ++it)
         {
             definesAndOptions += "-D" + *it + " ";
@@ -1427,8 +1422,8 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
         // Collect the other compiler options.
         bool bIsHoptionRequested = false;
 
-        for (vector<string>::const_iterator it = oclOptions.m_OpenCLCompileOptions.begin();
-             it != oclOptions.m_OpenCLCompileOptions.end();
+        for (vector<string>::const_iterator it = oclOptions.m_openCLCompileOptions.begin();
+             it != oclOptions.m_openCLCompileOptions.end();
              ++it)
         {
             if (((*it).compare("-h")) || ((*it).compare("-H")))
@@ -1445,7 +1440,7 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
         // Which devices do we care about?
         vector<cl_device_id> requestedDevices;
 
-        if (oclOptions.m_SelectedDevices.empty())
+        if (oclOptions.m_selectedDevices.empty())
         {
             // None were specified by the user, so do them all.
             requestedDevices = m_OpenCLDeviceIDs;
@@ -1453,8 +1448,8 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
         else
         {
             // Make a vector of device IDs from the requested device list.
-            for (set<string>::const_iterator it = oclOptions.m_SelectedDevices.begin();
-                 it != oclOptions.m_SelectedDevices.end();
+            for (set<string>::const_iterator it = oclOptions.m_selectedDevices.begin();
+                 it != oclOptions.m_selectedDevices.end();
                  ++it)
             {
                 if (m_NameDeviceIdMap.count(*it) > 0)
@@ -1970,20 +1965,6 @@ beStatus beProgramBuilderOpenCL::GetDeviceTable(std::vector<GDT_GfxCardInfo>& ta
 
 beProgramBuilderOpenCL::~beProgramBuilderOpenCL(void)
 {
-}
-
-bool beProgramBuilderOpenCL::CompileOK(std::string& device)
-{
-    bool bRet = false;
-
-    std::vector<char>& vBin = m_BinDeviceMap.at(device);
-
-    if (vBin.empty() == false)
-    {
-        bRet = true;
-    }
-
-    return bRet;
 }
 
 void beProgramBuilderOpenCL::ForceEnd()

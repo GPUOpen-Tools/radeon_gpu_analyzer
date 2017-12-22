@@ -51,6 +51,9 @@
     <ClCompile Include="..\..\..\Common\Src\DeviceInfo\DeviceInfoUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderLightning.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommander.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -93,6 +96,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcCliStringConstants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RadeonGPUAnalyzerCLI\src\kcCLICommanderLightning.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

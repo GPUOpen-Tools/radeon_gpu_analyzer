@@ -9,7 +9,8 @@
 #include <string>
 #include <sstream>
 
-#include "beProgramBuilder.h"
+#include <RadeonGPUAnalyzerBackend/include/beProgramBuilder.h>
+#include <RadeonGPUAnalyzerBackend/include/beOpenCLDefs.h>
 
 #ifdef _WIN32
     #include <DXXModule.h>
@@ -38,31 +39,13 @@ public:
 
 public:
 
-    /// Options specific to OpenCL
-    struct OpenCLOptions : public beKA::CompileOptions
-    {
-        /// OpenCL compilation options passed into clBuildProgram.
-        /// A vector of strings, since this is convenient for Boost command line processing.
-        std::vector<std::string> m_OpenCLCompileOptions;
-        /// OpenCL compilation options passed into clBuildProgram as -Ditems.
-        /// A vector of strings, since this is convenient for Boost command line processing.
-        std::vector<std::string> m_Defines;
-        /// Choose a subset of devices for compilation.
-        /// If a subset is not selected,
-        /// the backend will compile for all available devices.
-        std::set<std::string> m_SelectedDevices;
-
-        /// Indicator if Emulation Analysis should be performed
-        bool m_Analyze;
-    };
-
     /// Get list of Kernels/Shaders.
     /// Must be called after Compile is successfully called.
     /// \param[in]  device  The name of the device to choose.
     /// \param[out] kernels Vector of names of Kernels/Shaders compiled.
     /// \returns            a status.
     /// If a Log stream is available, some failures may be diagnosed.
-    virtual beKA::beStatus GetKernels(const std::string& device, std::vector<std::string>& kernels);
+    beKA::beStatus GetKernels(const std::string& device, std::vector<std::string>& kernels);
 
     /// Get a binary version of the program.
     /// \param[in]  program Handle to the built program.
@@ -99,10 +82,6 @@ public:
     /// Upon failure, some or all of the parts may be missing.
     /// If a Log stream is available, some failures may be diagnosed.
     const std::string& GetOpenCLVersionInfo();
-
-    /// Checks if the OpenCL part was set up properly
-    /// \return true if yes and false otherwise
-    virtual bool IsInitialized();
 
     /// Get a string for a kernel IL.
     /// \param[in]  device     The name of the device.
@@ -144,8 +123,8 @@ public:
     /// \param[out] numOfSuccessfulBuilds       output parameter to hold the number of successful builds.
     /// \returns               a status.
     /// If a Log stream is available, some failures may be diagnosed.
-    virtual beKA::beStatus Compile(const std::string& programSource, const OpenCLOptions& oclOptions, const std::string& sourceCodeFullPathName,
-                                   const std::vector<std::string>* pSourcePath, int& numOfSuccessfulBuilds);
+    beKA::beStatus Compile(const std::string& programSource, const OpenCLOptions& oclOptions, const std::string& sourceCodeFullPathName,
+                           const std::vector<std::string>* pSourcePath, int& numOfSuccessfulBuilds);
 
     /// Get a set of available devices.
     /// \param[out] a container to hold the set of device names.
@@ -175,8 +154,6 @@ public:
     /// \param[in] program
     /// If a Log stream is available, some failures may be diagnosed.
     void ReleaseProgram();
-
-    virtual bool CompileOK(std::string& device);
 
     /// force ending of the thread in a safe way:
     void ForceEnd();

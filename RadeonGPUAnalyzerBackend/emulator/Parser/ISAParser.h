@@ -15,6 +15,9 @@
 #include "ISAProgramGraph.h"
 #include <RadeonGPUAnalyzerBackend/include/beInclude.h>
 
+#define   STR_HSAIL_DISASM_START_TOKEN  "Disassembly for "
+#define   STR_HSAIL_DISASM_END_TOKEN    "end"
+
 /// Parser for the ISA instructions
 class RGA_BACKEND_DECLDIR ParserISA
 {
@@ -27,11 +30,15 @@ public:
 
     /// Parse the 32 instruction.
     /// \returns true if the instruction`s parsing succeeded.
-    bool Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen, Instruction::instruction32bit hexInstruction, bool isLiteral32b = false, uint32_t literal32b = 0, int iLabel = NO_LABEL, int iGotoLabel = NO_LABEL, int iLineCount = 0);
+    bool Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen, Instruction::instruction32bit hexInstruction,
+               const std::string& srcLine, int srcLineNum, bool isLiteral32b = false, uint32_t literal32b = 0,
+               int iLabel = NO_LABEL, int iGotoLabel = NO_LABEL, int iLineCount = 0);
 
     /// Parse the 64 instruction.
     /// \returns true if the instruction`s parsing succeeded.
-    bool Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen, Instruction::instruction64bit hexInstruction, int iLabel = NO_LABEL, int iGotoLabel = NO_LABEL, int iLineCount = 0);
+    bool Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen, Instruction::instruction64bit hexInstruction,
+               const std::string& srcLine, int srcLineNum, int iLabel = NO_LABEL,
+               int iGotoLabel = NO_LABEL, int iLineCount = 0);
 
     /// Parse the ISA.
     /// \returns true if ISA`s parsing succeeded.

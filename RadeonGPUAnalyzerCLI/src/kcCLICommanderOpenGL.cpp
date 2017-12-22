@@ -74,68 +74,32 @@ kcCLICommanderOpenGL::~kcCLICommanderOpenGL()
     delete m_pOglBuilder;
 }
 
-void kcCLICommanderOpenGL::ListAsics(Config& config, LoggingCallBackFunc_t callback)
-{
-    GT_UNREFERENCED_PARAMETER(config);
-
-    // Output message.
-    std::stringstream logMsg;
-
-    if (m_supportedDevicesCache.empty())
-    {
-        if (m_pOglBuilder != nullptr)
-        {
-            bool isDeviceListExtracted = m_pOglBuilder->GetSupportedDevices(m_supportedDevicesCache);
-
-            if (!isDeviceListExtracted || m_supportedDevicesCache.empty())
-            {
-                logMsg << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
-            }
-        }
-    }
-
-    // Print the list of unique device names.
-    for (const std::string& device : m_supportedDevicesCache)
-    {
-        logMsg << device << std::endl;
-    }
-
-    // Print the output messages.
-    if (callback != nullptr)
-    {
-        callback(logMsg.str());
-    }
-
-}
-
 void kcCLICommanderOpenGL::Version(Config& config, LoggingCallBackFunc_t callback)
 {
     GT_UNREFERENCED_PARAMETER(config);
+
+    kcCLICommander::Version(config, callback);
 
     if (m_pOglBuilder != nullptr)
     {
         gtString glVersion;
         bool rc = m_pOglBuilder->GetOpenGLVersion(glVersion);
 
-        if (rc && !glVersion.isEmpty())
-        {
-            callback(glVersion.asASCIICharArray());
-        }
-        else
-        {
-            std::stringstream logMsg;
-            logMsg << STR_ERR_CANNOT_EXTRACT_OPENGL_VERSION << std::endl;
-            callback(logMsg.str());
-        }
+        callback(((rc && !glVersion.isEmpty()) ? std::string(glVersion.asASCIICharArray()) : STR_ERR_CANNOT_EXTRACT_OPENGL_VERSION) + "\n");
     }
 }
 
+bool kcCLICommanderOpenGL::PrintAsicList(std::ostream & log)
+{
+    return kcUtils::PrintAsicList(log, beProgramBuilderOpenGL::GetDisabledDevices());
+}
+
 // Helper function to remove unnecessary file paths.
-static bool GenerateRenderingPipelineOutputPaths(const Config& config, const std::string& baseOutputFileName,
+static bool GenerateRenderingPipelineOutputPaths(const Config& config, const std::string& baseOutputFileName, const std::string& defaultExt,
                                                  const std::string& device, beProgramPipeline& pipelineToAdjust)
 {
     // Generate the output file paths.
-    bool  ret = kcUtils::AdjustRenderingPipelineOutputFileNames(baseOutputFileName, device, pipelineToAdjust);
+    bool  ret = kcUtils::AdjustRenderingPipelineOutputFileNames(baseOutputFileName, defaultExt, device, pipelineToAdjust);
 
     if (ret)
     {
@@ -195,7 +159,8 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
     bool isGeometryexShaderPresent = (!config.m_GeometryShader.empty());
     bool isFragmentShaderPresent = (!config.m_FragmentShader.empty());
     bool isComputeShaderPresent = (!config.m_ComputeShader.empty());
-    bool isIsaRequired = (!config.m_ISAFile.empty());
+    bool isIsaRequired = (!config.m_ISAFile.empty() || !config.m_LiveRegisterAnalysisFile.empty() ||
+                          !config.m_ControlFlowGraphFile.empty() || !config.m_AnalysisFile.empty());
     bool isLiveRegAnalysisRequired = (!config.m_LiveRegisterAnalysisFile.empty());
     bool isCfgRequired = (!config.m_ControlFlowGraphFile.empty());
     bool isIsaBinary = (!config.m_BinaryOutputFile.empty());
@@ -257,7 +222,7 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
     }
 
     // Validate the output directories.
-    if (!shouldAbort && isIsaRequired)
+    if (!shouldAbort && isIsaRequired && !config.m_ISAFile.empty())
     {
         shouldAbort = !kcUtils::ValidateShaderOutputDir(config.m_ISAFile, logMsg);
     }
@@ -293,7 +258,7 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
         if (m_supportedDevicesCache.empty())
         {
             // We need to populate the list of supported devices.
-            bool isDeviceListExtracted = m_pOglBuilder->GetSupportedDevices(m_supportedDevicesCache);
+            bool isDeviceListExtracted = beProgramBuilderOpenGL::GetSupportedDevices(m_supportedDevicesCache);
 
             if (!isDeviceListExtracted)
             {
@@ -305,14 +270,14 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
 
         if (!shouldAbort)
         {
-            InitRequestedAsicList(config, m_supportedDevicesCache, targetDevices);
+            InitRequestedAsicList(config, m_supportedDevicesCache, targetDevices, m_LogCallback);
 
             for (const std::string& device : targetDevices)
             {
                 if (!shouldAbort)
                 {
                     // Generate the output message.
-                    logMsg << KA_CLI_STR_COMPILING << device;
+                    logMsg << KA_CLI_STR_COMPILING << device << "... ";
 
                     // Set the target device info for the backend.
                     bool isDeviceGlInfoExtracted = m_pOglBuilder->GetDeviceGLInfo(device, glOptions.m_chipFamily, glOptions.m_chipRevision);
@@ -327,25 +292,28 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                     if (isIsaRequired)
                     {
                         glOptions.m_isAmdIsaDisassemblyRequired = true;
-                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_ISAFile, device, glOptions.m_isaDisassemblyOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_ISAFile, KC_STR_DEFAULT_ISA_SUFFIX, device, glOptions.m_isaDisassemblyOutputFiles);
                     }
 
                     if (isLiveRegAnalysisRequired)
                     {
                         glOptions.m_isLiveRegisterAnalysisRequired = true;
-                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_LiveRegisterAnalysisFile, device, glOptions.m_liveRegisterAnalysisOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVE_REG_ANALYSIS_SUFFIX,
+                                                                       device, glOptions.m_liveRegisterAnalysisOutputFiles);
                     }
 
                     if (isCfgRequired)
                     {
                         glOptions.m_isLiveRegisterAnalysisRequired = true;
-                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_ControlFlowGraphFile, device, glOptions.m_controlFlowGraphOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_ControlFlowGraphFile, KC_STR_DEFAULT_CFG_SUFFIX,
+                                                                       device, glOptions.m_controlFlowGraphOutputFiles);
                     }
 
                     if (isStatisticsRequired)
                     {
                         glOptions.m_isScStatsRequired = true;
-                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_AnalysisFile, device, glOptions.m_scStatisticsOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_AnalysisFile, KC_STR_DEFAULT_STATISTICS_SUFFIX,
+                                                                       device, glOptions.m_scStatisticsOutputFiles);
                     }
 
                     if (isIsaBinary)
@@ -356,7 +324,7 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                     else
                     {
                         // If binary file name is not provided, create a temp file.
-                        glOptions.m_programBinaryFile = kcUtils::ConstructTempFileName(L"rgaTempFile", L".bin");
+                        glOptions.m_programBinaryFile = kcUtils::ConstructTempFileName(L"rgaTempFile", L"bin");
                         GT_ASSERT_EX(glOptions.m_programBinaryFile != L"", L"Cannot create a temp file.");
                     }
 
@@ -381,6 +349,37 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                         // Parse and replace the statistics files.
                         beKA::AnalysisData statistics;
                         kcOpenGLStatisticsParser statsParser;
+
+                        // Parse ISA and write it to a csv file if required.
+                        if (isIsaRequired && config.m_isParsedISARequired)
+                        {
+                            bool  status;
+                            std::string  isaText, parsedIsaText, parsedIsaFileName;
+                            beProgramPipeline  isaFiles = glOptions.m_isaDisassemblyOutputFiles;
+                            for (const gtString& isaFileName : { isaFiles.m_computeShader, isaFiles.m_fragmentShader, isaFiles.m_geometryShader,
+                                                                isaFiles.m_tessControlShader, isaFiles.m_tessEvaluationShader, isaFiles.m_vertexShader })
+                            {
+                                if (!isaFileName.isEmpty())
+                                {
+                                    if ((status = kcUtils::ReadTextFile(isaFileName.asASCIICharArray(), isaText, m_LogCallback)) == true)
+                                    {
+                                        status = (beProgramBuilder::ParseISAToCSV(isaText, device, parsedIsaText) == beStatus::beStatus_SUCCESS);
+                                        if (status)
+                                        {
+                                            status = kcUtils::GetParsedISAFileName(isaFileName.asASCIICharArray(), parsedIsaFileName);
+                                        }
+                                        if (status)
+                                        {
+                                            status = kcUtils::WriteTextFile(parsedIsaFileName, parsedIsaText, m_LogCallback);
+                                        }
+                                    }
+                                    if (!status)
+                                    {
+                                        logMsg << STR_ERR_FAILED_PARSE_ISA << std::endl;
+                                    }
+                                }
+                            }
+                        }
 
                         if (isStatisticsRequired)
                         {
@@ -430,10 +429,16 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                                                                      glOptions.m_liveRegisterAnalysisOutputFiles.m_tessControlShader, callback);
                             }
 
-                            if (isTessControlShaderPresent)
+                            if (isTessEvaluationShaderPresent)
                             {
                                 kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader,
                                                                      glOptions.m_liveRegisterAnalysisOutputFiles.m_tessEvaluationShader, callback);
+                            }
+
+                            if (isGeometryexShaderPresent)
+                            {
+                                kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
+                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_geometryShader, callback);
                             }
 
                             if (isFragmentShaderPresent)
@@ -470,6 +475,12 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                                                                   glOptions.m_controlFlowGraphOutputFiles.m_tessEvaluationShader, callback);
                             }
 
+                            if (isGeometryexShaderPresent)
+                            {
+                                kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
+                                                                  glOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback);
+                            }
+
                             if (isFragmentShaderPresent)
                             {
                                 kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_fragmentShader,
@@ -495,6 +506,12 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                         {
                             logMsg << STR_ERR_FAILED_OUTPUT_FILE_VERIFICATION << std::endl;
                         }
+                    }
+
+                    // Delete temporary files
+                    if (isIsaRequired && config.m_ISAFile.empty())
+                    {
+                        kcUtils::DeletePipelineFiles(glOptions.m_isaDisassemblyOutputFiles);
                     }
 
                     // Notify the user about build errors if any.

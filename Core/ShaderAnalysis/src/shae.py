@@ -198,10 +198,10 @@ class Instruction:
         return self.__opcode.IsJump
 
     def GetBranchTarget(self):
-        return self.__args [0][6:] # strip label_
+        return self.__args [0]
 
     def GetJumpTarget(self):
-        return self.__args [0][6:] # strip label_
+        return self.__args [0]
 
 class BasicBlock:
     def __init__(self, label, instructions, order):
@@ -289,14 +289,14 @@ class _BaseIsaReader(IsaReader):
 
         for lineno, line in enumerate (lines):
             # shader <foo>, asic(VI), type(PS) and similar are ignored here
-            if line[0].startswith ('asic') or line[0].startswith ('type'):
+            if line[0].startswith ('asic') or line[0].startswith ('type') or line[0].startswith ('@kernel'):
                 continue
             elif line[0] == 'shader':
                 continue
-            elif line[0].startswith ('label') and line[0][-1] == ':':
-                nextLabel = line[0][6:-1] # strip label_, :
+            elif not ' ' in line[0] and line[0][-1] == ':':
+                nextLabel = line[0][:-1]
                 continue
-            
+
             binCode = line [0]
             opCode  = line [1]
             args = []

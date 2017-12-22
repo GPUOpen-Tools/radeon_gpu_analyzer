@@ -69,8 +69,6 @@ public:
     beProgramBuilderOpenGL();
     virtual ~beProgramBuilderOpenGL();
 
-    virtual beKA::beStatus GetKernels(const std::string& device, std::vector<std::string>& kernels) override;
-
     virtual beKA::beStatus GetBinary(const std::string& device, const beKA::BinaryOptions& binopts, std::vector<char>& binary) override;
 
     virtual beKA::beStatus GetKernelILText(const std::string& device, const std::string& kernel, std::string& il) override;
@@ -79,15 +77,7 @@ public:
 
     virtual beKA::beStatus GetStatistics(const std::string& device, const std::string& kernel, beKA::AnalysisData& analysis) override;
 
-    virtual bool IsInitialized() override;
-
-    virtual void ReleaseProgram() override;
-
     virtual beKA::beStatus GetDeviceTable(std::vector<GDT_GfxCardInfo>& table) override;
-
-    virtual bool CompileOK(std::string& device) override;
-
-    beKA::beStatus Initialize(const std::string& sDllModule = "");
 
     beKA::beStatus Compile(const OpenGLOptions& vulkanOptions, bool& cancelSignal, gtString& compilerOutput);
 
@@ -98,7 +88,10 @@ public:
     bool GetDeviceGLInfo(const std::string& deviceName, size_t& deviceFamilyId, size_t& deviceRevision) const;
 
     /// Retrieves the list of supported devices.
-    bool GetSupportedDevices(std::set<std::string>& deviceList);
+    static bool GetSupportedDevices(std::set<std::string>& deviceList);
+
+    /// Retrieves the list of disabled devices.
+    static const std::set<std::string>& GetDisabledDevices();
 
 private:
     std::set<std::string> m_publicDevices;

@@ -20,9 +20,10 @@
 #include <DeviceInfoUtils.h>
 
 // Local.
-#include <include/beBackend.h>
-#include <include/beProgramBuilderOpenCL.h>
-#include <include/beStringConstants.h>
+#include <RadeonGPUAnalyzerBackend/include/beBackend.h>
+#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderOpenCL.h>
+#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderLightning.h>
+#include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
 #ifdef _WIN32
     #include <include/beProgramBuilderDX.h>
 #endif
@@ -291,23 +292,6 @@ beStatus Backend::GetDeviceChipFamilyRevision(
 
     return retVal; 
 } 
-
-beProgramBuilderOpenCL* Backend::theOpenCLBuilder()
-{
-    return m_beOpenCL;
-}
-
-beProgramBuilderGL* Backend::theOpenGLBuilder()
-{
-    return m_beOpenGL;
-}
-
-#ifdef _WIN32
-beProgramBuilderDX* Backend::theOpenDXBuilder()
-{
-    return m_beDX;
-}
-#endif
 
 #ifdef _WIN32
 

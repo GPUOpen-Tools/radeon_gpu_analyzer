@@ -54,11 +54,13 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         ("version", "Print version string.")
         ("help,h", "Produce this help message.")
         ("analysis,a", po::value<string>(&config.m_AnalysisFile), "Path to output analysis file.")
+        ("binary,b", po::value<string>(&config.m_BinaryOutputFile), "Path to HSA Code Object binary output file.")
         ("isa", po::value<string>(&config.m_ISAFile), "Path to output ISA disassembly file(s).")
         ("livereg", po::value<string>(&config.m_LiveRegisterAnalysisFile), "Path to live register analysis output file(s).")
         ("cfg", po::value<string>(&config.m_ControlFlowGraphFile), "Path to control flow graph output file(s).")
-        ("il", po::value<string>(&config.m_ILFile), "Path to output IL file(s).")
         ("source-kind,s", po::value<string>(&config.m_SourceKind), "Source platform: cl for OpenCL, hlsl for DirectX, opengl for OpenGL, vulkan for Vulkan and amdil for AMDIL; cl is set by default")
+        ("parse-isa", "Generate a CSV file with a breakdown of each ISA instruction into opcode, operands. etc.")
+        ("line-numbers", "Add source line numbers to ISA disassembly.")
         ;
 
         // DX Options
@@ -89,20 +91,16 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         ;
 
         // CL Option
-        po::options_description clOpt("rga options");
+        po::options_description clOpt("");
         clOpt.add_options()
         ("list-kernels",                                                       "List kernel functions.")
-        ("debugil",      po::value<string>(&config.m_DebugILFile),             "Path to output Debug IL file(s).")
-        ("metadata",     po::value<string>(&config.m_MetadataFile),            "Path to output Metadata file(s).\n"
+        ("metadata,m",   po::value<string>(&config.m_MetadataFile),            "Path to output Metadata file(s).\n"
          "Requires --" KERNEL_OPTION ".")
         ("kernel,k",     po::value<string>(&config.m_Function),                "Kernel to be compiled and analyzed. If not specified, all kernels will be targeted.\n")
-        ("binary,b",     po::value<string>(&config.m_BinaryOutputFile),        "Path to binary output file(s).")
-        ("retain-user-filename",                                               "Retain the output path and name for the generated binary file as specified without adding the target asic name.")
-        ("suppress",     po::value<vector<string> >(&config.m_SuppressSection), "Section to omit from binary output.  Repeatable. Available options: .source, .amdil, .debugil, .debug_info, .debug_abbrev, .debug_line, .debug_pubnames, .debug_pubtypes, .debug_loc, .debug_str, .llvmir, .text\nNote: Debug sections are valid only with \"-g\" compile option")
         ("OpenCLoption", po::value< vector<string> >(&config.m_OpenCLOptions), "OpenCL compiler options.  Repeatable.");
 
         // Vulkan-specific.
-        po::options_description pipelinedOpt("");
+        po::options_description pipelinedOpt("Input shader type");
         pipelinedOpt.add_options()
         ("vert", po::value<string>(&config.m_VertexShader), "Full path to vertex shader source file.")
         ("tesc", po::value<string>(&config.m_TessControlShader), "Full path to tessellation control shader source file.")
@@ -111,15 +109,40 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         ("frag", po::value<string>(&config.m_FragmentShader), "Full path to fragment shader source file")
         ("comp", po::value<string>(&config.m_ComputeShader), "Full path to compute shader source file.");
 
+        // Legacy OpenCL options.
+        po::options_description legacyClOpt("");
+        legacyClOpt.add_options()
+        ("suppress", po::value<vector<string> >(&config.m_SuppressSection), "Section to omit from binary output.  Repeatable. Available options: .source, .amdil, .debugil,"
+                                                                            ".debug_info, .debug_abbrev, .debug_line, .debug_pubnames, .debug_pubtypes, .debug_loc, .debug_str,"
+                                                                            ".llvmir, .text\nNote: Debug sections are valid only with \"-g\" compile option");
 
+        // IL dump.
+        po::options_description ilDumpOpt("");
+        ilDumpOpt.add_options()
+        ("il", po::value<string>(&config.m_ILFile), "Path to output IL file(s).");
+
+        // Optimization Levels.
+        po::options_description optLevelOpt1("Optimization Levels");
+        po::options_description optLevelOpt2("");
+        optLevelOpt1.add_options()
+            ("O0", "Disable optimizations")
+            ("O1", "Enable minimal optimizations");
+        optLevelOpt2.add_options()
+            ("O2", "Optimize for speed")
+            ("O3", "Apply full optimization");
+
+        // "Hidden" options.
         po::options_description hiddenOpt("Options that we don't show with --help.");
         hiddenOpt.add_options()
-        ("?",                                                 "Produce help message.")
-        ("input",     po::value<string>(&config.m_InputFile), "Source program for analysis.");
+        ("?",                "Produce help message.")
+        ("input",            po::value<std::vector<string>>(&config.m_InputFiles),  "Input for analysis.")
+        ("version-info",     "Generate RGA CLI version info file. If no file name is provided, the version info is printed to stdout.")
+        ("session-metadata", po::value<string>(&config.m_sessionMetadataFile), "Generate session metadata file with the list of output files generated by RGA.");
+        ("retain-user-filename", "Retain the output path and name for the generated binary file as specified without adding the target asic name.");
 
         // all options available from command line
         po::options_description allOpt;
-        allOpt.add(genericOpt).add(macroAndIncludeOpt).add(clOpt).add(hiddenOpt).add(dxOpt).add(pipelinedOpt);
+        allOpt.add(genericOpt).add(macroAndIncludeOpt).add(clOpt).add(hiddenOpt).add(dxOpt).add(pipelinedOpt).add(ilDumpOpt).add(optLevelOpt1);
 
         po::variables_map vm;
 
@@ -133,7 +156,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         // Handle Options
         notify(vm);
 
-        if (vm.count("help") || vm.count("?"))
+        if (vm.count("help") || vm.count("?") || vm.size() == 0)
         {
             config.m_RequestedCommand = Config::ccHelp;
             //doWork = false;
@@ -142,6 +165,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         if (vm.count("list-asics"))
         {
             config.m_RequestedCommand = Config::ccListAsics;
+        }
+        else if (vm.count("list-kernels"))
+        {
+            config.m_RequestedCommand = Config::ccListKernels;
         }
 
         if (vm.count("intrinsics"))
@@ -159,63 +186,72 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.m_isRetainUserBinaryPath = true;
         }
 
+        if (vm.count("parse-isa"))
+        {
+            config.m_isParsedISARequired = true;
+        }
+
+        if (vm.count("line-numbers"))
+        {
+            config.m_isLineNumbersRequired = true;
+        }
+
+        // Set the optimization level.
+        if (vm.count("O0"))
+        {
+            config.m_optLevel = 0;
+        }
+        else if (vm.count("O1"))
+        {
+            config.m_optLevel = 1;
+        }
+        else if (vm.count("O2"))
+        {
+            config.m_optLevel = 2;
+        }
+        else if (vm.count("O3"))
+        {
+            config.m_optLevel = 3;
+        }
+
         // Set the default livereg output file name if not provided by a user.
         if (vm.count("--livereg") && config.m_LiveRegisterAnalysisFile.empty())
         {
             config.m_LiveRegisterAnalysisFile = KC_STR_DEFAULT_LIVEREG_OUTPUT_FILE_NAME;
         }
 
-        if (vm.count("list-kernels"))
+        if (vm.count("version-info"))
         {
-            config.m_RequestedCommand = Config::ccListKernels;
-
+            config.m_versionInfoFile = (vm.count("input") ? config.m_InputFiles[0] : "");
+            config.m_RequestedCommand = Config::ccGenVersionInfoFile;
         }
         else if (vm.count("version"))
         {
             config.m_RequestedCommand = Config::ccVersion;
         }
-
-        else if (config.m_AnalysisFile.size() > 0)
+        else if (config.m_AnalysisFile.size() > 0 || config.m_ILFile.size() > 0 || config.m_ISAFile.size() > 0 ||
+                 config.m_LiveRegisterAnalysisFile.size() > 0 || config.m_BinaryOutputFile.size() > 0 ||
+                 config.m_MetadataFile.size() > 0 || config.m_ControlFlowGraphFile.size() > 0)
         {
             config.m_RequestedCommand = Config::ccCompile;
         }
 
-        else if (config.m_ILFile.size() > 0)
+        if (config.m_RequestedCommand == Config::ccNone)
         {
-            config.m_RequestedCommand = Config::ccCompile;
-        }
-        else if (config.m_ISAFile.size() > 0)
-        {
-            config.m_RequestedCommand = Config::ccCompile;
-        }
-        else if (config.m_LiveRegisterAnalysisFile.size() > 0)
-        {
-            config.m_RequestedCommand = Config::ccCompile;
-        }
-        else if (config.m_BinaryOutputFile.size() > 0)
-        {
-            config.m_RequestedCommand = Config::ccCompile;
-        }
-        else if (config.m_DebugILFile.size() > 0)
-        {
-            config.m_RequestedCommand = Config::ccCompile;
-        }
-        else if (config.m_MetadataFile.size() > 0)
-        {
-            config.m_RequestedCommand = Config::ccCompile;
+            std::cout << STR_ERR_NO_VALID_CMD_DETECTED << std::endl;
         }
 
-        // what is the right way to do it?
-        // Danana- todo: need to decide how to know. not all commands requires file (like -l)
-        bool bSourceSpecified = false;
+        bool bSourceSpecified = true;
 
-        if (config.m_SourceKind.length() == 0) // set the default and remember it for the help
+        if (config.m_SourceKind.length() == 0)
         {
-            config.m_SourceKind = Config::sourceKindOpenCL;
-            bSourceSpecified = true;
+            if (config.m_RequestedCommand != Config::ccHelp && config.m_RequestedCommand != Config::ccVersion)
+            {
+                std::cout << STR_ERR_NO_MODE_SPECIFIED << std::endl;
+            }
+            bSourceSpecified = false;
         }
-
-        if (boost::iequals(config.m_SourceKind, Config::sourceKindHLSL))
+        else if (boost::iequals(config.m_SourceKind, Config::sourceKindHLSL))
         {
             config.m_SourceLanguage = SourceLanguage_HLSL;
         }
@@ -255,45 +291,25 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.m_SourceLanguage = SourceLanguage_SPIRVTXT_Vulkan;
         }
+        else if ((boost::iequals(config.m_SourceKind, Config::sourceKindRocmOpenCL)))
+        {
+            config.m_SourceLanguage = SourceLanguage_Rocm_OpenCL;
+        }
         else
         {
             config.m_SourceLanguage = SourceLanguage_Invalid;
             cout << "Source language: " <<  config.m_SourceKind << " not supported.\n";
-
         }
 
-
-        // Require an input file.
-        if (doWork && (vm.count("input") == 0 && config.m_RequestedCommand == Config::ccInvalid))
-        {
-            // TODO: get just the program name here.
-            // Maybe use boost file system stuff to just get KernelAnalyzerCLI.
-            //           cout << "Usage: " << argv[0] << " [options] source_file" << endl;
-            //           cout << visibleOpt << "\n";
-            doWork = false;
-        }
-
-        // handle the help. I do it here because we need the visibleOpt.
-        // TODO: change the function into class and make available.
-        string programName(argv[0]);
-
-        // On Linux platforms we use a script file that is what the user should call,
-        // and a binary file that the script invokes that has a "-bin" suffix.
-        // The binary file is the one that performs the commands so argv[0] equals the binary file name.
-        // Force the help text to display the script file name by removing the "-bin" suffix
-        // from sProgramName. This is applicable to Linux platforms only.
-        string suffixToRemove("-bin");
-        size_t pos = programName.rfind(suffixToRemove);
-
-        if (pos != string::npos)
-        {
-            // Remove the suffix
-            programName.erase(pos);
-        }
+#if _WIN32
+        const string  programName = "rga.exe";
+#else
+        const string  programName = "rga";
+#endif
 
         cout << std::endl;
 
-        if ((config.m_RequestedCommand == Config::ccHelp) && (bSourceSpecified))
+        if ((config.m_RequestedCommand == Config::ccHelp) && (!bSourceSpecified))
         {
             std::string productVersion;
 
@@ -303,7 +319,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << ", DirectX";
 #endif
             cout << ", OpenGL and Vulkan" << std::endl << std::endl;
-            cout << "To view help for OpenCL: -h -s cl" << std::endl;
+            cout << "To view help for ROCm OpenCL: -h -s rocm-cl" << std::endl;
+            cout << "To view help for legacy OpenCL: -h -s cl" << std::endl;
             cout << "To view help for OpenGL: -h -s opengl" << endl;
             cout << "To view help for Vulkan (GLSL): -h -s vulkan" << endl;
             cout << "To view help for Vulkan (SPIR-V binary input): -h -s vulkan-spv" << endl;
@@ -315,27 +332,49 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         }
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_OpenCL))
         {
-            cout << "*** OpenCL Instructions & Options ***" << endl;
-            cout << "=====================================" << endl;
+            // Put all options valid for this mode to one group to make the description aligned.
+            po::options_description  oclOptions;
+            oclOptions.add(genericOpt).add(ilDumpOpt).add(macroAndIncludeOpt).add(clOpt).add(legacyClOpt);
+            cout << "*** Legacy OpenCL Instructions & Options ***" << endl;
+            cout << "============================================" << endl;
+            cout << "Warning: this mode is deprecated for the Vega architecture, and is about to be deprecated in RGA." << endl;
             cout << "Usage: " << programName << " [options] source_file" << endl;
-            cout << genericOpt << endl;
-            cout << macroAndIncludeOpt << endl;
-            cout << clOpt << endl;
+            cout << oclOptions << endl;
             cout << "Examples:" << endl;
-            cout << "  " << "Extract ISA, IL code and statistics for all devices" << endl;
-            cout << "    " << programName << " foo.cl --isa outdir/foo/myIsa.isa --il outdir/foo/myIl.il -a outdir/foo/stats.csv" << endl;
-            cout << "  " << "Extract ISA and perform live register analysis for Fiji" << endl;
-            cout << "    " << programName << " foo.cl -c Fiji --isa outdir/foo/myIsa.isa --livereg outdir/foo/" << endl;
-            cout << "  " << "Create binary files output/foo-ASIC.bin for foo.cl and suppress the .source section" << endl;
-            cout << "    " << programName << " foo.cl --bin outdir/foo --suppress .source" << endl;
-            cout << "  " << "List the kernels available in foo.cl." << endl;
-            cout << "    " << programName << " foo.cl --list-kernels" << endl;
-            cout << "  " << "Produce analysis of myKernel in foo.cl.  Write the analysis to foo.csv." << endl;
-            cout << "    " << programName << " foo.cl --kernel myKernel --analysis foo.csv" << endl;
-            cout << "  " << "List the ASICs that the runtime supports." << endl;
-            cout << "    " << programName << " --list-asics" << endl;
-            cout << "  " << "Produce foo-Cypress.amdil and foo-Cypress.amdisa files for myKernel compiled for Cypress ASICs." << endl;
-            cout << "    " << programName << " foo.cl --kernel myKernel --il foo --isa foo --asic Cypress" << endl;
+            cout << "  " << "Compile foo.cl for all supported devices; extract ISA, IL code and statistics:" << endl;
+            cout << "    " << programName << " -s cl --isa output/foo_isa.txt --il output/foo_il.txt -a output/stats.csv foo.cl" << endl;
+            cout << "  " << "Compile foo.cl for Fiji; extract ISA and perform live register analysis:" << endl;
+            cout << "    " << programName << " -s cl -c Fiji --isa output/foo_isa.txt --livereg output/regs.txt foo.cl" << endl;
+            cout << "  " << "Compile foo.cl for gfx900; extract binary and control flow graphs:" << endl;
+            cout << "    " << programName << " -s cl -c gfx900 --bin output/foo.bin --cfg output/cfg.dot foo.cl" << endl;
+            cout << "  " << "List the kernels available in foo.cl:" << endl;
+            cout << "    " << programName << " -s cl --list-kernels foo.cl" << endl;
+            cout << "  " << "Compile foo.cl for Fiji; extract the static analysis data (statistics) for myKernel.  Write the statistics to foo.csv:" << endl;
+            cout << "    " << programName << " -s cl -c Fiji --kernel myKernel --analysis foo.csv foo.cl" << endl;
+            cout << "  " << "List the ASICs supported by Legacy OpenCL mode:" << endl;
+            cout << "    " << programName << " -s cl --list-asics" << endl;
+            cout << endl;
+        }
+        else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_Rocm_OpenCL))
+        {
+            // Put all options valid for this mode to one group to make the description aligned.
+            po::options_description  oclOptions;
+            oclOptions.add(genericOpt).add(ilDumpOpt).add(macroAndIncludeOpt).add(clOpt);
+            cout << "*** ROCm OpenCL Instructions & Options ***" << endl;
+            cout << "==========================================" << endl;
+            cout << "Usage: " << programName << " [options] source_file(s)" << endl;
+            cout << oclOptions << endl;
+            cout << "Examples:" << endl;
+            cout << "  " << "Compile test.cl for Vega and extract the binary:" << endl;
+            cout << "    " << programName << " -s rocm-cl -c vega -b output/test.bin test.cl" << endl;
+            cout << "  " << "Compile and link src1.cl, src2.cl and src3.cl into an HSA Code Object for Vega, and extract ISA disassembly:" << endl;
+            cout << "    " << programName << " -s rocm-cl -c vega --isa output/isa.txt src1.cl src2.cl src3.cl" << endl;
+            cout << "  " << "Compile test.cl for all supported targets, extract ISA and perform live register analysis:" << endl;
+            cout << "    " << programName << " -s rocm-cl --isa test_isa.txt --livereg regs.txt test.cl" << endl;
+            cout << "  " << "List the kernels available in test.cl:" << endl;
+            cout << "    " << programName << " -s rocm-cl --list-kernels test.cl" << endl;
+            cout << "  " << "List the ASICs supported by ROCm OpenCL Lightning Compiler:" << endl;
+            cout << "    " << programName << " -s rocm-cl --list-asics" << endl;
             cout << endl;
         }
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_HLSL))
@@ -344,16 +383,18 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << "================================================" << endl;
             cout << "Usage: " << programName << " [options] source_file" << endl;
             cout << genericOpt << endl;
+            cout << ilDumpOpt << endl;
             cout << macroAndIncludeOpt << endl;
             cout << dxOpt << endl;
             cout << "Examples:" << endl;
-            cout << " View supported ASICS for DirectX: " << programName << " -s hlsl -l" << endl;
-            cout << " Extract the ISA: " << programName << " -s hlsl -f VsMain -p vs_5_0 --isa c:\\files\\myShader.isa c:\\files\\myShader.hlsl" << endl;
-            cout << " Extract the ISA and perform live register analysis: " << programName << " -s hlsl -f VsMain -p vs_5_0 --isa c:\\output\\myShader.isa --livereg c:\\output\\ c:\\files\\myShader.hlsl" << endl;
-            cout << " Output analysis: " << programName << " -s hlsl -f VsMain -p vs_5_0  -a c:\\files\\myShader.csv c:\\files\\myShader.hlsl" << endl;
-            cout << " Compile using DX Assembly in binary format: " << programName << " -f  VsMain -s DXAsm -p vs_5_0 c:\\files\\myShader.obj  --isa c:\\temp\\dxTest.isa" << endl;
-            cout << " Compile using FXC: " << programName << " -s DXAsm -f  VsMain -p vs_5_0 c:\\files\\myShader.obj --isa c:\\files\\myIsa.isa c:\\files\\myShader.hlsl -c tahiti --FXC \"\"C:\\Program Files (x86)\\Windows Kits\\8.1\\bin\\x86\\fxc.exe\" /E VsMain /T vs_5_0  /Fo c:\\files\\myShader.obj c:\\files\\myShader.fx\"" << endl;
-            cout << " Compile using DX Assembly in text format: " << programName << " -f  VsMain -s DXAsmTxt -p vs_5_0 c:\\files\\myShaderblob.txt  --isa c:\\temp\\dxTest.isa c:\\files\\myShader.hlsl" << endl;
+            cout << "  View supported ASICS for DirectX:" << endl;
+            cout << "    " << programName << " -s hlsl -l" << endl;
+            cout << "  Compile myShader.hlsl for all supported targets and extract the ISA disassembly:" << endl;
+            cout << "    " << programName << " -s hlsl -f VsMain -p vs_5_0 --isa output/myShader_isa.txt src/myShader.hlsl" << endl;
+            cout << "  Compile myShader.hlsl for Fiji; extract the ISA and perform live register analysis:" << endl;
+            cout << "    " << programName << " -s hlsl -c Fiji -f VsMain -p vs_5_0 --isa output/myShader_isa.txt --livereg output/regs.txt myShader.hlsl" << endl;
+            cout << "  Compile myShader.hlsl for Radeon R9 390; perform static analysis and save the statistics to myShader.csv:" << endl;
+            cout << "    " << programName << " -s hlsl -c r9-390 -f VsMain -p vs_5_0 -a output/myShader.csv shaders/myShader.hlsl" << endl;
         }
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_AMDIL))
         {
@@ -362,9 +403,12 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << "Usage: " << programName << " [options] source_file" << endl;
             cout << genericOpt << endl;
             cout << "Examples:" << endl;
-            cout << " Generate ISA from AMDIL code: " << programName << " -s amdil --isa c:\\files\\isaFromAmdil.isa c:\\files\\myAmdilCode.amdil" << endl;
-            cout << " Generate ISA and performance statistics from AMDIL code: " << programName << " -s amdil --isa c:\\files\\isaFromAmdil.isa -a c:\\files\\statsFromAmdil.csv c:\\files\\myAmdilCode.amdil" << endl;
-            cout << " Generate ISA from AMDIL code, and perform live register analysis: " << programName << " -s amdil --isa c:\\output\\myShader.isa --livereg c:\\output\\ c:\\files\\myAmdilCode.amdil" << endl;
+            cout << "  Generate ISA from AMDIL code for all supported targets:" << endl;
+            cout << "    " << programName << " -s amdil --isa output/isaFromAmdil.isa myAmdilCode.amdil" << endl;
+            cout << "  Generate ISA for Fiji from AMDIL code and extract statistics:" << endl;
+            cout << "    " << programName << " -s amdil -c Fiji --isa output/isaFromAmdil.isa -a output/statsFromAmdil.csv myAmdilCode.amdil" << endl;
+            cout << "  Generate ISA for gfx900 from AMDIL code and perform live register analysis:" << endl;
+            cout << "    " << programName << " -s amdil -c gfx900 --isa output/myShader.isa --livereg output/regs.txt myAmdilCode.amdil" << endl;
         }
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_GLSL_Vulkan ||
             config.m_SourceLanguage == SourceLanguage_SPIRV_Vulkan || config.m_SourceLanguage == SourceLanguage_SPIRVTXT_Vulkan))
@@ -398,7 +442,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             std::transform(rgaModeName.begin(), rgaModeName.end(), rgaModeName.begin(), ::tolower);
 
             cout << "*** Vulkan Instructions & Options ***" << endl;
-            cout << "=================================" << endl;
+            cout << "=====================================" << endl;
             cout << "Usage: " << programName << " [options]";
             if (config.m_SourceLanguage == SourceLanguage_SPIRV_Vulkan || config.m_SourceLanguage == SourceLanguage_SPIRVTXT_Vulkan)
             {
@@ -413,27 +457,36 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
                     "   2) One or more pipeline stage specific shader files specified by the pipeline stage options (--vert, --tesc, etc.)." << endl << endl;
             }
             cout << genericOpt << endl;
+            cout << optLevelOpt1 << endl;
             cout << pipelinedOpt << endl;
             cout << "Examples:" << endl;
-            cout << " Extract ISA, AMD IL and statistics for a Vulkan program that is comprised of a vertex shader and a fragment shader for all devices: " << programName << " -s " << rgaModeName << " --isa c:\\output\\vulkan_isa.isa --il c:\\output\\vulkan_il.amdil -a c:\\output\\vulkan_stats.stats --vert c:\\source\\myVertexShader." << vertExt << " --frag c:\\source\\myFragmentShader." << fragExt << endl;
-            cout << " Extract ISA, AMD IL and statistics for a Vulkan program that is comprised of a vertex shader and a fragment shader for Iceland and Fiji: " << programName << " -s " << rgaModeName << " -c Iceland -c Fiji --isa c:\\output\\vulkan_isa.isa --il c:\\output\\vulkan_il.amdil -a c:\\output\\vulkan_stats.stats --vert c:\\source\\myVertexShader." << vertExt << " --frag c:\\source\\myFragmentShader." << fragExt << endl;
-            cout << " Extract ISA and binaries for a Vulkan program that is comprised of a vertex shader and a fragment shader for all devices: " << programName << " -s " << rgaModeName << " --isa c:\\output\\vulkan_isa.isa -b c:\\output\\vulkan_bin.bin -a c:\\output\\vulkan_stats.stats --vert c:\\source\\myVertexShader." << vertExt << " --frag c:\\source\\myFragmentShader." << fragExt << endl;
-            cout << " Extract ISA and perform live register analysis for a Vulkan program for all devices: " << programName << " -s " << rgaModeName << " --isa c:\\output\\vulkan_isa.isa --livereg c:\\output\\ --vert c:\\source\\myVertexShader." << vertExt << " --frag c:\\source\\myFragmentShader." << fragExt << endl;
-            cout << " Extract ISA for a single SPIR-V file, without specifying the pipeline stages: " << programName << " -s " << rgaModeName << " --isa c:\\output\\program.isa c:\\source\\program.spv" << endl;
+            cout << "  Compile vertex & fragment shaders for all supported devicesl; extract ISA, AMD IL and statistics:" << endl;
+            cout << "    " << programName << " -s " << rgaModeName << " --isa output/isa.txt --il output/il.txt -a output/stats.csv --vert source/myVertexShader." << vertExt << " --frag source/myFragmentShader." << fragExt << endl;
+            cout << "  Compile vertex & fragment shaders for Iceland and Fiji; extract ISA, AMD IL and statistics:" << endl;
+            cout << "    " << programName << " -s " << rgaModeName << " -c Iceland -c Fiji --isa output/isa.txt --il output/il.amdil -a output/.csv --vert source/myVertexShader." << vertExt << " --frag source/myFragmentShader." << fragExt << endl;
+            cout << "  Compile vertex shader for Radeon R9 390; extract ISA and binaries:" << endl;
+            cout << "    " << programName << " -s " << rgaModeName << " -c \"R9 390\" --isa output/isa.txt -b output/binary.bin -a output/stats.csv --vert c:\\source\\myVertexShader." << vertExt << endl;
+            if (config.m_SourceLanguage == SourceLanguage_SPIRV_Vulkan || config.m_SourceLanguage == SourceLanguage_SPIRVTXT_Vulkan)
+            {
+                cout << "  Extract ISA for a single SPIR-V file for Baffin, without specifying the pipeline stages:" << endl;
+                cout << "    " << programName << " -s " << rgaModeName << " -c Baffin --isa output/program_isa.txt source/program.spv" << endl;
+            }
         }
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_SourceLanguage == SourceLanguage_GLSL_OpenGL))
         {
             cout << "*** OpenGL Instructions & Options ***" << endl;
-            cout << "=================================" << endl;
+            cout << "=====================================" << endl;
             cout << "Usage: " << programName << " [options]" << endl;
             cout << genericOpt << endl;
             cout << pipelinedOpt << endl;
             cout << "Examples:" << endl;
-            cout << " Extract ISA, binaries and statistics for an OpenGL program that is comprised of a vertex shader and a fragment shader for all devices: " << programName << " -s opengl --isa c:\\output\\opengl_isa.isa -b c:\\output\\opengl_bin.bin -a c:\\output\\opengl_stats.stats --vert c:\\source\\myVertexShader.vert --frag c:\\source\\myFragmentShader.frag" << endl;
-            cout << " Extract ISA and statistics for an OpenGL program that is comprised of a vertex shader and a fragment shader for Tahiti: " << programName << " -s opengl -c Tahiti --isa c:\\output\\opengl_isa.isa -a c:\\output\\opengl_stats.stats --vert c:\\source\\myVertexShader.vert --frag c:\\source\\myFragmentShader.frag" << endl;
-            cout << " Extract ISA and perform live register analysis for an OpenGL program that is comprised of a vertex shader and a fragment shader for Tahiti: " << programName << " -s opengl -c Tahiti --isa c:\\output\\opengl_isa.isa --livereg c:\\output\\ --vert c:\\source\\myVertexShader.vert --frag c:\\source\\myFragmentShader.frag" << endl;
+            cout << "  Compile fragment shader for Baffin; extract ISA, binaries and statistics:" << endl;
+            cout << "    " << programName << " -s opengl --isa output/opengl_isa.txt -b output/opengl_bin.bin -a output/opengl_stats.csv --frag source/myFragmentShader.frag" << endl;
+            cout << "  Compile vertex & fragment shaders for FirePro W7100; Extract ISA and control flow graph: " << endl;
+            cout << "    " << programName << " -s opengl -c W7100 --isa output/opengl_isa.txt --cfg output/cfg.dot --vert myVertexShader.vert --frag cmyFragmentShader.frag" << endl;
+            cout << "  Compile geometry shader for all supported devices; extract ISA and perform live register analysis:" << endl;
+            cout << "    " << programName << " -s opengl --isa output/opengl_isa.txt --livereg output/regs.txt --geom source/myVertexShader.geom" << endl;
         }
-
     }
     catch (exception& e)
     {
@@ -450,6 +503,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         // TODO: Should be able to distinguish problem from --help/--version.
         //return false;
         doWork = false;
+    }
+
+    if (!doWork)
+    {
+        config.m_RequestedCommand = Config::ccInvalid;
     }
 
     return doWork;

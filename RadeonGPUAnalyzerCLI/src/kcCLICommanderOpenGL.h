@@ -22,9 +22,9 @@ public:
     kcCLICommanderOpenGL();
     virtual ~kcCLICommanderOpenGL();
 
-    virtual void ListAsics(Config& config, LoggingCallBackFunc_t callback) override;
-
     virtual void Version(Config& config, LoggingCallBackFunc_t callback) override;
+
+    virtual bool  PrintAsicList(std::ostream& log) override;
 
     virtual void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback) override;
 

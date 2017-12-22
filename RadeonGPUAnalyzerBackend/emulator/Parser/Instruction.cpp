@@ -1407,7 +1407,7 @@ Instruction::Instruction(unsigned int instructionWidth, InstructionCategory inst
     SetUpPerfTables();
 }
 
-void Instruction::GetCSVString(const std::string& deviceName, std::string& commaSeparatedString)const
+void Instruction::GetCSVString(const std::string& deviceName, bool addSrcLineInfo, std::string& commaSeparatedString)const
 {
     std::stringstream outputStream;
 
@@ -1418,10 +1418,19 @@ void Instruction::GetCSVString(const std::string& deviceName, std::string& comma
 
         outputStream << "0x" << fullOffset.substr(len, 6) << COMMA_SEPARATOR;
 
+        // Add the source line info.
+        if (addSrcLineInfo)
+        {
+            auto  srcLineInfo = GetSrcLineInfo();
+            outputStream << srcLineInfo.first << COMMA_SEPARATOR << DOUBLE_QUOTES << srcLineInfo.second << DOUBLE_QUOTES << COMMA_SEPARATOR;
+        }
+
         bool isBranch = (GetInstructionCategory() == InstructionCategory::Branch);
 
         outputStream << GetInstructionOpCode() << COMMA_SEPARATOR;
         outputStream << DOUBLE_QUOTES << GetInstructionParameters() << DOUBLE_QUOTES << COMMA_SEPARATOR;
+
+        outputStream << Instruction::GetFunctionalUnitAsString(GetInstructionCategory()) << COMMA_SEPARATOR;
 
         // Get the number of cycle that this instruction costs.
         int cycleCount = GetInstructionClockCount(deviceName);
@@ -1443,8 +1452,6 @@ void Instruction::GetCSVString(const std::string& deviceName, std::string& comma
         }
 
         outputStream << COMMA_SEPARATOR;
-
-        outputStream << Instruction::GetFunctionalUnitAsString(GetInstructionCategory()) << COMMA_SEPARATOR;
 
         outputStream << GetInstructionBinaryRep() << COMMA_SEPARATOR;
 

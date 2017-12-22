@@ -49,7 +49,6 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/x86/lib")
         set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/x86/arch")
     endif()
-
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -58,12 +57,21 @@ else()
     set(CMAKE_CONFIGURATION_TYPES "Release")
 endif()
 
-# Continue to the following subdirectories
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTBaseTools CMAKE_CURRENT_BINARY_DIR}/../Common/Src/AMDTBaseTools)
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTOSWrappers CMAKE_CURRENT_BINARY_DIR}/../Common/Src/AMDTOSWrappers)
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTOSAPIWrappers CMAKE_CURRENT_BINARY_DIR}/../Common/Src/AMDTOSAPIWrappers)
+# Add Common projects
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTBaseTools ${CMAKE_CURRENT_BINARY_DIR}/Common/Src/AMDTBaseTools)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTOSWrappers ${CMAKE_CURRENT_BINARY_DIR}/Common/Src/AMDTOSWrappers)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTOSAPIWrappers ${CMAKE_CURRENT_BINARY_DIR}/Common/Src/AMDTOSAPIWrappers)
+
+# Disable specific warnings for Common targets
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    target_compile_options(AMDTOSWrappers PRIVATE "-wd 4275")
+endif()
+
+# Add RGA CLI projects
 add_subdirectory (RadeonGPUAnalyzerBackend)
 add_subdirectory (RadeonGPUAnalyzerCLI)
+
+# Add Tests
 if(AMD_INTERNAL)
     add_subdirectory (${PROJECT_SOURCE_DIR}/../RGA-Internal/Tests ${CMAKE_CURRENT_BINARY_DIR}/Tests)
 endif()

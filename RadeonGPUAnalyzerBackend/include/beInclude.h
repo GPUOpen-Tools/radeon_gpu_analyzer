@@ -49,7 +49,8 @@ static const CALuint64 CAL_ERR_Value_64 = (CALuint64) - 2;
 /// Supported source language
 enum SourceLanguage
 {
-    SourceLanguage_Invalid = 0,
+    SourceLanguage_None,
+    SourceLanguage_Invalid,
     SourceLanguage_OpenCL,          // cl source of OpenCL kernels.
     SourceLanguage_GLSL,            // glsl input language for OpenGL (standalone, obsolete).
     SourceLanguage_GLSL_OpenGL,     // glsl input language for OpenGL Programs.
@@ -60,6 +61,7 @@ enum SourceLanguage
     SourceLanguage_AMDIL,           // AMDIL.
     SourceLanguage_DXasm,           // The other D3D/DX input language.
     SourceLanguage_DXasmT,          // D3D/DX Assembly as Text input language.
+    SourceLanguage_Rocm_OpenCL      // ROCm OpenCL
 };
 
 enum BuiltProgramKind
@@ -68,7 +70,8 @@ enum BuiltProgramKind
     BuiltProgramKind_OpenCL,
     BuiltProgramKind_OpenGL,
     BuiltProgramKind_DX,
-    BuiltProgramKind_Vulkan
+    BuiltProgramKind_Vulkan,
+    BuiltProgramKind_LC
 };
 
 enum beStatus
@@ -93,6 +96,7 @@ enum beStatus
     beStatus_NO_SUCH_DEVICE,
     beStatus_OpenCL_MODULE_NOT_LOADED,
     beStatus_OpenCL_MODULE_TOO_OLD,
+    beStatus_OpenCL_Compile_FAILED,
     beStatus_ACLCompile_FAILED,
     beStatus_ACLBinary_FAILED,
     beStatus_clCreateContextFromType_FAILED,
@@ -105,7 +109,7 @@ enum beStatus
     beStatus_BuildOpenCLProgramWrapper_FAILED,
     beStatus_Create_Bolob_FromInput_Failed,
     beStatus_NoStatSectionInElfPossibleOldDxDriver,
-    beSattus_WrongKernelName,
+    beStatus_WrongKernelName,
     beStatus_GLOpenGLVirtualContextFailedToLaunch,
     beStatus_GLOpenGLBuildError,
     beStatus_GLUnknownHardwareFamily,
@@ -118,6 +122,29 @@ enum beStatus
     beStatus_shaeIsaFileNotFound,
     beStatus_shaeFailedToLaunch,
     beStatus_dxDriverLaunchFailure,
+    beStatus_UnknownInputLang,
+    beStatus_UnknownObjDumpOperation,
+    beStatus_NoISAFileNameProvided,
+    beStatus_NoOutputFileGenerated,
+    beStatus_ParseIsaToCsvFailed,
+    beStatus_ConstructParsedIsaFileNameFailed,
+    beStatus_WriteParsedIsaFileFailed,
+    beStatus_LC_CompilerLaunchFailed,
+    beStatus_LC_CompilerTimeOut,
+    beStatus_LC_CompilerGeneratedError,
+    beStatus_LC_ObjDumpLaunchFailed,
+    beStatus_LC_DisassembleFailed,
+    beStatus_LC_BuilderLightningFailed,
+    beStatus_LC_ParseCodeObjMDFailed,
+    beStatus_LC_GetISASizeFailed,
+    beStatus_LC_ParseCompilerVersionFailed,
+    beStatus_LC_ConstructISAFileNameFailed,
+    beStatus_LC_ExtractMetadataFailed,
+    beStatus_LC_ExtractCodePropsFailed,
+    beStatus_LC_StoreStatsFailed,
+    beStatus_LC_SplitIsaFailed,
+    beStatus_LC_ExtractKernelNamesFailed,
+    beStatus_WriteToFile_FAILED,
     beStatus_General_FAILED,
 };
 
@@ -144,6 +171,7 @@ enum DeviceTableKind
 struct CompileOptions
 {
     SourceLanguage           m_SourceLanguage;
+    int                      m_optLevel;
 };
 
 /// Object to customize binary output strings.
@@ -197,6 +225,7 @@ struct AnalysisData
     CALuint64 numSGPRsUsed;            ///< number of SGPRs used by the program       CL_KERNELINFO_USED_SGPRS
     CALuint64 numVGPRsAvailable;       ///< number of VGPRs available to the program  CL_KERNELINFO_AVAILABLE_VGPRS
     CALuint64 numVGPRsUsed;            ///< number of VGPRs used by the program       CL_KERNELINFO_USED_VGPRS
+
     CALuint64 numThreadPerGroup;       ///< flattened Number of threads per group
     CALuint64 numThreadPerGroupX;      ///< x dimension of numThreadPerGroup
     CALuint64 numThreadPerGroupY;      ///< y dimension of numThreadPerGroup
@@ -208,6 +237,6 @@ struct AnalysisData
     CALuint64 ISASize;                 ///< Size of ISA
 };
 
-}
+} // namespace beKA
 
 #endif

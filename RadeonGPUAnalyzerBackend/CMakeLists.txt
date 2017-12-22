@@ -48,6 +48,7 @@ include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/CAL/8.95")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/CAL/8.95/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/ACL/TOT/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/APPSDK/3-0/include")
+include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/include")
 
 if (NOT IsDebian)
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0")

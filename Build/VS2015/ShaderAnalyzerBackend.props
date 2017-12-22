@@ -5,7 +5,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(RGABackendDir)\Include\Common;$(CommonLibDir)\Ext\Boost\boost_1_59_0;$(RGADir)..\Core\DX10ASM\include;$(CommonSrcDir);$(RGABackendDir);$(RGABackendDir)\..\;$(RGABackendDir)\Emulator\Parser;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonSrcDir)\DynamicLibraryModule;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir)\AMDTMutex;$(CommonSrcDir)\ADLUtil;$(CommonSrcDir)\CElf\Include;$(CommonLibDir)\AMD\ADL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(RGABackendDir)\Include\Common;$(CommonLibDir)\Ext\Boost\boost_1_59_0;$(RGADir)..\Core\DX10ASM\include;$(CommonSrcDir);$(RGABackendDir);$(RGABackendDir)\..\;$(RGABackendDir)\Emulator\Parser;$(CommonLibDir)\AMD\APPSDK\3-0\include;$(CommonLibDir)\AMD\CAL\8.95\include;$(CommonLibDir)\AMD\ACL\TOT\include;$(CommonSrcDir)\DynamicLibraryModule;$(CommonSrcDir)\TSingleton;$(CommonSrcDir)\DeviceInfo;$(CommonSrcDir)\AMDTMutex;$(CommonSrcDir)\ADLUtil;$(CommonSrcDir)\CElf\Include;$(CommonLibDir)\AMD\ADL\include;$(CommonLibDir)\Ext\yaml-cpp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ATI_OS_WIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>

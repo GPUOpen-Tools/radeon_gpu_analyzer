@@ -40,6 +40,19 @@
 #include "ParserSIVOP.h"
 #include "ParserFLAT.h"
 
+// *****************************************
+// *** INTERNALLY LINKED SYMBOLS - START ***
+// *****************************************
+
+static const std::string  ISA_LABEL_TOKEN_1 = "label_";
+static const std::string  ISA_LABEL_TOKEN_2 = "BB";
+static const std::string  ISA_BRANCH_TOKEN  = "branch";
+static const std::string  ISA_CALL_TOKEN    = "call";
+
+// ***************************************
+// *** INTERNALLY LINKED SYMBOLS - END ***
+// ***************************************
+
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - BEGIN ***
 
 static bool ExtractRuntimeChangedNumOfGprs(const std::string& isaLine, unsigned int& numOfGPRs)
@@ -188,10 +201,9 @@ ParserISA::~ParserISA()
     delete m_parsersSI[Instruction::InstructionSet_FLAT];
 }
 
-bool ParserISA::Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen,
-                      Instruction::instruction32bit hexInstruction, bool isLiteral32b,
-                      uint32_t literal32b, int iLabel /*=NO_LABEL*/,
-                      int iGotoLabel /*=NO_LABEL*/, int iLineCount/* = 0*/)
+bool ParserISA::Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen, Instruction::instruction32bit hexInstruction,
+                      const std::string& srcLine, int srcLineNum,  bool isLiteral32b, uint32_t literal32b,
+                      int iLabel /*=NO_LABEL*/, int iGotoLabel /*=NO_LABEL*/, int iLineCount/* = 0*/)
 {
     bool ret = false;
     Instruction* pInstruction = NULL;
@@ -249,6 +261,7 @@ bool ParserISA::Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen,
     if (pInstruction != NULL)
     {
         pInstruction->SetLineNumber(iLineCount);
+        pInstruction->SetSrcLineInfo(srcLineNum, srcLine);
         m_instructions.push_back(pInstruction);
 
         std::string opcode;
@@ -268,8 +281,8 @@ bool ParserISA::Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen,
     return ret;
 }
 
-bool ParserISA::Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen,
-                      Instruction::instruction64bit hexInstruction, int iLabel /*=NO_LABEL*/,
+bool ParserISA::Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen, Instruction::instruction64bit hexInstruction,
+                      const std::string& srcLine, int srcLineNum, int iLabel /*=NO_LABEL*/,
                       int iGotoLabel /*=NO_LABEL*/, int iLineCount /*= 0*/)
 {
     Instruction* pInstruction = NULL;
@@ -332,6 +345,7 @@ bool ParserISA::Parse(const std::string& isaLine, GDT_HW_GENERATION asicGen,
         if (NO_LABEL == pInstruction->GetLabel())
         {
             pInstruction->SetLineNumber(iLineCount);
+            pInstruction->SetSrcLineInfo(srcLineNum, srcLine);
             m_instructions.push_back(pInstruction);
 
             // Set the ISA instruction's string representation.
@@ -422,14 +436,33 @@ void ParserISA::GetNumOfInstructionsInCategory(ISAProgramGraph::NumOfInstruction
     m_pIsaTree.GetNumOfInstructionsInCategory(NumOfInstructionsInCategory, sDumpGraph);
 }
 
+static bool  GetSourceLineInfo(const std::string& isaLine, const std::string& prevIsaLine, std::string& srcLine, int& srcLineNum)
+{
+    // Source line info has the following format:
+    // ; C:\DEV\work\line_numbers\test.cl:4    <-- prevIsaLine
+    // ; A[0] = 0.0f;                          <-- isaLine
+
+    const size_t  srcLineOffset = 2;
+    size_t  colonOffset = 0;
+    bool  ret = false;
+    if (prevIsaLine.find(';') == 0 && isaLine.find(';') == 0 && ((colonOffset = prevIsaLine.rfind(':')) != std::string::npos))
+    {
+        srcLine = isaLine.substr(srcLineOffset);
+        srcLineNum = std::atoi(prevIsaLine.substr(colonOffset + 1).c_str());
+        ret = true;
+    }
+
+    return ret;
+}
+
 bool ParserISA::ParseToVector(const std::string& isa)
 {
-    int iLineCount = 0;
+    int iLineCount = 0, srcLineNum = 0;
     Instruction::instruction32bit inst32;
     Instruction::instruction64bit inst64;
 
     std::istringstream isaStream(isa);
-    std::string isaLine;
+    std::string isaLine, srcLine;
     bool isaCodeProc = false, parseOK = true, gprProc = false, vgprFound = false, sgprFound = false, codeLenFound = false;
     int iLabel = NO_LABEL, iGotoLabel = NO_LABEL;
 
@@ -464,13 +497,13 @@ bool ParserISA::ParseToVector(const std::string& isa)
             isaEnd = "end";
         }
     }
-    else if (isa.find("&__OpenCL_") != std::string::npos)
+    else if (isa.find(STR_HSAIL_DISASM_START_TOKEN) != std::string::npos)
     {
         // Shader entry point in HSAIL disassembly.
-        isaStart = "Disassembly for ";
+        isaStart = STR_HSAIL_DISASM_START_TOKEN;
 
         // End of shader token in HSAIL disassembly.
-        isaEnd = "end";
+        isaEnd = STR_HSAIL_DISASM_END_TOKEN;
     }
     else
     {
@@ -484,12 +517,14 @@ bool ParserISA::ParseToVector(const std::string& isa)
     GDT_HW_GENERATION asicGen = GDT_HW_GENERATION_NONE;
     /// Asic generation is in "asci("
     const std::string asicGenStr("asic(");
+    std::string  prevLine = "";
 
     while (getline(isaStream, isaLine))
     {
         iLineCount++;
 
-        if (!isaCodeProc && !gprProc && strstr(isaLine.c_str(), isaStart.c_str()) == NULL)
+        if (!isaCodeProc && !gprProc && strstr(isaLine.c_str(), isaStart.c_str()) == NULL ||
+            GetSourceLineInfo(isaLine, prevLine, srcLine, srcLineNum))
         {
             continue;
         }
@@ -504,7 +539,6 @@ bool ParserISA::ParseToVector(const std::string& isa)
             gprProc = true;
             isaCodeProc = false;
         }
-
         else if (isaCodeProc)
         {
             /// check generation first
@@ -548,7 +582,7 @@ bool ParserISA::ParseToVector(const std::string& isa)
                 std::string inst32TextHigh(matchInst[4].first, matchInst[4].second);
                 instStream << std::hex << inst32TextHigh << inst32TextLow;
                 instStream >> inst64;
-                instParseOK = Parse(isaLine, asicGen, inst64, iLabel, iGotoLabel, iLineCount);
+                instParseOK = Parse(isaLine, asicGen, inst64, srcLine, srcLineNum, iLabel, iGotoLabel, iLineCount);
                 iLabel = iGotoLabel = NO_LABEL;
 
                 if (!instParseOK)
@@ -563,7 +597,7 @@ bool ParserISA::ParseToVector(const std::string& isa)
                     instStream << std::hex << inst32TextHigh;
                     instStream >> literal32b;
 
-                    instParseOK = Parse(isaLine, asicGen, inst32, true, literal32b, iLabel, iGotoLabel, iLineCount);
+                    instParseOK = Parse(isaLine, asicGen, inst32, srcLine, srcLineNum, true, literal32b, iLabel, iGotoLabel, iLineCount);
                     iLabel = iGotoLabel = NO_LABEL;
 
                 }
@@ -576,7 +610,7 @@ bool ParserISA::ParseToVector(const std::string& isa)
 
                 instStream << std::hex << inst32Text;
                 instStream >> inst32;
-                instParseOK = Parse(isaLine, asicGen, inst32 , false, 0, iLabel, iGotoLabel, iLineCount);
+                instParseOK = Parse(isaLine, asicGen, inst32, srcLine, srcLineNum, false, 0, iLabel, iGotoLabel, iLineCount);
                 iLabel = iGotoLabel = NO_LABEL;
             }
             else if (iLabel != NO_LABEL)
@@ -647,6 +681,7 @@ bool ParserISA::ParseToVector(const std::string& isa)
                 m_CodeLen = atoi(codeLenText.c_str());
             }
         }
+        prevLine = isaLine;
     }
 
     return parseOK;
@@ -674,41 +709,59 @@ void ParserISA::ResetInstsCounters()
 
 int ParserISA::GetLabel(const std::string& sISALine)
 {
-    int iRet = NO_LABEL;
-    int iLocation = (int)sISALine.find("label");
     const int HSAIL_ISA_OFFSET = 2;
-    int offset = 0;
+    int ret = NO_LABEL;
+    size_t  offset = 0;
+    std::stringstream  stream;
 
-    if (iLocation == HSAIL_ISA_OFFSET)
+    if ((offset = sISALine.find(ISA_LABEL_TOKEN_1)) == 0 || offset == HSAIL_ISA_OFFSET)
     {
-        offset = HSAIL_ISA_OFFSET;
+        size_t  labelNumLen = sISALine.size() - offset - ISA_LABEL_TOKEN_1.size() - 1;
+        stream << std::hex << sISALine.substr(offset + ISA_LABEL_TOKEN_1.size(), labelNumLen);
+        stream >> ret;
+    }
+    else if ((offset = sISALine.find(ISA_LABEL_TOKEN_2)) == 0)
+    {
+        // LC generated labels have format "BB1_23". We consider the number of this label to be 123.
+        if ((offset = sISALine.find('_')) != std::string::npos)
+        {
+            stream << sISALine.substr(ISA_LABEL_TOKEN_2.size(), offset - ISA_LABEL_TOKEN_2.size()) <<
+                      sISALine.substr(offset + 1, sISALine.size() - offset - 2);
+            stream >> ret;
+        }
     }
 
-    if (iLocation == 0 || iLocation == HSAIL_ISA_OFFSET)
-    {
-        std::string labelText(sISALine.substr(6 + offset, sISALine.length() - 7));
-        std::stringstream instStream;
-        instStream << std::hex << labelText;
-        instStream >> iRet;
-    }
-
-    return iRet;
+    return ret;
 }
 
 int ParserISA::GetGotoLabel(const std::string& sISALine)
 {
-    int iRet = NO_LABEL;
-    size_t iLocation = (int)sISALine.find("label_");
+    int ret = NO_LABEL;
+    size_t  offset = 0;
+    std::stringstream  stream;
 
-    if (iLocation != std::string::npos)
+    if ((offset = sISALine.find(ISA_BRANCH_TOKEN)) != std::string::npos ||
+        (offset = sISALine.find(ISA_CALL_TOKEN)) != std::string::npos)
     {
-        std::string labelText(sISALine.substr(iLocation + 6, 4));
-        std::stringstream instStream;
-        instStream << std::hex << labelText;
-        instStream >> iRet;
+        if ((offset = sISALine.find(ISA_LABEL_TOKEN_1)) != std::string::npos)
+        {
+            size_t  labelNumLen = sISALine.find_first_of(' ', offset) - offset - ISA_LABEL_TOKEN_1.size();
+            stream << std::hex << sISALine.substr(offset + ISA_LABEL_TOKEN_1.size(), labelNumLen);
+            stream >> ret;
+        }
+        else if ((offset = sISALine.find(ISA_LABEL_TOKEN_2)) != std::string::npos)
+        {
+            size_t  labelNumOffset = offset + ISA_LABEL_TOKEN_2.size();
+            if ((offset = sISALine.find('_', offset)) != std::string::npos)
+            {
+                stream << sISALine.substr(labelNumOffset, offset - labelNumOffset) <<
+                          sISALine.substr(offset + 1, sISALine.find_first_of(' ', offset) - offset - 1);
+                stream >> ret;
+            }
+        }
     }
 
-    return iRet;
+    return ret;
 }
 
 /// this is for the analysis

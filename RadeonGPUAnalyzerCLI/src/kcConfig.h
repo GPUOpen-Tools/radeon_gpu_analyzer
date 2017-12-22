@@ -26,24 +26,26 @@ public:
     static std::string sourceKindGLSLVulkan;
     static std::string sourceKindSpirvBin;
     static std::string sourceKindSpirvTxt;
+    static std::string sourceKindRocmOpenCL;
 
     enum ConfigCommand
     {
-        ccInvalid = 0,
+        ccNone,
+        ccInvalid,
         ccCompile,
         ccListKernels,
         ccHelp,
         ccListAsics,
         ccListAdapters,
         ccVersion,
+        ccGenVersionInfoFile
     };
 
     Config();
-    void dump(std::ostream&) const;              ///< Method for debugging and maybe testing.
 
-    beKA::SourceLanguage    m_SourceLanguage;    ///<What language we want to work on. currently we support cl/hlsl
-    ConfigCommand           m_RequestedCommand;  ///<What the user requested to do
-    std::string              m_InputFile;        ///< Source file for processing.
+    beKA::SourceLanguage     m_SourceLanguage;   ///<What language we want to work on. currently we support cl/hlsl
+    ConfigCommand            m_RequestedCommand; ///<What the user requested to do
+    std::vector<std::string> m_InputFiles;       ///< Source file for processing.
     std::string              m_AnalysisFile;     ///< Output analysis file.
     std::string              m_ILFile;           ///< Output IL Text file template.
     std::string              m_ISAFile;          ///< Output ISA Text file template.
@@ -52,14 +54,16 @@ public:
     std::string              m_BinaryOutputFile; ///< Output binary file template.
     std::string              m_Function;         ///< Kernel/Function of interest in analysis.
     std::string              m_CSVSeparator;     ///< Override for CSV list separator.
-    std::string              m_DebugILFile;      ///< Output .debugil Text file template.
     std::string              m_MetadataFile;     ///< Output .metadata Text file template.
     std::vector<std::string> m_ASICs;            ///< Target GPUs for compilation.
     std::vector<std::string> m_SuppressSection;  ///< List of sections to suppress in generated binary files.
     std::vector<std::string> m_OpenCLOptions;    ///< Options to be added to OpenCL compile.
     std::vector<std::string> m_Defines;          ///< Macros to be added to compile.
-    std::vector<std::string> m_IncludePath;       ///< Additional Include paths
+    std::vector<std::string> m_IncludePath;      ///< Additional Include paths
     bool                     m_isRetainUserBinaryPath; ///< If true then CLI will not add the asic name to the generated binary output file
+    std::string              m_versionInfoFile;  ///< RGA CLI config file name.
+    std::string              m_sessionMetadataFile;  ///< RGA CLI session metadata file name.
+    int                      m_optLevel;         ///< Optimization level.
 
     // DX/GL
     std::string              m_SourceKind;             ///< Kind of source HLSL or GLSL (maybe more later like ASM kinds).
@@ -87,8 +91,9 @@ public:
     bool                     m_isAmdPalIlBinariesRequired;       ///< True to generate AMD PAL IL binaries
     bool                     m_isAmdPalIlDisassemblyRequired;    ///< True to generate AMD PAL IL disassembly
     bool                     m_isAmdIsaBinariesRequired;         ///< True to generate AMD ISA binaries
-    bool                     m_isAmdIsaDisassemblyRequired;      ///<True to generate AMD ISA binaries
-    bool                     m_isScStatsRequired;                ///< True to generate shader compiler statistics
+    bool                     m_isAmdIsaDisassemblyRequired;      ///< True to generate AMD ISA binaries
+    bool                     m_isParsedISARequired;              ///< True to generate "parsed" ISA in CSV format.
+    bool                     m_isLineNumbersRequired;            ///< True to generate source lines in the ISA disassembly.
 
 private:
     // Disable copy
@@ -97,7 +102,5 @@ private:
     Config& operator= (const Config&);
 
 };
-
-std::ostream& operator<<(std::ostream& ostr, const Config& config);
 
 #endif

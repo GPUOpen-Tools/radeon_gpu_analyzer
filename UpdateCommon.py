@@ -15,52 +15,58 @@ gitRoot = "https://github.com/GPUOpen-Tools/"
 # Define a set of dependencies that exist as separate git projects.
 gitMapping = {
  # Lib.
-	"common-lib-amd-ACL.git"              : "../Common/Lib/AMD/ACL",
-	"common-lib-amd-ADL.git"              : "../Common/Lib/AMD/ADL",
-	"common-lib-amd-APPSDK-3.0.git"       : "../Common/Lib/AMD/APPSDK",
-	"common-lib-AMD-CAL-8.95.git"         : "../Common/Lib/AMD/CAL",
-	"common-lib-amd-ags-4.0.0.git"	      : "../Common/Lib/AMD/ags",
-	"common-lib-ext-Boost-1.59.git"       : "../Common/Lib/Ext/Boost",
-	"common-lib-ext-tinyxml-2.6.2.git"    : "../Common/Lib/Ext/tinyxml",
-	"common-lib-ext-utf8cpp.git"          : "../Common/Lib/Ext/utf8cpp",
+    "common-lib-AMD-ACL.git"              : "../Common/Lib/AMD/ACL",
+    "common-lib-amd-ADL.git"              : "../Common/Lib/AMD/ADL",
+    "common-lib-amd-APPSDK-3.0.git"       : "../Common/Lib/AMD/APPSDK",
+    "common-lib-AMD-CAL-8.95.git"         : "../Common/Lib/AMD/CAL",
+    "common-lib-amd-ags-4.0.0.git"        : "../Common/Lib/AMD/ags",
+    "common-lib-ext-Boost-1.59.git"       : "../Common/Lib/Ext/Boost",
+    "common-lib-ext-tinyxml-2.6.2.git"    : "../Common/Lib/Ext/tinyxml",
+    "common-lib-ext-tinyxml2-5.0.1"       : "../Common/Lib/Ext/tinyxml2",
+    "common-lib-ext-utf8cpp.git"          : "../Common/Lib/Ext/utf8cpp",
     "common-lib-ext-WindowsKits.git"      : "../Common/Lib/Ext/Windows-Kits",
-	"common-lib-ext-zlib-1.2.8.git"	      : "../Common/Lib/Ext/zlib",
+    "common-lib-ext-zlib-1.2.8.git"       : "../Common/Lib/Ext/zlib",
+    "common-lib-ext-yaml-cpp"             : "../Common/Lib/Ext/yaml-cpp",
 # Src.
-	"common-src-ACLModuleManager.git"     : "../Common/Src/ACLModuleManager",
+    "common-src-ACLModuleManager.git"     : "../Common/Src/ACLModuleManager",
     "common-src-ADLUtil.git"              : "../Common/Src/ADLUtil",
     "common-src-AMDTBaseTools.git"        : "../Common/Src/AMDTBaseTools",
-	"common-src-AMDTOSAPIWrappers.git"    : "../Common/Src/AMDTOSAPIWrappers",
-	"common-src-AMDTOSWrappers.git"       : "../Common/Src/AMDTOSWrappers",
+    "common-src-AMDTOSAPIWrappers.git"    : "../Common/Src/AMDTOSAPIWrappers",
+    "common-src-AMDTOSWrappers.git"       : "../Common/Src/AMDTOSWrappers",
     "common-src-AMDTMutex.git"            : "../Common/Src/AMDTMutex",
-	"common-src-CElf.git"       		  : "../Common/Src/CElf",
-	"common-src-DeviceInfo.git"           : "../Common/Src/DeviceInfo",
+    "common-src-CElf.git"                 : "../Common/Src/CElf",
+    "common-src-DeviceInfo.git"           : "../Common/Src/DeviceInfo",
     "common-src-DynamicLibraryModule.git" : "../Common/Src/DynamicLibraryModule",
-    "common-src-SCons.git"      		  : "../Common/Src/SCons",
-	"common-src-ShaderUtils.git"      	  : "../Common/Src/ShaderUtils",
-	"common-src-SCons.git"      		  : "../Common/Src/SCons",
+    "common-src-SCons.git"                : "../Common/Src/SCons",
+    "common-src-ShaderUtils.git"          : "../Common/Src/ShaderUtils",
     "common-src-TSingleton.git"           : "../Common/Src/TSingleton",
-	"common-src-VersionInfo.git"	      : "../Common/Src/VersionInfo",
+    "common-src-VersionInfo.git"          : "../Common/Src/VersionInfo",
     "common-src-Vsprops.git"              : "../Common/Src/Vsprops",
-	"common-src-Miniz.git"                : "../Common/Src/Miniz",
-	"common-src-Misc.git"                 : "../Common/Src/Misc",
+    "common-src-Miniz.git"                : "../Common/Src/Miniz",
+    "common-src-Misc.git"                 : "../Common/Src/Misc",
+    "common-dk-Installer"                 : "../Common/DK/Installer",
 }
 
 # for each dependency - test if it has already been fetched - if not, then fetch it, otherwise update it to top of tree
 for key in gitMapping:
     # convert path to OS specific format
     # add script directory to path
-    tmppath = os.path.join(scriptRoot, gitMapping[key])  
+    tmppath = os.path.join(scriptRoot, gitMapping[key])
     # clean up path, collapsing and ../ and converting / to \ for Windows
-    path = os.path.normpath(tmppath)                    
+    path = os.path.normpath(tmppath)
+    source = gitRoot + key
 
     if os.path.isdir(path):
         # directory exists - get latest from git
-        print("\nDirectory " + path + " exists, using 'git pull' to get latest")
+        print("\nDirectory %s exists, using 'git pull' to get latest from %s"%(path, source))
         p = subprocess.Popen(["git","pull"], cwd=path)
-        p.wait();
+        p.wait()
+        if(p.returncode != 0):
+            print("git pull failed with %d"%p.returncode)
     else:
         # directory doesn't exist - clone from git
-        print("\nDirectory " + path + " does not exist, using 'git clone' to get latest")
-        p = subprocess.Popen(["git","clone",gitRoot+key,path])
-        p.wait();
-        
+        print("\nDirectory %s does not exist, using 'git clone' to get latest from %s"%(path, source))
+        p = subprocess.Popen(["git","clone",source,path])
+        p.wait()
+        if(p.returncode != 0):
+            print("git clone failed with %d"%p.returncode)

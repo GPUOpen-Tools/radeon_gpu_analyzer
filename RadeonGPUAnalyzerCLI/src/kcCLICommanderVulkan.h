@@ -25,9 +25,6 @@ public:
     kcCLICommanderVulkan();
     virtual ~kcCLICommanderVulkan();
 
-    // List the supported ASICs.
-    virtual void ListAsics(Config& config, LoggingCallBackFunc_t callback) override;
-
     // Print the Vulkan version.
     virtual void Version(Config& config, LoggingCallBackFunc_t callback) override;
 

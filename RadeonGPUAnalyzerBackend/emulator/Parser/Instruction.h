@@ -214,6 +214,13 @@ const int NO_LABEL = -1;
         void SetLineNumber(int iLineNumber) { m_iLineNumber = iLineNumber; }
 
         /// -----------------------------------------------------------------------------------------------
+        /// \brief Name:        GetSrcLineInfo/SetSrcLineInfo
+        /// \brief Description: Get/Set the source line (and its number) that was translated to this instructions.
+        /// -----------------------------------------------------------------------------------------------
+        std::pair<int, std::string>  GetSrcLineInfo() const { return {m_srcLineNum, m_srcLine}; }
+        void SetSrcLineInfo(int lineNum, const std::string& line) { m_srcLineNum = lineNum; m_srcLine = line; }
+
+        /// -----------------------------------------------------------------------------------------------
         /// \brief Name:        GetGotoLabel/SetGotoLabel
         /// \brief Description: Get/Set the Gotolabel if any where instruction is a branch
         /// \return InstructionSet
@@ -259,9 +266,9 @@ const int NO_LABEL = -1;
 
         /// prepares comma separated string
         /// \param [in] device name for cycles calculation
+        /// \param [in] should the source line info be added or not
         /// \param [out] commaSeparatedString to be filled
-
-        void GetCSVString(const std::string& deviceName, std::string& commaSeparatedString)const;
+        void GetCSVString(const std::string& deviceName, bool srcLineInfo, std::string& commaSeparatedString)const;
 
     protected:
         //
@@ -320,6 +327,12 @@ const int NO_LABEL = -1;
 
         /// If this instruction is being pointed by a label, this member will hold the label.
         std::string m_pointingLabelString;
+
+        /// Corresponding source line.
+        std::string m_srcLine;
+
+        /// Corresponding source line number.
+        int m_srcLineNum;
 
         /// Indicates whether the performance tables were initialized or not.
         static bool m_s_IsPerfTablesInitialized;

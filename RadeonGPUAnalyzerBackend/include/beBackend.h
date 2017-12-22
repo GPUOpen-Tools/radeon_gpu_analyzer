@@ -95,22 +95,23 @@ public:
     /// \returns                 a status.
     static beKA::beStatus GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& tableEntry, unsigned int& chipFamily, unsigned int& chipRevision);
 
-    beProgramBuilderOpenCL* theOpenCLBuilder();
-    beProgramBuilderGL* theOpenGLBuilder();
-
-    /// Extract the list of supported, public, devices
-    /// \param devices a set to be populated with the supported device names
-    /// \returns true for success, false otherwise
-    bool GetSupportedPublicDevices(std::set<std::string>& devices);
+    /// Get the builder: OpenCL, OpenGL, LC or DX.
+    beProgramBuilderOpenCL*    theOpenCLBuilder() { return m_beOpenCL; }
+    beProgramBuilderGL*        theOpenGLBuilder() { return m_beOpenGL; }
 
 #ifdef _WIN32
-    beProgramBuilderDX* theOpenDXBuilder();
+    beProgramBuilderDX*        theOpenDXBuilder() { return m_beDX; }
 
     /// Adds a directory to the list of custom directories where
     /// the backend would search for the DX binaries.
     /// \param[in]  dir   a full path to a directory.
     static void AddDxSearchDir(const std::string& dir);
 #endif
+
+    /// Extract the list of supported, public, devices
+    /// \param devices a set to be populated with the supported device names
+    /// \returns true for success, false otherwise
+    bool GetSupportedPublicDevices(std::set<std::string>& devices);
 
 private:
 

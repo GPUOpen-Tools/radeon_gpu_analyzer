@@ -121,24 +121,14 @@ public:
     };
 
 public: // inherited functions
-    beKA::beStatus GetKernels(const std::string& device, std::vector<std::string>& kernels);
     beKA::beStatus GetBinary(const std::string& device, const beKA::BinaryOptions& binopts, std::vector<char>& binary);
     beKA::beStatus GetISABinary(const std::string& device, std::vector<char>& binary);
     beKA::beStatus GetKernelILText(const std::string& device, const std::string& kernel, std::string& il);
     beKA::beStatus GetKernelISAText(const std::string& device, const std::string& kernel, std::string& isa);
     beKA::beStatus GetStatistics(const std::string& device, const std::string& kernel, beKA::AnalysisData& analysis);
-    bool IsInitialized();
     void ReleaseProgram();
     beKA::beStatus GetDeviceTable(std::vector<GDT_GfxCardInfo>& table) override;
-    bool CompileOK(std::string& device);
-
 public:
-    /// Ctor
-    beProgramBuilderDX();
-
-    /// Initialize the Builder 
-    beKA::beStatus Initialize(const std::string& dxxModuleName, const std::string& compilerModuleName = "");
-
     /// compile the specified source file
     /// \param[in] sourceLanguage   specify the source language- can be HLSL or DXAsm
     /// \param[in] programSource    the string of the source code
@@ -201,6 +191,10 @@ public:
     /// Gets the full path to AMD DXX library for GPU adapter specified by "adapterID".
     /// Returns the adapter name in "adapterName" and DXX lib path in "dxxModulePath".
     static bool GetDXXModulePathForAdapter(int adapterID, std::string& adapterName, std::string& dxxModulePath);
+
+    /// Ctor
+    beProgramBuilderDX();
+    beKA::beStatus Initialize(const std::string& dxxModuleName, const std::string& compilerModuleName);
 
 private: // members
     /// Interface with atidxx{32,64}.dll

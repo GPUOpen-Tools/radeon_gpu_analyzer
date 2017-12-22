@@ -29,41 +29,9 @@ bool kcCLICommanderVulkan::GetSupportedDevices()
     bool ret = !m_supportedDevicesCache.empty();
     if (!ret)
     {
-        ret = m_pVulkanBuilder->GetSupportedDevices(m_supportedDevicesCache);
+        ret = beProgramBuilderVulkan::GetSupportedDevices(m_supportedDevicesCache);
     }
     return (ret && !m_supportedDevicesCache.empty());
-}
-
-
-void kcCLICommanderVulkan::ListAsics(Config& config, LoggingCallBackFunc_t callback)
-{
-    GT_UNREFERENCED_PARAMETER(config);
-
-    // Output message.
-    std::stringstream logMsg;
-
-    // Todo: handle the verbose part.
-    if (m_supportedDevicesCache.empty())
-    {
-        bool isDeviceListExtracted = GetSupportedDevices();
-
-        if (!isDeviceListExtracted)
-        {
-            logMsg << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
-        }
-    }
-
-    // Print the list of unique device names.
-    for (const std::string& device : m_supportedDevicesCache)
-    {
-        logMsg << device << std::endl;
-    }
-
-    // Print the output messages.
-    if (callback != nullptr)
-    {
-        callback(logMsg.str());
-    }
 }
 
 void kcCLICommanderVulkan::Version(Config& config, LoggingCallBackFunc_t callback)
@@ -99,7 +67,7 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
     bool  status = true;
 
     // Output stream.
-    std::stringstream logMsg;
+    std::stringstream logMsg, wrnMsg;
 
     // Input validation.
     bool shouldAbort = false;
@@ -109,7 +77,8 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
     bool isGeometryexShaderPresent = (!config.m_GeometryShader.empty());
     bool isFragmentShaderPresent = (!config.m_FragmentShader.empty());
     bool isComputeShaderPresent = (!config.m_ComputeShader.empty());
-    bool isIsaRequired = (!config.m_ISAFile.empty());
+    bool isIsaRequired = (!config.m_ISAFile.empty() || !config.m_LiveRegisterAnalysisFile.empty() ||
+                          !config.m_ControlFlowGraphFile.empty() || !config.m_AnalysisFile.empty());
     bool isLiveRegAnalysisRequired = (!config.m_LiveRegisterAnalysisFile.empty());
     bool isCfgRequired = (!config.m_ControlFlowGraphFile.empty());
     bool isIsaBinary = (!config.m_BinaryOutputFile.empty());
@@ -144,10 +113,10 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
     // Options to be passed to the backend.
     VulkanOptions vulkanOptions(config.m_SourceLanguage);
 
-    if (!shouldAbort && !config.m_InputFile.empty())
+    if (!shouldAbort && !config.m_InputFiles.empty() && !config.m_InputFiles[0].empty())
     {
-        shouldAbort = !kcUtils::ValidateShaderFileName("", config.m_InputFile, logMsg);
-        vulkanOptions.m_stagelessInputFile = config.m_InputFile;
+        shouldAbort = !kcUtils::ValidateShaderFileName("", config.m_InputFiles[0], logMsg);
+        vulkanOptions.m_stagelessInputFile = config.m_InputFiles[0];
     }
 
     // Validate the input shaders.
@@ -188,7 +157,7 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
     }
 
     // Validate the output directories.
-    if (!shouldAbort && isIsaRequired)
+    if (!shouldAbort && isIsaRequired && !config.m_ISAFile.empty())
     {
         shouldAbort = !kcUtils::ValidateShaderOutputDir(config.m_ISAFile, logMsg);
     }
@@ -241,49 +210,64 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
 
         if (!shouldAbort)
         {
-            InitRequestedAsicList(config, m_supportedDevicesCache, targetDevices);
+            InitRequestedAsicList(config, m_supportedDevicesCache, targetDevices, m_LogCallback);
 
             for (const std::string& device : targetDevices)
             {
                 // Generate the output message.
-                logMsg << KA_CLI_STR_COMPILING << device;
+                logMsg << KA_CLI_STR_COMPILING << device << "... ";
 
                 // Set the target device for the backend.
                 vulkanOptions.m_targetDeviceName = device;
 
+                // Set the optimization level.
+                if (config.m_optLevel == -1 || config.m_optLevel == 0 || config.m_optLevel == 1)
+                {
+                    vulkanOptions.m_optLevel = config.m_optLevel;
+                }
+                else
+                {
+                    vulkanOptions.m_optLevel = -1;
+                    wrnMsg << STR_WRN_INCORRECT_OPT_LEVEL << std::endl;
+                }
+
                 // Adjust the output file names to the device and shader type.
-                if (isIsaRequired)
+                if (isIsaRequired || isIsaBinary)
                 {
                     // We must generate the ISA binaries (we will delete them in the end of the process).
                     vulkanOptions.m_isAmdIsaBinariesRequired = true;
-                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_BinaryOutputFile, device, vulkanOptions.m_isaBinaryFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_BinaryOutputFile, KC_STR_DEFAULT_BIN_SUFFIX, device, vulkanOptions.m_isaBinaryFiles);
 
-                    vulkanOptions.m_isAmdIsaDisassemblyRequired = true;
-                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ISAFile, device, vulkanOptions.m_isaDisassemblyOutputFiles);
+                    if (isIsaRequired)
+                    {
+                        vulkanOptions.m_isAmdIsaDisassemblyRequired = true;
+                        status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ISAFile, KC_STR_DEFAULT_ISA_SUFFIX, device, vulkanOptions.m_isaDisassemblyOutputFiles);
+                    }
                 }
 
                 if (isLiveRegAnalysisRequired)
                 {
                     vulkanOptions.m_isLiveRegisterAnalysisRequired = true;
-                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_LiveRegisterAnalysisFile, device, vulkanOptions.m_liveRegisterAnalysisOutputFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVE_REG_ANALYSIS_SUFFIX,
+                                                                              device, vulkanOptions.m_liveRegisterAnalysisOutputFiles);
                 }
 
                 if (isCfgRequired)
                 {
                     vulkanOptions.m_isControlFlowGraphRequired = true;
-                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ControlFlowGraphFile, device, vulkanOptions.m_controlFlowGraphOutputFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ControlFlowGraphFile, KC_STR_DEFAULT_CFG_SUFFIX, device, vulkanOptions.m_controlFlowGraphOutputFiles);
                 }
 
                 if (isIlRequired)
                 {
                     vulkanOptions.m_isAmdPalIlDisassemblyRequired = true;
-                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ILFile, device, vulkanOptions.m_pailIlDisassemblyOutputFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ILFile, KC_STR_DEFAULT_AMD_IL_SUFFIX, device, vulkanOptions.m_pailIlDisassemblyOutputFiles);
                 }
 
                 if (isStatisticsRequired)
                 {
                     vulkanOptions.m_isScStatsRequired = true;
-                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_AnalysisFile, device, vulkanOptions.m_scStatisticsOutputFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_AnalysisFile, KC_STR_DEFAULT_STATISTICS_SUFFIX, device, vulkanOptions.m_scStatisticsOutputFiles);
                 }
 
                 if (!status)
@@ -303,6 +287,37 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                 if (compilationStatus == beStatus_SUCCESS)
                 {
                     logMsg << KA_CLI_STR_STATUS_SUCCESS << std::endl;
+
+                    // Parse ISA and write it to a csv file if required.
+                    if (isIsaRequired && config.m_isParsedISARequired)
+                    {
+                        bool  status;
+                        std::string  isaText, parsedIsaText, parsedIsaFileName;
+                        beProgramPipeline  isaFiles = vulkanOptions.m_isaDisassemblyOutputFiles;
+                        for (const gtString& isaFileName : { isaFiles.m_computeShader, isaFiles.m_fragmentShader, isaFiles.m_geometryShader,
+                            isaFiles.m_tessControlShader, isaFiles.m_tessEvaluationShader, isaFiles.m_vertexShader })
+                        {
+                            if (!isaFileName.isEmpty())
+                            {
+                                if ((status = kcUtils::ReadTextFile(isaFileName.asASCIICharArray(), isaText, m_LogCallback)) == true)
+                                {
+                                    status = (beProgramBuilder::ParseISAToCSV(isaText, device, parsedIsaText) == beStatus::beStatus_SUCCESS);
+                                    if (status)
+                                    {
+                                        status = kcUtils::GetParsedISAFileName(isaFileName.asASCIICharArray(), parsedIsaFileName);
+                                    }
+                                    if (status)
+                                    {
+                                        status = kcUtils::WriteTextFile(parsedIsaFileName, parsedIsaText, m_LogCallback);
+                                    }
+                                }
+                                if (!status)
+                                {
+                                    logMsg << STR_ERR_FAILED_PARSE_ISA << std::endl;
+                                }
+                            }
+                        }
+                    }
 
                     // Parse the statistics file if required.
                     if (isStatisticsRequired)
@@ -356,7 +371,7 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                                                                  vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_tessControlShader, callback);
                         }
 
-                        if (isTessControlShaderPresent)
+                        if (isTessEvaluationShaderPresent)
                         {
                             kcUtils::PerformLiveRegisterAnalysis(vulkanOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader,
                                                                  vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_tessEvaluationShader, callback);
@@ -414,10 +429,16 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                                                               vulkanOptions.m_controlFlowGraphOutputFiles.m_tessControlShader, callback);
                         }
 
-                        if (isTessControlShaderPresent)
+                        if (isTessEvaluationShaderPresent)
                         {
                             kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader,
                                                               vulkanOptions.m_controlFlowGraphOutputFiles.m_tessEvaluationShader, callback);
+                        }
+
+                        if (isGeometryexShaderPresent)
+                        {
+                            kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
+                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback);
                         }
 
                         if (isFragmentShaderPresent)
@@ -430,6 +451,24 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                         {
                             kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_computeShader,
                                                               vulkanOptions.m_controlFlowGraphOutputFiles.m_computeShader, callback);
+                        }
+
+                        // Process stageless files.
+                        if (!vulkanOptions.m_stagelessInputFile.empty())
+                        {
+                            for (const auto& isaAndCfg : {
+                                std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_vertexShader, vulkanOptions.m_controlFlowGraphOutputFiles.m_vertexShader},
+                                std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_tessControlShader, vulkanOptions.m_controlFlowGraphOutputFiles.m_tessControlShader},
+                                std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader, vulkanOptions.m_controlFlowGraphOutputFiles.m_tessEvaluationShader},
+                                std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_geometryShader, vulkanOptions.m_controlFlowGraphOutputFiles.m_geometryShader},
+                                std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_fragmentShader, vulkanOptions.m_controlFlowGraphOutputFiles.m_fragmentShader},
+                                std::pair<gtString, gtString>{vulkanOptions.m_isaDisassemblyOutputFiles.m_computeShader, vulkanOptions.m_controlFlowGraphOutputFiles.m_computeShader} })
+                            {
+                                if (kcUtils::FileNotEmpty(isaAndCfg.first.asASCIICharArray()))
+                                {
+                                    kcUtils::GenerateControlFlowGraph(isaAndCfg.first, isaAndCfg.second, callback);
+                                }
+                            }
                         }
                     }
                 }
@@ -457,6 +496,16 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                     }
                 }
 
+                // Delete temporary files
+                if (isIsaRequired && config.m_ISAFile.empty())
+                {
+                    kcUtils::DeletePipelineFiles(vulkanOptions.m_isaDisassemblyOutputFiles);
+                }
+                if (isIsaRequired && config.m_BinaryOutputFile.empty())
+                {
+                    kcUtils::DeletePipelineFiles(vulkanOptions.m_isaBinaryFiles);
+                }
+
                 // Print the message for the current device.
                 callback(logMsg.str());
 
@@ -474,5 +523,6 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
     if (callback != nullptr)
     {
         callback(logMsg.str());
+        callback(wrnMsg.str());
     }
 }

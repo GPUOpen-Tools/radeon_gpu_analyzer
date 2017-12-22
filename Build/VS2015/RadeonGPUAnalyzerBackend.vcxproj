@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="UserMacros">
   </PropertyGroup>
   <ItemGroup Label="ProjectConfigurations">
@@ -11,14 +11,6 @@
       <Configuration>Debug_Static</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Release_Static|Win32">
       <Configuration>Release_Static</Configuration>
       <Platform>Win32</Platform>
@@ -27,34 +19,18 @@
       <Configuration>Release_Static</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>RadeonGPUAnalyzerBackend</ProjectName>
     <ProjectGuid>{C1F67D19-DD6E-4946-B16D-F4F4D125424B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>RadeonGPUAnalyzerBackend</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
-    <AMDTModuleType>Dynamic</AMDTModuleType>
-    <AMDTConfiguration>Release</AMDTConfiguration>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release_Static'" Label="Configuration">
     <AMDTModuleType>Static</AMDTModuleType>
     <AMDTConfiguration>Release</AMDTConfiguration>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
-    <AMDTModuleType>Dynamic</AMDTModuleType>
-    <AMDTConfiguration>Debug</AMDTConfiguration>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug_Static'" Label="Configuration">
     <AMDTModuleType>Static</AMDTModuleType>
@@ -77,22 +53,6 @@
     <Import Project="..\..\Core\DX10ASM\Global-DX10ASM-VS2015.props" />
     <Import Project="..\..\..\Common\Lib\Ext\Windows-Kits\Global-WindowsSDK.props" />
     <Import Project="ShaderAnalyzerCore.props" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Import Project="ShaderAnalyzerBackend.props" />
-    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <Import Project="ShaderAnalyzerBackend.props" />
-    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Import Project="ShaderAnalyzerBackend.props" />
-    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Import Project="ShaderAnalyzerBackend.props" />
-    <Import Project="..\..\..\Common\Src\Vsprops\Global-Common.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release_Static|x64'">
     <Import Project="ShaderAnalyzerBackend.props" />
@@ -117,12 +77,6 @@
     <IntDir Condition="'$(AMDTModuleType)'=='Static'">$(AMDTOutputDir)\$(Configuration)\obj\$(ProjectName)\$(Platform)$(AMDTBuildSuffix)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <TargetName>$(ProjectName)$(AMDTProjectSuffix)</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <TargetName>$(ProjectName)$(AMDTProjectSuffix)</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetName>$(ProjectName)$(AMDTProjectSuffix)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Static|Win32'">
@@ -153,7 +107,6 @@
       <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
       <TargetMachine Condition="'$(Platform)'=='x64'">MachineX64</TargetMachine>
       <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)'=='Release'">%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(AMDTOutputDir)$(Configuration)\arch;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -196,14 +149,10 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
-    <ClCompile>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-    </ClCompile>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug_Static'">
     <ClCompile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug_Static|x64'">false</TreatWarningAsError>
     </ClCompile>
     <Lib>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug_Static|x64'">DX10ASMLib_s.lib</AdditionalDependencies>
@@ -212,14 +161,10 @@
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug_Static|Win32'">DX10ASMLib_s.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
-    <ClCompile>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-    </ClCompile>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release_Static'">
     <ClCompile>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release_Static|x64'">false</TreatWarningAsError>
     </ClCompile>
     <Lib>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release_Static|Win32'">DX10ASMLib_s.lib</AdditionalDependencies>
@@ -280,6 +225,7 @@
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beD3DIncludeManager.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilder.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderDX.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderLightning.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderOpenCL.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderOpenGL.cpp" />
     <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderVulkan.cpp" />
@@ -339,8 +285,10 @@
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beD3DIncludeManager.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beDataTypes.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beInclude.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beOpenCLDefs.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilder.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderDX.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderLightning.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderOpenCL.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderOpenGL.h" />
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderVulkan.h" />

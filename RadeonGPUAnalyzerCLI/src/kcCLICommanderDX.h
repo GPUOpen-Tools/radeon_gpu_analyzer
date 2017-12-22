@@ -16,9 +16,6 @@ public:
     kcCLICommanderDX(void);
     virtual ~kcCLICommanderDX(void);
 
-    /// List the asics as got from device
-    void ListAsics(Config& config, LoggingCallBackFunc_t callback);
-
     /// List the adapters installed on the system.
     void ListAdapters(Config& config, LoggingCallBackFunc_t callback) override;
 

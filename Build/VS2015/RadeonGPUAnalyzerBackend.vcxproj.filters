@@ -102,6 +102,7 @@
     <ClCompile Include="..\..\..\Common\Src\Misc\GDT_Memory.cpp" />
     <ClCompile Include="..\..\..\Common\Src\ShaderUtils\DX10\DXBCChecksum.cpp" />
     <ClCompile Include="..\..\..\Common\Src\ShaderUtils\DX10\IBlob.cpp" />
+    <ClCompile Include="..\..\RadeonGPUAnalyzerBackend\src\beProgramBuilderLightning.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beBackend.h" />
@@ -233,5 +234,7 @@
     <ClInclude Include="..\..\..\Common\Src\Misc\GDT_Memory.h" />
     <ClInclude Include="..\..\..\Common\Src\ShaderUtils\DX10\DXBCChecksum.h" />
     <ClInclude Include="..\..\..\Common\Src\ShaderUtils\DX10\IBlob.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beProgramBuilderLightning.h" />
+    <ClInclude Include="..\..\RadeonGPUAnalyzerBackend\include\beOpenCLDefs.h" />
   </ItemGroup>
 </Project>

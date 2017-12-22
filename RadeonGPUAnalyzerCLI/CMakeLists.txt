@@ -2,12 +2,15 @@ cmake_minimum_required (VERSION 2.6)
 project (RadeonGPUAnalyzerCLI)
 
 # The version number
-set (RadeonGPUAnalyzerCLI_VERSION_MAJOR 1)
-set (RadeonGPUAnalyzerCLI_VERSION_MINOR 2)
+set (RadeonGPUAnalyzerCLI_VERSION_MAJOR 2)
+set (RadeonGPUAnalyzerCLI_VERSION_MINOR 0)
 
-# Pass the build number
+# Pass the build number and build date
 if (NOT "$ENV{BUILD_NUMBER}" STREQUAL "")
     add_definitions(-DRGA_BUILD_NUMBER=$ENV{BUILD_NUMBER})
+endif()
+if (NOT "$ENV{RGA_BUILD_DATE}" STREQUAL "")
+    add_definitions(-DRGA_BUILD_DATE=$ENV{RGA_BUILD_DATE})
 endif()
 
 # Windows-specific preprocessor directives
@@ -35,8 +38,9 @@ configure_file (
 # so that we will find ProjectConfig.h
 include_directories("${PROJECT_BINARY_DIR}")
 
-# Common include directories
+# Include directories
 include_directories("${PROJECT_SOURCE_DIR}/../RadeonGPUAnalyzerBackend/include/Common")
+include_directories("${PROJECT_SOURCE_DIR}/../Utils/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src")
 include_directories("${PROJECT_SOURCE_DIR}/../")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/CELF/Include")
@@ -46,6 +50,8 @@ include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/CAL/8.95/include
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/APPSDK/3-0/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/TSingleton")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/DeviceInfo")
+include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/")
+
 if (NOT IsDebian)
 # On Debian we use the native Boost libraries
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0")
@@ -127,6 +133,24 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     endif()
 endif()
 
+# Other libraries
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+        find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
+        find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Release")
+    elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        find_library(TINYXML_LIB "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
+        find_library(YAMLCPP_LIB "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Debug")
+    endif()
+else()
+    find_library(TINYXML_LIB "libtinyxml2.a" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/Linux/x64/Release")
+    if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0)
+        find_library(YAMLCPP_LIB "libyaml-cpp.a" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/linux/gcc5")
+    else()
+        find_library(YAMLCPP_LIB "libyaml-cpp.a" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/linux/gcc4")
+    endif()
+endif()
+
 # Set the name of the executable
 if(AMD_INTERNAL)
     if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -144,14 +168,13 @@ else()
     endif()
 endif()
 
-# Set binary suffix
-set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES DEBUG_POSTFIX -d)
-
 # Link settings
 if(NOT IsDebian)
-target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSAPIWrappers AMDTOSWrappers AMDTBaseTools ${BOOST_LIBRARY1} ${BOOST_LIBRARY2} ${BOOST_LIBRARY3} ${BOOST_LIBRARY4})
+target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSAPIWrappers AMDTOSWrappers AMDTBaseTools
+                       ${BOOST_LIBRARY1} ${BOOST_LIBRARY2} ${BOOST_LIBRARY3} ${BOOST_LIBRARY4} ${TINYXML_LIB} ${YAMLCPP_LIB})
 else()
-target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSAPIWrappers AMDTOSWrappers AMDTBaseTools ${Boost_LIBRARIES})
+target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSAPIWrappers AMDTOSWrappers AMDTBaseTools
+                       ${Boost_LIBRARIES} ${TINYXML_LIB} ${YAMLCPP_LIB})
 endif()
 
 # Configure the post-build actions.
@@ -161,21 +184,18 @@ if(AMD_INTERNAL)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    if (CMAKE_64BIT_TARGET)
-        set(COPY_SCRIPT_NAME "rga_copy_x64.bat")
-    else()
-        set(COPY_SCRIPT_NAME "rga_copy_x86.bat")
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(DEBUG_ARG "-debug")
     endif()
-
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
-            POST_BUILD
-            COMMAND ${PROJECT_SOURCE_DIR}/../Build/VS2015/${COPY_SCRIPT_NAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${INTERNAL_ARG}
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/VS2015
-            )
+                       POST_BUILD
+                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/VS2015/copy_post_build_cli.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${DEBUG_ARG} ${INTERNAL_ARG}
+                       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/VS2015
+                      )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
-            POST_BUILD
-            COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/linux/copy_post_build.sh ${INTERNAL_ARG}
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/linux
-            )
+                       POST_BUILD
+                       COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/linux/copy_post_build_cli.sh ${INTERNAL_ARG}
+                       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/linux
+                      )
 endif()

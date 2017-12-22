@@ -16,15 +16,13 @@
 using namespace std;
 
 /// This is the Commander interface
-class kcCLICommanderCL: kcCLICommander
+class kcCLICommanderCL: public kcCLICommander
 {
 public:
 
     kcCLICommanderCL();
     virtual ~kcCLICommanderCL();
 
-    /// List the asics as got from device
-    void ListAsics(Config& config, LoggingCallBackFunc_t callback);
 
     /// Output multiple commands for all commands that requires compilation: GetBinary, GetIL, GetISA, GetAnlysis, GetMetadata, GetDebugIL,ListKernels
     void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback);
@@ -37,12 +35,10 @@ private: // functions
 
     /// output for all commands that requires compilation
     void Analysis(const Config& config);
-    void ListKernels(const Config& config);
     void GetILText(const Config& config);
     void GetISAText(const Config& config);
     void GetBinary(const Config& config);
     void GetMetadata(const Config& config);
-    void GetDebugIL(const Config& config);
 
     /// Returns the list of required kernels according to the user's configurations.
     /// \param[in]  config - the configuration as given by the user.

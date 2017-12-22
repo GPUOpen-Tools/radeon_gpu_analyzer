@@ -17,6 +17,7 @@
 
 // Local.
 #include <RadeonGPUAnalyzerCLI/src/kcCLICommanderCL.h>
+#include <RadeonGPUAnalyzerCLI/src/kcCLICommanderLightning.h>
 #include <RadeonGPUAnalyzerBackend/include/beProgramBuilderOpenCL.h>
 #include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
 #include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
@@ -154,39 +155,41 @@ bool kcCLICommanderCL::Compile(const Config& config)
     bool bRet = false;
 
     // Verify that an input file was specified
-    if (config.m_InputFile.size() == 0)
+    if (config.m_InputFiles.size() != 1 || config.m_InputFiles[0].empty())
     {
-        LogCallBack("Error: Input file must be specified.\n");
+        std::stringstream logStream;
+        logStream << STR_ERR_ONE_INPUT_FILE_EXPECTED << std::endl;
+        LogCallBack(logStream.str());
     }
     else
     {
         string sSource;
-        bRet = kcUtils::ReadProgramSource(config.m_InputFile, sSource);
+        bRet = kcUtils::ReadProgramSource(config.m_InputFiles[0], sSource);
 
         if (!bRet)
         {
             std::stringstream logStream;
-            logStream << "Error: Unable to read: \'" << config.m_InputFile << "\'." << endl;
+            logStream << STR_ERR_CANNOT_READ_FILE << config.m_InputFiles[0] << endl;
             LogCallBack(logStream.str());
         }
         else
         {
-            beProgramBuilderOpenCL::OpenCLOptions options;
+            OpenCLOptions options;
             options.m_SourceLanguage = SourceLanguage_OpenCL;
-            options.m_SelectedDevices = m_asics;
-            options.m_Defines = config.m_Defines;
-            options.m_OpenCLCompileOptions = config.m_OpenCLOptions;
+            options.m_selectedDevices = m_asics;
+            options.m_defines = config.m_Defines;
+            options.m_openCLCompileOptions = config.m_OpenCLOptions;
 
             int numOfSuccessFulBuilds = 0;
             beKA::beStatus beRet;
 
             if (config.m_IncludePath.size() > 0)
             {
-                beRet = be->theOpenCLBuilder()->Compile(sSource, options, config.m_InputFile, &config.m_IncludePath, numOfSuccessFulBuilds);
+                beRet = be->theOpenCLBuilder()->Compile(sSource, options, config.m_InputFiles[0], &config.m_IncludePath, numOfSuccessFulBuilds);
             }
             else
             {
-                beRet = be->theOpenCLBuilder()->Compile(sSource, options, config.m_InputFile, NULL, numOfSuccessFulBuilds);
+                beRet = be->theOpenCLBuilder()->Compile(sSource, options, config.m_InputFiles[0], NULL, numOfSuccessFulBuilds);
             }
 
             if (beRet == beKA::beStatus_SUCCESS)
@@ -203,36 +206,15 @@ bool kcCLICommanderCL::Compile(const Config& config)
     return bRet;
 }
 
-void kcCLICommanderCL::ListAsics(Config& config, LoggingCallBackFunc_t callback)
-{
-    if (!Init(config, callback))
-    {
-        return;
-    }
-
-    std::stringstream ss;
-    ss << "Devices:" << endl;
-    LogCallBack(ss.str());
-
-    for (set<string>::const_iterator devIter = m_externalDevices.begin(); devIter != m_externalDevices.end(); ++devIter)
-    {
-        std::stringstream sss;
-        sss << "   " << *devIter << endl;
-        LogCallBack(sss.str());
-    }
-}
-
 void kcCLICommanderCL::RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback)
 {
     if (Init(config, callback))
     {
-        if (InitRequestedAsicList(config, m_externalDevices, m_asics))
+        if (InitRequestedAsicList(config, m_externalDevices, m_asics, callback))
         {
             if (Compile(config))
             {
                 InitRequiredKernels(config, m_asics, m_requiredKernels);
-
-                ListKernels(config);
 
                 GetBinary(config);
 
@@ -243,8 +225,6 @@ void kcCLICommanderCL::RunCompileCommands(const Config& config, LoggingCallBackF
                 Analysis(config);
 
                 GetMetadata(config);
-
-                GetDebugIL(config);
             }
         }
     }
@@ -306,7 +286,7 @@ void kcCLICommanderCL::Analysis(const Config& config)
 
             if (status != beStatus_SUCCESS)
             {
-                if (status == beSattus_WrongKernelName)
+                if (status == beStatus_WrongKernelName)
                 {
                     std::stringstream s_Log;
                     s_Log << "Info: Skipping analysis, wrong kernel name provided: '" << config.m_Function << "'." << endl;
@@ -328,7 +308,7 @@ void kcCLICommanderCL::Analysis(const Config& config)
             analysisOutputPath.setFileDirectory(targetDirAsStr);
 
             // Create the target directory if it does not exist.
-            if (!targetDir.exists())
+            if (!targetDir.IsEmpty() && !targetDir.exists())
             {
                 bool isTargetDirCreated(targetDir.create());
 
@@ -374,37 +354,6 @@ void kcCLICommanderCL::Analysis(const Config& config)
                 output.close();
             }
         }
-    }
-}
-
-void kcCLICommanderCL::ListKernels(const Config& config)
-{
-    if (config.m_RequestedCommand != Config::ccListKernels)
-    {
-        return;
-    }
-
-    vector<string> kernels;
-
-    for (set<string>::const_iterator devIter = m_asics.begin(); devIter != m_asics.end(); ++devIter)
-    {
-        be->theOpenCLBuilder()->GetKernels(*devIter, kernels);
-
-        if (kernels.size() == 0)
-        {
-            continue;
-        }
-
-        std::stringstream s_Log;
-        s_Log << *devIter << ":" << endl;
-
-        for (vector<string>::const_iterator kernelIter = kernels.begin(); kernelIter != kernels.end(); ++kernelIter)
-        {
-            s_Log << "   " << *kernelIter << endl;
-        }
-
-        LogCallBack(s_Log.str());
-        kernels.clear();
     }
 }
 
@@ -471,8 +420,11 @@ void kcCLICommanderCL::GetILText(const Config& config)
 
 void kcCLICommanderCL::GetISAText(const Config& config)
 {
-    if (config.m_ISAFile.size() > 0)
+    if (!config.m_ISAFile.empty() || !config.m_AnalysisFile.empty() ||
+        !config.m_ControlFlowGraphFile.empty() || !config.m_LiveRegisterAnalysisFile.empty())
     {
+        bool isIsaFileTemp = config.m_ISAFile.empty();
+
         if ((config.m_SuppressSection.size() > 0) && (config.m_BinaryOutputFile.size() == 0))
         {
             // Print the warning message.
@@ -499,7 +451,17 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                     if (status == beStatus_SUCCESS)
                     {
                         gtString isaOutputFileName;
-                        kcUtils::ConstructOutputFileName(config.m_ISAFile, KC_STR_DEFAULT_ISA_SUFFIX, kernelName, deviceName, isaOutputFileName);
+                        if (isIsaFileTemp)
+                        {
+                            gtString  isaFileName, isaFileExt;
+                            isaFileName << (std::string(KC_STR_DEFAULT_ISA_OUTPUT_FILE_NAME) + deviceName + kernelName).c_str();
+                            isaFileExt << KC_STR_DEFAULT_ISA_SUFFIX;
+                            isaOutputFileName = kcUtils::ConstructTempFileName(isaFileName, isaFileExt);
+                        }
+                        else
+                        {
+                            kcUtils::ConstructOutputFileName(config.m_ISAFile, KC_STR_DEFAULT_ISA_SUFFIX, kernelName, deviceName, isaOutputFileName);
+                        }
                         kcUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), sISAIL, m_LogCallback);
 
                         // Perform live register analysis.
@@ -530,6 +492,15 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                             // the analysis file.
                             kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName,
                                                                  m_LogCallback);
+                        }
+
+                        // Delete temporary files.
+                        if (config.m_ISAFile.empty())
+                        {
+                            if (kcUtils::FileNotEmpty(isaOutputFileName.asASCIICharArray()))
+                            {
+                                kcUtils::DeleteFile(isaOutputFileName);
+                            }
                         }
                     }
                     else
@@ -629,6 +600,11 @@ void kcCLICommanderCL::GetMetadata(const Config& config)
                                                          kernelName, deviceName, metaDataOutputFileName);
                         kcUtils::WriteTextFile(metaDataOutputFileName.asASCIICharArray(), metaDataText, m_LogCallback);
                     }
+                    else if (status == beStatus_NO_METADATA_FOR_DEVICE)
+                    {
+                        m_LogCallback(std::string(STR_WRN_CL_METADATA_NOT_SUPPORTED_1) + deviceName + STR_WRN_CL_METADATA_NOT_SUPPORTED_2 + "\n");
+                        break;
+                    }
                     else
                     {
                         // Inform the user.
@@ -639,50 +615,6 @@ void kcCLICommanderCL::GetMetadata(const Config& config)
 
                     // Clear the output buffer.
                     metaDataText.clear();
-                }
-            }
-        }
-    }
-}
-
-void kcCLICommanderCL::GetDebugIL(const Config& config)
-{
-    if (config.m_DebugILFile.size() > 0 && be != nullptr)
-    {
-        beProgramBuilderOpenCL* pBuilder = be->theOpenCLBuilder();
-
-        if (pBuilder != nullptr)
-        {
-            if ((config.m_SuppressSection.size() > 0) && (config.m_BinaryOutputFile.size() == 0))
-            {
-                // Print the warning message.
-                std::stringstream msg;
-                msg << STR_WRN_CL_SUPPRESS_WIHTOUT_BINARY << std::endl;
-                LogCallBack(msg.str());
-            }
-
-            // Create debug IL output files.
-            for (const std::string& deviceName : m_asics)
-            {
-                for (const std::string& kernelName : m_requiredKernels)
-                {
-                    std::string text;
-                    beStatus status = pBuilder->GetKernelDebugILText(deviceName, kernelName, text);
-
-                    if (status == beStatus_SUCCESS)
-                    {
-                        gtString debugIlOutputFileName;
-                        kcUtils::ConstructOutputFileName(config.m_MetadataFile, KC_STR_DEFAULT_DEBUG_IL_SUFFIX,
-                                                         kernelName, deviceName, debugIlOutputFileName);
-                        kcUtils::WriteTextFile(debugIlOutputFileName.asASCIICharArray(), text, m_LogCallback);
-                    }
-                    else
-                    {
-                        // Inform the user.
-                        std::stringstream msg;
-                        msg << STR_ERR_CANNOT_EXTRACT_DEBUG_IL << " for " << deviceName << "(kernel: " << kernelName << ")." << std::endl;
-                        m_LogCallback(msg.str().c_str());
-                    }
                 }
             }
         }

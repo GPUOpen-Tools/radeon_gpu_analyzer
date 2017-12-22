@@ -59,7 +59,7 @@ bool beUtils::GdtHwGenToNumericValue(GDT_HW_GENERATION hwGen, size_t& gfxIp)
         case GDT_HW_GENERATION_VOLCANICISLAND:
             gfxIp = BE_GFX_IP_8;
             break;
-        
+
         case GDT_HW_GENERATION_GFX9:
             gfxIp = BE_GFX_IP_9;
             break;
@@ -209,21 +209,13 @@ void beUtils::DeleteFile(const gtString& filePath)
     }
 }
 
-bool  beUtils::isFilePresent(const std::string& fileName, bool required)
+bool  beUtils::isFilePresent(const std::string& fileName)
 {
     bool  ret = true;
-    if (required && !fileName.empty())
+    if (!fileName.empty())
     {
         std::ifstream file(fileName);
         ret = (file.good() && file.peek() != std::ifstream::traits_type::eof());
     }
     return ret;
-}
-
-beUtils::beUtils()
-{
-}
-
-beUtils::~beUtils()
-{
 }

@@ -2,7 +2,9 @@
 // Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
+// Local.
 #include <include/beProgramBuilder.h>
+#include <RadeonGPUAnalyzerBackend/emulator/Parser/ISAParser.h>
 
 using namespace std;
 
@@ -38,3 +40,36 @@ void beProgramBuilder::UsePlatformNativeLineEndings(std::string& text)
 #endif
 }
 
+beKA::beStatus beProgramBuilder::ParseISAToCSV(const std::string& isaText, const std::string& device,
+                                               std::string& parsedIsaText, bool addLineNumbers, bool isHeaderRequired)
+{
+    beKA::beStatus     status = beKA::beStatus_ParseIsaToCsvFailed;
+    std::stringstream  parsedIsa;
+    ParserISA          parser;
+    std::string        inputIsa;
+
+    if (isHeaderRequired)
+    {
+        std::stringstream  inputIsaStream;
+        // Add ISA starting and ending tokens so that Parser can recognize it.
+        inputIsaStream << STR_HSAIL_DISASM_START_TOKEN << isaText << STR_HSAIL_DISASM_END_TOKEN << std::endl;
+        inputIsa = inputIsaStream.str();
+    }
+    else
+    {
+        inputIsa = isaText;
+    }
+
+    if (parser.Parse(inputIsa))
+    {
+        for (const Instruction* pInst : parser.GetInstructions())
+        {
+            std::string instStr;
+            pInst->GetCSVString(device, addLineNumbers, instStr);
+            parsedIsa << instStr;
+        }
+        parsedIsaText = parsedIsa.str();
+        status = beKA::beStatus_SUCCESS;
+    }
+    return status;
+}

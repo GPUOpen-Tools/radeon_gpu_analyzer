@@ -17,16 +17,7 @@ class backend;
 class RGA_BACKEND_DECLDIR beProgramBuilder
 {
 public:
-
     virtual ~beProgramBuilder() {};
-
-    /// Get list of Kernels/Shaders.
-    /// Must be called after Compile is successfully called.
-    /// \param[in]  device  The name of the device to choose.
-    /// \param[out] kernels Vector of names of Kernels/Shaders compiled.
-    /// \returns            a status.
-    /// If a Log stream is available, some failures may be diagnosed.
-    virtual beKA::beStatus GetKernels(const std::string& device, std::vector<std::string>& kernels) = 0;
 
     /// Get a binary version of the program.
     /// \param[in]  program Handle to the built program.
@@ -62,17 +53,13 @@ public:
     /// If a Log stream is available, some failures may be diagnosed.
     virtual beKA::beStatus GetStatistics(const std::string& device, const std::string& kernel, beKA::AnalysisData& analysis) = 0;
 
-    /// return true if the module was loaded and initialized properly
-    virtual bool IsInitialized() = 0;
-
-    /// release all data relevant to the previous compilations
-    virtual void ReleaseProgram() = 0;
-
     /// retrieve all devices as got from the loaded module
     virtual beKA::beStatus GetDeviceTable(std::vector<GDT_GfxCardInfo>& table) = 0;
 
-    /// returns true if previous compilation succeeded for the certain device. false otherwise
-    virtual bool CompileOK(std::string& device) = 0;
+    // Parse ISA text and convert it to CSV format with additional data added (Functional Unit, Cycles, etc.)
+    // if "isHeaderRequired" is true, adds standard disassembly header to the ISA text before parsing it.
+    static beKA::beStatus ParseISAToCSV(const std::string& isaText, const std::string& device,
+                                        std::string& parsedIsaText, bool addLineNumbers = false, bool isHeaderRequired = false);
 
     /// Set callback function for diagnostic output.
     /// \param[in] callback A pointer to callback function. Use nullptr to avoid output generation.
@@ -82,7 +69,6 @@ public:
     }
 
 protected:
-
     /// Stream for diagnostic output. set externally.
     LoggingCallBackFuncP m_LogCallback;
 
@@ -105,10 +91,7 @@ protected:
     /// This makes notepad and other Windows tools happier.
     virtual void UsePlatformNativeLineEndings(std::string& text);
 
-    friend class Backend;
-
     std::string m_DriverVersion;
-
 };
 
 #endif

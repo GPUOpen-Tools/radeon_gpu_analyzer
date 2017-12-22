@@ -36,19 +36,6 @@ kcCLICommanderDX::~kcCLICommanderDX(void)
     // No need to call DeleteInstance. The base class singleton performs this.
 }
 
-/// List the asics as got from device
-void kcCLICommanderDX::ListAsics(Config& config, LoggingCallBackFuncP callback)
-{
-    std::vector<GDT_GfxCardInfo> cardList;
-    std::set<std::string> supportedDeviceNames;
-    beUtils::GetAllGraphicsCards(cardList, supportedDeviceNames);
-
-    for (const std::string& device : supportedDeviceNames)
-    {
-        std::cout << device << std::endl;
-    }
-}
-
 void kcCLICommanderDX::ListAdapters(Config & config, LoggingCallBackFunc_t callback)
 {
     std::vector<std::string> adapterNames;
@@ -85,7 +72,7 @@ void kcCLICommanderDX::InitRequestedAsicListDX(const Config& config)
 
         if (beUtils::GetAllGraphicsCards(dxDeviceTable, supportedDevices))
         {
-            if (InitRequestedAsicList(config, supportedDevices, matchedTargets))
+            if (InitRequestedAsicList(config, supportedDevices, matchedTargets, m_LogCallback))
             {
                 for (const std::string& target : matchedTargets)
                 {
@@ -118,9 +105,36 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
         if (backendRet == beStatus_SUCCESS)
         {
             gtString isaOutputFileName;
-            kcUtils::ConstructOutputFileName(config.m_ISAFile, KC_STR_DEFAULT_ISA_SUFFIX,
-                                             config.m_Function, deviceName, isaOutputFileName);
+            if (fileName.empty())
+            {
+                gtString  tempIsaFileName, isaFileExt;
+                tempIsaFileName << (std::string(KC_STR_DEFAULT_ISA_OUTPUT_FILE_NAME) + deviceName + config.m_Function).c_str();
+                isaFileExt << KC_STR_DEFAULT_ISA_SUFFIX;
+                isaOutputFileName = kcUtils::ConstructTempFileName(tempIsaFileName, isaFileExt);
+            }
+            else
+            {
+                kcUtils::ConstructOutputFileName(config.m_ISAFile, KC_STR_DEFAULT_ISA_SUFFIX,
+                                                 config.m_Function, deviceName, isaOutputFileName);
+            }
             kcUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), isaBuffer, m_LogCallback);
+
+            // Save parsed ISA to a CSV file if it's requested
+            if (config.m_isParsedISARequired)
+            {
+                std::string  parsedIsa, parsedIsaFileName;
+                backendRet = beProgramBuilder::ParseISAToCSV(isaBuffer, deviceName, parsedIsa);
+
+                if (backendRet == beKA::beStatus_SUCCESS)
+                {
+                    backendRet = kcUtils::GetParsedISAFileName(isaOutputFileName.asASCIICharArray(), parsedIsaFileName) ?
+                                     backendRet : beKA::beStatus_LC_ConstructISAFileNameFailed;
+                }
+                if (backendRet == beKA::beStatus_SUCCESS)
+                {
+                    kcUtils::WriteTextFile(parsedIsaFileName, parsedIsa, m_LogCallback);
+                }
+            }
 
             // Detect the ISA size.
             isIsaSizeDetected = pProgramBuilderDX->GetIsaSize(isaBuffer, isaSizeInBytes);
@@ -149,18 +163,24 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
                 kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName,
                                                   m_LogCallback);
             }
+
+            // Delete temporary ISA file.
+            if (fileName.empty())
+            {
+                kcUtils::DeleteFile(isaOutputFileName);
+            }
         }
 
         if (backendRet == beStatus_SUCCESS)
         {
             std::stringstream s_Log;
-            s_Log << KA_CLI_STR_EXTRACTING_ISA << deviceName << KA_CLI_STR_STATUS_SUCCESS << std::endl;
+            s_Log << KA_CLI_STR_EXTRACTING_ISA << deviceName << "... " << KA_CLI_STR_STATUS_SUCCESS << std::endl;
             LogCallBack(s_Log.str());
         }
         else
         {
             std::stringstream s_Log;
-            s_Log << KA_CLI_STR_EXTRACTING_ISA << deviceName << KA_CLI_STR_STATUS_FAILURE << std::endl;
+            s_Log << KA_CLI_STR_EXTRACTING_ISA << deviceName << "... " << KA_CLI_STR_STATUS_FAILURE << std::endl;
             LogCallBack(s_Log.str());
         }
     }
@@ -186,13 +206,13 @@ void kcCLICommanderDX::ExtractIL(const std::string& deviceName, const Config& co
         if (backendRet == beStatus_SUCCESS)
         {
             std::stringstream s_Log;
-            s_Log << KA_CLI_STR_EXTRACTING_AMDIL << deviceName << KA_CLI_STR_STATUS_SUCCESS << std::endl;
+            s_Log << KA_CLI_STR_EXTRACTING_AMDIL << deviceName << "... " << KA_CLI_STR_STATUS_SUCCESS << std::endl;
             LogCallBack(s_Log.str());
         }
         else
         {
             std::stringstream s_Log;
-            s_Log << KA_CLI_STR_EXTRACTING_AMDIL << deviceName << KA_CLI_STR_STATUS_FAILURE << std::endl;
+            s_Log << KA_CLI_STR_EXTRACTING_AMDIL << deviceName << "... " << KA_CLI_STR_STATUS_FAILURE << std::endl;
             LogCallBack(s_Log.str());
         }
     }
@@ -246,13 +266,13 @@ bool kcCLICommanderDX::ExtractStats(const string& deviceName, const Config& conf
         DeviceAnalysisDataVec.push_back(deviceName);
 
         std::stringstream s_Log;
-        s_Log << KA_CLI_STR_EXTRACTING_STATISTICS << deviceName << KA_CLI_STR_STATUS_SUCCESS << std::endl;
+        s_Log << KA_CLI_STR_EXTRACTING_STATISTICS << "... " << KA_CLI_STR_STATUS_SUCCESS << std::endl;
         LogCallBack(s_Log.str());
     }
     else
     {
         std::stringstream s_Log;
-        s_Log << KA_CLI_STR_EXTRACTING_STATISTICS << deviceName << KA_CLI_STR_STATUS_FAILURE << std::endl;
+        s_Log << KA_CLI_STR_EXTRACTING_STATISTICS << "... " << KA_CLI_STR_STATUS_FAILURE << std::endl;
         LogCallBack(s_Log.str());
     }                   return isIsaSizeDetected;
 }
@@ -271,7 +291,7 @@ void kcCLICommanderDX::ExtractBinary(const std::string& deviceName, const Config
         kcUtils::ConstructOutputFileName(config.m_BinaryOutputFile, KC_STR_DEFAULT_BIN_SUFFIX, "", deviceName, binOutputFileName);
         kcUtils::WriteBinaryFile(binOutputFileName.asASCIICharArray(), binary, m_LogCallback);
         std::stringstream s_Log;
-        s_Log << KA_CLI_STR_EXTRACTING_BIN << deviceName << KA_CLI_STR_STATUS_SUCCESS << std::endl;
+        s_Log << KA_CLI_STR_EXTRACTING_BIN << deviceName << "... " << KA_CLI_STR_STATUS_SUCCESS << std::endl;
         LogCallBack(s_Log.str());
     }
     else
@@ -350,14 +370,6 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         // see if the user asked for specific asics
         InitRequestedAsicListDX(config);
 
-        // for logging purposes we will iterate through the requested ASICs, if input by user
-        std::vector<string>::const_iterator asicIter;
-
-        if (!config.m_ASICs.empty())
-        {
-            asicIter = config.m_ASICs.begin();
-        }
-
         // We need to iterate over the selected devices
         bool bCompileSucces = false;
 
@@ -367,18 +379,7 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         for (const GDT_GfxCardInfo& devceInfo : m_dxDefaultAsicsList)
         {
             // Get the device name.
-            std::string deviceName;
-
-            // prepare for logging
-            if (!config.m_ASICs.empty() && asicIter != config.m_ASICs.end())
-            {
-                deviceName = *asicIter;
-                ++asicIter;
-            }
-            else
-            {
-                deviceName = devceInfo.m_szCALName;
-            }
+            std::string deviceName = devceInfo.m_szCALName;
 
             if (Compile(config, devceInfo, deviceName))
             {
@@ -393,7 +394,7 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
                 bool shouldDetectIsaSize = true;
                 size_t isaSizeInBytes(0);
 
-                if (bISA)
+                if (bISA || bRegisterLiveness || bStatistics || bControlFlow)
                 {
                     ExtractISA(deviceName, config, isaSizeInBytes, isaBuffer, isIsaSizeDetected, shouldDetectIsaSize, bRegisterLiveness, bControlFlow);
                 }
@@ -622,12 +623,20 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
 
     if (ret)
     {
-        if (!config.m_InputFile.empty())
+        if (!config.m_InputFiles.empty())
         {
-            ret = kcUtils::ReadProgramSource(config.m_InputFile, sSource);
-            if (!ret)
+            if (config.m_InputFiles.size() > 1)
             {
-                s_Log << STR_ERR_CANNOT_READ_FILE << config.m_InputFile << std::endl;
+                s_Log << STR_ERR_ONE_INPUT_FILE_EXPECTED << std::endl;
+                ret = false;
+            }
+            else
+            {
+                ret = kcUtils::ReadProgramSource(config.m_InputFiles[0], sSource);
+                if (!ret)
+                {
+                    s_Log << STR_ERR_CANNOT_READ_FILE << config.m_InputFiles[0] << std::endl;
+                }
             }
         }
         else
@@ -651,7 +660,7 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
         else
         {
             // Set the source code file name.
-            dxOptions.m_FileName = config.m_InputFile;
+            dxOptions.m_FileName = config.m_InputFiles[0];
 
             // Set the device file name.
             dxOptions.m_deviceName = sDevicenametoLog;
@@ -672,12 +681,12 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
 
             if (beRet != beStatus_SUCCESS)
             {
-                s_Log << KA_CLI_STR_COMPILING << sDevicenametoLog << KA_CLI_STR_STATUS_FAILURE << std::endl;
+                s_Log << KA_CLI_STR_COMPILING << sDevicenametoLog << "... " << KA_CLI_STR_STATUS_FAILURE << std::endl;
                 ret = false;
             }
             else
             {
-                s_Log << KA_CLI_STR_COMPILING << sDevicenametoLog << KA_CLI_STR_STATUS_SUCCESS << std::endl;
+                s_Log << KA_CLI_STR_COMPILING << sDevicenametoLog << "... " << KA_CLI_STR_STATUS_SUCCESS << std::endl;
                 ret = true;
             }
         }
@@ -732,13 +741,17 @@ bool kcCLICommanderDX::Init(const Config& config, LoggingCallBackFuncP callback)
         std::vector<GDT_GfxCardInfo> dxDeviceTable;
         beStatus bRet = dxBuilder.GetDeviceTable(dxDeviceTable);
 
+        // Returns true if the device is disabled for all modes.
+        auto isDisabled = [](const std::string& device)
+                          { for (auto& d : kcUtils::GetRgaDisabledDevices()) { if (d.find(device) != std::string::npos) return true; } return false; };
+
         if (bRet == beStatus_SUCCESS)
         {
             string calName;
 
             for (vector<GDT_GfxCardInfo>::const_iterator it = dxDeviceTable.begin(); it != dxDeviceTable.end(); ++it)
             {
-                if (calName != string(it->m_szCALName))
+                if (calName != string(it->m_szCALName) && !isDisabled(it->m_szCALName))
                 {
                     calName = it->m_szCALName;
                     m_dxDefaultAsicsList.push_back(*it);

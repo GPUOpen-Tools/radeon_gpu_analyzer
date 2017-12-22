@@ -10,6 +10,7 @@
 #include <AMDTOSWrappers/Include/osProcess.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osFile.h>
+#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
 
 // Local.
 #include <RadeonGPUAnalyzerBackend/include/beStaticIsaAnalyzer.h>
@@ -108,8 +109,8 @@ beKA::beStatus beKA::beStaticIsaAnalyzer::GenerateControlFlowGraph(const gtStrin
         {
             // Construct the command.
             std::stringstream cmd;
-            cmd << analyzerPath << " dump-pi-cfg " << isaFileName.asASCIICharArray()
-                << " " << outputFileName.asASCIICharArray();
+            cmd << analyzerPath << " dump-pi-cfg " << kcUtils::Quote(isaFileName.asASCIICharArray())
+                << " " << kcUtils::Quote(outputFileName.asASCIICharArray());
 
             // Cancel signal. Not in use for now.
             bool shouldCancel = false;

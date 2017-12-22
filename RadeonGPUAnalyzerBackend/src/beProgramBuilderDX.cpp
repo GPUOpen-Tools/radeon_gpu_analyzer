@@ -275,7 +275,7 @@ beKA::beStatus beProgramBuilderDX::Initialize(const std::string& dxxModuleName, 
                 // Take the relevant module's name.
                 const char* pModuleName = (compilerDllName.length() > 0) ?
                                            compilerDllName.c_str() : D3DCompileModule::s_DefaultModuleName;
-                
+
                 // This flag will be true if the given D3D module's bitness is 64-bit, while
                 // this process' bitness is 32-bit.
                 bool is64from32Error = false;
@@ -602,14 +602,6 @@ beKA::beStatus beProgramBuilderDX::Compile(beKA::SourceLanguage sourceLanguage, 
     return beRet;
 }
 
-beKA::beStatus beProgramBuilderDX::GetKernels(const string& device, vector<string>& kernels)
-{
-    (void)(&device); // Unreferenced parameter
-    (void)(&kernels); // Unreferenced parameter
-
-    return beKA::beStatus_SUCCESS;
-}
-
 beKA::beStatus beProgramBuilderDX::GetBinary(const string& device, const beKA::BinaryOptions& binopts, vector<char>& binary)
 {
 
@@ -719,12 +711,6 @@ beKA::beStatus beProgramBuilderDX::GetStatistics(const string& device, const str
     return ret;
 }
 
-bool beProgramBuilderDX::IsInitialized()
-{
-    return beKA::beStatus_SUCCESS;
-}
-
-
 void beProgramBuilderDX::ClearFormerBuildOutputs()
 {
     // Clear the ELF sections.
@@ -751,13 +737,6 @@ beKA::beStatus beProgramBuilderDX::GetDeviceTable(vector<GDT_GfxCardInfo>& table
 {
     table = m_DXDeviceTable;
     return beStatus_SUCCESS;
-}
-
-bool beProgramBuilderDX::CompileOK(string& device)
-{
-    (void)(&device); // Unreferenced parameter
-
-    return true;
 }
 
 /////////////////////////////////////////////////////
@@ -1174,7 +1153,7 @@ static beKA::beStatus  InvokeDX11Driver(const std::string & args, std::string& o
         status = beStatus_SUCCESS;
         output = gtOutput.asASCIICharArray();
     }
-    
+
     return status;
 }
 

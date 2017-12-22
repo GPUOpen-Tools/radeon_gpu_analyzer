@@ -622,4 +622,24 @@
 // Versions.
 #define BE_STR_VULKAN_VERSION L"Based on Vulkan 1.0 Specification."
 
+// ROCm.
+#ifdef __linux
+#define LC_OPENCL_ROOT_DIR          L"ROCm/OpenCL"
+#elif _WIN64
+#define LC_OPENCL_ROOT_DIR          L"x64/ROCm/OpenCL"
+#else
+#define LC_OPENCL_ROOT_DIR          L"x86/ROCm/OpenCL"
+#endif
+
+#define LC_OPENCL_COMPILER_EXEC     L"clang"
+#define LC_AMDGPU_OBJDUMP_EXEC      L"amdgpu-objdump"
+#define LC_LLVM_OBJDUMP_EXEC        L"llvm-objdump"
+#define LC_LLVM_READOBJ_EXEC        L"llvm-readobj"
+
+#if defined(_WIN32)
+#define LC_COMPILER_EXEC_EXT        L"exe"
+#else
+#define LC_COMPILER_EXEC_EXT        L""
+#endif
+
 #endif // __beStringConstants_h
