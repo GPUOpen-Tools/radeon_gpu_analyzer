@@ -169,12 +169,6 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
             {
                 kcUtils::DeleteFile(isaOutputFileName);
             }
-
-            // Delete temporary ISA file.
-            if (fileName.empty())
-            {
-                kcUtils::DeleteFile(isaOutputFileName);
-            }
         }
 
         if (backendRet == beStatus_SUCCESS)

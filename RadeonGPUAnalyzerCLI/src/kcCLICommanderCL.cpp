@@ -502,15 +502,6 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                                 kcUtils::DeleteFile(isaOutputFileName);
                             }
                         }
-
-                        // Delete temporary files.
-                        if (config.m_ISAFile.empty())
-                        {
-                            if (kcUtils::FileNotEmpty(isaOutputFileName.asASCIICharArray()))
-                            {
-                                kcUtils::DeleteFile(isaOutputFileName);
-                            }
-                        }
                     }
                     else
                     {

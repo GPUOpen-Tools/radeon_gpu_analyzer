@@ -94,11 +94,6 @@ bool kcCLICommanderOpenGL::PrintAsicList(std::ostream & log)
     return kcUtils::PrintAsicList(log, beProgramBuilderOpenGL::GetDisabledDevices());
 }
 
-bool kcCLICommanderOpenGL::PrintAsicList(std::ostream & log)
-{
-    return kcUtils::PrintAsicList(log, beProgramBuilderOpenGL::GetDisabledDevices());
-}
-
 // Helper function to remove unnecessary file paths.
 static bool GenerateRenderingPipelineOutputPaths(const Config& config, const std::string& baseOutputFileName, const std::string& defaultExt,
                                                  const std::string& device, beProgramPipeline& pipelineToAdjust)
@@ -446,12 +441,6 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                                                                      glOptions.m_liveRegisterAnalysisOutputFiles.m_geometryShader, callback, config.m_printProcessCmdLines);
                             }
 
-                            if (isGeometryexShaderPresent)
-                            {
-                                kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_geometryShader, callback);
-                            }
-
                             if (isFragmentShaderPresent)
                             {
                                 kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_fragmentShader,
@@ -490,12 +479,6 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                             {
                                 kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
                                                                   glOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback, config.m_printProcessCmdLines);
-                            }
-
-                            if (isGeometryexShaderPresent)
-                            {
-                                kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback);
                             }
 
                             if (isFragmentShaderPresent)

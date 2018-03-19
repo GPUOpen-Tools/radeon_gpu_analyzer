@@ -196,10 +196,6 @@ public:
     beProgramBuilderDX();
     beKA::beStatus Initialize(const std::string& dxxModuleName, const std::string& compilerModuleName);
 
-    /// Ctor
-    beProgramBuilderDX();
-    beKA::beStatus Initialize(const std::string& dxxModuleName, const std::string& compilerModuleName);
-
 private: // members
     /// Interface with atidxx{32,64}.dll
     /// Windows only (since DX is a Windows thing).
