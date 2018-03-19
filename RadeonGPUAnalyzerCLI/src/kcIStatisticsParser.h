@@ -1,5 +1,4 @@
-#ifndef kcIStatisticsParser_h__
-#define kcIStatisticsParser_h__
+#pragma once
 
 // C++.
 #include <string>
@@ -21,5 +20,3 @@ public:
     /// Return value: true for success, false otherwise.
     virtual bool ParseStatistics(const gtString& statisticsFile, beKA::AnalysisData& statistics) = 0;
 };
-
-#endif // kcIStatisticsParser_h__

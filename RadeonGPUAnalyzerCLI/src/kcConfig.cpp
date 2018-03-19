@@ -51,6 +51,7 @@ Config::Config() :
     m_DumpMSIntermediate(),
     m_EnableShaderIntrinsics(false),
     m_UAVSlot(-1),
-    m_optLevel(-1)
+    m_optLevel(-1),
+    m_printProcessCmdLines(false)
 {
 }

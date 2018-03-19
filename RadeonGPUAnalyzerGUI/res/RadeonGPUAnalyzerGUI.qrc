@@ -1,0 +1,22 @@
+<RCC>
+    <qresource prefix="/">
+        <file>stylesheets/rgFileMenuStyle.qss</file>
+        <file>stylesheets/rgMainWindowStyle.qss</file>
+        <file>stylesheets/rgApplicationStyle.qss</file>
+        <file>icons/addFileIcon.svg</file>
+        <file>icons/newFileIcon.svg</file>
+        <file>icons/closeIcon.svg</file>
+        <file>icons/clearIcon.svg</file>
+        <file>icons/contractFileItem.svg</file>
+        <file>icons/expandFileItem.svg</file>
+        <file>icons/viewMinimizeIcon.svg</file>
+        <file>icons/viewMinimizeIconHover.svg</file>
+        <file>icons/viewMaximizeIcon.svg</file>
+        <file>icons/viewMaximizeIconHover.svg</file>
+        <file>icons/gearIcon.svg</file>
+        <file>icons/rgaIcon.svg</file>
+        <file>icons/findNextIcon.svg</file>
+        <file>icons/magnifyingGlassIcon.svg</file>
+        <file>icons/correlationWarningIcon.svg</file>
+    </qresource>
+</RCC>

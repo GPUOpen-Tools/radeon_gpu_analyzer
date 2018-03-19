@@ -140,7 +140,7 @@ static bool  VerifyVirtualContextOutput(const OpenGLOptions& options)
     return ret;
 }
 
-beKA::beStatus beProgramBuilderOpenGL::Compile(const OpenGLOptions& glOptions, bool& cancelSignal, gtString& vcOutput)
+beKA::beStatus beProgramBuilderOpenGL::Compile(const OpenGLOptions& glOptions, bool& cancelSignal, bool printCmd, gtString& vcOutput)
 {
     GT_UNREFERENCED_PARAMETER(cancelSignal);
     beKA::beStatus ret = beKA::beStatus_SUCCESS;
@@ -200,6 +200,8 @@ beKA::beStatus beProgramBuilderOpenGL::Compile(const OpenGLOptions& glOptions, b
 
         // Build the GL program.
         bool isCompilerOutputRelevant = false;
+        beUtils::PrintCmdLine(cmd.str(), printCmd);
+
         bool isLaunchSuccess = osExecAndGrabOutput(cmd.str().c_str(), cancelSignal, vcOutput);
 
         if (isLaunchSuccess)
@@ -233,7 +235,7 @@ beKA::beStatus beProgramBuilderOpenGL::Compile(const OpenGLOptions& glOptions, b
     return ret;
 }
 
-bool beProgramBuilderOpenGL::GetOpenGLVersion(gtString& glVersion)
+bool beProgramBuilderOpenGL::GetOpenGLVersion(bool printCmd, gtString& glVersion)
 {
     // Get VC's path.
     std::string vcPath;
@@ -245,6 +247,7 @@ bool beProgramBuilderOpenGL::GetOpenGLVersion(gtString& glVersion)
 
     // A flag for canceling the operation, we will not use it.
     bool dummyCancelFlag = false;
+    beUtils::PrintCmdLine(cmd.str(), printCmd);
     bool isLaunchSuccess = osExecAndGrabOutput(cmd.str().c_str(), dummyCancelFlag, glVersion);
 
     return isLaunchSuccess;

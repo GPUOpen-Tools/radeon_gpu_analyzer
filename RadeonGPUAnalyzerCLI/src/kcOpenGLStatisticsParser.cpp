@@ -99,7 +99,7 @@ bool kcOpenGLStatisticsParser::ParseStatistics(const gtString& satisticsFilePath
     parsedStatistics.ISASize = 0;
     parsedStatistics.numSGPRsUsed = 0;
     parsedStatistics.numVGPRsUsed = 0;
-    parsedStatistics.maxScratchRegsNeeded = 0;
+    parsedStatistics.scratchMemoryUsed = 0;
 
     // Check if the file exists.
     if (!satisticsFilePath.isEmpty())
@@ -146,7 +146,7 @@ bool kcOpenGLStatisticsParser::ParseStatistics(const gtString& satisticsFilePath
 
                 if (isScratchRegsExtracted)
                 {
-                    parsedStatistics.maxScratchRegsNeeded = scratchRegs;
+                    parsedStatistics.scratchMemoryUsed = scratchRegs;
                 }
 
                 // We succeeded if all data was extracted successfully.

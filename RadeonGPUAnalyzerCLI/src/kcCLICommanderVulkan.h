@@ -1,9 +1,7 @@
 //=================================================================
 // Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
-
-#ifndef __kcCLICommanderVulkan_h
-#define __kcCLICommanderVulkan_h
+#pragma once
 
 // C++.
 #include <string>
@@ -42,5 +40,3 @@ private:
     // Unique collections of the device names.
     std::set<std::string> m_supportedDevicesCache;
 };
-
-#endif // __kcCLICommanderVulkan_h

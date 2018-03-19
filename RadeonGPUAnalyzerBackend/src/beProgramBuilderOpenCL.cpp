@@ -833,7 +833,7 @@ beKA::beStatus beProgramBuilderOpenCL::GetAnalysisInternal(cl_program& program, 
         {
 
 #define X(FIELD,PARAM) Inquire(&FIELD,sizeof(FIELD),PARAM,k,deviceId);
-            X(analysis->maxScratchRegsNeeded, CL_KERNELINFO_SCRATCH_REGS)
+            X(analysis->scratchMemoryUsed, CL_KERNELINFO_SCRATCH_REGS)
             X(analysis->numWavefrontPerSIMD, CL_KERNELINFO_WAVEFRONT_PER_SIMD)
             X(analysis->wavefrontSize, CL_KERNELINFO_WAVEFRONT_SIZE)
             X(analysis->numGPRsAvailable, CL_KERNELINFO_AVAILABLE_GPRS)

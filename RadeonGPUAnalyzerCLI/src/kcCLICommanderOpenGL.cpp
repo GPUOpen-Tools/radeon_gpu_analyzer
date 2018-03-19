@@ -83,10 +83,15 @@ void kcCLICommanderOpenGL::Version(Config& config, LoggingCallBackFunc_t callbac
     if (m_pOglBuilder != nullptr)
     {
         gtString glVersion;
-        bool rc = m_pOglBuilder->GetOpenGLVersion(glVersion);
+        bool rc = m_pOglBuilder->GetOpenGLVersion(config.m_printProcessCmdLines, glVersion);
 
         callback(((rc && !glVersion.isEmpty()) ? std::string(glVersion.asASCIICharArray()) : STR_ERR_CANNOT_EXTRACT_OPENGL_VERSION) + "\n");
     }
+}
+
+bool kcCLICommanderOpenGL::PrintAsicList(std::ostream & log)
+{
+    return kcUtils::PrintAsicList(log, beProgramBuilderOpenGL::GetDisabledDevices());
 }
 
 bool kcCLICommanderOpenGL::PrintAsicList(std::ostream & log)
@@ -340,7 +345,7 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
 
                     // Compile.
                     gtString vcOutput;
-                    beKA::beStatus buildStatus = m_pOglBuilder->Compile(glOptions, shouldCancel, vcOutput);
+                    beKA::beStatus buildStatus = m_pOglBuilder->Compile(glOptions, shouldCancel, config.m_printProcessCmdLines, vcOutput);
 
                     if (buildStatus == beStatus_SUCCESS)
                     {
@@ -420,19 +425,25 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                             if (isVertexShaderPresent)
                             {
                                 kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_vertexShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_vertexShader, callback);
+                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_vertexShader, callback, config.m_printProcessCmdLines);
                             }
 
                             if (isTessControlShaderPresent)
                             {
                                 kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_tessControlShader, callback);
+                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_tessControlShader, callback, config.m_printProcessCmdLines);
                             }
 
                             if (isTessEvaluationShaderPresent)
                             {
                                 kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_tessEvaluationShader, callback);
+                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_tessEvaluationShader, callback, config.m_printProcessCmdLines);
+                            }
+
+                            if (isGeometryexShaderPresent)
+                            {
+                                kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
+                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_geometryShader, callback, config.m_printProcessCmdLines);
                             }
 
                             if (isGeometryexShaderPresent)
@@ -444,13 +455,13 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                             if (isFragmentShaderPresent)
                             {
                                 kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_fragmentShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_fragmentShader, callback);
+                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_fragmentShader, callback, config.m_printProcessCmdLines);
                             }
 
                             if (isComputeShaderPresent)
                             {
                                 kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_computeShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_computeShader, callback);
+                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_computeShader, callback, config.m_printProcessCmdLines);
                             }
                         }
 
@@ -460,19 +471,25 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                             if (isVertexShaderPresent)
                             {
                                 kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_vertexShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_vertexShader, callback);
+                                                                  glOptions.m_controlFlowGraphOutputFiles.m_vertexShader, callback, config.m_printProcessCmdLines);
                             }
 
                             if (isTessControlShaderPresent)
                             {
                                 kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_tessControlShader, callback);
+                                                                  glOptions.m_controlFlowGraphOutputFiles.m_tessControlShader, callback, config.m_printProcessCmdLines);
                             }
 
                             if (isTessControlShaderPresent)
                             {
                                 kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_tessEvaluationShader, callback);
+                                                                  glOptions.m_controlFlowGraphOutputFiles.m_tessEvaluationShader, callback, config.m_printProcessCmdLines);
+                            }
+
+                            if (isGeometryexShaderPresent)
+                            {
+                                kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
+                                                                  glOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback, config.m_printProcessCmdLines);
                             }
 
                             if (isGeometryexShaderPresent)
@@ -484,13 +501,13 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                             if (isFragmentShaderPresent)
                             {
                                 kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_fragmentShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_fragmentShader, callback);
+                                                                  glOptions.m_controlFlowGraphOutputFiles.m_fragmentShader, callback, config.m_printProcessCmdLines);
                             }
 
                             if (isComputeShaderPresent)
                             {
                                 kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_computeShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_computeShader, callback);
+                                                                  glOptions.m_controlFlowGraphOutputFiles.m_computeShader, callback, config.m_printProcessCmdLines);
                             }
                         }
                     }

@@ -21,6 +21,12 @@
 #include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
 #include <RadeonGPUAnalyzerCLI/src/kcCLICommander.h>
 #include <Utils/include/rgaXMLConstants.h>
+#include <Utils/include/rgaSharedUtils.h>
+#include <Utils/include/rgLog.h>
+
+
+// Shared between CLI and GUI.
+#include <RadeonGPUAnalyzerCLI/../Utils/include/rgaVersionInfo.h>
 
 #ifndef _WIN32
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -45,7 +51,7 @@ const int  WINDOWS_DATE_STRING_MONTH_OFFSET =  7;
 const int  WINDOWS_DATE_STRING_DAY_OFFSET   =  4;
 #endif
 
-static const std::vector<std::string>  RGA_DISABLED_DEVICES = { "gfx902 (Vega)" };
+static const std::vector<std::string>  RGA_DISABLED_DEVICES = { };
 
 static bool GetRGATempDir(osDirectory & dir);
 
@@ -168,7 +174,7 @@ std::string kcUtils::DeviceStatisticsToCsvString(const Config& config, const std
     output << device << csvSeparator;
 
     // Scratch registers.
-    output << statistics.maxScratchRegsNeeded << csvSeparator;
+    output << statistics.scratchMemoryUsed << csvSeparator;
 
     // Work-items per work-group.
     output << statistics.numThreadPerGroup << csvSeparator;
@@ -188,11 +194,17 @@ std::string kcUtils::DeviceStatisticsToCsvString(const Config& config, const std
     // Used SGPRs.
     output << statistics.numSGPRsUsed << csvSeparator;
 
+    // Spills of SGPRs.
+    output << statistics.numSGPRSpills << csvSeparator;
+
     // Available VGPRs.
     output << statistics.numVGPRsAvailable << csvSeparator;
 
     // Used VGPRs.
     output << statistics.numVGPRsUsed << csvSeparator;
+
+    // Spills of VGPRs.
+    output << statistics.numVGPRSpills << csvSeparator;
 
     // CL Work-group dimensions (for a unified format, to be revisited).
     output << statistics.numThreadPerGroupX << csvSeparator;
@@ -250,15 +262,17 @@ std::string kcUtils::GetStatisticsCsvHeaderString(char csvSeparator)
 {
     std::stringstream output;
     output << STR_CSV_HEADER_DEVICE << csvSeparator;
-    output << STR_CSV_HEADER_SCRATCH_REGS << csvSeparator;
+    output << STR_CSV_HEADER_SCRATCH_MEM << csvSeparator;
     output << STR_CSV_HEADER_THREADS_PER_WG << csvSeparator;
     output << STR_CSV_HEADER_WAVEFRONT_SIZE << csvSeparator;
     output << STR_CSV_HEADER_LDS_BYTES_MAX << csvSeparator;
     output << STR_CSV_HEADER_LDS_BYTES_ACTUAL << csvSeparator;
     output << STR_CSV_HEADER_SGPR_AVAILABLE << csvSeparator;
     output << STR_CSV_HEADER_SGPR_USED << csvSeparator;
+    output << STR_CSV_HEADER_SGPR_SPILLS << csvSeparator;
     output << STR_CSV_HEADER_VGPR_AVAILABLE << csvSeparator;
     output << STR_CSV_HEADER_VGPR_USED << csvSeparator;
+    output << STR_CSV_HEADER_VGPR_SPILLS << csvSeparator;
     output << STR_CSV_HEADER_CL_WORKGROUP_DIM_X << csvSeparator;
     output << STR_CSV_HEADER_CL_WORKGROUP_DIM_Y << csvSeparator;
     output << STR_CSV_HEADER_CL_WORKGROUP_DIM_Z << csvSeparator;
@@ -344,11 +358,11 @@ void kcUtils::ReplaceStatisticsFile(const gtString& statisticsFile, const Config
     kcUtils::CreateStatisticsFile(statisticsFile, config, device, statistics, logCb);
 }
 
-void kcUtils::PerformLiveRegisterAnalysis(const gtString& isaFileName,
-                                          const gtString& outputFileName, LoggingCallBackFunc_t pCallback)
+void kcUtils::PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName,
+                                          LoggingCallBackFunc_t pCallback, bool printCmd)
 {
     // Call the backend.
-    beStatus rc = beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isaFileName, outputFileName);
+    beStatus rc = beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isaFileName, outputFileName, printCmd);
 
     if (rc != beStatus_SUCCESS && pCallback != nullptr)
     {
@@ -392,10 +406,11 @@ void kcUtils::PerformLiveRegisterAnalysis(const gtString& isaFileName,
     }
 }
 
-void kcUtils::GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName, LoggingCallBackFunc_t pCallback)
+void kcUtils::GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
+                                       LoggingCallBackFunc_t pCallback, bool printCmd)
 {
     // Call the backend.
-    beStatus rc = beStaticIsaAnalyzer::GenerateControlFlowGraph(isaFileName, outputFileName);
+    beStatus rc = beStaticIsaAnalyzer::GenerateControlFlowGraph(isaFileName, outputFileName, printCmd);
 
     if (rc != beStatus_SUCCESS && pCallback != nullptr)
     {
@@ -805,7 +820,7 @@ void kcUtils::PrintRgaVersion()
 }
 
 kcUtils::ProcessStatus kcUtils::LaunchProcess(const std::string& execPath, const std::string& args, const std::string& dir,
-                                              unsigned long timeOut, std::string& stdOut, std::string& stdErr, long& exitCode)
+                                              unsigned long timeOut, bool printCmd, std::string& stdOut, std::string& stdErr, long& exitCode)
 {
     osProcessId      cmplrProcID;
     osProcessHandle  cmplrProcHandle;
@@ -839,6 +854,11 @@ kcUtils::ProcessStatus kcUtils::LaunchProcess(const std::string& execPath, const
     }
     else
     {
+        if (printCmd)
+        {
+            std::cout << std::endl << KC_STR_LAUNCH_EXTERNAL_PROCESS << gtExecPath.asASCIICharArray() << " " << gtArgs.asASCIICharArray() << std::endl;
+        }
+
         gtArgs += L" >";
         gtArgs += outFileName;
         gtArgs += L" 2>";
@@ -1176,17 +1196,7 @@ bool kcUtils::GenerateVersionInfoFile(const std::string & fileName)
     std::string  dateString = STR_RGA_BUILD_DATE;
 
 #ifdef WIN32
-    // Convert Windows date format to "YYYY-MM-DD".
-    if (dateString != STR_RGA_BUILD_DATE_DEV)
-    {
-        ret = (dateString.find('/') != std::string::npos && dateString.size() == WINDOWS_DATE_STRING_LEN);
-        if (ret)
-        {
-            dateString = dateString.substr(WINDOWS_DATE_STRING_YEAR_OFFSET, 4) + "-" +
-                dateString.substr(WINDOWS_DATE_STRING_MONTH_OFFSET, 2) + "-" +
-                dateString.substr(WINDOWS_DATE_STRING_DAY_OFFSET, 2);
-        }
-    }
+    ret = rgaSharedUtils::ConvertDateString(dateString);
 #endif
 
     tinyxml2::XMLElement*  pBuildDateElem = doc.NewElement(XML_NODE_BUILD_DATE);
@@ -1386,7 +1396,7 @@ bool kcUtils::GenerateCliMetadataFile(const std::string& fileName, const rgFileE
             // Try to find a source file corresponding to this entry name.
             auto inputFileInfo = std::find_if(fileEntryData.begin(), fileEntryData.end(),
                                               [&](rgFileEntryData::const_reference entryInfo)
-                                                 { for (auto entry : entryInfo.second) { if (entry.first == entryName) return true; } return false; });
+                                                 { for (auto entry : entryInfo.second) { if (std::get<0>(entry) == entryName) return true; } return false; });
 
             srcFileName = (inputFileInfo == fileEntryData.end() ? XML_UNKNOWN_SOURCE_FILE : inputFileInfo->first);
             metadataTable[srcFileName].insert(outFileItem);
@@ -1439,4 +1449,95 @@ bool kcUtils::GenerateCliMetadataFile(const std::string& fileName, const rgFileE
     ret = ret && (doc.SaveFile(fileName.c_str()) == tinyxml2::XML_SUCCESS);
 
     return ret;
+}
+
+// Get current system time.
+static bool  CurrentTime(struct tm& time)
+{
+    bool  ret = false;
+    std::stringstream  suffix;
+    time_t  currentTime = std::time(0);
+#ifdef _WIN32
+    struct tm* pTime = &time;
+    ret = (localtime_s(pTime, &currentTime) == 0);
+#else
+    struct tm*  pTime = localtime(&currentTime);
+    if (pTime != nullptr)
+    {
+        time = *pTime;
+        ret = true;
+    }
+#endif
+    return ret;
+}
+
+// Delete log files older than 1 week.
+static bool  DeleteOldLogs()
+{
+    bool  ret = false;
+    const double  oneWeekSeconds = static_cast<double>(7*24*60*60);
+    osDirectory tmpDir;
+    if ((ret = GetRGATempDir(tmpDir)) == true)
+    {
+        gtString  logFilePattern;
+        gtList<osFilePath>  filePaths;
+        logFilePattern << RGA_CLI_LOG_FILE_NAME.asASCIICharArray() << "*." << RGA_CLI_LOG_FILE_EXT.asASCIICharArray();
+        if (tmpDir.getContainedFilePaths(logFilePattern, osDirectory::SORT_BY_DATE_ASCENDING, filePaths))
+        {
+            for (const osFilePath& path : filePaths)
+            {
+                osStatStructure  fileStat;
+                if ((ret = (osWStat(path.asString(), fileStat) == 0)) == true)
+                {
+                    time_t  fileTime = fileStat.st_ctime;
+                    struct tm  time;
+                    if ((ret = CurrentTime(time)) == true)
+                    {
+                        time_t  curTime = std::mktime(&time);
+                        if (std::difftime(curTime, fileTime) > oneWeekSeconds)
+                        {
+                            std::remove(path.asString().asASCIICharArray());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return ret;
+}
+
+// Perform log file initialization.
+bool  kcUtils::InitCLILogFile(const Config& config)
+{
+    struct tm   tt;
+
+    bool  status = DeleteOldLogs();
+    status = status && CurrentTime(tt);
+
+    std::string  logFileName = config.m_logFile;
+    if (logFileName.empty())
+    {
+        gtString gFileName = kcUtils::ConstructTempFileName(RGA_CLI_LOG_FILE_NAME, RGA_CLI_LOG_FILE_EXT);
+        logFileName = gFileName.asASCIICharArray();
+    }
+
+    if (status)
+    {
+        auto ZeroExt = [](int n) {std::string nS = std::to_string(n); return (n < 10 ? std::string("0") + nS : nS);};
+
+        // Append current date/time to the log file name.
+        std::stringstream  suffix;
+        suffix << "-" << std::to_string(tt.tm_year + 1900) << ZeroExt(tt.tm_mon + 1) << ZeroExt(tt.tm_mday) <<
+                    "-" << ZeroExt(tt.tm_hour) << ZeroExt(tt.tm_min) << ZeroExt(tt.tm_sec);
+
+        size_t  extOffset = logFileName.rfind('.');
+        logFileName.insert((extOffset == std::string::npos ? logFileName.size() : extOffset), suffix.str());
+
+        if ((status = rgLog::OpenLogFile(logFileName)) == false)
+        {
+            rgLog::stdErr << STR_ERR_FAILED_OPEN_LOG_FILE << logFileName << std::endl;
+        }
+    }
+
+    return status;
 }

@@ -135,9 +135,6 @@ private:
     beProgramBuilderDX* m_beDX;
 #endif
 
-    /// A string that report catalyst version
-    string m_driverVersionInfo;
-
     /// successful build devices names list
     std::vector<std::string> m_successfulBuildDevices;
 

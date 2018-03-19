@@ -5,14 +5,6 @@ project (RadeonGPUAnalyzerCLI)
 set (RadeonGPUAnalyzerCLI_VERSION_MAJOR 2)
 set (RadeonGPUAnalyzerCLI_VERSION_MINOR 0)
 
-# Pass the build number and build date
-if (NOT "$ENV{BUILD_NUMBER}" STREQUAL "")
-    add_definitions(-DRGA_BUILD_NUMBER=$ENV{BUILD_NUMBER})
-endif()
-if (NOT "$ENV{RGA_BUILD_DATE}" STREQUAL "")
-    add_definitions(-DRGA_BUILD_DATE=$ENV{RGA_BUILD_DATE})
-endif()
-
 # Windows-specific preprocessor directives
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -25,14 +17,14 @@ if(EXISTS "/etc/debian_version")
 endif()
 
 # Add this definitions if static linkage is used with the other projects
-add_definitions(-DRGA_BACKEND_STATIC -DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC -DAMDTOSAPIWRAPPERS_STATIC)
- 
+add_definitions(-DRGA_BACKEND_STATIC -DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC)
+
 # Configure a header file to pass some of the CMake settings
 # to the source code
 configure_file (
   "${PROJECT_SOURCE_DIR}/RadeonGPUAnalyzerCLIConfig.h.in"
   "${PROJECT_BINARY_DIR}/RadeonGPUAnalyzerCLIConfig.h"
-  ) 
+  )
 
 # Add the binary tree to the search path for include files
 # so that we will find ProjectConfig.h
@@ -68,6 +60,7 @@ endif()
 
 # Source files that are common to Windows and Linux
 file(GLOB COMMON_SRC
+    "../Utils/src/*.cpp"
     "src/*.cpp"
     "src/*.h"
 )
@@ -106,23 +99,23 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
             find_library(BOOST_LIBRARY4 libboost_regex-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
         endif()
     endif()
-elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     # DeviceInfoLib objects are defined in RadeonGPUAnalyzerBackend/CMakeLists.txt
     add_executable(RadeonGPUAnalyzerCLI ${COMMON_SRC} ${LINUX_SRC} $<TARGET_OBJECTS:DeviceInfoLib>)
     set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES ENABLE_EXPORTS ON)
 
     if(IsDebian)
         # Debian-specific
-        # Configure Boost link settings 
-        set(Boost_USE_STATIC_LIBS ON) 
-        set(Boost_USE_MULTITHREADED ON)  
+        # Configure Boost link settings
+        set(Boost_USE_STATIC_LIBS ON)
+        set(Boost_USE_MULTITHREADED ON)
         set(Boost_USE_STATIC_RUNTIME OFF)
 
         # We use 1.55 as the minimum version
-        find_package(Boost 1.55.0 COMPONENTS filesystem system regex program_options) 
+        find_package(Boost 1.55.0 COMPONENTS filesystem system regex program_options)
 
         if(Boost_FOUND)
-            include_directories(${Boost_INCLUDE_DIRS}) 
+            include_directories(${Boost_INCLUDE_DIRS})
         endif()
     else()
         # RHEL
@@ -155,14 +148,14 @@ endif()
 if(AMD_INTERNAL)
     if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga-internal)
-    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         # On Linux we have a launch script that configures the environment prior to launching the executable.
         set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga-bin-internal)
     endif()
 else()
     if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga)
-    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         # On Linux we have a launch script that configures the environment prior to launching the executable.
         set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga-bin)
     endif()
@@ -170,10 +163,10 @@ endif()
 
 # Link settings
 if(NOT IsDebian)
-target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSAPIWrappers AMDTOSWrappers AMDTBaseTools
+target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools
                        ${BOOST_LIBRARY1} ${BOOST_LIBRARY2} ${BOOST_LIBRARY3} ${BOOST_LIBRARY4} ${TINYXML_LIB} ${YAMLCPP_LIB})
 else()
-target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSAPIWrappers AMDTOSWrappers AMDTBaseTools
+target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools
                        ${Boost_LIBRARIES} ${TINYXML_LIB} ${YAMLCPP_LIB})
 endif()
 
@@ -189,10 +182,10 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     endif()
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
                        POST_BUILD
-                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/VS2015/copy_post_build_cli.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${DEBUG_ARG} ${INTERNAL_ARG}
-                       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/VS2015
+                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/windows/copy_post_build_cli.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${DEBUG_ARG} ${INTERNAL_ARG}
+                       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/windows
                       )
-elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
                        POST_BUILD
                        COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/linux/copy_post_build_cli.sh ${INTERNAL_ARG}

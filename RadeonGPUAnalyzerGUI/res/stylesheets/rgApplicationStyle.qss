@@ -1,0 +1,199 @@
+/********************************************************************/
+/* Frame focus border
+/********************************************************************/
+QFrame:focus,
+QLineEdit:focus
+{
+    border: 1px solid rgb(224, 30, 55);
+}
+
+/********************************************************************/
+/* Splitters
+/********************************************************************/
+QSplitter::handle
+{
+    background: white;
+}
+
+/********************************************************************/
+/* Titlebar background color
+/********************************************************************/
+rgFileMenuTitlebar #itemBackground,
+rgViewContainer rgStandardTitlebar,
+rgViewContainer rgSourceEditorTitlebar,
+rgViewContainer #viewTitlebar
+{
+    background: rgb(51, 51, 51);
+}
+
+rgViewContainer[viewHovered="true"][viewFocused="false"] rgFileMenuTitlebar #itemBackground,
+rgViewContainer[viewHovered="true"][viewFocused="false"] rgStandardTitlebar,
+rgViewContainer[viewHovered="true"][viewFocused="false"] rgSourceEditorTitlebar,
+rgViewContainer[viewHovered="true"][viewFocused="false"] rgIsaDisassemblyView #viewTitlebar
+{
+    border-bottom: 3px solid rgb(135,20,16);
+}
+
+rgViewContainer[viewFocused="true"] rgFileMenuTitlebar #itemBackground,
+rgViewContainer[viewFocused="true"] rgStandardTitlebar,
+rgViewContainer[viewFocused="true"] rgSourceEditorTitlebar,
+rgViewContainer[viewFocused="true"] #viewTitlebar
+{
+    border-bottom: 3px solid rgb(224, 30, 55);
+}
+
+/********************************************************************/
+/* File menu titlebar (rgFileMenuTitlebar)
+/********************************************************************/
+rgFileMenuTitlebar QLabel
+{
+    font-size: 8pt;
+    color: white;
+}
+
+/********************************************************************/
+/* Source editor titlebar (rgSourceEditorTitlebar)
+/********************************************************************/
+rgSourceEditorTitlebar QLabel
+{
+    font-size: 8pt;
+    color: white;
+}
+
+/********************************************************************/
+/* Disassembly view titlebar
+/********************************************************************/
+rgIsaDisassemblyView #viewTitlebar ArrowIconWidget,
+rgIsaDisassemblyView #viewTitlebar ArrowIconWidget
+{
+    qproperty-fontColor: white;
+}
+
+rgIsaDisassemblyView #viewTitlebar #line
+{
+    border: 0px;
+    background: rgb(80, 80, 80);
+}
+
+/********************************************************************/
+/* CLI output view titlebar
+/********************************************************************/
+rgCliOutputView #viewTitlebar QLabel
+{
+    color: white;
+}
+
+/********************************************************************/
+/* CLI output view
+/********************************************************************/
+rgCliOutputView QTextEdit
+{
+    background: rgb(240, 240, 240);
+}
+
+rgCliOutputView #clearOutputPushButton
+{
+    background: rgba(0, 0, 0, 0);
+}
+
+rgCliOutputView #clearOutputPushButton:hover
+{
+    background: rgba(255, 255, 255, 50);
+    border: 0px;
+}
+
+rgCliOutputView #clearOutputPushButton:pressed
+{
+    background: rgba(255, 255, 255, 100);
+    border: 0px;
+}
+
+/********************************************************************/
+/* Maximizable view corner button
+/********************************************************************/
+
+/* Unmaximized+unhovered state */
+rgViewContainer[isMaximized="false"] #viewMaximizeButton
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-image: url(:/icons/viewMaximizeIcon.svg);
+}
+
+/* Unmaximized+hovered state */
+rgViewContainer[isMaximized="false"] #viewMaximizeButton:hover
+{
+    border-image: url(:/icons/viewMaximizeIconHover.svg);
+}
+
+/* Maximized+unhovered state */
+rgViewContainer[isMaximized="true"] #viewMaximizeButton
+{
+    background-color: rgba(0, 0, 0, 0);
+    border-image: url(:/icons/viewMinimizeIcon.svg);
+}
+
+/* Maximized+hovered state */
+rgViewContainer[isMaximized="true"] #viewMaximizeButton:hover
+{
+    border-image: url(:/icons/viewMinimizeIconHover.svg);
+}
+
+/********************************************************************/
+/* Include directories list widget.
+/********************************************************************/
+rgIncludeDirectoriesView #includeDirsList
+{
+	background: transparent;
+	border: 1px solid black;
+}
+
+/********************************************************************/
+/* Global settings view.
+/********************************************************************/
+rgGlobalSettingsView #applicationSettingsLabel
+{
+	background: rgb(240, 240, 240);
+}
+
+/********************************************************************/
+/* OpenCL build settings view.
+/********************************************************************/
+rgOpenCLBuildSettingsView #allOptionsTextEdit
+{
+    background: rgb(240, 240, 240);
+}
+
+rgOpenCLBuildSettingsView #additionalOptionsHeaderLabel
+{
+	background: rgb(240, 240, 240);
+}
+
+rgOpenCLBuildSettingsView #settingsCommandLineHeaderLabel
+{
+	background: rgb(240, 240, 240);
+}
+
+rgOpenCLBuildSettingsView #generalHeaderLabel
+{
+	background: rgb(240, 240, 240);
+}
+
+rgOpenCLBuildSettingsView #openCLOptionsHeaderLabel
+{
+	background: rgb(240, 240, 240);
+}
+
+rgOpenCLBuildSettingsView #alternativeCompilerLabel
+{
+	background: rgb(240, 240, 240);
+}
+
+rgOpenCLBuildSettingsView #scrollAreaWidgetContents
+{
+    background: white;
+}
+
+rgOpenCLBuildSettingsView #scrollArea
+{
+    border: none;
+}

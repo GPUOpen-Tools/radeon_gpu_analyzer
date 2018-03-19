@@ -1,5 +1,4 @@
-#ifndef _kcCLICommanderLightning_H_
-#define _kcCLICommanderLightning_H_
+#pragma once
 
 // C++.
 #include <string>
@@ -27,10 +26,13 @@ public:
 
     void  RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback) override;
 
-    beStatus  Init(LoggingCallBackFunc_t logCallback);
+    bool RunPostCompileSteps(const Config& config) const override;
 
-    // Extract the list of entry points from the source file specified by "fileName".
-    static bool  ExtractEntries(const std::string& fileName, const Config& config, rgEntryData& entryData);
+    beStatus  Init(const Config& config, LoggingCallBackFunc_t logCallback);
+
+    // Parse the source file and extract list of entry points (for example, kernels for OpenCL).
+    // Dump the extracted entry points to stdout.
+    static bool  ListEntries(const Config& config, LoggingCallBackFunc_t callback);
 
     // Get the list of names of supported targets.
     static std::set<std::string>  GetSupportedTargets();
@@ -51,16 +53,16 @@ private:
     // Dissasemble binary file.
     // The disassembled ISA text are be divided into per-kernel parts and stored in separate files.
     // The names of ISA files are generated based on provided user ISA file name.
-    beStatus  DisassembleBinary(const std::string& binFileName, const std::string& userIsaFileName,
-                                const std::string& device, const std::string& kernel, bool lineNumbers, std::string& errText);
+    beStatus  DisassembleBinary(const std::string& binFileName, const std::string& userIsaFileName, const std::string& device,
+                                const std::string& kernel, bool lineNumbers, std::string& errText);
 
     // Parse ISA files and generate separate files that contain parsed ISA in CSV format.
     bool  ParseIsaFilesToCSV(bool addLineNumbers);
 
     // Add the device name to the output file name provided in "outFileName" string.
     beStatus  AdjustBinaryFileName(const Config&       config,
-                                         const std::string & device,
-                                         std::string&        binFileName);
+                                   const std::string & device,
+                                   std::string&        binFileName);
 
     // Store ISA text in the file.
     beStatus  StoreISAToFile(const std::string& fileName, const std::string& isaText);
@@ -75,13 +77,13 @@ private:
     beStatus  ExtractMetadata(const std::string& metadataFileName) const;
 
     // Extract Resource Usage (statistics) data.
-    beStatus  ExtractStatistics(const Config& config) const;
+    beStatus  ExtractStatistics(const Config& config);
 
     // Split ISA text into separate per-kernel ISA fragments and store them into separate files.
     // Puts the names of generated ISA files into output metadata (kcCLICommander::m_outputMetadata).
-    bool  SplitISA(const std::string& isaText, const std::string& userIsaFileName,
-                   const std::string& device, const std::string& kernel,
-                   const std::vector<std::string>& kernelNames);
+    bool  SplitISA(const std::string& binFile, const std::string& isaText,
+                   const std::string& userIsaFileName, const std::string& device,
+                   const std::string& kernel, const std::vector<std::string>& kernelNames);
 
     // Split ISA text into separate per-kernel ISA fragments. The fragments are returned in the
     // "kernelIsaTextMap" map.
@@ -89,14 +91,26 @@ private:
                        const std::vector<std::string>& kernelNames,
                        IsaMap& kernelIsaTextMap) const;
 
-    // Filter the ISA text to remove extra information not needed by RGA.
-    bool  FilterISA(const std::string& isaText, std::string& filteredIsa);
+    // Remove unused code from the ISA disassembly.
+    bool  ReduceISA(const std::string& binFile, IsaMap& kernelIsaTexts);
 
+    // Generate RGA CLI session metadata file.
+    bool  GenerateSessionMetadata(const Config& config, const rgOutputMetadata& outMetadata) const override;
+
+    // Extract the list of entry points from the source file specified by "fileName".
+    static bool  ExtractEntries(const std::string& fileName, const Config& config, rgEntryData& entryData);
+
+    // ---- DATA ----
 
     // All targets supported by the LC Compiler.
     std::set<std::string>     m_LC_targets;
+
+    // Alternative compiler paths specified by a user.
+    CmplrPaths                m_cmplrPaths;
+
     // Chosen targets.
     std::set<std::string>     m_asics;
-};
 
-#endif
+    // Specifies whether the "-#" option (print commands) is enabled.
+    bool                      m_printCmds;
+};

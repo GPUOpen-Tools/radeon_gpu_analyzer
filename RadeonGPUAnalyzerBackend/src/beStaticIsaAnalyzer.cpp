@@ -14,6 +14,7 @@
 
 // Local.
 #include <RadeonGPUAnalyzerBackend/include/beStaticIsaAnalyzer.h>
+#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
 
 using namespace beKA;
 
@@ -44,7 +45,7 @@ static bool GetLiveRegAnalyzerPath(std::string& analyzerPath)
 }
 
 
-beKA::beStatus beKA::beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName)
+beKA::beStatus beKA::beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName, bool printCmd)
 {
     beStatus ret = beStatus_General_FAILED;
 
@@ -68,6 +69,7 @@ beKA::beStatus beKA::beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtSt
             bool shouldCancel = false;
 
             gtString analyzerOutput;
+            beUtils::PrintCmdLine(cmd.str(), printCmd);
             isOk = osExecAndGrabOutput(cmd.str().c_str(), shouldCancel, analyzerOutput);
 
             if (isOk)
@@ -92,7 +94,7 @@ beKA::beStatus beKA::beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtSt
     return ret;
 }
 
-beKA::beStatus beKA::beStaticIsaAnalyzer::GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName)
+beKA::beStatus beKA::beStaticIsaAnalyzer::GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName, bool printCmd)
 {
     beStatus ret = beStatus_General_FAILED;
 
@@ -116,6 +118,7 @@ beKA::beStatus beKA::beStaticIsaAnalyzer::GenerateControlFlowGraph(const gtStrin
             bool shouldCancel = false;
 
             gtString analyzerOutput;
+            beUtils::PrintCmdLine(cmd.str(), printCmd);
             isOk = osExecAndGrabOutput(cmd.str().c_str(), shouldCancel, analyzerOutput);
 
             if (isOk)

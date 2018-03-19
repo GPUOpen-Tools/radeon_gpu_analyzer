@@ -96,7 +96,7 @@ public:
 
     virtual beKA::beStatus GetDeviceTable(std::vector<GDT_GfxCardInfo>& table) override;
 
-    beKA::beStatus Compile(const VulkanOptions& vulkanOptions, bool& cancelSignal, gtString& buildLog);
+    beKA::beStatus Compile(const VulkanOptions& vulkanOptions, bool& cancelSignal, bool printCmd, gtString& buildLog);
 
     /// Extracts the OpenGL version of the installed runtime.
     bool GetVulkanVersion(gtString& vkVersion);

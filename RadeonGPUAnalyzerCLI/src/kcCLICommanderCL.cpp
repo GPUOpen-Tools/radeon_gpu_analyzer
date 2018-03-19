@@ -335,7 +335,7 @@ void kcCLICommanderCL::Analysis(const Config& config)
 
                 // Write a line of CSV.
                 output << deviceName << csvSeparator;
-                output << analysis.maxScratchRegsNeeded << csvSeparator;
+                output << analysis.scratchMemoryUsed << csvSeparator;
                 output << analysis.numThreadPerGroup << csvSeparator;
                 output << doNAFormat(analysis.wavefrontSize, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
                 output << analysis.LDSSizeAvailable << csvSeparator;
@@ -476,7 +476,7 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                             // Call the kcUtils routine to analyze <generatedFileName> and write
                             // the analysis file.
                             kcUtils::PerformLiveRegisterAnalysis(isaOutputFileName, liveRegAnalysisOutputFileName,
-                                                                 m_LogCallback);
+                                                                 m_LogCallback, config.m_printProcessCmdLines);
                         }
 
                         // Generate control flow graph.
@@ -491,7 +491,16 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                             // Call the kcUtils routine to analyze <generatedFileName> and write
                             // the analysis file.
                             kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName,
-                                                                 m_LogCallback);
+                                                                 m_LogCallback, config.m_printProcessCmdLines);
+                        }
+
+                        // Delete temporary files.
+                        if (config.m_ISAFile.empty())
+                        {
+                            if (kcUtils::FileNotEmpty(isaOutputFileName.asASCIICharArray()))
+                            {
+                                kcUtils::DeleteFile(isaOutputFileName);
+                            }
                         }
 
                         // Delete temporary files.

@@ -264,6 +264,8 @@ class _BaseIsaReader(IsaReader):
         lines = []
         for line in inputStream:
             line = line.strip ()
+            if line.startswith(';'):
+                continue
             comment = line.find ('//')
             commentStr = ""
             instItems = []
@@ -709,12 +711,22 @@ def DumpInstructionVGPRUsage(input, output, isaFormat, summaryOnly):
         else:
             return 0
 
+    print('Legend:', file=output)
+    print('  \':\' means that the register is kept alive, while it is not actively being used by the current instruction', file=output)
+    print('  \'^\' means that the current instruction writes to the register', file=output)
+    print('  \'v\' means that the current instruction reads from the register', file=output)
+    print('  \'x\' means that the current instruction both reads from the register and writes to it', file=output)
+    print(' \'Ra\': Number of allocated registers\n', file=output)
+
     maxVGPR = 0
     highestVGPR = 0
     for node in instructionNodes:
         maxVGPR = max (len (set.union (node.In, node.Out)), maxVGPR)
         highestVGPR = max (highestVGPR, _Max (node.In), _Max (node.Out))
  
+    print(' Line | Ra  | {:{width}} | Instruction'.format('Reg State', width=highestVGPR+1), file=output)
+    print('--------------------------------------------------------------------------------------------------------------------------', file=output)
+
     if not summaryOnly:
         for lineNumber, node in enumerate (instructionNodes):
             if node.Instruction is None:
@@ -740,7 +752,7 @@ def DumpInstructionVGPRUsage(input, output, isaFormat, summaryOnly):
                 else:
                     vgprStr += ' '
 
-            print ('{0: >5} | {1: >3} | {2} | {3}'.format (lineNumber, len (liveVGPR), vgprStr, node.Instruction), file=output)
+            print ('{0: >5} | {1: >3} | {2: <9} | {3}'.format (lineNumber, len (liveVGPR), vgprStr, node.Instruction), file=output)
 
         print (file=output)
     # +1, if we only use VGPR 0 then the number of allocated ones is 1

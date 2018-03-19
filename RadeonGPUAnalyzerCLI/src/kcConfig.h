@@ -2,8 +2,7 @@
 // Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -63,6 +62,7 @@ public:
     bool                     m_isRetainUserBinaryPath; ///< If true then CLI will not add the asic name to the generated binary output file
     std::string              m_versionInfoFile;  ///< RGA CLI config file name.
     std::string              m_sessionMetadataFile;  ///< RGA CLI session metadata file name.
+    std::string              m_logFile;          ///< RGA CLI log file name (full path).
     int                      m_optLevel;         ///< Optimization level.
 
     // DX/GL
@@ -77,7 +77,6 @@ public:
     bool                     m_AMDILInput;             /// true when the input language is AMDIL rather than HLSL.
     int                      m_UAVSlot;                /// User-defined UAV slot for shader intrinsics.
 
-
     // Vulkan.
     std::string              m_programOutputDir;     ///< Output directory for the compiler.
     std::string              m_VertexShader;         ///< Vertex shader full path
@@ -87,6 +86,11 @@ public:
     std::string              m_FragmentShader;       ///< Fragment shader full path
     std::string              m_ComputeShader;        ///< Compute shader full path
 
+    // Compiler paths
+    std::string              m_cmplrBinPath;         ///< Path to user-provided compiler "bin" folder.
+    std::string              m_cmplrIncPath;         ///< Path to user-provided compiler "include" folder.
+    std::string              m_cmplrLibPath;         ///< Path to user-provided compiler "lib" folder.
+
     bool                     m_isSpirvBinariesRequired;          ///< True to generate SPIR-V binaries
     bool                     m_isAmdPalIlBinariesRequired;       ///< True to generate AMD PAL IL binaries
     bool                     m_isAmdPalIlDisassemblyRequired;    ///< True to generate AMD PAL IL disassembly
@@ -95,6 +99,9 @@ public:
     bool                     m_isParsedISARequired;              ///< True to generate "parsed" ISA in CSV format.
     bool                     m_isLineNumbersRequired;            ///< True to generate source lines in the ISA disassembly.
 
+    bool                     m_printProcessCmdLines;             ///< True to print command lines that RGA uses to launch
+                                                                 ///  external processed.
+
 private:
     // Disable copy
     Config(const Config&);
@@ -102,5 +109,3 @@ private:
     Config& operator= (const Config&);
 
 };
-
-#endif

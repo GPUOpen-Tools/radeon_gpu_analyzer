@@ -2,8 +2,7 @@
 // Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
-#ifndef kcCLICommanderOpenGL_h__
-#define kcCLICommanderOpenGL_h__
+#pragma once
 
 // C++.
 #include <map>
@@ -38,5 +37,3 @@ private:
     // An internal structure representing a target device's info.
     struct OpenGLDeviceInfo;
 };
-
-#endif // kcCLICommanderOpenGL_h__

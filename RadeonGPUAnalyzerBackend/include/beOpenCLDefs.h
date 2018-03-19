@@ -17,4 +17,12 @@ struct OpenCLOptions : public beKA::CompileOptions
     std::set<std::string> m_selectedDevices;
 };
 
+/// Compiler package paths: bin, include and lib.
+struct CmplrPaths
+{
+    std::string     m_bin;
+    std::string     m_inc;
+    std::string     m_lib;
+};
+
 #endif // _BEOPENCLDEFS_H_

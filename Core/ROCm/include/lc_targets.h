@@ -6,4 +6,4 @@
 
 #include <vector>
 
-static const std::set<std::string>  LC_TARGET_NAMES = { "gfx900" };
+static const std::set<std::string>  LC_TARGET_NAMES = { "gfx900", "gfx902" };

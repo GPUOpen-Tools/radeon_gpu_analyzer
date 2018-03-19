@@ -42,6 +42,9 @@ public:
     // Checkss if file exists and is not empty.
     static bool isFilePresent(const std::string& fileName);
 
+    // Print "cmdLine" to stdout if "doPrint" is true.
+    static void PrintCmdLine(const std::string& cmdLine, bool doPrint);
+
 private:
     // No instances for this class, as this is a static utility class.
     beUtils() = default;

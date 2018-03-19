@@ -2,8 +2,7 @@
 // Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
-#ifndef kcVulkanStatisticsParser_h__
-#define kcVulkanStatisticsParser_h__
+#pragma once
 
 // Local.
 #include <RadeonGPUAnalyzerCLI/src/kcIStatisticsParser.h>
@@ -18,5 +17,3 @@ public:
     virtual bool ParseStatistics(const gtString& statisticsFilePath, beKA::AnalysisData& parsedStatistics) override;
 
 };
-
-#endif // kcVulkanStatisticsParser_h__

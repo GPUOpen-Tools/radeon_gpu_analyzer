@@ -693,7 +693,7 @@ beKA::beStatus beProgramBuilderDX::GetStatistics(const string& device, const str
                 analysis.numVGPRsAvailable = pStats->availableVgprs;
                 analysis.LDSSizeUsed = pStats->usedLdsBytes;
                 analysis.LDSSizeAvailable = pStats->availableLdsBytes;
-                analysis.maxScratchRegsNeeded = pStats->usedScratchBytes;
+                analysis.scratchMemoryUsed = pStats->usedScratchBytes;
                 analysis.numAluInst = pStats->numAluInst;
                 analysis.numControlFlowInst = pStats->numControlFlowInst;
                 analysis.numTfetchInst = pStats->numTfetchInst;
@@ -1138,13 +1138,18 @@ bool beProgramBuilderDX::GetDeviceElfBinPair(const string& deviceName, CelfBinar
     return result;
 }
 
-static beKA::beStatus  InvokeDX11Driver(const std::string & args, std::string& output)
+static beKA::beStatus  InvokeDX11Driver(const std::string& args, bool printCmd, std::string& output)
 {
     beKA::beStatus  status = beStatus_dxDriverLaunchFailure;
     std::stringstream  cmdLine;
     bool  cancelSignal = false;
     gtString  gtOutput;
     cmdLine << RGA_DX11_DRIVER_EXECUTABLE_PATH << " " << args;
+
+    if (printCmd)
+    {
+        beUtils::PrintCmdLine(cmdLine.str(), printCmd);
+    }
 
     bool  result = osExecAndGrabOutput(cmdLine.str().c_str(), cancelSignal, gtOutput);
 
@@ -1188,12 +1193,12 @@ void beProgramBuilderDX::SetPublicDeviceNames(const std::set<std::string>& publi
     m_publicDeviceNames = publicDeviceNames;
 }
 
-bool beProgramBuilderDX::GetSupportedDisplayAdapterNames(std::vector<std::string>& adapterNames)
+bool beProgramBuilderDX::GetSupportedDisplayAdapterNames(bool printCmd, std::vector<std::string>& adapterNames)
 {
     bool  result = false;
     std::string  driverOut;
 
-    beKA::beStatus  status = InvokeDX11Driver(RGA_DX11_DRIVER_GET_ADAPTERS_ARG, driverOut);
+    beKA::beStatus  status = InvokeDX11Driver(RGA_DX11_DRIVER_GET_ADAPTERS_ARG, printCmd, driverOut);
 
     result = (status == beKA::beStatus_SUCCESS && !driverOut.empty());
 
@@ -1218,14 +1223,14 @@ bool beProgramBuilderDX::GetSupportedDisplayAdapterNames(std::vector<std::string
     return result;
 }
 
-bool beProgramBuilderDX::GetDXXModulePathForAdapter(int adapterID, std::string& adapterName, std::string& dxxModulePath)
+bool beProgramBuilderDX::GetDXXModulePathForAdapter(int adapterID, bool printCmd, std::string& adapterName, std::string& dxxModulePath)
 {
     bool  result = false;
     std::string  driverOut;
     std::stringstream  args;
     args << RGA_DX11_DRIVER_GET_ADAPTER_INFO << " " << adapterID;
 
-    beKA::beStatus  status = InvokeDX11Driver(args.str().c_str(), driverOut);
+    beKA::beStatus  status = InvokeDX11Driver(args.str().c_str(), printCmd, driverOut);
 
     result = (status == beKA::beStatus_SUCCESS && !driverOut.empty());
 

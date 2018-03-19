@@ -186,11 +186,15 @@ public:
     void SetPublicDeviceNames(const std::set<std::string>& publicDeviceNames);
 
     /// Retrieves the list of names of AMD display adapters installed on the system.
-    static bool GetSupportedDisplayAdapterNames(std::vector<std::string>& adapterNames);
+    static bool GetSupportedDisplayAdapterNames(bool printCmd, std::vector<std::string>& adapterNames);
 
     /// Gets the full path to AMD DXX library for GPU adapter specified by "adapterID".
     /// Returns the adapter name in "adapterName" and DXX lib path in "dxxModulePath".
-    static bool GetDXXModulePathForAdapter(int adapterID, std::string& adapterName, std::string& dxxModulePath);
+    static bool GetDXXModulePathForAdapter(int adapterID, bool printCmd, std::string& adapterName, std::string& dxxModulePath);
+
+    /// Ctor
+    beProgramBuilderDX();
+    beKA::beStatus Initialize(const std::string& dxxModuleName, const std::string& compilerModuleName);
 
     /// Ctor
     beProgramBuilderDX();

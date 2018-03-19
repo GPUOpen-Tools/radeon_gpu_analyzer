@@ -29,9 +29,7 @@
 #endif
 
 // Infra.
-#include <AMDTOSAPIWrappers/Include/oaOpenGLRenderContext.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
-#include <AMDTOSAPIWrappers/Include/oaDriver.h>
 #include <AMDTOSWrappers/Include/osDebugLog.h>
 
 std::vector<std::string> Backend::m_customDxLoadPaths;
@@ -42,7 +40,6 @@ Backend::Backend() : m_supportedPublicDevices()
 #ifdef _WIN32
     m_beDX = NULL;
 #endif
-    m_driverVersionInfo.clear();
 }
 
 beKA::beStatus Backend::Initialize(BuiltProgramKind ProgramKind, LoggingCallBackFuncP callback)
@@ -183,6 +180,7 @@ beStatus Backend::GetDeviceChipFamilyRevision(
             break;
 
     case GDT_GFX9_0_0:
+    case GDT_GFX9_0_2:
         chipFamily = FAMILY_AI;
         chipRevision = AI_GD_P0;
         retVal = beStatus_SUCCESS;
@@ -285,13 +283,14 @@ beStatus Backend::GetDeviceChipFamilyRevision(
             break;
 
         case GDT_GFX8_0_4:
+        case GDT_VEGAM2:
             chipFamily = FAMILY_VI;
             chipRevision = VI_LEXA_V_A0;
-            break;            
+            break;
     }
 
-    return retVal; 
-} 
+    return retVal;
+}
 
 #ifdef _WIN32
 

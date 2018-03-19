@@ -11,6 +11,7 @@
 // Infra.
 #include <AMDTOSWrappers/Include/osEnvironmentVariable.h>
 #include <AMDTOSWrappers/Include/osProcess.h>
+#include <Utils/include/rgLog.h>
 
 // Backend.
 #include <RadeonGPUAnalyzerBackend/include/beProgramBuilderOpenCL.h>
@@ -48,10 +49,8 @@ int main(int argc, char* argv[])
     osSetCurrentProcessEnvVariable(envVar64Bit);
 #endif // _WIN64
 
-    if (status)
-    {
-        status = ParseCmdLine(argc, argv, config);
-    }
+    status = status && ParseCmdLine(argc, argv, config);
+    status = status && kcUtils::InitCLILogFile(config);
 
     // Create corresponding Commander object.
     std::shared_ptr<kcCLICommander> pCommander = nullptr;
@@ -81,7 +80,7 @@ int main(int argc, char* argv[])
 #endif
 
         case SourceLanguage_GLSL:
-            msg << STR_ERR_GLSL_MODE_DEPRECATED << std::endl;
+            rgLog::stdOut << STR_ERR_GLSL_MODE_DEPRECATED << std::endl;
             status = false;
             break;
 
@@ -98,9 +97,9 @@ int main(int argc, char* argv[])
         case SourceLanguage_Rocm_OpenCL:
         {
             pCommander = std::make_shared<kcCLICommanderLightning>();
-            if (static_cast<kcCLICommanderLightning&>(*pCommander).Init(loggingCallback) != beKA::beStatus_SUCCESS)
+            if (static_cast<kcCLICommanderLightning&>(*pCommander).Init(config, loggingCallback) != beKA::beStatus_SUCCESS)
             {
-                msg << STR_ERR_INITIALIZATION_FAILURE << std::endl;
+                rgLog::stdOut << STR_ERR_INITIALIZATION_FAILURE << std::endl;
                 status = false;
             }
             break;
@@ -120,13 +119,13 @@ int main(int argc, char* argv[])
             break;
 
         case Config::ccListKernels:
-            pCommander->ListEntries(config, loggingCallback);
+            kcCLICommanderLightning::ListEntries(config, loggingCallback);
             break;
 
         case Config::ccListAsics:
             if (!pCommander->PrintAsicList(s_Log))
             {
-                msg << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
+                rgLog::stdOut << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
                 status = false;
             }
             break;
@@ -144,16 +143,13 @@ int main(int argc, char* argv[])
             break;
 
         case Config::ccInvalid:
-            msg << STR_ERR_NO_VALID_CMD_DETECTED << std::endl;
+            rgLog::stdOut << STR_ERR_NO_VALID_CMD_DETECTED << std::endl;
             status = false;
             break;
         }
     }
 
-    if (!status)
-    {
-        loggingCallback(msg.str());
-    }
+    rgLog::Close();
 
     return 0;
 }

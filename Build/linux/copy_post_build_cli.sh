@@ -42,3 +42,6 @@ fi
 # Copy the launch script.
 cp ./rga ../../output/bin/
 chmod +x ../../output/bin/rga
+
+# Copy license file.
+cp ../../License.txt ../../output/bin/

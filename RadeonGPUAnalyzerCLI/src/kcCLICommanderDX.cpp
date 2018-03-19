@@ -41,7 +41,7 @@ void kcCLICommanderDX::ListAdapters(Config & config, LoggingCallBackFunc_t callb
     std::vector<std::string> adapterNames;
     stringstream  msg;
 
-    if (beProgramBuilderDX::GetSupportedDisplayAdapterNames(adapterNames))
+    if (beProgramBuilderDX::GetSupportedDisplayAdapterNames(config.m_printProcessCmdLines, adapterNames))
     {
         msg << STR_FOUND_ADAPTERS << std::endl << std::endl;
         for (size_t  i = 0; i < adapterNames.size(); i++)
@@ -151,7 +151,7 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
                 // Call the kcUtils routine to analyze <generatedFileName> and write
                 // the analysis file.
                 kcUtils::PerformLiveRegisterAnalysis(isaOutputFileName, liveRegAnalysisOutputFileName,
-                                                     m_LogCallback);
+                                                     m_LogCallback, config.m_printProcessCmdLines);
             }
 
             if (bControlFlow)
@@ -161,7 +161,13 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
                                                  config.m_Function, deviceName, cfgOutputFileName);
 
                 kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName,
-                                                  m_LogCallback);
+                                                  m_LogCallback, config.m_printProcessCmdLines);
+            }
+
+            // Delete temporary ISA file.
+            if (fileName.empty())
+            {
+                kcUtils::DeleteFile(isaOutputFileName);
             }
 
             // Delete temporary ISA file.
@@ -373,9 +379,6 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         // We need to iterate over the selected devices
         bool bCompileSucces = false;
 
-        // A flag to make sure that we dump DX ASM code only once (in case of multiple devices).
-        bool wasDxAsmDumped = false;
-
         for (const GDT_GfxCardInfo& devceInfo : m_dxDefaultAsicsList)
         {
             // Get the device name.
@@ -424,7 +427,7 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         }
 
         // We should do this only once because it is the same to all devices.
-        if ((!wasDxAsmDumped && config.m_DumpMSIntermediate.size() > 0) && bCompileSucces)
+        if ((config.m_DumpMSIntermediate.size() > 0) && bCompileSucces)
         {
             string sDumpMSIntermediate;
             beStatus beRet = m_pBackEndHandler->theOpenDXBuilder()->GetIntermediateMSBlob(sDumpMSIntermediate);
@@ -438,7 +441,6 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
                 gtString dxAsmOutputFileName;
                 kcUtils::ConstructOutputFileName(config.m_DumpMSIntermediate, KC_STR_DEFAULT_DXASM_SUFFIX, config.m_Function, "", dxAsmOutputFileName);
                 kcUtils::WriteTextFile(dxAsmOutputFileName.asASCIICharArray(), sDumpMSIntermediate, m_LogCallback);
-                wasDxAsmDumped = true;
             }
             else
             {
@@ -484,7 +486,7 @@ bool kcCLICommanderDX::WriteAnalysisDataForDX(const Config& config, const std::v
                 const AnalysisData& ad = *iterAd;
 
                 // Scratch registers.
-                output << ad.maxScratchRegsNeeded << csvSeparator;
+                output << ad.scratchMemoryUsed << csvSeparator;
 
                 // Work-items per work-group.
                 output << ad.numThreadPerGroup << csvSeparator;
@@ -721,7 +723,7 @@ bool kcCLICommanderDX::Init(const Config& config, LoggingCallBackFuncP callback)
         std::string  adapterName = "", dxxModulePath;
         if (config.m_DXAdapter != -1)
         {
-            bCont = beProgramBuilderDX::GetDXXModulePathForAdapter(config.m_DXAdapter, adapterName, dxxModulePath);
+            bCont = beProgramBuilderDX::GetDXXModulePathForAdapter(config.m_DXAdapter, config.m_printProcessCmdLines, adapterName, dxxModulePath);
         }
 
         if (bCont)

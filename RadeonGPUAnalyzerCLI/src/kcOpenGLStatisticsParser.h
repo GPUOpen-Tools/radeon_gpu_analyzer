@@ -2,8 +2,7 @@
 // Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
-#ifndef kcOpenGLStatisticsParser_h__
-#define kcOpenGLStatisticsParser_h__
+#pragma once
 
 // Local.
 #include <RadeonGPUAnalyzerCLI/src/kcIStatisticsParser.h>
@@ -18,5 +17,3 @@ public:
     virtual bool ParseStatistics(const gtString& scStatistics, beKA::AnalysisData& statisticsAsCsv) override;
 
 };
-
-#endif // kcOpenGLStatisticsParser_h__

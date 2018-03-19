@@ -24,11 +24,7 @@ RGA_BIN_PATH=`dirname "$thisScriptFullPath"`
 export PATH="${RGA_BIN_PATH}:$PATH"
 
 # Add RGA's binaries directory to LD_LIBRARY_PATH:
-if [ -z "$LD_LIBRARY_PATH" ]; then
-    export LD_LIBRARY_PATH="${RGA_BIN_PATH}"
-else
-    export LD_LIBRARY_PATH="${RGA_BIN_PATH}:$LD_LIBRARY_PATH"
-fi
+export LD_LIBRARY_PATH="${RGA_BIN_PATH}:$LD_LIBRARY_PATH"
 
 # Call RGA executable
 if [ -e $RGA_BIN_PATH/rga-bin-internal ]; then

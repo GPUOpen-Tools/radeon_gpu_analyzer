@@ -6,9 +6,11 @@
 #include <sstream>
 #include <algorithm>
 #include <iterator>
+#include <cassert>
 
 // Infra.
 #include <AMDTOSWrappers/Include/osFilePath.h>
+#include <Utils/include/rgLog.h>
 
 // Local.
 #include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
@@ -35,8 +37,15 @@ static const std::string  LC_KERNEL_ISA_HEADER_3 = "@kernel ";
 
 static const std::string  COMPILER_VERSION_TOKEN  = "clang version ";
 
-static const std::string  LC_ROCM_ISA_INST_SUFFIX_1 = "_e32";
-static const std::string  LC_ROCM_ISA_INST_SUFFIX_2 = "_e64";
+static const std::string  LC_ISA_INST_SUFFIX_1 = "_e32";
+static const std::string  LC_ISA_INST_SUFFIX_2 = "_e64";
+
+static const std::string  LC_ISA_BRANCH_TOKEN  = "branch";
+static const std::string  LC_ISA_CALL_TOKEN    = "call";
+
+static const std::string  LC_ISA_INST_ADDR_START_TOKEN = "//";
+static const std::string  LC_ISA_INST_ADDR_END_TOKEN   = ":";
+static const std::string  LC_ISA_COMMENT_START_TOKEN   = ";";
 
 static const std::string  OPENCL_KERNEL_QUALIFIER_TOKEN_1   = "__kernel";
 static const std::string  OPENCL_KERNEL_QUALIFIER_TOKEN_2   = "kernel";
@@ -56,8 +65,14 @@ struct DEVICE_PROPS
 };
 
 static const  std::map<std::string, DEVICE_PROPS> rgDeviceProps =
-    { {"gfx900", {102, 256, 32768, 16, 4}} };
+    { {"gfx900", {102, 256, 65536, 16, 4}},
+      {"gfx902", {102, 256, 65536, 16, 4}} };
 
+static const size_t  ISA_INST_64BIT_CODE_TEXT_SIZE = 16;
+static const int     ISA_INST_64BIT_BYTES_SIZE     = 8;
+static const int     ISA_INST_32BIT_BYTES_SIZE     = 4;
+
+static const int     MAX_SUPPORTED_LLVM_VERSION = 7;
 
 // ***************************************
 // *** INTERNALLY LINKED SYMBOLS - END ***
@@ -135,10 +150,12 @@ static void  LogErrorStatus(beStatus status, const std::string & errMsg)
     }
 }
 
-beKA::beStatus kcCLICommanderLightning::Init(LoggingCallBackFunc_t logCallback)
+beKA::beStatus kcCLICommanderLightning::Init(const Config& config, LoggingCallBackFunc_t logCallback)
 {
     m_LC_targets  = LC_TARGET_NAMES;
     m_LogCallback = logCallback;
+    m_cmplrPaths  = {config.m_cmplrBinPath, config.m_cmplrIncPath, config.m_cmplrLibPath};
+    m_printCmds   = config.m_printProcessCmdLines;
 
     return beKA::beStatus_SUCCESS;
 }
@@ -146,11 +163,12 @@ beKA::beStatus kcCLICommanderLightning::Init(LoggingCallBackFunc_t logCallback)
 // Checks if text[offset] is a start of OpenCL kernel qualifier ("kernel" of "__kernel" token).
 // Spaces are ignored.
 // The offset of the first symbol afther the qualifier is returned in "offset".
-static bool  IsKernelQual(const std::string& text, unsigned char prevSymbol, size_t& offset)
+inline static
+bool  IsKernelQual(const std::string& text, unsigned char prevSymbol, size_t& offset)
 {
     bool  found = false;
 
-    if ((prevSymbol == ' ' || prevSymbol == '\n') && ((offset = text.find_first_not_of(" \n", offset)) != std::string::npos))
+    if ((prevSymbol == ' ' || prevSymbol == '\n' || prevSymbol == '}'))
     {
         size_t  qualSize = 0;
 
@@ -211,7 +229,13 @@ static void  ParsePreprocessorHint(const std::string& hintLine, std::vector<std:
     {
         if (hintLine[offset] == '"' && (endOffset = hintLine.find('"', offset + 1)) != std::string::npos)
         {
-            hintItems.push_back(hintLine.substr(offset + 1, endOffset - offset - 1));
+            // The preprocessor generates double back-slash as a path delimiter on Windows.
+            // Replace them with single slashes here.
+            std::string filePath = hintLine.substr(offset + 1, endOffset - offset - 1);
+            char prev = 0;
+            auto found = [&](char& c) { bool ret = (prev == '\\' && c == '\\'); prev = c; return ret; };
+            filePath.erase(std::remove_if(filePath.begin(), filePath.end(), found), filePath.end());
+            hintItems.push_back(filePath);
             offset = endOffset + 1;
         }
         else
@@ -221,6 +245,71 @@ static void  ParsePreprocessorHint(const std::string& hintLine, std::vector<std:
             offset = (endOffset != std::string::npos ? endOffset + 1 : hintLine.size());
         }
     }
+}
+
+// Parse a preprocessor line that starts with '#'.
+// Returns updated offset.
+static size_t  ParsePreprocessorLine(const std::string& text, const std::string& fileName, size_t offset,
+                                     unsigned int& fileOffset, unsigned int& lineNum)
+{
+    // Parse the preprocessor hint line to get the file name and line offset.
+    // We are interested in hints like:  # <file_offset> <file_name>
+    //                              or:  # <file_offset> <file_name> 2
+    // If the source file found in the hint is not "our" file, put 0 as file offset.
+    size_t  eol = text.find_first_of('\n', offset);
+    std::vector<std::string>  hintItems;
+    ParsePreprocessorHint(text.substr(offset + 1, eol - offset - 1), hintItems);
+    if (hintItems.size() == 2 || (hintItems.size() == 3 && std::atoi(hintItems[2].c_str()) == 2))
+    {
+        unsigned int offset = std::atoi(hintItems[0].c_str());
+        if (offset > 0 && hintItems[1] == fileName)
+        {
+            fileOffset = offset;
+            lineNum = 0;
+        }
+        else
+        {
+            fileOffset = 0;
+        }
+    }
+
+    return eol;
+}
+
+// Parses a kernel declaration. Puts kernel name and starting line number to the "entryDeclInfo".
+// Returns "true" if successfully parsed the kernel declaration or "false" otherwise.
+static bool  ParseKernelDecl(const std::string& text, size_t& offset, unsigned int fileOffset, size_t kernelQualStart,
+                             unsigned int& lineNum, std::tuple<std::string, int, int>& entryDeclInfo)
+{
+    bool  ret = false;
+
+    // Skip "__attribute__(...)" if it's present.
+    SkipAttributeQual(text, offset);
+
+    // The kernel name is the last lexical token before "(" or "<" symbol.
+    size_t  kernelNameStart, kernelNameEnd;
+    if ((kernelNameEnd = text.find_first_of("(<", offset)) != std::string::npos)
+    {
+        if ((kernelNameEnd = text.find_last_not_of(" \n", kernelNameEnd - 1)) != std::string::npos &&
+            (kernelNameStart = text.find_last_of(" \n", kernelNameEnd)) != std::string::npos)
+        {
+            kernelNameStart++;
+            std::string  kernelName = text.substr(kernelNameStart, kernelNameEnd - kernelNameStart + 1);
+            offset = kernelNameEnd;
+            if (!kernelName.empty())
+            {
+                // Store the found kernel name and corresponding line number to "entryDeclInfo".
+                std::get<0>(entryDeclInfo) = kernelName;
+                std::get<1>(entryDeclInfo) = (fileOffset == 0 ? 0 : fileOffset + lineNum);
+                ret = true;
+            }
+        }
+    }
+
+    // Count the number of lines between the kernel qualifier and the kernel name.
+    lineNum += (unsigned)std::count(text.begin() + kernelQualStart, text.begin() + kernelNameEnd, '\n');
+
+     return ret;
 }
 
 // Extracts list of kernel names from OpenCL source text.
@@ -233,81 +322,52 @@ static bool  ExtractEntriesPreprocessed(std::string& text, const std::string& fi
     //  __kernel void bar(global int *N)  <-- The number of this line in the original file =
     //                                        the number of this line in preprocessed file + file offet.
 
-    size_t  offset = 0, kernelQualStart = 0, tokenStart = 0;
-    unsigned int  fileOffset, lineNum = 0;
+    size_t  offset = 0, kernelQualStart = 0, size = text.size();
+    unsigned int  fileOffset, lineNum = 0, bracketCount = 0;
     unsigned char  prevSymbol = '\n';
+    bool  inKernel = false;
+    std::tuple<std::string, int, int>  entryDeclInfo;
 
     // Replace tabs with spaces.
     std::replace(text.begin(), text.end(), '\t', ' ');
 
-    while (offset < text.size())
+    // Start parsing.
+    while (offset < size)
     {
-        // Preprocessor hints start with '#'.
-        if (prevSymbol == '\n' && text[offset] == '#' && text.compare(offset + 1, OPENCL_PRAGMA_TOKEN.size(), OPENCL_PRAGMA_TOKEN) != 0)
+        switch (text[offset])
         {
-            // Parse the preprocessor hint line to get the file name and line offset.
-            // We are interested in hints like:  # <file_offset> <file_name>
-            //                              or:  # <file_offset> <file_name> 2
-            // If the source file found in the hint is not "our" file, put 0 as file offset.
-            size_t  eol = text.find_first_of('\n', offset);
-            std::vector<std::string>  hintItems;
-            ParsePreprocessorHint(text.substr(offset + 1, eol - offset - 1), hintItems);
-            if (hintItems.size() == 2 || (hintItems.size() == 3 && std::atoi(hintItems[2].c_str()) == 2))
+        case ' ' : break;
+        case '\n': lineNum++; break;
+        case '"' : while (++offset < size && (text[offset] != '"'  || text[offset - 1] == '\\')) {}; break;
+        case '\'': while (++offset < size && (text[offset] != '\'' || text[offset - 1] == '\\')) {}; break;
+        case '{' : bracketCount++; break;
+
+        case '}' :
+            if (--bracketCount == 0 && inKernel)
             {
-                unsigned int offset = std::atoi(hintItems[0].c_str());
-                if (offset > 0 && hintItems[1] == fileName)
-                {
-                    fileOffset = offset;
-                    lineNum = 0;
-                }
-                else
-                {
-                    fileOffset = 0;
-                }
+                // Found the end of kernel body. Store the current line number.
+                std::get<2>(entryDeclInfo) = (fileOffset == 0 ? 0 : fileOffset + lineNum);
+                entryData.push_back(entryDeclInfo);
+                inKernel = false;
             }
-            offset = eol;
-        }
-        else if (text[offset] == '\n')
-        {
-            lineNum++;
-        }
-        else
-        {
+            break;
+
+        case '#':
+            if (prevSymbol == '\n' && text.compare(offset + 1, OPENCL_PRAGMA_TOKEN.size(), OPENCL_PRAGMA_TOKEN) != 0)
+            {
+                offset = ParsePreprocessorLine(text, fileName, offset, fileOffset, lineNum);
+            }
+            break;
+
+        default:
             // Look for "kernel" or "__kernel" qualifiers.
             kernelQualStart = offset;
             if (IsKernelQual(text, prevSymbol, offset))
             {
-                // Skip "__attribute__(...)" if it's present.
-                SkipAttributeQual(text, offset);
-
-                // The kernel name is the last lexical token before "(" or "<" symbol.
-                size_t  kernelNameEnd = text.find_first_of("(<", offset);
-                if (kernelNameEnd != std::string::npos)
-                {
-                    bool  stop = false;
-                    while (!stop)
-                    {
-                        size_t nextTokenStart = text.find_first_not_of(" \n", offset);
-                        stop = (nextTokenStart == std::string::npos || nextTokenStart >= kernelNameEnd);
-                        if (!stop)
-                        {
-                            tokenStart = nextTokenStart;
-                            offset = text.find_first_of(" \n", tokenStart);
-                        }
-                    }
-                    kernelNameEnd = min(kernelNameEnd, text.find_first_of(" \n", tokenStart));
-                    std::string  kernelName = text.substr(tokenStart, kernelNameEnd - tokenStart);
-                    if (!kernelName.empty())
-                    {
-                        // Store the found kernel name and corresponding line number to "entryData".
-                        entryData.push_back({ kernelName, fileOffset == 0 ? 0 : fileOffset + lineNum });
-                    }
-                }
-                // Count the number of lines between the kernel qualifier and the kernel name.
-                lineNum += (unsigned)std::count(text.begin() + kernelQualStart, text.begin() + kernelNameEnd, '\n');
+                inKernel = ParseKernelDecl(text, offset, fileOffset, kernelQualStart, lineNum, entryDeclInfo);
             }
         }
-        offset++;
+        prevSymbol = text[offset++];
     }
 
     return true;
@@ -373,6 +433,9 @@ bool kcCLICommanderLightning::Compile(const Config & config)
     options.m_defines              = config.m_Defines;
     options.m_incPaths             = config.m_IncludePath;
     options.m_openCLCompileOptions = config.m_OpenCLOptions;
+    options.m_optLevel             = config.m_optLevel;
+    options.m_lineNumbers          = config.m_isLineNumbersRequired;
+    options.m_dumpIL               = !config.m_ILFile.empty();
 
     // Run the back-end compilation procedure.
     switch (config.m_SourceLanguage)
@@ -402,7 +465,8 @@ void kcCLICommanderLightning::Version(Config & config, LoggingCallBackFunc_t cal
 
     std::string  outputText = "", version = "";
 
-    beKA::beStatus  status = beProgramBuilderLightning::GetCompilerVersion(SourceLanguage_Rocm_OpenCL, outputText);
+    beKA::beStatus  status = beProgramBuilderLightning::GetCompilerVersion(SourceLanguage_Rocm_OpenCL, config.m_cmplrBinPath,
+                                                                           config.m_printProcessCmdLines, outputText);
     ret = (status == beKA::beStatus_SUCCESS);
 
     if (ret)
@@ -443,9 +507,8 @@ beStatus kcCLICommanderLightning::CompileOpenCL(const Config& config, const Open
     {
         std::string  errText;
         LogPreStep(KA_CLI_STR_COMPILING, device);
-        std::string  isaFileName, binFileName;
+        std::string  binFileName;
         gtString  ilFileName, binName;
-        bool  dumpIL = !config.m_ILFile.empty();
 
         // Update the binary and ISA names for current device.
         beStatus currentStatus = AdjustBinaryFileName(config, device, binFileName);
@@ -468,19 +531,19 @@ beStatus kcCLICommanderLightning::CompileOpenCL(const Config& config, const Open
         }
 
         // Compile source to binary.
-        currentStatus = beProgramBuilderLightning::CompileOpenCLToBinary(oclOptions,
+        currentStatus = beProgramBuilderLightning::CompileOpenCLToBinary(m_cmplrPaths,
+                                                                         oclOptions,
                                                                          srcFileNames,
                                                                          binFileName,
                                                                          device,
-                                                                         dumpIL,
-                                                                         config.m_isLineNumbersRequired,
+                                                                         m_printCmds,
                                                                          errText);
         LogResult(currentStatus == beStatus_SUCCESS);
 
         if (currentStatus == beStatus_SUCCESS)
         {
             // If "dump IL" option is passed to the ROCm compiler, it should dump the IL to stderr.
-            if (dumpIL)
+            if (oclOptions.m_dumpIL)
             {
                 kcUtils::ConstructOutputFileName(config.m_ILFile, KC_STR_DEFAULT_LLVM_IR_SUFFIX, "", device, ilFileName);
                 currentStatus = kcUtils::WriteTextFile(ilFileName.asASCIICharArray(), errText, nullptr) ?
@@ -529,11 +592,11 @@ beKA::beStatus kcCLICommanderLightning::DisassembleBinary(const std::string& bin
     std::string  outIsaText;
     std::vector<std::string>  kernelNames;
 
-    beKA::beStatus status = beProgramBuilderLightning::DisassembleBinary(binFileName, device, lineNumbers, outIsaText, errText);
+    beKA::beStatus status = beProgramBuilderLightning::DisassembleBinary(m_cmplrPaths.m_bin, binFileName, device, lineNumbers, m_printCmds, outIsaText, errText);
 
     if (status == beKA::beStatus_SUCCESS)
     {
-        status = beProgramBuilderLightning::ExtractKernelNames(binFileName, kernelNames);
+        status = beProgramBuilderLightning::ExtractKernelNames(m_cmplrPaths.m_bin, binFileName, m_printCmds, kernelNames);
     }
 
     if (status == beKA::beStatus_SUCCESS)
@@ -545,7 +608,7 @@ beKA::beStatus kcCLICommanderLightning::DisassembleBinary(const std::string& bin
         }
         else
         {
-            status = SplitISA(outIsaText, userIsaFileName, device, kernel, kernelNames) ?
+            status = SplitISA(binFileName, outIsaText, userIsaFileName, device, kernel, kernelNames) ?
                          beKA::beStatus_SUCCESS : beKA::beStatus_LC_SplitIsaFailed;
         }
     }
@@ -672,7 +735,7 @@ bool kcCLICommanderLightning::PerformLiveRegAnalysis(const Config & config)
                                          entryName, device, liveRegOutFileName);
         if (!liveRegOutFileName.isEmpty())
         {
-            kcUtils::PerformLiveRegisterAnalysis(isaFileName, liveRegOutFileName, m_LogCallback);
+            kcUtils::PerformLiveRegisterAnalysis(isaFileName, liveRegOutFileName, m_LogCallback, config.m_printProcessCmdLines);
 
             if (beProgramBuilderLightning::VerifyOutputFile(liveRegOutFileName.asASCIICharArray()))
             {
@@ -723,7 +786,7 @@ bool kcCLICommanderLightning::ExtractCFG(const Config & config)
         kcUtils::ConstructOutputFileName(config.m_ControlFlowGraphFile, KC_STR_DEFAULT_CFG_SUFFIX, entryName, device, cfgOutFileName);
         if (!cfgOutFileName.isEmpty())
         {
-            kcUtils::GenerateControlFlowGraph(isaFileName, cfgOutFileName, m_LogCallback);
+            kcUtils::GenerateControlFlowGraph(isaFileName, cfgOutFileName, m_LogCallback, config.m_printProcessCmdLines);
             if (!beProgramBuilderLightning::VerifyOutputFile(cfgOutFileName.asASCIICharArray()))
             {
                 errMsg << STR_ERR_CANNOT_PERFORM_LIVE_REG_ANALYSIS << " " << STR_KERNEL_NAME << entryName << std::endl;
@@ -770,7 +833,7 @@ beKA::beStatus kcCLICommanderLightning::ExtractMetadata(const std::string& metad
             kcUtils::ConstructOutputFileName(metadataFileName, KC_STR_DEFAULT_LC_METADATA_SUFFIX, "", device, outFileName);
             if (!outFileName.isEmpty())
             {
-                currentStatus = beProgramBuilderLightning::ExtractMetadata(binFileName, metadataText);
+                currentStatus = beProgramBuilderLightning::ExtractMetadata(m_cmplrPaths.m_bin, binFileName, m_printCmds, metadataText);
                 if (currentStatus == beKA::beStatus_SUCCESS && !metadataText.empty())
                 {
                     currentStatus = kcUtils::WriteTextFile(outFileName.asASCIICharArray(), metadataText, m_LogCallback) ?
@@ -796,7 +859,7 @@ beKA::beStatus kcCLICommanderLightning::ExtractMetadata(const std::string& metad
 }
 
 // Get the ISA size and store it to "kernelCodeProps" structure.
-static beStatus  GetIsaSize(const std::string isaFileName, KernelCodeProps& kernelCodeProps)
+static beStatus  GetIsaSize(const std::string& isaFileName, KernelCodeProps& kernelCodeProps)
 {
     beStatus  status = beStatus_LC_GetISASizeFailed;
     if (!isaFileName.empty())
@@ -838,16 +901,19 @@ static bool  BuildAnalysisData(const KernelCodeProps& kernelCodeProps, const std
         stats.numSGPRsAvailable    = -1;
         stats.numVGPRsAvailable    = -1;
     }
-    stats.maxScratchRegsNeeded = -1;
     stats.numThreadPerGroup    = -1;
     stats.numThreadPerGroupX   = -1;
     stats.numThreadPerGroupY   = -1;
     stats.numThreadPerGroupZ   = -1;
-    stats.LDSSizeUsed   = kernelCodeProps.workgroupGroupSegmentSize;
-    stats.numSGPRsUsed  = max(minSGPRs, kernelCodeProps.wavefrontNumSGPRs);
-    stats.numVGPRsUsed  = max(minVGPRs, kernelCodeProps.workitemNumVGPRs);
-    stats.wavefrontSize = ((CALuint64)1 << kernelCodeProps.wavefrontSize);
-    stats.ISASize       = kernelCodeProps.isaSize;
+
+    stats.scratchMemoryUsed = kernelCodeProps.privateSegmentSize;
+    stats.LDSSizeUsed       = kernelCodeProps.workgroupSegmentSize;
+    stats.numSGPRsUsed      = max(minSGPRs, kernelCodeProps.wavefrontNumSGPRs);
+    stats.numVGPRsUsed      = max(minVGPRs, kernelCodeProps.workitemNumVGPRs);
+    stats.numSGPRSpills     = kernelCodeProps.SGPRSpills;
+    stats.numVGPRSpills     = kernelCodeProps.VGPRSpills;
+    stats.wavefrontSize     = ((CALuint64)1 << kernelCodeProps.wavefrontSize);
+    stats.ISASize           = kernelCodeProps.isaSize;
 
     return true;
 }
@@ -870,14 +936,17 @@ static bool  StoreStatistics(const Config& config, const std::string& baseStatFi
 
         statText << kcUtils::GetStatisticsCsvHeaderString(separator) << std::endl;
         statText << device << separator;
-        statText << NAor(stats.maxScratchRegsNeeded) << separator;
+        statText << NAor(stats.scratchMemoryUsed) << separator;
+        statText << NAor(stats.numThreadPerGroup) << separator;
         statText << NAor(stats.wavefrontSize) << separator;
         statText << NAor(stats.LDSSizeAvailable) << separator;
         statText << NAor(stats.LDSSizeUsed) << separator;
         statText << NAor(stats.numSGPRsAvailable) << separator;
         statText << NAor(stats.numSGPRsUsed) << separator;
+        statText << NAor(stats.numSGPRSpills) << separator;
         statText << NAor(stats.numVGPRsAvailable) << separator;
         statText << NAor(stats.numVGPRsUsed) << separator;
+        statText << NAor(stats.numVGPRSpills) << separator;
         statText << NAor(stats.numThreadPerGroupX) << separator;
         statText << NAor(stats.numThreadPerGroupY) << separator;
         statText << NAor(stats.numThreadPerGroupZ) << separator;
@@ -890,22 +959,22 @@ static bool  StoreStatistics(const Config& config, const std::string& baseStatFi
     return ret;
 }
 
-beStatus kcCLICommanderLightning::ExtractStatistics(const Config& config) const
+beStatus kcCLICommanderLightning::ExtractStatistics(const Config& config)
 {
     std::string  device = "", statFileName = config.m_AnalysisFile, outStatFileName;
     beStatus     status = beStatus_SUCCESS;
 
     LogPreStep(KA_CLI_STR_EXTRACTING_STATISTICS);
 
-    for (auto outputMDItem : m_outputMetadata)
+    for (auto& outputMDItem : m_outputMetadata)
     {
         AnalysisData  statData;
         CodePropsMap  codeProps;
-        rgOutputFiles&  outFiles = outputMDItem.second;
         const std::string& currentDevice = outputMDItem.first.first;
         if (device != currentDevice)
         {
-            status = beProgramBuilderLightning::ExtractKernelCodeProps(outFiles.m_binFile, codeProps);
+            status = beProgramBuilderLightning::ExtractKernelCodeProps(config.m_cmplrBinPath, outputMDItem.second.m_binFile,
+                                                                       config.m_printProcessCmdLines, codeProps);
             if (status != beStatus_SUCCESS)
             {
                 break;
@@ -921,7 +990,11 @@ beStatus kcCLICommanderLightning::ExtractStatistics(const Config& config) const
                                      status : beStatus_WriteToFile_FAILED;
                         if (status == beStatus_SUCCESS)
                         {
-                            outFiles.m_statFile = outStatFileName;
+                            auto outFiles = m_outputMetadata.find({currentDevice, kernelCodeProps.first});
+                            if (outFiles != m_outputMetadata.end())
+                            {
+                                outFiles->second.m_statFile = outStatFileName;
+                            }
                         }
                     }
                 }
@@ -936,23 +1009,191 @@ beStatus kcCLICommanderLightning::ExtractStatistics(const Config& config) const
     return status;
 }
 
-bool kcCLICommanderLightning::SplitISA(const std::string& isaText, const std::string& userIsaFileName,
-                                       const std::string& device, const std::string& kernel,
-                                       const std::vector<std::string>& kernelNames)
+static void  GetherBranchTargets(std::stringstream& isa, std::unordered_map<std::string, bool>& branchTargets)
+{
+    // The format of branch instuction text:
+    //
+    //     s_cbranch_scc1 BB0_3        // 000000001110: BF85001C
+    //           ^         ^                    ^          ^
+    //           |         |                    |          |
+    //      instruction  label               offset       code
+
+    std::string  isaLine;
+
+    // Skip lines before the actual ISA code.
+    while (std::getline(isa, isaLine) && isaLine.find(LC_KERNEL_ISA_HEADER_3) == std::string::npos) {}
+
+    // Gather target labes of all branch instructions.
+    while (std::getline(isa, isaLine))
+    {
+        size_t  instEndOffset, branchTokenOffset, instOffset = isaLine.find_first_not_of(" \t");
+        if (instOffset != std::string::npos)
+        {
+            if ((branchTokenOffset = isaLine.find(LC_ISA_BRANCH_TOKEN, instOffset)) != std::string::npos ||
+                (branchTokenOffset = isaLine.find(LC_ISA_CALL_TOKEN, instOffset)) != std::string::npos)
+            {
+                if ((instEndOffset = isaLine.find_first_of(" \t", instOffset)) != std::string::npos &&
+                    branchTokenOffset < instEndOffset)
+                {
+                    // Found branch instruction. Add its target label to the list.
+                    size_t  labelStartOffset, labelEndOffset;
+                    if ((labelStartOffset = isaLine.find_first_not_of(" \t", instEndOffset)) != std::string::npos &&
+                        isaLine.compare(labelStartOffset, LC_ISA_INST_ADDR_START_TOKEN.size(), LC_ISA_INST_ADDR_START_TOKEN) != 0 &&
+                        ((labelEndOffset = isaLine.find_first_of(" \t", labelStartOffset)) != std::string::npos))
+                    {
+                        branchTargets[isaLine.substr(labelStartOffset, labelEndOffset - labelStartOffset)] = true;
+                    }
+                }
+            }
+        }
+    }
+    isa.clear();
+    isa.seekg(0);
+}
+
+// Checks if "isaLine" is a label that is not in the list of branch targets.
+bool  IsUnreferencedLabel(const std::string& isaLine, const std::unordered_map<std::string, bool>& branchTargets)
+{
+    bool  ret = false;
+
+    if (isaLine.find(':') == isaLine.size() - 1)
+    {
+        ret = (branchTargets.find(isaLine.substr(0, isaLine.size() - 1)) == branchTargets.end());
+    }
+
+    return ret;
+}
+
+// Remove non-standard instruction suffixes.
+static void  FilterISALine(std::string & isaLine)
+{
+    size_t  offset = isaLine.find_first_not_of(" \t");
+    if (offset != std::string::npos)
+    {
+        offset = isaLine.find_first_of(" ");
+    }
+    if (offset != std::string::npos)
+    {
+        size_t  suffixLen = 0;
+        if (offset >= LC_ISA_INST_SUFFIX_1.size() &&
+            isaLine.substr(offset - LC_ISA_INST_SUFFIX_1.size(), LC_ISA_INST_SUFFIX_1.size()) == LC_ISA_INST_SUFFIX_1)
+        {
+            suffixLen = LC_ISA_INST_SUFFIX_1.size();
+        }
+        else if (offset >= LC_ISA_INST_SUFFIX_2.size() &&
+            isaLine.substr(offset - LC_ISA_INST_SUFFIX_2.size(), LC_ISA_INST_SUFFIX_2.size()) == LC_ISA_INST_SUFFIX_2)
+        {
+            suffixLen = LC_ISA_INST_SUFFIX_2.size();
+        }
+        // Remove the suffix.
+        if (suffixLen != 0)
+        {
+            isaLine.erase(offset - suffixLen, suffixLen);
+            // Restore the alignment of byte encoding.
+            if ((offset = isaLine.find("//", offset)) != std::string::npos)
+            {
+                isaLine.insert(offset, suffixLen, ' ');
+            }
+        }
+    }
+}
+
+// The Lightning Compiler may append useless code for some library functions to the ISA disassembly.
+// This function eliminates such code.
+// It also also removes unreferenced labels and non-standard instruction suffixes.
+bool  kcCLICommanderLightning::ReduceISA(const std::string& binFile, IsaMap& kernelIsaTexts)
+{
+    bool  ret = false;
+
+    for (auto& kernelIsa : kernelIsaTexts)
+    {
+        int  codeSize = beProgramBuilderLightning::GetKernelCodeSize(m_cmplrPaths.m_bin, binFile, kernelIsa.first, m_printCmds);
+        assert(codeSize != -1);
+        if (codeSize != -1)
+        {
+            // Copy ISA lines to new stream. Stop when found an instruction with address > codeSize.
+            std::stringstream  oldIsa, newIsa, addrStream;
+            oldIsa.str(kernelIsa.second);
+            std::string  isaLine;
+            int  addr, addrOffset = -1;
+
+            // Gather the target labels of all branch instructions.
+            std::unordered_map<std::string, bool>  branchTargets;
+            branchTargets.clear();
+            GetherBranchTargets(oldIsa, branchTargets);
+
+            // Skip lines before the actual ISA code.
+            while (std::getline(oldIsa, isaLine) && newIsa << isaLine << std::endl &&
+                   isaLine.find(LC_KERNEL_ISA_HEADER_3) == std::string::npos) {}
+
+            while (std::getline(oldIsa, isaLine))
+            {
+                // Add the ISA line to the new ISA text if it's not an unreferenced label.
+                if (!IsUnreferencedLabel(isaLine, branchTargets))
+                {
+                    newIsa << isaLine << std::endl;
+                }
+
+                // Check if this instruction is the last one and we have to stop here.
+                // Skip comment lines generated by disassembler.
+                if (isaLine.find(LC_ISA_COMMENT_START_TOKEN) != 0)
+                {
+                    // Format of ISA disassembly instruction (64-bit and 32-bit):
+                    //  s_load_dwordx2 s[0:1], s[6:7], 0x0     // 000000001108: C0060003 00000000
+                    //  v_add_u32 v0, s8, v0                   // 000000001134: 68000008
+                    //                                            `-- addr --'
+                    size_t  addrStart, addrEnd;
+
+                    FilterISALine(isaLine);
+
+                    if ((addrStart = isaLine.find(LC_ISA_INST_ADDR_START_TOKEN)) != std::string::npos &&
+                        (addrEnd = isaLine.find(LC_ISA_INST_ADDR_END_TOKEN, addrStart)) != std::string::npos)
+                    {
+                        addrStart += (LC_ISA_INST_ADDR_START_TOKEN.size() + 1);
+                        addrStream.str(isaLine.substr(addrStart, addrEnd - addrStart));
+                        addrStream.clear();
+                        int instSize = (isaLine.size() - addrEnd < ISA_INST_64BIT_CODE_TEXT_SIZE) ? ISA_INST_32BIT_BYTES_SIZE : ISA_INST_64BIT_BYTES_SIZE;
+                        if (addrStream >> std::hex >> addr)
+                        {
+                            // addrOffset is the binary address of 1st instruction.
+                            addrOffset = (addrOffset == -1 ? addr : addrOffset);
+                            if ((addr - addrOffset + instSize) >= codeSize)
+                            {
+                                ret = true;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (ret)
+            {
+                kernelIsa.second = newIsa.str();
+            }
+        }
+    }
+
+    return ret;
+}
+
+bool kcCLICommanderLightning::SplitISA(const std::string& binFile, const std::string& isaText,
+                                       const std::string& userIsaFileName, const std::string& device,
+                                       const std::string& kernel, const std::vector<std::string>& kernelNames)
 {
     // kernelIsaTextMap maps kernel name --> kernel ISA text.
     IsaMap  kernelIsaTextMap;
-
-    // Filter the ISA text.
-    std::string  filteredIsaText;
-    bool  ret = FilterISA(isaText, filteredIsaText);
-    bool  isIsaFileTemp = userIsaFileName.empty();
+    bool    ret, isIsaFileTemp = userIsaFileName.empty();
 
     // Split ISA text into per-kernel fragments.
-    if (ret)
-    {
-        ret = SplitISAText(filteredIsaText, kernelNames, kernelIsaTextMap);
-    }
+    ret = SplitISAText(isaText, kernelNames, kernelIsaTextMap);
+
+    // Eliminate the useless code.
+    ret = ret && ReduceISA(binFile, kernelIsaTextMap);
 
     // Store per-kernel ISA texts to separate files and launch livereg tool for each file.
     if (ret)
@@ -975,7 +1216,7 @@ bool kcCLICommanderLightning::SplitISA(const std::string& isaText, const std::st
             }
             else
             {
-                kcUtils::ConstructOutputFileName(userIsaFileName, "", isaTextMapItem.first, device, isaFileName);
+                kcUtils::ConstructOutputFileName(userIsaFileName, KC_STR_DEFAULT_ISA_SUFFIX, isaTextMapItem.first, device, isaFileName);
             }
             if (!isaFileName.isEmpty())
             {
@@ -1062,55 +1303,56 @@ bool kcCLICommanderLightning::SplitISAText(const std::string& isaText,
     return status;
 }
 
-bool kcCLICommanderLightning::FilterISA(const std::string & isaText, std::string& filteredIsaText)
+bool kcCLICommanderLightning::ListEntries(const Config& config, LoggingCallBackFunc_t callback)
 {
-    bool  ret = !isaText.empty();
+    bool  ret = true;
+    std::string  fileName;
+    rgEntryData  entryData;
+    std::stringstream  msg;
 
-    if (ret)
+    if (config.m_SourceLanguage != SourceLanguage_OpenCL && config.m_SourceLanguage != SourceLanguage_Rocm_OpenCL)
     {
-        // Remove the instruction suffixes that are generated by the ROCm disassembler and can be ignored.
-        std::stringstream isa(isaText), filteredIsa;
-        std::string  line;
-        while (std::getline(isa, line))
-        {
-            size_t  offset = line.find_first_not_of(" \t");
-            if (offset != std::string::npos)
-            {
-                offset = line.find_first_of(" ");
-            }
-            if (offset != std::string::npos)
-            {
-                size_t  suffixLen = 0;
-                if (offset >= LC_ROCM_ISA_INST_SUFFIX_1.size() &&
-                    line.substr(offset - LC_ROCM_ISA_INST_SUFFIX_1.size(), LC_ROCM_ISA_INST_SUFFIX_1.size()) == LC_ROCM_ISA_INST_SUFFIX_1)
-                {
-                    suffixLen = LC_ROCM_ISA_INST_SUFFIX_1.size();
-                }
-                else if (offset >= LC_ROCM_ISA_INST_SUFFIX_2.size() &&
-                         line.substr(offset - LC_ROCM_ISA_INST_SUFFIX_2.size(), LC_ROCM_ISA_INST_SUFFIX_2.size()) == LC_ROCM_ISA_INST_SUFFIX_2)
-                {
-                    suffixLen = LC_ROCM_ISA_INST_SUFFIX_2.size();
-                }
-                // Remove the suffix.
-                if (suffixLen != 0)
-                {
-                    line.erase(offset - suffixLen, suffixLen);
-                    // Restore the alignment of byte encoding.
-                    if ((offset = line.find("//", offset)) != std::string::npos)
-                    {
-                        line.insert(offset, suffixLen, ' ');
-                    }
-                }
-            }
-            filteredIsa << line << std::endl;
-        }
-        filteredIsaText = filteredIsa.str();
+        msg << STR_ERR_COMMAND_NOT_SUPPORTED << std::endl;
+        ret = false;
     }
+    else
+    {
+        if (config.m_InputFiles.size() == 1)
+        {
+            fileName = config.m_InputFiles[0];
+        }
+        else if (config.m_InputFiles.size() > 1)
+        {
+            msg << STR_ERR_ONE_INPUT_FILE_EXPECTED << std::endl;
+            ret = false;
+        }
+        else
+        {
+            msg << STR_ERR_NO_INPUT_FILE << std::endl;
+            ret = false;
+        }
+    }
+
+    if (ret && (ret = kcCLICommanderLightning::ExtractEntries(fileName, config, entryData)) == true)
+    {
+        // Sort the entry names in alphabetical order.
+        std::sort(entryData.begin(), entryData.end(),
+            [](const std::tuple<std::string, int, int>& a, const std::tuple<std::string, int, int>& b) {return (std::get<0>(a) < std::get<0>(b)); });
+
+        // Dump the entry points.
+        for (const auto& dataItem : entryData)
+        {
+            msg << std::get<0>(dataItem) << ": " << std::get<1>(dataItem) << "-" << std::get<2>(dataItem) << std::endl;
+        }
+        msg << std::endl;
+    }
+
+    callback(msg.str());
 
     return ret;
 }
 
-bool kcCLICommanderLightning::ExtractEntries(const std::string & fileName, const Config & config, rgEntryData& entryData)
+bool kcCLICommanderLightning::ExtractEntries(const std::string& fileName, const Config& config, rgEntryData& entryData)
 {
     std::string  prepSrc;
     bool  ret = false;
@@ -1119,7 +1361,7 @@ bool kcCLICommanderLightning::ExtractEntries(const std::string & fileName, const
     std::string  options = GatherOCLOptions(config);
 
     // Call ROCm compiler preprocessor.
-    beStatus  status = beProgramBuilderLightning::PreprocessOpenCL(fileName, options, prepSrc);
+    beStatus  status = beProgramBuilderLightning::PreprocessOpenCL("", fileName, options, config.m_printProcessCmdLines, prepSrc);
 
     if (status == beStatus_SUCCESS)
     {
@@ -1150,5 +1392,52 @@ bool GetParsedIsaCSVText(const std::string& isaText, const std::string& device, 
         csvText = (addLineNumbers ? STR_CSV_PARSED_ISA_HEADER_LINE_NUMS : STR_CSV_PARSED_ISA_HEADER) + parsedIsa;
         ret = true;
     }
+    return ret;
+}
+
+bool kcCLICommanderLightning::GenerateSessionMetadata(const Config& config, const rgOutputMetadata& outMetadata) const
+{
+    rgFileEntryData  fileKernelData;
+
+    bool  ret = !config.m_sessionMetadataFile.empty();
+    assert(ret);
+
+    if (ret)
+    {
+        for (const std::string& inputFile : config.m_InputFiles)
+        {
+            rgEntryData  entryData;
+            ret = ret && ExtractEntries(inputFile, config, entryData);
+            if (ret)
+            {
+                fileKernelData[inputFile] = entryData;
+            }
+        }
+    }
+
+    if (ret && !outMetadata.empty())
+    {
+        ret = kcUtils::GenerateCliMetadataFile(config.m_sessionMetadataFile, fileKernelData, outMetadata);
+    }
+
+    return ret;
+}
+
+bool kcCLICommanderLightning::RunPostCompileSteps(const Config& config) const
+{
+    bool ret = false;
+    if (!config.m_sessionMetadataFile.empty())
+    {
+        ret = GenerateSessionMetadata(config, m_outputMetadata);
+        if (!ret)
+        {
+            std::stringstream  msg;
+            msg << STR_ERR_FAILED_GENERATE_SESSION_METADATA << std::endl;
+            m_LogCallback(msg.str());
+        }
+    }
+
+    DeleteTempFiles();
+
     return ret;
 }

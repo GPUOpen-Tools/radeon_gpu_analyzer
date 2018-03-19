@@ -3,6 +3,7 @@ REM Usage:
 REM   OUTPUT_PATH defined by parent script, WindowsBuild.bat
 REM   cd <workspace>\RGA\Build
 REM   .\JenkinsMSBuildClean.bat <solution-path> <platform> <configuration>
+
 set SOLUTION_PATH=%1
 set ARCH=%2
 set CONFIG=%3

@@ -16,7 +16,7 @@
 #include <RadeonGPUAnalyzerBackend/include/beInclude.h>
 
 #define   STR_HSAIL_DISASM_START_TOKEN  "Disassembly for "
-#define   STR_HSAIL_DISASM_END_TOKEN    "end"
+#define   STR_HSAIL_DISASM_END_TOKEN    "\nend\n"
 
 /// Parser for the ISA instructions
 class RGA_BACKEND_DECLDIR ParserISA

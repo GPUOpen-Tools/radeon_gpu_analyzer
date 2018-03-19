@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <sstream>
 #include <fstream>
+#include <iostream>
 
 // Infra.
 #include <AMDTBaseTools/Include/gtAssert.h>
@@ -14,6 +15,7 @@
 
 // Local.
 #include <RadeonGPUAnalyzerBackend/include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
 #include <DeviceInfoUtils.h>
 #include <DeviceInfo.h>
 
@@ -218,4 +220,12 @@ bool  beUtils::isFilePresent(const std::string& fileName)
         ret = (file.good() && file.peek() != std::ifstream::traits_type::eof());
     }
     return ret;
+}
+
+void beUtils::PrintCmdLine(const std::string & cmdLine, bool doPrint)
+{
+    if (doPrint)
+    {
+        std::cout << std::endl << BE_STR_LAUNCH_EXTERNAL_PROCESS << cmdLine << std::endl;
+    }
 }

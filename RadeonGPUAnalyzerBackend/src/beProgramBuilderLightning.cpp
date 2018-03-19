@@ -40,9 +40,12 @@ const std::string  LC_OPENCL_DEFS                = "-D__OPENCL_VERSION__=200";
 
 const std::string  COMPILER_ERROR_TOKEN          = "error:";
 const std::string  ISA_DISASM_TEXT_TOKEN         = "Disassembly of section .text:";
-const std::string  CODEOBJ_METADATA_END_TOKEN    = "\n...\n";
+const std::string  CODEOBJ_METADATA_START_TOKEN  = "---\n";
+const std::string  CODEOBJ_METADATA_END_TOKEN    = "\n...";
 
-const std::string  COMPILER_OCL_TRIPLE_SWITCH    = "--target=amdgcn-amd-amdhsa";
+const std::string  OBJDUMP_METADATA_OPTION_TOKEN = "-amdgpu-code-object-metadata";
+
+const std::string  COMPILER_OCL_TRIPLE_SWITCH    = "--target=amdgcn-amd-amdhsa-amdgizcl";
 const std::string  COMPILER_OCL_INCLUDE_SWITCH   = "-include ";
 const std::string  COMPILER_OCL_LIB_SWITCH       = "-Xclang -mlink-bitcode-file -Xclang ";
 const std::string  COMPILER_DEVICE_SWITCH        = "-mcpu=";
@@ -50,20 +53,35 @@ const std::string  COMPILER_VERSION_SWITCH       = "--version";
 const std::string  COMPILER_PREPROC_SWITCH       = "-E";
 const std::string  COMPILER_DUMP_IL_SWITCH       = "-mllvm --print-after-all";
 const std::string  COMPILER_DEBUG_INFO_SWITCH    = "-g";
+const std::string  COMPILER_OPT_LEVEL_SWITCH     = "-O";
+
 const std::string  OBJDUMP_DEVICE_SWITCH         = "-mcpu=";
 const std::string  OBJDUMP_DISASM_SWITCH         = "-disassemble";
 const std::string  OBJDUMP_DISASM_LINENUM_SWITCH = "-disassemble -line-numbers -source";
-const std::string  OBJDUMP_METADATA_SWITCH       = "-amdgpu-code-object-metadata -elf-output-style=GNU -notes";
+const std::string  OBJDUMP_METADATA_SWITCH_1     = "-amdgpu-code-object-metadata -elf-output-style=GNU -notes";
+const std::string  OBJDUMP_METADATA_SWITCH_2     = "-elf-output-style=GNU -notes";
 const std::string  OBJDUMP_TRIPLE_SWITCH         = "-triple=amdgcn-amd-amdhsa";
+const std::string  OBJDUMP_SYMBOLS_SWITCH        = "-symbols";
+const std::string  OBJDUMP_HELP_SWITCH           = "--help";
 
 // CodeObject MetaData keys
 const std::string  CODE_OBJ_MD_KERNELS_KEY       = "Kernels";
 const std::string  CODE_OBJ_MD_KERNEL_NAME_KEY   = "Name";
 const std::string  CODE_OBJ_MD_CODE_PROPS_KEY    = "CodeProps";
-const std::string  CODE_OBJ_MD_WAVEFRONT_VGRPS   = "WavefrontNumSGPRs";
-const std::string  CODE_OBJ_MD_WORKITEM_VGPRS    = "WorkitemNumVGPRs";
+const std::string  CODE_OBJ_MD_WAVEFRONT_SGRPS   = "NumSGPRs";
+const std::string  CODE_OBJ_MD_WORKITEM_VGPRS    = "NumVGPRs";
 const std::string  CODE_OBJ_MD_WAVEFRONT_SIZE    = "WavefrontSize";
-const std::string  CODE_OBJ_MD_WG_GROUP_SEGMENT_SIZE  = "WorkgroupGroupSegmentSize";
+const std::string  CODE_OBJ_MD_SPILLED_SGPRS     = "NumSpilledSGPRs";
+const std::string  CODE_OBJ_MD_SPILLED_VGPRS     = "NumSpilledVGPRs";
+const std::string  CODE_OBJ_MD_GROUP_SEGMENT_SIZE   = "GroupSegmentFixedSize";
+const std::string  CODE_OBJ_MD_PRIVATE_SEGMENT_SIZE = "PrivateSegmentFixedSize";
+
+// Readobj symbols output keys
+const std::string  BINARY_SYMBOLS_KEY            = "Symbols [";
+const std::string  BINARY_SYMBOL_KEY             = "Symbol {";
+const std::string  BINARY_SYMBOL_NAME_KEY        = "Name: ";
+const std::string  BINARY_SYMBOL_NAME_END_KEY    = " (";
+const std::string  BINARY_SYMBOL_SIZE_KEY        = "Size: ";
 
 // ***************************************
 // *** INTERNALLY LINKED SYMBOLS - END ***
@@ -71,9 +89,13 @@ const std::string  CODE_OBJ_MD_WG_GROUP_SEGMENT_SIZE  = "WorkgroupGroupSegmentSi
 
 // Constants
 
-static const  unsigned long  RGA_ROCM_COMPILER_EXEC_TIMEOUT_MS = 600000;
-static const  unsigned long  RGA_ROCM_PREPROC_TIMEOUT_MS       =  60000;
-static const  unsigned long  RGA_ROCM_OBJDUMP_EXEC_TIMEOUT_MS  =  60000;
+static const  unsigned long  PROCESS_WAIT_INFINITE             = 0xFFFFFFFF;
+
+static const  unsigned long  RGA_ROCM_COMPILER_EXEC_TIMEOUT_MS = PROCESS_WAIT_INFINITE;
+static const  unsigned long  RGA_ROCM_PREPROC_TIMEOUT_MS       = PROCESS_WAIT_INFINITE;
+static const  unsigned long  RGA_ROCM_OBJDUMP_EXEC_TIMEOUT_MS  = PROCESS_WAIT_INFINITE;
+
+static const  unsigned int   RGA_ROCM_COMPILER_AKC_SIZE        = 256;
 
 static bool GetIsaSize(const string& isaAsText, const std::string& kernelName, size_t& sizeInBytes);
 static beKA::beStatus  ParseCodeProps(const std::string & MDText, CodePropsMap& codeProps);
@@ -116,16 +138,16 @@ beKA::beStatus beProgramBuilderLightning::GetDeviceTable(std::vector<GDT_GfxCard
     return beKA::beStatus();
 }
 
-beKA::beStatus beProgramBuilderLightning::GetCompilerVersion(SourceLanguage lang, std::string& outText)
+beKA::beStatus beProgramBuilderLightning::GetCompilerVersion(SourceLanguage lang, const std::string& userBinFolder, bool printCmd, std::string& outText)
 {
     std::string  errText;
 
-    beKA::beStatus  status = InvokeCompiler(lang, COMPILER_VERSION_SWITCH, outText, errText);
+    beKA::beStatus  status = InvokeCompiler(lang, userBinFolder, COMPILER_VERSION_SWITCH, printCmd, outText, errText);
 
     return status;
 }
 
-beKA::beStatus beProgramBuilderLightning::AddCompilerStandardOptions(beKA::SourceLanguage lang, std::string& options)
+beKA::beStatus beProgramBuilderLightning::AddCompilerStandardOptions(beKA::SourceLanguage lang, const CmplrPaths& cmplrPaths, std::string& options)
 {
     std::stringstream  optsStream;
     beKA::beStatus  status = beKA::beStatus_SUCCESS;
@@ -137,19 +159,38 @@ beKA::beStatus beProgramBuilderLightning::AddCompilerStandardOptions(beKA::Sourc
 
         // Add OpenCL include required by ROCm OpenCL compiler.
         osFilePath  inclFilePath;
-        osGetCurrentApplicationPath(inclFilePath, false);
-        inclFilePath.clearFileExtension();
-        inclFilePath.appendSubDirectory(LC_OPENCL_ROOT_DIR);
-        inclFilePath.appendSubDirectory(LC_OPENCL_INCLUDE_DIR);
+        if (!cmplrPaths.m_inc.empty())
+        {
+            gtString  incDir;
+            incDir << cmplrPaths.m_inc.c_str();
+            inclFilePath.setFileDirectory(incDir);
+        }
+        else
+        {
+            osGetCurrentApplicationPath(inclFilePath, false);
+            inclFilePath.clearFileExtension();
+            inclFilePath.appendSubDirectory(LC_OPENCL_ROOT_DIR);
+            inclFilePath.appendSubDirectory(LC_OPENCL_INCLUDE_DIR);
+        }
+
         inclFilePath.setFileName(LC_OPENCL_INCLUDE_FILE);
         optsStream << " " << COMPILER_OCL_INCLUDE_SWITCH << kcUtils::Quote(inclFilePath.asString().asASCIICharArray());
 
         // Add OpenCL device libs.
         osFilePath  libFilePath;
-        osGetCurrentApplicationPath(libFilePath, false);
-        libFilePath.clearFileExtension();
-        libFilePath.appendSubDirectory(LC_OPENCL_ROOT_DIR);
-        libFilePath.appendSubDirectory(LC_OPENCL_LIB_DIR);
+        if (!cmplrPaths.m_lib.empty())
+        {
+            gtString  libDir;
+            libDir << cmplrPaths.m_lib.c_str();
+            libFilePath.setFileDirectory(libDir);
+        }
+        else
+        {
+            osGetCurrentApplicationPath(libFilePath, false);
+            libFilePath.clearFileExtension();
+            libFilePath.appendSubDirectory(LC_OPENCL_ROOT_DIR);
+            libFilePath.appendSubDirectory(LC_OPENCL_LIB_DIR);
+        }
 
         for (const gtString & libFile : LC_OPENCL_LIB_FILES)
         {
@@ -166,17 +207,16 @@ beKA::beStatus beProgramBuilderLightning::AddCompilerStandardOptions(beKA::Sourc
     return status;
 }
 
-beKA::beStatus beProgramBuilderLightning::ConstructOpenCLCompilerOptions(const OpenCLOptions&               userOptions,
-                                                                         const std::vector<std::string>&    srcFileNames,
-                                                                         const std::string&                 binFileName,
-                                                                         const std::string&                 device,
-                                                                         bool                               dumpIL,
-                                                                         bool                               lineNumbers,
-                                                                         gtString&                          outOptions)
+beKA::beStatus beProgramBuilderLightning::ConstructOpenCLCompilerOptions(const CmplrPaths&                 cmplrPaths,
+                                                                         const OpenCLOptions&              userOptions,
+                                                                         const std::vector<std::string>&   srcFileNames,
+                                                                         const std::string&                binFileName,
+                                                                         const std::string&                device,
+                                                                         std::string&                      outOptions)
 {
     beKA::beStatus status;
     std::string  standardOptions = "";
-    status = AddCompilerStandardOptions(beKA::SourceLanguage_Rocm_OpenCL, standardOptions);
+    status = AddCompilerStandardOptions(beKA::SourceLanguage_Rocm_OpenCL, cmplrPaths, standardOptions);
     if (status == beKA::beStatus_SUCCESS)
     {
         std::stringstream options;
@@ -190,8 +230,14 @@ beKA::beStatus beProgramBuilderLightning::ConstructOpenCLCompilerOptions(const O
             options << " " << LC_OPENCL_DEFS;
         }
 
+        // Specify optimization level if required.
+        if (userOptions.m_optLevel != -1)
+        {
+            options << " " << COMPILER_OPT_LEVEL_SWITCH << userOptions.m_optLevel;
+        }
+
         // Add the source debug info switch.
-        if (lineNumbers)
+        if (userOptions.m_lineNumbers)
         {
             options << " " << COMPILER_DEBUG_INFO_SWITCH;
         }
@@ -200,7 +246,7 @@ beKA::beStatus beProgramBuilderLightning::ConstructOpenCLCompilerOptions(const O
         options << " " << COMPILER_DEVICE_SWITCH << device;
 
         // Enable IL dump if requested.
-        if (dumpIL)
+        if (userOptions.m_dumpIL)
         {
             options << " " << COMPILER_DUMP_IL_SWITCH;
         }
@@ -230,30 +276,30 @@ beKA::beStatus beProgramBuilderLightning::ConstructOpenCLCompilerOptions(const O
             size_t  asgnOffset = def.find('=');
             options << " -D" << (asgnOffset == std::string::npos ? def : def.substr(0, asgnOffset + 1) + kcUtils::Quote(def.substr(asgnOffset + 1)));
         }
-        outOptions.fromASCIIString(options.str().c_str());
+        outOptions = options.str();
     }
 
     return status;
 }
 
-beKA::beStatus beProgramBuilderLightning::CompileOpenCLToBinary(const OpenCLOptions&              userOptions,
-                                                                const std::vector<std::string>&   srcFileNames,
-                                                                const std::string&                binFileName,
-                                                                const std::string&                device,
-                                                                bool                              dumpIL,
-                                                                bool                              lineNumbers,
-                                                                std::string&                      errText)
+beKA::beStatus beProgramBuilderLightning::CompileOpenCLToBinary(const CmplrPaths&                cmplrPaths,
+                                                                const OpenCLOptions&             userOptions,
+                                                                const std::vector<std::string>&  srcFileNames,
+                                                                const std::string&               binFileName,
+                                                                const std::string&               device,
+                                                                bool                             printCmd,
+                                                                std::string&                     errText)
 {
     // Generate the compiler command line options string.
     beKA::beStatus  status = beKA::beStatus_SUCCESS;
-    gtString  options = L"";
+    std::string  options = "";
     std::string  outText;
 
-    status = ConstructOpenCLCompilerOptions(userOptions, srcFileNames, binFileName, device, dumpIL, lineNumbers, options);
+    status = ConstructOpenCLCompilerOptions(cmplrPaths, userOptions, srcFileNames, binFileName, device, options);
     if (status == beKA::beStatus_SUCCESS)
     {
         // Run LC compiler.
-        status = InvokeCompiler(beKA::SourceLanguage_Rocm_OpenCL, options.asASCIICharArray(), outText, errText);
+        status = InvokeCompiler(beKA::SourceLanguage_Rocm_OpenCL, cmplrPaths.m_bin, options, printCmd, outText, errText);
     }
 
     if (status == beKA::beStatus_SUCCESS)
@@ -266,7 +312,9 @@ beKA::beStatus beProgramBuilderLightning::CompileOpenCLToBinary(const OpenCLOpti
 
 
 beKA::beStatus beProgramBuilderLightning::InvokeCompiler(beKA::SourceLanguage   lang,
+                                                         const std::string    & userBinFolder,
                                                          const std::string    & cmdLineOptions,
+                                                         bool                   printCmd,
                                                          std::string          & stdOut,
                                                          std::string          & stdErr,
                                                          unsigned long          timeOut)
@@ -282,23 +330,35 @@ beKA::beStatus beProgramBuilderLightning::InvokeCompiler(beKA::SourceLanguage   
     }
 
     // Select the compiler executable
-    if (lang == beKA::SourceLanguage::SourceLanguage_Rocm_OpenCL)
+    if (!userBinFolder.empty())
     {
-        osGetCurrentApplicationPath(lcCompilerExec, false);
-        lcCompilerExec.appendSubDirectory(LC_OPENCL_ROOT_DIR);
-        lcCompilerExec.appendSubDirectory(LC_OPENCL_BIN_DIR);
+        gtString  binFolder;
+        binFolder << userBinFolder.c_str();
+        lcCompilerExec.setFileDirectory(binFolder);
         lcCompilerExec.setFileName(LC_OPENCL_COMPILER_EXEC);
         lcCompilerExec.setFileExtension(LC_COMPILER_EXEC_EXT);
     }
     else
     {
-        return beKA::beStatus_UnknownInputLang;
+        if (lang == beKA::SourceLanguage::SourceLanguage_Rocm_OpenCL)
+        {
+            osGetCurrentApplicationPath(lcCompilerExec, false);
+            lcCompilerExec.appendSubDirectory(LC_OPENCL_ROOT_DIR);
+            lcCompilerExec.appendSubDirectory(LC_OPENCL_BIN_DIR);
+            lcCompilerExec.setFileName(LC_OPENCL_COMPILER_EXEC);
+            lcCompilerExec.setFileExtension(LC_COMPILER_EXEC_EXT);
+        }
+        else
+        {
+            return beKA::beStatus_UnknownInputLang;
+        }
     }
 
     kcUtils::ProcessStatus  procStatus = kcUtils::LaunchProcess(lcCompilerExec.asString().asASCIICharArray(),
                                                                 cmdLineOptions,
                                                                 "",
                                                                 timeOut,
+                                                                printCmd,
                                                                 stdOut,
                                                                 stdErr,
                                                                 exitCode);
@@ -331,16 +391,17 @@ beKA::beStatus beProgramBuilderLightning::VerifyCompilerOutput(const std::string
     osFilePath  outFilePath(outFileNameWChar);
     beStatus    status = beStatus_SUCCESS;
 
-    if (!outFilePath.exists())
+    if (outFileName.empty() || !outFilePath.exists())
     {
         status = errText.find(COMPILER_ERROR_TOKEN) != std::string::npos ?
-                     beStatus_LC_CompilerGeneratedError : beStatus_NoOutputFileGenerated;
+                     beStatus_LC_CompilerGeneratedError : (outFileName.empty() ? beStatus_SUCCESS : beStatus_NoOutputFileGenerated);
     }
 
     return status;
 }
 
-beStatus beProgramBuilderLightning::PreprocessOpenCL(const std::string & inputFile, const std::string & args, std::string & output)
+beStatus beProgramBuilderLightning::PreprocessOpenCL(const std::string& userBinDir, const std::string& inputFile,
+                                                     const std::string& args, bool printCmd, std::string& output)
 {
     std::stringstream  compilerArgs;
     compilerArgs << COMPILER_PREPROC_SWITCH << " " << args << " " << kcUtils::Quote(inputFile);
@@ -348,8 +409,14 @@ beStatus beProgramBuilderLightning::PreprocessOpenCL(const std::string & inputFi
     compilerArgs << " " << LC_OPENCL_DEFS;
     std::string  stdOut, stdErr;
 
-    beStatus  status = InvokeCompiler(SourceLanguage::SourceLanguage_Rocm_OpenCL, compilerArgs.str(),
-                                      stdOut, stdErr, RGA_ROCM_PREPROC_TIMEOUT_MS);
+    beStatus  status = InvokeCompiler(SourceLanguage::SourceLanguage_Rocm_OpenCL, userBinDir, compilerArgs.str(),
+                                      printCmd, stdOut, stdErr, RGA_ROCM_PREPROC_TIMEOUT_MS);
+
+    if (status == beStatus_SUCCESS)
+    {
+        status = VerifyCompilerOutput("", stdErr);
+    }
+
     if (status == beStatus_SUCCESS)
     {
         output = stdOut;
@@ -362,9 +429,11 @@ beStatus beProgramBuilderLightning::PreprocessOpenCL(const std::string & inputFi
     return status;
 }
 
-beKA::beStatus beProgramBuilderLightning::DisassembleBinary(const std::string& binFileName,
+beKA::beStatus beProgramBuilderLightning::DisassembleBinary(const std::string& userBinDir,
+                                                            const std::string& binFileName,
                                                             const std::string& device,
                                                             bool               lineNumbers,
+                                                            bool               printCmd,
                                                             std::string&       outISAText,
                                                             std::string&       errText)
 {
@@ -377,11 +446,11 @@ beKA::beStatus beProgramBuilderLightning::DisassembleBinary(const std::string& b
         std::string  objDumpOptions = "";
         outISAText = "";
         ObjDumpOp  op = (lineNumbers ? ObjDumpOp::DisassembleWithLineNums : ObjDumpOp::Disassemble);
-        beKA::beStatus status = ConstructObjDumpOptions(op, binFileName, device, objDumpOptions);
+        beKA::beStatus status = ConstructObjDumpOptions(op, userBinDir, binFileName, device, printCmd, objDumpOptions);
 
         if (status == beKA::beStatus_SUCCESS)
         {
-            status = InvokeObjDump(ObjDumpOp::Disassemble, objDumpOptions, outISAText, errText);
+            status = InvokeObjDump(ObjDumpOp::Disassemble, userBinDir, objDumpOptions, printCmd, outISAText, errText);
         }
 
         if (status == beKA::beStatus_SUCCESS)
@@ -402,54 +471,62 @@ beKA::beStatus beProgramBuilderLightning::DisassembleBinary(const std::string& b
     return status;
 }
 
-beKA::beStatus beProgramBuilderLightning::ExtractMetadata(const std::string & binFileName, std::string& metadataText)
+beKA::beStatus beProgramBuilderLightning::ExtractMetadata(const std::string& userBinDir, const std::string & binFileName,
+                                                          bool printCmd, std::string& metadataText)
 {
     beKA::beStatus  status = beKA::beStatus_LC_ExtractMetadataFailed;
     std::string  readObjOutput, options, errText;
 
     // Launch the LC ReadObj.
-    status = ConstructObjDumpOptions(ObjDumpOp::GetMetadata, binFileName, "", options);
-    status = InvokeObjDump(ObjDumpOp::GetMetadata, options, readObjOutput, errText);
+    status = ConstructObjDumpOptions(ObjDumpOp::GetMetadata, userBinDir, binFileName, "", printCmd, options);
+
+    if (status == beKA::beStatus_SUCCESS)
+    {
+        status = InvokeObjDump(ObjDumpOp::GetMetadata, userBinDir, options, printCmd, readObjOutput, errText);
+    }
 
     if (status == beKA::beStatus_SUCCESS)
     {
         metadataText = readObjOutput;
-        status = beStatus_SUCCESS;
     }
 
     return status;
 }
 
-beStatus beProgramBuilderLightning::ExtractKernelCodeProps(const std::string& binFileName, CodePropsMap& codeProps)
+beStatus beProgramBuilderLightning::ExtractKernelCodeProps(const std::string& userBinDir, const std::string& binFileName,
+                                                           bool printCmd, CodePropsMap& codeProps)
 {
     beKA::beStatus  status = beKA::beStatus_LC_ExtractCodePropsFailed;
     std::string  metadataText;
 
-    if ((status = ExtractMetadata(binFileName, metadataText)) == beStatus_SUCCESS)
+    if ((status = ExtractMetadata(userBinDir, binFileName, printCmd, metadataText)) == beStatus_SUCCESS)
     {
-        ParseCodeProps(metadataText, codeProps);
+        status = ParseCodeProps(metadataText, codeProps);
     }
 
     return status;
 }
 
-beKA::beStatus beProgramBuilderLightning::ExtractKernelNames(const std::string& binFileName, std::vector<std::string>& kernelNames)
+beKA::beStatus beProgramBuilderLightning::ExtractKernelNames(const std::string& userBinDir, const std::string& binFileName,
+                                                             bool printCmd, std::vector<std::string>& kernelNames)
 {
     beKA::beStatus  status = beKA::beStatus_SUCCESS;
     std::string  metadata, options, errText;
 
     // Launch the LC ReadObj and parse its output.
-    status = ConstructObjDumpOptions(ObjDumpOp::GetMetadata, binFileName, "", options);
+    status = ConstructObjDumpOptions(ObjDumpOp::GetMetadata, userBinDir, binFileName, "", printCmd, options);
 
     if (status == beKA::beStatus_SUCCESS)
     {
-        status = InvokeObjDump(ObjDumpOp::GetMetadata, options, metadata, errText);
+        status = InvokeObjDump(ObjDumpOp::GetMetadata, userBinDir, options, printCmd, metadata, errText);
     }
 
     if (status == beKA::beStatus_SUCCESS)
     {
         YAML::Node  codeObjMDNode, kernelsMDMap, kernelName;
         size_t  startOffset = 0, endOffset;
+
+        startOffset = metadata.find(CODEOBJ_METADATA_START_TOKEN);
 
         // Load all Metadata nodes found in the ObjDump output.
         while ((endOffset = metadata.find(CODEOBJ_METADATA_END_TOKEN, startOffset)) != std::string::npos)
@@ -482,7 +559,7 @@ beKA::beStatus beProgramBuilderLightning::ExtractKernelNames(const std::string& 
                     }
                 }
             }
-            startOffset = endOffset + CODEOBJ_METADATA_END_TOKEN.size();
+            startOffset = metadata.find(CODEOBJ_METADATA_START_TOKEN, endOffset);
         }
     }
 
@@ -509,9 +586,76 @@ int beProgramBuilderLightning::GetIsaSize(const std::string & isaText)
     return isaSize;
 }
 
+int beProgramBuilderLightning::GetKernelCodeSize(const std::string & userBinDir, const std::string & binFile,
+                                                 const std::string & kernelName, bool printCmd)
+{
+    beKA::beStatus  status = beStatus_LC_GetKernelCodeSizeFailed;
+    std::string     symbols, options, errText;
+    int             ret = -1, symSize;
+    size_t          offset, nameOffset, nameEndOffset, sizeOffset;
+
+    // Launch the LC ReadObj.
+    status = ConstructObjDumpOptions(ObjDumpOp::GetKernelCodeSize, userBinDir, binFile, "", printCmd, options);
+
+    if (status == beStatus_SUCCESS)
+    {
+        status = InvokeObjDump(ObjDumpOp::GetKernelCodeSize, userBinDir, options, printCmd, symbols, errText);
+    }
+
+    // Parse the readobj output.
+    // readobj uses its own format, so we have to parse it manually.
+    //
+    //    File: gfx900_test.bin
+    //    Format : ELF64 - amdgpu
+    //    Arch : amdgcn
+    //    AddressSize : 64bit
+    //    LoadName :
+    //    Symbols[
+    //      Symbol{
+    //        Name: foo (387)
+    //        Value : 0x1000
+    //        Size : 376
+    //        Binding : Global(0x1)
+    //        Type : AMDGPU_HSA_KERNEL(0xA)
+    //        Other : 0
+    //        Section : .text(0x6)
+    //      }
+    //    ]
+
+    if (status == beStatus_SUCCESS)
+    {
+        if ((offset = symbols.find(BINARY_SYMBOLS_KEY)) != std::string::npos)
+        {
+            bool  stop = false;
+            while (!stop && (offset = symbols.find(BINARY_SYMBOL_KEY, offset)) != std::string::npos)
+            {
+                if ((nameOffset = symbols.find(BINARY_SYMBOL_NAME_KEY, offset)) != std::string::npos &&
+                    (sizeOffset = symbols.find(BINARY_SYMBOL_SIZE_KEY, nameOffset)) != std::string::npos &&
+                    (nameEndOffset = symbols.find(BINARY_SYMBOL_NAME_END_KEY, nameOffset)) != std::string::npos)
+                {
+                    nameOffset += BINARY_SYMBOL_NAME_KEY.size();
+                    if (symbols.substr(nameOffset, nameEndOffset - nameOffset) == kernelName)
+                    {
+                        if ((symSize = std::atoi(symbols.c_str() + sizeOffset + BINARY_SYMBOL_SIZE_KEY.size())) != 0)
+                        {
+                            ret = symSize - RGA_ROCM_COMPILER_AKC_SIZE;
+                        }
+                        stop = true;
+                    }
+                    offset = sizeOffset;
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
 beKA::beStatus beProgramBuilderLightning::ConstructObjDumpOptions(ObjDumpOp          op,
+                                                                  const std::string& compilerBinDir,
                                                                   const std::string& binFileName,
                                                                   const std::string& device,
+                                                                  bool               printCmd,
                                                                   std::string&       options)
 {
     std::stringstream  allOptions;
@@ -526,7 +670,11 @@ beKA::beStatus beProgramBuilderLightning::ConstructObjDumpOptions(ObjDumpOp     
         opSelector = OBJDUMP_DISASM_LINENUM_SWITCH;
         break;
     case ObjDumpOp::GetMetadata:
-        opSelector = OBJDUMP_METADATA_SWITCH;
+        // Use OBJDUMP_METADATA_SWITCH_2 option set for LLVM versions >= 6 and unknown version (0).
+        opSelector = ReadobjSupportsGetMDOption(compilerBinDir, printCmd) ? OBJDUMP_METADATA_SWITCH_1 : OBJDUMP_METADATA_SWITCH_2;
+        break;
+    case ObjDumpOp::GetKernelCodeSize:
+        opSelector = OBJDUMP_SYMBOLS_SWITCH;
         break;
     default:
         return beKA::beStatus_UnknownObjDumpOperation;
@@ -546,23 +694,37 @@ beKA::beStatus beProgramBuilderLightning::ConstructObjDumpOptions(ObjDumpOp     
     return beKA::beStatus_SUCCESS;
 }
 
-beKA::beStatus beProgramBuilderLightning::InvokeObjDump(ObjDumpOp op, const std::string& cmdLineOptions, std::string& outText, std::string& errText)
+beKA::beStatus beProgramBuilderLightning::InvokeObjDump(ObjDumpOp op, const std::string& userBinDir, const std::string& cmdLineOptions,
+                                                        bool printCmd, std::string& outText, std::string& errText)
 {
     osFilePath  lcObjDumpExec;
     long        exitCode;
     // llvm-objdump is currently not able to extract the CodeObj Metadata, so use llvm-readobj instead.
-    const gtString  objdumpExecName = (op == ObjDumpOp::GetMetadata ? LC_LLVM_READOBJ_EXEC : LC_LLVM_OBJDUMP_EXEC);
+    const gtString  objdumpExecName = ((op == ObjDumpOp::GetMetadata || op == ObjDumpOp::GetKernelCodeSize)
+                                       ? LC_LLVM_READOBJ_EXEC : LC_LLVM_OBJDUMP_EXEC);
 
-    osGetCurrentApplicationPath(lcObjDumpExec, false);
-    lcObjDumpExec.appendSubDirectory(LC_OPENCL_ROOT_DIR);
-    lcObjDumpExec.appendSubDirectory(LC_OPENCL_BIN_DIR);
-    lcObjDumpExec.setFileName(objdumpExecName);
-    lcObjDumpExec.setFileExtension(LC_COMPILER_EXEC_EXT);
+    if (!userBinDir.empty())
+    {
+        gtString  binFolder;
+        binFolder << userBinDir.c_str();
+        lcObjDumpExec.setFileDirectory(binFolder);
+        lcObjDumpExec.setFileName(objdumpExecName);
+        lcObjDumpExec.setFileExtension(LC_COMPILER_EXEC_EXT);
+    }
+    else
+    {
+        osGetCurrentApplicationPath(lcObjDumpExec, false);
+        lcObjDumpExec.appendSubDirectory(LC_OPENCL_ROOT_DIR);
+        lcObjDumpExec.appendSubDirectory(LC_OPENCL_BIN_DIR);
+        lcObjDumpExec.setFileName(objdumpExecName);
+        lcObjDumpExec.setFileExtension(LC_COMPILER_EXEC_EXT);
+    }
 
     kcUtils::ProcessStatus  status = kcUtils::LaunchProcess(lcObjDumpExec.asString().asASCIICharArray(),
                                                             cmdLineOptions,
                                                             "",
                                                             RGA_ROCM_OBJDUMP_EXEC_TIMEOUT_MS,
+                                                            printCmd,
                                                             outText,
                                                             errText,
                                                             exitCode);
@@ -596,6 +758,19 @@ beKA::beStatus beProgramBuilderLightning::FilterCodeObjOutput(ObjDumpOp op, std:
     return beKA::beStatus_SUCCESS;
 }
 
+bool beProgramBuilderLightning::ReadobjSupportsGetMDOption(const std::string& userBinDir, bool printCmd)
+{
+    std::string  out, err;
+    bool ret = false;
+
+    if (InvokeObjDump(ObjDumpOp::GetMetadata, userBinDir, OBJDUMP_HELP_SWITCH, printCmd, out, err) == beStatus_SUCCESS)
+    {
+        ret = (out.find(OBJDUMP_METADATA_OPTION_TOKEN) != std::string::npos);
+    }
+
+    return ret;
+}
+
 static bool GetIsaSize(const std::string& isaText, const std::string& kernelName, size_t& sizeInBytes)
 {
     // Example of the ISA instruction in the disassembled ISA text:
@@ -613,6 +788,7 @@ static bool GetIsaSize(const std::string& isaText, const std::string& kernelName
 
     bool   status = true;
     size_t kernelIsaBegin, kernelIsaEnd, addrBegin, addrEnd;
+    kernelIsaBegin = kernelIsaEnd = addrBegin = addrEnd = 0;
     std::string  kernelIsaText;
     uint64_t  firstInstAddr, lastInstAddr;
 
@@ -693,7 +869,9 @@ static bool GetIsaSize(const std::string& isaText, const std::string& kernelName
 
 // Parse an integer YAML node for CodeProps value.
 // Do nothing if "oldResult" is false.
-static bool ParseCodePropsItem(const YAML::Node& codeProps, const std::string& key, size_t& value)
+// If "zeroIfAbsent" is true, the value is set to 0 and "true" is returned if the required value is not found in the MD.
+// (The Lightning Compiler does not generate some CodeProps values if they are 0).
+static bool ParseCodePropsItem(const YAML::Node& codeProps, const std::string& key, size_t& value, bool zeroIfAbsent = false)
 {
     bool  result;
     const YAML::Node& propMDNode = codeProps[key];
@@ -708,6 +886,14 @@ static bool ParseCodePropsItem(const YAML::Node& codeProps, const std::string& k
             result = false;
         }
     }
+    else
+    {
+        if (zeroIfAbsent)
+        {
+            value = 0;
+            result = true;
+        }
+    }
 
     return result;
 }
@@ -719,16 +905,13 @@ static bool  ParseKernelCodeProps(const YAML::Node& kernelMD, KernelCodeProps& c
 
     bool  result = (kernelCodePropsMD = kernelMD[CODE_OBJ_MD_CODE_PROPS_KEY]).IsDefined();
 
-    result = result && ParseCodePropsItem(kernelCodePropsMD, CODE_OBJ_MD_WAVEFRONT_VGRPS, codeProps.wavefrontNumSGPRs);
-    result = result && ParseCodePropsItem(kernelCodePropsMD, CODE_OBJ_MD_WORKITEM_VGPRS,  codeProps.workitemNumVGPRs);
+    result = result && ParseCodePropsItem(kernelCodePropsMD, CODE_OBJ_MD_WAVEFRONT_SGRPS, codeProps.wavefrontNumSGPRs, true);
+    result = result && ParseCodePropsItem(kernelCodePropsMD, CODE_OBJ_MD_WORKITEM_VGPRS,  codeProps.workitemNumVGPRs, true);
     result = result && ParseCodePropsItem(kernelCodePropsMD, CODE_OBJ_MD_WAVEFRONT_SIZE,  codeProps.wavefrontSize);
-
-    size_t wgSegmentSize;
-    if (!ParseCodePropsItem(kernelCodePropsMD, CODE_OBJ_MD_WAVEFRONT_SIZE, wgSegmentSize))
-    {
-        wgSegmentSize = 0;
-    }
-    codeProps.workgroupGroupSegmentSize = wgSegmentSize;
+    result = result && ParseCodePropsItem(kernelCodePropsMD, CODE_OBJ_MD_GROUP_SEGMENT_SIZE, codeProps.workgroupSegmentSize, true);
+    result = result && ParseCodePropsItem(kernelCodePropsMD, CODE_OBJ_MD_PRIVATE_SEGMENT_SIZE, codeProps.privateSegmentSize, true);
+    result = result && ParseCodePropsItem(kernelCodePropsMD, CODE_OBJ_MD_SPILLED_SGPRS, codeProps.SGPRSpills, true);
+    result = result && ParseCodePropsItem(kernelCodePropsMD, CODE_OBJ_MD_SPILLED_VGPRS, codeProps.VGPRSpills, true);
 
     return result;
 }
@@ -737,14 +920,17 @@ static bool  ParseKernelCodeProps(const YAML::Node& kernelMD, KernelCodeProps& c
 static beStatus  ParseCodeProps(const std::string & MDText, CodePropsMap& codeProps)
 {
     beStatus  status = beStatus_SUCCESS;
-    size_t  startOffset = 0, endOffset;
+    size_t  startOffset, endOffset;
     YAML::Node  codeObjMDNode, kernelsMDMap, kernelName;
+
+    startOffset = MDText.find(CODEOBJ_METADATA_START_TOKEN);
 
     while ((endOffset = MDText.find(CODEOBJ_METADATA_END_TOKEN, startOffset)) != std::string::npos)
     {
         try
         {
-            codeObjMDNode = YAML::Load(MDText.substr(startOffset, endOffset - startOffset + CODEOBJ_METADATA_END_TOKEN.size()));
+            const std::string& kernelMDText = MDText.substr(startOffset, endOffset - startOffset + CODEOBJ_METADATA_END_TOKEN.size());
+            codeObjMDNode = YAML::Load(kernelMDText);
         }
         catch (YAML::ParserException&)
         {
@@ -770,7 +956,7 @@ static beStatus  ParseCodeProps(const std::string & MDText, CodePropsMap& codePr
                 }
             }
         }
-        startOffset = endOffset + CODEOBJ_METADATA_END_TOKEN.size();
+        startOffset = MDText.find(CODEOBJ_METADATA_START_TOKEN, endOffset);
     }
 
     return status;

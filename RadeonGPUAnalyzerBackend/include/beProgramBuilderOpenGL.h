@@ -79,10 +79,10 @@ public:
 
     virtual beKA::beStatus GetDeviceTable(std::vector<GDT_GfxCardInfo>& table) override;
 
-    beKA::beStatus Compile(const OpenGLOptions& vulkanOptions, bool& cancelSignal, gtString& compilerOutput);
+    beKA::beStatus Compile(const OpenGLOptions& vulkanOptions, bool& cancelSignal, bool printCmd, gtString& compilerOutput);
 
     /// Extracts the OpenGL version of the installed runtime.
-    bool GetOpenGLVersion(gtString& glVersion);
+    bool GetOpenGLVersion(bool printCmd, gtString& glVersion);
 
     /// Retrieve the device ID and Revision ID from the OpenGL backend.
     bool GetDeviceGLInfo(const std::string& deviceName, size_t& deviceFamilyId, size_t& deviceRevision) const;

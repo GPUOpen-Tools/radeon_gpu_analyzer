@@ -10,7 +10,6 @@
     #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
 #include <CALModule.h>
-#include <CL/cl.h>
 #include <ACLModule.h>
 #if defined(__linux__)
     #pragma GCC diagnostic pop
@@ -144,6 +143,7 @@ enum beStatus
     beStatus_LC_StoreStatsFailed,
     beStatus_LC_SplitIsaFailed,
     beStatus_LC_ExtractKernelNamesFailed,
+    beStatus_LC_GetKernelCodeSizeFailed,
     beStatus_WriteToFile_FAILED,
     beStatus_General_FAILED,
 };
@@ -170,8 +170,22 @@ enum DeviceTableKind
 /// Options that make sense for any of OpenCL, DX, GL.
 struct CompileOptions
 {
-    SourceLanguage           m_SourceLanguage;
-    int                      m_optLevel;
+    // Source language
+    SourceLanguage      m_SourceLanguage;
+
+    // Optimization level.
+    // -1 : Use compiler default value (not specified by user).
+    //  0 : Disable optimization.
+    //  1 : Minimal optimization.
+    //  2 : Optimize for speed (usually, compiler default level).
+    //  3 : Maximum optimization (may significantly slow down compilation).
+    int                 m_optLevel    = -1;
+
+    // Indicates whether IL dump is required or not.
+    bool                m_dumpIL      = false;
+
+    // Indicates whether line number info is required or not.
+    bool                m_lineNumbers = false;
 };
 
 /// Object to customize binary output strings.
@@ -184,7 +198,8 @@ struct BinaryOptions
 /// Data collected in analyzing a kernel/function.
 struct AnalysisData
 {
-    AnalysisData() :  maxScratchRegsNeeded(0),
+    AnalysisData() :
+        scratchMemoryUsed(0),
         numWavefrontPerSIMD(0),
         wavefrontSize(0),
         numGPRsAvailable(0),
@@ -195,8 +210,10 @@ struct AnalysisData
         stackSizeUsed(0),
         numSGPRsAvailable(0),
         numSGPRsUsed(0),
+        numSGPRSpills(0),
         numVGPRsAvailable(0),
         numVGPRsUsed(0),
+        numVGPRSpills(0),
         numThreadPerGroup(0),
         numThreadPerGroupX(0),
         numThreadPerGroupY(0),
@@ -212,7 +229,7 @@ struct AnalysisData
     // Information directly from the compiled Kernel (passed back from SC).
     // We used to use the CAL interface to get this as a block.
     // We now use OpenCL extensions to get the same info.
-    CALuint64 maxScratchRegsNeeded;    ///< Maximum number of scratch regs needed     CL_KERNELINFO_SCRATCH_REGS
+    CALuint64 scratchMemoryUsed;       ///< Size of statically allocated scratch memory
     CALuint64 numWavefrontPerSIMD;     ///< Number of wavefronts per SIMD             CL_KERNELINFO_WAVEFRONT_PER_SIMD
     CALuint64 wavefrontSize;           ///< number of threads per wavefront.          CL_KERNELINFO_WAVEFRONT_SIZE
     CALuint64 numGPRsAvailable;        ///< number of GPRs available to the program   CL_KERNELINFO_AVAILABLE_GPRS
@@ -223,8 +240,10 @@ struct AnalysisData
     CALuint64 stackSizeUsed;           ///< stack size use by the program             CL_KERNELINFO_USED_STACK_SIZE
     CALuint64 numSGPRsAvailable;       ///< number of SGPRs available to the program  CL_KERNELINFO_AVAILABLE_SGPRS
     CALuint64 numSGPRsUsed;            ///< number of SGPRs used by the program       CL_KERNELINFO_USED_SGPRS
+    CALuint64 numSGPRSpills;           ///< number of spills/fills of SGPRs to/from memory
     CALuint64 numVGPRsAvailable;       ///< number of VGPRs available to the program  CL_KERNELINFO_AVAILABLE_VGPRS
     CALuint64 numVGPRsUsed;            ///< number of VGPRs used by the program       CL_KERNELINFO_USED_VGPRS
+    CALuint64 numVGPRSpills;           ///< number of spills/fills of VGPRs to/from memory
 
     CALuint64 numThreadPerGroup;       ///< flattened Number of threads per group
     CALuint64 numThreadPerGroupX;      ///< x dimension of numThreadPerGroup

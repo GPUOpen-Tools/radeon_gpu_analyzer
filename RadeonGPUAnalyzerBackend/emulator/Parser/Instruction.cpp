@@ -1,4 +1,5 @@
 #include <RadeonGPUAnalyzerBackend/emulator/Parser/Instruction.h>
+#include <RadeonGPUAnalyzerBackend/../Utils/include/rgaCliDefs.h>
 
 // C++.
 #include <algorithm>
@@ -18,8 +19,8 @@ int Instruction::GetInstructionClockCount(const std::string& deviceName) const
     if (!deviceName.empty())
     {
         // Ignore the case.
-        std::string opCodeUpperCase(m_instructionOpCode);
-        std::transform(opCodeUpperCase.begin(), opCodeUpperCase.end(), opCodeUpperCase.begin(), ::toupper);
+        std::string opCodeLowerCase(m_instructionOpCode);
+        std::transform(opCodeLowerCase.begin(), opCodeLowerCase.end(), opCodeLowerCase.begin(), ::tolower);
 
         // One quarter-precision-speed devices.
         bool isQuarterDoubleDevice = (deviceName.compare(DEVICE_NAME_CYPRESS) == 0 ||
@@ -30,7 +31,7 @@ int Instruction::GetInstructionClockCount(const std::string& deviceName) const
         bool isHalfDoubleDevice = !isQuarterDoubleDevice && (deviceName.compare(DEVICE_NAME_HAWAII) == 0);
 
         // First look at the scalar performance table.
-        auto devIter = m_s_scalarPerfTable.find(opCodeUpperCase);
+        auto devIter = m_s_scalarPerfTable.find(opCodeLowerCase);
 
         if (devIter != m_s_scalarPerfTable.end())
         {
@@ -41,7 +42,7 @@ int Instruction::GetInstructionClockCount(const std::string& deviceName) const
             // If this is not a scalar operation, check the other tables.
             if (isQuarterDoubleDevice)
             {
-                devIter = m_s_quarterDevicePerfTable.find(opCodeUpperCase);
+                devIter = m_s_quarterDevicePerfTable.find(opCodeLowerCase);
 
                 if (devIter != m_s_quarterDevicePerfTable.end())
                 {
@@ -50,7 +51,7 @@ int Instruction::GetInstructionClockCount(const std::string& deviceName) const
             }
             else if (isHalfDoubleDevice)
             {
-                devIter = m_s_halfDevicePerfTable.find(opCodeUpperCase);
+                devIter = m_s_halfDevicePerfTable.find(opCodeLowerCase);
 
                 if (devIter != m_s_halfDevicePerfTable.end())
                 {
@@ -59,7 +60,7 @@ int Instruction::GetInstructionClockCount(const std::string& deviceName) const
             }
             else
             {
-                devIter = m_s_hybridDevicePerfTable.find(opCodeUpperCase);
+                devIter = m_s_hybridDevicePerfTable.find(opCodeLowerCase);
 
                 if (devIter != m_s_hybridDevicePerfTable.end())
                 {
@@ -75,7 +76,7 @@ int Instruction::GetInstructionClockCount(const std::string& deviceName) const
 void Instruction::SetInstructionStringRepresentation(const std::string& opCode, const std::string& params, const std::string& binaryRep, const std::string& offset)
 {
     m_instructionOpCode = opCode;
-    std::transform(m_instructionOpCode.begin(), m_instructionOpCode.end(), m_instructionOpCode.begin(), ::toupper);
+    std::transform(m_instructionOpCode.begin(), m_instructionOpCode.end(), m_instructionOpCode.begin(), ::tolower);
 
     m_parameters = params;
     m_binaryInstruction = binaryRep;
@@ -1334,10 +1335,13 @@ std::string Instruction::GetFunctionalUnitAsString(InstructionCategory category)
 
     switch (category)
     {
+        case ScalarALU:
+            ret = FUNC_UNIT_SALU;
+            break;
+
         case ScalarMemoryRead:
         case ScalarMemoryWrite:
-        case ScalarALU:
-            ret = FUNC_UNIT_SCALAR;
+            ret = FUNC_UNIT_SMEM;
             break;
 
         case VectorMemoryRead:
@@ -1422,7 +1426,7 @@ void Instruction::GetCSVString(const std::string& deviceName, bool addSrcLineInf
         if (addSrcLineInfo)
         {
             auto  srcLineInfo = GetSrcLineInfo();
-            outputStream << srcLineInfo.first << COMMA_SEPARATOR << DOUBLE_QUOTES << srcLineInfo.second << DOUBLE_QUOTES << COMMA_SEPARATOR;
+            outputStream << srcLineInfo.first << COMMA_SEPARATOR;
         }
 
         bool isBranch = (GetInstructionCategory() == InstructionCategory::Branch);

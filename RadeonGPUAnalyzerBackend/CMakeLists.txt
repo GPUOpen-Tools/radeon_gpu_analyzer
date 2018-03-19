@@ -14,20 +14,20 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 endif()
 
 # Add these definitions if static linkage is used with the other projects
-add_definitions(-DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC -DAMDTOSAPIWRAPPERS_STATIC)
- 
+add_definitions(-DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC)
+
 # Identify if this script runs on a Debian system
 set (IsDebian FALSE)
 if(EXISTS "/etc/debian_version")
     set(IsDebian TRUE)
 endif()
- 
+
 # Configure a header file to pass some of the CMake settings
 # to the source code
 configure_file (
   "${PROJECT_SOURCE_DIR}/RadeonGPUAnalyzerBackendConfig.h.in"
   "${PROJECT_BINARY_DIR}/RadeonGPUAnalyzerBackendConfig.h"
-  ) 
+  )
 
 # Include directories
 include_directories("${PROJECT_SOURCE_DIR}/../")
@@ -53,7 +53,7 @@ include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/include
 if (NOT IsDebian)
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0")
 endif()
-    
+
 # Windows-specific include files
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     include_directories("${PROJECT_SOURCE_DIR}/../Core/DX10ASM/Include")
@@ -120,7 +120,7 @@ if(AMD_INTERNAL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAMD_INTERNAL -DAMDT_INTERNAL")
 endif()
 
- 
+
 # Pick up the source files that are relevant to the platform
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_library(RadeonGPUAnalyzerBackend STATIC ${COMMON_SRC} ${WINDOWS_SRC} ${DEVICE_INFO_SRC})
@@ -128,10 +128,10 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         # Release Build
         if (CMAKE_64BIT_TARGET)
             find_library(DX10ASM_LIBRARY_RELEASE DX10ASMLib_s HINTS "${PROJECT_SOURCE_DIR}/../Core/DX10ASM/Lib/VS2015/x64/Release_Static")
-            target_link_libraries (RadeonGPUAnalyzerBackend ${DX10ASM_LIBRARY_RELEASE})  
+            target_link_libraries (RadeonGPUAnalyzerBackend ${DX10ASM_LIBRARY_RELEASE})
         else()
             find_library(DX10ASM_LIBRARY_RELEASE DX10ASMLib_s HINTS "${PROJECT_SOURCE_DIR}/../Core/DX10ASM/Lib/VS2015/Win32/Release_Static")
-            target_link_libraries (RadeonGPUAnalyzerBackend ${DX10ASM_LIBRARY_RELEASE})  
+            target_link_libraries (RadeonGPUAnalyzerBackend ${DX10ASM_LIBRARY_RELEASE})
         endif()
     else()
         # Debug build
@@ -143,7 +143,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
             target_link_libraries (RadeonGPUAnalyzerBackend ${DX10ASM_LIBRARY_DEBUG})
         endif()
     endif()
-elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     add_library(RadeonGPUAnalyzerBackend STATIC ${COMMON_SRC} ${LINUX_SRC})
     add_library(DeviceInfoLib OBJECT ${DEVICE_INFO_SRC})
 endif()
@@ -159,4 +159,4 @@ else()
 endif()
 
 # Link libraries
-target_link_libraries(RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools AMDTOSAPIWrappers)
+target_link_libraries(RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools)

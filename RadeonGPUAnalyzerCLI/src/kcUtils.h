@@ -2,8 +2,7 @@
 // Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
-#ifndef kcUtils_h__
-#define kcUtils_h__
+#pragma once
 
 // C++.
 #include <string>
@@ -101,13 +100,17 @@ public:
     // isaFileName - the disassembled ISA file name
     // outputFileName - the output file name
     // pCallback - callback to log messages
-    static void PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName, LoggingCallBackFunc_t pCallback);
+    // printCmd - print command line to stdout
+    static void PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName,
+                                            LoggingCallBackFunc_t pCallback, bool printCmd);
 
     // Generates control flow graph for the given ISA.
     // isaFileName - the disassembled ISA file name
     // outputFileName - the output file name
     // pCallback - callback to log messages
-    static void GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName, LoggingCallBackFunc_t pCallback);
+    // printCmd - print command line to stdout
+    static void GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
+                                         LoggingCallBackFunc_t pCallback, bool printCmd);
 
     // Generates an output file name in the Analyzer CLI format.
     // baseOutputFileName - the base output file name as configured by the user's command
@@ -200,12 +203,16 @@ public:
     // \param[in]  args        command line arguments
     // \param[in]  dir         working directory for the process. If empty string is provided, the current directory will be used.
     // \param[in]  timeOut     process time out in milliseconds
+    // \param[in]  printCmd    print the command + arguments to be launched.
     // \param[out] stdOut      the content of stdout stream dumped by launched process
     // \param[out] stdErr      the content of stderr stream dumped by launched process
     // \param[out] exitCode    the exit code returned by launched process
     // Returns status of process launch.
     static ProcessStatus LaunchProcess(const std::string& execPath, const std::string& args, const std::string& dir,
-                                       unsigned long timeOut, std::string& stdOut, std::string& stdErr, long& exitCode);
+                                       unsigned long timeOut, bool printCmd, std::string& stdOut, std::string& stdErr, long& exitCode);
+
+    // Open new CLI log file and delete old files (older than 1 week).
+    static bool  InitCLILogFile(const Config& config);
 
 private:
     // This is a static class (no instances).
@@ -213,5 +220,3 @@ private:
     kcUtils()  = default;
     ~kcUtils() = default;
 };
-
-#endif // kcUtils_h__

@@ -7,6 +7,7 @@ REM       <platform>    x86 or x64
 
 set SOLUTION_PATH=%1
 set ARCH=%2
+
 msbuild /m:6 /t:Rebuild /p:Configuration=Debug /p:Platform=%ARCH%  /p:OutputPath=%OUTPUT_PATH% %SOLUTION_PATH%
 if not %ERRORLEVEL%==0 (
     echo Debug build of solution %SOLUTION_PATH% failed!

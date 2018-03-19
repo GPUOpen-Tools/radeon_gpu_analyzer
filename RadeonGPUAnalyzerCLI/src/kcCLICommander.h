@@ -1,5 +1,4 @@
-#ifndef _KCCLICOMMANDER_H_
-#define _KCCLICOMMANDER_H_
+#pragma once
 
 // C++.
 #include <string>
@@ -38,14 +37,10 @@ public:
     virtual void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback) = 0;
 
     // Perform post-compile actions.
-    bool RunPostCompileSteps(const Config& config) const;
+    virtual bool RunPostCompileSteps(const Config& config) const;
 
     // Delete all temporary files created by RGA.
     void DeleteTempFiles() const;
-
-    // Parse the source file and extract list of entry points (for example, kernels for OpenCL).
-    // Dump the extracted entry points to stdout.
-    static bool  ListEntries(const Config& config, LoggingCallBackFunc_t callback);
 
     // Get the list of supported targets for the given mode (source language).
     static bool  GetSupportedTargets(SourceLanguage lang, std::set<std::string>& targets);
@@ -58,7 +53,7 @@ protected:
                                       std::set<std::string>& targets, std::function<void(const std::string&)> logCallback);
 
     // Generate RGA CLI session metadata file.
-    bool  GenerateSessionMetadata(const Config& config, const rgOutputMetadata& outMetadata) const;
+    virtual bool  GenerateSessionMetadata(const Config& config, const rgOutputMetadata& outMetadata) const { return true; }
 
     // Logging callback type.
     bool LogCallBack(const std::string& theString) const
@@ -81,9 +76,3 @@ protected:
     // Output Metadata
     rgOutputMetadata        m_outputMetadata;
 };
-
-
-
-#endif
-
-

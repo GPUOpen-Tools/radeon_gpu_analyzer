@@ -2,8 +2,7 @@
 // Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
-#ifndef _PARSE_CMD_LINE_H_
-#define _PARSE_CMD_LINE_H_
+#pragma once
 
 class Config;
 
@@ -13,5 +12,3 @@ class Config;
 /// \param[out] configOut the output config structure
 /// \return true if successful, false otherwise
 bool ParseCmdLine(int argc, char* argv[], Config& configOut);
-
-#endif

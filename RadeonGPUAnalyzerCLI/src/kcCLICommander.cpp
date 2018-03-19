@@ -2,6 +2,9 @@
 // Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
+// C++
+#include <cassert>
+
 // Backend.
 #include <RadeonGPUAnalyzerBackend/include/beUtils.h>
 
@@ -42,47 +45,9 @@ void kcCLICommander::ListAdapters(Config & config, LoggingCallBackFunc_t callbac
     callback(msg.str());
 }
 
-bool kcCLICommander::GenerateSessionMetadata(const Config& config, const rgOutputMetadata& outMetadata) const
+bool kcCLICommander::RunPostCompileSteps(const Config & config) const
 {
-    rgFileEntryData  fileKernelData;
-
-    bool  ret = !config.m_sessionMetadataFile.empty();
-
-    if (ret)
-    {
-        for (const std::string&  inputFile : config.m_InputFiles)
-        {
-            rgEntryData  entryData;
-            ret = ret && kcCLICommanderLightning::ExtractEntries(inputFile, config, entryData);
-            if (ret)
-            {
-                fileKernelData[inputFile] = entryData;
-            }
-        }
-    }
-
-    ret = ret && kcUtils::GenerateCliMetadataFile(config.m_sessionMetadataFile, fileKernelData, outMetadata);
-
-    return ret;
-}
-
-bool kcCLICommander::RunPostCompileSteps(const Config& config) const
-{
-    bool ret = false;
-    if (!config.m_sessionMetadataFile.empty())
-    {
-        ret = GenerateSessionMetadata(config, m_outputMetadata);
-        if (!ret)
-        {
-            std::stringstream  msg;
-            msg << STR_ERR_FAILED_GENERATE_SESSION_METADATA << std::endl;
-            m_LogCallback(msg.str());
-        }
-    }
-
-    DeleteTempFiles();
-
-    return ret;
+    return true;
 }
 
 void kcCLICommander::DeleteTempFiles() const
@@ -160,50 +125,6 @@ bool kcCLICommander::InitRequestedAsicList(const Config& config, const std::set<
     }
 
     bool ret = (targets.size() != 0);
-
-    return ret;
-}
-
-bool kcCLICommander::ListEntries(const Config& config, LoggingCallBackFunc_t callback)
-{
-    bool  ret = true;
-    std::string  fileName, prepSrc;
-    rgEntryData  entryData;
-    std::stringstream  msg;
-
-    if (config.m_SourceLanguage != SourceLanguage_OpenCL && config.m_SourceLanguage != SourceLanguage_Rocm_OpenCL)
-    {
-        msg << STR_ERR_COMMAND_NOT_SUPPORTED << std::endl;
-        ret = false;
-    }
-    else
-    {
-        if (config.m_InputFiles.size() == 1)
-        {
-            fileName = config.m_InputFiles[0];
-        }
-        else
-        {
-            msg << STR_ERR_ONE_INPUT_FILE_EXPECTED << std::endl;
-            ret = false;
-        }
-    }
-
-    if (ret && (ret = kcCLICommanderLightning::ExtractEntries(fileName, config, entryData)) == true)
-    {
-        // Sort the entry names in alphabetical order.
-        std::sort(entryData.begin(), entryData.end(),
-                  [](const std::pair<std::string, int>& a, const std::pair<std::string, int>& b) {return (a.first < b.first); });
-
-        // Dump the entry points.
-        for (const std::pair<std::string, int>& dataItem : entryData)
-        {
-            msg << dataItem.first << ": " << dataItem.second << std::endl;
-        }
-        msg << std::endl;
-    }
-
-    callback(msg.str());
 
     return ret;
 }

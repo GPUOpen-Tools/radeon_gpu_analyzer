@@ -451,7 +451,7 @@ static bool  VerifyAmdspvOutput(const VulkanOptions& options)
     return ret;
 }
 
-beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOptions, bool& cancelSignal, gtString& buildLog)
+beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOptions, bool& cancelSignal, bool printCmd, gtString& buildLog)
 {
     GT_UNREFERENCED_PARAMETER(cancelSignal);
     beKA::beStatus ret = beKA::beStatus_General_FAILED;
@@ -489,7 +489,6 @@ beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOption
                 AddOutputFileNames(vulkanOptions, cmd);
 
                 // Redirect build log to a temporary file.
-                std::string tmpFileAmdspv;
                 const gtString AMPSPV_TMP_OUTPUT_FILE = L"amdspvTempFile.txt";
                 osFilePath tmpFilePath(osFilePath::OS_TEMP_DIRECTORY);
                 tmpFilePath.setFileName(AMPSPV_TMP_OUTPUT_FILE);
@@ -508,6 +507,7 @@ beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOption
 
                 // Launch amdspv.
                 gtString amdspvOutput;
+                beUtils::PrintCmdLine(cmd.str(), printCmd);
                 bool isLaunchSuccess = osExecAndGrabOutput(cmd.str().c_str(), cancelSignal, amdspvOutput);
 
                 if (isLaunchSuccess)
