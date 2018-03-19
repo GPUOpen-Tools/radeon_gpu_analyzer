@@ -16,6 +16,14 @@ This product can be used to produce the following output:
 
 The RGA package contains both a GUI app and a command-line exectuable.
 
+***Source-to-disassembly correlation in RGA GUI app***
+
+![GUI app's build view](/RadeonGPUAnalyzerGUI/res/screenshots/build_view.png?raw=true "Source correlation in RGA GUI app")
+
+***Notification about potential performance hazards in the GUI app***
+
+![GUI app's resource usage view](/RadeonGPUAnalyzerGUI/res/screenshots/resource_usage.png?raw=true "Performance hazard notification in RGA GUI app")
+
 The supported platforms by the **command-line tool** are:
 * D3D11
 * OpenCL - AMD's LLVM-based Lightning Compiler for ROCm (-s rocm-cl)
