@@ -7,7 +7,7 @@ The Home Page
 -------------
 At the top of the home page, you will find two tabs:
 
-.. image:: images/007_home_page_b_tabs.PNG
+.. image:: images/007_home_page_b_tabs.png
   :width: 4.25532in
   :height: 2.47686in
 
@@ -24,13 +24,13 @@ RGA will automatically create for you the project when you add or create a file 
 
 To add an existing .cl source file, use Ctrl+O or click on "Open existing .cl file" under the Start section:
 
-.. image:: images/001_open_file_link_button.PNG
+.. image:: images/001_open_file_link_button.png
   :width: 4.25532in
   :height: 2.47686in
 
 You can also do this by clicking on File -> "Open existing .cl file":
 
-.. image:: images/001_open_file_menu_bar.PNG
+.. image:: images/001_open_file_menu_bar.png
   :width: 4.25532in
   :height: 2.47686in
 
@@ -38,7 +38,7 @@ In a similar way, you can create a project by creating an empty .cl file. Use th
 
 You will then be prompted for an optional rename of your project:
 
-.. image:: images/002_rename_project.PNG
+.. image:: images/002_rename_project.png
 
 RGA will use a yyyymmdd-hhmmss date-time string as a default name. Check the "Always use auto-generated project names" check box to instruct RGA to always use the default name without prompting for renaming.
 
@@ -46,13 +46,13 @@ Loading a Project
 """""""""""""""""
 You can load an existing project (.rga file) using the Ctrl+Alt+O shortcut or by clicking on an item on the Recent menu in the home page:
 
-.. image:: images/007_home_page_b_recent.PNG
+.. image:: images/007_home_page_b_recent.png
   :width: 4.05532in
   :height: 1.17686in
   
 It is also possible to load a project from the File -> "Open existing RGA project..." menu item:
 
-.. image:: images/008_home_page_b_open_project.PNG
+.. image:: images/008_home_page_b_open_project.png
   :width: 4.25532in
   :height: 2.87686in
 
@@ -64,7 +64,7 @@ Application
 """""""""""
 The Application page controls configurable parts of the app:
 
-.. image:: images/010_home_page_b_settings_app.PNG
+.. image:: images/010_home_page_b_settings_app.png
   :width: 5.55532in
   :height: 4.27686in
   
@@ -210,7 +210,7 @@ Using the File Menu you can:
 	* Create a new source file by clicking on "Create file", or using the Ctrl+N shortcut
 	* Open the project-specific build settings by clicking on "Build settings", or using the F8 shortcut. For more details about the build settings view, please see the Build Settings section.
 
-.. image:: images/012_build_view_file_menu.PNG
+.. image:: images/012_build_view_file_menu.png
   :width: 2.25532in
   :height: 4.87686in
 
@@ -226,7 +226,7 @@ On the left side of the Source Code View, you will find running line numbers.
 
 You can use the Ctrl+F (Edit -> Find) and Ctrl+G (Edit -> Go to...) to search for a string or jump to a specific line.
 
-.. image:: images/013_build_view_source_view.PNG
+.. image:: images/013_build_view_source_view.png
   :width: 8.25532in
   :height: 8.87686in
   
@@ -234,7 +234,7 @@ After a successful build, when the disassembly view becomes visible alongside th
 you can double click-on the view's black title bar to maximize it. 
 You can also click on the resize icon at the top right corner to maximize/minimize the view:
 
-.. image:: images/013_build_view_title_bar.PNG
+.. image:: images/013_build_view_title_bar.png
   :width: 8.25532in
   :height: 1.87686in
 
@@ -242,7 +242,7 @@ Build Output View
 ^^^^^^^^^^^^^^^^^
 When a build is triggered, the RGA command line app is being launched to execute the build. Its output would be streamed into the Build Output View.
 
-.. image:: images/014_build_view_build_output.PNG
+.. image:: images/014_build_view_build_output.png
   :width: 8.25532in
   :height: 3.87686in
   
@@ -254,7 +254,7 @@ Disassembly View
 ^^^^^^^^^^^^^^^^
 The disassembly for the relevant kernel will be displayed in the disassembly view on the right:
 
-.. image:: images/006_disassembly_view.PNG
+.. image:: images/006_disassembly_view.png
   :width: 6.08333in
   :height: 4.08568in
 
@@ -316,13 +316,13 @@ Load existing Project
 ^^^^^^^^^^^^^^^^^^^^^
 You can load an existing project (.rga file) using the Ctrl+Alt+O shortcut or by clicking on an item on the Recent menu in the home page:
 
-.. image:: images/007_home_page_b_recent.PNG
+.. image:: images/007_home_page_b_recent.png
   :width: 4.05532in
   :height: 1.17686in
   
 It is also possible to load a project from the File -> "Open existing RGA project..." menu item:
 
-.. image:: images/008_home_page_b_open_project.PNG
+.. image:: images/008_home_page_b_open_project.png
   :width: 4.25532in
   :height: 2.87686in
   

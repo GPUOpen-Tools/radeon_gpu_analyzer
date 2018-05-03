@@ -16,13 +16,13 @@ RGA will automatically create for you the project when you add or create a file 
 
 To add an existing .cl source file, use Ctrl+O or click on "Open existing .cl file" under the Start section:
 
-.. image:: images/001_open_file_link_button.PNG
+.. image:: images/001_open_file_link_button.png
   :width: 4.25532in
   :height: 2.47686in
 
 You can also do this by clicking on File -> "Open existing c.l file":
 
-.. image:: images/001_open_file_menu_bar.PNG
+.. image:: images/001_open_file_menu_bar.png
   :width: 4.25532in
   :height: 2.47686in
 
@@ -30,7 +30,7 @@ In a similar way, you can create a project by creating an empty .cl file. Use th
 
 You will then be prompted for an optional rename of your project:
 
-.. image:: images/002_rename_project.PNG
+.. image:: images/002_rename_project.png
 
 RGA will use a yyyymmdd-hhmmss date-time string as a default name. Check the "Always use auto-generated project names" check box to instruct RGA to always use the default name without prompting for renaming.
 
@@ -39,7 +39,7 @@ Generating Disassembly
 To build your project and generate the disassembly, use the Ctrl+Shift+B shortcut.
 Alternatively, you can use the Build -> Build project menu item:
 
-.. image:: images/003_build_project.PNG
+.. image:: images/003_build_project.png
   :width: 4.25532in
   :height: 1.82522in
   
@@ -50,13 +50,13 @@ In case of a build success, the list of kernels in each file would be shown unde
 
 Use that list to control which kernel is in focus (highlighted in yellow):
 
-.. image:: images/005_project_file_menu.PNG
+.. image:: images/005_project_file_menu.png
   :width: 2.45532in
   :height: 0.6in
 
 The disassembly for the relevant kernel will be displayed in the disassembly view on the right:
 
-.. image:: images/006_disassembly_view.PNG
+.. image:: images/006_disassembly_view.png
   :width: 6.08333in
   :height: 4.08568in
 
