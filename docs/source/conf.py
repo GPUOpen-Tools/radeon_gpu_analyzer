@@ -47,7 +47,7 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 
 # The master toctree document.
-master_doc = 'Documentation'
+master_doc = 'index'
 
 # General information about the project.
 project = 'Radeon GPU Analyzer'
