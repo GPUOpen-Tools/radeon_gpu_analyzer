@@ -52,6 +52,7 @@ if "%1"=="--qt" goto :set_qt
 if "%1"=="--cli-only" goto :set_cli_only
 if "%1"=="--gui-only" goto :set_gui_only
 if "%1"=="--no-fetch" goto :set_no_update
+if "%1"=="--automation" goto :set_automation
 goto :bad_arg
 
 :set_cmake
@@ -77,6 +78,10 @@ goto :shift_arg
 :set_no_update
 set NO_UPDATE=TRUE
 goto :shift_arg
+:set_automation
+set AUTOMATION=-DGUI_AUTOMATION^=ON
+set TEST_DIR_SUFFIX=_Test
+goto :shift_arg
 
 :shift_2args
 rem Shift to the next pair of arguments
@@ -89,8 +94,7 @@ goto :begin
 echo Error: Unexpected argument: %1%. Aborting...
 exit /b
 
-:start_cmake
-
+:start_cmake 
 if "%VS_VER%"=="2015" (
     set CMAKE_VS="Visual Studio 14 2015 Win64"
 ) else (
@@ -108,8 +112,9 @@ if not [%QT_ROOT%]==[] (
 
 rem Create an output folder
 set VS_FOLDER=VS%VS_VER%
-if not exist %SCRIPT_DIR%CMake\%VS_FOLDER%\%BUILD_TYPE% (
-    mkdir %SCRIPT_DIR%CMake\%VS_FOLDER%\%BUILD_TYPE%
+set OUTPUT_FOLDER=%SCRIPT_DIR%Windows\%VS_FOLDER%\%BUILD_TYPE%%TEST_DIR_SUFFIX%
+if not exist %OUTPUT_FOLDER% (
+    mkdir %OUTPUT_FOLDER%
 )
 
 rem clone or download dependencies
@@ -123,8 +128,8 @@ if not "%NO_UPDATE%"=="TRUE" (
 rem Invoke cmake with required arguments.
 echo:
 echo Running cmake to generate a VisualStudio solution...
-cd %SCRIPT_DIR%CMake\%VS_FOLDER%\%BUILD_TYPE%
-%CMAKE_PATH% -G %CMAKE_VS% -DCMAKE_BUILD_TYPE=%BUILD_TYPE% %CMAKE_QT% %CLI_ONLY% %GUI_ONLY% ..\..\..\..
+cd %OUTPUT_FOLDER%
+%CMAKE_PATH% -G %CMAKE_VS% -DCMAKE_BUILD_TYPE=%BUILD_TYPE% %CMAKE_QT% %CLI_ONLY% %GUI_ONLY% %AUTOMATION% ..\..\..\..
 cd %CURRENT_DIR%
 echo Done.
 

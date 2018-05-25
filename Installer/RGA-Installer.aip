@@ -10,7 +10,7 @@
     <ROW Property="AI_SHORTCUTSREG" Value="0|0|0|0|"/>
     <ROW Property="AI_STARTMENU_SH" Type="4" MsiKey="AI_STARTMENU_SH"/>
     <ROW Property="ALLUSERS" Value="1"/>
-    <ROW Property="ARPCOMMENTS" Value="RGA-[|ProductVersion]-Installer.msi" MultiBuildValue="x64_Release_Static:RGA-2.0-Installer.msi" ValueLocId="*"/>
+    <ROW Property="ARPCOMMENTS" Value=" " ValueLocId="*"/>
     <ROW Property="ARPCONTACT" Value="https://github.com/GPUOpen-Tools/"/>
     <ROW Property="ARPURLINFOABOUT" Value="https://github.com/GPUOpen-Tools/RGA"/>
     <ROW Property="CTRLS" Value="2"/>
@@ -34,23 +34,23 @@
     <ROW Directory="APPDIR" Directory_Parent="TARGETDIR" DefaultDir="APPDIR:." IsPseudoRoot="1"/>
     <ROW Directory="Assets" Directory_Parent="TARGETDIR" DefaultDir="Assets" IsPseudoRoot="1"/>
     <ROW Directory="DesktopFolder" Directory_Parent="TARGETDIR" DefaultDir="DESKTO~1|DesktopFolder" IsPseudoRoot="1"/>
+    <ROW Directory="Documentation_Dir" Directory_Parent="APPDIR" DefaultDir="DOCUME~1|Documentation"/>
     <ROW Directory="OpenCL_Dir" Directory_Parent="ROCm_Dir" DefaultDir="OpenCL"/>
     <ROW Directory="ROCm_Dir" Directory_Parent="x64_Dir" DefaultDir="ROCm"/>
     <ROW Directory="SHORTCUTDIR" Directory_Parent="TARGETDIR" DefaultDir="SHORTC~1|SHORTCUTDIR" IsPseudoRoot="1"/>
     <ROW Directory="TARGETDIR" DefaultDir="SourceDir"/>
-    <ROW Directory="_images_Dir" Directory_Parent="html_Dir" DefaultDir="_images"/>
-    <ROW Directory="_sources_Dir" Directory_Parent="html_Dir" DefaultDir="_sources"/>
-    <ROW Directory="_static_Dir" Directory_Parent="html_Dir" DefaultDir="_static"/>
+    <ROW Directory="_images_1_Dir" Directory_Parent="html_1_Dir" DefaultDir="_images"/>
+    <ROW Directory="_sources_1_Dir" Directory_Parent="html_1_Dir" DefaultDir="_sources"/>
+    <ROW Directory="_static_1_Dir" Directory_Parent="html_1_Dir" DefaultDir="_static"/>
     <ROW Directory="bin_Dir" Directory_Parent="OpenCL_Dir" DefaultDir="bin"/>
     <ROW Directory="bitcode_Dir" Directory_Parent="lib_Dir" DefaultDir="bitcode"/>
-    <ROW Directory="css_Dir" Directory_Parent="_static_Dir" DefaultDir="css"/>
-    <ROW Directory="docs_Dir" Directory_Parent="APPDIR" DefaultDir="docs"/>
-    <ROW Directory="fonts_Dir" Directory_Parent="_static_Dir" DefaultDir="fonts"/>
-    <ROW Directory="html_Dir" Directory_Parent="docs_Dir" DefaultDir="html"/>
+    <ROW Directory="css_1_Dir" Directory_Parent="_static_1_Dir" DefaultDir="css"/>
+    <ROW Directory="fonts_1_Dir" Directory_Parent="_static_1_Dir" DefaultDir="fonts"/>
+    <ROW Directory="html_1_Dir" Directory_Parent="Documentation_Dir" DefaultDir="html"/>
     <ROW Directory="iconengines_Dir" Directory_Parent="APPDIR" DefaultDir="ICONEN~1|iconengines"/>
     <ROW Directory="imageformats_Dir" Directory_Parent="APPDIR" DefaultDir="IMAGEF~1|imageformats"/>
     <ROW Directory="include_Dir" Directory_Parent="OpenCL_Dir" DefaultDir="include"/>
-    <ROW Directory="js_Dir" Directory_Parent="_static_Dir" DefaultDir="js"/>
+    <ROW Directory="js_1_Dir" Directory_Parent="_static_1_Dir" DefaultDir="js"/>
     <ROW Directory="lib_Dir" Directory_Parent="OpenCL_Dir" DefaultDir="lib"/>
     <ROW Directory="platforms_Dir" Directory_Parent="APPDIR" DefaultDir="PLATFO~1|platforms"/>
     <ROW Directory="x64_Dir" Directory_Parent="APPDIR" DefaultDir="x64"/>
@@ -68,23 +68,23 @@
     <ROW Component="SHORTCUTDIR" ComponentId="{881CE3B9-0F49-4431-9CA8-BCA9D9993313}" Directory_="SHORTCUTDIR" Attributes="0"/>
     <ROW Component="Tiny44x44Logo.scale100.png" ComponentId="{FAD42D9F-547D-478F-95CA-A379E128B00C}" Directory_="Assets" Attributes="0" KeyPath="Tiny44x44Logo.scale100.png" Type="0"/>
     <ROW Component="VirtualContext.exe" ComponentId="{CF661885-24CF-4D5C-A50C-B0E79E17F14A}" Directory_="x64_Dir" Attributes="256" KeyPath="VirtualContext.exe"/>
-    <ROW Component="_open_file_link_button.PNG" ComponentId="{45C0081D-9714-4644-8A4C-20A16454A170}" Directory_="_images_Dir" Attributes="0" KeyPath="_open_file_link_button.PNG" Type="0"/>
-    <ROW Component="ajaxloader.gif" ComponentId="{6495B4FE-50DA-47B7-89B8-EC8C403CFCC8}" Directory_="_static_Dir" Attributes="0" KeyPath="ajaxloader.gif" Type="0"/>
+    <ROW Component="_open_file_link_button.PNG_1" ComponentId="{69CF924B-0B9E-420B-9C22-40E8D64E1596}" Directory_="_images_1_Dir" Attributes="0" KeyPath="_open_file_link_button.PNG_1" Type="0"/>
+    <ROW Component="ajaxloader.gif_1" ComponentId="{04103D4C-65F3-43F1-AC87-4BC8A970E3E7}" Directory_="_static_1_Dir" Attributes="0" KeyPath="ajaxloader.gif_1" Type="0"/>
     <ROW Component="amdspv.exe" ComponentId="{C3BA55FF-D6A1-4CB0-AF7A-FF38F35ADD94}" Directory_="x64_Dir" Attributes="256" KeyPath="amdspv.exe"/>
-    <ROW Component="badge_only.css" ComponentId="{76793A3F-5D09-42AB-9659-2DEEA61583D0}" Directory_="css_Dir" Attributes="0" KeyPath="badge_only.css" Type="0"/>
-    <ROW Component="buildinfo" ComponentId="{EF750392-3304-4070-B3A4-963AE2667CB0}" Directory_="html_Dir" Attributes="0" KeyPath="buildinfo" Type="0"/>
+    <ROW Component="badge_only.css_1" ComponentId="{DEEF6FAB-F9FC-4F69-AE98-D042F64633E8}" Directory_="css_1_Dir" Attributes="0" KeyPath="badge_only.css_1" Type="0"/>
+    <ROW Component="buildinfo_1" ComponentId="{58E57C59-032D-429C-BB5E-44421FB13C68}" Directory_="html_1_Dir" Attributes="0" KeyPath="buildinfo_1" Type="0"/>
     <ROW Component="clang.exe" ComponentId="{B785DFAA-6863-4459-8D68-0E95C706BC95}" Directory_="bin_Dir" Attributes="0" KeyPath="clang.exe"/>
     <ROW Component="concrt140.dll" ComponentId="{F6366CA5-6B9C-4E77-AD65-3E3C0E2460D2}" Directory_="APPDIR" Attributes="256" KeyPath="concrt140.dll"/>
     <ROW Component="d3dcompiler_47.dll" ComponentId="{4152BE90-70A2-404D-A4BA-FC690801355F}" Directory_="x64_Dir" Attributes="256" KeyPath="d3dcompiler_47.dll"/>
-    <ROW Component="documentation.html" ComponentId="{031509CB-4F74-408C-B1DB-5544633079CB}" Directory_="html_Dir" Attributes="0" KeyPath="documentation.html"/>
-    <ROW Component="documentation.rst.txt" ComponentId="{69682708-CE2F-4C4C-8216-C18A7A8A1B63}" Directory_="_sources_Dir" Attributes="0" KeyPath="documentation.rst.txt" Type="0"/>
-    <ROW Component="fontawesomewebfont.eot" ComponentId="{0276E501-16C5-4711-97C5-CF5A6CF99CA1}" Directory_="fonts_Dir" Attributes="0" KeyPath="fontawesomewebfont.eot" Type="0"/>
+    <ROW Component="fontawesomewebfont.eot_1" ComponentId="{99ABF317-76CC-4F99-BE5C-A55980242BA9}" Directory_="fonts_1_Dir" Attributes="0" KeyPath="fontawesomewebfont.eot_1" Type="0"/>
     <ROW Component="gen_devices.py" ComponentId="{CD05B5D7-1DE0-4A2D-A9B6-573F36381840}" Directory_="bin_Dir" Attributes="0" KeyPath="gen_devices.py" Type="0"/>
+    <ROW Component="help_manual.rst.txt" ComponentId="{4CAF84FE-0FD5-487C-977B-284B16222CB3}" Directory_="_sources_1_Dir" Attributes="0" KeyPath="help_manual.rst.txt_1" Type="0"/>
+    <ROW Component="index.html" ComponentId="{AD202F03-C047-4EFD-9536-E17EE4EDEAAE}" Directory_="html_1_Dir" Attributes="0" KeyPath="index.html"/>
     <ROW Component="irif.amdgcn.bc" ComponentId="{9EF8831E-EBC7-4EB7-8A02-CA6D31E89815}" Directory_="bitcode_Dir" Attributes="0" KeyPath="irif.amdgcn.bc" Type="0"/>
     <ROW Component="ld.lld.exe" ComponentId="{A4A7AEED-738D-4C23-A150-9B303AF4EC26}" Directory_="bin_Dir" Attributes="0" KeyPath="ld.lld.exe"/>
     <ROW Component="llvmobjdump.exe" ComponentId="{E37FB394-FA29-48E8-AD96-DFDA705EE54A}" Directory_="bin_Dir" Attributes="0" KeyPath="llvmobjdump.exe"/>
     <ROW Component="llvmreadobj.exe" ComponentId="{F5C2794D-B0EB-4ACB-A238-72D968B0E1CA}" Directory_="bin_Dir" Attributes="256" KeyPath="llvmreadobj.exe"/>
-    <ROW Component="modernizr.min.js" ComponentId="{FA5E2ABF-64F3-486E-BEB5-301834665238}" Directory_="js_Dir" Attributes="0" KeyPath="modernizr.min.js" Type="0"/>
+    <ROW Component="modernizr.min.js_1" ComponentId="{45F58D30-A846-4261-9B2B-8959B49A2BA4}" Directory_="js_1_Dir" Attributes="0" KeyPath="modernizr.min.js_1" Type="0"/>
     <ROW Component="msvcp140.dll" ComponentId="{6F0921B7-A92A-407E-8FA0-BEBD31BB9050}" Directory_="APPDIR" Attributes="256" KeyPath="msvcp140.dll"/>
     <ROW Component="openclc.h" ComponentId="{D8919465-CC0F-4AFB-BA1E-481F154781A5}" Directory_="include_Dir" Attributes="0" KeyPath="openclc.h" Type="0"/>
     <ROW Component="qsvg.dll" ComponentId="{E3CA603A-9CA1-46D2-957E-F8FD0C3C8332}" Directory_="imageformats_Dir" Attributes="256" KeyPath="qsvg.dll"/>
@@ -98,15 +98,15 @@
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiFeatsComponent">
     <ROW Feature="AiAppXAssets" Title="AiAppXAssets" Description="Description" Display="3" Level="0" Directory_="APPDIR" Attributes="0" Components="Tiny44x44Logo.scale100.png"/>
-    <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0" Components="AIShRegAnswer License.txt ProductInformation Qt5Core.dll Qt5Gui.dll Qt5Svg.dll Qt5Widgets.dll RGADX11.exe RadeonGPUAnalyzerGUI.exe SHORTCUTDIR VirtualContext.exe _open_file_link_button.PNG ajaxloader.gif amdspv.exe badge_only.css buildinfo clang.exe concrt140.dll d3dcompiler_47.dll documentation.html documentation.rst.txt fontawesomewebfont.eot gen_devices.py irif.amdgcn.bc ld.lld.exe llvmobjdump.exe llvmreadobj.exe modernizr.min.js msvcp140.dll openclc.h qsvg.dll qsvgicon.dll qwindows.dll rga.exe shae.exe spvgen.dll vccorlib140.dll vcruntime140.dll"/>
+    <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0" Components="AIShRegAnswer License.txt ProductInformation Qt5Core.dll Qt5Gui.dll Qt5Svg.dll Qt5Widgets.dll RGADX11.exe RadeonGPUAnalyzerGUI.exe SHORTCUTDIR VirtualContext.exe _open_file_link_button.PNG_1 ajaxloader.gif_1 amdspv.exe badge_only.css_1 buildinfo_1 clang.exe concrt140.dll d3dcompiler_47.dll fontawesomewebfont.eot_1 gen_devices.py help_manual.rst.txt index.html irif.amdgcn.bc ld.lld.exe llvmobjdump.exe llvmreadobj.exe modernizr.min.js_1 msvcp140.dll openclc.h qsvg.dll qsvgicon.dll qwindows.dll rga.exe shae.exe spvgen.dll vccorlib140.dll vcruntime140.dll"/>
     <ATTRIBUTE name="CurrentFeature" value="MainFeature"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiFilesComponent">
-    <ROW File="InconsolataBold.ttf" Component_="fontawesomewebfont.eot" FileName="INCONS~1.TTF|Inconsolata-Bold.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\fonts\Inconsolata-Bold.ttf" SelfReg="false" NextFile="InconsolataRegular.ttf"/>
-    <ROW File="InconsolataRegular.ttf" Component_="fontawesomewebfont.eot" FileName="INCONS~2.TTF|Inconsolata-Regular.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\fonts\Inconsolata-Regular.ttf" SelfReg="false" NextFile="LatoBold.ttf"/>
-    <ROW File="LatoBold.ttf" Component_="fontawesomewebfont.eot" FileName="LATO-B~1.TTF|Lato-Bold.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\fonts\Lato-Bold.ttf" SelfReg="false" NextFile="LatoRegular.ttf"/>
-    <ROW File="LatoRegular.ttf" Component_="fontawesomewebfont.eot" FileName="LATO-R~1.TTF|Lato-Regular.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\fonts\Lato-Regular.ttf" SelfReg="false" NextFile="RobotoSlabBold.ttf"/>
-    <ROW File="License.txt" Component_="License.txt" FileName="License.txt" Attributes="0" SourcePath="..\License.txt" SelfReg="false" NextFile="buildinfo"/>
+    <ROW File="InconsolataBold.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="INCONS~1.TTF|Inconsolata-Bold.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\fonts\Inconsolata-Bold.ttf" SelfReg="false" NextFile="InconsolataRegular.ttf_1"/>
+    <ROW File="InconsolataRegular.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="INCONS~2.TTF|Inconsolata-Regular.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\fonts\Inconsolata-Regular.ttf" SelfReg="false" NextFile="LatoBold.ttf_1"/>
+    <ROW File="LatoBold.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="LATO-B~1.TTF|Lato-Bold.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\fonts\Lato-Bold.ttf" SelfReg="false" NextFile="LatoRegular.ttf_1"/>
+    <ROW File="LatoRegular.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="LATO-R~1.TTF|Lato-Regular.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\fonts\Lato-Regular.ttf" SelfReg="false" NextFile="RobotoSlabBold.ttf_1"/>
+    <ROW File="License.txt" Component_="License.txt" FileName="License.txt" Attributes="0" SourcePath="..\License.txt" SelfReg="false" NextFile="buildinfo_1"/>
     <ROW File="Medium150x150Logo.scale100.png" Component_="Tiny44x44Logo.scale100.png" FileName="MEDIUM~1.PNG|Medium150x150Logo.scale-100.png" Attributes="0" SourcePath="&lt;AI_RES&gt;appx\Logo.png" SelfReg="false" NextFile="Store50x50Logo.scale100.png"/>
     <ROW File="Qt5Core.dll" Component_="Qt5Core.dll" FileName="Qt5Core.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Core.dll" SelfReg="false" NextFile="Qt5Gui.dll"/>
     <ROW File="Qt5Gui.dll" Component_="Qt5Gui.dll" FileName="Qt5Gui.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Gui.dll" SelfReg="false" NextFile="Qt5Svg.dll"/>
@@ -114,66 +114,66 @@
     <ROW File="Qt5Widgets.dll" Component_="Qt5Widgets.dll" FileName="QT5WID~1.DLL|Qt5Widgets.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Widgets.dll" SelfReg="false" NextFile="RadeonGPUAnalyzerGUI.exe"/>
     <ROW File="RGADX11.exe" Component_="RGADX11.exe" FileName="RGADX11.exe" Attributes="0" SourcePath="..\BuildOutput\bin\x64\RGADX11.exe" SelfReg="false" NextFile="clang.exe" DigSign="true"/>
     <ROW File="RadeonGPUAnalyzerGUI.exe" Component_="RadeonGPUAnalyzerGUI.exe" FileName="RADEON~1.EXE|RadeonGPUAnalyzerGUI.exe" Version="[|ProductVersion]" Attributes="0" SourcePath="..\BuildOutput\bin\RadeonGPUAnalyzerGUI.exe" SelfReg="false" NextFile="rga.exe" DigSign="true"/>
-    <ROW File="RobotoSlabBold.ttf" Component_="fontawesomewebfont.eot" FileName="ROBOTO~1.TTF|RobotoSlab-Bold.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\fonts\RobotoSlab-Bold.ttf" SelfReg="false" NextFile="RobotoSlabRegular.ttf"/>
-    <ROW File="RobotoSlabRegular.ttf" Component_="fontawesomewebfont.eot" FileName="ROBOTO~2.TTF|RobotoSlab-Regular.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\fonts\RobotoSlab-Regular.ttf" SelfReg="false" NextFile="jquery3.1.0.js"/>
+    <ROW File="RobotoSlabBold.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="ROBOTO~1.TTF|RobotoSlab-Bold.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\fonts\RobotoSlab-Bold.ttf" SelfReg="false" NextFile="RobotoSlabRegular.ttf_1"/>
+    <ROW File="RobotoSlabRegular.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="ROBOTO~2.TTF|RobotoSlab-Regular.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\fonts\RobotoSlab-Regular.ttf" SelfReg="false" NextFile="jquery3.1.0.js_1"/>
     <ROW File="Store50x50Logo.scale100.png" Component_="Tiny44x44Logo.scale100.png" FileName="STORE5~1.PNG|Store50x50Logo.scale-100.png" Attributes="0" SourcePath="&lt;AI_RES&gt;appx\StoreLogo.png" SelfReg="false" NextFile="qsvgicon.dll"/>
     <ROW File="Tiny44x44Logo.scale100.png" Component_="Tiny44x44Logo.scale100.png" FileName="TINY44~1.PNG|Tiny44x44Logo.scale-100.png" Attributes="0" SourcePath="&lt;AI_RES&gt;appx\SmallLogo10.png" SelfReg="false" NextFile="Medium150x150Logo.scale100.png"/>
     <ROW File="VirtualContext.exe" Component_="VirtualContext.exe" FileName="VIRTUA~1.EXE|VirtualContext.exe" Attributes="0" SourcePath="..\BuildOutput\bin\x64\VirtualContext.exe" SelfReg="false" NextFile="concrt140.dll" DigSign="true"/>
-    <ROW File="_about_dialog.png" Component_="_open_file_link_button.PNG" FileName="016_AB~1.PNG|016_about_dialog.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\016_about_dialog.png" SelfReg="false" NextFile="_disassembly_view_context_menu.png"/>
-    <ROW File="_build_project.PNG" Component_="_open_file_link_button.PNG" FileName="003_BU~1.PNG|003_build_project.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\003_build_project.PNG" SelfReg="false" NextFile="_project_file_menu.PNG"/>
-    <ROW File="_build_view_build_output.PNG" Component_="_open_file_link_button.PNG" FileName="014_BU~1.PNG|014_build_view_build_output.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\014_build_view_build_output.PNG" SelfReg="false" NextFile="_build_view_disassembly_resource_usage_hazard.png"/>
-    <ROW File="_build_view_disassembly_resource_usage_hazard.png" Component_="_open_file_link_button.PNG" FileName="015_BU~1.PNG|015_build_view_disassembly_resource_usage_hazard.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\015_build_view_disassembly_resource_usage_hazard.png" SelfReg="false" NextFile="_about_dialog.png"/>
-    <ROW File="_build_view_file_menu.PNG" Component_="_open_file_link_button.PNG" FileName="012_BU~1.PNG|012_build_view_file_menu.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\012_build_view_file_menu.PNG" SelfReg="false" NextFile="_build_view_file_menu_build_settings.png"/>
-    <ROW File="_build_view_file_menu_build_settings.png" Component_="_open_file_link_button.PNG" FileName="012_BU~2.PNG|012_build_view_file_menu_build_settings.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\012_build_view_file_menu_build_settings.png" SelfReg="false" NextFile="_build_view_file_menu_rename_project.png"/>
-    <ROW File="_build_view_file_menu_rename_project.png" Component_="_open_file_link_button.PNG" FileName="012_BU~3.PNG|012_build_view_file_menu_rename_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\012_build_view_file_menu_rename_project.png" SelfReg="false" NextFile="_build_view_source_view.PNG"/>
-    <ROW File="_build_view_source_view.PNG" Component_="_open_file_link_button.PNG" FileName="013_BU~1.PNG|013_build_view_source_view.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\013_build_view_source_view.PNG" SelfReg="false" NextFile="_build_view_title_bar.PNG"/>
-    <ROW File="_build_view_title_bar.PNG" Component_="_open_file_link_button.PNG" FileName="013_BU~2.PNG|013_build_view_title_bar.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\013_build_view_title_bar.PNG" SelfReg="false" NextFile="_build_view_build_output.PNG"/>
-    <ROW File="_disassembly_view.PNG" Component_="_open_file_link_button.PNG" FileName="006_DI~1.PNG|006_disassembly_view.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\006_disassembly_view.PNG" SelfReg="false" NextFile="_home_page_b_recent.PNG"/>
-    <ROW File="_disassembly_view_context_menu.png" Component_="_open_file_link_button.PNG" FileName="017_DI~1.PNG|017_disassembly_view_context_menu.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\017_disassembly_view_context_menu.png" SelfReg="false" NextFile="documentation.rst.txt"/>
-    <ROW File="_home_page_b_open_project.PNG" Component_="_open_file_link_button.PNG" FileName="008_HO~1.PNG|008_home_page_b_open_project.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\008_home_page_b_open_project.PNG" SelfReg="false" NextFile="_home_page_b_settings_app.PNG"/>
-    <ROW File="_home_page_b_recent.PNG" Component_="_open_file_link_button.PNG" FileName="007_HO~1.PNG|007_home_page_b_recent.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\007_home_page_b_recent.PNG" SelfReg="false" NextFile="_home_page_b_tabs.PNG"/>
-    <ROW File="_home_page_b_settings_app.PNG" Component_="_open_file_link_button.PNG" FileName="010_HO~1.PNG|010_home_page_b_settings_app.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\010_home_page_b_settings_app.PNG" SelfReg="false" NextFile="_build_view_file_menu.PNG"/>
-    <ROW File="_home_page_b_tabs.PNG" Component_="_open_file_link_button.PNG" FileName="007_HO~2.PNG|007_home_page_b_tabs.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\007_home_page_b_tabs.PNG" SelfReg="false" NextFile="_home_page_b_open_project.PNG"/>
-    <ROW File="_open_file_link_button.PNG" Component_="_open_file_link_button.PNG" FileName="001_OP~1.PNG|001_open_file_link_button.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\001_open_file_link_button.PNG" SelfReg="false" NextFile="_open_file_menu_bar.PNG"/>
-    <ROW File="_open_file_menu_bar.PNG" Component_="_open_file_link_button.PNG" FileName="001_OP~2.PNG|001_open_file_menu_bar.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\001_open_file_menu_bar.PNG" SelfReg="false" NextFile="_rename_project.PNG"/>
-    <ROW File="_project_file_menu.PNG" Component_="_open_file_link_button.PNG" FileName="005_PR~1.PNG|005_project_file_menu.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\005_project_file_menu.PNG" SelfReg="false" NextFile="_disassembly_view.PNG"/>
-    <ROW File="_rename_project.PNG" Component_="_open_file_link_button.PNG" FileName="002_RE~1.PNG|002_rename_project.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_images\002_rename_project.PNG" SelfReg="false" NextFile="_build_project.PNG"/>
-    <ROW File="ajaxloader.gif" Component_="ajaxloader.gif" FileName="AJAX-L~1.GIF|ajax-loader.gif" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\ajax-loader.gif" SelfReg="false" NextFile="basic.css"/>
+    <ROW File="_about_dialog.png_1" Component_="_open_file_link_button.PNG_1" FileName="016_AB~1.PNG|016_about_dialog.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\016_about_dialog.png" SelfReg="false" NextFile="_disassembly_view_context_menu.png_1"/>
+    <ROW File="_build_project.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="003_BU~1.PNG|003_build_project.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\003_build_project.PNG" SelfReg="false" NextFile="_project_file_menu.PNG_1"/>
+    <ROW File="_build_view_build_output.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="014_BU~1.PNG|014_build_view_build_output.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\014_build_view_build_output.PNG" SelfReg="false" NextFile="_build_view_disassembly_resource_usage_hazard.png_1"/>
+    <ROW File="_build_view_disassembly_resource_usage_hazard.png_1" Component_="_open_file_link_button.PNG_1" FileName="015_BU~1.PNG|015_build_view_disassembly_resource_usage_hazard.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\015_build_view_disassembly_resource_usage_hazard.png" SelfReg="false" NextFile="_about_dialog.png_1"/>
+    <ROW File="_build_view_file_menu.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="012_BU~1.PNG|012_build_view_file_menu.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\012_build_view_file_menu.PNG" SelfReg="false" NextFile="_build_view_file_menu_build_settings.png_1"/>
+    <ROW File="_build_view_file_menu_build_settings.png_1" Component_="_open_file_link_button.PNG_1" FileName="012_BU~2.PNG|012_build_view_file_menu_build_settings.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\012_build_view_file_menu_build_settings.png" SelfReg="false" NextFile="_build_view_file_menu_rename_project.png_1"/>
+    <ROW File="_build_view_file_menu_rename_project.png_1" Component_="_open_file_link_button.PNG_1" FileName="012_BU~3.PNG|012_build_view_file_menu_rename_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\012_build_view_file_menu_rename_project.png" SelfReg="false" NextFile="_build_view_source_view.PNG_1"/>
+    <ROW File="_build_view_source_view.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="013_BU~1.PNG|013_build_view_source_view.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\013_build_view_source_view.PNG" SelfReg="false" NextFile="_build_view_title_bar.PNG_1"/>
+    <ROW File="_build_view_title_bar.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="013_BU~2.PNG|013_build_view_title_bar.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\013_build_view_title_bar.PNG" SelfReg="false" NextFile="_build_view_build_output.PNG_1"/>
+    <ROW File="_disassembly_view.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="006_DI~1.PNG|006_disassembly_view.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\006_disassembly_view.PNG" SelfReg="false" NextFile="_home_page_b_recent.PNG_1"/>
+    <ROW File="_disassembly_view_context_menu.png_1" Component_="_open_file_link_button.PNG_1" FileName="017_DI~1.PNG|017_disassembly_view_context_menu.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\017_disassembly_view_context_menu.png" SelfReg="false" NextFile="help_manual.rst.txt_1"/>
+    <ROW File="_home_page_b_open_project.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="008_HO~1.PNG|008_home_page_b_open_project.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\008_home_page_b_open_project.PNG" SelfReg="false" NextFile="_home_page_b_settings_app.PNG_1"/>
+    <ROW File="_home_page_b_recent.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="007_HO~1.PNG|007_home_page_b_recent.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\007_home_page_b_recent.PNG" SelfReg="false" NextFile="_home_page_b_tabs.PNG_1"/>
+    <ROW File="_home_page_b_settings_app.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="010_HO~1.PNG|010_home_page_b_settings_app.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\010_home_page_b_settings_app.PNG" SelfReg="false" NextFile="_build_view_file_menu.PNG_1"/>
+    <ROW File="_home_page_b_tabs.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="007_HO~2.PNG|007_home_page_b_tabs.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\007_home_page_b_tabs.PNG" SelfReg="false" NextFile="_home_page_b_open_project.PNG_1"/>
+    <ROW File="_open_file_link_button.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="001_OP~1.PNG|001_open_file_link_button.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\001_open_file_link_button.PNG" SelfReg="false" NextFile="_open_file_menu_bar.PNG_1"/>
+    <ROW File="_open_file_menu_bar.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="001_OP~2.PNG|001_open_file_menu_bar.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\001_open_file_menu_bar.PNG" SelfReg="false" NextFile="_rename_project.PNG_1"/>
+    <ROW File="_project_file_menu.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="005_PR~1.PNG|005_project_file_menu.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\005_project_file_menu.PNG" SelfReg="false" NextFile="_disassembly_view.PNG_1"/>
+    <ROW File="_rename_project.PNG_1" Component_="_open_file_link_button.PNG_1" FileName="002_RE~1.PNG|002_rename_project.PNG" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_images\002_rename_project.PNG" SelfReg="false" NextFile="_build_project.PNG_1"/>
+    <ROW File="ajaxloader.gif_1" Component_="ajaxloader.gif_1" FileName="AJAX-L~1.GIF|ajax-loader.gif" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\ajax-loader.gif" SelfReg="false" NextFile="basic.css_1"/>
     <ROW File="amdspv.exe" Component_="amdspv.exe" FileName="amdspv.exe" Attributes="0" SourcePath="..\BuildOutput\bin\x64\amdspv.exe" SelfReg="false" NextFile="d3dcompiler_47.dll" DigSign="true"/>
-    <ROW File="badge_only.css" Component_="badge_only.css" FileName="BADGE_~1.CSS|badge_only.css" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\css\badge_only.css" SelfReg="false" NextFile="theme.css"/>
-    <ROW File="basic.css" Component_="ajaxloader.gif" FileName="basic.css" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\basic.css" SelfReg="false" NextFile="commentbright.png"/>
-    <ROW File="buildinfo" Component_="buildinfo" FileName="BUILDI~1|.buildinfo" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\.buildinfo" SelfReg="false" NextFile="nojekyll"/>
+    <ROW File="badge_only.css_1" Component_="badge_only.css_1" FileName="BADGE_~1.CSS|badge_only.css" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\css\badge_only.css" SelfReg="false" NextFile="theme.css_1"/>
+    <ROW File="basic.css_1" Component_="ajaxloader.gif_1" FileName="basic.css" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\basic.css" SelfReg="false" NextFile="commentbright.png_1"/>
+    <ROW File="buildinfo_1" Component_="buildinfo_1" FileName="BUILDI~1|.buildinfo" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\.buildinfo" SelfReg="false" NextFile="nojekyll_1"/>
     <ROW File="clang.exe" Component_="clang.exe" FileName="clang.exe" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\bin\clang.exe" SelfReg="false" NextFile="gen_devices.py" DigSign="true"/>
-    <ROW File="comment.png" Component_="ajaxloader.gif" FileName="comment.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\comment.png" SelfReg="false" NextFile="badge_only.css"/>
-    <ROW File="commentbright.png" Component_="ajaxloader.gif" FileName="COMMEN~1.PNG|comment-bright.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\comment-bright.png" SelfReg="false" NextFile="commentclose.png"/>
-    <ROW File="commentclose.png" Component_="ajaxloader.gif" FileName="COMMEN~2.PNG|comment-close.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\comment-close.png" SelfReg="false" NextFile="comment.png"/>
+    <ROW File="comment.png_1" Component_="ajaxloader.gif_1" FileName="comment.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\comment.png" SelfReg="false" NextFile="badge_only.css_1"/>
+    <ROW File="commentbright.png_1" Component_="ajaxloader.gif_1" FileName="COMMEN~1.PNG|comment-bright.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\comment-bright.png" SelfReg="false" NextFile="commentclose.png_1"/>
+    <ROW File="commentclose.png_1" Component_="ajaxloader.gif_1" FileName="COMMEN~2.PNG|comment-close.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\comment-close.png" SelfReg="false" NextFile="comment.png_1"/>
     <ROW File="concrt140.dll" Component_="concrt140.dll" FileName="CONCRT~1.DLL|concrt140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\concrt140.dll" SelfReg="false" NextFile="msvcp140.dll"/>
     <ROW File="d3dcompiler_47.dll" Component_="d3dcompiler_47.dll" FileName="D3DCOM~1.DLL|d3dcompiler_47.dll" Attributes="0" SourcePath="..\BuildOutput\bin\x64\d3dcompiler_47.dll" SelfReg="false" NextFile="RGADX11.exe"/>
-    <ROW File="doctools.js" Component_="ajaxloader.gif" FileName="doctools.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\doctools.js" SelfReg="false" NextFile="downpressed.png"/>
-    <ROW File="documentation.html" Component_="documentation.html" FileName="DOCUME~1.HTM|documentation.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\documentation.html" SelfReg="false" NextFile="genindex.html"/>
-    <ROW File="documentation.rst.txt" Component_="documentation.rst.txt" FileName="DOCUME~1.TXT|documentation.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_sources\documentation.rst.txt" SelfReg="false" NextFile="help_manual.rst.txt"/>
-    <ROW File="down.png" Component_="ajaxloader.gif" FileName="down.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\down.png" SelfReg="false" NextFile="file.png"/>
-    <ROW File="downpressed.png" Component_="ajaxloader.gif" FileName="DOWN-P~1.PNG|down-pressed.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\down-pressed.png" SelfReg="false" NextFile="down.png"/>
-    <ROW File="file.png" Component_="ajaxloader.gif" FileName="file.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\file.png" SelfReg="false" NextFile="fontawesomewebfont.eot"/>
-    <ROW File="fontawesomewebfont.eot" Component_="fontawesomewebfont.eot" FileName="FONTAW~1.EOT|fontawesome-webfont.eot" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\fonts\fontawesome-webfont.eot" SelfReg="false" NextFile="fontawesomewebfont.svg"/>
-    <ROW File="fontawesomewebfont.svg" Component_="fontawesomewebfont.eot" FileName="FONTAW~1.SVG|fontawesome-webfont.svg" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\fonts\fontawesome-webfont.svg" SelfReg="false" NextFile="fontawesomewebfont.ttf"/>
-    <ROW File="fontawesomewebfont.ttf" Component_="fontawesomewebfont.eot" FileName="FONTAW~1.TTF|fontawesome-webfont.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\fonts\fontawesome-webfont.ttf" SelfReg="false" NextFile="fontawesomewebfont.woff"/>
-    <ROW File="fontawesomewebfont.woff" Component_="fontawesomewebfont.eot" FileName="FONTAW~1.WOF|fontawesome-webfont.woff" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\fonts\fontawesome-webfont.woff" SelfReg="false" NextFile="InconsolataBold.ttf"/>
+    <ROW File="doctools.js_1" Component_="ajaxloader.gif_1" FileName="doctools.js" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\doctools.js" SelfReg="false" NextFile="downpressed.png_1"/>
+    <ROW File="down.png_1" Component_="ajaxloader.gif_1" FileName="down.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\down.png" SelfReg="false" NextFile="file.png_1"/>
+    <ROW File="downpressed.png_1" Component_="ajaxloader.gif_1" FileName="DOWN-P~1.PNG|down-pressed.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\down-pressed.png" SelfReg="false" NextFile="down.png_1"/>
+    <ROW File="file.png_1" Component_="ajaxloader.gif_1" FileName="file.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\file.png" SelfReg="false" NextFile="fontawesomewebfont.eot_1"/>
+    <ROW File="fontawesomewebfont.eot_1" Component_="fontawesomewebfont.eot_1" FileName="FONTAW~1.EOT|fontawesome-webfont.eot" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\fonts\fontawesome-webfont.eot" SelfReg="false" NextFile="fontawesomewebfont.svg_1"/>
+    <ROW File="fontawesomewebfont.svg_1" Component_="fontawesomewebfont.eot_1" FileName="FONTAW~1.SVG|fontawesome-webfont.svg" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\fonts\fontawesome-webfont.svg" SelfReg="false" NextFile="fontawesomewebfont.ttf_1"/>
+    <ROW File="fontawesomewebfont.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="FONTAW~1.TTF|fontawesome-webfont.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\fonts\fontawesome-webfont.ttf" SelfReg="false" NextFile="fontawesomewebfont.woff_1"/>
+    <ROW File="fontawesomewebfont.woff_1" Component_="fontawesomewebfont.eot_1" FileName="FONTAW~1.WOF|fontawesome-webfont.woff" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\fonts\fontawesome-webfont.woff" SelfReg="false" NextFile="InconsolataBold.ttf_1"/>
     <ROW File="gen_devices.py" Component_="gen_devices.py" FileName="GEN_DE~1.PY|gen_devices.py" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\bin\gen_devices.py" SelfReg="false" NextFile="ld.lld.exe"/>
-    <ROW File="genindex.html" Component_="buildinfo" FileName="GENIND~1.HTM|genindex.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\genindex.html" SelfReg="false" NextFile="help_manual.html"/>
-    <ROW File="help_manual.html" Component_="buildinfo" FileName="HELP_M~1.HTM|help_manual.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\help_manual.html" SelfReg="false" NextFile="objects.inv"/>
-    <ROW File="help_manual.rst.txt" Component_="documentation.rst.txt" FileName="HELP_M~1.TXT|help_manual.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_sources\help_manual.rst.txt" SelfReg="false" NextFile="quickstart.rst.txt"/>
+    <ROW File="genindex.html_1" Component_="buildinfo_1" FileName="GENIND~1.HTM|genindex.html" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\genindex.html" SelfReg="false" NextFile="help_manual.html_1"/>
+    <ROW File="help_manual.html_1" Component_="buildinfo_1" FileName="HELP_M~1.HTM|help_manual.html" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\help_manual.html" SelfReg="false" NextFile="index.html"/>
+    <ROW File="help_manual.rst.txt_1" Component_="help_manual.rst.txt" FileName="HELP_M~1.TXT|help_manual.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_sources\help_manual.rst.txt" SelfReg="false" NextFile="index.rst.txt_1"/>
+    <ROW File="index.html" Component_="index.html" FileName="INDEX~1.HTM|index.html" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\index.html" SelfReg="false" NextFile="objects.inv_1"/>
+    <ROW File="index.rst.txt_1" Component_="help_manual.rst.txt" FileName="INDEXR~1.TXT|index.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_sources\index.rst.txt" SelfReg="false" NextFile="quickstart.rst.txt_1"/>
     <ROW File="irif.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="IRIFAM~1.BC|irif.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\lib\bitcode\irif.amdgcn.bc" SelfReg="false" NextFile="ockl.amdgcn.bc"/>
-    <ROW File="jquery.js" Component_="ajaxloader.gif" FileName="jquery.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\jquery.js" SelfReg="false" NextFile="modernizr.min.js"/>
-    <ROW File="jquery3.1.0.js" Component_="ajaxloader.gif" FileName="JQUERY~1.JS|jquery-3.1.0.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\jquery-3.1.0.js" SelfReg="false" NextFile="jquery.js"/>
+    <ROW File="jquery.js_1" Component_="ajaxloader.gif_1" FileName="jquery.js" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\jquery.js" SelfReg="false" NextFile="modernizr.min.js_1"/>
+    <ROW File="jquery3.1.0.js_1" Component_="ajaxloader.gif_1" FileName="JQUERY~1.JS|jquery-3.1.0.js" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\jquery-3.1.0.js" SelfReg="false" NextFile="jquery.js_1"/>
     <ROW File="ld.lld.exe" Component_="ld.lld.exe" FileName="LDLLD~1.EXE|ld.lld.exe" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\bin\ld.lld.exe" SelfReg="false" NextFile="llvmobjdump.exe" DigSign="true"/>
     <ROW File="llvmobjdump.exe" Component_="llvmobjdump.exe" FileName="LLVM-O~1.EXE|llvm-objdump.exe" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\bin\llvm-objdump.exe" SelfReg="false" NextFile="llvmreadobj.exe" DigSign="true"/>
     <ROW File="llvmreadobj.exe" Component_="llvmreadobj.exe" FileName="LLVM-R~1.EXE|llvm-readobj.exe" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\bin\llvm-readobj.exe" SelfReg="false" NextFile="openclc.h" DigSign="true"/>
-    <ROW File="minus.png" Component_="ajaxloader.gif" FileName="minus.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\minus.png" SelfReg="false" NextFile="plus.png"/>
-    <ROW File="modernizr.min.js" Component_="modernizr.min.js" FileName="MODERN~1.JS|modernizr.min.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\js\modernizr.min.js" SelfReg="false" NextFile="theme.js"/>
+    <ROW File="minus.png_1" Component_="ajaxloader.gif_1" FileName="minus.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\minus.png" SelfReg="false" NextFile="plus.png_1"/>
+    <ROW File="modernizr.min.js_1" Component_="modernizr.min.js_1" FileName="MODERN~1.JS|modernizr.min.js" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\js\modernizr.min.js" SelfReg="false" NextFile="theme.js_1"/>
     <ROW File="msvcp140.dll" Component_="msvcp140.dll" FileName="msvcp140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\msvcp140.dll" SelfReg="false" NextFile="Qt5Core.dll"/>
-    <ROW File="nojekyll" Component_="buildinfo" FileName="NOJEKY~1|.nojekyll" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\.nojekyll" SelfReg="false" NextFile="documentation.html"/>
-    <ROW File="objects.inv" Component_="buildinfo" FileName="objects.inv" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\objects.inv" SelfReg="false" NextFile="quickstart.html"/>
+    <ROW File="nojekyll_1" Component_="buildinfo_1" FileName="NOJEKY~1|.nojekyll" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\.nojekyll" SelfReg="false" NextFile="genindex.html_1"/>
+    <ROW File="objects.inv_1" Component_="buildinfo_1" FileName="objects.inv" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\objects.inv" SelfReg="false" NextFile="quickstart.html_1"/>
     <ROW File="ockl.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCKLAM~1.BC|ockl.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\lib\bitcode\ockl.amdgcn.bc" SelfReg="false" NextFile="oclc_correctly_rounded_sqrt_off.amdgcn.bc"/>
     <ROW File="oclc_correctly_rounded_sqrt_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_C~1.BC|oclc_correctly_rounded_sqrt_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\lib\bitcode\oclc_correctly_rounded_sqrt_off.amdgcn.bc" SelfReg="false" NextFile="oclc_correctly_rounded_sqrt_on.amdgcn.bc"/>
     <ROW File="oclc_correctly_rounded_sqrt_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_C~2.BC|oclc_correctly_rounded_sqrt_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\lib\bitcode\oclc_correctly_rounded_sqrt_on.amdgcn.bc" SelfReg="false" NextFile="oclc_daz_opt_off.amdgcn.bc"/>
@@ -187,28 +187,28 @@
     <ROW File="ocml.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCMLAM~1.BC|ocml.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\lib\bitcode\ocml.amdgcn.bc" SelfReg="false" NextFile="opencl.amdgcn.bc"/>
     <ROW File="opencl.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OPENCL~1.BC|opencl.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\lib\bitcode\opencl.amdgcn.bc" SelfReg="false" NextFile="shae.exe"/>
     <ROW File="openclc.h" Component_="openclc.h" FileName="opencl-c.h" Attributes="0" SourcePath="..\BuildOutput\bin\x64\ROCm\OpenCL\include\opencl-c.h" SelfReg="false" NextFile="irif.amdgcn.bc"/>
-    <ROW File="plus.png" Component_="ajaxloader.gif" FileName="plus.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\plus.png" SelfReg="false" NextFile="pygments.css"/>
-    <ROW File="pygments.css" Component_="ajaxloader.gif" FileName="pygments.css" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\pygments.css" SelfReg="false" NextFile="searchtools.js"/>
+    <ROW File="plus.png_1" Component_="ajaxloader.gif_1" FileName="plus.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\plus.png" SelfReg="false" NextFile="pygments.css_1"/>
+    <ROW File="pygments.css_1" Component_="ajaxloader.gif_1" FileName="pygments.css" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\pygments.css" SelfReg="false" NextFile="searchtools.js_1"/>
     <ROW File="qsvg.dll" Component_="qsvg.dll" FileName="qsvg.dll" Attributes="0" SourcePath="..\BuildOutput\bin\imageformats\qsvg.dll" SelfReg="false" NextFile="License.txt"/>
     <ROW File="qsvgicon.dll" Component_="qsvgicon.dll" FileName="qsvgicon.dll" Attributes="0" SourcePath="..\BuildOutput\bin\iconengines\qsvgicon.dll" SelfReg="false" NextFile="qwindows.dll"/>
-    <ROW File="quickstart.html" Component_="buildinfo" FileName="QUICKS~1.HTM|quickstart.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\quickstart.html" SelfReg="false" NextFile="search.html"/>
-    <ROW File="quickstart.rst.txt" Component_="documentation.rst.txt" FileName="QUICKS~1.TXT|quickstart.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_sources\quickstart.rst.txt" SelfReg="false" NextFile="ajaxloader.gif"/>
+    <ROW File="quickstart.html_1" Component_="buildinfo_1" FileName="QUICKS~1.HTM|quickstart.html" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\quickstart.html" SelfReg="false" NextFile="search.html_1"/>
+    <ROW File="quickstart.rst.txt_1" Component_="help_manual.rst.txt" FileName="QUICKS~1.TXT|quickstart.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_sources\quickstart.rst.txt" SelfReg="false" NextFile="ajaxloader.gif_1"/>
     <ROW File="qwindows.dll" Component_="qwindows.dll" FileName="qwindows.dll" Attributes="0" SourcePath="..\BuildOutput\bin\platforms\qwindows.dll" SelfReg="false" NextFile="amdspv.exe"/>
     <ROW File="rga.exe" Component_="rga.exe" FileName="rga.exe" Version="[|ProductVersion]" Attributes="0" SourcePath="..\BuildOutput\bin\rga.exe" SelfReg="false" NextFile="vccorlib140.dll" DigSign="true"/>
-    <ROW File="search.html" Component_="buildinfo" FileName="SEARCH~1.HTM|search.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\search.html" SelfReg="false" NextFile="searchindex.js"/>
-    <ROW File="searchindex.js" Component_="buildinfo" FileName="SEARCH~1.JS|searchindex.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\searchindex.js" SelfReg="false" NextFile="_open_file_link_button.PNG"/>
-    <ROW File="searchtools.js" Component_="ajaxloader.gif" FileName="SEARCH~1.JS|searchtools.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\searchtools.js" SelfReg="false" NextFile="underscore1.3.1.js"/>
+    <ROW File="search.html_1" Component_="buildinfo_1" FileName="SEARCH~1.HTM|search.html" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\search.html" SelfReg="false" NextFile="searchindex.js_1"/>
+    <ROW File="searchindex.js_1" Component_="buildinfo_1" FileName="SEARCH~1.JS|searchindex.js" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\searchindex.js" SelfReg="false" NextFile="_open_file_link_button.PNG_1"/>
+    <ROW File="searchtools.js_1" Component_="ajaxloader.gif_1" FileName="SEARCH~1.JS|searchtools.js" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\searchtools.js" SelfReg="false" NextFile="underscore1.3.1.js_1"/>
     <ROW File="shae.exe" Component_="shae.exe" FileName="shae.exe" Attributes="0" SourcePath="..\BuildOutput\bin\x64\shae.exe" SelfReg="false" NextFile="spvgen.dll" DigSign="true"/>
     <ROW File="spvgen.dll" Component_="spvgen.dll" FileName="spvgen.dll" Attributes="0" SourcePath="..\BuildOutput\bin\x64\spvgen.dll" SelfReg="false" NextFile="VirtualContext.exe"/>
-    <ROW File="theme.css" Component_="badge_only.css" FileName="theme.css" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\css\theme.css" SelfReg="false" NextFile="doctools.js"/>
-    <ROW File="theme.js" Component_="modernizr.min.js" FileName="theme.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\js\theme.js" SelfReg="false" NextFile="minus.png"/>
-    <ROW File="underscore.js" Component_="ajaxloader.gif" FileName="UNDERS~2.JS|underscore.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\underscore.js" SelfReg="false" NextFile="uppressed.png"/>
-    <ROW File="underscore1.3.1.js" Component_="ajaxloader.gif" FileName="UNDERS~1.JS|underscore-1.3.1.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\underscore-1.3.1.js" SelfReg="false" NextFile="underscore.js"/>
-    <ROW File="up.png" Component_="ajaxloader.gif" FileName="up.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\up.png" SelfReg="false" NextFile="websupport.js"/>
-    <ROW File="uppressed.png" Component_="ajaxloader.gif" FileName="UP-PRE~1.PNG|up-pressed.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\up-pressed.png" SelfReg="false" NextFile="up.png"/>
+    <ROW File="theme.css_1" Component_="badge_only.css_1" FileName="theme.css" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\css\theme.css" SelfReg="false" NextFile="doctools.js_1"/>
+    <ROW File="theme.js_1" Component_="modernizr.min.js_1" FileName="theme.js" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\js\theme.js" SelfReg="false" NextFile="minus.png_1"/>
+    <ROW File="underscore.js_1" Component_="ajaxloader.gif_1" FileName="UNDERS~2.JS|underscore.js" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\underscore.js" SelfReg="false" NextFile="uppressed.png_1"/>
+    <ROW File="underscore1.3.1.js_1" Component_="ajaxloader.gif_1" FileName="UNDERS~1.JS|underscore-1.3.1.js" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\underscore-1.3.1.js" SelfReg="false" NextFile="underscore.js_1"/>
+    <ROW File="up.png_1" Component_="ajaxloader.gif_1" FileName="up.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\up.png" SelfReg="false" NextFile="websupport.js_1"/>
+    <ROW File="uppressed.png_1" Component_="ajaxloader.gif_1" FileName="UP-PRE~1.PNG|up-pressed.png" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\up-pressed.png" SelfReg="false" NextFile="up.png_1"/>
     <ROW File="vccorlib140.dll" Component_="vccorlib140.dll" FileName="VCCORL~1.DLL|vccorlib140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\vccorlib140.dll" SelfReg="false" NextFile="vcruntime140.dll"/>
     <ROW File="vcruntime140.dll" Component_="vcruntime140.dll" FileName="VCRUNT~1.DLL|vcruntime140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\vcruntime140.dll" SelfReg="false" NextFile="qsvg.dll"/>
-    <ROW File="websupport.js" Component_="ajaxloader.gif" FileName="WEBSUP~1.JS|websupport.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\html\_static\websupport.js" SelfReg="false"/>
+    <ROW File="websupport.js_1" Component_="ajaxloader.gif_1" FileName="WEBSUP~1.JS|websupport.js" Attributes="0" SourcePath="..\BuildOutput\bin\Documentation\html\_static\websupport.js" SelfReg="false"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.BuildComponent">
     <ROW BuildKey="x64_Release_Static" BuildName="x64_Release_Static" BuildOrder="1" BuildType="0" PackageFolder="." PackageFileName="RGA-[|ProductVersion]-Installer" Languages="en" InstallationType="4" UseLargeSchema="true" MsiPackageType="x64"/>
@@ -332,7 +332,7 @@
     <ROW Registry="Version" Root="-1" Key="Software\[Manufacturer]\[ProductName]" Name="Version" Value="[ProductVersion]" Component_="ProductInformation"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiShortsComponent">
-    <ROW Shortcut="Documentation" Directory_="SHORTCUTDIR" Name="DOCUME~1|Documentation" Component_="documentation.html" Target="[#documentation.html]" Hotkey="0" IconIndex="0" ShowCmd="1" WkDir="html_Dir"/>
+    <ROW Shortcut="Documentation" Directory_="SHORTCUTDIR" Name="DOCUME~1|Documentation" Component_="index.html" Target="[#index.html]" Hotkey="0" IconIndex="0" ShowCmd="1" WkDir="html_1_Dir"/>
     <ROW Shortcut="RadeonGPUAnalyzerGUI" Directory_="DesktopFolder" Name="RADEON~1|RadeonGPUAnalyzerGUI" Component_="RadeonGPUAnalyzerGUI.exe" Target="[#RadeonGPUAnalyzerGUI.exe]" Hotkey="0" IconIndex="0" ShowCmd="1" WkDir="APPDIR"/>
     <ROW Shortcut="RadeonGPUAnalyzerGUI_1" Directory_="SHORTCUTDIR" Name="RADEON~1|RadeonGPUAnalyzerGUI" Component_="RadeonGPUAnalyzerGUI.exe" Target="[#RadeonGPUAnalyzerGUI.exe]" Hotkey="0" Icon_="RadeonGPUAnalyzerGUI.exe" IconIndex="0" ShowCmd="1" WkDir="APPDIR"/>
   </COMPONENT>
