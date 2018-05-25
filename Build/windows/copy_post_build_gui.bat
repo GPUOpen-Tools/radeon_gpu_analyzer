@@ -15,8 +15,8 @@ IF NOT exist %OUTPUT_DIR% mkdir %OUTPUT_DIR%
 IF NOT exist %OUTPUT_DIR%\platforms mkdir %OUTPUT_DIR%\platforms
 IF NOT exist %OUTPUT_DIR%\iconengines mkdir %OUTPUT_DIR%\iconengines
 IF NOT exist %OUTPUT_DIR%\imageformats mkdir %OUTPUT_DIR%\imageformats
-IF NOT exist %OUTPUT_DIR%\docs mkdir %OUTPUT_DIR%\docs
-IF NOT exist %OUTPUT_DIR%\docs\html mkdir %OUTPUT_DIR%\docs\html
+IF NOT exist %OUTPUT_DIR%\Documentation mkdir %OUTPUT_DIR%\Documentation
+IF NOT exist %OUTPUT_DIR%\Documentation\html mkdir %OUTPUT_DIR%\Documentation\html
 
 rem Copy Qt5 dlls
 IF NOT [%QT_LIB_DIR%]==[] (
@@ -40,4 +40,4 @@ IF NOT [%QT_LIB_DIR%]==[] (
 )
 
 rem Copy documentation files
-XCopy /r /e /d /y "..\..\docs\build\html" "%OUTPUT_DIR%\docs\html\"
+XCopy /r /e /d /y "..\..\..\Documentation\Build\html" "%OUTPUT_DIR%\Documentation\html\"

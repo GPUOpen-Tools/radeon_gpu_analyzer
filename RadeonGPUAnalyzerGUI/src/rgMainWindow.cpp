@@ -1143,7 +1143,7 @@ void rgMainWindow::HandleAboutEvent()
 void rgMainWindow::HandleGettingStartedGuideEvent()
 {
     // Build the path to the quickstart guide document.
-    static const char* QUICKSTART_GUIDE_RELATIVE_PATH = "/docs/html/quickstart.html";
+    static const char* QUICKSTART_GUIDE_RELATIVE_PATH = "/Documentation/html/quickstart.html";
     QString quickstartFilePath = "file:///";
     QString appDirPath = qApp->applicationDirPath();
     quickstartFilePath.append(appDirPath);
@@ -1154,7 +1154,7 @@ void rgMainWindow::HandleGettingStartedGuideEvent()
 void rgMainWindow::HandleHelpManual()
 {
     // Build the path to the help manual document.
-    static const char* HELP_MANUAL_RELATIVE_PATH = "/docs/html/Documentation.html";
+    static const char* HELP_MANUAL_RELATIVE_PATH = "/Documentation/html/index.html";
     QString helpManualFilePath = "file:///";
     QString appDirPath = qApp->applicationDirPath();
     helpManualFilePath.append(appDirPath);
