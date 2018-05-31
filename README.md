@@ -57,7 +57,7 @@ cd to the Build sub-folder, and run:
 prebuild.bat --build release (or: debug)
 
 Running the prebuild script will fetch all the dependencies, and generate the solution file for VS 2015. 
-After successfully running the preuild script, open RGA.sln from Build\CMake\VS2015, and build:
+After successfully running the prebuild script, open RGA.sln from Build\windows\VS2015\Release (or Debug), and build:
 * RadeonGPUAnalyzerCLI project for the command line exectuable
 * RadeonGPUAnalyzerGUI project for the GUI app
 
@@ -103,7 +103,7 @@ named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dl
    
    This will fetch all the dependencies, and generate the makefiles.
 
-   Then, cd to the auto-generated subfolder Build/CMake/linux and run make.
+   Then, cd to the auto-generated subfolder Build/Linux/Make/Release (or Debug) and run make.
 
    -=-
    
@@ -151,7 +151,7 @@ cd to the Build sub-folder, and run:
   
   This will fetch all the dependencies, and generate the makefiles.
 
-* cd to the auto-generated subfolder Build/CMake/linux and run make.
+* cd to the auto-generated subfolder Build/Linux/Make/Release (or Debug) and run make.
 
    -=-
    
