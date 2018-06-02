@@ -32,10 +32,14 @@ endif()
 
 # Linux specific configurations
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-
     # Compiler & linker configuration
     add_definitions(-std=c++11 -fmessage-length=0 -Wno-unknown-pragmas -pthread)
     set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc ${CMAKE_EXE_LINKER_FLAGS}")
+
+    # Disable PIE (position-independent executable) to avoid link errors (gcc 6+ generates PIE by default).
+    if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
+    endif()
 
     # Generic preprocessor directives
     add_definitions(-DLINUX)
