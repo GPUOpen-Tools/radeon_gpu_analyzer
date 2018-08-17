@@ -130,6 +130,7 @@ bool rgIsaDisassemblyView::PopulateDisassemblyView(const std::vector<rgSourceFil
     // Iterate through each target GPU's output.
     for (auto gpuOutputsIter = buildOutput.begin(); gpuOutputsIter != buildOutput.end(); ++gpuOutputsIter)
     {
+        const std::string& familyName = gpuOutputsIter->first;
         std::shared_ptr<rgCliBuildOutput> pGpuBuildOutput = gpuOutputsIter->second;
         bool isValidOutput = pGpuBuildOutput != nullptr;
         assert(isValidOutput);
@@ -159,12 +160,12 @@ bool rgIsaDisassemblyView::PopulateDisassemblyView(const std::vector<rgSourceFil
                         {
                             if (outputs.m_fileType == IsaDisassemblyCsv)
                             {
-                                std::vector<rgEntryOutput>& disassemblyCsvFilePaths = gpuToDisassemblyCsvEntries[outputs.m_gpuName];
+                                std::vector<rgEntryOutput>& disassemblyCsvFilePaths = gpuToDisassemblyCsvEntries[familyName];
                                 disassemblyCsvFilePaths.push_back(entry);
                             }
                             else if (outputs.m_fileType == HwResourceUsageFile)
                             {
-                                std::vector<rgEntryOutput>& entryCsvFilePaths = gpuToResourceUsageCsvEntries[outputs.m_gpuName];
+                                std::vector<rgEntryOutput>& entryCsvFilePaths = gpuToResourceUsageCsvEntries[familyName];
                                 entryCsvFilePaths.push_back(entry);
                             }
                         }
@@ -240,18 +241,36 @@ void rgIsaDisassemblyView::HandleSelectedEntrypointChanged(const std::string& ta
     }
 
     // Get a reference to the map of input file path to the entrypoint names map.
-    InputToEntrypointViews& inputFileToEntrypointMap = m_gpuResourceUsageViews[targetGpu];
-
-    // Use the input file path to get a reference to a map of entrypoint names to resource usage views.
-    EntrypointToResourcesView& entrypointMap = inputFileToEntrypointMap[inputFilePath];
-
-    // Search the map to find the resource usage view associated with the given entrypoint.
-    auto resourceViewIter = entrypointMap.find(selectedEntrypointName);
-    if (resourceViewIter != entrypointMap.end())
+    const auto& targetGpuResourceUsageViewsIter = m_gpuResourceUsageViews.find(targetGpu);
+    assert(targetGpuResourceUsageViewsIter != m_gpuResourceUsageViews.end());
+    if (targetGpuResourceUsageViewsIter != m_gpuResourceUsageViews.end())
     {
-        // Display the resource usage view associated with the given entrypoint.
-        rgResourceUsageView* pResourceUsageView = resourceViewIter->second;
-        ui.resourceUsageHostStackedWidget->setCurrentWidget(pResourceUsageView);
+        InputToEntrypointViews& inputFileToEntrypointMap = targetGpuResourceUsageViewsIter->second;
+
+        // Use the input file path to get a reference to a map of entrypoint names to resource usage views.
+        EntrypointToResourcesView& entrypointMap = inputFileToEntrypointMap[inputFilePath];
+
+        // Search the map to find the resource usage view associated with the given entrypoint.
+        auto resourceViewIter = entrypointMap.find(selectedEntrypointName);
+        if (resourceViewIter != entrypointMap.end())
+        {
+            // Display the resource usage view associated with the given entrypoint.
+            rgResourceUsageView* pResourceUsageView = resourceViewIter->second;
+            ui.resourceUsageHostStackedWidget->setCurrentWidget(pResourceUsageView);
+        }
+    }
+    else
+    {
+        std::string filenameOnly;
+        bool isOk = rgUtils::ExtractFileName(inputFilePath, filenameOnly);
+        assert(isOk);
+        if (isOk)
+        {
+            std::stringstream errorStream;
+            errorStream << STR_ERR_CANNOT_LOAD_RESOURCE_USAGE_CSV_FILE;
+            errorStream << filenameOnly;
+            rgUtils::ShowErrorMessageBox(errorStream.str().c_str());
+        }
     }
 }
 
@@ -387,6 +406,12 @@ void rgIsaDisassemblyView::HandleTargetGpuArrowClicked(bool clicked)
     }
     else
     {
+        // The selected GPU hasn't been changed yet- we're only altering the visibility of the GPU
+        // dropdown in this handler. Block signals from being emitted from the dropdown while
+        // setting the focus. The "Target GPU Changed" handler will only be invoked when the user
+        // changes the selected row in the GPU dropdown list.
+        QSignalBlocker selectedGpuChangedBlocker(m_pTargetGpusListWidget);
+
         // Compute where to place the combo box relative to where the arrow button is.
         QWidget* pWidget = ui.targetGpuPushButton;
         m_pTargetGpusListWidget->show();
@@ -406,20 +431,40 @@ void rgIsaDisassemblyView::HandleTargetGpuArrowClicked(bool clicked)
 
 void rgIsaDisassemblyView::HandleTargetGpuChanged(int currentIndex)
 {
-    auto pTargetGpuItem = m_pTargetGpusListWidget->item(currentIndex);
-    assert(pTargetGpuItem != nullptr);
-    if (pTargetGpuItem != nullptr)
+    assert(m_pTargetGpusListWidget != nullptr);
+    if (m_pTargetGpusListWidget != nullptr)
     {
-        // Change the target GPU if it differs from the current target GPU.
-        std::string currentTargetGpu = ui.targetGpuPushButton->text().toStdString();
-        std::string newTargetGpu = pTargetGpuItem->text().toStdString();
-        if (currentTargetGpu.compare(newTargetGpu) != 0)
+        auto pTargetGpuItem = m_pTargetGpusListWidget->item(currentIndex);
+        assert(pTargetGpuItem != nullptr);
+        if (pTargetGpuItem != nullptr)
         {
-            // Change the target GPU to the newly selected item.
-            SetTargetGpu(newTargetGpu);
+            // Change the target GPU if it differs from the current target GPU.
+            std::string currentTargetGpu = ui.targetGpuPushButton->text().toStdString();
+            std::string newTargetGpu = pTargetGpuItem->text().toStdString();
+            if (currentTargetGpu.compare(newTargetGpu) != 0)
+            {
+                // Use the dropdown list's selection model to change the currently selected target GPU.
+                QItemSelectionModel* pSelectionModel = m_pTargetGpusListWidget->selectionModel();
+                assert(pSelectionModel != nullptr);
+                if (pSelectionModel != nullptr)
+                {
+                    // Select the new target GPU within the dropdown list widget.
+                    QAbstractItemModel* pListModel = m_pTargetGpusListWidget->model();
 
-            // Emit a signal with the name of the target GPU to switch to.
-            emit SelectedTargetGpuChanged(newTargetGpu);
+                    assert(pListModel != nullptr);
+                    if (pListModel != nullptr)
+                    {
+                        QModelIndex modelIndex = pListModel->index(currentIndex, 0);
+                        pSelectionModel->setCurrentIndex(modelIndex, QItemSelectionModel::SelectionFlag::Select);
+                    }
+                }
+
+                // Change the target GPU to the newly selected item.
+                SetTargetGpu(newTargetGpu);
+
+                // Emit a signal with the name of the target GPU to switch to.
+                emit SelectedTargetGpuChanged(newTargetGpu);
+            }
         }
     }
 }
@@ -570,8 +615,8 @@ void rgIsaDisassemblyView::PopulateTargetGpuList(const rgBuildOutputsMap& buildO
         }
     }
 
-    // Switch to the first target GPU.
-    HandleTargetGpuChanged(0);
+    // Switch to the last target GPU, which is the most recently released.
+    HandleTargetGpuChanged(static_cast<int>(buildOutput.size()) - 1);
 
     // Re-enable signals emitted from the target GPU list.
     m_pTargetGpusListWidget->blockSignals(false);
@@ -662,7 +707,7 @@ bool rgIsaDisassemblyView::PopulateResourceUsageEntries(const GpuToEntryVector& 
                         ui.resourceUsageHostStackedWidget->addWidget(pResourceUsageView);
 
                         // Get a reference to the entrypoint views associated with the parsed device.
-                        InputToEntrypointViews& inputFileToEntrypointMap = m_gpuResourceUsageViews[resourceUsageData.m_device];
+                        InputToEntrypointViews& inputFileToEntrypointMap = m_gpuResourceUsageViews[gpuName];
 
                         // Get a reference to the resource views map for the source file.
                         EntrypointToResourcesView& entrypointMap = inputFileToEntrypointMap[entry.m_inputFilePath];

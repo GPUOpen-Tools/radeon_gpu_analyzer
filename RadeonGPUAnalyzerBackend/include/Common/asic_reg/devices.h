@@ -108,8 +108,8 @@ enum {
 };
 
 enum {
-    AI_GD_P0 = 1,
-    AI_GD_P1 = 2,
+    AI_GD_P0       = 1,
+    AI_GD_P1       = 2,
 
     AI_UNKNOWN = 0xFF
 };

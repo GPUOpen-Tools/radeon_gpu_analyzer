@@ -576,50 +576,57 @@ static void ReduceDeviceName(std::string& name)
 }
 
 // Helper function that interprets the matched devices found by the "kcUtils::FindGPUArchName()".
-// Returns the message in "outMessage" string.
-static bool ResolveMatchedDevices(const kcUtils::DeviceNameMap& matchedDevices, const std::string& device, std::string& outMessage)
+static bool ResolveMatchedDevices(const kcUtils::DeviceNameMap& matchedDevices, const std::string& device,
+                                  bool printInfo, bool printUnknownDeviceError)
 {
     bool  status = false;
-    std::stringstream  msg;
-
-    // Routine printing the architecture name and all its device names.
-    auto  PrintArchAndDevices = [&](const kcUtils::DeviceNameMap::value_type& arch)
+    std::stringstream  outMsg, errMsg;
+    // Routine printing the architecture name and all its device names to required stream.
+    auto  PrintArchAndDevices = [&](const kcUtils::DeviceNameMap::value_type& arch, std::stringstream& s)
     {
-        msg << arch.first << std::endl;
+        s << arch.first << std::endl;
         for (const std::string& marketingName : arch.second)
         {
-            msg << "\t" << marketingName << std::endl;
+            s << "\t" << marketingName << std::endl;
         }
     };
-
     if (matchedDevices.size() == 0)
     {
-        // No matching architectures found. Failure.
-        msg << STR_ERR_COULD_NOT_DETECT_TARGET << device << std::endl;
+        if (printInfo && printUnknownDeviceError)
+        {
+            // No matching architectures found. Failure.
+            errMsg << STR_ERR_COULD_NOT_DETECT_TARGET << device << std::endl;
+        }
     }
     else if (matchedDevices.size() == 1)
     {
         // Found exactly one GPU architectire. Success.
-        msg << STR_TARGET_DETECTED << std::endl << std::endl;
-        PrintArchAndDevices(*(matchedDevices.begin()));
+        if (printInfo)
+        {
+            outMsg << STR_TARGET_DETECTED << std::endl << std::endl;
+            PrintArchAndDevices(*(matchedDevices.begin()), outMsg);
+            outMsg << std::endl;
+        }
         status = true;
     }
-    else
+    else if (printInfo)
     {
         // Found multiple GPU architectures. Failure.
-        msg << STR_ERR_AMBIGUOUS_TARGET << device << std::endl << std::endl;
+        errMsg << STR_ERR_AMBIGUOUS_TARGET << device << std::endl << std::endl;
         for (auto& arch : matchedDevices)
         {
-            PrintArchAndDevices(arch);
+            PrintArchAndDevices(arch, errMsg);
         }
     }
-    msg << std::endl;
-    outMessage = msg.str();
-
+    rgLog::stdOut << outMsg.str() << rgLog::flush;
+    if (!errMsg.str().empty())
+    {
+        rgLog::stdErr << errMsg.str() << std::endl;
+    }
     return status;
 }
 
-bool kcUtils::FindGPUArchName(const std::string & deviceName, std::string & archName, std::string& msg)
+bool kcUtils::FindGPUArchName(const std::string& device, std::string& matchedDevice, bool printInfo, bool allowUnknownDevice)
 {
     bool  status = false;
     const char* FILTER_INDICATOR_1 = ":";
@@ -629,7 +636,7 @@ bool kcUtils::FindGPUArchName(const std::string & deviceName, std::string & arch
     DeviceNameMap  matchedDevices, cardsMapping;
 
     // Transform the device name to lower case and remove spaces.
-    std::string  reducedName = deviceName;
+    std::string  reducedName = device;
     ReduceDeviceName(reducedName);
 
     bool rc = kcUtils::GetMarketingNameToCodenameMapping(cardsMapping);
@@ -687,9 +694,9 @@ bool kcUtils::FindGPUArchName(const std::string & deviceName, std::string & arch
     }
 
     // Interpret the matched names.
-    if (ResolveMatchedDevices(matchedDevices, deviceName, msg))
+    if (ResolveMatchedDevices(matchedDevices, device, printInfo, !allowUnknownDevice))
     {
-        archName = (*(matchedDevices.begin())).first;
+        matchedDevice = (*(matchedDevices.begin())).first;
         status = true;
     }
 
@@ -1540,4 +1547,12 @@ bool  kcUtils::InitCLILogFile(const Config& config)
     }
 
     return status;
+}
+
+bool kcUtils::StrCmpNoCase(const std::string & s1, const std::string & s2)
+{
+    std::string s1_u = s1, s2_u = s2;
+    std::transform(s1_u.begin(), s1_u.end(), s1_u.begin(), [](unsigned char c) {return std::toupper(c); });
+    std::transform(s2_u.begin(), s2_u.end(), s2_u.begin(), [](unsigned char c) {return std::toupper(c); });
+    return (s1_u == s2_u);
 }

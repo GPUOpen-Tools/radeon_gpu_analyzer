@@ -88,14 +88,7 @@ check the "Enable MAD instructions" checkbox in the global OpenCL build settings
 			* Architecture: the name of the GPU HW architecture, such as Vega.
 			* Compute capability: the name of the architecture variant. From the compiler's point of view, GPUs with the same compute capability are identical. Therefore, RGA treats all of the product names that share the same compute capability as a single Target GPU.
 			* Product name: this is the public name of the GPU product, such as "Radeon Instinct MI25" or "Radeon RX Vega".
-				
-		**Important note:**
-		
-		This release only supports two compute capabilities:
-		
-			* gfx900: discrete Vega GPUs
-			* gfx902: Vega GPUs that are used in the Raven Ridge APU
-					 
+
 	* **Predefined macros:**
   
 		Preprocessor directives which can come in two forms:

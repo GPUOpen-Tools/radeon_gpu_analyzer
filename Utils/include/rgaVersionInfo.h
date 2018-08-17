@@ -1,6 +1,6 @@
 #pragma once
 
-const char* const STR_RGA_VERSION = "2.0";
+const char* const STR_RGA_VERSION = "2.0.1305";
 #ifdef RGA_BUILD_NUMBER
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)

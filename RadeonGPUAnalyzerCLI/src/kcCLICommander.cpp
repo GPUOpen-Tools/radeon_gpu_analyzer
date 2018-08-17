@@ -12,6 +12,7 @@
 #include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
 #include <RadeonGPUAnalyzerCLI/src/kcCLICommander.h>
 #include <RadeonGPUAnalyzerCLI/src/kcCLICommanderLightning.h>
+#include <Utils/include/rgLog.h>
 
 
 void kcCLICommander::Version(Config& config, LoggingCallBackFunc_t callback)
@@ -70,18 +71,15 @@ void kcCLICommander::DeleteTempFiles() const
 }
 
 bool kcCLICommander::InitRequestedAsicList(const Config& config, const std::set<std::string>& supportedDevices,
-                                           std::set<std::string>& targets, std::function<void(const std::string&)> logCallback)
+                                           std::set<std::string>& matchedDevices, bool allowUnknownDevices)
 {
     if (!config.m_ASICs.empty())
     {
         // Take the devices which the user selected.
-        std::set<std::string>  matchedArchs;
         for (const std::string& asicName : config.m_ASICs)
         {
             std::string  matchedArchName;
-            std::string  msg;
-            bool foundSingleTarget = kcUtils::FindGPUArchName(asicName, matchedArchName, msg);
-            logCallback(msg);
+            bool foundSingleTarget = kcUtils::FindGPUArchName(asicName, matchedArchName, true, allowUnknownDevices);
 
             if (foundSingleTarget)
             {
@@ -93,17 +91,18 @@ bool kcCLICommander::InitRequestedAsicList(const Config& config, const std::set<
                 {
                     if (matchedArchName.find(asic) != std::string::npos)
                     {
-                        targets.insert(asic);
+                        matchedDevices.insert(asic);
                         isSupported = true;
                         break;
                     }
                 }
-                if (!isSupported)
+                if (!isSupported && !allowUnknownDevices)
                 {
-                    std::stringstream  log;
-                    log << STR_ERR_ERROR << GetInpulLanguageString(config.m_SourceLanguage)
-                        << STR_ERR_TARGET_IS_NOT_SUPPORTED << matchedArchName << std::endl;
-                    logCallback(log.str());
+                    // This is a workaround for CodeXL issue: CodeXL is unable to grab the stderr stream of child processes.
+                    // Therefore, we dump error message to stdout instead of stderr here to allow CodeXL users to see
+                    // this error message in the CodeXL "Output" window.
+                    rgLog::stdOut << STR_ERR_ERROR << GetInpulLanguageString(config.m_SourceLanguage)
+                                  << STR_ERR_TARGET_IS_NOT_SUPPORTED << matchedArchName << std::endl;
                 }
             }
         }
@@ -116,15 +115,15 @@ bool kcCLICommander::InitRequestedAsicList(const Config& config, const std::set<
             std::string  archName = "";
             std::string  tmpMsg;
 
-            bool  found = kcUtils::FindGPUArchName(device, archName, tmpMsg);
+            bool  found = kcUtils::FindGPUArchName(device, archName, true, allowUnknownDevices);
             if (found)
             {
-                targets.insert(device);
+                matchedDevices.insert(device);
             }
         }
     }
 
-    bool ret = (targets.size() != 0);
+    bool ret = (matchedDevices.size() != 0);
 
     return ret;
 }
@@ -143,7 +142,7 @@ bool kcCLICommander::GetSupportedTargets(SourceLanguage lang, std::set<std::stri
 
         if (beUtils::GetAllGraphicsCards(dxDeviceTable, supportedDevices))
         {
-            if (InitRequestedAsicList(Config(), supportedDevices, matchedTargets, [](const std::string& s) {}))
+            if (InitRequestedAsicList(Config(), supportedDevices, matchedTargets, false))
             {
                 targets = matchedTargets;
             }

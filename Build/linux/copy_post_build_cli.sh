@@ -17,6 +17,7 @@ if [ ! -d "../../output/bin/ROCm" ]; then
   mkdir ../../output/bin/ROCm
 fi
 cp -rf ../../Core/ROCm/OpenCL/linux ../../output/bin/ROCm/OpenCL
+cp ../../Core/ROCm/OpenCL/additional-targets ../../output/bin/ROCm/OpenCL/
 
 # Copy the static analysis backend.
 if [ "$INTERNAL" = true ]; then
@@ -43,5 +44,7 @@ fi
 cp ./rga ../../output/bin/
 chmod +x ../../output/bin/rga
 
-# Copy license file.
+# Copy license files.
 cp ../../License.txt ../../output/bin/
+cp ../../RGAThirdPartyLicenses.txt ../../output/bin/
+

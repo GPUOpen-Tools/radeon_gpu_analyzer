@@ -48,9 +48,12 @@ public:
 protected:
     // -- Functions --
 
-    // Initialize the list of GPU targets.
+    // Initialize the list of GPU targets based on device(s) specified in the config.
+    // "supportedDevices" is the list of supported devices. Only targets from this list will be considered.
+    // The matched devices are returned in "matchedDevices" set.
+    // If "allowUnknownDevice" is true, no error message will be printed if no matched devices are found.
     static bool InitRequestedAsicList(const Config& config, const std::set<std::string>& supportedDevices,
-                                      std::set<std::string>& targets, std::function<void(const std::string&)> logCallback);
+                                      std::set<std::string>& matchedDevices, bool allowUnknownDevice);
 
     // Generate RGA CLI session metadata file.
     virtual bool  GenerateSessionMetadata(const Config& config, const rgOutputMetadata& outMetadata) const { return true; }

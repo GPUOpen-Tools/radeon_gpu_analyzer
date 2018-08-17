@@ -60,12 +60,11 @@ private:
     // A compute capability group has a color and a number of rows associated with the group.
     struct CapabilityGroup
     {
-        QColor m_color;
         std::vector<TableRow> m_groupRows;
     };
 
     // Compute the color for the capability group with the given index.
-    void ComputeGroupColor(int groupIndex, QColor& color) const;
+    void ComputeGroupColors(std::map<std::string, float>& architectureHues, std::map<std::string, float>& groupSaturations) const;
 
     // Connect signals to slots within the dialog.
     void ConnectSignals();
@@ -82,6 +81,7 @@ private:
     // Populate the table with available GPU data.
     void PopulateTableData(std::shared_ptr<rgCliVersionInfo> pVersionInfo, const std::string& mode);
 
+    // Set the check state of all GPUs in the given group.
     void SetIsGroupChecked(int groupIndex, bool isChecked);
 
     // Set the data to insert at the given position within the table.
@@ -117,8 +117,11 @@ private:
     // A map of table row index to compute capability group index.
     std::map<int, int> m_tableRowIndexToGroupIndex;
 
-    // A map of group index to group data.
+    // A vector of group index to group data.
     std::vector<CapabilityGroup> m_capabilityGroups;
+
+    // A pointer to the parent object.
+    QWidget* m_pParent = nullptr;
 
     // The interface for the rgTargetGpusDialog.
     Ui::rgTargetGpusDialog ui;

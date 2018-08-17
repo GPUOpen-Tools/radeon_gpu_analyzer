@@ -34,7 +34,7 @@ public:
     // Dump the extracted entry points to stdout.
     static bool  ListEntries(const Config& config, LoggingCallBackFunc_t callback);
 
-    // Get the list of names of supported targets.
+    // Get the list of names of supported targets in DeviceInfo format.
     static std::set<std::string>  GetSupportedTargets();
 
 private:
@@ -102,15 +102,12 @@ private:
 
     // ---- DATA ----
 
-    // All targets supported by the LC Compiler.
-    std::set<std::string>     m_LC_targets;
-
     // Alternative compiler paths specified by a user.
-    CmplrPaths                m_cmplrPaths;
+    CmplrPaths   m_cmplrPaths;
 
-    // Chosen targets.
-    std::set<std::string>     m_asics;
+    // Chosen target GPUs.
+    std::set<std::string>  m_targets;
 
     // Specifies whether the "-#" option (print commands) is enabled.
-    bool                      m_printCmds;
+    bool         m_printCmds;
 };

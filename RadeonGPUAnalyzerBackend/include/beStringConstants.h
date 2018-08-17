@@ -602,6 +602,8 @@
 #define DEVICE_NAME_AMUR     "Amur"
 #define DEVICE_NAME_NOLAN    "Nolan"
 #define DEVICE_NAME_STONEY   "Stoney"
+#define DEVICE_NAME_GFX900   "gfx900"
+#define DEVICE_NAME_GFX902   "gfx902"
 
 // DUMMY SHADERS.
 #define BE_STR_DUMMY_VRTX_SHADER "#version 330 core\nlayout(location = 0) in vec3 vertexPosition_modelspace;\nvoid main()\n{}"
@@ -632,5 +634,7 @@
 #else
 #define LC_COMPILER_EXEC_EXT        L""
 #endif
+
+#define LC_EXTRA_TARGETS_FILE_NAME  L"additional-targets"
 
 #endif // __beStringConstants_h

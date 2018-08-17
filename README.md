@@ -16,14 +16,6 @@ This product can be used to produce the following output:
 
 The RGA package contains both a GUI app and a command-line exectuable.
 
-***Source-to-disassembly correlation in RGA GUI app***
-
-![GUI app's build view](/RadeonGPUAnalyzerGUI/res/screenshots/build_view.png?raw=true "Source correlation in RGA GUI app")
-
-***Notification about potential performance hazards in the GUI app***
-
-![GUI app's resource usage view](/RadeonGPUAnalyzerGUI/res/screenshots/resource_usage.png?raw=true "Performance hazard notification in RGA GUI app")
-
 The supported platforms by the **command-line tool** are:
 * D3D11
 * OpenCL - AMD's LLVM-based Lightning Compiler for ROCm (-s rocm-cl)
@@ -57,7 +49,7 @@ cd to the Build sub-folder, and run:
 prebuild.bat --build release (or: debug)
 
 Running the prebuild script will fetch all the dependencies, and generate the solution file for VS 2015. 
-After successfully running the prebuild script, open RGA.sln from Build\windows\VS2015\Release (or Debug), and build:
+After successfully running the preuild script, open RGA.sln from Build\CMake\VS2015, and build:
 * RadeonGPUAnalyzerCLI project for the command line exectuable
 * RadeonGPUAnalyzerGUI project for the GUI app
 
@@ -103,7 +95,7 @@ named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dl
    
    This will fetch all the dependencies, and generate the makefiles.
 
-   Then, cd to the auto-generated subfolder Build/Linux/Make/Release (or Debug) and run make.
+   Then, cd to the auto-generated subfolder Build/CMake/linux and run make.
 
    -=-
    
@@ -151,7 +143,7 @@ cd to the Build sub-folder, and run:
   
   This will fetch all the dependencies, and generate the makefiles.
 
-* cd to the auto-generated subfolder Build/Linux/Make/Release (or Debug) and run make.
+* cd to the auto-generated subfolder Build/CMake/linux and run make.
 
    -=-
    
@@ -199,155 +191,5 @@ For support, please visit the RGA repository github page: https://github.com/GPU
 Radeon GPU Analyzer is licensed under the MIT license. See the License.txt file for complete license information.
 
 ## Copyright information ##
+Please see RGAThirdPartyLicenses.txt for copyright and third party license information.
 
-**Boost**
-
-Copyright Beman Dawes, 2003.
-    
-**TinyXML**
-
-TinyXML is released under the zlib license
-Files: *
-Copyright: 2000-2007, Lee Thomason, 2002-2004, Yves Berquin 
-Files: tinystr.*
-Copyright: 2000-2007, Lee Thomason, 2002-2004, Yves Berquin, 2005, Tyge Lovset
-
-**TinyXML-2**
-
-TinyXML-2 is released under the zlib license:
-
-This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
-
-The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
-Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
-This notice may not be removed or altered from any source distribution.
-
-**glew**
-
-The OpenGL Extension Wrangler Library
-Copyright (C) 2002-2007, Milan Ikits <milan ikits@ieee org>
-Copyright (C) 2002-2007, Marcelo E. Magallon <mmagallo@debian org>
-Copyright (C) 2002, Lev Povalahev
-All rights reserved.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-THE POSSIBILITY OF SUCH DAMAGE.
-    
-**OpenCL**
-
-Copyright (c) 2008-2015 The Khronos Group Inc.
-
-**RSA Data Security, Inc.**
-
-Copyright (C) 1990, RSA Data Security, Inc. All rights reserved.
-License to copy and use this software is granted provided that
-it is identified as the "RSA Data Security, Inc. MD5 Message
-Digest Algorithm" in all material mentioning or referencing this 
-software or this function.
-License is also granted to make and use derivative works
-provided that such works are identified as "derived from the RSA
-Data Security, Inc. MD5 Message Digest Algorithm" in all
-material mentioning or referencing the derived work.
-
-RSA Data Security, Inc. makes no representations concerning
-either the merchantability of this software or the suitability
-of this software for any particular purpose.  It is provided "as
-is" without express or implied warranty of any kind.
-
-These notices must be retained in any copies of any part of this
-documentation and/or software.
- 
-**Glslang**
-
-Copyright (C) 2002-2005 3Dlabs Inc. Ltd.
-Copyright (C) 2012-2013 LunarG, Inc.
-
-**yaml-cpp**
-
-Copyright (c) 2008-2015 Jesse Beder.
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-**spdlog**
-
-The MIT License (MIT)
-
-Copyright (c) 2016 Gabi Melman.                                       
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-**LLVM**
-
-University of Illinois/NCSA
-Open Source License
-
-Copyright (c) 2003-2017 University of Illinois at Urbana-Champaign.
-All rights reserved.
-
-Developed by:
-
-    LLVM Team
-
-    University of Illinois at Urbana-Champaign
-
-    http://llvm.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal with
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimers.
-
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimers in the
-      documentation and/or other materials provided with the distribution.
-
-    * Neither the names of the LLVM Team, University of Illinois at
-      Urbana-Champaign, nor the names of its contributors may be used to
-      endorse or promote products derived from this Software without specific
-      prior written permission.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE
-SOFTWARE.

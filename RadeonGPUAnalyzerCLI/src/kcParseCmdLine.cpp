@@ -389,6 +389,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << "==========================================" << endl;
             cout << "Usage: " << programName << " [options] source_file(s)" << endl;
             cout << oclOptions << endl;
+            cout << "Note: In case that your alternative compiler supports targets which are not known to the RGA build that you are using, "
+                    "use the x64/ROCm/additional-targets text file, which contains a list of targets that would be dynamically loaded by RGA. "
+                    "To add targets, simply list them in a new line in the file, and RGA would load them while running." << endl << endl;
+
             cout << "Examples:" << endl;
             cout << "  " << "Compile test.cl for Vega Frontier and extract the binary:" << endl;
             cout << "    " << programName << " -s rocm-cl -c \"vega frontier\" -b output/test.bin test.cl" << endl;

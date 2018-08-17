@@ -213,7 +213,7 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
 
         if (!shouldAbort)
         {
-            InitRequestedAsicList(config, m_supportedDevicesCache, targetDevices, m_LogCallback);
+            InitRequestedAsicList(config, m_supportedDevicesCache, targetDevices, false);
 
             for (const std::string& device : targetDevices)
             {

@@ -61,6 +61,7 @@ const char* const STR_ERR_NO_BIN_ISA_FILE_NAME = "Error: failed to find ISA or b
 const char* const STR_ERR_EXTRACT_STATS_FAILED = "Error: failed to extract statistics for the device: ";
 const char* const STR_ERR_TARGET_IS_NOT_SUPPORTED = " offline compilation for the detected target GPU is not supported: ";
 const char* const STR_ERR_COULD_NOT_DETECT_TARGET = "Error: could not detect target GPU -> ";
+const char* const STR_ERR_SINGLE_TARGET_GPU_EXPECTED = "Error: this mode only supports single target GPU.";
 const char* const STR_ERR_AMBIGUOUS_TARGET = "Error: ambiguous target GPU name -> ";
 const char* const STR_ERR_NO_KERNELS_FOR_ANALYSIS = "Error: no kernels provided for analysis.";
 const char* const STR_ERR_OPENCL_CANNOT_FIND_KERNEL = "Error: cannot find OpenCL kernel: ";
@@ -76,7 +77,8 @@ const char* const STR_ERR_ONE_INPUT_FILE_EXPECTED = "Error: exactly one input fi
 const char* const STR_ERR_MIXED_INPUT_FILES = "Error: cannot mix stage-specific input files (--vert, --tesc, --tese, --geom, --frag, --comp) with a stage-less SPIR-V input file.";
 const char* const STR_ERR_FAILED_OUTPUT_FILE_VERIFICATION = "Error: failed to generate one or more output files.";
 const char* const STR_ERR_NOT_KNOWN_ASIC = " is not a known device ASIC.";
-const char* const STR_ERR_UNKNOWN_DEVICE_PROVIDED = "Error: unknown device name provided. Aborting.";
+const char* const STR_ERR_UNKNOWN_DEVICE_PROVIDED_1 = "Error: unknown device name provided: ";
+const char* const STR_ERR_UNKNOWN_DEVICE_PROVIDED_2 = ". Cannot compile for this target.";
 const char* const STR_ERR_FAILED_PARSE_ISA = "Error: failed to parse ISA into CSV.";
 const char* const STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME = "Error: failed to construct output file name for kernel: ";
 const char* const STR_ERR_FAILED_CREATE_TEMP_FILE = "Error: failed to create a temp file.";
@@ -94,6 +96,8 @@ const char* const STR_ERR_FAILED_OPEN_LOG_FILE = "Error: failed to open log file
 #define STR_WRN_CL_METADATA_NOT_SUPPORTED_2 " is not supported."
 #define STR_WRN_FAILED_EXTRACT_ROCM_LLVM_VERSION  "Warning: Failed to extract the LLVM version; compilation may not work correctly."
 #define STR_WRN_UNKNOWN_ROCM_LLVM_VERSION  "Warning: Unknown LLVM version; compilation may not work correctly."
+#define STR_WRN_USING_EXTRA_LC_DEVICE_1  "Warning: using unknown target GPU: "
+#define STR_WRN_USING_EXTRA_LC_DEVICE_2  "; successful compilation and analysis are not guaranteed."
 
 // Environment variables.
 #define STR_OCL_ENV_VAR_GPU_FORCE_64BIT_PTR_NAME  L"GPU_FORCE_64BIT_PTR"
@@ -179,8 +183,9 @@ const char* const STR_ERR_FAILED_OPEN_LOG_FILE = "Error: failed to open log file
 #define KA_STR_familyNameVICards " (Rx 200 / 300 / Fury series)"
 
 // Misc
-#define KC_STR_DEVICE_LIST_TITLE   "Devices:"
-#define KC_STR_DEVICE_LIST_OFFSET  "    "
-#define KC_STR_KERNEL_LIST_TITLE   "Found the following kernel names:"
-#define KC_STR_KERNEL_LIST_OFFSET  "    "
-#define KC_STR_LAUNCH_EXTERNAL_PROCESS  "Launching external process: \n"
+#define KC_STR_DEVICE_LIST_TITLE         "Devices:"
+#define KC_STR_EXTRA_DEVICE_LIST_TITLE   "Additional GPU targets (Warning: correct compilation and analysis are not guaranteed):"
+#define KC_STR_DEVICE_LIST_OFFSET        "    "
+#define KC_STR_KERNEL_LIST_TITLE         "Found the following kernel names:"
+#define KC_STR_KERNEL_LIST_OFFSET        "    "
+#define KC_STR_LAUNCH_EXTERNAL_PROCESS   "Launching external process: \n"

@@ -698,12 +698,31 @@ bool rgBuildView::LoadBuildOutput(const std::string& projectFolder, const std::v
 {
     bool isLoaded = false;
 
-    // A list of target GPUs to attempt to load build output for.
-    static std::vector<std::string> s_TARGET_GPUS_TO_LOAD;
-    if (s_TARGET_GPUS_TO_LOAD.empty())
+    std::vector<std::string> targetGpuFamilyResultsToLoad;
+
+    // Build a list of possible target GPUs to attempt to load results for, based on the supported GPUs for the current mode.
+    std::shared_ptr<rgCliVersionInfo> pVersionInfo = rgConfigManager::Instance().GetVersionInfo();
+    assert(pVersionInfo != nullptr);
+    if (pVersionInfo != nullptr)
     {
-        s_TARGET_GPUS_TO_LOAD.push_back(TARGET_GPU_GFX900);
-        s_TARGET_GPUS_TO_LOAD.push_back(TARGET_GPU_GFX902);
+        // Determine which GPU architectures and families are supported in the current mode.
+        const std::string& currentMode = rgConfigManager::Instance().GetCurrentMode();
+        auto modeArchitecturesIter = pVersionInfo->m_gpuArchitectures.find(currentMode);
+        if (modeArchitecturesIter != pVersionInfo->m_gpuArchitectures.end())
+        {
+            const std::vector<rgGpuArchitecture>& modeArchitectures = modeArchitecturesIter->second;
+
+            // Step through each architecture.
+            for (auto architectureIter = modeArchitectures.begin(); architectureIter != modeArchitectures.end(); ++architectureIter)
+            {
+                // Step through each family within the architecture.
+                for (auto familyIter = architectureIter->m_gpuFamilies.begin(); familyIter != architectureIter->m_gpuFamilies.end(); ++familyIter)
+                {
+                    // Add the family name to the list of targets to atempt to load results for.
+                    targetGpuFamilyResultsToLoad.push_back(familyIter->m_familyName);
+                }
+            }
+        }
     }
 
     // Build a path to the project's output directory.
@@ -732,7 +751,7 @@ bool rgBuildView::LoadBuildOutput(const std::string& projectFolder, const std::v
             {
                 // When no target GPUs to load are provided, fall back to attempting to load results for all possible target GPUs.
                 // If the session metadata for the target GPU doesn't exist, there's no disassembly to load.
-                pGpusToLoad = &s_TARGET_GPUS_TO_LOAD;
+                pGpusToLoad = &targetGpuFamilyResultsToLoad;
             }
 
             assert(pGpusToLoad != nullptr);

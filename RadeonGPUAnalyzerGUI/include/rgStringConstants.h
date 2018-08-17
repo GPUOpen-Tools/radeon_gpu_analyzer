@@ -98,6 +98,7 @@ static const char* STR_ERR_CANNOT_LOAD_VERSION_INFO_FILE = "RGA Failed to load v
 static const char* STR_ERR_CANNOT_LOAD_SUPPORTED_GPUS_LIST_FOR_MODE_A = "Failed to load list of supported GPUs for '";
 static const char* STR_ERR_CANNOT_LOAD_SUPPORTED_GPUS_LIST_FOR_MODE_B = "' mode.";
 static const char* STR_ERR_CANNOT_LOAD_DISASSEMBLY_CSV_FILE = "Failed to load disassembly output file at ";
+static const char* STR_ERR_CANNOT_LOAD_RESOURCE_USAGE_CSV_FILE = "Failed to load resource usage data for ";
 static const char* STR_ERR_ILLEGAL_PROJECT_NAME = "Project name is not a legal file name: ";
 static const char* STR_ERR_FAILED_TO_OPEN_FILE_BROWSER = "Failed to open the system's file explorer.";
 static const char* STR_ERR_CSV_PARSING_FAILED_A = "Failed to parse ";

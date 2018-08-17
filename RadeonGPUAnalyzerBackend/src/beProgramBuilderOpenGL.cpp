@@ -22,6 +22,7 @@
 // *** INTERNALLY LINKED SYMBOLS - START ***
 // *****************************************
 
+// The list of devices not supported by VirtualContext.
 static const std::set<std::string>  RGA_OPENGL_DISABLED_DEVICES = {"gfx900", "gfx902"};
 
 // ***************************************

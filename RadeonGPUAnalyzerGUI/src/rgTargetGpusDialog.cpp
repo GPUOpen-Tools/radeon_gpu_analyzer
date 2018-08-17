@@ -51,7 +51,9 @@ private:
     rgTargetGpusDialog* m_pParentDialog = nullptr;
 };
 
-rgTargetGpusDialog::rgTargetGpusDialog(const QString& selectedGPUs, QWidget* pParent) : QDialog(pParent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint)
+rgTargetGpusDialog::rgTargetGpusDialog(const QString& selectedGPUs, QWidget* pParent) :
+    QDialog(pParent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint),
+    m_pParent(pParent)
 {
     ui.setupUi(this);
 
@@ -219,20 +221,57 @@ void rgTargetGpusDialog::HandleSearchTextChanged(const QString& searchText)
     HighlightMatchingRows(regex);
 }
 
-void rgTargetGpusDialog::ComputeGroupColor(int groupIndex, QColor& color) const
+void rgTargetGpusDialog::ComputeGroupColors(std::map<std::string, float>& architectureHues, std::map<std::string, float>& groupSaturations) const
 {
-    // Use 25% saturation for a more muted color palette, but 100% value to maintain brightness.
-    static const int s_BACKGROUND_COLOR_NUM_HUE_STEPS = 10;
-    static const float s_BACKGROUND_COLOR_HUE_STEP_INCREMENT = 1.0f / s_BACKGROUND_COLOR_NUM_HUE_STEPS;
-    static const float s_BACKGROUND_COLOR_SATURATION = 0.25f;
-    static const float s_BACKGROUND_COLOR_VALUE = 1.0f;
+    // The starting saturation for all groups within an architecture. Smaller values will result in lighter initial colors.
+    static const float s_BACKGROUND_COLOR_BASE_SATURATION = 0.25f;
 
-    // If the number of groups exceeds the number of hue steps, reset the hue to the start of the color wheel.
-    int colorGroupIndex = groupIndex % s_BACKGROUND_COLOR_NUM_HUE_STEPS;
+    // The overall saturation range to cover among all compute capability groups within an architecture.
+    // To work correctly, (s_BACKGROUND_COLOR_BASE_SATURATION + s_BACKGROUND_COLOR_SATURATION_RANGE) must be <= 1.0.
+    static const float s_BACKGROUND_COLOR_SATURATION_RANGE = 0.7f;
 
-    // Compute the group's color based on the group index vs. the total group count.
-    float hue = colorGroupIndex * s_BACKGROUND_COLOR_HUE_STEP_INCREMENT;
-    color.setHsvF(hue, s_BACKGROUND_COLOR_SATURATION, s_BACKGROUND_COLOR_VALUE);
+    // Use the cached CLI version info structure to populate the GPU tree.
+    std::shared_ptr<rgCliVersionInfo> pVersionInfo = rgConfigManager::Instance().GetVersionInfo();
+    assert(pVersionInfo != nullptr);
+    if (pVersionInfo != nullptr)
+    {
+        // Retrieve the list of supported GPU architectures for the current mode.
+        const std::string& currentMode = rgConfigManager::Instance().GetCurrentMode();
+        auto currentModeArchitecturesIter = pVersionInfo->m_gpuArchitectures.find(currentMode);
+        if (currentModeArchitecturesIter != pVersionInfo->m_gpuArchitectures.end())
+        {
+            const std::vector<rgGpuArchitecture>& modeArchitectures = currentModeArchitecturesIter->second;
+
+            size_t numArchitectures = modeArchitectures.size();
+
+            // Determine the overall hue for each architecture group.
+            float hueIncrementPerArchitecture = 1.0f / static_cast<float>(numArchitectures);
+
+            for (size_t architectureIndex = 0; architectureIndex < numArchitectures; ++architectureIndex)
+            {
+                // The base hue for this architecture.
+                float architectureHue = hueIncrementPerArchitecture * architectureIndex;
+
+                const std::string& architectureName = modeArchitectures[architectureIndex].m_architectureName;
+                architectureHues[architectureName] = architectureHue;
+
+                const rgGpuArchitecture& currentArchitecture = modeArchitectures[architectureIndex];
+
+                const std::vector<rgGpuFamily>& architectureFamilies = currentArchitecture.m_gpuFamilies;
+
+                float groupSaturationIncrement = s_BACKGROUND_COLOR_SATURATION_RANGE / static_cast<float>(architectureFamilies.size());
+
+                for (size_t familyIndex = 0; familyIndex < architectureFamilies.size(); ++familyIndex)
+                {
+                    const std::string& familyName = architectureFamilies[familyIndex].m_familyName;
+
+                    float saturation = s_BACKGROUND_COLOR_BASE_SATURATION + (familyIndex * groupSaturationIncrement);
+                    groupSaturations[familyName] = saturation;
+                }
+            }
+        }
+    }
+
 }
 
 void rgTargetGpusDialog::ConnectSignals()
@@ -455,7 +494,7 @@ void rgTargetGpusDialog::PopulateTableData(std::shared_ptr<rgCliVersionInfo> pVe
             errorString << STR_ERR_CANNOT_LOAD_SUPPORTED_GPUS_LIST_FOR_MODE_A;
             errorString << mode;
             errorString << STR_ERR_CANNOT_LOAD_SUPPORTED_GPUS_LIST_FOR_MODE_B;
-            rgUtils::ShowErrorMessageBox(errorString.str().c_str());
+            rgUtils::ShowErrorMessageBox(errorString.str().c_str(), m_pParent);
         }
     }
 
@@ -522,21 +561,48 @@ void rgTargetGpusDialog::ToggleOKButtonEnabled(bool isOkEnabled)
 
 void rgTargetGpusDialog::SetDefaultTableBackgroundColors()
 {
+    // The color's value remains constant for all rows.
+    static const float s_BACKGROUND_COLOR_VALUE = 1.0f;
+
+    // Compute the base hue for each architecture, and the saturations for each capability group.
+    std::map<std::string, float> architectureGroupHues;
+    std::map<std::string, float> computeCapabilitySaturations;
+    ComputeGroupColors(architectureGroupHues, computeCapabilitySaturations);
+
+    // Step through each capability group and initialize the row's background color.
     for (int groupIndex = 0; groupIndex < static_cast<int>(m_capabilityGroups.size()); ++groupIndex)
     {
         CapabilityGroup& groupInfo = m_capabilityGroups[groupIndex];
-
-        // Compute the group's color based on the group index.
-        ComputeGroupColor(groupIndex, groupInfo.m_color);
 
         // Set the table background color for each row in the group.
         for (size_t rowIndex = 0; rowIndex < groupInfo.m_groupRows.size(); ++rowIndex)
         {
             auto groupRow = groupInfo.m_groupRows[rowIndex];
-            SetTableBackgroundColor(groupRow.m_rowIndex, groupInfo.m_color);
 
-            // Set each row to deselected.
-            SetRowDeselected(groupRow.m_rowIndex);
+            auto architectureHueIter = architectureGroupHues.find(groupRow.m_architecture);
+            assert(architectureHueIter != architectureGroupHues.end());
+            if (architectureHueIter != architectureGroupHues.end())
+            {
+                float architectureHue = architectureHueIter->second;
+
+                auto computeCapabilitySaturationsIter = computeCapabilitySaturations.find(groupRow.m_computeCapability);
+                assert(computeCapabilitySaturationsIter != computeCapabilitySaturations.end());
+                if (computeCapabilitySaturationsIter != computeCapabilitySaturations.end())
+                {
+                    // Extract the saturation for the group.
+                    float groupSaturation = computeCapabilitySaturationsIter->second;
+
+                    // Initialize the color for the row.
+                    QColor color;
+                    color.setHsvF(architectureHue, groupSaturation, s_BACKGROUND_COLOR_VALUE);
+
+                    // Set the background color for the table row.
+                    SetTableBackgroundColor(groupRow.m_rowIndex, color);
+
+                    // Set each row to deselected.
+                    SetRowDeselected(groupRow.m_rowIndex);
+                }
+            }
         }
     }
 }

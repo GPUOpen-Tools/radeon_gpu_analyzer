@@ -63,8 +63,33 @@ private:
     {
         std::shared_ptr<rgCLBuildSettings> pRet = std::make_shared<rgCLBuildSettings>();
 
-        // Add the initial target GPU family.
-        pRet->m_targetGpus.push_back(DEFAULT_TARGET_GPU);
+        // Use the version info's list of supported GPUs to determine the most recent
+        // hardware to build for by default.
+        rgConfigManager& configManager = rgConfigManager::Instance();
+        std::shared_ptr<rgCliVersionInfo> pVersionInfo = configManager.GetVersionInfo();
+
+        assert(pVersionInfo != nullptr);
+        if (pVersionInfo != nullptr)
+        {
+            // Find the set of GPU architectures supported in the current mode.
+            const std::string& apiMode = configManager.GetCurrentMode();
+            auto modeArchitecturesIter = pVersionInfo->m_gpuArchitectures.find(apiMode);
+            if (modeArchitecturesIter != pVersionInfo->m_gpuArchitectures.end())
+            {
+                // Find the last supported architecture in the list.
+                // The last entries are always the most recently released hardware.
+                const std::vector<rgGpuArchitecture>& modeArchitectures = modeArchitecturesIter->second;
+                auto lastArchitectureIter = modeArchitectures.rbegin();
+
+                // Find the last family within the last architecture. This is the latest supported GPU family.
+                const auto& architectureFamilies = lastArchitectureIter->m_gpuFamilies;
+                const auto& latestFamily = architectureFamilies.rbegin();
+                const std::string& latestFamilyName = latestFamily->m_familyName;
+
+                // Add the latest supported GPU family as the default target GPU.
+                pRet->m_targetGpus.push_back(latestFamilyName);
+            }
+        }
 
         return pRet;
     }

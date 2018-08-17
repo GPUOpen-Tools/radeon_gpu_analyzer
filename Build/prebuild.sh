@@ -68,22 +68,22 @@ fi
 
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$0")
-OUTPUT_LINUX_DIR="$SCRIPT_DIR/Linux"
-OUTPUT_MAKE_DIR="$OUTPUT_LINUX_DIR/Make"
-OUTPUT_DIR="$OUTPUT_MAKE_DIR/$BUILD_TYPE"
+OUTPUT_CMAKE_DIR="$SCRIPT_DIR/CMake"
+OUTPUT_LINUX_DIR="$OUTPUT_CMAKE_DIR/linux"
+OUTPUT_DIR="$OUTPUT_LINUX_DIR/$BUILD_TYPE"
 
 # Create output folder
+if [ ! -d "$OUTPUT_CMAKE_DIR" ]; then
+    mkdir $OUTPUT_CMAKE_DIR
+fi
 if [ ! -d "$OUTPUT_LINUX_DIR" ]; then
     mkdir $OUTPUT_LINUX_DIR
-fi
-if [ ! -d "$OUTPUT_MAKE_DIR" ]; then
-    mkdir $OUTPUT_MAKE_DIR
 fi
 if [ ! -d "$OUTPUT_DIR" ]; then
     mkdir $OUTPUT_DIR
 fi
 
-# Update Common
+# Call UpdateCommon.py
 if [ "$NO_UPDATE" != "TRUE" ]; then
     echo ""
     echo "Updating Common..."

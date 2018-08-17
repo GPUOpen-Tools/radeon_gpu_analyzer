@@ -41,3 +41,4 @@ IF NOT [%QT_LIB_DIR%]==[] (
 
 rem Copy documentation files
 XCopy /r /e /d /y "..\..\Documentation\build\html" "%OUTPUT_DIR%\Documentation\html\"
+

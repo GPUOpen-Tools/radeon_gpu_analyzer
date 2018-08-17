@@ -179,12 +179,12 @@ beStatus Backend::GetDeviceChipFamilyRevision(
             retVal = beStatus_NO_DEVICE_FOUND;
             break;
 
-    case GDT_GFX9_0_0:
-    case GDT_GFX9_0_2:
-        chipFamily = FAMILY_AI;
-        chipRevision = AI_GD_P0;
-        retVal = beStatus_SUCCESS;
-        break;
+        case GDT_GFX9_0_0:
+        case GDT_GFX9_0_2:
+            chipFamily = FAMILY_AI;
+            chipRevision = AI_GD_P0;
+            retVal = beStatus_SUCCESS;
+            break;
 
         case GDT_TAHITI_PRO:
         case GDT_TAHITI_XT:

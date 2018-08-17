@@ -1,12 +1,5 @@
 #pragma once
 
-// A list of supported target GPUs to load build output for.
-static const char* TARGET_GPU_GFX900 = "gfx900";
-static const char* TARGET_GPU_GFX902 = "gfx902";
-
-// The default target GPU to add when creating a new build settings.
-static const std::string DEFAULT_TARGET_GPU = TARGET_GPU_GFX900;
-
 // Standard truncation lengths.
 // @TODO - Determine appropriate values.
 static const int gs_TEXT_TRUNCATE_LENGTH_FRONT = 10;

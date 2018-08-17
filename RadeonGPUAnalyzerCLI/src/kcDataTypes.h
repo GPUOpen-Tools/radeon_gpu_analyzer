@@ -36,12 +36,14 @@ struct rgOutputFiles
     std::string  m_cfgFile;
     bool         m_isBinFileTemp;
     bool         m_isIsaFileTemp;
+    bool         m_status;
 
     rgOutputFiles() = default;
     rgOutputFiles(rgEntryType type, const std::string& isaFile, const std::string& binFile = "", const std::string& isaCsvFile = "",
-        const std::string& statFile = "", const std::string& liveregFile = "", const std::string& cfgFile = "")
+                  const std::string& statFile = "", const std::string& liveregFile = "", const std::string& cfgFile = "")
         : m_isaFile(isaFile), m_binFile(binFile), m_isaCsvFile(isaCsvFile), m_statFile(statFile),
-        m_liveregFile(liveregFile), m_cfgFile(cfgFile), m_entryType(type), m_isBinFileTemp(false), m_isIsaFileTemp(false) {}
+          m_liveregFile(liveregFile), m_cfgFile(cfgFile), m_entryType(type), m_isBinFileTemp(false),
+          m_isIsaFileTemp(false), m_status(true) {}
 };
 
 // Output Metadata type. Maps  pair{device, kernel} --> OutputFiles

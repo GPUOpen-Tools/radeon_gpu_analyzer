@@ -228,10 +228,11 @@ bool rgCliLauncher::ListKernels(std::shared_ptr<rgProject> pProject, int cloneIn
     {
         bool isValidIndex = cloneIndex >= 0 && cloneIndex < pProject->m_clones.size();
         assert(isValidIndex);
-        if (isValidIndex && !pProject->m_clones.empty() && pProject->m_clones[cloneIndex] != nullptr)
+        std::shared_ptr<rgProjectClone> pClone = pProject->m_clones[cloneIndex];
+        if (isValidIndex && !pProject->m_clones.empty() && pClone != nullptr)
         {
             // Append each input file to the end of the CLI command.
-            for (const rgSourceFileInfo& fileInfo : pProject->m_clones[cloneIndex]->m_sourceFiles)
+            for (const rgSourceFileInfo& fileInfo : pClone->m_sourceFiles)
             {
                 // Generate the command line backend invocation command.
                 std::stringstream cmd;
@@ -246,15 +247,27 @@ bool rgCliLauncher::ListKernels(std::shared_ptr<rgProject> pProject, int cloneIn
                 std::stringstream fullCmdWithGpu;
                 fullCmdWithGpu << cmd.str();
 
+                // Append extra command line tokens for the build settings.
+                std::string buildSettings;
+                std::shared_ptr<rgCLBuildSettings> pClBuildSettings =
+                    std::static_pointer_cast<rgCLBuildSettings>(pClone->m_pBuildSettings);
+                isParsingFailed = rgCliUtils::GenerateBuildSettingsString(pClBuildSettings, buildSettings);
+
+                assert(isParsingFailed);
+                if (!buildSettings.empty())
+                {
+                    fullCmdWithGpu << buildSettings << " ";
+                }
+
                 const std::string& sourceFilePath = fileInfo.m_filePath;
 
                 // Add the version-info option to the command.
-                cmd << CLI_OPT_LIST_KERNELS << " " << "\"" << sourceFilePath << "\"";
+                fullCmdWithGpu << CLI_OPT_LIST_KERNELS << " " << "\"" << sourceFilePath << "\"";
 
                 // Launch the command line backend to generate the version info file.
                 bool cancelSignal = false;
                 gtString cliOutputAsGtStr;
-                bool isLaunchSuccessful = osExecAndGrabOutput(cmd.str().c_str(), cancelSignal, cliOutputAsGtStr);
+                bool isLaunchSuccessful = osExecAndGrabOutput(fullCmdWithGpu.str().c_str(), cancelSignal, cliOutputAsGtStr);
                 assert(isLaunchSuccessful);
                 if (isLaunchSuccessful)
                 {

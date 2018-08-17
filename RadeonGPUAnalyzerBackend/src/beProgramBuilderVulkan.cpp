@@ -34,6 +34,9 @@ static const std::string  STR_GEOM_PALIL_OUTPUT_FILE_NAME = "geom.palIl";
 static const std::string  STR_FRAG_PALIL_OUTPUT_FILE_NAME = "frag.palIl";
 static const std::string  STR_COMP_PALIL_OUTPUT_FILE_NAME = "comp.palIl";
 
+static const std::string  STR_AMDSPV_DEVICE_GFX900 = "900";
+static const std::string  STR_AMDSPV_DEVICE_GFX902 = "902";
+
 // ***************************************
 // *** INTERNALLY LINKED SYMBOLS - END ***
 // ***************************************
@@ -70,6 +73,16 @@ static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* pDeviceInfo, const VulkanOpti
         // Special case #2: 8.1 devices.
         gfxIpStr = "8.1";
         ret = true;
+    }
+    else if (vulkanOptions.m_targetDeviceName.compare(DEVICE_NAME_GFX900) == 0 ||
+             vulkanOptions.m_targetDeviceName.compare(DEVICE_NAME_GFX902) == 0)
+    {
+        // Special case #3: gfx9 devices.
+        gfxIpStr =
+            vulkanOptions.m_targetDeviceName == DEVICE_NAME_GFX900 ? STR_AMDSPV_DEVICE_GFX900 :
+            vulkanOptions.m_targetDeviceName == DEVICE_NAME_GFX902 ? STR_AMDSPV_DEVICE_GFX902 :
+            "";
+        ret = !gfxIpStr.empty();
     }
     else
     {

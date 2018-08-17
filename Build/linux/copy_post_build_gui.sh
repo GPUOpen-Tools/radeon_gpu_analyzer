@@ -25,7 +25,6 @@ if [ -n "$QT_LIB_DIR" ]; then
   cp -d $QT_LIB_DIR/../plugins/platforms/libqxcb.so ../../output/bin/Qt/platforms
 fi
 
-pwd
 # Copy the documentation files
 if [ ! -d "../../output/bin/Documentation" ]; then
     mkdir ../../output/bin/Documentation
@@ -38,3 +37,4 @@ cp -rf ../../Documentation/build/html ../../output/bin/Documentation
 # Copy the GUI launch script.
 cp ./RadeonGPUAnalyzerGUI ../../output/bin/
 chmod +x ../../output/bin/RadeonGPUAnalyzerGUI
+

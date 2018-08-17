@@ -65,9 +65,17 @@ file(GLOB COMMON_SRC
     "src/*.h"
 )
 
+# Windows-specific include directories
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    file(GLOB  WINDOWS_INC
+        "../Utils/Res/*CLI.rc"
+        "../Utils/Res/*.h"
+    )
+endif()
+
 # Pick up the source files that are relevant to the platform
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    add_executable(RadeonGPUAnalyzerCLI ${COMMON_SRC} ${WINDOWS_SRC})
+    add_executable(RadeonGPUAnalyzerCLI ${WINDOWS_INC} ${COMMON_SRC} ${WINDOWS_SRC})
     if (CMAKE_BUILD_TYPE STREQUAL "Release")
         # Release build
         if (CMAKE_64BIT_TARGET)
@@ -129,11 +137,21 @@ endif()
 # Other libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-        find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
-        find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Release")
+        if (CMAKE_64BIT_TARGET)
+            find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
+            find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Release")
+        else()
+            find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win32/Release/MD")
+            find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win32/Release")
+        endif()
     elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        find_library(TINYXML_LIB "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
-        find_library(YAMLCPP_LIB "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Debug")
+        if (CMAKE_64BIT_TARGET)
+            find_library(TINYXML_LIB "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
+            find_library(YAMLCPP_LIB "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Debug")
+        else()
+            find_library(TINYXML_LIB "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win32/Debug/MDd")
+            find_library(YAMLCPP_LIB "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win32/Debug")
+        endif()
     endif()
 else()
     find_library(TINYXML_LIB "libtinyxml2.a" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/Linux/x64/Release")
@@ -170,10 +188,10 @@ target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrapp
                        ${Boost_LIBRARIES} ${TINYXML_LIB} ${YAMLCPP_LIB})
 endif()
 
-# Configure the post-build actions.
-set(INTERNAL_ARG "")
-if(AMD_INTERNAL)
-    set(INTERNAL_ARG "-internal")
+if (CMAKE_64BIT_TARGET)
+    set(BUILD_32BIT "")
+else()
+    set(BUILD_32BIT "-x86")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -182,13 +200,13 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     endif()
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
                        POST_BUILD
-                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/windows/copy_post_build_cli.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${DEBUG_ARG} ${INTERNAL_ARG}
+                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/windows/copy_post_build_cli.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${DEBUG_ARG} ${BUILD_32BIT}
                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/windows
                       )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
                        POST_BUILD
-                       COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/linux/copy_post_build_cli.sh ${INTERNAL_ARG}
+                       COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/linux/copy_post_build_cli.sh
                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/linux
                       )
 endif()

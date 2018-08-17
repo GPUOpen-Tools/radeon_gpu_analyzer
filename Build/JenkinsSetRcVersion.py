@@ -17,20 +17,20 @@ import argparse
 scriptRoot = os.path.dirname(os.path.realpath(__file__))
 
 # handle command line arguments
-parser = argparse.ArgumentParser('Update version string in RadeonGPUAnalyzerGUI.rc')
+parser = argparse.ArgumentParser('Update version string in RadeonGPUAnalyzerGUI.rc and RadeonGPUAnalyzerCLI.rc')
 parser.add_argument('-M', '--major', action='store', required=True, help='version MAJOR value')
 parser.add_argument('-m', '--minor', action='store', required=True, help='version MINOR value')
 parser.add_argument('-b', '--build', action='store', required=True, help='version BUILD_NUMBER value')
 parser.add_argument('-r', '--revision', action='store', default="0", help='version REVISION value')
 updateArgs = parser.parse_args()
 
-# initialize file for search
-rgaVersionFile = os.path.normpath(os.path.join(os.environ['WORKSPACE'], 'RGA', 'Utils', 'res', 'RadeonGPUAnalyzerGUI.rc'))
-rgaVersionData = open(rgaVersionFile, 'r')
+# initialize GUI RC file for search
+rgaGuiRCFile = os.path.normpath(os.path.join(os.environ['WORKSPACE'], 'RGA', 'Utils', 'res', 'RadeonGPUAnalyzerGUI.rc'))
+rgaGuiRCData = open(rgaGuiRCFile, 'r')
 
-# replace version string in data and write back out to file
+# replace version string in GUI rc file and write information back to file
 newData = []
-for line in rgaVersionData:
+for line in rgaGuiRCData:
     if 'define RADEON_GPU_ANALYZER_MAJOR_VERSION ' in line:
         newline = line.replace("0", updateArgs.major)
         newData.append(newline)
@@ -49,7 +49,38 @@ for line in rgaVersionData:
                 else:
                     newData.append(line)
 
-rgaVersionData.close()
-rgaVersionData = open(rgaVersionFile, 'w')
-rgaVersionData.writelines(newData)
-rgaVersionData.close()
+rgaGuiRCData.close()
+rgaGuiRCData = open(rgaGuiRCFile, 'w')
+rgaGuiRCData.writelines(newData)
+rgaGuiRCData.close()
+
+# initialize CLI RC file for search
+rgaCliRCFile = os.path.normpath(os.path.join(os.environ['WORKSPACE'], 'RGA', 'Utils', 'res', 'RadeonGPUAnalyzerCLI.rc'))
+rgaCliRCData = open(rgaCliRCFile, 'r')
+
+# replace version string in GUI rc file and write information back to file
+newData = []
+for line in rgaCliRCData:
+    if 'define RADEON_GPU_ANALYZER_MAJOR_VERSION ' in line:
+        newline = line.replace("0", updateArgs.major)
+        newData.append(newline)
+    else:
+        if 'define RADEON_GPU_ANALYZER_MINOR_VERSION ' in line:
+          newline = line.replace("0", updateArgs.minor)
+          newData.append(newline)
+        else:
+            if 'define RADEON_GPU_ANALYZER_BUILD_NUMBER ' in line:
+                newline = line.replace("0", updateArgs.build)
+                newData.append(newline)
+            else:
+                if 'define RADEON_GPU_ANALYZER_REVISION_NUMBER ' in line:
+                    newline = line.replace("0", updateArgs.revision)
+                    newData.append(newline)
+                else:
+                    newData.append(line)
+
+rgaCliRCData.close()
+rgaCliRCData = open(rgaCliRCFile, 'w')
+rgaCliRCData.writelines(newData)
+rgaCliRCData.close()
+

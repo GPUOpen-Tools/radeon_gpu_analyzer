@@ -64,10 +64,13 @@ file(GLOB  RES_SRC
     "res/*.qrc"
 )
 
-file(GLOB  WINDOWS_INC
-     "include/res/icons/*.ico"
-     "../Utils/res/*"
-)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    file(GLOB  WINDOWS_INC
+         "include/res/icons/*.ico"
+         "../Utils/Res/*GUI.rc"
+         "../Utils/Res/*.h"
+    )
+endif()
 
 qt5_wrap_cpp(GENERATED_MOC  ${MOC_INC})
 qt5_wrap_ui (GENERATED_UI   ${UI_SRC})

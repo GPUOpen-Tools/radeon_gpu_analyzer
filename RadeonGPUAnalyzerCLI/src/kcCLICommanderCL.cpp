@@ -210,7 +210,7 @@ void kcCLICommanderCL::RunCompileCommands(const Config& config, LoggingCallBackF
 {
     if (Init(config, callback))
     {
-        if (InitRequestedAsicList(config, m_externalDevices, m_asics, callback))
+        if (InitRequestedAsicList(config, m_externalDevices, m_asics, false))
         {
             if (Compile(config))
             {
@@ -342,8 +342,10 @@ void kcCLICommanderCL::Analysis(const Config& config)
                 output << analysis.LDSSizeUsed << csvSeparator;
                 output << doNAFormat(analysis.numSGPRsAvailable, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
                 output << doNAFormat(analysis.numSGPRsUsed, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+                output << doNAFormat(CAL_NA_Value_64, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
                 output << doNAFormat(analysis.numVGPRsAvailable, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
                 output << doNAFormat(analysis.numVGPRsUsed, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+                output << doNAFormat(CAL_NA_Value_64, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
                 output << doNAFormat(analysis.numThreadPerGroupX, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
                 output << doNAFormat(analysis.numThreadPerGroupY, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
                 output << doNAFormat(analysis.numThreadPerGroupZ, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);

@@ -25,6 +25,9 @@
 const int  DX_MAX_SUPPORTED_SHADER_MODEL_MAJOR = 5;
 const int  DX_MAX_SUPPORTED_SHADER_MODEL_MINOR = 0;
 
+static const std::string  s_STR_NA_VALUE = "N/A";
+
+
 kcCLICommanderDX::kcCLICommanderDX(void)
 {
     m_pBackEndHandler = nullptr;
@@ -72,7 +75,7 @@ void kcCLICommanderDX::InitRequestedAsicListDX(const Config& config)
 
         if (beUtils::GetAllGraphicsCards(dxDeviceTable, supportedDevices))
         {
-            if (InitRequestedAsicList(config, supportedDevices, matchedTargets, m_LogCallback))
+            if (InitRequestedAsicList(config, supportedDevices, matchedTargets, false))
             {
                 for (const std::string& target : matchedTargets)
                 {
@@ -500,11 +503,17 @@ bool kcCLICommanderDX::WriteAnalysisDataForDX(const Config& config, const std::v
                 // Used SGPRs.
                 output << ad.numSGPRsUsed << csvSeparator;
 
+                // SGPR spills.
+                output << s_STR_NA_VALUE << csvSeparator;
+
                 // Available VGPRs.
                 output << ad.numVGPRsAvailable << csvSeparator;
 
                 // Used VGPRs.
                 output << ad.numVGPRsUsed << csvSeparator;
+
+                // VGPR spills.
+                output << s_STR_NA_VALUE << csvSeparator;
 
                 // CL Work-group dimensions (for a unified format, to be revisited).
                 output << ad.numThreadPerGroupX << csvSeparator;

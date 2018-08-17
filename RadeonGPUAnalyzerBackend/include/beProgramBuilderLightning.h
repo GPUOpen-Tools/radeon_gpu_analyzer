@@ -12,6 +12,7 @@
 // Local:
 #include <RadeonGPUAnalyzerBackend/include/beProgramBuilder.h>
 #include <RadeonGPUAnalyzerBackend/include/beOpenCLDefs.h>
+#include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
 
 using namespace beKA;
 

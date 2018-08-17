@@ -481,10 +481,13 @@ void rgGlobalSettingsView::HandleLogFileEditingFinished()
     // Verify that the line edit text is not empty or the location is not invalid before losing the focus.
     if (this->ui.logFileLocationLineEdit->text().isEmpty() || !rgUtils::IsDirExists(this->ui.logFileLocationLineEdit->text().toStdString()))
     {
-        // If empty, use the default log file folder.
-        std::string defaultLogFileLocation;
-        rgConfigManager::Instance().GetDefaultDataFolder(defaultLogFileLocation);
-        this->ui.logFileLocationLineEdit->setText(defaultLogFileLocation.c_str());
+        // If empty or invalid, use the saved location.
+        std::shared_ptr<rgGlobalSettings> pGlobalConfig = rgConfigManager::Instance().GetGlobalConfig();
+        assert(pGlobalConfig != nullptr);
+        if (pGlobalConfig != nullptr)
+        {
+            this->ui.logFileLocationLineEdit->setText(pGlobalConfig->m_logFileLocation.c_str());
+        }
         this->ui.logFileLocationLineEdit->setFocus();
     }
 }
