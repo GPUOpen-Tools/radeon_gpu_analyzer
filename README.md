@@ -139,7 +139,7 @@ Building RGA
 
 cd to the Build sub-folder, and run:
    
-* prebuild.bat --build release (or: debug)
+* prebuild.sh --build release (or: debug)
   
   This will fetch all the dependencies, and generate the makefiles.
 
@@ -147,7 +147,7 @@ cd to the Build sub-folder, and run:
 
    -=-
    
-   If for some reason you do not want to use the prebuild.bat script, you can also manually fetch the dependencies and generate the makefiles:
+   If for some reason you do not want to use the prebuild.sh script, you can also manually fetch the dependencies and generate the makefiles:
    
   * run: fetch_dependencies.py
   * run: cmake –DCMAKE_BUILD_TYPE=Release (or: Debug) <full or relative path to the RGA repo directory>
