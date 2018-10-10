@@ -81,9 +81,10 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
     bool isFragmentShaderPresent = (!config.m_FragmentShader.empty());
     bool isComputeShaderPresent = (!config.m_ComputeShader.empty());
     bool isIsaRequired = (!config.m_ISAFile.empty() || !config.m_LiveRegisterAnalysisFile.empty() ||
-                          !config.m_ControlFlowGraphFile.empty() || !config.m_AnalysisFile.empty());
+                          !config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty() || !config.m_AnalysisFile.empty());
     bool isLiveRegAnalysisRequired = (!config.m_LiveRegisterAnalysisFile.empty());
-    bool isCfgRequired = (!config.m_ControlFlowGraphFile.empty());
+    bool isBlockCfgRequired = (!config.m_blockCFGFile.empty());
+    bool isInstCfgRequired = (!config.m_instCFGFile.empty());
     bool isIsaBinary = (!config.m_BinaryOutputFile.empty());
     bool isIlRequired = (!config.m_ILFile.empty());
     bool isStatisticsRequired = (!config.m_AnalysisFile.empty());
@@ -170,9 +171,14 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
         shouldAbort = !kcUtils::ValidateShaderOutputDir(config.m_LiveRegisterAnalysisFile, logMsg);
     }
 
-    if (!shouldAbort && isCfgRequired)
+    if (!shouldAbort && isBlockCfgRequired)
     {
-        shouldAbort = !kcUtils::ValidateShaderOutputDir(config.m_ControlFlowGraphFile, logMsg);
+        shouldAbort = !kcUtils::ValidateShaderOutputDir(config.m_blockCFGFile, logMsg);
+    }
+
+    if (!shouldAbort && isInstCfgRequired)
+    {
+        shouldAbort = !kcUtils::ValidateShaderOutputDir(config.m_instCFGFile, logMsg);
     }
 
     if (!shouldAbort && isIlRequired)
@@ -255,10 +261,16 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                                                                               device, vulkanOptions.m_liveRegisterAnalysisOutputFiles);
                 }
 
-                if (isCfgRequired)
+                if (isBlockCfgRequired)
                 {
-                    vulkanOptions.m_isControlFlowGraphRequired = true;
-                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_ControlFlowGraphFile, KC_STR_DEFAULT_CFG_SUFFIX, device, vulkanOptions.m_controlFlowGraphOutputFiles);
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_blockCFGFile, KC_STR_DEFAULT_CFG_EXT,
+                                                                              device, vulkanOptions.m_controlFlowGraphOutputFiles);
+                }
+
+                if (isInstCfgRequired)
+                {
+                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_instCFGFile, KC_STR_DEFAULT_CFG_EXT,
+                                                                              device, vulkanOptions.m_controlFlowGraphOutputFiles);
                 }
 
                 if (isIlRequired)
@@ -418,42 +430,42 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                     }
 
                     // Generate control flow graph if required.
-                    if (isCfgRequired)
+                    if (isInstCfgRequired || isBlockCfgRequired)
                     {
                         if (isVertexShaderPresent)
                         {
                             kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_vertexShader,
-                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_vertexShader, callback, config.m_printProcessCmdLines);
+                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_vertexShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
                         }
 
                         if (isTessControlShaderPresent)
                         {
                             kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
-                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_tessControlShader, callback, config.m_printProcessCmdLines);
+                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_tessControlShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
                         }
 
                         if (isTessEvaluationShaderPresent)
                         {
                             kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader,
-                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_tessEvaluationShader, callback, config.m_printProcessCmdLines);
+                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_tessEvaluationShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
                         }
 
                         if (isGeometryexShaderPresent)
                         {
                             kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
-                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback, config.m_printProcessCmdLines);
+                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
                         }
 
                         if (isFragmentShaderPresent)
                         {
                             kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_fragmentShader,
-                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_fragmentShader, callback, config.m_printProcessCmdLines);
+                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_fragmentShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
                         }
 
                         if (isComputeShaderPresent)
                         {
                             kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_computeShader,
-                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_computeShader, callback, config.m_printProcessCmdLines);
+                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_computeShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
                         }
 
                         // Process stageless files.
@@ -469,7 +481,7 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
                             {
                                 if (kcUtils::FileNotEmpty(isaAndCfg.first.asASCIICharArray()))
                                 {
-                                    kcUtils::GenerateControlFlowGraph(isaAndCfg.first, isaAndCfg.second, callback, config.m_printProcessCmdLines);
+                                    kcUtils::GenerateControlFlowGraph(isaAndCfg.first, isaAndCfg.second, callback, isInstCfgRequired, config.m_printProcessCmdLines);
                                 }
                             }
                         }

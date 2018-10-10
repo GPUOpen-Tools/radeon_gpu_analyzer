@@ -28,8 +28,8 @@ private: //functions
     bool Compile(const Config& config, const GDT_GfxCardInfo& gfxCardInfo, string sDevicenametoLog);
     bool WriteAnalysisDataForDX(const Config& config, const std::vector<AnalysisData>& AnalysisDataVec, const std::vector<string>& DeviceAnalysisDataVec,
                                 const std::string& sAnalysisFile, std::stringstream& log);
-    void ExtractISA(const std::string& deviceName, const Config& config, size_t& isaSizeInBytes, std::string isaBuffer,
-                    bool& isIsaSizeDetected, bool& shouldDetectIsaSize, const bool bRegisterLiveness, const bool bControlFlow);
+    void ExtractISA(const std::string& deviceName, const Config& config, size_t& isaSizeInBytes,
+                    std::string isaBuffer, bool& isIsaSizeDetected, bool& shouldDetectIsaSize);
     void ExtractIL(const std::string& deviceName, const Config& config);
     bool ExtractStats(const  std::string& deviceName, const Config& config, bool shouldDetectIsaSize, std::string isaBuffer,
                       bool isIsaSizeDetected, size_t isaSizeInBytes, vector<AnalysisData>& AnalysisDataVec, vector<string>& DeviceAnalysisDataVec);

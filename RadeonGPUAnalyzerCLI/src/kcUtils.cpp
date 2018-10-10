@@ -407,10 +407,10 @@ void kcUtils::PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtS
 }
 
 void kcUtils::GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
-                                       LoggingCallBackFunc_t pCallback, bool printCmd)
+                                       LoggingCallBackFunc_t pCallback, bool perInstCfg, bool printCmd)
 {
     // Call the backend.
-    beStatus rc = beStaticIsaAnalyzer::GenerateControlFlowGraph(isaFileName, outputFileName, printCmd);
+    beStatus rc = beStaticIsaAnalyzer::GenerateControlFlowGraph(isaFileName, outputFileName, perInstCfg, printCmd);
 
     if (rc != beStatus_SUCCESS && pCallback != nullptr)
     {

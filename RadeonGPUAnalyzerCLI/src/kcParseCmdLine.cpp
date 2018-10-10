@@ -61,7 +61,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         ("binary,b", po::value<string>(&config.m_BinaryOutputFile), "Path to HSA Code Object binary output file.")
         ("isa", po::value<string>(&config.m_ISAFile), "Path to output ISA disassembly file(s).")
         ("livereg", po::value<string>(&config.m_LiveRegisterAnalysisFile), "Path to live register analysis output file(s).")
-        ("cfg", po::value<string>(&config.m_ControlFlowGraphFile), "Path to control flow graph output file(s).")
+        ("cfg", po::value<string>(&config.m_blockCFGFile), "Path to per-block control flow graph output file(s).")
+        ("cfg-i", po::value<string>(&config.m_instCFGFile), "Path to per-instruction control flow graph output file(s).")
         ("source-kind,s", po::value<string>(&config.m_SourceKind), "Source platform: cl for OpenCL, hlsl for DirectX, opengl for OpenGL, vulkan for Vulkan and amdil for AMDIL.")
         ("parse-isa", "Generate a CSV file with a breakdown of each ISA instruction into opcode, operands. etc.")
         ;
@@ -179,7 +180,6 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         if (vm.count("help") || vm.count("?") || vm.size() == 0)
         {
             config.m_RequestedCommand = Config::ccHelp;
-            //doWork = false;
         }
 
         if (vm.count("list-asics"))
@@ -221,6 +221,12 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.m_printProcessCmdLines = true;
         }
 
+        if (vm.count("cfg") && vm.count("cfg-i"))
+        {
+            std::cerr << STR_ERR_BOTH_CFG_AND_CFGI_SPECIFIED << std::endl;
+            doWork = false;
+        }
+
         // Set the optimization level.
         if (vm.count("O0"))
         {
@@ -254,9 +260,9 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.m_RequestedCommand = Config::ccVersion;
         }
-        else if (config.m_AnalysisFile.size() > 0 || config.m_ILFile.size() > 0 || config.m_ISAFile.size() > 0 ||
-                 config.m_LiveRegisterAnalysisFile.size() > 0 || config.m_BinaryOutputFile.size() > 0 ||
-                 config.m_MetadataFile.size() > 0 || config.m_ControlFlowGraphFile.size() > 0)
+        else if (!config.m_AnalysisFile.empty() || !config.m_ILFile.empty() || !config.m_ISAFile.empty() ||
+                 !config.m_LiveRegisterAnalysisFile.empty() || !config.m_BinaryOutputFile.empty() ||
+                 !config.m_MetadataFile.empty() || !config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty())
         {
             config.m_RequestedCommand = Config::ccCompile;
         }

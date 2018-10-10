@@ -639,7 +639,7 @@ beStatus kcCLICommanderLightning::CompileOpenCL(const Config& config, const Open
 
             // Disassemble binary to ISA text.
             if (!config.m_ISAFile.empty() || !config.m_AnalysisFile.empty() ||
-                !config.m_LiveRegisterAnalysisFile.empty() || !config.m_ControlFlowGraphFile.empty())
+                !config.m_LiveRegisterAnalysisFile.empty() || !config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty())
             {
                 LogPreStep(KA_CLI_STR_EXTRACTING_ISA, device);
                 currentStatus = DisassembleBinary(binFileName, config.m_ISAFile, clangDevice, config.m_Function, config.m_isLineNumbersRequired, errText);
@@ -767,7 +767,7 @@ void kcCLICommanderLightning::RunCompileCommands(const Config& config, LoggingCa
     }
 
     // Extract Control Flow Graph.
-    if ((status || multiDevices) && !config.m_ControlFlowGraphFile.empty())
+    if ((status || multiDevices) && (!config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty()))
     {
         ExtractCFG(config);
     }
@@ -875,7 +875,7 @@ bool kcCLICommanderLightning::PerformLiveRegAnalysis(const Config & config)
     return ret;
 }
 
-bool kcCLICommanderLightning::ExtractCFG(const Config & config)
+bool kcCLICommanderLightning::ExtractCFG(const Config& config)
 {
     bool  ret = true;
     std::stringstream  errMsg;
@@ -894,10 +894,14 @@ bool kcCLICommanderLightning::ExtractCFG(const Config & config)
             isaFileName << outputFiles.m_isaFile.c_str();
 
             // Construct a name for the output livereg file.
-            kcUtils::ConstructOutputFileName(config.m_ControlFlowGraphFile, KC_STR_DEFAULT_CFG_SUFFIX, entryName, device, cfgOutFileName);
+            std::string baseFile = (!config.m_blockCFGFile.empty() ? config.m_blockCFGFile : config.m_instCFGFile);
+            kcUtils::ConstructOutputFileName(baseFile, KC_STR_DEFAULT_CFG_EXT,
+                                             entryName, device, cfgOutFileName);
             if (!cfgOutFileName.isEmpty())
             {
-                kcUtils::GenerateControlFlowGraph(isaFileName, cfgOutFileName, m_LogCallback, config.m_printProcessCmdLines);
+                kcUtils::GenerateControlFlowGraph(isaFileName, cfgOutFileName, m_LogCallback,
+                                                  !config.m_instCFGFile.empty(), config.m_printProcessCmdLines);
+
                 if (!beProgramBuilderLightning::VerifyOutputFile(cfgOutFileName.asASCIICharArray()))
                 {
                     errMsg << STR_ERR_CANNOT_PERFORM_LIVE_REG_ANALYSIS << " " << STR_KERNEL_NAME << entryName << std::endl;

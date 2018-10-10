@@ -49,7 +49,8 @@ public:
     std::string              m_ILFile;           ///< Output IL Text file template.
     std::string              m_ISAFile;          ///< Output ISA Text file template.
     std::string              m_LiveRegisterAnalysisFile;///< Live register analysis output file.
-    std::string              m_ControlFlowGraphFile;///< Control flow graph output file.
+    std::string              m_blockCFGFile;     ///< Output file for per-block control flow graph.
+    std::string              m_instCFGFile;      ///< Output file for per-instruction control flow graph.
     std::string              m_BinaryOutputFile; ///< Output binary file template.
     std::string              m_Function;         ///< Kernel/Function of interest in analysis.
     std::string              m_CSVSeparator;     ///< Override for CSV list separator.

@@ -716,7 +716,7 @@ def DumpInstructionVGPRUsage(input, output, isaFormat, summaryOnly):
     print('  \'^\' means that the current instruction writes to the register', file=output)
     print('  \'v\' means that the current instruction reads from the register', file=output)
     print('  \'x\' means that the current instruction both reads from the register and writes to it', file=output)
-    print(' \'Ra\': Number of allocated registers\n', file=output)
+    print(' \'Rn\': Number of live registers\n', file=output)
 
     maxVGPR = 0
     highestVGPR = 0
@@ -724,7 +724,7 @@ def DumpInstructionVGPRUsage(input, output, isaFormat, summaryOnly):
         maxVGPR = max (len (set.union (node.In, node.Out)), maxVGPR)
         highestVGPR = max (highestVGPR, _Max (node.In), _Max (node.Out))
  
-    print(' Line | Ra  | {:{width}} | Instruction'.format('Reg State', width=highestVGPR+1), file=output)
+    print(' Line | Rn  | {:{width}} | Instruction'.format('Reg State', width=highestVGPR+1), file=output)
     print('--------------------------------------------------------------------------------------------------------------------------', file=output)
 
     if not summaryOnly:

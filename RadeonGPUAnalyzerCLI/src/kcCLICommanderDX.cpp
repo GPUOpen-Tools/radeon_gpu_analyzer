@@ -95,8 +95,7 @@ void kcCLICommanderDX::InitRequestedAsicListDX(const Config& config)
 
 
 void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config, size_t& isaSizeInBytes,
-                                  string isaBuffer, bool& isIsaSizeDetected, bool& shouldDetectIsaSize,
-                                  const bool bRegisterLiveness, const bool bControlFlow)
+                                  string isaBuffer, bool& isIsaSizeDetected, bool& shouldDetectIsaSize)
 {
     beProgramBuilderDX* pProgramBuilderDX =  m_pBackEndHandler != nullptr ? m_pBackEndHandler->theOpenDXBuilder() : nullptr;
     beStatus backendRet = beStatus_Invalid;
@@ -145,7 +144,7 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
             // If we managed to detect the ISA size, don't do it again.
             shouldDetectIsaSize = !isIsaSizeDetected;
 
-            if (bRegisterLiveness)
+            if (!config.m_LiveRegisterAnalysisFile.empty())
             {
                 gtString liveRegAnalysisOutputFileName;
                 kcUtils::ConstructOutputFileName(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVE_REG_ANALYSIS_SUFFIX,
@@ -157,14 +156,15 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
                                                      m_LogCallback, config.m_printProcessCmdLines);
             }
 
-            if (bControlFlow)
+            if (!config.m_instCFGFile.empty() || !config.m_blockCFGFile.empty())
             {
                 gtString cfgOutputFileName;
-                kcUtils::ConstructOutputFileName(config.m_ControlFlowGraphFile, KC_STR_DEFAULT_CFG_SUFFIX,
+                std::string baseName = (!config.m_instCFGFile.empty() ? config.m_instCFGFile : config.m_blockCFGFile);
+                kcUtils::ConstructOutputFileName(baseName, KC_STR_DEFAULT_CFG_EXT,
                                                  config.m_Function, deviceName, cfgOutputFileName);
 
-                kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName,
-                                                  m_LogCallback, config.m_printProcessCmdLines);
+                kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName, m_LogCallback,
+                                                  !config.m_instCFGFile.empty(),  config.m_printProcessCmdLines);
             }
 
             // Delete temporary ISA file.
@@ -313,12 +313,12 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
 
     if (isInitSuccessful)
     {
-        const bool bISA = config.m_ISAFile.length() > 0;
-        const bool bIL = config.m_ILFile.length() > 0;
-        const bool bStatistics = config.m_AnalysisFile.length() > 0;
-        const bool bRegisterLiveness = config.m_LiveRegisterAnalysisFile.length() > 0;
-        const bool bControlFlow = config.m_ControlFlowGraphFile.length() > 0;
-        const bool bBinaryOutput = config.m_BinaryOutputFile.length() > 0;
+        const bool bISA = !config.m_ISAFile.empty();
+        const bool bIL = !config.m_ILFile.empty();
+        const bool bStatistics = !config.m_AnalysisFile.empty();
+        const bool bBinaryOutput = !config.m_BinaryOutputFile.empty();
+        const bool bLivereg = !config.m_LiveRegisterAnalysisFile.empty();
+        const bool bCfg = (!config.m_instCFGFile.empty() || !config.m_blockCFGFile.empty());
 
         vector <AnalysisData> AnalysisDataVec;
         vector <string> DeviceAnalysisDataVec;
@@ -394,9 +394,9 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
                 bool shouldDetectIsaSize = true;
                 size_t isaSizeInBytes(0);
 
-                if (bISA || bRegisterLiveness || bStatistics || bControlFlow)
+                if (bISA || bStatistics || bLivereg || bCfg)
                 {
-                    ExtractISA(deviceName, config, isaSizeInBytes, isaBuffer, isIsaSizeDetected, shouldDetectIsaSize, bRegisterLiveness, bControlFlow);
+                    ExtractISA(deviceName, config, isaSizeInBytes, isaBuffer, isIsaSizeDetected, shouldDetectIsaSize);
                 }
                 if (bIL)
                 {
@@ -404,8 +404,8 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
                 }
                 if (bStatistics)
                 {
-                    isIsaSizeDetected = ExtractStats(deviceName, config, shouldDetectIsaSize, isaBuffer, isIsaSizeDetected, isaSizeInBytes, AnalysisDataVec, DeviceAnalysisDataVec);
-
+                    isIsaSizeDetected = ExtractStats(deviceName, config, shouldDetectIsaSize, isaBuffer, isIsaSizeDetected,
+                                                     isaSizeInBytes, AnalysisDataVec, DeviceAnalysisDataVec);
                 }
             }
 

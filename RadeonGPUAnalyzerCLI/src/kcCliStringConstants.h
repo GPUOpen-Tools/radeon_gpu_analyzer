@@ -26,6 +26,7 @@ const char* const STR_ERR_NO_MODE_SPECIFIED = "No mode specified. Please specify
 const char* const STR_ERR_INVALID_GLSL_SHADER_TYPE = "Error: the Specified profile is invalid. Possible options: Vertex, Fragment, Compute, Geometry, TessControl, TessEval.";
 const char* const STR_ERR_NO_VALID_CMD_DETECTED = "Error: no valid command. Please run -h for available commands.";
 const char* const STR_ERR_COMMAND_NOT_SUPPORTED = "Error: the command is not supported for this mode.";
+const char* const STR_ERR_BOTH_CFG_AND_CFGI_SPECIFIED = "Error: only one of \"--cfg\" and \"--cfg-i\" options can be specified.";
 const char* const STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST = "Error: unable to extract the list of supported devices.";
 const char* const STR_ERR_MEMORY_ALLOC_FAILURE = "Error: memory allocation failure.";
 const char* const STR_ERR_RENDER_COMPUTE_MIX = "Error: cannot mix compute and non-compute shaders.";
@@ -164,7 +165,8 @@ const char* const STR_ERR_FAILED_OPEN_LOG_FILE = "Error: failed to open log file
 #define KC_STR_DEFAULT_AMD_IL_SUFFIX "amdil"
 #define KC_STR_DEFAULT_LLVM_IR_SUFFIX "llvmir"
 #define KC_STR_DEFAULT_LIVE_REG_ANALYSIS_SUFFIX "txt"
-#define KC_STR_DEFAULT_CFG_SUFFIX "dot"
+#define KC_STR_DEFAULT_CFG_SUFFIX "cfg"
+#define KC_STR_DEFAULT_CFG_EXT "dot"
 #define KC_STR_DEFAULT_BIN_SUFFIX "bin"
 #define KC_STR_DEFAULT_METADATA_SUFFIX "amdMetadata"
 #define KC_STR_DEFAULT_DEBUG_IL_SUFFIX "amdDebugil"

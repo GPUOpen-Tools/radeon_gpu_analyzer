@@ -30,9 +30,10 @@ public:
     /// Params:
     ///     isaFileName: the file name that contains the ISA to be analyzed.
     ///     outputFileName: the output file name (will contain the graph representation in dot format).
+    //      perInst:  generate per-instruction CFG.
     ///     printCmd: print the command line.
     /// Returns: true if the operation succeeded, false otherwise.
-    static beStatus GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName, bool printCmd);
+    static beStatus GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName, bool perInst, bool printCmd);
 
 private:
     // No instances.

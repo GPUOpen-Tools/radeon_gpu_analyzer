@@ -110,7 +110,7 @@ public:
     // pCallback - callback to log messages
     // printCmd - print command line to stdout
     static void GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
-                                         LoggingCallBackFunc_t pCallback, bool printCmd);
+                                         LoggingCallBackFunc_t pCallback, bool perInstCfg, bool printCmd);
 
     // Generates an output file name in the Analyzer CLI format.
     // baseOutputFileName - the base output file name as configured by the user's command

@@ -72,9 +72,6 @@ struct VulkanOptions : public beKA::CompileOptions
     // True to perform live register analysis.
     bool m_isLiveRegisterAnalysisRequired;
 
-    // True to generate control flow graph.
-    bool m_isControlFlowGraphRequired;
-
     // True to generate shader compiler statistics.
     bool m_isScStatsRequired;
 };

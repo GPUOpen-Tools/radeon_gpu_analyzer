@@ -10,13 +10,17 @@
 #include <AMDTOSWrappers/Include/osProcess.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osFile.h>
-#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
 
 // Local.
 #include <RadeonGPUAnalyzerBackend/include/beStaticIsaAnalyzer.h>
 #include <RadeonGPUAnalyzerBackend/include/beUtils.h>
 
 using namespace beKA;
+
+// Static constants.
+static const std::string  RGA_SHAE_OPT_LIVEREG   = "analyse-liveness";
+static const std::string  RGA_SHAE_OPT_BLOCK_CFG = "dump-bb-cfg";
+static const std::string  RGA_SHAE_OPT_INST_CFG  = "dump-pi-cfg";
 
 static bool GetLiveRegAnalyzerPath(std::string& analyzerPath)
 {
@@ -62,7 +66,7 @@ beKA::beStatus beKA::beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtSt
         {
             // Construct the command.
             std::stringstream cmd;
-            cmd << analyzerPath << " analyse-liveness " << '"' << isaFileName.asASCIICharArray()
+            cmd << analyzerPath << " " << RGA_SHAE_OPT_LIVEREG << " \"" << isaFileName.asASCIICharArray()
                 << "\" \"" << outputFileName.asASCIICharArray() << '"';
 
             // Cancel signal. Not in use for now.
@@ -94,7 +98,8 @@ beKA::beStatus beKA::beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtSt
     return ret;
 }
 
-beKA::beStatus beKA::beStaticIsaAnalyzer::GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName, bool printCmd)
+beKA::beStatus beKA::beStaticIsaAnalyzer::GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
+                                                                   bool perInst, bool printCmd)
 {
     beStatus ret = beStatus_General_FAILED;
 
@@ -111,8 +116,9 @@ beKA::beStatus beKA::beStaticIsaAnalyzer::GenerateControlFlowGraph(const gtStrin
         {
             // Construct the command.
             std::stringstream cmd;
-            cmd << analyzerPath << " dump-pi-cfg " << kcUtils::Quote(isaFileName.asASCIICharArray())
-                << " " << kcUtils::Quote(outputFileName.asASCIICharArray());
+            std::string shaeOptCfg = perInst ? RGA_SHAE_OPT_INST_CFG : RGA_SHAE_OPT_BLOCK_CFG;
+            cmd << analyzerPath << " " << shaeOptCfg << " " << '"' << isaFileName.asASCIICharArray()
+                << "\" \"" << outputFileName.asASCIICharArray() << '"';
 
             // Cancel signal. Not in use for now.
             bool shouldCancel = false;
