@@ -8,12 +8,12 @@
 #include <QPainter>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgUnsavedItemsDialog.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgUnsavedItemsDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
 
-rgUnsavedItemsDialog::rgUnsavedItemsDialog(QWidget *parent)
-    : QDialog(parent)
+rgUnsavedItemsDialog::rgUnsavedItemsDialog(QWidget *pParent)
+    : QDialog(pParent)
 {
     // Setup the UI.
     ui.setupUi(this);

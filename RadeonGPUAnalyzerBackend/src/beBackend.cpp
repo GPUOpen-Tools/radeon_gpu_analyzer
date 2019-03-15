@@ -20,17 +20,24 @@
 #include <DeviceInfoUtils.h>
 
 // Local.
-#include <RadeonGPUAnalyzerBackend/include/beBackend.h>
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderOpenCL.h>
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderLightning.h>
-#include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
+#include <RadeonGPUAnalyzerBackend/Include/beBackend.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderOpenCL.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderLightning.h>
+#include <RadeonGPUAnalyzerBackend/Include/beStringConstants.h>
 #ifdef _WIN32
-    #include <include/beProgramBuilderDX.h>
+    #include <Include/beProgramBuilderDX.h>
 #endif
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osDebugLog.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 std::vector<std::string> Backend::m_customDxLoadPaths;
 
@@ -173,120 +180,126 @@ beStatus Backend::GetDeviceChipFamilyRevision(
 
     switch (tableEntry.m_asicType)
     {
-        default:
-            // The 600's EG, and NI are no longer supported by OpenCL.
-            // For GSA the earliest DX/GL support is SI.
-            retVal = beStatus_NO_DEVICE_FOUND;
-            break;
+    case GDT_GFX9_0_6:
+        chipFamily = FAMILY_AI;
+        chipRevision = AI_VEGA20_P_A0;
+        retVal = beStatus_SUCCESS;
+        break;
 
-        case GDT_GFX9_0_0:
-        case GDT_GFX9_0_2:
-            chipFamily = FAMILY_AI;
-            chipRevision = AI_GD_P0;
-            retVal = beStatus_SUCCESS;
-            break;
+    case GDT_GFX9_0_0:
+    case GDT_GFX9_0_2:
+        chipFamily = FAMILY_AI;
+        chipRevision = AI_GD_P0;
+        retVal = beStatus_SUCCESS;
+        break;
 
-        case GDT_TAHITI_PRO:
-        case GDT_TAHITI_XT:
-            chipFamily = FAMILY_SI;
-            chipRevision = SI_TAHITI_P_B1;
-            retVal = beStatus_SUCCESS;
-            break;
+    case GDT_TAHITI_PRO:
+    case GDT_TAHITI_XT:
+        chipFamily = FAMILY_SI;
+        chipRevision = SI_TAHITI_P_B1;
+        retVal = beStatus_SUCCESS;
+        break;
 
-        case GDT_PITCAIRN_PRO:
-        case GDT_PITCAIRN_XT:
-            chipFamily = FAMILY_SI;
-            chipRevision = SI_PITCAIRN_PM_A1;
-            retVal = beStatus_SUCCESS;
-            break;
+    case GDT_PITCAIRN_PRO:
+    case GDT_PITCAIRN_XT:
+        chipFamily = FAMILY_SI;
+        chipRevision = SI_PITCAIRN_PM_A1;
+        retVal = beStatus_SUCCESS;
+        break;
 
-        case GDT_CAPEVERDE_PRO:
-        case GDT_CAPEVERDE_XT:
-            chipFamily = FAMILY_SI;
-            chipRevision = SI_CAPEVERDE_M_A1;
-            retVal = beStatus_SUCCESS;
-            break;
+    case GDT_CAPEVERDE_PRO:
+    case GDT_CAPEVERDE_XT:
+        chipFamily = FAMILY_SI;
+        chipRevision = SI_CAPEVERDE_M_A1;
+        retVal = beStatus_SUCCESS;
+        break;
 
-        case GDT_OLAND:
-            chipFamily = FAMILY_SI;
-            chipRevision = SI_OLAND_M_A0;
-            retVal = beStatus_SUCCESS;
-            break;
+    case GDT_OLAND:
+        chipFamily = FAMILY_SI;
+        chipRevision = SI_OLAND_M_A0;
+        retVal = beStatus_SUCCESS;
+        break;
 
-        case GDT_HAINAN:
-            chipFamily = FAMILY_SI;
-            chipRevision = SI_HAINAN_V_A0;
-            retVal = beStatus_SUCCESS;
-            break;
+    case GDT_HAINAN:
+        chipFamily = FAMILY_SI;
+        chipRevision = SI_HAINAN_V_A0;
+        retVal = beStatus_SUCCESS;
+        break;
 
-        case GDT_BONAIRE:
-            chipFamily = FAMILY_CI;
-            chipRevision = CI_BONAIRE_M_A0;
-            break;
+    case GDT_BONAIRE:
+        chipFamily = FAMILY_CI;
+        chipRevision = CI_BONAIRE_M_A0;
+        break;
 
-        case GDT_HAWAII:
-            chipFamily = FAMILY_CI;
-            chipRevision = CI_HAWAII_P_A0;
-            break;
+    case GDT_HAWAII:
+        chipFamily = FAMILY_CI;
+        chipRevision = CI_HAWAII_P_A0;
+        break;
 
-        case GDT_KALINDI:
-            chipFamily = FAMILY_CI;
-            chipRevision = CI_BONAIRE_M_A0;
-            break;
+    case GDT_KALINDI:
+        chipFamily = FAMILY_CI;
+        chipRevision = CI_BONAIRE_M_A0;
+        break;
 
-        case GDT_SPECTRE:
-        case GDT_SPECTRE_SL:
-        case GDT_SPECTRE_LITE:
-            chipFamily = FAMILY_CI;
-            chipRevision = KV_SPECTRE_A0;
-            break;
+    case GDT_SPECTRE:
+    case GDT_SPECTRE_SL:
+    case GDT_SPECTRE_LITE:
+        chipFamily = FAMILY_CI;
+        chipRevision = KV_SPECTRE_A0;
+        break;
 
-        case GDT_SPOOKY:
-            chipFamily = FAMILY_CI;
-            chipRevision = KV_SPOOKY_A0;
-            break;
+    case GDT_SPOOKY:
+        chipFamily = FAMILY_CI;
+        chipRevision = KV_SPOOKY_A0;
+        break;
 
-        case GDT_ICELAND:
-            chipFamily = FAMILY_VI;
-            chipRevision = VI_ICELAND_M_A0;
-            break;
+    case GDT_ICELAND:
+        chipFamily = FAMILY_VI;
+        chipRevision = VI_ICELAND_M_A0;
+        break;
 
-        case GDT_TONGA:
-            chipFamily = FAMILY_VI;
-            chipRevision = VI_TONGA_P_A0;
-            break;
+    case GDT_TONGA:
+        chipFamily = FAMILY_VI;
+        chipRevision = VI_TONGA_P_A0;
+        break;
 
-        case GDT_CARRIZO_EMB:
-        case GDT_CARRIZO:
-            chipFamily = FAMILY_VI;
-            chipRevision = CARRIZO_A0;
-            break;
+    case GDT_CARRIZO_EMB:
+    case GDT_CARRIZO:
+        chipFamily = FAMILY_VI;
+        chipRevision = CARRIZO_A0;
+        break;
 
-        case GDT_STONEY:
-            chipFamily = FAMILY_VI;
-            chipRevision = STONEY_A0;
-            break;
+    case GDT_STONEY:
+        chipFamily = FAMILY_VI;
+        chipRevision = STONEY_A0;
+        break;
 
-        case GDT_FIJI:
-            chipFamily = FAMILY_VI;
-            chipRevision = VI_FIJI_P_A0;
-            break;
+    case GDT_FIJI:
+        chipFamily = FAMILY_VI;
+        chipRevision = VI_FIJI_P_A0;
+        break;
 
-        case GDT_BAFFIN:
-            chipFamily = FAMILY_VI;
-            chipRevision = VI_BAFFIN_M_A0;
-            break;
+    case GDT_BAFFIN:
+        chipFamily = FAMILY_VI;
+        chipRevision = VI_BAFFIN_M_A0;
+        break;
 
-        case GDT_ELLESMERE:
-            chipFamily = FAMILY_VI;
-            chipRevision = VI_ELLESMERE_P_A0;
-            break;
+    case GDT_ELLESMERE:
+        chipFamily = FAMILY_VI;
+        chipRevision = VI_ELLESMERE_P_A0;
+        break;
 
-        case GDT_GFX8_0_4:
-        case GDT_VEGAM2:
-            chipFamily = FAMILY_VI;
-            chipRevision = VI_LEXA_V_A0;
-            break;
+    case GDT_GFX8_0_4:
+    case GDT_VEGAM2:
+        chipFamily = FAMILY_VI;
+        chipRevision = VI_LEXA_V_A0;
+        break;
+
+    default:
+        // The 600's EG, and NI are no longer supported by OpenCL.
+        // For GSA the earliest DX/GL support is SI.
+        retVal = beStatus_NO_DEVICE_FOUND;
+        break;
     }
 
     return retVal;

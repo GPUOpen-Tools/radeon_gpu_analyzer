@@ -3,10 +3,10 @@
 #include <sstream>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgSettingsModelBase.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgSettingsModelBase.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
 
 rgSettingsModelBase::rgSettingsModelBase(unsigned int modelCount) :
     ModelViewMapper(modelCount) {}

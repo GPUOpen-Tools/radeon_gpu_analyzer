@@ -3,7 +3,7 @@
 #include <cassert>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgCheckBox.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgCheckBox.h>
 
 rgCheckBox::rgCheckBox(QWidget* pParent) : QCheckBox(pParent)
 {

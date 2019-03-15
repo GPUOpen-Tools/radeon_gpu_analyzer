@@ -1,4 +1,5 @@
 // C++.
+#include <cassert>
 #include <string>
 #include <sstream>
 
@@ -6,15 +7,18 @@
 #include <QDialog>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgRenameProjectDialog.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgRenameProjectDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
 
 rgRenameProjectDialog::rgRenameProjectDialog(std::string& projectName, QWidget* pParent) :
     m_projectName(projectName), QDialog(pParent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint)
 {
     // Setup the UI.
     ui.setupUi(this);
+
+    // Set the background to white.
+    rgUtils::SetBackgroundColor(this, Qt::white);
 
     // Generate a unique project name based on the incoming base name string.
     m_projectName = rgUtils::GenerateDefaultProjectName();
@@ -30,6 +34,26 @@ rgRenameProjectDialog::rgRenameProjectDialog(std::string& projectName, QWidget* 
 
     // Set the tool tip for default project name check box.
     SetCheckboxToolTip(STR_GLOBAL_SETTINGS_CHECKBOX_TOOLTIP);
+
+    // Disable resizing of this dialog.
+    setFixedSize(size());
+
+    // Connect signals.
+    ConnectSignals();
+
+    // Set the cursor type.
+    SetCursor(Qt::PointingHandCursor);
+}
+
+void rgRenameProjectDialog::ConnectSignals()
+{
+    // Connect the OK button.
+    bool isConnected = connect(this->ui.okPushButton, &QPushButton::clicked, this, &rgRenameProjectDialog::HandleOKButtonClicked);
+    assert(isConnected);
+
+    // Connect the Cancel button.
+    isConnected = connect(this->ui.cancelPushButton, &QPushButton::clicked, this, &rgRenameProjectDialog::HandleCancelButtonClicked);
+    assert(isConnected);
 }
 
 void rgRenameProjectDialog::accept()
@@ -61,11 +85,27 @@ void rgRenameProjectDialog::accept()
         std::stringstream msg;
         msg << STR_ERR_ILLEGAL_PROJECT_NAME <<" \"";
         msg << projectName << "\".";
-        rgUtils::ShowErrorMessageBox(msg.str().c_str());
+        rgUtils::ShowErrorMessageBox(msg.str().c_str(), this);
     }
 }
 
 void rgRenameProjectDialog::SetCheckboxToolTip(const std::string& text)
 {
     ui.projectNameCheckBox->setToolTip(text.c_str());
+}
+
+void rgRenameProjectDialog::HandleOKButtonClicked(bool /* checked */)
+{
+    this->accept();
+}
+
+void rgRenameProjectDialog::HandleCancelButtonClicked(bool /* checked */)
+{
+    this->reject();
+}
+
+void rgRenameProjectDialog::SetCursor(const QCursor& cursor)
+{
+    this->ui.okPushButton->setCursor(cursor);
+    this->ui.cancelPushButton->setCursor(cursor);
 }

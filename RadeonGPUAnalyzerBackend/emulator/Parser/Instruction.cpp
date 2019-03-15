@@ -1,5 +1,5 @@
-#include <RadeonGPUAnalyzerBackend/emulator/Parser/Instruction.h>
-#include <RadeonGPUAnalyzerBackend/../Utils/include/rgaCliDefs.h>
+#include <RadeonGPUAnalyzerBackend/Emulator/Parser/Instruction.h>
+#include <RadeonGPUAnalyzerBackend/../Utils/Include/rgaCliDefs.h>
 
 // C++.
 #include <algorithm>

@@ -6,14 +6,21 @@
 #include <ctime>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTBaseTools/Include/gtString.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osFile.h>
 #include <AMDTOSWrappers/Include/osDirectory.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local
-#include "../include/rgaSharedUtils.h"
-#include "../include/rgLog.h"
+#include "../Include/rgaSharedUtils.h"
+#include "../Include/rgLog.h"
 
 // *** INTERNALLY LINKED SYMBOLS - BEGIN ***
 static const int  WINDOWS_DATE_STRING_LEN = 14;
@@ -58,6 +65,20 @@ bool rgaSharedUtils::ConvertDateString(std::string& dateString)
     return ret;
 }
 
+// Compares two paths, based on ignored case and with standardized path separators.
+// Returns true if the paths match; false otherwise.
+bool rgaSharedUtils::ComparePaths(const std::string& path1, const std::string& path2)
+{
+    std::string p1_lower = path1;
+    std::string p2_lower = path2;
+
+    // Make both paths lowercase and with forward slashes.
+    std::transform(p1_lower.begin(), p1_lower.end(), p1_lower.begin(), [](unsigned char c) {return (c == '\\') ? '/' : std::tolower(c); });
+    std::transform(p2_lower.begin(), p2_lower.end(), p2_lower.begin(), [](unsigned char c) {return (c == '\\') ? '/' : std::tolower(c); });
+
+    return (p1_lower == p2_lower);
+}
+
 // Get current system time.
 static bool  CurrentTime(struct tm& time)
 {
@@ -79,7 +100,7 @@ static bool  CurrentTime(struct tm& time)
 }
 
 // Delete log files older than "daysNum" days.
-static bool  DeleteOldLogs(const std::string& dir, const std::string& baseFileName, unsigned int daysNum)
+bool rgaSharedUtils::DeleteOldLogs(const std::string& dir, const std::string& baseFileName, unsigned int daysNum)
 {
     bool  ret = false;
     const double  secondsNum = static_cast<double>(daysNum * 24 * 60 * 60);
@@ -128,7 +149,7 @@ static bool  DeleteOldLogs(const std::string& dir, const std::string& baseFileNa
     return ret;
 }
 
-static std::string  ConstructLogFileName(const std::string& baseFileName)
+std::string  rgaSharedUtils::ConstructLogFileName(const std::string& baseFileName)
 {
     struct tm   tt;
     osFilePath  logFileName;

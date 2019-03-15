@@ -1,56 +1,85 @@
 /********************************************************************/
-/* File menu item (rgFileMenuFileItem)
+/* File menu item (rgMenuFileItemGraphics)
 /********************************************************************/
 
-/* Selected item */
-rgFileMenuFileItem #itemBackground[selected=true]
-{
-    background-color: rgb(200, 214, 254);
-    border: 1px inset rgb(80, 99, 124);
-}
-
-/* Unselected item */
-rgFileMenuFileItem #itemBackground[selected=false]
+/* The default color is gray. */
+rgMenuFileItemGraphics #itemBackground
 {
     background-color: rgb(234, 235, 230);
-    border: 1px outset rgb(9, 9, 17);
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgb(135,20,16);
 }
 
-/* Hovered item (unselected) */
-rgFileMenuFileItem #itemBackground[selected=false]:hover
+/* Current item color is light yellow (the RGA "highlight" color). */
+rgMenuFileItemGraphics #itemBackground[current=true]
 {
-    background-color: rgb(214, 214, 214);
-    border: 1px outset rgb(9, 9, 17);
+    background-color: rgb(253,255,174);
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgb(135,20,16);
 }
 
+/* Occupied but not current item color is grayish light yellow. */
+rgMenuFileItemGraphics #itemBackground[current=false][occupied=true]
+{
+    background-color: rgb(253, 255, 238);
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgb(135,20,16);
+}
+
+/* Hovered item (unselected) border is Vulkan red. */
+rgMenuFileItemGraphics #itemBackground[hovered=true][current=false]
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
+}
+
+rgMenuFileItemGraphics #createFilePushButton:hover
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
+}
+
+rgMenuFileItemGraphics #addFilePushButton:hover
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
+}
+
+rgMenuFileItemGraphics #removeButton:hover
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
+}
+
+
 /********************************************************************/
-/* Add/create menu item (rgAddCreateMenuItem)
+/* Pipeline state menu item (rgMenuPipelineStateItem)
 /********************************************************************/
 
-rgAddCreateMenuItem QPushButton
+rgMenuPipelineStateItem QPushButton
 {
     background-color: rgb(214, 214, 214);
     text-align: left;
     padding-left: 11px;
 }
 
-rgAddCreateMenuItem QPushButton:hover
+rgMenuPipelineStateItem QPushButton:hover
 {
-    background-color: rgb(200, 214, 254);
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
 }
 
-/********************************************************************/
-/* Build settings menu item (rgAddCreateMenuItem)
-/********************************************************************/
-
-rgFileMenuBuildSettingsItem QPushButton
+rgMenuPipelineStateItem QPushButton:selected
 {
-    background-color: rgb(214, 214, 214);
-    text-align: left;
-    padding-left: 11px;
-}
-
-rgFileMenuBuildSettingsItem QPushButton:hover
-{
-    background-color: rgb(200, 214, 254);
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
 }

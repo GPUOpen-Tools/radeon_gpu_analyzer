@@ -22,6 +22,14 @@ static const char*  XML_MODE_HLSL               = "hlsl";
 static const char*  XML_MODE_OPENGL             = "opengl";
 static const char*  XML_MODE_VULKAN             = "vulkan";
 
+// System level Version Info tags
+static const char*  XML_NODE_SYSTEM             = "System";
+static const char*  XML_NODE_ADAPTERS           = "DisplayAdapters";
+static const char*  XML_NODE_ADAPTER            = "DisplayAdapter";
+static const char*  XML_NODE_ID                 = "ID";
+static const char*  XML_NODE_VK_DRIVER          = "VulkanDriverVersion";
+static const char*  XML_NODE_VK_API             = "VulkanAPIVersion";
+
 // CLI Output Metadata tags
 static const char* XML_NODE_METADATA            = "ProgramOutputMetadata";
 static const char* XML_NODE_DATA_MODEL          = "DataModel";
@@ -38,6 +46,23 @@ static const char* XML_NODE_CSV_ISA             = "CSV_ISA";
 static const char* XML_NODE_RES_USAGE           = "ResourceUsage";
 static const char* XML_NODE_LIVEREG             = "LiveReg";
 static const char* XML_NODE_CFG                 = "CFG";
+static const char* XML_NODE_PIPELINE            = "Pipeline";
+static const char* XML_NODE_STAGE               = "Stage";
+
+// Pipeline types
+static const char* XML_PIPELINE_TYPE_GRAPHICS   = "Graphics";
+static const char* XML_PIPELINE_TYPE_COMPUTE    = "Compute";
+
+// CLI Output Metadata tags for graphics and compute pipelines.
+static const char* XML_NODE_METADATA_PIPELINE           = "PipelineOutputMetadata";
+static const char* XML_NODE_PIPELINE_TYPE_GRAPHICS      = "Graphics";
+static const char* XML_NODE_PIPELINE_TYPE_COMPUTE       = "Compute";
+static const char* XML_NODE_PIPELINE_STAGE_VERTEX       = "Vert";
+static const char* XML_NODE_PIPELINE_STAGE_TESS_CTRL    = "Tesc";
+static const char* XML_NODE_PIPELINE_STAGE_TESS_EVAL    = "Tese";
+static const char* XML_NODE_PIPELINE_STAGE_GEOMETRY     = "Geom";
+static const char* XML_NODE_PIPELINE_STAGE_FRAGMENT     = "Frag";
+static const char* XML_NODE_PIPELINE_STAGE_COMPUTE      = "Comp";
 
 // Shader types
 static const char* XML_SHADER_OPENCL            = "OpenCL_Kernel";
@@ -57,3 +82,4 @@ static const char* XML_SHADER_UNKNOWN           = "Unknown";
 
 // Other
 static const char* XML_UNKNOWN_SOURCE_FILE      = "<Unknown>";
+static const char* XML_UNKNOWN_MKT_NAME         = "<Unknown>";

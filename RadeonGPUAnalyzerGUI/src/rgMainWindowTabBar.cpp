@@ -11,22 +11,36 @@
 #include <QPainter>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgMainWindowTabBar.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgUnsavedItemsDialog.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMainWindowTabBar.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgSettingsTab.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgUnsavedItemsDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
 // Infra.
 #include <QtCommon/Scaling/ScalingManager.h>
+
+static const int s_TAB_BAR_HEIGHT = 47;
+static const int s_TAB_BAR_WIDTH = 100;
 
 rgMainWindowTabBar::rgMainWindowTabBar(QWidget* pParent) :
     QTabBar(pParent),
     m_spacerIndex(-1),
     m_mouseHoverLastTabIndex(-1),
-    m_pParent(pParent)
+    m_pParent(pParent),
+    m_pSettingsTab(nullptr)
 {
     setMouseTracking(true);
     setObjectName("rgMainWindowTabBar");
+
+    // Install an app-level event filter so that this widget can process
+    // [Shift+]Ctrl+Tab key press events before other widgets steal them.
+    // In particular this is needed for the Tab key, since the tab key
+    // on its own causes focus to step between widgets on other parts of the UI.
+    qApp->installEventFilter(this);
+
+    // Set the font stylesheet.
+    setStyleSheet("font: bold 14px;");
 }
 
 void rgMainWindowTabBar::mouseMoveEvent(QMouseEvent* pEvent)
@@ -57,42 +71,17 @@ void rgMainWindowTabBar::mousePressEvent(QMouseEvent* pEvent)
     {
     case (TabItem::Start):
     {
-        if (m_hasBuildPendingChanges || m_hasApplicationPendingChanges)
+        bool userMadeSelection = true;
+
+        assert(m_pSettingsTab != nullptr);
+        if (m_pSettingsTab != nullptr)
         {
-            rgUnsavedItemsDialog::UnsavedFileDialogResult result = SaveSettings();
-
-            switch (result)
-            {
-            case rgUnsavedItemsDialog::Yes:
-                // Save all data.
-                emit SaveBuildSettingsChangesSignal(true);
-
-                // Let the tab switch occur.
-                // Pass the event onto the base class.
-                QTabBar::mousePressEvent(pEvent);
-
-                break;
-            case rgUnsavedItemsDialog::No:
-                // Do not save the data
-                emit SaveBuildSettingsChangesSignal(false);
-
-                // Let the tab switch occur.
-                // Pass the event onto the base class.
-                QTabBar::mousePressEvent(pEvent);
-
-                break;
-            case rgUnsavedItemsDialog::Cancel:
-                // Do not save anything if the user hit the cancel button.
-                // Also, do not change the tab.
-                break;
-            default:
-                // Shouldn't get here.
-                assert(false);
-            }
+            userMadeSelection = m_pSettingsTab->PromptToSavePendingChanges();
         }
-        else
+
+        if (userMadeSelection)
         {
-            // Let the tab switch occur.
+            // User did not cancel the prompt, so let the tab switch occur.
             // Pass the event onto the base class.
             QTabBar::mousePressEvent(pEvent);
         }
@@ -110,6 +99,53 @@ void rgMainWindowTabBar::mousePressEvent(QMouseEvent* pEvent)
         assert(false);
     }
     }
+}
+
+bool rgMainWindowTabBar::eventFilter(QObject* pObject, QEvent* pEvent)
+{
+    bool filtered = false;
+
+    if (pEvent != nullptr)
+    {
+        if (pEvent->type() == QEvent::KeyPress)
+        {
+            // Only process the events if the SettingsTab is the current tab.
+            if (currentIndex() == TabItem::Settings)
+            {
+                if (m_pSettingsTab != nullptr)
+                {
+                    QKeyEvent* pKeyEvent = static_cast<QKeyEvent*>(pEvent);
+                    if (pKeyEvent != nullptr)
+                    {
+                        // If Ctrl+Shift+Tab or Ctrl+Tab is switching tabs, prompt to save pending
+                        // settings changes first.
+                        // Note: The [Shift] is just a way to choose prev or next direction, but
+                        // we only have two tabs, so they both behave the same way.
+                        const int keyPressed = pKeyEvent->key();
+                        if ((keyPressed == Qt::Key_Tab || keyPressed == Qt::Key_Backtab) &&
+                            (pKeyEvent->modifiers() & Qt::ControlModifier))
+                        {
+                            // Prompt user to save pending changes.
+                            bool userMadeSelection = m_pSettingsTab->PromptToSavePendingChanges();
+                            if (userMadeSelection == false)
+                            {
+                                // User cancelled the prompt, so the event should be filtered out.
+                                filtered = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Allow base class to filter the event if needed.
+    if (!filtered)
+    {
+        filtered = QTabBar::eventFilter(pObject, pEvent);
+    }
+
+    return filtered;
 }
 
 void rgMainWindowTabBar::SetTabEnabled(int index, bool enable)
@@ -135,7 +171,9 @@ QSize rgMainWindowTabBar::minimumTabSizeHint(int index) const
 
 QSize rgMainWindowTabBar::tabSizeHint(int index) const
 {
-    int height = QTabBar::tabSizeHint(index).height();
+    const int height = s_TAB_BAR_HEIGHT * ScalingManager::Get().GetScaleFactor();
+    const int width = s_TAB_BAR_WIDTH * ScalingManager::Get().GetScaleFactor();
+
     if (index == SpacerIndex())
     {
         return QSize(CalcSpacerWidth(), height);
@@ -158,7 +196,7 @@ QSize rgMainWindowTabBar::tabSizeHint(int index) const
     }
     else
     {
-        return QSize(QTabBar::tabSizeHint(index).width(), height);
+        return QSize(width, height);
     }
 }
 
@@ -225,52 +263,12 @@ int rgMainWindowTabBar::CalcSpacerWidth() const
     return spacerWidth;
 }
 
-void rgMainWindowTabBar::UpdateApplicationPendingChanges(bool pendingChanges)
-{
-    m_hasApplicationPendingChanges = pendingChanges;
-}
-
-void rgMainWindowTabBar::UpdateBuildPendingChanges(bool pendingChanges)
-{
-    m_hasBuildPendingChanges = pendingChanges;
-}
-
 void rgMainWindowTabBar::SetParentWidget(QWidget* pParent)
 {
     m_pParent = pParent;
 }
 
-rgUnsavedItemsDialog::UnsavedFileDialogResult rgMainWindowTabBar::SaveSettings()
+void rgMainWindowTabBar::SetSettingsTab(rgSettingsTab* pSettingsTab)
 {
-    rgUnsavedItemsDialog::UnsavedFileDialogResult result = rgUnsavedItemsDialog::No;
-
-    if (m_hasBuildPendingChanges || m_hasApplicationPendingChanges)
-    {
-        // Create a modal unsaved file dialog.
-        rgUnsavedItemsDialog* pUnsavedChangesDialog = new rgUnsavedItemsDialog(this);
-        pUnsavedChangesDialog->setModal(true);
-        pUnsavedChangesDialog->setWindowTitle(STR_UNSAVED_ITEMS_DIALOG_TITLE);
-
-        // Add a message string to the dialog list.
-        if (m_hasApplicationPendingChanges)
-        {
-            pUnsavedChangesDialog->AddFile(STR_SETTINGS_CONFIRMATION_APPLICATION_SETTINGS);
-        }
-        if (m_hasBuildPendingChanges)
-        {
-            pUnsavedChangesDialog->AddFile(STR_DEFAULT_OPENCL_BUILD_SETTINGS);
-        }
-
-        // Register the dialog with the scaling manager.
-        ScalingManager::Get().RegisterObject(pUnsavedChangesDialog);
-
-        // Center the dialog on the view (registering with the scaling manager
-        // shifts it out of the center so we need to manually center it).
-        rgUtils::CenterOnWidget(pUnsavedChangesDialog, m_pParent);
-
-        // Execute the dialog and get the result.
-        result = static_cast<rgUnsavedItemsDialog::UnsavedFileDialogResult>(pUnsavedChangesDialog->exec());
-    }
-
-    return result;
+    m_pSettingsTab = pSettingsTab;
 }

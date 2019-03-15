@@ -3,14 +3,17 @@
 
 // Qt.
 #include <QtWidgets>
+#include <QMenu>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgSourceCodeEditor.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgSourceCodeEditor.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
 
 // Use a light yellow to highlight the line that the cursor is on.
 static const QColor COLOR_HIGHLIGTED_ROW = QColor(Qt::yellow).lighter(170);
 
-rgSourceCodeEditor::rgSourceCodeEditor(QWidget* pParent) : QPlainTextEdit(pParent)
+rgSourceCodeEditor::rgSourceCodeEditor(QWidget* pParent, rgSrcLanguage lang) : QPlainTextEdit(pParent)
 {
     m_pLineNumberArea = new LineNumberArea(this);
 
@@ -26,7 +29,10 @@ rgSourceCodeEditor::rgSourceCodeEditor(QWidget* pParent) : QPlainTextEdit(pParen
     ConnectSignals();
 
     // Create the syntax highlighter.
-    m_pSyntaxHighlight = new rgSyntaxHighlight(document(), rgSyntaxHighlight::Language::OpenCL);
+    if (lang != rgSrcLanguage::Unknown)
+    {
+        m_pSyntaxHighlight = new rgSyntaxHighlight(document(), lang);
+    }
 
     UpdateLineNumberAreaWidth(0);
 
@@ -38,8 +44,8 @@ rgSourceCodeEditor::rgSourceCodeEditor(QWidget* pParent) : QPlainTextEdit(pParen
     if (pDoc != nullptr)
     {
         QFont font = pDoc->defaultFont();
-        font.setFamily("Consolas");
-        font.setPointSize(10);
+        font.setFamily(STR_BUILD_VIEW_FONT_FAMILY);
+        font.setPointSize(gs_BUILD_VIEW_FONT_SIZE);
         pDoc->setDefaultFont(font);
 
         // A tab is the same width as 4 spaces.
@@ -53,6 +59,69 @@ rgSourceCodeEditor::rgSourceCodeEditor(QWidget* pParent) : QPlainTextEdit(pParen
 
     // Disable accepting dropped files.
     setAcceptDrops(false);
+
+    // Set up the open header file action.
+    m_pOpenHeaderFileAction = new QAction(tr(STR_SOURCE_EDITOR_CONTEXT_MENU_OPEN_HEADER), this);
+
+    // Cut action.
+    m_pCutTextAction = new QAction(tr(STR_SOURCE_EDITOR_CONTEXT_MENU_CUT), this);
+    m_pCutTextAction->setShortcut(QKeySequence(gs_SOURCE_EDITOR_HOTKEY_CONTEXT_MENU_CUT));
+
+    // Copy action.
+    m_pCopyTextAction = new QAction(tr(STR_SOURCE_EDITOR_CONTEXT_MENU_COPY), this);
+    m_pCopyTextAction->setShortcut(QKeySequence(gs_SOURCE_EDITOR_HOTKEY_CONTEXT_MENU_COPY));
+
+    // Paste action.
+    m_pPasteTextAction = new QAction(tr(STR_SOURCE_EDITOR_CONTEXT_MENU_PASTE), this);
+    m_pPasteTextAction->setShortcut(QKeySequence(gs_SOURCE_EDITOR_HOTKEY_CONTEXT_MENU_PASTE));
+
+    // Select All action.
+    m_pSelectAllTextAction = new QAction(tr(STR_SOURCE_EDITOR_CONTEXT_MENU_SELECT_ALL), this);
+    m_pCutTextAction->setShortcut(QKeySequence(gs_SOURCE_EDITOR_HOTKEY_CONTEXT_MENU_SELECT_ALL));
+
+    // Open header file.
+    bool isConnected = connect(m_pOpenHeaderFileAction, &QAction::triggered, this, &rgSourceCodeEditor::HandleOpenHeaderFile);
+    assert(isConnected);
+
+    // Cut action.
+    isConnected = connect(m_pCutTextAction, &QAction::triggered, this, &QPlainTextEdit::cut);
+    assert(isConnected);
+
+    // Copy action.
+    isConnected = connect(m_pCopyTextAction, &QAction::triggered, this, &QPlainTextEdit::copy);
+    assert(isConnected);
+
+    // Paste action.
+    isConnected = connect(m_pPasteTextAction, &QAction::triggered, this, &QPlainTextEdit::paste);
+    assert(isConnected);
+
+    // Select All action.
+    isConnected = connect(m_pSelectAllTextAction, &QAction::triggered, this, &QPlainTextEdit::selectAll);
+    assert(isConnected);
+
+    m_pContextMenu = this->createStandardContextMenu();
+    assert(m_pContextMenu != nullptr);
+    if (m_pContextMenu != nullptr)
+    {
+        // Reconstruct the context menu.
+        m_pContextMenu->clear();
+        m_pContextMenu->addAction(m_pOpenHeaderFileAction);
+        m_pContextMenu->addSeparator();
+        m_pContextMenu->addAction(m_pCutTextAction);
+        m_pContextMenu->addAction(m_pCopyTextAction);
+        m_pContextMenu->addAction(m_pPasteTextAction);
+        m_pContextMenu->addSeparator();
+        m_pContextMenu->addAction(m_pSelectAllTextAction);
+        this->setContextMenuPolicy(Qt::CustomContextMenu);
+
+        // Set hand pointer for the context menu.
+        m_pContextMenu->setCursor(Qt::PointingHandCursor);
+
+        // Connect the signal for showing the context menu.
+        isConnected = connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(ShowContextMenu(const QPoint&)));
+        assert(isConnected);
+    }
+
 }
 
 int rgSourceCodeEditor::LineNumberAreaWidth() const
@@ -121,6 +190,16 @@ void rgSourceCodeEditor::clearText(const QString& txt)
     }
 }
 
+const std::string& rgSourceCodeEditor::GetTitleBarText()
+{
+    return m_titleBarNotificationText;
+}
+
+void rgSourceCodeEditor::SetTitleBarText(const std::string& text)
+{
+    m_titleBarNotificationText = text;
+}
+
 void rgSourceCodeEditor::HandleToggleCursorVisibility()
 {
     // Toggle the visibility of the cursor and trigger a repaint.
@@ -142,6 +221,112 @@ void rgSourceCodeEditor::UpdateLineNumberArea(const QRect &rect, int dy)
 
     if (rect.contains(viewport()->rect()))
         UpdateLineNumberAreaWidth(0);
+}
+
+void rgSourceCodeEditor::HandleOpenHeaderFile()
+{
+    QString lineText;
+    bool isValid = GetCurrentLineText(lineText);
+    if (isValid)
+    {
+        // Parse the line.
+        if (IsIncludeDirectiveLine(lineText))
+        {
+            // Check the type of the include directive: double-quotes or triangular.
+            bool isDoubleQuoted = (lineText.count("\"") == 2);
+            bool isTriangular = !isDoubleQuoted && (lineText.count("<") == 1) && (lineText.count(">") == 1) &&
+                (std::find(lineText.begin(), lineText.end(), "<") < std::find(lineText.begin(), lineText.end(), ">"));
+
+            if (isDoubleQuoted)
+            {
+                // Extract the file name.
+                QStringList lineBroken = lineText.split("\"");
+                if (lineBroken.size() >= 2)
+                {
+                    QString fileName = lineBroken[1];
+
+                    // Fire the signal: user requested to open header file.
+                    emit OpenHeaderFileRequested(fileName);
+                }
+            }
+            else if (isTriangular)
+            {
+                // Extract the part that is after the first < character.
+                QStringList lineBrokenA = lineText.split("<");
+                if (lineBrokenA.size() >= 2)
+                {
+                    // Extract the part that is before the > character.
+                    QStringList lineBrokenB = lineBrokenA.at(1).split(">");
+                    if (lineBrokenB.size() >= 1)
+                    {
+                        // Fire the signal: user requested to open header file.
+                        QString fileName = lineBrokenB[0];
+                        emit OpenHeaderFileRequested(fileName);
+                    }
+                }
+            }
+        }
+    }
+}
+
+bool rgSourceCodeEditor::GetCurrentLineText(QString& lineText)
+{
+    // Get the current line.
+    QTextCursor cursor = this->textCursor();
+    cursor.movePosition(QTextCursor::StartOfLine);
+    int lines = 1;
+    while (cursor.positionInBlock() > 0)
+    {
+        cursor.movePosition(QTextCursor::Up);
+        lines++;
+    }
+
+    QTextBlock block = cursor.block().previous();
+    while (block.isValid())
+    {
+        lines += block.lineCount();
+        block = block.previous();
+    }
+
+    // Extract the current line's text.
+    bool isValid = GetTextAtLine(lines, lineText) && !lineText.isEmpty();
+    return isValid;
+}
+
+bool rgSourceCodeEditor::IsIncludeDirectiveLine(const QString& lineTxt)
+{
+    // We use this token to identify if a line is an include directive.
+    static const char* INCLUDE_DIR_TOKEN = "#include ";
+    bool isIncludeDirective = lineTxt.startsWith(INCLUDE_DIR_TOKEN);
+    return isIncludeDirective;
+}
+
+void rgSourceCodeEditor::ShowContextMenu(const QPoint& pt)
+{
+    // Is the open header file action relevant.
+    QString lineText;
+    bool isValid = GetCurrentLineText(lineText);
+
+    // Set the open header action to enabled
+    // only when the line is an include directive.
+    m_pOpenHeaderFileAction->setEnabled(IsIncludeDirectiveLine(lineText));
+
+    // Only enable cut, copy if there is text selected.
+    QTextCursor cursor = this->textCursor();
+    bool hasSelection = cursor.hasSelection();
+    m_pCutTextAction->setEnabled(hasSelection);
+    m_pCopyTextAction->setEnabled(hasSelection);
+
+    // Paste is enabled if there is anything in the clipboard.
+    QString clipboard = QApplication::clipboard()->text();
+    m_pPasteTextAction->setEnabled(!clipboard.isEmpty());
+
+    // Show the context menu to the user where the mouse is.
+    assert(m_pContextMenu != nullptr);
+    if (m_pContextMenu != nullptr)
+    {
+        m_pContextMenu->exec(QCursor::pos());
+    }
 }
 
 void rgSourceCodeEditor::ConnectSignals()
@@ -280,6 +465,21 @@ void rgSourceCodeEditor::UpdateCursorPosition()
     UpdateCursorPositionHelper(false);
 }
 
+bool rgSourceCodeEditor::SetSyntaxHighlighting(rgSrcLanguage lang)
+{
+    bool result = (lang != rgSrcLanguage::Unknown);
+    if (result)
+    {
+        if (m_pSyntaxHighlight != nullptr)
+        {
+            delete m_pSyntaxHighlight;
+        }
+        m_pSyntaxHighlight = new rgSyntaxHighlight(document(), lang);
+    }
+
+    return result;
+}
+
 int rgSourceCodeEditor::GetSelectedLineNumber() const
 {
     return textCursor().blockNumber() + 1;
@@ -290,7 +490,6 @@ bool rgSourceCodeEditor::GetTextAtLine(int lineNumber, QString& text) const
     bool ret = false;
 
     bool isLineValid = lineNumber >= 1 && lineNumber < document()->blockCount();
-    assert(isLineValid);
     if (isLineValid)
     {
         QTextBlock lineBlock = document()->findBlockByLineNumber(lineNumber - 1);
@@ -308,8 +507,8 @@ void rgSourceCodeEditor::LineNumberAreaPaintEvent(QPaintEvent* pEvent)
 
     QTextBlock block = firstVisibleBlock();
     int blockNumber = block.blockNumber();
-    int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
-    int bottom = top + (int) blockBoundingRect(block).height();
+    int top = (int)blockBoundingGeometry(block).translated(contentOffset()).top();
+    int bottom = top + (int)blockBoundingRect(block).height();
 
     while (block.isValid() && top <= pEvent->rect().bottom())
     {
@@ -320,12 +519,61 @@ void rgSourceCodeEditor::LineNumberAreaPaintEvent(QPaintEvent* pEvent)
             QFont defaultFont = this->document()->defaultFont();
             painter.setFont(defaultFont);
             painter.drawText(0, top, m_pLineNumberArea->width(), fontMetrics().height(),
-                             Qt::AlignCenter, number);
+                Qt::AlignCenter, number);
         }
 
         block = block.next();
         top = bottom;
-        bottom = top + (int) blockBoundingRect(block).height();
+        bottom = top + (int)blockBoundingRect(block).height();
         ++blockNumber;
     }
+}
+
+void rgSourceCodeEditor::mousePressEvent(QMouseEvent* pEvent)
+{
+    // Close the context menu if it is open.
+    if (m_pContextMenu != nullptr)
+    {
+        m_pContextMenu->close();
+    }
+
+    // Only open the context menu on right-click.
+    // In that case do not process the event further.
+    if (pEvent != nullptr && pEvent->button() == Qt::RightButton)
+    {
+        // Simulate a left click event to bring us to the current line.
+        Qt::MouseButtons buttons;
+        QMouseEvent* pDummyEvent = new QMouseEvent(pEvent->type(), pEvent->localPos(), pEvent->screenPos(),
+            Qt::MouseButton::LeftButton, buttons, pEvent->modifiers());
+        emit mousePressEvent(pDummyEvent);
+    }
+    else
+    {
+        // Disable disassembly view's scroll bar signals.
+        // This is needed because when the user clicks on source code editor,
+        // the disassembly view's scroll bars emit a signal, causing the
+        // disassembly view's border to be colored red, and now the user
+        // will see both the source code editor and the disassembly view
+        // with a red border around it.
+        emit DisableScrollbarSignals();
+
+        emit SourceCodeEditorFocusInEvent();
+
+        // Pass the event onto the base class.
+        QPlainTextEdit::mousePressEvent(pEvent);
+
+        // Enable disassembly view's scroll bar signals.
+        emit EnableScrollbarSignals();
+    }
+}
+
+void rgSourceCodeEditor::mouseDoubleClickEvent(QMouseEvent * pEvent)
+{
+    // Override the double-click event to avoid QPlainTextEdit
+    // from interpreting the sequence that happens when we simulate
+    // a left click as an event of a triple click and select the entire
+    // row's text.
+    QTextCursor cursor = this->textCursor();
+    cursor.select(QTextCursor::SelectionType::WordUnderCursor);
+    this->setTextCursor(cursor);
 }

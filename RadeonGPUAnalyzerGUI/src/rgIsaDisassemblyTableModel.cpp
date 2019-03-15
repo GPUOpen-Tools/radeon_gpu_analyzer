@@ -11,15 +11,15 @@
 #include <QTextStream>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyTableModel.h>
-#include <RadeonGPUAnalyzerGUI/include/rgConfigManager.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTableModel.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgConfigManager.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 #include <ui_rgIsaDisassemblyTableView.h>
 
 // Shared with CLI.
-#include <RadeonGPUAnalyzerGUI/../Utils/include/rgaCliDefs.h>
+#include <RadeonGPUAnalyzerGUI/../Utils/Include/rgaCliDefs.h>
 
 // The color to use for label backgrounds within the table.
 static const QColor kBranchLabelInstructionColor = QColor(37, 36, 225);
@@ -363,13 +363,13 @@ bool rgIsaDisassemblyTableModel::LoadCsvData(const std::string& csvFileFullPath)
                             int disassemblyLineIndex = static_cast<int>(m_disassembledIsaLines.size());
                             m_instructionLineNumberToInputSourceLineNumber[disassemblyLineIndex] = inputSourceLineIndex;
 
-                            // Find the minimum line number of the entrypoint in the input file.
+                            // Find the minimum line number of the entry point in the input file.
                             if (inputSourceLineIndex < m_sourceFileEntrypointStartLine)
                             {
                                 m_sourceFileEntrypointStartLine = inputSourceLineIndex;
                             }
 
-                            // Find the maximum line number of the entrypoint in the input file.
+                            // Find the maximum line number of the entry point in the input file.
                             if (inputSourceLineIndex > m_sourceFileEntrypointEndLine)
                             {
                                 m_sourceFileEntrypointEndLine = inputSourceLineIndex;
@@ -546,7 +546,7 @@ void rgIsaDisassemblyTableModel::ClearLabelLines()
     }
 }
 
-void rgIsaDisassemblyTableModel::GetColumnMaxWigths(const int startRow, const int endRow, std::vector<int>& widths) const
+void rgIsaDisassemblyTableModel::GetColumnMaxWidths(const QVector<int>& selectedRowNumbers, std::vector<int>& widths) const
 {
     const auto& pGlobalSettings = rgConfigManager::Instance().GetGlobalConfig();
     for (int col = 0, numColumns = m_pIsaTableModel->columnCount(); col < numColumns; ++col)
@@ -554,9 +554,9 @@ void rgIsaDisassemblyTableModel::GetColumnMaxWigths(const int startRow, const in
         if (pGlobalSettings->m_visibleDisassemblyViewColumns[col])
         {
             int maxWidth = 0;
-            if (endRow < m_disassembledIsaLines.size())
+            if (selectedRowNumbers.at(selectedRowNumbers.size() - 1) < m_disassembledIsaLines.size())
             {
-                for (int row = startRow; row <= endRow; ++row)
+                foreach (auto row, selectedRowNumbers)
                 {
                     if (m_disassembledIsaLines[row]->m_type == rgIsaLineType::Instruction)
                     {
@@ -570,21 +570,21 @@ void rgIsaDisassemblyTableModel::GetColumnMaxWigths(const int startRow, const in
     }
 }
 
-void rgIsaDisassemblyTableModel::CopyRangeToClipboard(int startRow, int endRow)
+void rgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selectedRowNumbers)
 {
     const int MIN_COLUMN_OFFSET = 4;
     std::shared_ptr<rgGlobalSettings> pGlobalSettings = rgConfigManager::Instance().GetGlobalConfig();
 
     // Calculate maximum width for each column in the selected ISA region.
     std::vector<int>  maxColumnWidths;
-    GetColumnMaxWigths(startRow, endRow, maxColumnWidths);
+    GetColumnMaxWidths(selectedRowNumbers, maxColumnWidths);
 
     // Add a tab as a delimiter between each column.
     const char COLUMN_DELIMITER_SYMBOL = ' ';
 
     // Build a string including each line in the selected range.
     std::stringstream clipboardText;
-    for (int rowIndex = startRow; rowIndex <= endRow; ++rowIndex)
+    foreach(auto rowIndex, selectedRowNumbers)
     {
         // Is the current row an instruction or a label?
         std::shared_ptr<rgIsaLine> pIsaLine = m_disassembledIsaLines[rowIndex];
@@ -594,40 +594,35 @@ void rgIsaDisassemblyTableModel::CopyRangeToClipboard(int startRow, int endRow)
             std::string  prevColumnText = "";
 
             // Add the contents of visible columns to the clipboard text.
-            for (int columnIndex = 0, prevVisibleColumnIndex = 0; columnIndex < 10; ++columnIndex)
+            for (int columnIndex = 0, prevVisibleColumnIndex = 0; columnIndex < pGlobalSettings->m_visibleDisassemblyViewColumns.size(); ++columnIndex)
             {
-                // Is the column index valid?
-                bool isValidColumn = columnIndex >= 0 && columnIndex < pGlobalSettings->m_visibleDisassemblyViewColumns.size();
-                if (isValidColumn)
+                // Is the current column visible?
+                bool isColumnVisible = pGlobalSettings->m_visibleDisassemblyViewColumns[columnIndex];
+                if (isColumnVisible)
                 {
-                    // Is the current column visible?
-                    bool isColumnVisible = pGlobalSettings->m_visibleDisassemblyViewColumns[columnIndex];
-                    if (isColumnVisible)
+                    if (isFirstTokenInLine)
                     {
-                        if (isFirstTokenInLine)
-                        {
-                            // We don't need to append the delimiter before the first token in the line.
-                            isFirstTokenInLine = false;
-                        }
-                        else
-                        {
-                            // Append sufficient number of spaces so that the colums are aligned.
-                            // The number of needed spaces is based on the width of the text in the previous column and its maximum width.
-                            assert(prevVisibleColumnIndex < maxColumnWidths.size());
-                            std::string  delimiter = "";
-                            for (size_t i = 0, numSpaces = MIN_COLUMN_OFFSET + maxColumnWidths[prevVisibleColumnIndex++] - prevColumnText.size();
-                                 i < numSpaces; ++i)
-                            {
-                                delimiter += COLUMN_DELIMITER_SYMBOL;
-                            }
-                            clipboardText << delimiter;
-                        }
-
-                        // Add the data to the clipboard string stream.
-                        QModelIndex cellIndex = m_pIsaTableModel->index(rowIndex, columnIndex);
-                        QVariant cellText = m_pIsaTableModel->data(cellIndex);
-                        clipboardText << (prevColumnText = cellText.toString().toStdString());
+                        // We don't need to append the delimiter before the first token in the line.
+                        isFirstTokenInLine = false;
                     }
+                    else
+                    {
+                        // Append sufficient number of spaces so that the columns are aligned.
+                        // The number of needed spaces is based on the width of the text in the previous column and its maximum width.
+                        assert(prevVisibleColumnIndex < maxColumnWidths.size());
+                        std::string  delimiter = "";
+                        for (size_t i = 0, numSpaces = MIN_COLUMN_OFFSET + maxColumnWidths[prevVisibleColumnIndex++] - prevColumnText.size();
+                            i < numSpaces; ++i)
+                        {
+                            delimiter += COLUMN_DELIMITER_SYMBOL;
+                        }
+                        clipboardText << delimiter;
+                    }
+
+                    // Add the data to the clipboard string stream.
+                    QModelIndex cellIndex = m_pIsaTableModel->index(rowIndex, columnIndex);
+                    QVariant cellText = m_pIsaTableModel->data(cellIndex);
+                    clipboardText << (prevColumnText = cellText.toString().toStdString());
                 }
             }
         }

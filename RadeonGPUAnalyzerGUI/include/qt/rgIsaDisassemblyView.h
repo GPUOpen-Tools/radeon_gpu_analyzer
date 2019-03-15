@@ -7,7 +7,7 @@
 #include <QWidget>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
 #include <ui_rgIsaDisassemblyView.h>
 
 // Forward declarations.
@@ -31,6 +31,9 @@ public:
     explicit rgIsaDisassemblyView(QWidget* pParent = nullptr);
     virtual ~rgIsaDisassemblyView();
 
+    // Populate the disassembly view using the given clone and build outputs.
+    virtual bool PopulateBuildOutput(const std::shared_ptr<rgProjectClone> pProjectClone, const rgBuildOutputsMap& buildOutputs) = 0;
+
     // Clear all existing build outputs loaded in the view.
     void ClearBuildOutput();
 
@@ -40,14 +43,20 @@ public:
     // Is the view currently empty?
     bool IsEmpty() const;
 
-    // Populate the disassembly view with the given CLI build output.
-    bool PopulateDisassemblyView(const std::vector<rgSourceFileInfo>& sourceFiles, const rgBuildOutputsMap& buildOutput);
-
     // Remove the disassembly for the given input file.
     void RemoveInputFileEntries(const std::string& inputFilePath);
 
     // Checks if given source line is present in line correlation table for current entry point.
-    bool IsLineCorrelatedInEntry(const std::string& targetGpu, const std::string& entrypoint, int srcLine) const;
+    bool IsLineCorrelatedInEntry(const std::string& inputFilePath, const std::string& targetGpu, const std::string& entrypoint, int srcLine) const;
+
+    // Connect the title bar's double click signal.
+    void ConnectTitleBarDoubleClick(const rgViewContainer* pDisassemblyViewContainer);
+
+    // Replace the input file path in the ISA disassembly & resource tables with another file.
+    // This function should be used if:
+    // 1. a shader SPIR-V file is replaced with its disassembly version and vice versa (Vulkan mode only).
+    // 2. a source file is renamed (all modes).
+    bool ReplaceInputFilePath(const std::string& oldFilePath, const std::string& newFilePath);
 
 signals:
     // A signal emitted when the input source file's highlighted correlation line should be updated.
@@ -56,7 +65,7 @@ signals:
     // A signal emitted when the user has changed the disassembly table's column visibility.
     void DisassemblyColumnVisibilityUpdated();
 
-    // Handler invoked when the user changes the selected entrypoint for a given input file.
+    // Handler invoked when the user changes the selected entry point for a given input file.
     void SelectedEntrypointChanged(const std::string& inputFilePath, const std::string& selectedEntrypointName);
 
     // A signal emitted when the requested width of the disassembly table is changed.
@@ -65,16 +74,58 @@ signals:
     // A signal emitted when the target GPU is changed.
     void SelectedTargetGpuChanged(const std::string& targetGpu);
 
+    // A signal to disable table scroll bar signals.
+    void DisableScrollbarSignals();
+
+    // A signal to enable table scroll bar signals.
+    void EnableScrollbarSignals();
+
+    // A signal to remove focus from file menu sub buttons.
+    void RemoveFileMenuButtonFocus();
+
+    // A signal to indicate that the user clicked on disassembly view.
+    void DisassemblyViewClicked();
+
+    // A signal to focus the next view.
+    void FocusNextView();
+
+    // A signal to focus the previous view.
+    void FocusPrevView();
+
+    // A signal to focus the disassembly view.
+    void FocusDisassemblyView();
+
+    // A signal to update the current sub widget.
+    void UpdateCurrentSubWidget(DisassemblyViewSubWidgets subWidget);
+
+    // A signal to focus the cli output window.
+    void FocusCliOutputWindow();
+
+    // A signal to focus the source window.
+    void FocusSourceWindow();
+
+    // A signal to switch disassembly view size.
+    void SwitchDisassemblyContainerSize();
+
 public slots:
     // Handler invoked when the user changes the selected line in the input source file.
     void HandleInputFileSelectedLineChanged(const std::string& targetGpu, const std::string& inputFilePath, std::string& entryName, int lineIndex);
 
-    // Handler invoked when the user changes the selected entrypoint for a given input file.
+    // Handler invoked when the user changes the selected entry point for a given input file.
     void HandleSelectedEntrypointChanged(const std::string& targetGpu, const std::string& inputFilePath, const std::string& selectedEntrypointName);
 
-private slots:
+    // Handler invoked when the user clicks on the tab view.
+    void HandleDisassemblyTabViewClicked();
+
+    // Handler invoked to color the container frame black.
+    void HandleFocusOutEvent();
+
+    // Handler to focus the column push button.
+    void HandleFocusColumnsPushButton();
+
+protected slots:
     // Handler invoked when the user clicks the column visibility arrow.
-    void HandleColumnVisibilityArrowClicked(bool clicked);
+    void HandleColumnVisibilityButtonClicked(bool clicked);
 
     // Handler invoked when the user clicks an item in the column visibility list.
     void HandleColumnVisibilityComboBoxItemClicked(const QString& text, const bool checked);
@@ -82,17 +133,44 @@ private slots:
     // Handler invoked when a check box's state is changed.
     void HandleColumnVisibilityFilterStateChanged(bool checked);
 
+    // Handler invoked when the disassembly view loses focus.
+    void HandleDisassemblyTabViewLostFocus();
+
+    // Handler invoked when the user clicks on title bar.
+    void HandleTitlebarClickedEvent(QMouseEvent* pEvent);
+
+    // Handler invoked when the user clicks outside of the resource view.
+    void HandleResourceUsageViewFocusOutEvent();
+
     // Handler invoked when the user clicks the Target GPU dropdown arrow button.
     void HandleTargetGpuArrowClicked(bool clicked);
 
     // Handler invoked when the user changes the selected target GPU.
     void HandleTargetGpuChanged(int currentIndex);
 
-private:
+    // Handler invoked when the list widget gains focus.
+    void HandleListWidgetFocusInEvent();
+
+    // Handler invoked when the list widget loses focus.
+    void HandleListWidgetFocusOutEvent();
+
+    // Handler to process select GPU target hot key.
+    void HandleSelectNextGPUTargetAction();
+
+    // Handler to focus the target GPUs push button.
+    void HandleFocusTargetGpuPushButton();
+
+    // Handler to open the column list widget.
+    void HandleOpenColumnListWidget();
+
+    // Handler to open the GPU list widget.
+    void HandleOpenGpuListWidget();
+
+protected:
     // A map that associates an GPU name to a list of program build outputs.
     typedef std::map<std::string, std::vector<rgEntryOutput>> GpuToEntryVector;
 
-    // A type of map that associates an entrypoint name with a resource usage view for the entrypoint.
+    // A type of map that associates an entry point name with a resource usage view for the entrypoint.
     typedef std::map<std::string, rgResourceUsageView*> EntrypointToResourcesView;
 
     // A map of full input file path to a map of rgResourceUsageViews for the file.
@@ -128,6 +206,9 @@ private:
     // Populate the resource usage view with the given build outputs.
     bool PopulateResourceUsageEntries(const GpuToEntryVector& gpuToResourceUsageCsvEntries);
 
+    // Connect resource usage view signals.
+    void ConnectResourceUsageViewSignals(rgResourceUsageView * pResourceUsageView);
+
     // Populate the names in the column visibility list.
     void PopulateColumnVisibilityList();
 
@@ -136,6 +217,9 @@ private:
 
     // Clean up all resource usage views related to the given input source file.
     void DestroyResourceUsageViewsForFile(const std::string& inputFilePath);
+
+    // Set focus proxies for list widget check boxes to the frame.
+    void SetCheckBoxFocusProxies(const ListWidget* pListWidget) const;
 
     // Set font sizes for list widget push buttons.
     void SetFontSizes();
@@ -149,6 +233,9 @@ private:
     // Set the cursor to pointing hand cursor for various widgets.
     void SetCursor();
 
+    // Set the border stylesheet.
+    virtual void SetBorderStylesheet() = 0;
+
     // Set the current target GPU to display disassembly for.
     void SetTargetGpu(const std::string& targetGpu);
 
@@ -158,7 +245,7 @@ private:
     // A map of GPU to the views showing disassembly for multiple kernel entries.
     std::map<std::string, rgIsaDisassemblyTabView*> m_gpuTabViews;
 
-    // A map of GPU name to a map of an input file's entrypoint resource usage views.
+    // A map of GPU name to a map of an input file's entry point resource usage views.
     std::map<std::string, InputToEntrypointViews> m_gpuResourceUsageViews;
 
     // The current target GPU tab being viewed.
@@ -181,6 +268,15 @@ private:
 
     // The resource usage font.
     QFont m_resourceUsageFont;
+
+    // Select next GPU action.
+    QAction* m_pSelectNextGPUTarget = nullptr;
+
+    // The tab key action.
+    QAction* m_pTabKeyAction = nullptr;
+
+    // The shift+tab key action.
+    QAction* m_pShiftTabKeyAction = nullptr;
 
     // The interface responsible for presenting disassembly results for multiple GPUs.
     Ui::rgIsaDisassemblyView ui;

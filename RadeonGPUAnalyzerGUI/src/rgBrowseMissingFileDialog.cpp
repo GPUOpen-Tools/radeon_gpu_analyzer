@@ -8,9 +8,9 @@
 #include <QPainter>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgBrowseMissingFileDialog.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgBrowseMissingFileDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
 
 rgBrowseMissingFileDialog::rgBrowseMissingFileDialog(rgProjectAPI api, QWidget* pParent)
     : QDialog(pParent)

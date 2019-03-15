@@ -4,7 +4,7 @@
 #include <QTabWidget>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgMainWindowTabBar.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMainWindowTabBar.h>
 
 /// Support for the custom Tab Widget.
 class rgMainWindowTabWidget : public QTabWidget

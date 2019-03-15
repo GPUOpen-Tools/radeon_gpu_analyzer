@@ -12,7 +12,7 @@
 #include <utility>
 
 // GSA.
-#include <RadeonGPUAnalyzerBackend/include/Common/AmdDxGsaCompile.h>
+#include <RadeonGPUAnalyzerBackend/Include/Common/AmdDxGsaCompile.h>
 
 using namespace beKA;
 class CElf;
@@ -136,7 +136,7 @@ public:
     /// \param[in] sourcePath       additional source path
     /// \returns               a status.
     /// If a Log stream is available, some failures may be diagnosed.
-    virtual beKA::beStatus Compile(beKA::SourceLanguage sourceLanguage, const std::string& programSource, const DXOptions& dxOptions);
+    virtual beKA::beStatus Compile(RgaMode mode, const std::string& programSource, const DXOptions& dxOptions);
     virtual beKA::beStatus GetIntermediateMSBlob(std::string& IntermediateMDBlob);
 
     /// Used when the DXASM code is generated using the FXC tool, and therefore needs to be injected to the DX builder.

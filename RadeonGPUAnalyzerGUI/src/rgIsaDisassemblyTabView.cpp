@@ -6,12 +6,17 @@
 #include <QtCommon/Scaling/ScalingManager.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyTabView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyTableView.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTabView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTableView.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+
+// A separator used in joining an input source file path with an entry point name.
+// Such a string is used to uniquely identify an entry point with potential for
+// name collisions between separate source files.
+static const char s_ENTRYPOINT_KEY_SEPARATOR = '|';
 
 rgIsaDisassemblyTabView::rgIsaDisassemblyTabView(QWidget* pParent) :
     QWidget(pParent)
@@ -52,7 +57,7 @@ bool rgIsaDisassemblyTabView::PopulateEntries(const std::vector<rgEntryOutput>& 
     bool ret = true;
 
     // Create a disassembly table for each entry, and add it to the layout.
-    // Only a single entrypoint table will be visible at a time, and the user can switch between the current entry.
+    // Only a single entry point table will be visible at a time, and the user can switch between the current entry.
     for (const rgEntryOutput& entry : disassembledEntries)
     {
         OutputFileTypeFinder outputFileTypeSearcher(rgCliOutputFileType::IsaDisassemblyCsv);
@@ -80,11 +85,14 @@ bool rgIsaDisassemblyTabView::PopulateEntries(const std::vector<rgEntryOutput>& 
             // Hide the table initially, as only a single table can be shown at once.
             pTableView->hide();
 
-            // Associate the kernel name with the table showing the disassembly.
-            m_entrypointDisassemblyTableViews[entry.m_kernelName] = pTableView;
+            // Generate a key string used to identify a named entry point within a given input source file.
+            std::string entrypointNameKey = GenerateEntrypointKey(entry.m_inputFilePath, entry.m_entrypointName);
 
-            // Also associate the disassembly table with the entrypoint it's displaying data for.
-            m_disassemblyTableViewToEntrypoint[pTableView] = entry.m_kernelName;
+            // Associate the kernel name with the table showing the disassembly.
+            m_entrypointDisassemblyTableViews[entrypointNameKey] = pTableView;
+
+            // Also associate the disassembly table with the entry point it's displaying data for.
+            m_disassemblyTableViewToEntrypoint[pTableView] = entrypointNameKey;
 
             // Add the new table to the list of tables associated with the input file.
             std::vector<rgIsaDisassemblyTableView*>& tableList = m_inputFileToIsaTableList[entry.m_inputFilePath];
@@ -106,7 +114,7 @@ void rgIsaDisassemblyTabView::RemoveInputFileEntries(const std::string& inputFil
         // Step through each table and destroy it.
         for (rgIsaDisassemblyTableView* pTableView : entryTables)
         {
-            // Remove the references to the table from the entrypoint name to ISA table map.
+            // Remove the references to the table from the entry point name to ISA table map.
             RemoveEntrypointTable(pTableView);
 
             // Remove the table from the view.
@@ -122,10 +130,13 @@ void rgIsaDisassemblyTabView::RemoveInputFileEntries(const std::string& inputFil
     }
 }
 
-void rgIsaDisassemblyTabView::SwitchToEntryPoint(const std::string& entryName)
+void rgIsaDisassemblyTabView::SwitchToEntryPoint(const std::string& inputFilePath, const std::string& entrypointName)
 {
-    // Find the disassembly table corresponding to the given entrypoint name.
-    auto entryIter = m_entrypointDisassemblyTableViews.find(entryName);
+    // Generate a key string used to identify a named entry point within a given input source file.
+    std::string entrypointNameKey = GenerateEntrypointKey(inputFilePath, entrypointName);
+
+    // Find the disassembly table corresponding to the given entry point name.
+    auto entryIter = m_entrypointDisassemblyTableViews.find(entrypointNameKey);
     if (entryIter != m_entrypointDisassemblyTableViews.end())
     {
         rgIsaDisassemblyTableView* pTableView = entryIter->second;
@@ -153,7 +164,7 @@ void rgIsaDisassemblyTabView::SwitchToEntryPoint(const std::string& entryName)
                         std::stringstream errorString;
                         errorString << STR_ERR_CANNOT_LOAD_DISASSEMBLY_CSV_FILE;
                         errorString << disassemblyFilePath;
-                        rgUtils::ShowErrorMessageBox(errorString.str().c_str());
+                        rgUtils::ShowErrorMessageBox(errorString.str().c_str(), this);
                     }
                 }
 
@@ -189,11 +200,12 @@ void rgIsaDisassemblyTabView::UpdateCorrelatedSourceFileLine(const std::string& 
     if (!entryName.empty())
     {
         // Switch to view the disassembly table for the named entrypoint.
-        SwitchToEntryPoint(entryName);
+        SwitchToEntryPoint(inputFilePath, entryName);
     }
 
     // Find the table used to present the given entrypoint's disassembly.
-    auto entrypointToTableIter = m_entrypointDisassemblyTableViews.find(entryName);
+    std::string entrypointNameKey = GenerateEntrypointKey(inputFilePath, entryName);
+    auto entrypointToTableIter = m_entrypointDisassemblyTableViews.find(entrypointNameKey);
     if (entrypointToTableIter != m_entrypointDisassemblyTableViews.end())
     {
         // Update the currently selected source line number.
@@ -202,14 +214,82 @@ void rgIsaDisassemblyTabView::UpdateCorrelatedSourceFileLine(const std::string& 
     }
 }
 
-bool rgIsaDisassemblyTabView::IsSourceLineCorrelatedForEntry(const std::string& entryName, int lineNumber)
+bool rgIsaDisassemblyTabView::IsSourceLineCorrelatedForEntry(const std::string& inputFilePath, const std::string& entryName, int lineNumber)
 {
     bool  ret = false;
-    const auto& isaTableView = m_entrypointDisassemblyTableViews.find(entryName);
+
+    // Generate a key string used to identify a named entry point within a given input source file.
+    std::string entrypointNameKey = GenerateEntrypointKey(inputFilePath, entryName);
+
+    const auto& isaTableView = m_entrypointDisassemblyTableViews.find(entrypointNameKey);
     if (isaTableView != m_entrypointDisassemblyTableViews.end())
     {
         ret = isaTableView->second->IsSourceLineCorrelated(lineNumber);
     }
+    return ret;
+}
+
+bool rgIsaDisassemblyTabView::ReplaceInputFilePath(const std::string& oldFilePath, const std::string& newFilePath)
+{
+    assert(!oldFilePath.empty());
+    assert(!newFilePath.empty());
+    bool ret = (!oldFilePath.empty() && !newFilePath.empty());
+
+    if (ret)
+    {
+        // 1. Replace the file path in the "entry point --> disasm table view" map.
+        // There may be multiple matching elements since the keys in this map
+        // consist of the file path and the entry name: KEY = "file-path|entry-name".
+        std::vector<std::map<std::string, rgIsaDisassemblyTableView*>::iterator> nodesToChange;
+        for (auto it = m_entrypointDisassemblyTableViews.begin(); it != m_entrypointDisassemblyTableViews.end(); ++it)
+        {
+            std::string filePath, entryName;
+            DecodeEntrypointKey(it->first, filePath, entryName);
+            if (filePath == oldFilePath)
+            {
+                nodesToChange.push_back(it);
+            }
+        }
+
+        for (auto it : nodesToChange)
+        {
+            std::string filePath, entryName;
+            DecodeEntrypointKey(it->first, filePath, entryName);
+            auto pTableView = it->second;
+            m_entrypointDisassemblyTableViews.erase(it);
+            std::string newKey = GenerateEntrypointKey(newFilePath, entryName);
+            m_entrypointDisassemblyTableViews[newKey] = pTableView;
+        }
+    }
+
+    if (ret)
+    {
+        // 2. Replace the file path in the "disasm table view --> entry point" map.
+        for (auto& val : m_disassemblyTableViewToEntrypoint)
+        {
+            std::string filePath, entryName;
+            DecodeEntrypointKey(val.second, filePath, entryName);
+            if (filePath == oldFilePath)
+            {
+                val.second = GenerateEntrypointKey(newFilePath, entryName);
+            }
+        }
+    }
+
+    if (ret)
+    {
+        // 3. Replace the file path in the "input file --> disasm table views" map.
+        auto it = m_inputFileToIsaTableList.find(oldFilePath);
+        if ((ret = (it != m_inputFileToIsaTableList.end())) == true)
+        {
+            auto tableViews = it->second;
+            m_inputFileToIsaTableList.erase(it);
+            m_inputFileToIsaTableList[newFilePath] = tableViews;
+        }
+    }
+
+    assert(ret);
+
     return ret;
 }
 
@@ -234,6 +314,80 @@ void rgIsaDisassemblyTabView::ConnectTableViewSignals(rgIsaDisassemblyTableView*
     // Connect the disassembly table resized handler.
     isConnected = connect(pTableView, &rgIsaDisassemblyTableView::DisassemblyTableWidthResizeRequested, this, &rgIsaDisassemblyTabView::DisassemblyTableWidthResizeRequested);
     assert(isConnected);
+
+    // Connect the disassembly table clicked handler.
+    isConnected = connect(pTableView, &rgIsaDisassemblyTableView::FrameFocusInSignal, this, &rgIsaDisassemblyTabView::FrameFocusInSignal);
+    assert(isConnected);
+
+    // Connect a forwarding signal used to handle when the disassembly table loses focus.
+    isConnected = connect(pTableView, &rgIsaDisassemblyTableView::FrameFocusOutSignal, this, &rgIsaDisassemblyTabView::FrameFocusOutSignal);
+    assert(isConnected);
+
+    // Connect the disassembly view's enable scroll bar signal.
+    isConnected = connect(this, &rgIsaDisassemblyTabView::EnableScrollbarSignals, pTableView, &rgIsaDisassemblyTableView::EnableScrollbarSignals);
+    assert(isConnected);
+
+    // Connect the disassembly view's disable scroll bar signal.
+    isConnected = connect(this, &rgIsaDisassemblyTabView::DisableScrollbarSignals, pTableView, &rgIsaDisassemblyTableView::DisableScrollbarSignals);
+    assert(isConnected);
+
+    // Connect the disassembly table's target GPU push button focus in signal.
+    isConnected = connect(pTableView, &rgIsaDisassemblyTableView::FocusTargetGpuPushButton, this, &rgIsaDisassemblyTabView::FocusTargetGpuPushButton);
+    assert(isConnected);
+
+    // Connect the disassembly table's switch disassembly view size signal.
+    isConnected = connect(pTableView, &rgIsaDisassemblyTableView::SwitchDisassemblyContainerSize, this, &rgIsaDisassemblyTabView::SwitchDisassemblyContainerSize);
+    assert(isConnected);
+
+    // Connect the disassembly table's columns push button focus in signal.
+    isConnected = connect(pTableView, &rgIsaDisassemblyTableView::FocusColumnPushButton, this, &rgIsaDisassemblyTabView::FocusColumnPushButton);
+    assert(isConnected);
+
+    // Connect the disassembly table's cli output window focus in signal.
+    isConnected = connect(pTableView, &rgIsaDisassemblyTableView::FocusCliOutputWindow, this, &rgIsaDisassemblyTabView::FocusCliOutputWindow);
+    assert(isConnected);
+
+    // Connect the disassembly table's source window focus in signal.
+    isConnected = connect(pTableView, &rgIsaDisassemblyTableView::FocusSourceWindow, this, &rgIsaDisassemblyTabView::FocusSourceWindow);
+    assert(isConnected);
+
+    // Connect the disassembly tab view's update current sub widget signal.
+    isConnected = connect(this, &rgIsaDisassemblyTabView::UpdateCurrentSubWidget, pTableView, &rgIsaDisassemblyTableView::UpdateCurrentSubWidget);
+    assert(isConnected);
+
+    // Connect the disassembly table's focus cli output window signal.
+    isConnected = connect(pTableView, &rgIsaDisassemblyTableView::FocusCliOutputWindow, this, &rgIsaDisassemblyTabView::FocusCliOutputWindow);
+    assert(isConnected);
+
+}
+
+std::string rgIsaDisassemblyTabView::GenerateEntrypointKey(const std::string& filePath, const std::string& entrypointName) const
+{
+    // In some cases it may not be possible to identify a given entry point by name when multiple
+    // entrypoints use the same name. Return a unique key based on the input filename and the
+    // entry point name, so that each entry point can be identified correctly.
+    return filePath + s_ENTRYPOINT_KEY_SEPARATOR + entrypointName;
+}
+
+bool rgIsaDisassemblyTabView::DecodeEntrypointKey(const std::string& entrypointKey, std::string& filePath, std::string& entrypointName) const
+{
+    bool ret = false;
+
+    // Attempt to split the given entry point key string into source file path and entry point name strings.
+    std::vector<std::string> filePathAndEntrypointNameList;
+    rgUtils::splitString(entrypointKey, s_ENTRYPOINT_KEY_SEPARATOR, filePathAndEntrypointNameList);
+
+    // Verify that only 2 tokens are found. One for the source file path, and another for entry point name.
+    size_t tokenCount = filePathAndEntrypointNameList.size();
+    assert(tokenCount == 2);
+    if (tokenCount == 2)
+    {
+        filePath = filePathAndEntrypointNameList[0];
+        entrypointName = filePathAndEntrypointNameList[1];
+        ret = true;
+    }
+
+    return ret;
 }
 
 void rgIsaDisassemblyTabView::RemoveEntrypointTable(rgIsaDisassemblyTableView* pTableView)
@@ -244,7 +398,7 @@ void rgIsaDisassemblyTabView::RemoveEntrypointTable(rgIsaDisassemblyTableView* p
         m_pCurrentTable = nullptr;
     }
 
-    // Step through the map of entrypoint to table, and erase the one that matches the incoming table being removed.
+    // Step through the map of entry point to table, and erase the one that matches the incoming table being removed.
     auto tablesStartIter = m_entrypointDisassemblyTableViews.begin();
     auto tablesEndIter = m_entrypointDisassemblyTableViews.end();
     for (auto tableIter = tablesStartIter; tableIter != tablesEndIter; ++tableIter)
@@ -256,7 +410,7 @@ void rgIsaDisassemblyTabView::RemoveEntrypointTable(rgIsaDisassemblyTableView* p
         }
     }
 
-    // Find and remove the given table from the table to entrypoint name map.
+    // Find and remove the given table from the table to entry point name map.
     auto tableIter = m_disassemblyTableViewToEntrypoint.find(pTableView);
     if (tableIter != m_disassemblyTableViewToEntrypoint.end())
     {

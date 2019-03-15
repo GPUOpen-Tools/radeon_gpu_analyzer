@@ -4,22 +4,29 @@
 
 #ifndef __ISAPARSER_H
 #define __ISAPARSER_H
-#include <RadeonGPUAnalyzerBackend/include/beRGADllBuild.h>
 
 #include <iostream>
 #include <vector>
 #include <map>
 #include <sstream>
 #include <set>
+
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include "ParserSI.h"
 #include "ISAProgramGraph.h"
-#include <RadeonGPUAnalyzerBackend/include/beInclude.h>
+#include <RadeonGPUAnalyzerBackend/Include/beInclude.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 #define   STR_HSAIL_DISASM_START_TOKEN  "Disassembly for "
 #define   STR_HSAIL_DISASM_END_TOKEN    "\nend\n"
 
 /// Parser for the ISA instructions
-class RGA_BACKEND_DECLDIR ParserISA
+class ParserISA
 {
 public:
     /// ctor

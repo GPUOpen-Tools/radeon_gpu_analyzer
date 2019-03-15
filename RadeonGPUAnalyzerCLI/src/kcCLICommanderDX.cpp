@@ -4,22 +4,26 @@
 
 #ifdef _WIN32
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTBaseTools/Include/gtString.h>
 #include <AMDTBaseTools/Include/gtAssert.h>
-
-// Boost.
-#include <boost/algorithm/string/predicate.hpp>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Backend.
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderDX.h>
-#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
-#include  <CElf.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderDX.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
+#include <CElf.h>
 #include <DeviceInfoUtils.h>
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommanderDX.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
-#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderDX.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCliStringConstants.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
 
 // Static constants.
 const int  DX_MAX_SUPPORTED_SHADER_MODEL_MAJOR = 5;
@@ -75,13 +79,13 @@ void kcCLICommanderDX::InitRequestedAsicListDX(const Config& config)
 
         if (beUtils::GetAllGraphicsCards(dxDeviceTable, supportedDevices))
         {
-            if (InitRequestedAsicList(config, supportedDevices, matchedTargets, false))
+            if (InitRequestedAsicList(config.m_ASICs, config.m_mode, supportedDevices, matchedTargets, false))
             {
                 for (const std::string& target : matchedTargets)
                 {
                     for (const GDT_GfxCardInfo& dxDevice : dxDeviceTable)
                     {
-                        if (boost::iequals(dxDevice.m_szCALName, target))
+                        if (dxDevice.m_szCALName == target)
                         {
                             m_dxDefaultAsicsList.push_back(dxDevice);
                             break;
@@ -111,12 +115,12 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
             {
                 gtString  tempIsaFileName, isaFileExt;
                 tempIsaFileName << (std::string(KC_STR_DEFAULT_ISA_OUTPUT_FILE_NAME) + deviceName + config.m_Function).c_str();
-                isaFileExt << KC_STR_DEFAULT_ISA_SUFFIX;
+                isaFileExt << KC_STR_DEFAULT_ISA_EXT;
                 isaOutputFileName = kcUtils::ConstructTempFileName(tempIsaFileName, isaFileExt);
             }
             else
             {
-                kcUtils::ConstructOutputFileName(config.m_ISAFile, KC_STR_DEFAULT_ISA_SUFFIX,
+                kcUtils::ConstructOutputFileName(config.m_ISAFile, "", KC_STR_DEFAULT_ISA_EXT,
                                                  config.m_Function, deviceName, isaOutputFileName);
             }
             kcUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), isaBuffer, m_LogCallback);
@@ -147,8 +151,8 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
             if (!config.m_LiveRegisterAnalysisFile.empty())
             {
                 gtString liveRegAnalysisOutputFileName;
-                kcUtils::ConstructOutputFileName(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVE_REG_ANALYSIS_SUFFIX,
-                                                 config.m_Function, deviceName, liveRegAnalysisOutputFileName);
+                kcUtils::ConstructOutputFileName(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVEREG_SUFFIX,
+                                                 KC_STR_DEFAULT_LIVEREG_EXT, config.m_Function, deviceName, liveRegAnalysisOutputFileName);
 
                 // Call the kcUtils routine to analyze <generatedFileName> and write
                 // the analysis file.
@@ -160,7 +164,7 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
             {
                 gtString cfgOutputFileName;
                 std::string baseName = (!config.m_instCFGFile.empty() ? config.m_instCFGFile : config.m_blockCFGFile);
-                kcUtils::ConstructOutputFileName(baseName, KC_STR_DEFAULT_CFG_EXT,
+                kcUtils::ConstructOutputFileName(baseName, KC_STR_DEFAULT_CFG_SUFFIX, KC_STR_DEFAULT_CFG_EXT,
                                                  config.m_Function, deviceName, cfgOutputFileName);
 
                 kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName, m_LogCallback,
@@ -201,8 +205,8 @@ void kcCLICommanderDX::ExtractIL(const std::string& deviceName, const Config& co
         if (backendRet == beStatus_SUCCESS)
         {
             gtString ilOutputFileName;
-            kcUtils::ConstructOutputFileName(config.m_ILFile, KC_STR_DEFAULT_AMD_IL_SUFFIX,
-                config.m_Function, deviceName, ilOutputFileName);
+            kcUtils::ConstructOutputFileName(config.m_ILFile, "", KC_STR_DEFAULT_AMD_IL_EXT,
+                                             config.m_Function, deviceName, ilOutputFileName);
             kcUtils::WriteTextFile(ilOutputFileName.asASCIICharArray(), ilBuffer, m_LogCallback);
         }
 
@@ -291,7 +295,7 @@ void kcCLICommanderDX::ExtractBinary(const std::string& deviceName, const Config
     if (beStatus_SUCCESS == m_pBackEndHandler->theOpenDXBuilder()->GetBinary(deviceName, binOptions, binary))
     {
         gtString binOutputFileName;
-        kcUtils::ConstructOutputFileName(config.m_BinaryOutputFile, KC_STR_DEFAULT_BIN_SUFFIX, "", deviceName, binOutputFileName);
+        kcUtils::ConstructOutputFileName(config.m_BinaryOutputFile, "", KC_STR_DEFAULT_BIN_EXT, "", deviceName, binOutputFileName);
         kcUtils::WriteBinaryFile(binOutputFileName.asASCIICharArray(), binary, m_LogCallback);
         std::stringstream s_Log;
         s_Log << KA_CLI_STR_EXTRACTING_BIN << deviceName << "... " << KA_CLI_STR_STATUS_SUCCESS << std::endl;
@@ -323,28 +327,16 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         vector <AnalysisData> AnalysisDataVec;
         vector <string> DeviceAnalysisDataVec;
 
-        // check for input correctness
-        if ((config.m_FXC.length() > 0) && (config.m_SourceLanguage != SourceLanguage_DXasm))
+        // Check flags first.
+        if (config.m_Profile.length() == 0 && config.m_mode == Mode_HLSL)
         {
             std::stringstream s_Log;
-            s_Log << "DXAsm must be specified when using FXC";
+            s_Log << "-p Must be specified. Check compiler target: vs_5_0, ps_5_0 etc.";
             LogCallBack(s_Log.str());
             return;
         }
 
-        // check flags first
-        if ((config.m_Profile.length() == 0) && (config.m_SourceLanguage == SourceLanguage_HLSL))
-        {
-            std::stringstream s_Log;
-            s_Log << "-P Must be specified. Check compiler target: vs_5_0, ps_5_0 etc.";
-            LogCallBack(s_Log.str());
-            return;
-        }
-
-        if ((config.m_SourceLanguage != SourceLanguage_HLSL)    &&
-            (config.m_SourceLanguage != SourceLanguage_DXasm)   &&
-            (config.m_SourceLanguage != SourceLanguage_DXasmT)  &&
-            (config.m_SourceLanguage != SourceLanguage_AMDIL))
+        if (config.m_mode != Mode_HLSL && config.m_mode != Mode_AMDIL)
         {
             std::stringstream s_Log;
             s_Log << "Source language is not supported. Please use ";
@@ -416,7 +408,8 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         if ((AnalysisDataVec.size() > 0) && bCompileSucces)
         {
             gtString analysisFileName;
-            kcUtils::ConstructOutputFileName(config.m_AnalysisFile, KC_STR_DEFAULT_STATISTICS_SUFFIX, config.m_Function, "", analysisFileName);
+            kcUtils::ConstructOutputFileName(config.m_AnalysisFile, KC_STR_DEFAULT_STATS_SUFFIX,
+                                             KC_STR_DEFAULT_STATS_EXT, config.m_Function, KC_STR_ALL_DEVICES_SUFFIX, analysisFileName);
 
             std::stringstream s_Log;
             WriteAnalysisDataForDX(config, AnalysisDataVec, DeviceAnalysisDataVec, analysisFileName.asASCIICharArray(), s_Log);
@@ -436,7 +429,8 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
                 LogCallBack(ss.str());
 
                 gtString dxAsmOutputFileName;
-                kcUtils::ConstructOutputFileName(config.m_DumpMSIntermediate, KC_STR_DEFAULT_DXASM_SUFFIX, config.m_Function, "", dxAsmOutputFileName);
+                kcUtils::ConstructOutputFileName(config.m_DumpMSIntermediate, "", KC_STR_DEFAULT_DXASM_EXT,
+                                                 config.m_Function, "", dxAsmOutputFileName);
                 kcUtils::WriteTextFile(dxAsmOutputFileName.asASCIICharArray(), sDumpMSIntermediate, m_LogCallback);
             }
             else
@@ -564,7 +558,7 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
     std::pair<int, int>  version;
     beProgramBuilderDX::DXOptions dxOptions;
 
-    if (config.m_SourceLanguage != SourceLanguage_AMDIL &&
+    if (config.m_mode != Mode_AMDIL &&
         !ParseProfileString(config.m_Profile, version))
     {
         s_Log << STR_ERR_PARSE_DX_SHADER_MODEL_FAILED << std::endl;
@@ -659,7 +653,7 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
         if (beRet != beStatus_SUCCESS)
         {
             // the use must have got the asics spelled wrong- let him know and continue
-            s_Log << "Error: Couldn't find device named: " << sDevicenametoLog << ". Run \'-s HLSL -l to view available devices." << endl;
+            s_Log << "Error: could not find device named: " << sDevicenametoLog << ". Run \'-s HLSL -l to view available devices." << endl;
             ret = false;
         }
         else
@@ -676,7 +670,7 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
                 dxOptions.m_includeDirectories.push_back(includePath);
             }
 
-            beRet = m_pBackEndHandler->theOpenDXBuilder()->Compile(config.m_SourceLanguage, sSource, dxOptions);
+            beRet = m_pBackEndHandler->theOpenDXBuilder()->Compile(config.m_mode, sSource, dxOptions);
 
             if (beRet == beStatus_Create_Bolob_FromInput_Failed)
             {

@@ -1,109 +1,98 @@
 //=================================================================
-// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2018 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
-#ifndef beProgramBuilderVulkan_h__
-#define beProgramBuilderVulkan_h__
-
-// C++.
-#include <string>
-#include <set>
+#pragma once
 
 // Local.
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilder.h>
-#include <RadeonGPUAnalyzerBackend/include/beInclude.h>
-#include <RadeonGPUAnalyzerBackend/include/beRGADllBuild.h>
-#include <RadeonGPUAnalyzerBackend/include/beDataTypes.h>
+#include <RadeonGPUAnalyzerBackend/Include/beDataTypes.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilder.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcConfig.h>
 
-struct VulkanOptions : public beKA::CompileOptions
+using namespace beKA;
+
+// SPIR-V tool.
+enum class beSpvTool
 {
-    VulkanOptions(beKA::SourceLanguage inputType) : m_isSpirvBinariesRequired(false), m_isAmdPalIlBinariesRequired(false),
-        m_isAmdPalIlDisassemblyRequired(false), m_isAmdIsaBinariesRequired(false),
-        m_isAmdIsaDisassemblyRequired(false), m_isScStatsRequired(false)
-    {
-        CompileOptions::m_SourceLanguage = inputType;
-    }
-
-    // The target devices.
-    std::string m_targetDeviceName;
-
-    // The generic input file name.
-    std::string m_stagelessInputFile;
-
-    // The input shader file names.
-    beProgramPipeline m_pipelineShaders;
-
-    // AMD PAL IL binary output file names.
-    beProgramPipeline m_palIlBinaryOutputFiles;
-
-    // AMD PAL IL disassembly output files.
-    beProgramPipeline m_pailIlDisassemblyOutputFiles;
-
-    // ISA disassembly output file names.
-    beProgramPipeline m_isaDisassemblyOutputFiles;
-
-    // Register liveness analysis output file names.
-    beProgramPipeline m_liveRegisterAnalysisOutputFiles;
-
-    // Control flow graph output file names.
-    beProgramPipeline m_controlFlowGraphOutputFiles;
-
-    // ISA binary output file name.
-    beProgramPipeline m_isaBinaryFiles;
-
-    // SC statistics output file name.
-    beProgramPipeline m_scStatisticsOutputFiles;
-
-    // True to generate SPIR-V binaries.
-    bool m_isSpirvBinariesRequired;
-
-    // True to generate AMD PAL IL binaries.
-    bool m_isAmdPalIlBinariesRequired;
-
-    // True to generate AMD PAL IL disassembly.
-    bool m_isAmdPalIlDisassemblyRequired;
-
-    // True to generate AMD ISA binaries.
-    bool m_isAmdIsaBinariesRequired;
-
-    // True to generate AMD ISA binaries.
-    bool m_isAmdIsaDisassemblyRequired;
-
-    // True to perform live register analysis.
-    bool m_isLiveRegisterAnalysisRequired;
-
-    // True to generate shader compiler statistics.
-    bool m_isScStatsRequired;
+    Assembler,
+    Disassembler
 };
 
-class RGA_BACKEND_DECLDIR beProgramBuilderVulkan : public
-    beProgramBuilder
+//
+// ProgramBuilder implementation for online Vulkan mode.
+//
+class beProgramBuilderVulkan : public beProgramBuilder
 {
 public:
-    beProgramBuilderVulkan();
-    ~beProgramBuilderVulkan();
+    beProgramBuilderVulkan()  = default;
+    ~beProgramBuilderVulkan() = default;
 
-    virtual beKA::beStatus GetBinary(const std::string& device, const beKA::BinaryOptions& binopts, std::vector<char>& binary) override;
+    // Get the list of target GPUs supported by the Vulkan driver.
+    static beStatus GetVulkanDriverTargetGPUs(const std::string& loaderDebug, const std::string& icdFile,
+                                              std::set<std::string>& targetGPUs,
+                                              bool printCmd, std::string& errText);
 
-    virtual beKA::beStatus GetKernelILText(const std::string& device, const std::string& kernel, std::string& il) override;
+    // Get the list of physically installed GPUs.
+    static beStatus GetPhysicalGPUs(const std::string&                icdFile,
+                                    std::vector<beVkPhysAdapterInfo>& gpuInfo,
+                                    bool                              printCmd,
+                                    std::string&                      errText);
 
-    virtual beKA::beStatus GetKernelISAText(const std::string& device, const std::string& kernel, std::string& isa) override;
+    // Compile single glsl or hlsl source file to a binary SPIR-V file.
+    // If compilation fails, the error text returned by the compiler is returned in "errText" string.
+    static beStatus CompileSrcToSpirvBinary(const Config& config,
+                                            const std::string& srcFile,
+                                            const std::string& spvFile,
+                                            bePipelineStage stage,
+                                            bool isHlsl,
+                                            std::string& errText);
 
-    virtual beKA::beStatus GetStatistics(const std::string& device, const std::string& kernel, beKA::AnalysisData& analysis) override;
+    // Link multiple SPIR-V binary files into a single SPIR-V binary file.
+    //static beStatus LinkSpvBinaries(const std::vector<std::string>& spvFileNames, const std::string& outSpvFileName);
 
-    virtual beKA::beStatus GetDeviceTable(std::vector<GDT_GfxCardInfo>& table) override;
+    // Compile SPIR-V binary file(s) to pipeline binary, ISA disassembly & statistics using the Vulkan Backend executable.
+    static beStatus CompileSpirv(const std::string& loaderDebug,
+                                 const beVkPipelineFiles& spirvFiles,
+                                 const beVkPipelineFiles& isaFiles,
+                                 const beVkPipelineFiles& statsFiles,
+                                 const std::string& binFile,
+                                 const std::string& psoFile,
+                                 const std::string& icdFile,
+                                 const std::string& validationOutput,
+                                 const std::string& validationOutputRedirection,
+                                 const std::string& device,
+                                 bool printCmd,
+                                 std::string& errMsg);
 
-    beKA::beStatus Compile(const VulkanOptions& vulkanOptions, bool& cancelSignal, bool printCmd, gtString& buildLog);
+    // Disassemble SPIR-V binary file to disassembly text file.
+    static beStatus DisassembleSpv(const std::string& spvToolsBinDir,
+                                   const std::string& spvFilePath,
+                                   const std::string& spvDisFilePath,
+                                   bool               printCmd,
+                                   std::string&       errMsg);
 
-    /// Extracts the OpenGL version of the installed runtime.
-    bool GetVulkanVersion(gtString& vkVersion);
+    // Assemble SPIR-V text file to SPIR-V binary file.
+    static beStatus AssembleSpv(const std::string& spvToolsBinDir,
+                                const std::string& spvTxtFilePath,
+                                const std::string& spvFilePath,
+                                bool               printCmd,
+                                std::string&       errMsg);
 
-    /// Retrieves the list of supported devices.
-    static bool GetSupportedDevices(std::set<std::string>& deviceList);
+    // Preprocess input file using the glslang compiler. The preprocessed text is returned in "output" string.
+    static beStatus PreprocessSource(const Config& config, const std::string& glslangBinDir, const std::string& inputFile,
+                                     bool isHlsl, bool printCmd, std::string& output, std::string& errMsg);
 
 private:
 
-    std::set<std::string> m_publicDevices;
-};
+    // Invoke the Glslang compiler executable.
+    static beStatus InvokeGlslang(const std::string& glslangBinPath, const std::string& cmdLineOptions,
+                                  bool printCmd, std::string& outText, std::string& errText);
 
-#endif // beProgramBuilderVulkan_h__
+    // Invoke one of SPIR-V tools.
+    static beStatus InvokeSpvTool(beSpvTool tool, const std::string& spvToolsBinDir, const std::string& cmdLineOptions,
+                                  bool printCmd, std::string& outMsg, std::string& errMsg);
+
+    // Invoke the VulkanBackend executable.
+    static beStatus InvokeVulkanBackend(const std::string& cmdLineOptions, bool printCmd,
+                                        std::string& outText, std::string& errText);
+};

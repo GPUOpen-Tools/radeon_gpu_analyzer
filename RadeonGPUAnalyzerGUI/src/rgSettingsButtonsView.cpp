@@ -17,13 +17,13 @@
 #include <QtCommon/Util/RestoreCursorPosition.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgConfigManager.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgSettingsButtonsView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgHideListWidgetEventFilter.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyTableModel.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgConfigManager.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgSettingsButtonsView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgHideListWidgetEventFilter.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTableModel.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
 
 rgSettingsButtonsView::rgSettingsButtonsView(QWidget* pParent) :
@@ -86,4 +86,15 @@ void rgSettingsButtonsView::HandleSaveSettingsButtonClick()
 void rgSettingsButtonsView::EnableSaveButton(bool isEnabled)
 {
     ui.saveSettingsButton->setEnabled(isEnabled);
+}
+
+void rgSettingsButtonsView::HideRestoreDefaultSettingsButton(bool isHidden)
+{
+    ui.defaultSettingsPushButton->setHidden(isHidden);
+}
+
+
+void rgSettingsButtonsView::mousePressEvent(QMouseEvent *pEvent)
+{
+    emit SettingsButtonsViewClickedSignal();
 }

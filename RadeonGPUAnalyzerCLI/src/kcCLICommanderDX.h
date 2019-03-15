@@ -7,8 +7,8 @@
 #ifdef _WIN32
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommander.h>
-#include <RadeonGPUAnalyzerCLI/src/kcDataTypes.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommander.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcDataTypes.h>
 
 class kcCLICommanderDX : public kcCLICommander
 {

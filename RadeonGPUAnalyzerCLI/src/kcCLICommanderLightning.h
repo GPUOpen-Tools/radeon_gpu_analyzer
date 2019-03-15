@@ -7,9 +7,8 @@
 #include <unordered_map>
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommander.h>
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderLightning.h>
-#include <RadeonGPUAnalyzerCLI/src/kcDataTypes.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommander.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderLightning.h>
 
 using namespace std;
 
@@ -17,25 +16,39 @@ using namespace std;
 class kcCLICommanderLightning : public kcCLICommander
 {
 public:
+    // CTOR/DTOR
     kcCLICommanderLightning() = default;
     ~kcCLICommanderLightning() = default;
 
-    void  Version(Config& config, LoggingCallBackFunc_t callback) override;
+    // Print the driver version.
+    void Version(Config& config, LoggingCallBackFunc_t callback) override;
 
-    virtual bool  PrintAsicList(std::ostream& log) override;
-
-    void  RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback) override;
-
-    bool RunPostCompileSteps(const Config& config) const override;
-
-    beStatus  Init(const Config& config, LoggingCallBackFunc_t logCallback);
+    // Print list of supported devices.
+    virtual bool PrintAsicList(const Config&) override;
 
     // Parse the source file and extract list of entry points (for example, kernels for OpenCL).
     // Dump the extracted entry points to stdout.
-    static bool  ListEntries(const Config& config, LoggingCallBackFunc_t callback);
+    virtual bool ListEntries(const Config& config, LoggingCallBackFunc_t callback) override;
+
+    // Actual implementation of "ListEntries" virtual function.
+    // This function is also used by legacy cl mode.
+    static bool ListEntriesRocmCL(const Config& config, LoggingCallBackFunc_t callback);
+
+    // Perform compilation steps.
+    void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback) override;
+
+    // Perform post-compile actions.
+    bool RunPostCompileSteps(const Config& config) override;
+
+    // Initialize the Commander object.
+    beStatus  Init(const Config& config, LoggingCallBackFunc_t logCallback);
+
+    // Generates rocm-cl "version info" data and writes it to the file specified by "fileName".
+    // The data will be appended to the existing content of the file.
+    static bool GenerateRocmVersionInfo(const std::string& fileName);
 
     // Get the list of names of supported targets in DeviceInfo format.
-    static std::set<std::string>  GetSupportedTargets();
+    static bool GetSupportedTargets(std::set<std::string>& targets, bool printCmd = false);
 
 private:
     // Map  device or kernel name <--> kernel ISA text.
@@ -53,7 +66,7 @@ private:
     // Dissasemble binary file.
     // The disassembled ISA text are be divided into per-kernel parts and stored in separate files.
     // The names of ISA files are generated based on provided user ISA file name.
-    beStatus  DisassembleBinary(const std::string& binFileName, const std::string& userIsaFileName, const std::string& device,
+    beStatus DisassembleBinary(const std::string& binFileName, const std::string& userIsaFileName, const std::string& clangDevice, const std::string& rgaDevice,
                                 const std::string& kernel, bool lineNumbers, std::string& errText);
 
     // Parse ISA files and generate separate files that contain parsed ISA in CSV format.
@@ -63,9 +76,6 @@ private:
     beStatus  AdjustBinaryFileName(const Config&       config,
                                    const std::string & device,
                                    std::string&        binFileName);
-
-    // Store ISA text in the file.
-    beStatus  StoreISAToFile(const std::string& fileName, const std::string& isaText);
 
     // Perform the live VGPR analysis.
     bool  PerformLiveRegAnalysis(const Config& config);
@@ -95,12 +105,18 @@ private:
     bool  ReduceISA(const std::string& binFile, IsaMap& kernelIsaTexts);
 
     // Generate RGA CLI session metadata file.
-    bool  GenerateSessionMetadata(const Config& config, const rgOutputMetadata& outMetadata) const override;
+    bool  GenerateSessionMetadata(const Config& config) const;
 
     // Extract the list of entry points from the source file specified by "fileName".
     static bool  ExtractEntries(const std::string& fileName, const Config& config, rgEntryData& entryData);
 
+    // Delete all temporary files created by RGA.
+    void DeleteTempFiles() const;
+
     // ---- DATA ----
+
+    // Output Metadata
+    rgCLOutputMetadata  m_outputMetadata;
 
     // Alternative compiler paths specified by a user.
     CmplrPaths   m_cmplrPaths;
@@ -109,5 +125,5 @@ private:
     std::set<std::string>  m_targets;
 
     // Specifies whether the "-#" option (print commands) is enabled.
-    bool         m_printCmds;
+    bool  m_printCmds;
 };

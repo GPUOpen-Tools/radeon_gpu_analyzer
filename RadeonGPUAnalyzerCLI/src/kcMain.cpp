@@ -6,36 +6,49 @@
 #include <map>
 #include <utility>
 #include <sstream>
-#include <boost/algorithm/string.hpp>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTOSWrappers/Include/osEnvironmentVariable.h>
 #include <AMDTOSWrappers/Include/osProcess.h>
-#include <Utils/include/rgLog.h>
+#include <Utils/Include/rgLog.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Backend.
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderOpenCL.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderOpenCL.h>
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcConfig.h>
-#include <RadeonGPUAnalyzerCLI/src/kcParseCmdLine.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommanderCL.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommanderOpenGL.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommanderVulkan.h>
-#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommanderLightning.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcConfig.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcParseCmdLine.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderCL.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCliStringConstants.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderOpenGL.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderVkOffline.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderVulkan.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderLightning.h>
 
 #ifdef _WIN32
-    #include <RadeonGPUAnalyzerCLI/src/kcCLICommanderDX.h>
+    #include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderDX.h>
 #endif
 
 using namespace beKA;
-static std::ostream& s_Log = cout;
 
 static void loggingCallback(const string& s)
 {
-    s_Log << s.c_str();
+    rgLog::stdOut << s.c_str() << std::flush;
+}
+
+// Perform finalizing actions before exiting.
+static void Shutdown()
+{
+    rgLog::file << KC_STR_CLI_LOG_CLOSE << std::endl;
+    rgLog::Close();
 }
 
 int main(int argc, char* argv[])
@@ -57,49 +70,46 @@ int main(int argc, char* argv[])
 
     if (status)
     {
-        switch (config.m_SourceLanguage)
+        switch (config.m_mode)
         {
-        case SourceLanguage_None:
+        case Mode_None:
             if (config.m_RequestedCommand == Config::ccVersion)
             {
                 kcUtils::PrintRgaVersion();
             }
             break;
 
-        case SourceLanguage_OpenCL:
+        case Mode_OpenCL:
             pCommander = std::make_shared<kcCLICommanderCL>();
             break;
 
 #ifdef _WIN32
-        case SourceLanguage_HLSL:
-        case SourceLanguage_AMDIL:
-        case SourceLanguage_DXasm:
-        case SourceLanguage_DXasmT:
+        case Mode_HLSL:
+        case Mode_AMDIL:
             pCommander = std::make_shared<kcCLICommanderDX>();
             break;
 #endif
 
-        case SourceLanguage_GLSL:
-            rgLog::stdOut << STR_ERR_GLSL_MODE_DEPRECATED << std::endl;
-            status = false;
-            break;
-
-        case SourceLanguage_GLSL_OpenGL:
+        case Mode_OpenGL:
             pCommander = std::make_shared<kcCLICommanderOpenGL>();
             break;
 
-        case SourceLanguage_GLSL_Vulkan:
-        case SourceLanguage_SPIRV_Vulkan:
-        case SourceLanguage_SPIRVTXT_Vulkan:
+        case Mode_Vk_Offline:
+        case Mode_Vk_Offline_Spv:
+        case Mode_Vk_Offline_SpvTxt:
+            pCommander = std::make_shared<kcCLICommanderVkOffline>();
+            break;
+
+        case Mode_Vulkan:
             pCommander = std::make_shared<kcCLICommanderVulkan>();
             break;
 
-        case SourceLanguage_Rocm_OpenCL:
+        case Mode_Rocm_OpenCL:
         {
             pCommander = std::make_shared<kcCLICommanderLightning>();
             if (static_cast<kcCLICommanderLightning&>(*pCommander).Init(config, loggingCallback) != beKA::beStatus_SUCCESS)
             {
-                rgLog::stdOut << STR_ERR_INITIALIZATION_FAILURE << std::endl;
+                rgLog::stdErr << STR_ERR_INITIALIZATION_FAILURE << std::endl;
                 status = false;
             }
             break;
@@ -118,12 +128,12 @@ int main(int argc, char* argv[])
             pCommander->RunPostCompileSteps(config);
             break;
 
-        case Config::ccListKernels:
-            kcCLICommanderLightning::ListEntries(config, loggingCallback);
+        case Config::ccListEntries:
+            pCommander->ListEntries(config, loggingCallback);
             break;
 
         case Config::ccListAsics:
-            if (!pCommander->PrintAsicList(s_Log))
+            if (!pCommander->PrintAsicList(config))
             {
                 rgLog::stdOut << STR_ERR_CANNOT_EXTRACT_SUPPORTED_DEVICE_LIST << std::endl;
                 status = false;
@@ -138,18 +148,18 @@ int main(int argc, char* argv[])
             pCommander->Version(config, loggingCallback);
             break;
 
-        case Config::ccGenVersionInfoFile:
-            kcUtils::GenerateVersionInfoFile(config.m_versionInfoFile);
-            break;
-
         case Config::ccInvalid:
             rgLog::stdOut << STR_ERR_NO_VALID_CMD_DETECTED << std::endl;
             status = false;
             break;
         }
     }
+    else if (status && config.m_RequestedCommand == Config::ccGenVersionInfoFile)
+    {
+        kcCLICommander::GenerateVersionInfoFile(config);
+    }
 
-    rgLog::Close();
+    Shutdown();
 
     return 0;
 }

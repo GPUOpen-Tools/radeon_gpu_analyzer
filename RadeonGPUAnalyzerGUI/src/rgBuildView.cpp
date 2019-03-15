@@ -15,45 +15,55 @@
 #include <QSizePolicy>
 #include <QSplitter>
 #include <QString>
-#include <QTextStream>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QProcess>
+#include <QDesktopServices>
 
 // Infra.
 #include <QtCommon/Scaling/ScalingManager.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgBuildView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgBuildSettingsWidget.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgCliOutputView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgFileMenu.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgFileMenuBuildSettingsItem.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgFileMenuFileItem.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgFileMenuTitlebar.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgFindTextWidget.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgMainWindow.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgMaximizeSplitter.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgOpenCLBuildSettingsView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgRenameProjectDialog.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgSourceCodeEditor.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgSettingsButtonsView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgSourceEditorTitlebar.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgUnsavedItemsDialog.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgViewContainer.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgViewManager.h>
-#include <RadeonGPUAnalyzerGUI/include/rgConfigManager.h>
-#include <RadeonGPUAnalyzerGUI/include/rgCliLauncher.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
-#include <RadeonGPUAnalyzerGUI/include/rgFactory.h>
-#include <RadeonGPUAnalyzerGUI/include/rgSourceEditorSearcher.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
-#include <RadeonGPUAnalyzerGUI/include/rgXMLSessionConfig.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildSettingsView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildSettingsViewVulkan.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildSettingsWidget.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgCliOutputView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMenu.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMenuBuildSettingsItem.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMenuFileItem.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMenuTitlebar.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgFindTextWidget.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyViewOpenCL.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyViewVulkan.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMainWindow.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMaximizeSplitter.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgRenameProjectDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgScrollArea.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgSourceCodeEditor.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgSettingsButtonsView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgSourceEditorTitlebar.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgUnsavedItemsDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgViewContainer.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgViewManager.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgConfigManager.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgCliLauncher.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypesVulkan.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgFactory.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgSourceEditorSearcher.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgXMLSessionConfig.h>
+
+static const int s_FILE_MENU_VIEW_CONTAINER_WIDTH = 200;
+static const int s_FIND_TEXT_WIDGET_HORIZONTAL_MARGIN = 10;
+static const int s_FIND_TEXT_WIDGET_VERTICAL_MARGIN = 10;
 
 rgBuildView::rgBuildView(rgProjectAPI api, QWidget* pParent) :
     QWidget(pParent),
-    m_cloneIndex(0)
+    m_cloneIndex(0),
+    m_pParent(pParent)
 {
     // Setup the UI.
     ui.setupUi(this);
@@ -61,106 +71,8 @@ rgBuildView::rgBuildView(rgProjectAPI api, QWidget* pParent) :
     // Create the factory used to create API specific objects within the rgBuildView.
     m_pFactory = rgFactory::CreateFactory(api);
 
-    // Create the file menu.
-    m_pFileMenu = new rgFileMenu(this);
-    m_pFileMenuTitlebar = new rgFileMenuTitlebar();
-
-    // Wrap the file menu in a view container with its titlebar.
-    m_pFileMenuViewContainer = new rgViewContainer();
-    m_pFileMenuViewContainer->SetMainWidget(m_pFileMenu);
-    m_pFileMenuViewContainer->SetTitlebarWidget(m_pFileMenuTitlebar);
-
-    // Create an empty panel to insert alongside the file menu when no files are open.
-    m_pEmptyPanel = new QWidget(this);
-
-    // Create container for source view widgets.
-    m_pSourceViewStack = new QWidget();
-    QVBoxLayout* pLayout = new QVBoxLayout();
-    pLayout->setContentsMargins(0, 0, 0, 0);
-    m_pSourceViewStack->setLayout(pLayout);
-
-    // Wrap the source code stack in a view container and a source editor titlebar.
-    m_pSourceViewContainer = new rgViewContainer();
-    m_pSourceViewContainer->SetMainWidget(m_pSourceViewStack);
-    m_pSourceEditorTitlebar = new rgSourceEditorTitlebar(m_pSourceViewContainer);
-    m_pSourceViewContainer->SetTitlebarWidget(m_pSourceEditorTitlebar);
-
-    // Create the disassembly view splitter.
-    m_pDisassemblyViewSplitter = new rgMaximizeSplitter(this);
-    m_pDisassemblyViewSplitter->setOrientation(Qt::Orientation::Horizontal);
-    m_pDisassemblyViewSplitter->setChildrenCollapsible(false);
-
-    // Add the source view container to the disassembly view splitter.
-    m_pDisassemblyViewSplitter->AddMaximizableWidget(m_pSourceViewContainer);
-
-    // Set up the splitter between the file menu and the rest of the views.
-    m_pFileMenuSplitter = new QSplitter(Qt::Orientation::Horizontal, this);
-
-    // Add the file menu and the disassembly view splitter to the file menu splitter.
-    m_pFileMenuSplitter->addWidget(m_pFileMenuViewContainer);
-    m_pFileMenuSplitter->addWidget(m_pDisassemblyViewSplitter);
-
-    // The file menu should not grow with the window, while the source code view should.
-    m_pFileMenuSplitter->setStretchFactor(0, 0);
-    m_pFileMenuSplitter->setStretchFactor(1, 1);
-
-    // Disable the file menu splitter.
-    m_pFileMenuSplitter->handle(1)->setDisabled(true);
-
-    // Create the output window.
-    m_pCliOutputWindow = new rgCliOutputView(this);
-
-    // Wrap the build output view in a view container with an embedded titlebar.
-    m_pBuildOutputViewContainer = new rgViewContainer();
-    m_pBuildOutputViewContainer->SetMainWidget(m_pCliOutputWindow);
-
-    // Create a vertical splitter to divide the rgBuildView's FileMenu/SourceEditors and the Output Window.
-    m_pOutputSplitter = new rgMaximizeSplitter(this);
-    m_pOutputSplitter->setOrientation(Qt::Orientation::Vertical);
-
-    // Connect the build output window signals.
-    ConnectOutputWindowSignals();
-
-    // Add the file menu's splitter and the output window to the splitter.
-    m_pOutputSplitter->addWidget(m_pFileMenuSplitter);
-    m_pOutputSplitter->AddMaximizableWidget(m_pBuildOutputViewContainer);
-
-    // Let the file menu and code editor resize, and the output window will stay vertically squished.
-    m_pOutputSplitter->setStretchFactor(0, 6);
-    m_pOutputSplitter->setStretchFactor(1, 1);
-    m_pOutputSplitter->setCollapsible(1, false);
-
-    // Create a main window layout, and add the root-level splitter widget.
-    QVBoxLayout* pMainLayout = new QVBoxLayout(this);
-    pMainLayout->addWidget(m_pOutputSplitter);
-    this->setLayout(pMainLayout);
-
-    // Connect signals for the file menu.
-    ConnectFileSignals();
-
-    // Restore the previous session buildview layout.
-    RestoreViewLayout();
-
-    // Connect signals for the Build View.
-    ConnectBuildViewSignals();
-
-    // Setup view manager.
-    m_pViewManager = new rgViewManager(this);
-    m_pViewManager->AddView(m_pFileMenuViewContainer);
-    m_pViewManager->AddView(m_pSourceViewContainer);
-    m_pViewManager->AddView(m_pBuildOutputViewContainer, false);
-
-    // Declare EditMode as a meta type so it can be used with slots/signals.
-    int id = qRegisterMetaType<EditMode>();
-    Q_UNUSED(id);
-}
-
-void rgBuildView::AddFile(const std::string& fileFullPath, bool isNewFile)
-{
-    if (m_pFileMenu)
-    {
-        m_pFileMenu->AddItem(fileFullPath, isNewFile);
-    }
+    // Create the find widget.
+    CreateFindWidget();
 }
 
 bool rgBuildView::CheckSourcesModifiedSinceLastBuild(rgSourceCodeEditor* pCodeEditor)
@@ -187,17 +99,20 @@ bool rgBuildView::CheckSourcesModifiedSinceLastBuild(rgSourceCodeEditor* pCodeEd
 
 void rgBuildView::ClearBuildView()
 {
-    assert(m_pFileMenu != nullptr);
-    if (m_pFileMenu != nullptr)
+    rgMenu* pMenu = GetMenu();
+    if (pMenu != nullptr)
     {
-        m_pFileMenu->ClearFiles();
+        pMenu->ClearFiles();
     }
 
     // Clean up source editor instances.
     ClearEditors();
 
     // Clear the output window.
-    m_pCliOutputWindow->ClearText();
+    if (m_pCliOutputWindow != nullptr)
+    {
+        m_pCliOutputWindow->ClearText();
+    }
 }
 
 void rgBuildView::ClearEditors()
@@ -214,133 +129,119 @@ void rgBuildView::ClearEditors()
     }
 }
 
-void rgBuildView::ClearFileItemsEntrypointList()
-{
-    assert(m_pFileMenu != nullptr);
-    if (m_pFileMenu != nullptr)
-    {
-        // Clear references to build outputs from the file menu,
-        m_pFileMenu->ClearBuildOutputs();
-    }
-}
-
-std::string rgBuildView::CreateProjectBuildOutputPath() const
-{
-    std::string resultPath;
-
-    // Build an output path where all of the build artifacts will be dumped to.
-    std::string projectDirectory;
-    bool isOk = rgUtils::ExtractFileDirectory(m_pProject->m_projectFileFullPath, projectDirectory);
-    assert(isOk);
-    if (isOk)
-    {
-        std::string outputFolderPath;
-        isOk = rgUtils::AppendFolderToPath(projectDirectory, STR_OUTPUT_FOLDER_NAME, outputFolderPath);
-        assert(isOk);
-        if (isOk)
-        {
-            resultPath = outputFolderPath;
-        }
-    }
-
-    return resultPath;
-}
-
 void rgBuildView::ConnectFileSignals()
 {
-    assert(m_pFileMenu != nullptr);
+    rgMenu* pMenu = GetMenu();
+    assert(pMenu != nullptr);
+    if (pMenu != nullptr)
+    {
+        // Connect the file menu to the build view, so that the view knows when the current file is switched.
+        bool isConnected = connect(pMenu, &rgMenu::SelectedFileChanged, this, &rgBuildView::HandleSelectedFileChanged);
+        assert(isConnected);
 
-    // Connect the file menu to the build view, so that the view knows when the current file is switched.
-    bool isConnected = connect(m_pFileMenu, &rgFileMenu::SelectedFileChanged, this, &rgBuildView::HandleSelectedFileChanged);
-    assert(isConnected);
+        // Connect the file menu's MenuItemCloseButtonClicked signal with the menu item closed handler.
+        isConnected = connect(pMenu, &rgMenu::MenuItemCloseButtonClicked, this, &rgBuildView::HandleMenuItemCloseButtonClicked);
+        assert(isConnected);
 
-    // Connect the file menu's MenuItemCloseButtonClicked signal with the menu item closed handler.
-    isConnected = connect(m_pFileMenu, &rgFileMenu::MenuItemCloseButtonClicked, this, &rgBuildView::HandleMenuItemCloseButtonClicked);
-    assert(isConnected);
+        // Connect the file menu default item's "Add new file" button.
+        isConnected = connect(pMenu, &rgMenu::CreateFileButtonClicked, this, &rgBuildView::CreateFileButtonClicked);
+        assert(isConnected);
 
-    // Connect the file menu default item's "Add new file" button.
-    isConnected = connect(m_pFileMenu, &rgFileMenu::CreateFileButtonClicked, this, &rgBuildView::CreateFileButtonClicked);
-    assert(isConnected);
+        // Connect the file menu default item's "Open existing file" button.
+        isConnected = connect(pMenu, &rgMenu::OpenFileButtonClicked, this, &rgBuildView::OpenFileButtonClicked);
+        assert(isConnected);
 
-    // Connect the file menu default item's "Open existing file" button.
-    isConnected = connect(m_pFileMenu, &rgFileMenu::OpenFileButtonClicked, this, &rgBuildView::OpenFileButtonClicked);
-    assert(isConnected);
+        // Connect the file menu's rename signal.
+        isConnected = connect(pMenu, &rgMenu::FileRenamed, this, &rgBuildView::HandleFileRenamed);
+        assert(isConnected);
 
-    // Connect the file menu's rename signal.
-    isConnected = connect(m_pFileMenu, &rgFileMenu::FileRenamed, this, &rgBuildView::HandleFileRenamed);
-    assert(isConnected);
+        // Connect the file menu's project renamed signal.
+        isConnected = connect(m_pFileMenuTitlebar, &rgMenuTitlebar::TitleChanged, this, &rgBuildView::HandleProjectRenamed);
+        assert(isConnected);
 
-    // Connect the file menu's project renamed signal.
-    isConnected = connect(m_pFileMenuTitlebar, &rgFileMenuTitlebar::TitleChanged, this, &rgBuildView::HandleProjectRenamed);
-    assert(isConnected);
+        // Connect the file menu's item count change signal.
+        isConnected = connect(pMenu, &rgMenu::FileMenuItemCountChanged, this, &rgBuildView::ProjectFileCountChanged);
+        assert(isConnected);
 
-    // Connect the file menu's item count change signal.
-    isConnected = connect(m_pFileMenu, &rgFileMenu::FileMenuItemCountChanged, this, &rgBuildView::ProjectFileCountChanged);
-    assert(isConnected);
+        // Connect the file menu's file build settings button click signal to the rgBuildView's handler.
+        isConnected = connect(pMenu, &rgMenu::BuildSettingsButtonClicked, this, &rgBuildView::HandleFindWidgetVisibilityToggled);
+        assert(isConnected);
 
-    // Connect the file menu's file item entrypoint changed signal.
-    isConnected = connect(m_pFileMenu, &rgFileMenu::SelectedEntrypointChanged, this, &rgBuildView::HandleSelectedEntrypointChanged);
-    assert(isConnected);
+        // Connect the file menu's next focus change signal.
+        isConnected = connect(pMenu, &rgMenu::FocusNextView, this, &rgBuildView::HandleFocusNextView);
+        assert(isConnected);
 
-    // Connect the file menu's file build settings button click signal to the rgBuildView's handler.
-    isConnected = connect(m_pFileMenu, &rgFileMenu::BuildSettingsButtonClicked, this, &rgBuildView::HandleFindWidgetVisibilityToggled);
-    assert(isConnected);
+        // Connect the error location reported by CLI output window to the rgBuildView's handlers.
+        isConnected = connect(m_pCliOutputWindow, &rgCliOutputView::SwitchToFile, pMenu, &rgMenu::HandleSwitchToFile);
+        assert(isConnected);
 
-    // Connect the file menu's next focus change signal.
-    isConnected = connect(m_pFileMenu, &rgFileMenu::FocusNextView, this, &rgBuildView::HandleFocusNextView);
-    assert(isConnected);
+        // Connect the focus file menu signal to the build view's handlers.
+        isConnected = connect(m_pCliOutputWindow, &rgCliOutputView::FocusNextView, this, &rgBuildView::HandleFocusNextView);
+        assert(isConnected);
 
-    // Connect the rgBuildView's entrypoint changed signal to the file menu's handler.
-    isConnected = connect(this, &rgBuildView::SelectedEntrypointChanged, m_pFileMenu, &rgFileMenu::HandleSelectedEntrypointChanged);
-    assert(isConnected);
+        // Connect the focus output window signal to the build view's handlers.
+        isConnected = connect(m_pCliOutputWindow, &rgCliOutputView::FocusOutputWindow, this, &rgBuildView::HandleSetOutputWindowFocus);
+        assert(isConnected);
 
-    // Connect the error location reported by CLI output window to the rgBuildView's handlers.
-    isConnected = connect(m_pCliOutputWindow, &rgCliOutputView::SwitchToFile, m_pFileMenu, &rgFileMenu::HandleSwitchToFile);
-    assert(isConnected);
-    isConnected = connect(m_pFileMenu, &rgFileMenu::ScrollCodeEditorToLine, this, &rgBuildView::HandleScrollCodeEditorToLine);
-    assert(isConnected);
+        // Connect the source editor's scroll-to-line signal.
+        isConnected = connect(pMenu, &rgMenu::ScrollCodeEditorToLine, this, &rgBuildView::HandleScrollCodeEditorToLine);
+        assert(isConnected);
 
-    // Connect the "Build Settings" button in the menu file.
-    rgFileMenuBuildSettingsItem* pBuildSettingsItem = m_pFileMenu->GetBuildSettingsItem();
-    const QPushButton* pBuildSettingsFileMenuButton = pBuildSettingsItem->GetBuildSettingsButton();
-    isConnected = connect(pBuildSettingsFileMenuButton, &QPushButton::clicked, this, &rgBuildView::HandleBuildSettingsMenuButtonClicked);
-    assert(isConnected);
+        // Connect the "Build Settings" button in the file menu.
+        rgMenuBuildSettingsItem* pBuildSettingsItem = pMenu->GetBuildSettingsItem();
+        const QPushButton* pBuildSettingsFileMenuButton = pBuildSettingsItem->GetBuildSettingsButton();
+        isConnected = connect(pBuildSettingsFileMenuButton, &QPushButton::clicked, this, &rgBuildView::HandleBuildSettingsMenuButtonClicked);
+        assert(isConnected);
 
-    // Connect to the file menu container's mouse click event.
-    isConnected = connect(m_pFileMenuViewContainer, &rgViewContainer::ViewContainerMouseClickEventSignal, this, &rgBuildView::HandleSetFrameBorderBlack);
-    assert(isConnected);
+        // Connect to the file menu container's mouse click event.
+        isConnected = connect(m_pFileMenuViewContainer, &rgViewContainer::ViewContainerMouseClickEventSignal, this, &rgBuildView::HandleSetFrameBorderBlack);
+        assert(isConnected);
+
+        // Connect menu signals.
+        isConnected = ConnectMenuSignals();
+        assert(isConnected);
+    }
+}
+
+void rgBuildView::HandleFocusPrevView()
+{
+    assert(m_pViewManager != nullptr);
+    if (m_pViewManager != nullptr)
+    {
+        m_pViewManager->FocusPrevView();
+    }
+}
+
+void rgBuildView::HandleSetOutputWindowFocus()
+{
+    assert(m_pViewManager != nullptr);
+    if (m_pViewManager != nullptr)
+    {
+        m_pViewManager->SetOutputWindowFocus();
+    }
+}
+
+void rgBuildView::HandleSetDisassemblyViewFocus()
+{
+    assert(m_pViewManager != nullptr);
+    if (m_pViewManager != nullptr)
+    {
+        m_pViewManager->SetDisassemblyViewFocus();
+    }
 }
 
 void rgBuildView::ConnectBuildSettingsSignals()
 {
-    bool isConnected = connect(static_cast<rgOpenCLBuildSettingsView*>(m_pBuildSettingsView), &rgOpenCLBuildSettingsView::PendingChangesStateChanged, this, &rgBuildView::HandleBuildSettingsPendingChangesStateChanged);
-    assert(isConnected);
-
-    isConnected = connect(static_cast<rgOpenCLBuildSettingsView*>(m_pBuildSettingsView), &rgOpenCLBuildSettingsView::ProjectBuildSettingsSaved, this, &rgBuildView::HandleBuildSettingsSaved);
-    assert(isConnected);
-
-    // Connect to build settings view's edit line's "focus in" event to color the frame red.
-    isConnected = connect(static_cast<rgOpenCLBuildSettingsView*>(m_pBuildSettingsView), &rgOpenCLBuildSettingsView::SetFrameBorderRedSignal, this, &rgBuildView::HandleSetFrameBorderRed);
-    assert(isConnected);
-
-    // Connect to build settings view's edit line's "focus out" event to color the frame black.
-    isConnected = connect(static_cast<rgOpenCLBuildSettingsView*>(m_pBuildSettingsView), &rgOpenCLBuildSettingsView::SetFrameBorderBlackSignal, this, &rgBuildView::HandleSetFrameBorderBlack);
-    assert(isConnected);
-
     // "Save" button.
-    isConnected = connect(m_pSettingsButtonsView, &rgSettingsButtonsView::SaveSettingsButtonClickedSignal, this, &rgBuildView::HandleSaveSettingsButtonClicked);
+    bool isConnected = connect(m_pSettingsButtonsView, &rgSettingsButtonsView::SaveSettingsButtonClickedSignal, this, &rgBuildView::HandleSaveSettingsButtonClicked);
     assert(isConnected);
 
     // "Restore defaults" button.
     isConnected = connect(m_pSettingsButtonsView, &rgSettingsButtonsView::RestoreDefaultSettingsButtonClickedSignal, this, &rgBuildView::HandleRestoreDefaultsSettingsClicked);
     assert(isConnected);
 
-    // Connect to build settings widget's "focus in" event to color the boundary red.
-    isConnected = connect(m_pBuildSettingsWidget, &rgBuildSettingsWidget::FrameFocusInEventSignal, this, &rgBuildView::HandleSetFrameBorderRed);
-    assert(isConnected);
-
-    // Connect to build settings widget's "focus out" event to color the boundary black.
-    isConnected = connect(m_pBuildSettingsWidget, &rgBuildSettingsWidget::FrameFocusOutEventSignal, this, &rgBuildView::HandleSetFrameBorderBlack);
+    // Connect the save settings view clicked signal.
+    isConnected = connect(m_pSettingsButtonsView, &rgSettingsButtonsView::SettingsButtonsViewClickedSignal, this, &rgBuildView::SetAPISpecificBorderColor);
     assert(isConnected);
 }
 
@@ -360,6 +261,12 @@ void rgBuildView::ConnectBuildViewSignals()
     assert(isConnected);
 
     isConnected = connect(qGuiApp, &QGuiApplication::applicationStateChanged, this, &rgBuildView::HandleApplicationStateChanged);
+    assert(isConnected);
+
+    isConnected = connect(m_pViewManager, &rgViewManager::BuildSettingsWidgetFocusInSignal, this, &rgBuildView::SetAPISpecificBorderColor);
+    assert(isConnected);
+
+    isConnected = connect(m_pViewManager, &rgViewManager::BuildSettingsWidgetFocusOutSignal, this, &rgBuildView::HandleSetFrameBorderBlack);
     assert(isConnected);
 }
 
@@ -386,24 +293,16 @@ void rgBuildView::ConnectOutputWindowSignals()
     }
 }
 
-void rgBuildView::ConnectDisassemblyViewSignals()
+bool rgBuildView::ConnectDisassemblyViewSignals()
 {
+    bool isConnected = false;
+
     assert(m_pDisassemblyView != nullptr);
     if (m_pDisassemblyView != nullptr)
     {
-        // Connect the handler invoked when the user changes the selected entrypoint.
-        bool isConnected = connect(this, &rgBuildView::SelectedEntrypointChanged,
-            m_pDisassemblyView, &rgIsaDisassemblyView::HandleSelectedEntrypointChanged);
-        assert(isConnected);
-
         // Connect the handler invoked when the highlighted correlation line in the input source file should be updated.
         isConnected = connect(m_pDisassemblyView, &rgIsaDisassemblyView::InputSourceHighlightedLineChanged,
             this, &rgBuildView::HandleHighlightedCorrelationLineUpdated);
-        assert(isConnected);
-
-        // Connect the rgIsaDisassemblyView's entrypoint changed handler.
-        isConnected = connect(m_pDisassemblyView, &rgIsaDisassemblyView::SelectedEntrypointChanged,
-            this, &rgBuildView::HandleSelectedEntrypointChanged);
         assert(isConnected);
 
         // Connect the rgIsaDisassemblyView's table resized handler.
@@ -415,13 +314,93 @@ void rgBuildView::ConnectDisassemblyViewSignals()
         isConnected = connect(m_pDisassemblyView, &rgIsaDisassemblyView::SelectedTargetGpuChanged,
             this, &rgBuildView::HandleSelectedTargetGpuChanged);
         assert(isConnected);
+
+        // Connect the rgIsaDisassemblyView's clicked handler.
+        isConnected = connect(m_pDisassemblyView, &rgIsaDisassemblyView::DisassemblyViewClicked,
+            this, &rgBuildView::HandleDisassemblyViewClicked);
+        assert(isConnected);
+
+        // Connect the rgIsaDisassemblyViewTitlebar's double click handler.
+        m_pDisassemblyView->ConnectTitleBarDoubleClick(m_pDisassemblyViewContainer);
+
+        // Connect the focus disassembly view signal to the build view's handlers.
+        isConnected = connect(m_pDisassemblyView, &rgIsaDisassemblyView::FocusDisassemblyView, this, &rgBuildView::HandleSetDisassemblyViewFocus);
+        assert(isConnected);
+
+        // Connect the handler invoked when cli output window should be highlighted.
+        isConnected = connect(m_pDisassemblyView, &rgIsaDisassemblyView::FocusCliOutputWindow,
+            this, &rgBuildView::HandleSetOutputWindowFocus);
+        assert(isConnected);
+
+        // Connect the splitter's frame in focus signal.
+        if (m_pDisassemblyViewSplitter != nullptr)
+        {
+            isConnected = connect(m_pDisassemblyViewSplitter, &rgMaximizeSplitter::FrameInFocusSignal,
+                m_pDisassemblyView, &rgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+            assert(isConnected);
+        }
+
+        // Connect the source code editor focus in signal.
+        assert(m_pCurrentCodeEditor != nullptr);
+        if (m_pCurrentCodeEditor != nullptr)
+        {
+            // Connect the source editor's focus in handler.
+            isConnected = connect(m_pCurrentCodeEditor, &rgSourceCodeEditor::SourceCodeEditorFocusInEvent,
+                m_pDisassemblyView, &rgIsaDisassemblyView::HandleFocusOutEvent);
+            assert(isConnected);
+
+            // Connect the source editor's scrollbar disabling signal.
+            isConnected = connect(m_pCurrentCodeEditor, &rgSourceCodeEditor::DisableScrollbarSignals,
+                m_pDisassemblyView, &rgIsaDisassemblyView::DisableScrollbarSignals);
+            assert(isConnected);
+
+            // Connect the source editor's scrollbar enabling signal.
+            isConnected = connect(m_pCurrentCodeEditor, &rgSourceCodeEditor::EnableScrollbarSignals,
+                m_pDisassemblyView, &rgIsaDisassemblyView::EnableScrollbarSignals);
+            assert(isConnected);
+        }
+
+        rgMenu* pMenu = GetMenu();
+        assert(pMenu != nullptr);
+        if (pMenu != nullptr)
+        {
+            // Connect the file menu focus in signal.
+            isConnected = connect(pMenu, &rgMenu::FileMenuFocusInEvent, m_pDisassemblyView, &rgIsaDisassemblyView::HandleFocusOutEvent);
+            assert(isConnected);
+        }
+
+        // Connect the view manager focus in signals.
+        assert(m_pViewManager != nullptr);
+        if (m_pViewManager != nullptr)
+        {
+            isConnected = connect(m_pViewManager, &rgViewManager::FrameFocusInSignal, m_pDisassemblyView, &rgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+            assert(isConnected);
+
+            isConnected = connect(m_pViewManager, &rgViewManager::FrameFocusOutSignal, m_pDisassemblyView, &rgIsaDisassemblyView::HandleFocusOutEvent);
+            assert(isConnected);
+        }
+
+        // Connect the focus column push button signal to the disassembly view's handlers.
+        isConnected = connect(m_pCliOutputWindow, &rgCliOutputView::FocusColumnPushButton, m_pDisassemblyView, &rgIsaDisassemblyView::HandleFocusColumnsPushButton);
+        assert(isConnected);
+
+        // Connect the focus source window signal to the disassembly view's handlers.
+        isConnected = connect(m_pDisassemblyView, &rgIsaDisassemblyView::FocusSourceWindow, this, &rgBuildView::HandleFocusPreviousView);
+        assert(isConnected);
+
+        // Connect the switch container size signal from the disassembly view..
+        isConnected = connect(m_pDisassemblyView, &rgIsaDisassemblyView::SwitchDisassemblyContainerSize, this, &rgBuildView::HandleSwitchContainerSize);
+        assert(isConnected);
+
+        // Connect API-specific rgBuildView signals to the disassembly view.
+        ConnectDisassemblyViewApiSpecificSignals();
     }
 
     assert(m_pDisassemblyViewSplitter != nullptr);
     if (m_pDisassemblyViewSplitter != nullptr)
     {
         // Connect the handler invoked when the disassembly container has been maximized.
-        bool isConnected = connect(m_pDisassemblyViewSplitter, &rgMaximizeSplitter::ViewMaximized,
+        isConnected = connect(m_pDisassemblyViewSplitter, &rgMaximizeSplitter::ViewMaximized,
             this, &rgBuildView::HandleDisassemblyViewSizeMaximize);
         assert(isConnected);
 
@@ -434,6 +413,35 @@ void rgBuildView::ConnectDisassemblyViewSignals()
         isConnected = connect(m_pDisassemblyViewSplitter, &rgMaximizeSplitter::splitterMoved,
             this, &rgBuildView::HandleSplitterMoved);
         assert(isConnected);
+    }
+
+    return isConnected;
+}
+
+void rgBuildView::HandleSwitchContainerSize()
+{
+    assert(m_pViewManager != nullptr);
+    if (m_pViewManager != nullptr)
+    {
+        m_pViewManager->SwitchContainerSize();
+    }
+}
+
+void rgBuildView::HandleFocusCliOutputWindow()
+{
+    assert(m_pViewManager != nullptr);
+    if (m_pViewManager != nullptr)
+    {
+        m_pViewManager->FocusNextView();
+    }
+}
+
+void rgBuildView::HandleFocusPreviousView()
+{
+    assert(m_pViewManager != nullptr);
+    if (m_pViewManager != nullptr)
+    {
+        m_pViewManager->FocusPrevView();
     }
 }
 
@@ -453,6 +461,11 @@ void rgBuildView::ConnectSourcecodeEditorSignals(rgSourceCodeEditor* pEditor)
 
     // Connect the source editor's hidden handler.
     isConnected = connect(pEditor, &rgSourceCodeEditor::EditorHidden, this, &rgBuildView::HandleSourceEditorHidden);
+    assert(isConnected);
+
+    // Connect the editor titlebar's "Dismiss Message" handler.
+    isConnected = connect(m_pSourceEditorTitlebar, &rgSourceEditorTitlebar::DismissMsgButtonClicked,
+        this, &rgBuildView::HandleCodeEditorTitlebarDismissMsgPressed);
     assert(isConnected);
 }
 
@@ -475,47 +488,17 @@ bool rgBuildView::PopulateBuildView()
     // If the project source paths are valid, proceed.
     if (isProjectSourcesValid)
     {
-        // Fill up the file path list with the paths corrected by the user.
-        std::vector<std::string> sourceFilepaths;
-        rgConfigManager::Instance().GetProjectSourceFilePaths(m_pProject, m_cloneIndex, sourceFilepaths);
-
-        if (!sourceFilepaths.empty())
+        bool isPopulated = PopulateMenu();
+        rgMenu* pMenu = GetMenu();
+        assert(pMenu != nullptr);
+        if (pMenu != nullptr)
         {
-            // Add all the project's source files into the rgBuildView.
-            for (int fileIndex = 0; fileIndex < sourceFilepaths.size(); ++fileIndex)
+            // Does the menu contain any files after attempting to populate it?
+            if (pMenu->IsEmpty())
             {
-                const std::string& filePath = sourceFilepaths[fileIndex];
-
-                // Check that the file still exists before attempting to load it.
-                bool isFileExists = rgUtils::IsFileExists(filePath);
-                assert(isFileExists);
-                if (isFileExists)
-                {
-                    // Add the selected file to the menu.
-                    AddFile(filePath);
-
-                    // Set the source code view text with the contents of the selected file.
-                    SetSourceCodeText(filePath);
-
-                    // The rgBuildView was successfully populated with the current project.
-                    ret = true;
-                }
-                else
-                {
-                    // Build an error string saying the file couldn't be found on disk.
-                    std::stringstream errorString;
-                    errorString << STR_ERR_CANNOT_LOAD_SOURCE_FILE_MSG;
-                    errorString << filePath;
-
-                    // Show the user the error message.
-                    rgUtils::ShowErrorMessageBox(errorString.str().c_str(), this);
-                }
+                // There are no files to display. Open the rgBuildView in an empty state, and return true.
+                SwitchEditMode(EditMode::Empty);
             }
-        }
-        else
-        {
-            // There are no files to display. Open the rgBuildView in an empty state, and return true.
-            SwitchEditMode(EditMode::Empty);
             ret = true;
         }
     }
@@ -539,7 +522,7 @@ void rgBuildView::CreateProjectClone()
             rgConfigManager& configManager = rgConfigManager::Instance();
             configManager.SaveProjectFile(m_pProject);
 
-            if (m_pFileMenu != nullptr)
+            if (m_pFileMenuTitlebar != nullptr)
             {
                 // Set project name title in file menu.
                 std::stringstream title;
@@ -556,49 +539,174 @@ void rgBuildView::CreateProjectClone()
     }
 }
 
-bool rgBuildView::GetEntrypointNameForLineNumber(const std::string& filePath, int lineNumber, std::string& entryName)
+void rgBuildView::BuildCurrentProject()
 {
-    bool found = false;
+    // Destroy outputs from previous builds.
+    DestroyProjectBuildArtifacts();
 
-    // 1. Check if "lineNumber" is within some kernel code.
-    const auto& fileSrcLineData = m_entrypointLineNumbers.find(filePath);
-    if (fileSrcLineData != m_entrypointLineNumbers.end())
+    // Clear the output window.
+    m_pCliOutputWindow->ClearText();
+
+    // Set the "is currently building" flag.
+    HandleIsBuildInProgressChanged(true);
+
+    // Notify the system that a build has started.
+    emit ProjectBuildStarted();
+
+    // The function that will be invoked by the build thread.
+    auto backgroundTask = [&]
     {
-        for (const auto& entrySrcLineData : fileSrcLineData->second)
+        // Build an output path where all of the build artifacts will be dumped to.
+        std::string outputPath = CreateProjectBuildOutputPath();
+
+        // Create the output directory if it doesn't already exist.
+        bool isOk = rgUtils::IsDirExists(outputPath);
+        if (!isOk)
         {
-            const std::pair<int, int>  startAndEndLines = entrySrcLineData.second;
-            if (lineNumber >= startAndEndLines.first && lineNumber <= startAndEndLines.second)
-            {
-                entryName = entrySrcLineData.first;
-                found = true;
-                break;
-            }
+            isOk = rgUtils::CreateFolder(outputPath);
+            assert(isOk);
         }
-    }
 
-    // 2. Check if "lineNumber" is present in the line correlation table for currently active entry.
-    if (!found)
-    {
-        found = m_pDisassemblyView->IsLineCorrelatedInEntry(m_currentTargetGpu, entryName, lineNumber);
-
-        assert(m_pFileMenu != nullptr);
-        if (m_pFileMenu != nullptr)
+        if (isOk)
         {
-            // Fall back to selecting the current entrypoint in the selected file item.
-            rgFileMenuFileItem* pFileItem = m_pFileMenu->GetFileItemFromPath(filePath);
-            assert(pFileItem != nullptr);
-            if (pFileItem != nullptr)
+            // Create a new output folder specific to the current clone's build artifacts.
+            std::stringstream cloneFolderName;
+            cloneFolderName << STR_CLONE_FOLDER_NAME;
+            cloneFolderName << m_cloneIndex;
+
+            // Append the clone folder to the output folder.
+            isOk = rgUtils::AppendFolderToPath(outputPath, cloneFolderName.str(), outputPath);
+            if (isOk)
             {
-                std::string entrypointName;
-                if (pFileItem->GetSelectedEntrypointName(entrypointName))
+                // Append a path separator to the new output path.
+                isOk = rgUtils::AppendPathSeparator(outputPath, outputPath);
+                assert(isOk);
+
+                // Create the output folder if it does not exist.
+                if (!rgUtils::IsDirExists(outputPath))
                 {
-                    entryName = entrypointName;
+                    isOk = rgUtils::CreateFolder(outputPath);
+                    assert(isOk);
                 }
             }
         }
+
+        // If the correct build output paths exist, proceed with building the project.
+        if (isOk)
+        {
+            // Set up the function pointer responsible for handling new output from the CLI invocation.
+            using std::placeholders::_1;
+            std::function<void(const std::string&)> appendBuildOutput = std::bind(&rgBuildView::HandleNewCLIOutputString, this, _1);
+
+            // Build the current project clone.
+            m_cancelBuildSignal = false;
+
+            // Verify that the clone index is valid.
+            int numClones = static_cast<int>(m_pProject->m_clones.size());
+            bool isCloneIndexValid = (m_cloneIndex >= 0 && m_cloneIndex < numClones);
+            assert(isCloneIndexValid);
+            if (isCloneIndexValid)
+            {
+                // Attempt to build the clone.
+                bool isProjectBuilt = false;
+                std::vector<std::string> gpusWithBuildOutputs;
+                rgProjectAPI currentApi = rgConfigManager::Instance().GetCurrentAPI();
+                if (currentApi == rgProjectAPI::OpenCL)
+                {
+                    isProjectBuilt = rgCliLauncher::BuildProjectCloneOpenCL(m_pProject, m_cloneIndex, outputPath, appendBuildOutput, gpusWithBuildOutputs, m_cancelBuildSignal);
+                }
+                else if (currentApi == rgProjectAPI::Vulkan)
+                {
+                    isProjectBuilt = rgCliLauncher::BuildProjectCloneVulkan(m_pProject, m_cloneIndex, outputPath, appendBuildOutput, gpusWithBuildOutputs, m_cancelBuildSignal);
+                }
+
+                // Verify that the build was not canceled.
+                if (!m_cancelBuildSignal)
+                {
+                    // If the project was built successfully, parse the session metadata file and populate an rgCliOutput structure.
+                    if (isProjectBuilt)
+                    {
+                        // Load the build outputs in the project's directory.
+                        std::string projectDirectory;
+                        bool isOk = rgUtils::ExtractFileDirectory(m_pProject->m_projectFileFullPath, projectDirectory);
+                        if (isOk)
+                        {
+                            bool isOutputLoaded = LoadBuildOutput(projectDirectory, &gpusWithBuildOutputs);
+                            assert(isOutputLoaded);
+                            if (isOutputLoaded)
+                            {
+                                // Trigger the build success signal.
+                                emit ProjectBuildSuccess();
+                            }
+                            else
+                            {
+                                // Trigger the build failure signal.
+                                emit ProjectBuildFailure();
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Trigger the build cancellation signal.
+                    emit ProjectBuildCanceled();
+
+                    // Notify the user that the build was canceled.
+                    HandleNewCLIOutputString(STR_STATUS_BAR_BUILD_CANCELED);
+                }
+            }
+        }
+    };
+
+    // Launch the build thread.
+    std::thread buildThread(backgroundTask);
+    buildThread.detach();
+}
+
+bool rgBuildView::CreateFileMenu()
+{
+    // Create the API-specific file menu.
+    bool isOk = CreateMenu(this);
+    if (isOk)
+    {
+        // Retrieve a pointer to the file menu.
+        rgMenu* pMenu = GetMenu();
+        assert(pMenu != nullptr);
+        if (pMenu != nullptr)
+        {
+            assert(m_pProject != nullptr);
+            if (m_pProject != nullptr)
+            {
+                // Ensure that the incoming clone index is valid for the current project.
+                bool isValidRange = (m_cloneIndex >= 0 && m_cloneIndex < m_pProject->m_clones.size());
+                assert(isValidRange);
+
+                if (isValidRange)
+                {
+                    std::shared_ptr<rgProjectClone> pProjectClone = m_pProject->m_clones[m_cloneIndex];
+
+                    // Initialize the menu with default items.
+                    pMenu->InitializeDefaultMenuItems(pProjectClone);
+                }
+            }
+        }
+
+        // Create the menu title bar where the program name is displayed.
+        m_pFileMenuTitlebar = new rgMenuTitlebar();
+
+        // Register the menu title bar with scaling manager.
+        ScalingManager::Get().RegisterObject(m_pFileMenuTitlebar);
+
+        // Wrap the file menu in a view container with its title bar.
+        m_pFileMenuViewContainer->SetMainWidget(pMenu);
+        m_pFileMenuViewContainer->SetTitlebarWidget(m_pFileMenuTitlebar);
+        m_pFileMenuViewContainer->setObjectName(STR_RG_FILE_MENU_VIEW_CONTAINER);
+
+        // Connect signals for the file menu.
+        ConnectFileSignals();
     }
 
-    return found;
+    return isOk;
 }
 
 bool rgBuildView::CreateNewEmptyProject()
@@ -627,71 +735,173 @@ bool rgBuildView::CreateNewEmptyProject()
     }
     else
     {
-        rgRenameProjectDialog* pRenameProjectDialog = new rgRenameProjectDialog(projectName, this);
-
-        // Prompt the user for the project name.
-        int rc = pRenameProjectDialog->exec();
-        if (rc == QDialog::Accepted)
+        // Repeatedly ask the user for a project name when their provided name is invalid.
+        bool isValidProjectPath = false;
+        do
         {
-            // Create a project instance with the given name.
-            m_pProject = m_pFactory->CreateProject(projectName, rgConfigManager::GenerateProjectFilepath(projectName));
-            assert(m_pProject != nullptr);
+            rgRenameProjectDialog* pRenameProjectDialog = m_pFactory->CreateRenameProjectDialog(projectName, m_pParent);
 
-            // Emit a signal to force use default project name check box value update.
-            emit UpdateUseDefaultProjectNameCheckbox();
+            // Prompt the user for the project name.
+            int rc = pRenameProjectDialog->exec();
+            if (rc == QDialog::Accepted)
+            {
+                // Generate the path to where the new project's project file would live.
+                std::string projectFilePath = rgConfigManager::GenerateProjectFilepath(projectName);
 
-            // Create the clone.
-            CreateProjectClone();
+                // The path for the new project is valid only if it doesn't already exist.
+                isValidProjectPath = !rgUtils::IsFileExists(projectFilePath);
+                if (isValidProjectPath)
+                {
+                    // Create a project instance with the given name.
+                    m_pProject = m_pFactory->CreateProject(projectName, projectFilePath);
+                    assert(m_pProject != nullptr);
 
-            // We're done.
-            ret = true;
-        }
+                    // Create the clone.
+                    CreateProjectClone();
+
+                    // We're done.
+                    ret = true;
+                }
+                else
+                {
+                    // Let the user know that the project name they have provided has already been used.
+                    rgUtils::ShowErrorMessageBox(STR_NEW_PROJECT_ALREADY_EXISTS, this);
+                }
+            }
+            else
+            {
+                break;
+            }
+
+            // Free memory.
+            RG_SAFE_DELETE(pRenameProjectDialog);
+
+        } while (!isValidProjectPath);
     }
+
     return ret;
 }
 
-bool rgBuildView::CreateNewSourceFileInProject()
+void rgBuildView::InitializeView()
 {
-    // Generate a new empty source file in the correct location.
-    std::string sourceFilename = STR_DEFAULT_SOURCE_FILENAME;
+    // Create an empty panel to insert alongside the file menu when no files are open.
+    m_pEmptyPanel = new QWidget(this);
 
-    std::string fullSourcefilePath;
-    bool ret = CreateNewSourceFile(sourceFilename, fullSourcefilePath);
+    // Create container for source view widgets.
+    m_pSourceViewStack = new QWidget();
+    QVBoxLayout* pLayout = new QVBoxLayout();
+    pLayout->setContentsMargins(0, 0, 0, 0);
+    m_pSourceViewStack->setLayout(pLayout);
 
-    if (ret)
+    // Wrap the source code stack in a view container and a source editor titlebar.
+    m_pSourceViewContainer = new rgViewContainer();
+    m_pSourceViewContainer->SetMainWidget(m_pSourceViewStack);
+    m_pSourceEditorTitlebar = new rgSourceEditorTitlebar(m_pSourceViewContainer);
+    m_pSourceViewContainer->SetTitlebarWidget(m_pSourceEditorTitlebar);
+    m_pSourceViewContainer->setObjectName(STR_RG_SOURCE_VIEW_CONTAINER);
+
+    // Create the disassembly view splitter.
+    m_pDisassemblyViewSplitter = new rgMaximizeSplitter(this);
+    m_pDisassemblyViewSplitter->setOrientation(Qt::Orientation::Horizontal);
+    m_pDisassemblyViewSplitter->setChildrenCollapsible(false);
+
+    // Add the source view container to the disassembly view splitter.
+    m_pDisassemblyViewSplitter->AddMaximizableWidget(m_pSourceViewContainer);
+
+    // Set up the splitter between the file menu and the rest of the views.
+    m_pFileMenuSplitter = new QSplitter(Qt::Orientation::Horizontal, this);
+
+    // Create the file menu's container.
+    m_pFileMenuViewContainer = new rgViewContainer();
+
+    // Set the fixed width of file menu container.
+    m_pFileMenuViewContainer->setFixedWidth(s_FILE_MENU_VIEW_CONTAINER_WIDTH);
+
+    // Add the file menu and the disassembly view splitter to the file menu splitter.
+    m_pFileMenuSplitter->addWidget(m_pFileMenuViewContainer);
+    m_pFileMenuSplitter->addWidget(m_pDisassemblyViewSplitter);
+
+    // The file menu should not grow with the window, while the source code view should.
+    m_pFileMenuSplitter->setStretchFactor(0, 0);
+    m_pFileMenuSplitter->setStretchFactor(1, 1);
+
+    // Disable the file menu splitter.
+    m_pFileMenuSplitter->handle(1)->setDisabled(true);
+
+    // Create the output window.
+    m_pCliOutputWindow = new rgCliOutputView(this);
+
+    // Wrap the build output view in a view container with an embedded titlebar.
+    m_pBuildOutputViewContainer = new rgViewContainer();
+    m_pBuildOutputViewContainer->SetMainWidget(m_pCliOutputWindow);
+    m_pBuildOutputViewContainer->setObjectName(STR_RG_BUILD_OUTPUT_VIEW_CONTAINER);
+
+    // Create a vertical splitter to divide the rgBuildView's FileMenu/SourceEditors and the Output Window.
+    m_pOutputSplitter = new rgMaximizeSplitter(this);
+    m_pOutputSplitter->setOrientation(Qt::Orientation::Vertical);
+
+    // Connect the build output window signals.
+    ConnectOutputWindowSignals();
+
+    // Add the file menu's splitter and the output window to the splitter.
+    m_pOutputSplitter->addWidget(m_pFileMenuSplitter);
+    m_pOutputSplitter->AddMaximizableWidget(m_pBuildOutputViewContainer);
+
+    // Let the file menu and code editor resize, and the output window will stay vertically squished.
+    m_pOutputSplitter->setStretchFactor(0, 6);
+    m_pOutputSplitter->setStretchFactor(1, 1);
+    m_pOutputSplitter->setCollapsible(1, false);
+
+    // Create a main window layout, and add the root-level splitter widget.
+    QVBoxLayout* pMainLayout = new QVBoxLayout(this);
+    pMainLayout->addWidget(m_pOutputSplitter);
+    this->setLayout(pMainLayout);
+
+    // Restore the previous session rgBuildView layout.
+    RestoreViewLayout();
+
+    // Setup view manager.
+    m_pViewManager = new rgViewManager(this);
+    m_pViewManager->AddView(m_pFileMenuViewContainer, true);
+    m_pViewManager->AddView(m_pSourceViewContainer, true);
+    m_pViewManager->AddView(m_pBuildOutputViewContainer, true);
+
+    // Connect signals for the Build View.
+    ConnectBuildViewSignals();
+
+    // Declare EditMode as a meta type so it can be used with slots/signals.
+    int id = qRegisterMetaType<EditMode>();
+    Q_UNUSED(id);
+
+    // Create the file menu.
+    CreateFileMenu();
+
+    // Update the menu's title bar to display the Project name.
+    assert(m_pFileMenuTitlebar != nullptr);
+    assert(m_pProject != nullptr);
+    if (m_pFileMenuTitlebar != nullptr && m_pProject != nullptr)
     {
-        // This should be a full filename, but new files don't have that.
-        AddFile(fullSourcefilePath, true);
-
-        // Display the file's source code.
-        SetSourceCodeText(fullSourcefilePath);
+        // Set project name title in file menu.
+        std::stringstream title;
+        title << rgUtils::GetProjectTitlePrefix(m_pProject->m_api) << m_pProject->m_projectName;
+        m_pFileMenuTitlebar->SetTitle(title.str().c_str());
     }
 
-    return ret;
+    // Create a new build settings view after a new project has been created.
+    CreateBuildSettingsView();
+
+    // Create and initialize views specific to the current mode only.
+    InitializeModeSpecificViews();
 }
 
-bool rgBuildView::IsFileDisassembled(const std::string& inputFilePath) const
-{
-    bool isCurrentFileDisassembled = false;
-
-    auto targetGpuOutputsIter = m_buildOutputs.find(m_currentTargetGpu);
-    if (targetGpuOutputsIter != m_buildOutputs.end())
-    {
-        std::shared_ptr<rgCliBuildOutput> pBuildOutput = targetGpuOutputsIter->second;
-        auto inputFileOutputsIter = pBuildOutput->m_perFileOutput.find(inputFilePath);
-        if (inputFileOutputsIter != pBuildOutput->m_perFileOutput.end())
-        {
-            rgFileOutputs& fileOutputs = inputFileOutputsIter->second;
-            isCurrentFileDisassembled = !fileOutputs.m_outputs.empty();
-        }
-    }
-
-    return isCurrentFileDisassembled;
-}
-
-bool rgBuildView::IsEmpty() const
+bool rgBuildView::HasSourceCodeEditors() const
 {
     return m_sourceCodeEditors.empty();
+}
+
+bool rgBuildView::HasProject() const
+{
+    return (m_pProject != nullptr);
 }
 
 bool rgBuildView::LoadBuildOutput(const std::string& projectFolder, const std::vector<std::string>* pTargetGpus)
@@ -706,7 +916,7 @@ bool rgBuildView::LoadBuildOutput(const std::string& projectFolder, const std::v
     if (pVersionInfo != nullptr)
     {
         // Determine which GPU architectures and families are supported in the current mode.
-        const std::string& currentMode = rgConfigManager::Instance().GetCurrentMode();
+        const std::string& currentMode = rgConfigManager::Instance().GetCurrentModeString();
         auto modeArchitecturesIter = pVersionInfo->m_gpuArchitectures.find(currentMode);
         if (modeArchitecturesIter != pVersionInfo->m_gpuArchitectures.end())
         {
@@ -718,7 +928,7 @@ bool rgBuildView::LoadBuildOutput(const std::string& projectFolder, const std::v
                 // Step through each family within the architecture.
                 for (auto familyIter = architectureIter->m_gpuFamilies.begin(); familyIter != architectureIter->m_gpuFamilies.end(); ++familyIter)
                 {
-                    // Add the family name to the list of targets to atempt to load results for.
+                    // Add the family name to the list of targets to attempt to load results for.
                     targetGpuFamilyResultsToLoad.push_back(familyIter->m_familyName);
                 }
             }
@@ -764,6 +974,7 @@ bool rgBuildView::LoadBuildOutput(const std::string& projectFolder, const std::v
                     metadataFilenameStream << currentGpu;
                     metadataFilenameStream << "_";
                     metadataFilenameStream << STR_SESSION_METADATA_FILENAME;
+                    bool isLoadedForGpu = false;
 
                     std::string fullMetadataFilePath;
                     isOk = rgUtils::AppendFileNameToPath(outputFolderPath, metadataFilenameStream.str(), fullMetadataFilePath);
@@ -774,18 +985,17 @@ bool rgBuildView::LoadBuildOutput(const std::string& projectFolder, const std::v
                         bool isMetadataExists = rgUtils::IsFileExists(fullMetadataFilePath);
                         if (isMetadataExists)
                         {
-                            // The session-metadata file exists, meaning the project has been built previously.
+                            // Emit a signal so the file coloring in the file menu is updated.
+                            emit UpdateFileColoring();
+
                             std::shared_ptr<rgCliBuildOutput> pGpuOutput = nullptr;
-                            isLoaded = rgXMLSessionConfig::ReadSessionMetadata(fullMetadataFilePath, pGpuOutput);
-                            assert(isLoaded);
-                            if (isLoaded)
+                            isLoadedForGpu = LoadSessionMetadata(fullMetadataFilePath, pGpuOutput);
+
+                            if (isLoadedForGpu && pGpuOutput != nullptr)
                             {
-                                assert(pGpuOutput != nullptr);
-                                if (pGpuOutput != nullptr)
-                                {
-                                    // Add the outputs to the map to store per-GPU results.
-                                    m_buildOutputs[currentGpu] = pGpuOutput;
-                                }
+                                // Add the outputs to the map to store per-GPU results.
+                                m_buildOutputs[currentGpu] = pGpuOutput;
+                                isLoaded = true;
                             }
                         }
                     }
@@ -813,19 +1023,8 @@ bool rgBuildView::LoadProjectFile(const std::string& projectFilePath)
     assert(m_pProject != nullptr);
     if (m_pProject != nullptr)
     {
-        if (m_pFileMenuTitlebar != nullptr)
-        {
-            // Set project name title in file menu.
-            std::stringstream title;
-            title << rgUtils::GetProjectTitlePrefix(m_pProject->m_api) << m_pProject->m_projectName;
-            m_pFileMenuTitlebar->SetTitle(title.str().c_str());
-        }
-
         // Signal that a new project has been loaded into the rgBuildView.
         emit ProjectLoaded(m_pProject);
-
-        // Create a new build settings view after a new project has been created.
-        CreateBuildSettingsView();
 
         ret = true;
     }
@@ -841,37 +1040,48 @@ bool rgBuildView::LoadProjectFile(const std::string& projectFilePath)
     return ret;
 }
 
+void rgBuildView::ReloadFile(const std::string& filePath)
+{
+    SetSourceCodeText(filePath);
+}
+
 void rgBuildView::SaveCurrentFile()
 {
     bool isSourceCodeEditorValid = (m_pCurrentCodeEditor != nullptr);
     assert(isSourceCodeEditorValid);
     if (isSourceCodeEditorValid)
     {
-        std::string currentFilename = m_pFileMenu->GetSelectedFilePath();
-
-        // Ask the user for a filename if none exists so far.
-        if (currentFilename.empty())
+        rgMenu* pMenu = GetMenu();
+        assert(pMenu != nullptr);
+        if (pMenu != nullptr && pMenu->GetSelectedFileItem() != nullptr)
         {
-            currentFilename = QFileDialog::getSaveFileName(this, STR_FILE_DIALOG_SAVE_NEW_FILE,
-                rgConfigManager::Instance().GetLastSelectedFolder().c_str(), STR_FILE_DIALOG_CL_FILTER).toStdString();
+            std::string currentFilename = pMenu->GetSelectedFilePath();
 
-            // Extract directory from full path.
-            std::string fileDirectory;
-            bool isOk = rgUtils::ExtractFileDirectory(currentFilename, fileDirectory);
-            assert(isOk);
-
-            if (isOk)
+            // Ask the user for a filename if none exists so far.
+            if (currentFilename.empty())
             {
-                // Update last selected directory in global config.
-                std::shared_ptr<rgGlobalSettings> pGlobalConfig = rgConfigManager::Instance().GetGlobalConfig();
-                pGlobalConfig->m_lastSelectedDirectory = fileDirectory;
-            }
-        }
+                std::string filter = std::string(STR_FILE_DIALOG_FILTER_OPENCL) + ";;" + STR_FILE_DIALOG_FILTER_ALL;
+                currentFilename = QFileDialog::getSaveFileName(this, STR_FILE_DIALOG_SAVE_NEW_FILE,
+                    rgConfigManager::Instance().GetLastSelectedFolder().c_str(), filter.c_str()).toStdString();
 
-        // Write the editor text to file if the file path is valid.
-        if (!currentFilename.empty())
-        {
-            SaveEditorTextToFile(m_pCurrentCodeEditor, currentFilename);
+                // Extract directory from full path.
+                std::string fileDirectory;
+                bool isOk = rgUtils::ExtractFileDirectory(currentFilename, fileDirectory);
+                assert(isOk);
+
+                if (isOk)
+                {
+                    // Update last selected directory in global config.
+                    std::shared_ptr<rgGlobalSettings> pGlobalConfig = rgConfigManager::Instance().GetGlobalConfig();
+                    pGlobalConfig->m_lastSelectedDirectory = fileDirectory;
+                }
+            }
+
+            // Write the editor text to file if the file path is valid.
+            if (!currentFilename.empty())
+            {
+                SaveEditorTextToFile(m_pCurrentCodeEditor, currentFilename);
+            }
         }
     }
 }
@@ -897,11 +1107,18 @@ rgUnsavedItemsDialog::UnsavedFileDialogResult rgBuildView::RequestSaveFile(const
     return userResponse;
 }
 
-bool rgBuildView::ShowSaveDialog(rgFilesToSave filesToSave)
+bool rgBuildView::ShowSaveDialog(rgFilesToSave filesToSave /* = rgFilesToSave::All */, bool shouldSaveSourceFiles /* = false */)
 {
+    bool ret = false;
     QStringList unsavedFiles;
 
-    if (filesToSave == rgFilesToSave::SourceFiles || filesToSave == rgFilesToSave::All)
+    // This flag would be set to true if the user chose to cancel the operation.
+    // In that case, we should return false from this function and the subsequent
+    // logic would make sure to cancel the entire operation (as part of which showing
+    // the save dialog was required).
+    bool isCanceled = false;
+
+    if (shouldSaveSourceFiles && (filesToSave == rgFilesToSave::SourceFiles || filesToSave == rgFilesToSave::All))
     {
         // Add unsaved source files to the list of files that must be saved.
         GetUnsavedSourceFiles(unsavedFiles);
@@ -911,47 +1128,72 @@ bool rgBuildView::ShowSaveDialog(rgFilesToSave filesToSave)
     bool pendingBuildSettingsChanges = false;
 
     // If the build settings have been modified but the changes are still pending, add the build settings file to the list.
-    rgOpenCLBuildSettingsView* pBuildSettingsView = static_cast<rgOpenCLBuildSettingsView*>(m_pBuildSettingsView);
-    assert(pBuildSettingsView != nullptr);
-    if (pBuildSettingsView != nullptr)
+    if (m_pBuildSettingsView != nullptr)
     {
         if (filesToSave == rgFilesToSave::BuildSettings || filesToSave == rgFilesToSave::All)
         {
-            pendingBuildSettingsChanges = pBuildSettingsView->GetHasPendingChanges();
+            pendingBuildSettingsChanges = m_pBuildSettingsView->GetHasPendingChanges();
             if (pendingBuildSettingsChanges)
             {
                 // Add a build settings item to the unsaved files list.
                 unsavedFiles << STR_MENU_BUILD_SETTINGS;
             }
         }
-    }
 
-    // Ask the user if they want save files with modifications.
-    rgUnsavedItemsDialog::UnsavedFileDialogResult saveResult = rgUnsavedItemsDialog::Yes;
-    if (!unsavedFiles.empty())
-    {
-        saveResult = RequestSaveFiles(unsavedFiles);
-        switch (saveResult)
+        // File changes are ignored unless it is:
+        // Project close.
+        // App exit.
+        if (pendingBuildSettingsChanges || shouldSaveSourceFiles)
         {
-        case rgUnsavedItemsDialog::No:
+            // Ask the user if they want to save files with modifications.
+            rgUnsavedItemsDialog::UnsavedFileDialogResult saveResult = rgUnsavedItemsDialog::Yes;
+            if (!unsavedFiles.empty())
             {
-                if (pendingBuildSettingsChanges)
+                saveResult = RequestSaveFiles(unsavedFiles);
+                switch (saveResult)
                 {
-                    // If the user clicks "No," they don't care about the pending changes. Revert them before moving on.
-                    pBuildSettingsView->RevertPendingChanges();
+                case rgUnsavedItemsDialog::No:
+                {
+                    if (pendingBuildSettingsChanges)
+                    {
+                        // If the user clicks "No," they don't care about the pending changes. Revert them before moving on.
+                        m_pBuildSettingsView->RevertPendingChanges();
+                    }
+                    else
+                    {
+                        // Discard the changes from all editors.
+                        for (const QString& unsavedFilePath : unsavedFiles)
+                        {
+                            rgSourceCodeEditor* pEditor = GetEditorForFilepath(unsavedFilePath.toStdString());
+                            DiscardEditorChanges(pEditor);
+                        }
+                    }
+                }
+                break;
+                case rgUnsavedItemsDialog::Cancel:
+                    isCanceled = true;
+                    break;
+                default:
+                    break;
                 }
             }
-            break;
-        case rgUnsavedItemsDialog::Cancel:
-            break;
-        default:
-            break;
+
+            // If "Yes", proceed with the build. If "No", proceed with the build since the pending settings have been reverted.
+            // If "Cancel," stop the attempt to build and continue where the user left off.
+            ret = (saveResult == rgUnsavedItemsDialog::Yes || saveResult == rgUnsavedItemsDialog::No);
         }
+
+        ret = (ret || (!pendingBuildSettingsChanges)) && !isCanceled;
+    }
+    else
+    {
+        // Return true if the build settings view was not created yet.
+        // This happens when the user has not created or opened a project,
+        // and attempts to quit the application.
+        ret = true;
     }
 
-    // If "Yes", proceed with the build. If "No", proceed with the build since the pending settings have been reverted.
-    // If "Cancel," stop the attempt to build and continue where the user left off.
-    return (saveResult == rgUnsavedItemsDialog::Yes || saveResult == rgUnsavedItemsDialog::No);
+    return ret;
 }
 
 rgUnsavedItemsDialog::UnsavedFileDialogResult rgBuildView::RequestSaveFiles(const QStringList& unsavedFiles)
@@ -984,7 +1226,11 @@ rgUnsavedItemsDialog::UnsavedFileDialogResult rgBuildView::RequestSaveFiles(cons
         {
         case rgUnsavedItemsDialog::Yes:
             // Save all files and indicated dialog accepted.
-            SaveFiles(unsavedFiles);
+            if (!SaveFiles(unsavedFiles))
+            {
+                // The files weren't saved, so the action in-flight should be cancelled.
+                result = rgUnsavedItemsDialog::Cancel;
+            }
             break;
             // If the user chooses No or Cancel, nothing needs to happen except for making the dialog disappear.
         case rgUnsavedItemsDialog::No:
@@ -994,6 +1240,9 @@ rgUnsavedItemsDialog::UnsavedFileDialogResult rgBuildView::RequestSaveFiles(cons
             // Shouldn't get here.
             assert(false);
         }
+
+        // Free memory.
+        RG_SAFE_DELETE(pUnsavedFileDialog);
     }
     else
     {
@@ -1004,8 +1253,10 @@ rgUnsavedItemsDialog::UnsavedFileDialogResult rgBuildView::RequestSaveFiles(cons
     return result;
 }
 
-void rgBuildView::SaveFiles(const QStringList& unsavedFiles)
+bool rgBuildView::SaveFiles(const QStringList& unsavedFiles)
 {
+    bool isSaved = true;
+
     // Step through each of the files with pending changes.
     auto stringListIter = unsavedFiles.begin();
     while (stringListIter != unsavedFiles.end())
@@ -1015,11 +1266,9 @@ void rgBuildView::SaveFiles(const QStringList& unsavedFiles)
         if (filePath.compare(STR_MENU_BUILD_SETTINGS) == 0)
         {
             // Submit all pending changes and save the build settings file.
-            rgOpenCLBuildSettingsView* pBuildSettingsView = static_cast<rgOpenCLBuildSettingsView*>(m_pBuildSettingsView);
-            assert(pBuildSettingsView != nullptr);
-            if (pBuildSettingsView != nullptr)
+            if (m_pBuildSettingsView != nullptr)
             {
-                pBuildSettingsView->SaveSettings();
+                isSaved = m_pBuildSettingsView->SaveSettings();
             }
         }
         else
@@ -1028,7 +1277,14 @@ void rgBuildView::SaveFiles(const QStringList& unsavedFiles)
         }
 
         stringListIter++;
+
+        if (!isSaved)
+        {
+            break;
+        }
     }
+
+    return isSaved;
 }
 
 void rgBuildView::SaveSourceFile(const std::string& sourceFilePath)
@@ -1038,28 +1294,54 @@ void rgBuildView::SaveSourceFile(const std::string& sourceFilePath)
     bool isEditorValid = (pEditor != nullptr);
     assert(isEditorValid);
 
-    // Save the editor text.
     if (isEditorValid)
     {
         SaveEditorTextToFile(pEditor, sourceFilePath);
     }
 }
 
+bool rgBuildView::SaveCurrentState()
+{
+    // Save all source files when a new build is started.
+    QStringList unsavedSources;
+    GetUnsavedSourceFiles(unsavedSources);
+    if (!unsavedSources.empty())
+    {
+        for (const QString& sourceFilePath : unsavedSources)
+        {
+            SaveSourceFile(sourceFilePath.toStdString().c_str());
+        }
+    }
+
+    // Save the current project first.
+    SaveCurrentFile();
+
+    // The build settings must be saved in order to proceed with a build.
+    bool shouldProceedWithBuild = ShowSaveDialog(rgFilesToSave::BuildSettings);
+
+    return shouldProceedWithBuild;
+}
+
 bool rgBuildView::RequestRemoveAllFiles()
 {
-    bool isSaveAccepted = ShowSaveDialog();
+    bool isSaveAccepted = ShowSaveDialog(rgBuildView::rgFilesToSave::All, true);
     if (isSaveAccepted)
     {
-        // Remove all file menu items.
-        auto editorIter = m_sourceCodeEditors.begin();
-        while (editorIter != m_sourceCodeEditors.end())
+        rgMenu* pMenu = GetMenu();
+        assert(pMenu != nullptr);
+        if (pMenu != nullptr)
         {
-            std::string fullPath = editorIter->first;
-            m_pFileMenu->RemoveItem(fullPath);
-            RemoveEditor(fullPath);
+            // Remove all file menu items.
+            auto editorIter = m_sourceCodeEditors.begin();
+            while (editorIter != m_sourceCodeEditors.end())
+            {
+                std::string fullPath = editorIter->first;
+                pMenu->RemoveItem(fullPath);
+                RemoveEditor(fullPath);
 
-            // Keep getting first item until all are removed.
-            editorIter = m_sourceCodeEditors.begin();
+                // Keep getting first item until all are removed.
+                editorIter = m_sourceCodeEditors.begin();
+            }
         }
     }
 
@@ -1113,39 +1395,6 @@ void rgBuildView::SetSourceCodeText(const std::string& fileFullPath)
     }
 }
 
-void rgBuildView::ShowCurrentFileDisassembly()
-{
-    bool isCurrentFileDisassembled = false;
-
-    // Show the currently selected file's first entrypoint disassembly (if there is no currently selected entry).
-    const std::string& inputFilepath = m_pFileMenu->GetSelectedFilePath();
-    rgFileMenuFileItem* pSelectedFileItem = m_pFileMenu->GetSelectedFileItem();
-    if (pSelectedFileItem != nullptr)
-    {
-        std::string currentEntrypointName;
-        bool isEntrySelected = pSelectedFileItem->GetSelectedEntrypointName(currentEntrypointName);
-        // Get the list of entrypoint names for the selected input file.
-        std::vector<std::string> entrypointNames;
-        pSelectedFileItem->GetEntrypointNames(entrypointNames);
-
-        // Select the first available entrypoint if any exist.
-        if (!entrypointNames.empty())
-        {
-            // Show the first entrypoint in the disassembly table.
-            std::string& entrypointName = (isEntrySelected ? currentEntrypointName : entrypointNames[0]);
-            m_pDisassemblyView->HandleSelectedEntrypointChanged(m_currentTargetGpu, inputFilepath, entrypointName);
-
-            // Emit a signal indicating that the selected entrypoint has changed.
-            emit SelectedEntrypointChanged(m_currentTargetGpu, inputFilepath, entrypointName);
-
-            isCurrentFileDisassembled = true;
-        }
-    }
-
-    // Toggle the view based on if the current file has been disassembled or not.
-    ToggleDisassemblyViewVisibility(isCurrentFileDisassembled);
-}
-
 void rgBuildView::ToggleDisassemblyViewVisibility(bool isVisible)
 {
     bool isViewCreated = m_pDisassemblyViewContainer != nullptr && m_pDisassemblyView != nullptr;
@@ -1176,6 +1425,7 @@ void rgBuildView::ToggleDisassemblyViewVisibility(bool isVisible)
     {
         // Show the disassembly view container to display the tables within.
         m_pDisassemblyViewContainer->setVisible(isVisible);
+        m_pDisassemblyViewContainer->SetHiddenState(!isVisible);
     }
 
     assert(m_pSourceViewContainer != nullptr);
@@ -1184,19 +1434,6 @@ void rgBuildView::ToggleDisassemblyViewVisibility(bool isVisible)
         // Only allow the source editor container to be maximized/restored when the disassembly view is available.
         m_pSourceViewContainer->SetIsMaximizable(isVisible);
     }
-}
-
-void rgBuildView::HandleSelectedEntrypointChanged(const std::string& inputFilePath, const std::string& selectedEntrypointName)
-{
-    assert(m_pFileMenu != nullptr);
-    if (m_pFileMenu != nullptr)
-    {
-        // Trigger the file menu to be updated, which will change the current selection in the current item's entrypoint list.
-        m_pFileMenu->HandleSelectedEntrypointChanged(inputFilePath, selectedEntrypointName);
-    }
-
-    // Highlight the start line for the given entrypoint in the source editor.
-    HighlightEntrypointStartLine(inputFilePath, selectedEntrypointName);
 }
 
 void rgBuildView::HandleSourceEditorHidden()
@@ -1213,51 +1450,98 @@ void rgBuildView::HandleSourceEditorResized()
     }
 }
 
-void rgBuildView::HandleSelectedFileChanged(const std::string& oldFilepath, const std::string& newFilepath)
+void rgBuildView::HandleSourceEditorOpenHeaderRequest(const QString& path)
 {
-    // Get a pointer to the editor responsible for displaying the new file.
-    rgSourceCodeEditor* pEditor = GetEditorForFilepath(newFilepath);
-    assert(pEditor != nullptr);
-    if (pEditor != nullptr)
+    // Check if the file exists.
+    assert(m_pProject != nullptr);
+    assert(m_cloneIndex < m_pProject->m_clones.size());
+    assert(m_pProject->m_clones[m_cloneIndex] != nullptr);
+    assert(m_pProject->m_clones[m_cloneIndex]->m_pBuildSettings != nullptr);
+    if (m_pProject != nullptr && m_cloneIndex < m_pProject->m_clones.size() &&
+        m_pProject->m_clones[m_cloneIndex] != nullptr)
     {
-        bool isEditorSwitched = SwitchToEditor(pEditor);
-        if (isEditorSwitched)
+        const std::vector<std::string>& includePaths =
+            m_pProject->m_clones[m_cloneIndex]->m_pBuildSettings->m_additionalIncludeDirectories;
+
+        // The path to the file that we would like to open.
+        std::string pathToOpen;
+
+        // Try to find if any file with that full path exists on the system.
+        bool isExist = rgUtils::IsFileExists(path.toStdString());
+        if (!isExist)
         {
-            // Switch the disassembly view to show the currently-selected entrypoint in the newly-selected file item.
-            if (m_pDisassemblyView != nullptr && !m_isBuildInProgress)
+            // Try the local directory.
+            assert(m_pCurrentCodeEditor != nullptr);
+            if (m_pCurrentCodeEditor != nullptr)
             {
-                // Open the disassembly view for the source file only if it's disassembled.
-                if (IsFileDisassembled(newFilepath))
+                // Get the directory of the currently edited file.
+                std::string fileDirectory;
+                std::string filePath = GetFilepathForEditor(m_pCurrentCodeEditor);
+                bool isDirExtracted = rgUtils::ExtractFileDirectory(filePath, fileDirectory);
+                if (isDirExtracted)
                 {
-                    rgFileMenuFileItem* pFileItem = m_pFileMenu->GetFileItemFromPath(newFilepath);
-
-                    assert(pFileItem != nullptr);
-                    if (pFileItem != nullptr)
+                    // Search for the user's file in the directory
+                    // where the currently edited file is located.
+                    std::stringstream fullPath;
+                    fullPath << fileDirectory << "/" << path.toStdString();
+                    if (rgUtils::IsFileExists(fullPath.str()))
                     {
-                        // Retrieve the name of the currently-selected entrypoint (if there is one).
-                        std::string selectedEntrypointName;
-                        bool isEntrypointSelected = pFileItem->GetSelectedEntrypointName(selectedEntrypointName);
-
-                        // Update the visibility of the disassembly view.
-                        ToggleDisassemblyViewVisibility(isEntrypointSelected);
-
-                        if (isEntrypointSelected)
-                        {
-                            // Make the disassembly view visible because the file has build outputs to display.
-                            emit SelectedEntrypointChanged(m_currentTargetGpu, newFilepath, selectedEntrypointName);
-                        }
-
-                        // Update the titlebar for the current source editor.
-                        UpdateSourceEditorTitlebar(pEditor);
+                        // We found it.
+                        pathToOpen = fullPath.str();
+                        isExist = true;
                     }
                 }
-                else
+            }
+
+            if (!isExist)
+            {
+                // Try to create the path for each of the Additional Include paths.
+                for (const std::string includePath : includePaths)
                 {
-                    // Hide the disassembly view when switching to a file that hasn't been disassembled.
-                    ToggleDisassemblyViewVisibility(false);
+                    std::stringstream fullPath;
+                    fullPath << includePath;
+                    fullPath << "/" << path.toStdString();
+                    if (rgUtils::IsFileExists(fullPath.str()))
+                    {
+                        pathToOpen = fullPath.str();
+                        isExist = true;
+                        break;
+                    }
                 }
             }
         }
+        else
+        {
+            pathToOpen = path.toStdString();
+        }
+
+        if (isExist)
+        {
+            // Open the include file.
+            bool isLaunched = OpenIncludeFile(pathToOpen);
+            if (!isLaunched)
+            {
+                // Notify the user that the viewer app could not be launched.
+                std::stringstream errMsg;
+                errMsg << STR_ERR_COULD_NOT_OPEN_HEADER_FILE_VIEWER <<
+                    rgConfigManager::Instance().GetIncludeFileViewer();
+                emit SetStatusBarText(errMsg.str());
+            }
+        }
+        else
+        {
+            // Notify the user that the header could not be located.
+            emit SetStatusBarText(STR_ERR_COULD_NOT_LOCATE_HEADER_FILE);
+        }
+    }
+}
+
+void rgBuildView::HandleCodeEditorTitlebarDismissMsgPressed()
+{
+    assert(m_pCurrentCodeEditor != nullptr);
+    if (m_pCurrentCodeEditor != nullptr)
+    {
+        m_pCurrentCodeEditor->SetTitleBarText("");
     }
 }
 
@@ -1315,60 +1599,31 @@ void rgBuildView::HandleIsLineCorrelationEnabled(rgSourceCodeEditor* pEditor, bo
     }
 }
 
-void rgBuildView::HandleSourceFileSelectedLineChanged(rgSourceCodeEditor* pEditor, int lineNumber)
-{
-    // Handle updating source correlation only when the project isn't currently being built.
-    if (!m_isBuildInProgress)
-    {
-        if (m_pDisassemblyView != nullptr && !m_pDisassemblyView->IsEmpty())
-        {
-            const std::string& inputFilename = GetFilepathForEditor(pEditor);
-            bool isDisassembled = IsFileDisassembled(inputFilename);
-            if (isDisassembled)
-            {
-                int correlatedLineNumber = kInvalidCorrelationLineIndex;
-
-                bool isCorrelationEnabled = IsLineCorrelationEnabled(pEditor);
-                if (isCorrelationEnabled)
-                {
-                    correlatedLineNumber = lineNumber;
-                }
-
-                // If the line is associated with a named entrypoint, highlight it in the file menu item.
-                std::string entryName;
-                bool isValid = GetEntrypointNameForLineNumber(inputFilename, lineNumber, entryName);
-                if (isValid)
-                {
-                    m_pFileMenu->HandleSelectedEntrypointChanged(inputFilename, entryName);
-                }
-
-                // Send the input source file's correlation line index to the disassembly view.
-                m_pDisassemblyView->HandleInputFileSelectedLineChanged(m_currentTargetGpu, inputFilename, entryName, correlatedLineNumber);
-            }
-        }
-    }
-}
-
 void rgBuildView::HandleBuildSettingsPendingChangesStateChanged(bool hasPendingChanges)
 {
     // Pull the build settings menu item out of the file menu.
-    rgFileMenuBuildSettingsItem* pBuildSettingsMenuItem = m_pFileMenu->GetBuildSettingsItem();
-    assert(pBuildSettingsMenuItem != nullptr);
-
-    // Toggle the pending changed flag.
-    if (pBuildSettingsMenuItem != nullptr)
+    rgMenu* pMenu = GetMenu();
+    assert(pMenu != nullptr);
+    if (pMenu != nullptr)
     {
-        pBuildSettingsMenuItem->SetHasPendingChanges(hasPendingChanges);
+        rgMenuBuildSettingsItem* pBuildSettingsMenuItem = pMenu->GetBuildSettingsItem();
+        assert(pBuildSettingsMenuItem != nullptr);
 
-        // Update the file menu save build settings item visibility.
-        emit CurrentEditorModificationStateChanged(hasPendingChanges);
-    }
+        // Toggle the pending changed flag.
+        if (pBuildSettingsMenuItem != nullptr)
+        {
+            pBuildSettingsMenuItem->SetHasPendingChanges(hasPendingChanges);
 
-    // Set the enabledness of the "Save" button.
-    assert(m_pSettingsButtonsView != nullptr);
-    if (m_pSettingsButtonsView != nullptr)
-    {
-        m_pSettingsButtonsView->EnableSaveButton(hasPendingChanges);
+            // Update the file menu save build settings item visibility.
+            emit CurrentEditorModificationStateChanged(hasPendingChanges);
+        }
+
+        // Set the enabledness of the "Save" button.
+        assert(m_pSettingsButtonsView != nullptr);
+        if (m_pSettingsButtonsView != nullptr)
+        {
+            m_pSettingsButtonsView->EnableSaveButton(hasPendingChanges);
+        }
     }
 }
 
@@ -1407,9 +1662,11 @@ void rgBuildView::HandleSelectedTargetGpuChanged(const std::string& targetGpu)
         // Switch the target GPU.
         m_currentTargetGpu = targetGpu;
 
-        std::shared_ptr<rgCliBuildOutput> pFileOutputs = targetGpuBuildOutputs->second;
-        assert(pFileOutputs != nullptr);
-        if (pFileOutputs != nullptr)
+        InputFileToBuildOutputsMap outputsMap;
+        bool gotOutputs = GetInputFileOutputs(targetGpuBuildOutputs->second, outputsMap);
+
+        assert(gotOutputs);
+        if (gotOutputs)
         {
             assert(m_pCurrentCodeEditor != nullptr);
             if (m_pCurrentCodeEditor != nullptr)
@@ -1417,11 +1674,11 @@ void rgBuildView::HandleSelectedTargetGpuChanged(const std::string& targetGpu)
                 std::string currentFilePath = GetFilepathForEditor(m_pCurrentCodeEditor);
 
                 // Does the currently-selected source file have build output for the new Target GPU?
-                auto sourceFileOutputsIter = pFileOutputs->m_perFileOutput.find(currentFilePath);
+                auto sourceFileOutputsIter = outputsMap.find(currentFilePath);
 
                 // Trigger an update to handle highlighting the correlated disassembly
                 // lines associated with the selected line in the current file.
-                bool isFileBuiltForTarget = sourceFileOutputsIter != pFileOutputs->m_perFileOutput.end();
+                bool isFileBuiltForTarget = sourceFileOutputsIter != outputsMap.end();
                 if (isFileBuiltForTarget)
                 {
                     // Use the currently-selected line in the source editor to highlight correlated lines in the disassembly table.
@@ -1454,8 +1711,12 @@ void rgBuildView::HandleFileRenamed(const std::string& oldFilepath, const std::s
 
 void rgBuildView::HandleFocusNextView()
 {
-    // Manually advance to the next view within the rgViewManager.
-    m_pViewManager->FocusNextView();
+    assert(m_pViewManager != nullptr);
+    if (m_pViewManager != nullptr)
+    {
+        // Manually advance to the next view within the rgViewManager.
+        m_pViewManager->FocusNextView();
+    }
 }
 
 void rgBuildView::HandleFindWidgetVisibilityToggled()
@@ -1489,8 +1750,13 @@ void rgBuildView::HandleEditorModificationStateChanged(bool isModified)
     // Get the file path for the given editor instance.
     std::string fullFilePath = GetFilepathForEditor(pEditor);
 
-    // Set menu item saved state.
-    m_pFileMenu->SetItemIsSaved(fullFilePath, !isModified);
+    rgMenu* pMenu = GetMenu();
+    assert(pMenu != nullptr);
+    if (pMenu != nullptr)
+    {
+        // Set menu item saved state.
+        pMenu->SetItemIsSaved(fullFilePath, !isModified);
+    }
 
     // If the editor being modified is the current one, emit the modification signal.
     if (pEditor == m_pCurrentCodeEditor)
@@ -1510,47 +1776,82 @@ void rgBuildView::HandleEditorModificationStateChanged(bool isModified)
     }
 }
 
-void rgBuildView::HandleMenuItemCloseButtonClicked(const std::string fullPath)
+void rgBuildView::HandleMenuItemCloseButtonClicked(const std::string& fullPath)
 {
-    if (!fullPath.empty())
+    std::stringstream msg;
+    msg << fullPath << STR_MENU_BAR_CONFIRM_REMOVE_FILE_DIALOG_WARNING;
+
+    if (ShowRemoveFileConfirmation(msg.str(), fullPath))
     {
-        std::stringstream msg;
-        msg << fullPath << STR_MENU_BAR_CONFIRM_REMOVE_FILE_DIALOG_WARNING;
+        // Remove the input file from the rgBuildView.
+        RemoveInputFile(fullPath);
+    }
+}
 
-        // Ask the user if they're sure they want to remove the file.
-        bool shouldRemove = rgUtils::ShowConfirmationMessageBox(STR_MENU_BAR_CONFIRM_REMOVE_FILE_DIALOG_TITLE, msg.str().c_str(), this);
+void rgBuildView::SetViewContentsWidget(QWidget* pNewContents)
+{
+    assert(m_pSourceViewStack != nullptr);
+    if (m_pSourceViewStack != nullptr)
+    {
+        // Hide all existing views before replacing with the new one.
+        QLayout* pLayout = m_pSourceViewStack->layout();
 
-        // Ask the user if we should save the changes. Continue only if the user did not ask to cancel the operation.
-        shouldRemove = shouldRemove && (RequestSaveFile(fullPath) != rgUnsavedItemsDialog::Cancel);
-        if (shouldRemove)
+        assert(pLayout != nullptr);
+        if (pLayout != nullptr)
         {
-            // Remove the input file from the rgBuildView.
-            RemoveInputFile(fullPath);
+            for (int childIndex = 0; childIndex < pLayout->count(); ++childIndex)
+            {
+                QLayoutItem* pItemLayout = pLayout->itemAt(childIndex);
+                assert(pItemLayout != nullptr);
+                if (pItemLayout != nullptr)
+                {
+                    QWidget* pItem = pItemLayout->widget();
+                    assert(pItem != nullptr);
+                    if (pItem != nullptr)
+                    {
+                        pItem->hide();
+                    }
+                }
+            }
+        }
+
+        // Verify that the new contents are valid.
+        assert(pNewContents != nullptr);
+        if (pNewContents != nullptr)
+        {
+            // Add the new contents, and make it visible.
+            m_pSourceViewStack->layout()->addWidget(pNewContents);
+            pNewContents->show();
+
+            // Use the active view as the focus proxy for the source view stack.
+            m_pSourceViewStack->setFocusProxy(pNewContents);
+
+            // Set focus to the new contents.
+            pNewContents->setFocus();
         }
     }
 }
 
+bool rgBuildView::ShowRemoveFileConfirmation(const std::string& messageString, const std::string& fullPath)
+{
+    bool isRemoved = false;
+
+    if (!fullPath.empty())
+    {
+        // Ask the user if they're sure they want to remove the file.
+        isRemoved = rgUtils::ShowConfirmationMessageBox(STR_MENU_BAR_CONFIRM_REMOVE_FILE_DIALOG_TITLE, messageString.c_str(), this);
+
+        // Ask the user if we should save the changes. Continue only if the user did not ask to cancel the operation.
+        isRemoved = isRemoved && (RequestSaveFile(fullPath) != rgUnsavedItemsDialog::Cancel);
+    }
+
+    return isRemoved;
+}
+
 void rgBuildView::HandleFindTriggered()
 {
-    assert(m_pCurrentCodeEditor != nullptr);
-    if (m_pCurrentCodeEditor != nullptr)
-    {
-        // Trigger showing the find widget only when the source editor is visible.
-        if (m_pCurrentCodeEditor->isVisible())
-        {
-            // Create the find widget if it doesn't already exist.
-            if (m_pFindWidget == nullptr)
-            {
-                CreateFindWidget();
-            }
-
-            // Toggle to "Find" mode, and show the find widget.
-            if (m_pFindWidget != nullptr)
-            {
-                ToggleFindWidgetVisibility(true);
-            }
-        }
-    }
+    // Toggle to show the find widget.
+    ToggleFindWidgetVisibility(true);
 }
 
 void rgBuildView::HandleIsBuildInProgressChanged(bool isBuilding)
@@ -1566,17 +1867,11 @@ void rgBuildView::HandleProjectBuildSuccess()
     // Update the last successful build time to now.
     m_lastSuccessfulBuildTime = QDateTime::currentDateTime();
 
-    // Invoke the CLI to load the start line numbers for each entrypoint.
-    LoadEntrypointLineNumbers();
-
-    assert(m_pFileMenu != nullptr);
-    if (m_pFileMenu != nullptr)
+    rgMenu* pMenu = GetMenu();
+    assert(pMenu != nullptr);
+    if (pMenu != nullptr)
     {
-        // Allow the user to expand the file's entrypoint list.
-        m_pFileMenu->SetIsShowEntrypointListEnabled(true);
-
-        // Update the file menu item with the clone's build output.
-        m_pFileMenu->UpdateBuildOutput(m_buildOutputs);
+        CurrentBuildSucceeded();
     }
 
     // The current project was built successfully. Open the disassembly view with the results.
@@ -1584,12 +1879,12 @@ void rgBuildView::HandleProjectBuildSuccess()
     assert(isDisassemblyLoaded);
     if (isDisassemblyLoaded)
     {
-        // Switch the edit mode to display input source code alongside disassembly.
-        if (m_editMode != EditMode::SourceCode)
+        // Switch to the Source Code view and show the disassembly view.
+        if (pMenu != nullptr)
         {
-            SwitchEditMode(EditMode::SourceCode);
+            pMenu->DeselectItems();
+            pMenu->SwitchToLastSelectedItem();
         }
-
         ShowCurrentFileDisassembly();
     }
 
@@ -1601,54 +1896,11 @@ void rgBuildView::HandleProjectBuildSuccess()
         HandleSourceFileSelectedLineChanged(m_pCurrentCodeEditor, selectedLineNumber);
     }
 
-    std::string outputGpu;
-    std::shared_ptr<rgCliBuildOutput> pBuildOutput = nullptr;
-    bool isOutputValid = rgUtils::GetFirstValidOutputGpu(m_buildOutputs, outputGpu, pBuildOutput);
-    if (isOutputValid && pBuildOutput != nullptr)
-    {
-        // Store the path to the current source file using the file menu.
-        std::string currentSourceFilePath;
-        if (m_pFileMenu != nullptr)
-        {
-            currentSourceFilePath = m_pFileMenu->GetSelectedFilePath();
-        }
-
-        // Enable line correlation for all source files that were built successfully.
-        auto sourcePathIterStart = pBuildOutput->m_perFileOutput.begin();
-        auto sourcePathIterEnd = pBuildOutput->m_perFileOutput.end();
-        for (auto inputFilePathIter = sourcePathIterStart; inputFilePathIter != sourcePathIterEnd; ++inputFilePathIter)
-        {
-            // Get a pointer to the source editor for each input file.
-            const std::string& sourceFilePath = inputFilePathIter->first;
-
-            // Skip updating the current file within the loop. It  will be updated last.
-            if (currentSourceFilePath.compare(sourceFilePath) != 0)
-            {
-                // Only update the correlation if the source file still exists in the project.
-                // Previously-built files that have already been removed from the project may have artifacts loaded.
-                auto editorIter = m_sourceCodeEditors.find(sourceFilePath);
-                if (editorIter != m_sourceCodeEditors.end())
-                {
-                    rgSourceCodeEditor* pEditor = GetEditorForFilepath(sourceFilePath);
-
-                    // Emit the signal used to update the correlation enabledness.
-                    emit LineCorrelationEnabledStateChanged(pEditor, true);
-                }
-            }
-        }
-
-        // Update the currently selected file last.
-        rgSourceCodeEditor* pEditor = GetEditorForFilepath(currentSourceFilePath);
-        assert(pEditor != nullptr);
-        if (pEditor != nullptr)
-        {
-            // Emit the signal used to update the correlation enabledness.
-            emit LineCorrelationEnabledStateChanged(pEditor, true);
-        }
-    }
-
     // Resize the disassembly view.
     HandleDisassemblyTableWidthResizeRequested(0);
+
+    // Update the notification message if needed.
+    UpdateApplicationNotificationMessage();
 }
 
 void rgBuildView::HandleApplicationStateChanged(Qt::ApplicationState state)
@@ -1688,140 +1940,15 @@ void rgBuildView::HandleDisassemblyTableWidthResizeRequested(int minimumWidth)
 
         // Set the ideal width for both sides of the splitter.
         m_pDisassemblyViewSplitter->setSizes(splitterWidths);
+
+        // Save the new sizes.
+        SetConfigSplitterPositions();
     }
 }
 
 void rgBuildView::HandleBuildSettingsMenuButtonClicked()
 {
     OpenBuildSettings();
-}
-
-void rgBuildView::BuildCurrentProject()
-{
-    // The build settings must be saved in order to proceed with a build.
-    bool shouldProceedWithBuild = ShowSaveDialog(rgFilesToSave::BuildSettings);
-    if (shouldProceedWithBuild)
-    {
-        // Destroy outputs from previous builds.
-        DestroyProjectBuildArtifacts();
-
-        // Clear the output window.
-        m_pCliOutputWindow->ClearText();
-
-        // Don't allow the user to expand the entrypoint list for file items.
-        assert(m_pFileMenu != nullptr);
-        if (m_pFileMenu != nullptr)
-        {
-            m_pFileMenu->SetIsShowEntrypointListEnabled(false);
-        }
-
-        // Set the "is currently building" flag.
-        HandleIsBuildInProgressChanged(true);
-
-        // Notify the system that a build has started.
-        emit ProjectBuildStarted();
-
-        // The function that will be invoked by the build thread.
-        auto backgroundTask = [&]
-        {
-            // Build an output path where all of the build artifacts will be dumped to.
-            std::string outputPath = CreateProjectBuildOutputPath();
-
-            // Create the output directory if it doesn't already exist.
-            bool isOk = rgUtils::IsDirExists(outputPath);
-            if (!isOk)
-            {
-                isOk = rgUtils::CreateFolder(outputPath);
-                assert(isOk);
-            }
-
-            if (isOk)
-            {
-                // Create a new output folder specific to the current clone's build artifacts.
-                std::stringstream cloneFolderName;
-                cloneFolderName << STR_CLONE_FOLDER_NAME;
-                cloneFolderName << m_cloneIndex;
-
-                // Append the clone folder to the output folder.
-                isOk = rgUtils::AppendFolderToPath(outputPath, cloneFolderName.str(), outputPath);
-                assert(isOk);
-                if (isOk)
-                {
-                    // Append a path separator to the new output path.
-                    isOk = rgUtils::AppendPathSeparator(outputPath, outputPath);
-                    assert(isOk);
-
-                    // Create the output folder if it does not exist.
-                    if (!rgUtils::IsDirExists(outputPath))
-                    {
-                        isOk = rgUtils::CreateFolder(outputPath);
-                        assert(isOk);
-                    }
-                }
-            }
-
-            // If the correct build output paths exist, proceed with building the project.
-            if (isOk)
-            {
-                // Set up the function pointer responsible for handling new output from the CLI invocation.
-                using std::placeholders::_1;
-                std::function<void(const std::string&)> appendBuildOutput = std::bind(&rgBuildView::HandleNewCLIOutputString, this, _1);
-
-                // Build the current project clone.
-                m_cancelBuildSignal = false;
-
-                // Verify that the clone index is valid.
-                int numClones = static_cast<int>(m_pProject->m_clones.size());
-                bool isCloneIndexValid = (m_cloneIndex >= 0 && m_cloneIndex < numClones);
-                assert(isCloneIndexValid);
-                if (isCloneIndexValid)
-                {
-                    // Attempt to build the clone.
-                    std::vector<std::string> gpusWithBuildOutputs;
-                    bool isProjectBuilt = rgCliLauncher::BuildProjectClone(m_pProject, m_cloneIndex, outputPath, appendBuildOutput, gpusWithBuildOutputs, m_cancelBuildSignal);
-
-                    // Verify that the build was not canceled.
-                    if (!m_cancelBuildSignal)
-                    {
-                        // If the project was built successfully, parse the session metadata file and populate an rgCliOutput structure.
-                        if (isProjectBuilt)
-                        {
-                            // Load the build outputs in the project's directory.
-                            std::string projectDirectory;
-                            bool isOk = rgUtils::ExtractFileDirectory(m_pProject->m_projectFileFullPath, projectDirectory);
-                            if (isOk)
-                            {
-                                bool isOutputLoaded = LoadBuildOutput(projectDirectory, &gpusWithBuildOutputs);
-                                assert(isOutputLoaded);
-                                if (isOutputLoaded)
-                                {
-                                    // Trigger the build success signal.
-                                    emit ProjectBuildSuccess();
-                                }
-                                else
-                                {
-                                    // Trigger the build failure signal.
-                                    emit ProjectBuildFailure();
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Trigger the build cancellation signal.
-                        emit ProjectBuildCanceled();
-
-                        // Notify the user that the build was canceled.
-                        HandleNewCLIOutputString(STR_STATUS_BAR_BUILD_CANCELED);
-                    }
-                }
-            }
-        };
-
-        // Launch the build thread.
-        std::thread buildThread(backgroundTask);
-        buildThread.detach();
-    }
 }
 
 void rgBuildView::ResetView()
@@ -1884,7 +2011,7 @@ void rgBuildView::DestroyBuildOutputsForFile(const std::string& inputFileFullPat
     }
 }
 
-void rgBuildView::RemoveEditor(const std::string& filename)
+void rgBuildView::RemoveEditor(const std::string& filename, bool switchToNextFile)
 {
     // Attempt to find the editor instance used to display the given file.
     rgSourceCodeEditor* pEditor = nullptr;
@@ -1916,7 +2043,10 @@ void rgBuildView::RemoveEditor(const std::string& filename)
     // Destroy the editor associated with the file that was closed.
     pEditor->deleteLater();
 
-    SwitchToFirstRemainingFile();
+    if (switchToNextFile)
+    {
+        SwitchToFirstRemainingFile();
+    }
 }
 
 void rgBuildView::RemoveInputFile(const std::string& inputFileFullPath)
@@ -1927,8 +2057,13 @@ void rgBuildView::RemoveInputFile(const std::string& inputFileFullPath)
     configManager.RemoveSourceFilePath(m_pProject, m_cloneIndex, inputFileFullPath);
     configManager.SaveProjectFile(m_pProject);
 
-    // Remove the file from the file menu.
-    m_pFileMenu->RemoveItem(inputFileFullPath);
+    rgMenu* pMenu = GetMenu();
+    assert(pMenu != nullptr);
+    if (pMenu != nullptr)
+    {
+        // Remove the file from the file menu.
+        pMenu->RemoveItem(inputFileFullPath);
+    }
 
     // Remove the associated file editor.
     RemoveEditor(inputFileFullPath);
@@ -1962,13 +2097,13 @@ bool rgBuildView::LoadDisassemblyFromBuildOutput()
 {
     bool result = false;
 
-    if (m_pDisassemblyViewContainer == nullptr)
+    if (m_pDisassemblyViewContainer == nullptr || m_pDisassemblyView == nullptr)
     {
         // Create the ISA disassembly view.
         CreateIsaDisassemblyView();
 
         // Connect the disassembly view signals.
-        ConnectDisassemblyViewSignals();
+        result = ConnectDisassemblyViewSignals();
     }
 
     assert(m_pDisassemblyView != nullptr);
@@ -1993,17 +2128,235 @@ bool rgBuildView::LoadDisassemblyFromBuildOutput()
                 assert(pClone != nullptr);
                 if (pClone != nullptr)
                 {
-                    std::vector<rgSourceFileInfo>& projectSourceFiles = pClone->m_sourceFiles;
-
-                    // Build artifacts may contain disassembly for source files that are no longer
-                    // in the project, so provide a list of files to load, along with the current build output.
-                    result = m_pDisassemblyView->PopulateDisassemblyView(projectSourceFiles, m_buildOutputs);
+                    // Populate the disassembly view with the build output.
+                    result = m_pDisassemblyView->PopulateBuildOutput(pClone, m_buildOutputs);
                 }
             }
         }
     }
 
     return result;
+}
+
+void rgBuildView::DestroyProjectBuildArtifacts()
+{
+    // Navigate to the current clone's build output and destroy all artifacts.
+    std::string projectBuildOutputPath = CreateProjectBuildOutputPath();
+
+    // Destroy all build artifacts in the project's output directory.
+    QDir outputDir(projectBuildOutputPath.c_str());
+    outputDir.removeRecursively();
+
+    // Clear references to outputs from previous project compilations.
+    m_buildOutputs.clear();
+
+    if (m_pDisassemblyView != nullptr)
+    {
+        // Clear any disassembly tables already loaded into the view.
+        m_pDisassemblyView->ClearBuildOutput();
+
+        // Hide the disassembly view.
+        ToggleDisassemblyViewVisibility(false);
+    }
+}
+
+std::string rgBuildView::GetFilepathForEditor(const rgSourceCodeEditor* pEditor)
+{
+    // Return an empty string by default.
+    std::string ret = "";
+
+    auto editorIter = m_sourceCodeEditors.begin();
+    while (editorIter != m_sourceCodeEditors.end())
+    {
+        // Return the filename if a match is found.
+        if (editorIter->second == pEditor)
+        {
+            ret = editorIter->first;
+            break;
+        }
+
+        editorIter++;
+    }
+
+    return ret;
+}
+
+void rgBuildView::HandleNewCLIOutputString(const std::string& cliOutputString)
+{
+    // Send the CLI's output text to the output window.
+    m_pCliOutputWindow->EmitSetText(cliOutputString.c_str());
+}
+
+bool rgBuildView::IsLineCorrelationEnabled(rgSourceCodeEditor* pSourceEditor)
+{
+    bool isCorrelationEnabled = false;
+
+    assert(m_pProject != nullptr);
+    if (m_pProject != nullptr)
+    {
+        // Ensure that the clone index is valid.
+        bool isValidCloneIndex = m_cloneIndex >= 0 && m_cloneIndex < m_pProject->m_clones.size();
+        assert(isValidCloneIndex);
+        if (isValidCloneIndex)
+        {
+            auto firstFile = m_pProject->m_clones[m_cloneIndex]->m_sourceFiles.begin();
+            auto lastFile = m_pProject->m_clones[m_cloneIndex]->m_sourceFiles.end();
+
+            // Search the list of source file info for the one that matches the given editor.
+            std::string filePath = GetFilepathForEditor(pSourceEditor);
+            rgSourceFilePathSearcher pathSearcher(filePath);
+            auto fileIter = std::find_if(firstFile, lastFile, pathSearcher);
+            assert(fileIter != lastFile);
+            if (fileIter != lastFile)
+            {
+                // Update the correlation state for the file.
+                isCorrelationEnabled = fileIter->m_isCorrelated;
+            }
+        }
+    }
+
+    return isCorrelationEnabled;
+}
+
+std::string rgBuildView::CreateProjectBuildOutputPath() const
+{
+    std::string resultPath;
+
+    // Build an output path where all of the build artifacts will be dumped to.
+    std::string projectDirectory;
+    bool isOk = rgUtils::ExtractFileDirectory(m_pProject->m_projectFileFullPath, projectDirectory);
+    assert(isOk);
+    if (isOk)
+    {
+        std::string outputFolderPath;
+        isOk = rgUtils::AppendFolderToPath(projectDirectory, STR_OUTPUT_FOLDER_NAME, outputFolderPath);
+        assert(isOk);
+        if (isOk)
+        {
+            resultPath = outputFolderPath;
+        }
+    }
+
+    return resultPath;
+}
+
+bool rgBuildView::SwitchToEditor(rgSourceCodeEditor* pEditor)
+{
+    bool ret = false;
+
+    assert(pEditor != nullptr);
+    if (pEditor != nullptr)
+    {
+        // Verify if the user is allowed to switch to source editing mode.
+        bool isSwitchingAllowed = CanSwitchEditMode();
+        if (isSwitchingAllowed)
+        {
+            // Switch to the new editor.
+            SetViewContentsWidget(pEditor);
+
+            if (m_pCurrentCodeEditor != nullptr)
+            {
+                bool oldEditorIsModified = m_pCurrentCodeEditor->document()->isModified();
+                bool newEditorIsModified = pEditor->document()->isModified();
+
+                // Check if the new editor has a different modification state then the old one
+                if (oldEditorIsModified != newEditorIsModified)
+                {
+                    emit CurrentEditorModificationStateChanged(newEditorIsModified);
+                }
+            }
+
+            // The editor being switched to is now the current editor.
+            m_pCurrentCodeEditor = pEditor;
+
+            // Update the editor context.
+            UpdateSourceEditorSearchContext();
+
+            // Update the title bar text.
+            const std::string& titleBarText = pEditor->GetTitleBarText();
+            if (!titleBarText.empty())
+            {
+                m_pSourceEditorTitlebar->ShowMessage(titleBarText);
+            }
+            else
+            {
+                m_pSourceEditorTitlebar->SetTitlebarContentsVisibility(false);
+            }
+
+            // The editor isn't empty, and will switch to displaying source code.
+            SwitchEditMode(EditMode::SourceCode);
+
+            // Check if the editor file has been modified externally.
+            CheckExternalFileModification();
+
+            ret = true;
+        }
+    }
+
+    return ret;
+}
+
+void rgBuildView::UpdateFindWidgetViewAttachment(QWidget* pView, bool isVisible)
+{
+    assert(pView != nullptr);
+    if (pView != nullptr)
+    {
+        if (m_pFindWidget != nullptr)
+        {
+            QLayout* pLayout = static_cast<QVBoxLayout*>(pView->layout());
+            assert(pLayout != nullptr);
+            if (pLayout != nullptr)
+            {
+                if (isVisible)
+                {
+                    // Only make the widget visible if the source editor is currently visible.
+                    bool isEditorVisible = pView->isVisible();
+                    if (isEditorVisible)
+                    {
+                        m_pFindWidget->setParent(pView);
+                        // Insert the find widget into the top of the layout above the source editor.
+                        m_pFindWidget->setVisible(isVisible);
+                        m_pFindWidget->raise();
+
+                        // Update the position of the find widget.
+                        UpdateFindWidgetGeometry();
+                    }
+                }
+                else
+                {
+                    pLayout->removeWidget(m_pFindWidget);
+                    m_pFindWidget->setVisible(isVisible);
+                }
+            }
+        }
+    }
+}
+
+void rgBuildView::UpdateSourceEditorTitlebar(rgSourceCodeEditor* pCodeEditor)
+{
+    std::string sourceFilePath = GetFilepathForEditor(pCodeEditor);
+    if (!sourceFilePath.empty())
+    {
+        // If the source file has already been disassembled, check if line correlation is currently enabled.
+        bool isCorrelationEnabled = false;
+        bool isDisassembled = IsGcnDisassemblyGenerated(sourceFilePath);
+        if (isDisassembled)
+        {
+            isCorrelationEnabled = IsLineCorrelationEnabled(pCodeEditor);
+        }
+        else
+        {
+            // The file hasn't been disassembled yet, so don't display a warning in the editor's titlebar.
+            isCorrelationEnabled = true;
+        }
+
+        // Update the title bar to show the current correlation state for the file.
+        assert(m_pSourceEditorTitlebar != nullptr);
+        if (m_pSourceEditorTitlebar != nullptr && IsLineCorrelationSupported())
+        {
+            m_pSourceEditorTitlebar->SetIsCorrelationEnabled(isCorrelationEnabled);
+        }
+    }
 }
 
 bool rgBuildView::CanSwitchEditMode()
@@ -2024,28 +2377,16 @@ void rgBuildView::SwitchEditMode(EditMode mode)
 {
     if (m_editMode != mode)
     {
-        // Based on the incoming mode, hide/show specific widgets living within the BuildView.
         if (mode == EditMode::Empty)
         {
-            // When empty, hide the code editor and build settings interfaces.
-            if (m_pCurrentCodeEditor != nullptr)
-            {
-                m_pCurrentCodeEditor->hide();
-            }
-
-            // Hide the build settings view.
-            m_pBuildSettingsWidget->hide();
-
-            // Add an empty placeholder widget so the file menu stays remains on the left side.
-            m_pSourceViewStack->layout()->addWidget(m_pEmptyPanel);
-            m_pEmptyPanel->show();
+            SetViewContentsWidget(m_pEmptyPanel);
         }
         else
         {
-            // Hide the empty panel before showing anything.
-            m_pEmptyPanel->hide();
-
-            if (mode == EditMode::SourceCode)
+            // Based on the incoming mode, hide/show specific widgets living within the BuildView.
+            switch (mode)
+            {
+            case EditMode::SourceCode:
             {
                 // Enable maximizing the source editor/build settings container.
                 assert(m_pSourceViewContainer != nullptr);
@@ -2057,16 +2398,29 @@ void rgBuildView::SwitchEditMode(EditMode mode)
                 // Hide the build settings, and show the code editor.
                 if (m_pCurrentCodeEditor != nullptr)
                 {
-                    SetViewContentsWidget(m_pBuildSettingsWidget, m_pCurrentCodeEditor);
+                    // Set the code editor instance in the view.
+                    SetViewContentsWidget(m_pCurrentCodeEditor);
                 }
+
+                // Set the appropriate boolean in rgViewManager
+                // to facilitate focusing the correct widget.
+                m_pViewManager->SetIsSourceViewCurrent(true);
             }
-            else if (mode == EditMode::BuildSettings)
+            break;
+            case EditMode::BuildSettings:
             {
                 // Disable maximizing the source editor/build settings container.
                 assert(m_pSourceViewContainer != nullptr);
                 if (m_pSourceViewContainer != nullptr)
                 {
                     m_pSourceViewContainer->SetIsMaximizable(false);
+                }
+
+                assert(m_pSourceEditorTitlebar != nullptr);
+                if (m_pSourceEditorTitlebar != nullptr)
+                {
+                    // Hide the Source Code Editor titlebar message.
+                    m_pSourceEditorTitlebar->SetTitlebarContentsVisibility(false);
                 }
 
                 if (m_pDisassemblyViewSplitter != nullptr)
@@ -2081,13 +2435,37 @@ void rgBuildView::SwitchEditMode(EditMode mode)
                 }
 
                 // Switch from showing the code editor, to showing the build settings.
-                SetViewContentsWidget(m_pCurrentCodeEditor, m_pBuildSettingsWidget);
+                SetViewContentsWidget(m_pBuildSettingsWidget);
+
+                // Set the build settings frame border color.
+                SetAPISpecificBorderColor();
 
                 // If the disassembly view exists, hide it.
                 if (m_pDisassemblyViewContainer != nullptr)
                 {
                     ToggleDisassemblyViewVisibility(false);
                 }
+
+                // Initialize focus.
+                if (m_pBuildSettingsView != nullptr)
+                {
+                    m_pBuildSettingsView->SetInitialWidgetFocus();
+                }
+
+                // Set the appropriate booleans in rgViewManager
+                // to facilitate focusing the correct widget.
+                m_pViewManager->SetIsSourceViewCurrent(false);
+                m_pViewManager->SetIsPSOEditorViewCurrent(false);
+                m_pViewManager->SetIsBuildSettingsViewCurrent(true);
+            }
+            break;
+            default:
+                // Invoke the mode-specific edit mode switch handler.
+                HandleModeSpecificEditMode(mode);
+                m_pViewManager->SetIsSourceViewCurrent(false);
+                m_pViewManager->SetIsPSOEditorViewCurrent(true);
+                m_pViewManager->SetIsBuildSettingsViewCurrent(false);
+                break;
             }
 
             // Update the file menu save text and action.
@@ -2099,36 +2477,17 @@ void rgBuildView::SwitchEditMode(EditMode mode)
     }
 }
 
-void rgBuildView::SetViewContentsWidget(QWidget* pOldContents, QWidget* pNewContents)
-{
-    // If the build settings are visible, hide them.
-    if (pOldContents != nullptr)
-    {
-        pOldContents->hide();
-    }
-
-    // Verify that the new contents are valid.
-    assert(pNewContents);
-    if (pNewContents != nullptr)
-    {
-        // Add the new contents, and make it visible.
-        m_pSourceViewStack->layout()->addWidget(pNewContents);
-        pNewContents->show();
-
-        // Use the active view as the focus proxy for the source view stack.
-        m_pSourceViewStack->setFocusProxy(pNewContents);
-
-        // Set focus to the new contents.
-        pNewContents->setFocus();
-    }
-}
-
 void rgBuildView::SwitchToFirstRemainingFile()
 {
     // If there are code editors remaining, switch to the first remaining item.
     if (!m_sourceCodeEditors.empty())
     {
-        m_pFileMenu->SelectLastRemainingItem();
+        rgMenu* pMenu = GetMenu();
+        assert(pMenu != nullptr);
+        if (pMenu != nullptr)
+        {
+            pMenu->SelectLastRemainingItem();
+        }
 
         // Switch to viewing the rgSourceCodeEditor for the newly selected item.
         SwitchEditMode(EditMode::SourceCode);
@@ -2138,111 +2497,6 @@ void rgBuildView::SwitchToFirstRemainingFile()
         // When the last file has been removed, the editor is in the empty state.
         SwitchEditMode(EditMode::Empty);
     }
-}
-
-bool rgBuildView::SwitchToEditor(rgSourceCodeEditor* pEditor)
-{
-    bool ret = false;
-
-    assert(pEditor != nullptr);
-    if (pEditor != nullptr)
-    {
-        // Verify if the user is allowed to switch to source editing mode.
-        bool isSwitchingAllowed = CanSwitchEditMode();
-        if (isSwitchingAllowed)
-        {
-            // Switch to the new editor.
-            SetViewContentsWidget(m_pCurrentCodeEditor, pEditor);
-
-            if (m_pCurrentCodeEditor != nullptr)
-            {
-                bool oldEditorIsModified = m_pCurrentCodeEditor->document()->isModified();
-                bool newEditorIsModified = pEditor->document()->isModified();
-
-                // Check if the new editor has a different modification state then the old one
-                if (oldEditorIsModified != newEditorIsModified)
-                {
-                    emit CurrentEditorModificationStateChanged(newEditorIsModified);
-                }
-            }
-
-            // The editor being switched to is now the current editor.
-            m_pCurrentCodeEditor = pEditor;
-
-            // The editor isn't empty, and will switch to displaying source code.
-            SwitchEditMode(EditMode::SourceCode);
-
-            // Check if the editor file has been modified externally.
-            CheckExternalFileModification();
-
-            // Update the find widget's searcher to search the new editor.
-            if (m_pSourceSearcher != nullptr)
-            {
-                m_pSourceSearcher->SetTargetEditor(m_pCurrentCodeEditor);
-            }
-
-            ret = true;
-        }
-    }
-
-    return ret;
-}
-
-bool rgBuildView::AddExistingSourcefileToProject(const std::string& sourceFilepath)
-{
-    bool ret = false;
-
-    bool isProjectCreated = (m_pProject != nullptr);
-    if (!isProjectCreated)
-    {
-        isProjectCreated = CreateNewEmptyProject();
-    }
-
-    if (isProjectCreated)
-    {
-        // Generate a path to where the new empty file will live in the project directory.
-        rgConfigManager& configManager = rgConfigManager::Instance();
-
-        std::string filename;
-        bool isOk = rgUtils::ExtractFileName(sourceFilepath, filename, false);
-        assert(isOk);
-        if (isOk)
-        {
-            if (!m_pFileMenu->IsFileInMenu(filename))
-            {
-                // Add the source file's path to the project's clone.
-                configManager.AddSourceFileToProject(sourceFilepath, m_pProject, m_cloneIndex);
-
-                // Save the project after adding a sourcefile.
-                configManager.SaveProjectFile(m_pProject);
-
-                // Add the selected file to the menu.
-                AddFile(sourceFilepath);
-
-                // Set the source code view text with the contents of the selected file.
-                SetSourceCodeText(sourceFilepath);
-
-                // The file was added to the project successfully.
-                ret = true;
-            }
-
-            if (!ret)
-            {
-                // Report the error.
-                std::stringstream msg;
-                msg << STR_ERR_CANNOT_ADD_FILE_A << sourceFilepath << STR_ERR_CANNOT_ADD_FILE_B;
-                rgUtils::ShowErrorMessageBox(msg.str().c_str(), this);
-            }
-        }
-
-        // Switch the focus to the file editor to begin editing the file.
-        if (m_pCurrentCodeEditor != nullptr)
-        {
-            m_pCurrentCodeEditor->setFocus();
-        }
-    }
-
-    return ret;
 }
 
 void rgBuildView::CreateBuildSettingsView()
@@ -2282,8 +2536,24 @@ void rgBuildView::CreateBuildSettingsView()
                         // Create the Settings buttons view.
                         m_pSettingsButtonsView = new rgSettingsButtonsView(this);
 
+                        // Hide the Restore Default Settings button from the project build settings.
+                        m_pSettingsButtonsView->HideRestoreDefaultSettingsButton(true);
+
+                        // Create a scroll area to contain the build settings view.
+                        rgScrollArea* pScrollArea = new rgScrollArea(this);
+                        pScrollArea->setObjectName(STR_BUILD_VIEW_SETTINGS_SCROLLAREA);
+                        pScrollArea->setStyleSheet(STR_BUILD_VIEW_SETTINGS_SCROLLAREA_STYLESHEET);
+                        pScrollArea->setFrameShape(QFrame::NoFrame);
+                        pScrollArea->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+                        pScrollArea->setWidget(m_pBuildSettingsView);
+                        pScrollArea->setWidgetResizable(true);
+
+                        // Connect the scroll area click to set the border to the API-specific color.
+                        bool isConnected = connect(pScrollArea, &rgScrollArea::ScrollAreaClickedEvent, this, &rgBuildView::SetAPISpecificBorderColor);
+                        assert(isConnected);
+
                         // Add various widgets to this tab.
-                        m_pBuildSettingsWidget->layout()->addWidget(m_pBuildSettingsView);
+                        m_pBuildSettingsWidget->layout()->addWidget(pScrollArea);
                         m_pBuildSettingsWidget->layout()->addWidget(m_pSettingsButtonsView);
 
                         // Hide the build settings view after creating it.
@@ -2304,201 +2574,69 @@ void rgBuildView::CreateFindWidget()
     assert(m_pFindWidget == nullptr);
     if (m_pFindWidget == nullptr)
     {
-        // Create a find widget searcher, and target the current source editor.
-        m_pSourceSearcher = new rgSourceEditorSearcher();
-        m_pSourceSearcher->SetTargetEditor(m_pCurrentCodeEditor);
-
-        m_pFindWidget = new rgFindTextWidget(m_pSourceSearcher, this);
+        // Create the find widget, register with the scaling manager.
+        m_pFindWidget = new rgFindTextWidget(this);
         ScalingManager::Get().RegisterObject(m_pFindWidget);
 
+        // The find widget is hidden by default.
+        m_pFindWidget->hide();
+
+        // Connect the find widget signals.
         ConnectFindSignals();
+
+        // Create the source code searcher interface.
+        m_pSourceSearcher = new rgSourceEditorSearcher();
     }
 }
 
 void rgBuildView::CreateIsaDisassemblyView()
 {
-    m_pDisassemblyView = new rgIsaDisassemblyView(this);
+    // Create a factory matching the API mode.
+    rgProjectAPI currentApi = rgConfigManager::Instance().GetCurrentAPI();
+    std::shared_ptr<rgFactory> pFactory = rgFactory::CreateFactory(currentApi);
+    assert(pFactory != nullptr);
+    if (pFactory != nullptr)
+    {
+        rgIsaDisassemblyView* pDisassemblyView = pFactory->CreateDisassemblyView(this);
+        assert(pDisassemblyView != nullptr);
+        if (pDisassemblyView != nullptr)
+        {
+            m_pDisassemblyView = pDisassemblyView;
 
-    // Wrap the disassembly view in a view container.
-    m_pDisassemblyViewContainer = new rgViewContainer();
-    m_pDisassemblyViewContainer->SetMainWidget(m_pDisassemblyView);
+            // Wrap the disassembly view in a view container.
+            m_pDisassemblyViewContainer = new rgViewContainer();
+            m_pDisassemblyViewContainer->SetMainWidget(m_pDisassemblyView);
 
-    // Add the disassembly view to the disassembly splitter.
-    m_pDisassemblyViewSplitter->AddMaximizableWidget(m_pDisassemblyViewContainer);
+            // Set the object name for the disassembly view container.
+            m_pDisassemblyViewContainer->setObjectName(STR_RG_ISA_DISASSEMBLY_VIEW_CONTAINER);
 
-    // Hide the disassembly view when it is first created.
-    m_pDisassemblyView->setVisible(true);
+            // Add the disassembly view to the disassembly splitter.
+            m_pDisassemblyViewSplitter->AddMaximizableWidget(m_pDisassemblyViewContainer);
 
-    // Add the view to the view manager.
-    m_pViewManager->AddView(m_pDisassemblyViewContainer);
+            // Hide the disassembly view when it is first created.
+            m_pDisassemblyView->setVisible(true);
+
+            // Add the view to the view manager in the disassembly view position so the tabbing order is correct.
+            m_pViewManager->AddView(m_pDisassemblyViewContainer, true, static_cast<int>(rgViewManagerViewContainerIndex::DisassemblyView));
+        }
+    }
 }
 
-bool rgBuildView::CreateNewSourceFile(const std::string& sourceFileName, std::string& fullSourceFilepath)
+bool rgBuildView::GetInputFileOutputs(std::shared_ptr<rgCliBuildOutput> pBuildOutputs, InputFileToBuildOutputsMap& outputs) const
 {
     bool ret = false;
 
-    // True if a new project was created.
-    bool wasProjectCreated = false;
-
-    // True if we are creating a new file in an existing project.
-    bool isExistingProject = (m_pProject != nullptr);
-
-    if (!isExistingProject)
+    assert(pBuildOutputs != nullptr);
+    if (pBuildOutputs != nullptr)
     {
-        wasProjectCreated = CreateNewEmptyProject();
-    }
-
-    if (isExistingProject || wasProjectCreated)
-    {
-        std::string filename = sourceFileName;
-
-        // Is there an existing file with the same name already opened in the file menu?
-        // If so, append a numbered suffix to the end of the filename to make it more unique.
-        bool fileAlreadyOpened = false;
-        assert(m_pFileMenu != nullptr);
-        if (m_pFileMenu != nullptr)
-        {
-            fileAlreadyOpened = m_pFileMenu->IsFileInMenu(filename);
-
-            // If a file with the same name is already opened within the file menu, generate a new unique filename.
-            if (fileAlreadyOpened)
-            {
-                std::string uniqueFilename;
-                m_pFileMenu->GenerateUniqueFilename(filename, uniqueFilename);
-
-                // Add the new file with the generated unique filename.
-                filename = uniqueFilename;
-            }
-
-            // Generate a path to where the new empty file will live in the projects directory.
-            std::string newFileExtension;
-            bool isOk = rgUtils::ProjectAPIToSourceFileExtension(m_pProject->m_api, newFileExtension);
-            assert(isOk);
-            if (isOk)
-            {
-                rgConfigManager& configManager = rgConfigManager::Instance();
-                configManager.GenerateNewSourceFilepath(m_pProject->m_projectName, m_cloneIndex, filename, newFileExtension, fullSourceFilepath);
-
-                // Ensure that the folder where the file will be saved already exists.
-                std::string sourcefileFolder;
-                rgUtils::ExtractFileDirectory(fullSourceFilepath, sourcefileFolder);
-                if (!rgUtils::IsDirExists(sourcefileFolder))
-                {
-                    bool isDirCreated = rgUtils::CreateFolder(sourcefileFolder);
-                    assert(isDirCreated);
-                }
-
-                // Create a new file at the target location.
-                QFile emptyFile(fullSourceFilepath.c_str());
-                emptyFile.open(QIODevice::ReadWrite);
-
-                // Add the template source code to the newly created file.
-                QTextStream stream(&emptyFile);
-                stream << rgUtils::GenerateTemplateCode(m_pProject->m_api, filename).c_str() << endl;
-                emptyFile.close();
-
-                // Add the source file's path to the project's clone.
-                configManager.AddSourceFileToProject(fullSourceFilepath, m_pProject, m_cloneIndex);
-
-                // Save the project after adding a source file.
-                rgConfigManager::Instance().SaveProjectFile(m_pProject);
-
-                // We are done.
-                ret = true;
-            }
-        }
+        outputs = pBuildOutputs->m_perFileOutput;
+        ret = true;
     }
 
     return ret;
 }
 
-void rgBuildView::DestroyProjectBuildArtifacts()
-{
-    // Navigate to the current clone's build output and destroy all artifacts.
-    std::string projectBuildOutputPath = CreateProjectBuildOutputPath();
-
-    // Destroy all build artifacts in the project's output directory.
-    QDir outputDir(projectBuildOutputPath.c_str());
-    outputDir.removeRecursively();
-
-    // Clear references to outputs from previous project compilations.
-    m_buildOutputs.clear();
-
-    if (m_pDisassemblyView != nullptr)
-    {
-        // Clear any disassembly tables already loaded into the view.
-        m_pDisassemblyView->ClearBuildOutput();
-
-        // Hide the disassembly view.
-        ToggleDisassemblyViewVisibility(false);
-    }
-
-    // Clear any old build artifacts from the file menu.
-    ClearFileItemsEntrypointList();
-}
-
-int rgBuildView::FindEntrypointStartLine(rgSourceCodeEditor* pEditor, int listKernelsStartLine) const
-{
-    int actualStartLine = listKernelsStartLine;
-
-    // Verify that the current source editor is valid.
-    assert(pEditor != nullptr);
-    if (pEditor != nullptr)
-    {
-        // Start at the given line and search for the next opening brace. This is the "real" start of the entrypoint.
-        int searchLine = actualStartLine;
-        bool searchingForStartLine = true;
-        while (searchingForStartLine)
-        {
-            QString lineText;
-            bool gotLineText = pEditor->GetTextAtLine(searchLine, lineText);
-            if (gotLineText)
-            {
-                // Start at the index of the brace, and check if there's anything else in the line other than whitespace.
-                int braceIndex = lineText.indexOf("{");
-                if (braceIndex != -1)
-                {
-                    std::string lineTextString = lineText.toStdString();
-
-                    // Search for alphanumeric characters the occur after the opening brace.
-                    auto startCharacter = lineTextString.begin() + (braceIndex + 1);
-                    auto endCharacter = lineTextString.end();
-
-                    // Create a list of bools, used to determine if there are any alphanumeric characters in the line after the opening brace.
-                    std::vector<bool> isAlphanumericList;
-                    isAlphanumericList.resize(lineTextString.size());
-
-                    // Step through each character in the line. If it's alphanumeric, add a "true" to the output list in the character's position.
-                    std::transform(startCharacter, endCharacter, isAlphanumericList.begin(), [](char c) { return (isalnum(c) != 0); });
-
-                    // If there are any 'true' values in the isAlphanumericList, it means that an alphanumeric character appeared after the opening brace.
-                    auto alphanumericCharactersIter = std::find(isAlphanumericList.begin(), isAlphanumericList.end(), true);
-                    if (alphanumericCharactersIter == isAlphanumericList.end())
-                    {
-                        // There was only whitespace after the opening brace. Advance one more line to where the entrypoint actually starts.
-                        searchLine++;
-                    }
-
-                    actualStartLine = searchLine;
-                    searchingForStartLine = false;
-                }
-                else
-                {
-                    // Step down to the next line to check if there's an opening brace for the entrypoint.
-                    searchLine++;
-                }
-            }
-            else
-            {
-                searchingForStartLine = false;
-            }
-        }
-    }
-
-    return actualStartLine;
-}
-
-rgSourceCodeEditor* rgBuildView::GetEditorForFilepath(const std::string fullFilepath)
+rgSourceCodeEditor* rgBuildView::GetEditorForFilepath(const std::string& fullFilepath, rgSrcLanguage lang)
 {
     // The source code editor to use for the given filename.
     rgSourceCodeEditor* pEditor = nullptr;
@@ -2512,13 +2650,33 @@ rgSourceCodeEditor* rgBuildView::GetEditorForFilepath(const std::string fullFile
         }
         else
         {
-            pEditor = new rgSourceCodeEditor(this);
+            pEditor = new rgSourceCodeEditor(this, lang);
             m_sourceCodeEditors[fullFilepath] = pEditor;
+
+            // Connect to the specific editor's signals.
+            bool isConnected = connect(pEditor, &rgSourceCodeEditor::OpenHeaderFileRequested, this, &rgBuildView::HandleSourceEditorOpenHeaderRequest);
+            assert(isConnected);
 
             QFileInfo fileInfo(fullFilepath.c_str());
             m_fileModifiedTimeMap[pEditor] = fileInfo.lastModified();
 
             ConnectSourcecodeEditorSignals(pEditor);
+
+            // Set the fonts for the source code editor.
+            rgConfigManager& configManager = rgConfigManager::Instance();
+            std::shared_ptr<rgGlobalSettings> pGlobalSettings = configManager.GetGlobalConfig();
+            assert(pGlobalSettings != nullptr);
+            if (pGlobalSettings != nullptr)
+            {
+                QFont font;
+                font.setFamily(QString::fromStdString(pGlobalSettings->m_fontFamily));
+                font.setPointSize(pGlobalSettings->m_fontSize);
+                assert(pEditor != nullptr);
+                if (pEditor != nullptr)
+                {
+                    pEditor->setFont(font);
+                }
+            }
         }
     }
     return pEditor;
@@ -2536,11 +2694,15 @@ void rgBuildView::CancelCurrentBuild()
     // (this handle is being watched by the thread that launches the CLI).
     m_cancelBuildSignal = true;
 
-    assert(m_pFileMenu != nullptr);
-    if (m_pFileMenu != nullptr)
+    CurrentBuildCancelled();
+}
+
+void rgBuildView::FocusOnSourceCodeEditor()
+{
+    // Switch the focus to the file editor to begin editing the file.
+    if (m_pCurrentCodeEditor != nullptr)
     {
-        // Don't allow the user to expand file item's entrypoint list.
-        m_pFileMenu->SetIsShowEntrypointListEnabled(false);
+        m_pCurrentCodeEditor->setFocus();
     }
 }
 
@@ -2552,24 +2714,6 @@ void rgBuildView::HandleScrollCodeEditorToLine(int lineNum)
 
     // Switch focus to the code editor.
     m_pCurrentCodeEditor->setFocus();
-}
-
-bool rgBuildView::LoadEntrypointLineNumbers()
-{
-    bool ret = false;
-
-    // Destroy the existing entrypoint line numbers map.
-    m_entrypointLineNumbers.clear();
-
-    // Invoke the CLI To query entrypoint names and start line numbers.
-    ret = rgCliLauncher::ListKernels(m_pProject, m_cloneIndex, m_entrypointLineNumbers);
-    if (!ret)
-    {
-        // Let the user know that the query failed.
-        emit SetStatusBarText(STR_ERR_FAILED_TO_GET_ENTRYPOINT_LINE_NUMBERS, gs_STATUS_BAR_NOTIFICATION_TIMEOUT_MS);
-    }
-
-    return ret;
 }
 
 void rgBuildView::RenameFile(const std::string& oldFilepath, const std::string& newFilepath)
@@ -2585,137 +2729,63 @@ void rgBuildView::RenameFile(const std::string& oldFilepath, const std::string& 
     }
 
     // Update the project's source file list with the new filepath.
-    rgConfigManager& configManager = rgConfigManager::Instance();
-    configManager.UpdateSourceFilepath(oldFilepath, newFilepath, m_pProject, m_cloneIndex);
+    rgConfigManager::UpdateSourceFilepath(oldFilepath, newFilepath, m_pProject, m_cloneIndex);
 
     // Save the updated project file.
-    configManager.SaveProjectFile(m_pProject);
+    rgConfigManager::Instance().SaveProjectFile(m_pProject);
 }
 
 void rgBuildView::RenameProject(const std::string& fullPath)
 {
     // Cache the original file path being renamed.
-    std::string originalFilePath = m_pProject->m_projectFileFullPath;
-
-    // Rename the project config file.
-    bool isRenamed = QFile::rename(m_pProject->m_projectFileFullPath.c_str(), fullPath.c_str());
-    assert(isRenamed);
-
-    if (isRenamed)
-    {
-        // Set full path.
-        m_pProject->m_projectFileFullPath = fullPath;
-
-        // Set project name.
-        std::string filename;
-        rgUtils::ExtractFileName(fullPath, filename, false);
-        m_pProject->m_projectName = filename;
-        rgConfigManager& configManager = rgConfigManager::Instance();
-
-        // Update the recent project list to reference the new path.
-        configManager.UpdateRecentProjectPath(originalFilePath, fullPath);
-
-        // Save the project file.
-        configManager.SaveProjectFile(m_pProject);
-
-        // Update main window title text.
-        emit ProjectLoaded(m_pProject);
-    }
-}
-
-std::string rgBuildView::GetFilepathForEditor(const rgSourceCodeEditor* pEditor)
-{
-    // Return an empty string by default.
-    std::string ret = "";
-
-    auto editorIter = m_sourceCodeEditors.begin();
-    while (editorIter != m_sourceCodeEditors.end())
-    {
-        // Return the filename if a match is found.
-        if (editorIter->second == pEditor)
-        {
-            ret = editorIter->first;
-            break;
-        }
-
-        editorIter++;
-    }
-
-    return ret;
-}
-
-void rgBuildView::HandleNewCLIOutputString(const std::string& cliOutputString)
-{
-    // Send the CLI's output text to the output window.
-    m_pCliOutputWindow->EmitSetText(cliOutputString.c_str());
-}
-
-void rgBuildView::HighlightEntrypointStartLine(const std::string& inputFilePath, const std::string& selectedEntrypointName)
-{
-    // Find the input file in the map of entrypoint start line numbers.
-    auto inputFileIter = m_entrypointLineNumbers.find(inputFilePath);
-    if (inputFileIter != m_entrypointLineNumbers.end())
-    {
-        // Search for the start line number for the given entrypoint name.
-        EntryToSourceLineRange& fileEntrypointsInfo = inputFileIter->second;
-        auto lineNumberIter = fileEntrypointsInfo.find(selectedEntrypointName);
-        if (lineNumberIter != fileEntrypointsInfo.end())
-        {
-            rgSourceCodeEditor* pEditor = GetEditorForFilepath(inputFilePath);
-            assert(pEditor != nullptr);
-            if (pEditor != nullptr)
-            {
-                // Retrieve the entrypoint's start line index according to the "list-kernels" results.
-                int listKernelsEntrypointStartLine = lineNumberIter->second.first;
-
-                // If necessary, advance to the line with the entrypoint's opening brace. This is the real start of the entrypoint.
-                int actualStartLine = FindEntrypointStartLine(pEditor, listKernelsEntrypointStartLine);
-
-                // Scroll to the start of the entrypoint.
-                pEditor->ScrollToLine(actualStartLine);
-
-                // Move the cursor to the line where the entrypoint starts.
-                QTextCursor cursor(pEditor->document()->findBlockByLineNumber(actualStartLine - 1));
-                pEditor->setTextCursor(cursor);
-
-                // Highlight the start line for the entrypoint.
-                QList<int> lineIndices;
-                lineIndices.push_back(actualStartLine);
-                pEditor->SetHighlightedLines(lineIndices);
-            }
-        }
-    }
-}
-
-bool rgBuildView::IsLineCorrelationEnabled(rgSourceCodeEditor* pSourceEditor)
-{
-    bool isCorrelationEnabled = false;
-
     assert(m_pProject != nullptr);
     if (m_pProject != nullptr)
     {
-        // Ensure that the clone index is valid.
-        bool isValidCloneIndex = m_cloneIndex >= 0 && m_cloneIndex < m_pProject->m_clones.size();
-        assert(isValidCloneIndex);
-        if (isValidCloneIndex)
-        {
-            auto firstFile = m_pProject->m_clones[m_cloneIndex]->m_sourceFiles.begin();
-            auto lastFile = m_pProject->m_clones[m_cloneIndex]->m_sourceFiles.end();
+        std::string originalFilePath = m_pProject->m_projectFileFullPath;
 
-            // Search the list of source file info for the one that matches the given editor.
-            std::string filePath = GetFilepathForEditor(pSourceEditor);
-            rgSourceFilePathSearcher pathSearcher(filePath);
-            auto fileIter = std::find_if(firstFile, lastFile, pathSearcher);
-            assert(fileIter != lastFile);
-            if (fileIter != lastFile)
+        // Rename the project config file.
+        bool isRenamed = QFile::rename(m_pProject->m_projectFileFullPath.c_str(), fullPath.c_str());
+        assert(isRenamed);
+
+        if (isRenamed)
+        {
+            // Set full path.
+            m_pProject->m_projectFileFullPath = fullPath;
+
+            // Set project name.
+            std::string filename;
+            rgUtils::ExtractFileName(fullPath, filename, false);
+            m_pProject->m_projectName = filename;
+            rgConfigManager& configManager = rgConfigManager::Instance();
+
+            // Update the recent project list to reference the new path.
+            configManager.UpdateRecentProjectPath(originalFilePath, fullPath, m_pProject->m_api);
+
+            // Save the project file.
+            configManager.SaveProjectFile(m_pProject);
+
+            // Update main window title text.
+            emit ProjectLoaded(m_pProject);
+        }
+    }
+}
+
+void rgBuildView::ToggleFindWidgetVisibility(bool isVisible)
+{
+    if (m_editMode == EditMode::SourceCode)
+    {
+        // Attach the Find widget to the source editor view.
+        UpdateFindWidgetViewAttachment(m_pSourceViewStack, isVisible);
+
+        assert(m_pFindWidget != nullptr);
+        if (m_pFindWidget != nullptr)
+        {
+            if (isVisible)
             {
-                // Update the correlation state for the file.
-                isCorrelationEnabled = fileIter->m_isCorrelated;
+                m_pFindWidget->SetFocused();
             }
         }
     }
-
-    return isCorrelationEnabled;
 }
 
 void rgBuildView::SaveEditorTextToFile(rgSourceCodeEditor* pEditor, const std::string& fullPath)
@@ -2738,31 +2808,13 @@ void rgBuildView::SaveEditorTextToFile(rgSourceCodeEditor* pEditor, const std::s
     }
 }
 
-void rgBuildView::ToggleFindWidgetVisibility(bool isVisible)
+void rgBuildView::DiscardEditorChanges(rgSourceCodeEditor* pEditor)
 {
-    if (m_pFindWidget != nullptr)
+    bool isEditorValid = (pEditor != nullptr);
+    assert(isEditorValid);
+    if (isEditorValid)
     {
-        QVBoxLayout* pLayout = static_cast<QVBoxLayout*>(m_pSourceViewStack->layout());
-        if (isVisible)
-        {
-            // Only make the widget visible if the source editor is currently visible.
-            bool isEditorVisible = m_pCurrentCodeEditor->isVisible();
-            if (isEditorVisible)
-            {
-                // Insert the find widget into the top of the layout above the source editor.
-                m_pFindWidget->setVisible(isVisible);
-
-                // Update the position of the find widget.
-                UpdateFindWidgetGeometry();
-
-                m_pFindWidget->SetFocused();
-            }
-        }
-        else
-        {
-            pLayout->removeWidget(m_pFindWidget);
-            m_pFindWidget->setVisible(isVisible);
-        }
+        pEditor->document()->setModified(false);
     }
 }
 
@@ -2771,13 +2823,8 @@ void rgBuildView::UpdateFindWidgetGeometry()
     assert(m_pFindWidget != nullptr);
     if (m_pFindWidget != nullptr)
     {
-        assert(m_pCurrentCodeEditor != nullptr);
         if (m_pCurrentCodeEditor != nullptr)
         {
-            // Convert the topleft of the source editor to a global position.
-            QPoint pos(0, 0);
-            pos = m_pCurrentCodeEditor->mapTo(this, pos);
-
             // Compute the geometry for the widget relative to the source editor.
             int scrollbarWidth = m_pCurrentCodeEditor->verticalScrollBar()->width();
             if (!m_pCurrentCodeEditor->verticalScrollBar()->isVisible())
@@ -2785,8 +2832,12 @@ void rgBuildView::UpdateFindWidgetGeometry()
                 scrollbarWidth = 0;
             }
 
+            // Start the Find widget at the far left of the attached control, and shift it to the
+            // right as far as possible within the parent.
+            int widgetHorizontalLocation = 0;
+
+            // The total amount of horizontal space available for the Find widget to fit into.
             int availableEditorWidth = m_pCurrentCodeEditor->width() - scrollbarWidth;
-            int x = pos.x();
 
             // Try to display the find widget with the maximum dimensions that can fit within the source editor.
             int findWidgetWidth = m_pFindWidget->maximumWidth();
@@ -2796,42 +2847,20 @@ void rgBuildView::UpdateFindWidgetGeometry()
             }
             else
             {
-                x += (availableEditorWidth - findWidgetWidth);
+                widgetHorizontalLocation += (availableEditorWidth - findWidgetWidth - s_FIND_TEXT_WIDGET_HORIZONTAL_MARGIN);
+                assert(widgetHorizontalLocation >= 0);
+                if (widgetHorizontalLocation < 0)
+                {
+                    widgetHorizontalLocation = 0;
+                }
             }
 
-            int w = findWidgetWidth;
-            int h = m_pFindWidget->maximumHeight();
+            // Use the unmodified height of the Find Widget in the final dimension.
+            int findWidgetHeight = m_pFindWidget->maximumHeight();
 
             // Set the geometry for the widget manually.
-            // Offset vertically by a single pixel so the widget doesn't overlap the editor's titlebar.
-            m_pFindWidget->setGeometry(x, pos.y() + 1, w, h);
-        }
-    }
-}
-
-void rgBuildView::UpdateSourceEditorTitlebar(rgSourceCodeEditor* pCodeEditor)
-{
-    std::string sourceFilePath = GetFilepathForEditor(pCodeEditor);
-    if (!sourceFilePath.empty())
-    {
-        // If the source file has already been disassembled, check if line correlation is currently enabled.
-        bool isCorrelationEnabled = false;
-        bool isDisassembled = IsFileDisassembled(sourceFilePath);
-        if (isDisassembled)
-        {
-            isCorrelationEnabled = IsLineCorrelationEnabled(pCodeEditor);
-        }
-        else
-        {
-            // The file hasn't been disassembled yet, so don't display a warning in the editor's titlebar.
-            isCorrelationEnabled = true;
-        }
-
-        // Update the titlebar to show the current correlation state for the file.
-        assert(m_pSourceEditorTitlebar != nullptr);
-        if (m_pSourceEditorTitlebar != nullptr)
-        {
-            m_pSourceEditorTitlebar->SetIsCorrelationEnabled(isCorrelationEnabled);
+            // Offset vertically so the widget doesn't overlap the editor's titlebar.
+            m_pFindWidget->setGeometry(widgetHorizontalLocation, s_FIND_TEXT_WIDGET_VERTICAL_MARGIN, findWidgetWidth, findWidgetHeight);
         }
     }
 }
@@ -2863,6 +2892,19 @@ void rgBuildView::UpdateSourceFileCorrelationState(const std::string& filePath, 
     }
 }
 
+void rgBuildView::UpdateSourceEditorSearchContext()
+{
+    // Update the find widget's searcher to search the new editor.
+    assert(m_pSourceSearcher != nullptr);
+    assert(m_pFindWidget != nullptr);
+    if (m_pSourceSearcher != nullptr && m_pFindWidget != nullptr)
+    {
+        // Update the FindWidget's search context to use the source editor searcher.
+        m_pFindWidget->SetSearchContext(m_pSourceSearcher);
+        m_pSourceSearcher->SetTargetEditor(m_pCurrentCodeEditor);
+    }
+}
+
 void rgBuildView::CheckExternalFileModification()
 {
     // If there are no active code editors, no files can be modified.
@@ -2890,7 +2932,7 @@ void rgBuildView::CheckExternalFileModification()
             switch (response)
             {
             case QMessageBox::Yes:
-                SetSourceCodeText(filename);
+                ReloadFile(filename);
                 break;
             case QMessageBox::No:
                 m_fileModifiedTimeMap[m_pCurrentCodeEditor] = fileInfo.lastModified();
@@ -2964,8 +3006,36 @@ void rgBuildView::GetUnsavedSourceFiles(QStringList& unsavedSourceFiles)
     }
 }
 
+bool rgBuildView::OpenIncludeFile(const std::string& fullFilePath)
+{
+    bool ret = false;
+    if (rgUtils::IsFileExists(fullFilePath))
+    {
+        // Check if RGA is configured to use the system's default app, or the user's app of choice.
+        std::string includeViewer = rgConfigManager::Instance().GetIncludeFileViewer();
+        if (includeViewer.compare(STR_GLOBAL_SETTINGS_SRC_VIEW_INCLUDE_VIEWER_DEFAULT) == 0)
+        {
+            // Launch the system's default viewer.
+            QUrl fileUrl = QUrl::fromLocalFile(fullFilePath.c_str());
+            QDesktopServices::openUrl(fileUrl);
+            ret = true;
+        }
+        else
+        {
+            // Launch the user's editor of choice.
+            QStringList argList;
+            argList.push_back(fullFilePath.c_str());
+            ret = QProcess::startDetached(includeViewer.c_str(), argList);
+        }
+    }
+
+    return ret;
+}
+
 void rgBuildView::HandleSaveSettingsButtonClicked()
 {
+    SetAPISpecificBorderColor();
+
     if (m_editMode == EditMode::SourceCode)
     {
         SaveCurrentFile();
@@ -2985,6 +3055,8 @@ void rgBuildView::HandleSaveSettingsButtonClicked()
 
 void rgBuildView::HandleRestoreDefaultsSettingsClicked()
 {
+    SetAPISpecificBorderColor();
+
     // Ask the user for confirmation.
     bool isConfirmation = rgUtils::ShowConfirmationMessageBox(STR_BUILD_SETTINGS_DEFAULT_SETTINGS_CONFIRMATION_TITLE, STR_BUILD_SETTINGS_DEFAULT_SETTINGS_CONFIRMATION, this);
 
@@ -3005,14 +3077,19 @@ void rgBuildView::HandleRestoreDefaultsSettingsClicked()
     }
 }
 
+void rgBuildView::HandleSetFrameBorderGreen()
+{
+    m_pBuildSettingsWidget->setStyleSheet(STR_BUILD_VIEW_BUILD_SETTINGS_WIDGET_STYLESHEET_GREEN);
+}
+
 void rgBuildView::HandleSetFrameBorderRed()
 {
-    m_pBuildSettingsWidget->setStyleSheet("#buildSettingsWidget { border: 1px solid rgb(224, 30, 55); }");
+    m_pBuildSettingsWidget->setStyleSheet(STR_BUILD_VIEW_BUILD_SETTINGS_WIDGET_STYLESHEET_RED);
 }
 
 void rgBuildView::HandleSetFrameBorderBlack()
 {
-    m_pBuildSettingsWidget->setStyleSheet("#buildSettingsWidget { border: 1px solid black; }");
+    m_pBuildSettingsWidget->setStyleSheet(STR_BUILD_VIEW_BUILD_SETTINGS_WIDGET_STYLESHEET_BLACK);
 }
 
 void rgBuildView::HandleDisassemblyViewSizeMaximize()
@@ -3039,4 +3116,20 @@ void rgBuildView::HandleSplitterMoved(int pos, int index)
 {
     // Update the splitter dimensions in the config file.
     SetConfigSplitterPositions();
+}
+
+std::string rgBuildView::GetCurrentProjectAPIName() const
+{
+    std::string projectAPI = "";
+
+    bool ok = rgUtils::ProjectAPIToString(m_pProject->m_api, projectAPI);
+    assert(ok);
+
+    return projectAPI;
+}
+
+void rgBuildView::HandleDisassemblyViewClicked()
+{
+    qApp->focusObjectChanged(m_pDisassemblyView);
+    m_pDisassemblyView->setFocus();
 }

@@ -7,11 +7,11 @@
 #include <ACLModuleManager.h>
 #include <DeviceInfoUtils.h>
 
-#include <include/beProgramBuilderOpenCL.h>
-#include <emulator/Parser/ISAParser.h>
+#include <Include/beProgramBuilderOpenCL.h>
+#include <Emulator/Parser/ISAParser.h>
 
 // Local.
-#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
 
 #define CL_STATUS_TABLE \
     X(CL_SUCCESS) \

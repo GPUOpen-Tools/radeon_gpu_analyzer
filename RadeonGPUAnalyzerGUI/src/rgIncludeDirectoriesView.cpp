@@ -10,10 +10,10 @@
 #include <QtCommon/Scaling/ScalingManager.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIncludeDirectoriesView.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIncludeDirectoriesView.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
 rgIncludeDirectoriesView::rgIncludeDirectoriesView(const char* pDelimiter, QWidget* pParent) :
     rgOrderedListDialog(pDelimiter, pParent)
@@ -32,9 +32,6 @@ rgIncludeDirectoriesView::rgIncludeDirectoriesView(const char* pDelimiter, QWidg
 
     // Set the button fonts.
     SetButtonFonts();
-
-    // Set push button shortcuts.
-    SetButtonShortcuts();
 
     // Update various buttons.
     UpdateButtons();
@@ -101,58 +98,95 @@ void rgIncludeDirectoriesView::HandleIncludeFileLocationBrowseButtonClick(bool /
     // Create a file chooser dialog.
     QFileDialog fileDialog;
 
-    // Get the latest entry from the directories list and open the dialog there.
-    std::string latestPath = rgConfigManager::GetLastSelectedFolder();
-    if (m_itemsList.size() > 0)
+    // Get the last entry from the directories list and open the dialog there.
+    std::string latestPath = rgConfigManager::Instance().GetLastSelectedFolder();
+
+    // If the user has an item selected, use that as starting path.
+    // Otherwise use the last item in the list since it is probably most recent.
+    QListWidgetItem* pItem = ui.itemsList->currentItem();
+    if (pItem != nullptr && !pItem->text().isEmpty() && QDir(pItem->text()).exists())
+    {
+        latestPath = pItem->text().toStdString();
+    }
+    else if (m_itemsList.size() > 0)
     {
         latestPath = m_itemsList.at(m_itemsList.size() - 1).toStdString();
     }
 
-    QString selectedDirectory = QFileDialog::getExistingDirectory(this, tr(STR_INCLUDE_DIR_DIALOG_SELECT_DIR_TITLE),
-                                                                  latestPath.c_str(),
-                                                                  QFileDialog::ShowDirsOnly);
+    bool shouldShowFindDirectoryDialog = true;
 
-    // If the user selected an entry, process it.
-    if (!selectedDirectory.isEmpty())
+    while (shouldShowFindDirectoryDialog)
     {
-        // If not a duplicate selection, update the list widget.
-        if (!m_itemsList.contains(selectedDirectory))
-        {
-            QListWidgetItem* pItem = nullptr;
-            if (ui.itemsList->count() > 0)
-            {
-                pItem = ui.itemsList->item(ui.itemsList->count() - 1);
-            }
-            if (pItem != nullptr && pItem->text().isEmpty())
-            {
-                QListWidgetItem* pItem = ui.itemsList->item(ui.itemsList->count() - 1);
-                pItem->setText(selectedDirectory);
-                ui.itemsList->setCurrentItem(pItem);
-            }
-            else
-            {
-                QListWidgetItem* pItem = new QListWidgetItem;
-                pItem->setText(selectedDirectory);
-                pItem->setFlags(pItem->flags() | Qt::ItemIsEditable);
-                ui.itemsList->setCurrentItem(pItem);
-                ui.itemsList->insertItem(ui.itemsList->count(), pItem);
-            }
+        QString selectedDirectory = QFileDialog::getExistingDirectory(this, tr(STR_INCLUDE_DIR_DIALOG_SELECT_DIR_TITLE),
+            latestPath.c_str(),
+            QFileDialog::ShowDirsOnly);
 
-            // Update move buttons.
-            UpdateButtons();
+        // If the user did not select an entry, don't update anything, just exit the loop.
+        if (selectedDirectory.isEmpty())
+        {
+            shouldShowFindDirectoryDialog = false;
         }
         else
         {
-            // Display an error message when a duplicate directory is selected.
-            rgUtils::ShowErrorMessageBox(STR_INCLUDE_DIR_DIALOG_DIR_ALREADY_SELECTED, this);
+            // If not a duplicate selection, update the list widget.
+            if (!m_itemsList.contains(selectedDirectory))
+            {
+                QListWidgetItem* pItem = ui.itemsList->currentItem();
+                if (pItem == nullptr)
+                {
+                    // There was no selected item,
+                    // so make sure there is a final entry that is empty, and edit that.
+                    if (ui.itemsList->count() > 0)
+                    {
+                        pItem = ui.itemsList->item(ui.itemsList->count() - 1);
+                    }
+
+                    if (pItem == nullptr || !pItem->text().isEmpty())
+                    {
+                        // Add an empty row to the dialog
+                        InsertBlankItem();
+                        assert(ui.itemsList->count() > 0);
+
+                        // Use the empty row for the new item
+                        pItem = ui.itemsList->item(ui.itemsList->count() - 1);
+                    }
+                }
+
+                assert(pItem != nullptr);
+                pItem->setText(selectedDirectory);
+
+                // If the last item in the UI is no longer empty, add another item.
+                pItem = ui.itemsList->item(ui.itemsList->count() - 1);
+                if (pItem == nullptr || !pItem->text().isEmpty())
+                {
+                    // Add an empty row to the dialog
+                    InsertBlankItem();
+                }
+
+                // Don't show the find directory dialog again.
+                shouldShowFindDirectoryDialog = false;
+            }
+            else
+            {
+                // Display an error message when a duplicate directory is selected.
+                rgUtils::ShowErrorMessageBox(STR_INCLUDE_DIR_DIALOG_DIR_ALREADY_SELECTED, this);
+
+                // Make the user try again.
+                shouldShowFindDirectoryDialog = true;
+            }
         }
     }
+
+    // Update move buttons.
+    UpdateButtons();
 }
 
 void rgIncludeDirectoriesView::OnListItemChanged(QListWidgetItem* pItem)
 {
     // Block signals from the list widget.
     ui.itemsList->blockSignals(true);
+
+    m_editingInvalidEntry = false;
 
     // Process the newly-entered data.
     if (pItem != nullptr)
@@ -162,37 +196,46 @@ void rgIncludeDirectoriesView::OnListItemChanged(QListWidgetItem* pItem)
         bool directoryExists = QDir(newDirectory).exists();
         bool directoryDuplicate = m_itemsList.contains(newDirectory);
         bool directoryValueEmpty = newDirectory.isEmpty();
-        // If the new directory exists, and it is not a duplicate entry, update local data.
-        if (directoryExists && !directoryDuplicate && !directoryValueEmpty)
+
+        int itemRow = ui.itemsList->row(pItem);
+
+        if (directoryValueEmpty && itemRow != ui.itemsList->count() - 1)
         {
-            // Update local data.
-            m_itemsList << newDirectory;
-
-            // Update tool tips.
-            UpdateToolTips();
-
-            m_editingInvalidEntry = false;
+            // The user has emptied out the entry, so delete it.
+            // Simulate a click on the delete button to remove the entry from the UI.
+            ui.deletePushButton->click();
         }
         else
         {
-            if (!m_editingInvalidEntry)
+            // If the new directory exists, and it is not a duplicate entry, update local data.
+            if (!directoryExists || directoryDuplicate)
             {
-                // Update local data.
-                m_itemsList << newDirectory;
+                // Display an error message box.
+                if (!directoryExists)
+                {
+                    rgUtils::ShowErrorMessageBox(STR_INCLUDE_DIR_DIALOG_DIR_DOES_NOT_EXIST, this);
+                }
+                else if (directoryDuplicate)
+                {
+                    rgUtils::ShowErrorMessageBox(STR_INCLUDE_DIR_DIALOG_DIR_ALREADY_SELECTED, this);
+                }
+
+                m_editingInvalidEntry = true;
             }
 
-            // Display an error message box.
-            if (!directoryExists)
+            // Update local data.
+            if (itemRow < m_itemsList.count())
             {
-                rgUtils::ShowErrorMessageBox(STR_INCLUDE_DIR_DIALOG_DIR_DOES_NOT_EXIST, this);
+                m_itemsList[itemRow] = newDirectory;
             }
-            else if (directoryDuplicate && !newDirectory.isEmpty())
+            else
             {
-                rgUtils::ShowErrorMessageBox(STR_INCLUDE_DIR_DIALOG_DIR_ALREADY_SELECTED, this);
+                m_itemsList.append(newDirectory);
             }
-
-            m_editingInvalidEntry = true;
         }
+
+        // Update tool tips.
+        UpdateToolTips();
 
         // Unblock signals from the list widget.
         ui.itemsList->blockSignals(false);
@@ -200,14 +243,4 @@ void rgIncludeDirectoriesView::OnListItemChanged(QListWidgetItem* pItem)
         // Update buttons.
         UpdateButtons();
     }
-}
-
-void rgIncludeDirectoriesView::SetButtonShortcuts()
-{
-    // Browse button keyboard shortcut.
-    m_pBrowseAction = new QAction(this);
-    m_pBrowseAction->setShortcut(QKeySequence(Qt::Key_Alt | Qt::Key_B));
-
-    bool isConnected = connect(m_pBrowseAction, &QAction::triggered, this, &rgIncludeDirectoriesView::HandleIncludeFileLocationBrowseButtonClick);
-    assert(isConnected);
 }

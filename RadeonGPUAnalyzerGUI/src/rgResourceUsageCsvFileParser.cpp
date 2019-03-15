@@ -2,7 +2,7 @@
 #include <cassert>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgResourceUsageCsvFileParser.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgResourceUsageCsvFileParser.h>
 
 bool rgResourceUsageCsvFileParser::ProcessLineTokens(const std::vector<std::string>& tokens)
 {

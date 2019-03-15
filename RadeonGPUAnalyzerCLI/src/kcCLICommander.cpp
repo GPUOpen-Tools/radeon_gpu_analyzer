@@ -6,13 +6,17 @@
 #include <cassert>
 
 // Backend.
-#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommander.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommanderLightning.h>
-#include <Utils/include/rgLog.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcXmlWriter.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommander.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderLightning.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderVulkan.h>
+
+// Shared.
+#include <Utils/Include/rgLog.h>
 
 
 void kcCLICommander::Version(Config& config, LoggingCallBackFunc_t callback)
@@ -20,21 +24,25 @@ void kcCLICommander::Version(Config& config, LoggingCallBackFunc_t callback)
     kcUtils::PrintRgaVersion();
 }
 
-std::string  GetInpulLanguageString(beKA::SourceLanguage lang)
+std::string  GetInputlLanguageString(beKA::RgaMode mode)
 {
-    switch (lang)
+    switch (mode)
     {
-        case beKA::SourceLanguage_OpenCL:
-            return "OpenCL";
-        case beKA::SourceLanguage_GLSL_OpenGL:
-            return "OpenGL";
-        case beKA::SourceLanguage_GLSL_Vulkan:
-        case beKA::SourceLanguage_SPIRV_Vulkan:
-            return "Vulkan";
-        case beKA::SourceLanguage_HLSL:
-            return "DX";
-        default:
-            return "";
+    case beKA::RgaMode::Mode_OpenCL:
+        return "OpenCL";
+    case beKA::RgaMode::Mode_OpenGL:
+        return "OpenGL";
+    case beKA::RgaMode::Mode_Vulkan:
+        return "Vulkan";
+    case beKA::RgaMode::Mode_Vk_Offline:
+    case beKA::RgaMode::Mode_Vk_Offline_Spv:
+    case beKA::RgaMode::Mode_Vk_Offline_SpvTxt:
+        return "Vulkan Offline";
+    case beKA::Mode_HLSL:
+        return "DX";
+    default:
+        assert(false && STR_ERR_UNKNOWN_MODE);
+        return "";
     }
 }
 
@@ -46,40 +54,117 @@ void kcCLICommander::ListAdapters(Config & config, LoggingCallBackFunc_t callbac
     callback(msg.str());
 }
 
-bool kcCLICommander::RunPostCompileSteps(const Config & config) const
+bool kcCLICommander::RunPostCompileSteps(const Config & config)
 {
     return true;
 }
 
-void kcCLICommander::DeleteTempFiles() const
+bool kcCLICommander::GenerateVersionInfoFile(const Config& config)
 {
-    for (const auto& outFileData : m_outputMetadata)
+    bool status = true;
+    std::string fileName = config.m_versionInfoFile;
+
+    // If the file requires wrapping with double-quotes, do it.
+    if (fileName.find(' ') != std::string::npos &&
+        fileName.find("\"") != std::string::npos)
     {
-        const rgOutputFiles  outFiles = outFileData.second;
-        gtString  fileName;
-        if (outFiles.m_isBinFileTemp && kcUtils::FileNotEmpty(outFiles.m_binFile))
-        {
-            fileName.fromASCIIString(outFiles.m_binFile.c_str());
-            kcUtils::DeleteFile(fileName);
-        }
-        if (outFiles.m_isIsaFileTemp && kcUtils::FileNotEmpty(outFiles.m_isaFile))
-        {
-            fileName.fromASCIIString(outFiles.m_isaFile.c_str());
-            kcUtils::DeleteFile(fileName);
-        }
+        std::stringstream wrappedFileName;
+        wrappedFileName << "\"" << fileName << "\"";
+        fileName = wrappedFileName.str();
     }
+
+    // Delete the version info file if it already exists.
+    if (!fileName.empty() && kcUtils::FileNotEmpty(fileName))
+    {
+        status = kcUtils::DeleteFile(fileName);
+    }
+
+    // Generate the Version Info header.
+    rgLog::stdErr << STR_INFO_GENERATING_VERSION_INFO_FILE << fileName << std::endl;
+    status = status && kcXmlWriter::AddVersionInfoHeader(fileName);
+    assert(status);
+
+    if (status)
+    {
+        // Try generating the version info file for ROCm OpenCL mode.
+        bool isRocmVersionInfoGenerated =
+            kcCLICommanderLightning::GenerateRocmVersionInfo(fileName);
+        assert(isRocmVersionInfoGenerated);
+        if (!isRocmVersionInfoGenerated)
+        {
+            rgLog::stdErr << STR_ERR_FAILED_GENERATE_VERSION_INFO_FILE_ROCM_CL << std::endl;
+        }
+
+        // Try generating the version info file for Vulkan live-driver mode.
+        bool isVulkanVersionInfoGenerated =
+            kcCLICommanderVulkan::GenerateVulkanVersionInfo(config,
+                fileName, config.m_printProcessCmdLines);
+
+        if (isVulkanVersionInfoGenerated)
+        {
+            // Try generating system version info for Vulkan live-driver mode.
+            isVulkanVersionInfoGenerated = kcCLICommanderVulkan::GenerateSystemVersionInfo(config,
+                fileName, config.m_printProcessCmdLines);
+            assert(isVulkanVersionInfoGenerated);
+            if (!isVulkanVersionInfoGenerated)
+            {
+                rgLog::stdErr << STR_ERR_FAILED_GENERATE_VERSION_INFO_FILE_VULKAN_SYSTEM << std::endl;
+            }
+        }
+        else
+        {
+            rgLog::stdErr << STR_ERR_FAILED_GENERATE_VERSION_INFO_FILE_VULKAN << std::endl;
+        }
+
+        // We are good if at least one of the modes managed to generate the version info.
+        status = isRocmVersionInfoGenerated || isVulkanVersionInfoGenerated;
+        assert(status);
+    }
+    else
+    {
+        rgLog::stdErr << STR_ERR_FAILED_GENERATE_VERSION_INFO_HEADER << std::endl;
+    }
+
+    if (!status)
+    {
+        rgLog::stdErr << STR_ERR_FAILED_GENERATE_VERSION_INFO_FILE << std::endl;
+    }
+
+    return status;
 }
 
-bool kcCLICommander::InitRequestedAsicList(const Config& config, const std::set<std::string>& supportedDevices,
-                                           std::set<std::string>& matchedDevices, bool allowUnknownDevices)
+bool kcCLICommander::ListEntries(const Config & config, LoggingCallBackFunc_t callback)
 {
-    if (!config.m_ASICs.empty())
+    rgLog::stdErr << STR_ERR_COMMAND_NOT_SUPPORTED << std::endl;
+
+    return false;
+}
+
+bool kcCLICommander::GetParsedIsaCSVText(const std::string& isaText, const std::string& device, bool addLineNumbers, std::string& csvText)
+{
+    bool  ret = false;
+
+    std::string  parsedIsa;
+    if (beProgramBuilder::ParseISAToCSV(isaText, device, parsedIsa, addLineNumbers, true) == beKA::beStatus_SUCCESS)
+    {
+        csvText = (addLineNumbers ? STR_CSV_PARSED_ISA_HEADER_LINE_NUMS : STR_CSV_PARSED_ISA_HEADER) + parsedIsa;
+        ret = true;
+    }
+
+    return ret;
+}
+
+bool kcCLICommander::InitRequestedAsicList(const std::vector<std::string>& devices, RgaMode mode,
+    const std::set<std::string>& supportedDevices,
+    std::set<std::string>& matchedDevices, bool allowUnknownDevices)
+{
+    if (!devices.empty())
     {
         // Take the devices which the user selected.
-        for (const std::string& asicName : config.m_ASICs)
+        for (const std::string& device : devices)
         {
             std::string  matchedArchName;
-            bool foundSingleTarget = kcUtils::FindGPUArchName(asicName, matchedArchName, true, allowUnknownDevices);
+            bool foundSingleTarget = kcUtils::FindGPUArchName(device, matchedArchName, true, allowUnknownDevices);
 
             if (foundSingleTarget)
             {
@@ -87,9 +172,10 @@ bool kcCLICommander::InitRequestedAsicList(const Config& config, const std::set<
                 // The architecture returned by FindGPUArchName() is an extended name, for example: "gfx804 (Graphics IP v8)",
                 // while the items in the list of known ASICs are "short" names: "gfx804".
                 bool  isSupported = false;
+                matchedArchName = kcUtils::ToLower(matchedArchName);
                 for (const std::string& asic : supportedDevices)
                 {
-                    if (matchedArchName.find(asic) != std::string::npos)
+                    if (matchedArchName.find(kcUtils::ToLower(asic)) != std::string::npos)
                     {
                         matchedDevices.insert(asic);
                         isSupported = true;
@@ -98,11 +184,8 @@ bool kcCLICommander::InitRequestedAsicList(const Config& config, const std::set<
                 }
                 if (!isSupported && !allowUnknownDevices)
                 {
-                    // This is a workaround for CodeXL issue: CodeXL is unable to grab the stderr stream of child processes.
-                    // Therefore, we dump error message to stdout instead of stderr here to allow CodeXL users to see
-                    // this error message in the CodeXL "Output" window.
-                    rgLog::stdOut << STR_ERR_ERROR << GetInpulLanguageString(config.m_SourceLanguage)
-                                  << STR_ERR_TARGET_IS_NOT_SUPPORTED << matchedArchName << std::endl;
+                    rgLog::stdErr << STR_ERR_ERROR << GetInputlLanguageString(mode)
+                        << STR_ERR_TARGET_IS_NOT_SUPPORTED << matchedArchName << std::endl;
                 }
             }
         }
@@ -115,7 +198,7 @@ bool kcCLICommander::InitRequestedAsicList(const Config& config, const std::set<
             std::string  archName = "";
             std::string  tmpMsg;
 
-            bool  found = kcUtils::FindGPUArchName(device, archName, true, allowUnknownDevices);
+            bool  found = kcUtils::FindGPUArchName(device, archName, false, allowUnknownDevices);
             if (found)
             {
                 matchedDevices.insert(device);
@@ -128,26 +211,17 @@ bool kcCLICommander::InitRequestedAsicList(const Config& config, const std::set<
     return ret;
 }
 
-bool kcCLICommander::GetSupportedTargets(SourceLanguage lang, std::set<std::string>& targets)
+beKA::beStatus kcCLICommander::WriteISAToFile(const std::string& fileName, const std::string& isaText)
 {
-    if (lang == SourceLanguage_Rocm_OpenCL)
-    {
-        targets = kcCLICommanderLightning::GetSupportedTargets();
-    }
-    else
-    {
-        std::vector<GDT_GfxCardInfo> dxDeviceTable;
-        std::set<std::string> supportedDevices;
-        std::set<std::string> matchedTargets;
+    beStatus res = beStatus::beStatus_Invalid;
 
-        if (beUtils::GetAllGraphicsCards(dxDeviceTable, supportedDevices))
-        {
-            if (InitRequestedAsicList(Config(), supportedDevices, matchedTargets, false))
-            {
-                targets = matchedTargets;
-            }
-        }
+    res = kcUtils::WriteTextFile(fileName, isaText, m_LogCallback) ?
+        beKA::beStatus_SUCCESS : beKA::beStatus_WriteToFile_FAILED;
 
+    if (res != beKA::beStatus_SUCCESS)
+    {
+        rgLog::stdErr << STR_ERR_FAILED_ISA_FILE_WRITE << fileName << std::endl;
     }
-    return (!targets.empty());
+
+    return res;
 }

@@ -16,6 +16,21 @@ public:
     // The RGA data model version that this build uses.
     static std::string GetRGADataModelVersion();
 
+    // Append a new XML element to the given parent node.
+    template <typename T>
+    static void AppendXMLElement(tinyxml2::XMLDocument &xmlDoc, tinyxml2::XMLElement* pParentElement, const char* pElemName, T elemValue)
+    {
+        if (pParentElement != nullptr && pElemName != nullptr)
+        {
+            tinyxml2::XMLElement* pElem = xmlDoc.NewElement(pElemName);
+            if (pElem != nullptr)
+            {
+                pElem->SetText(elemValue);
+                pParentElement->InsertEndChild(pElem);
+            }
+        }
+    }
+
 private:
     rgXMLUtils() = default;
     ~rgXMLUtils() = default;

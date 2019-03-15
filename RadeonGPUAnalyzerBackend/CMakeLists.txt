@@ -31,9 +31,9 @@ configure_file (
 
 # Include directories
 include_directories("${PROJECT_SOURCE_DIR}/../")
-include_directories("${PROJECT_SOURCE_DIR}/include")
-include_directories("${PROJECT_SOURCE_DIR}/include/Common")
-include_directories("${PROJECT_SOURCE_DIR}/emulator/Parser")
+include_directories("${PROJECT_SOURCE_DIR}/Include")
+include_directories("${PROJECT_SOURCE_DIR}/Include/Common")
+include_directories("${PROJECT_SOURCE_DIR}/Emulator/Parser")
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/CElf/Include")
@@ -49,6 +49,7 @@ include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/CAL/8.95/include
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/ACL/TOT/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/APPSDK/3-0/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/include")
+include_directories("${PROJECT_SOURCE_DIR}/../Utils/Include")
 
 if (NOT IsDebian)
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0")
@@ -65,25 +66,25 @@ endif()
 
 # Source files that are common to Windows and Linux
 file(GLOB COMMON_SRC
-    "src/*.cpp"
-    "include/*.h"
-    "emulator/Parser/Instruction.cpp"
-    "emulator/Parser/ISAParser.cpp"
-    "emulator/Parser/ISAProgramGraph.cpp"
-    "emulator/Parser/ParserSI.cpp"
-    "emulator/Parser/ParserSIDS.cpp"
-    "emulator/Parser/ParserSIEXP.cpp"
-    "emulator/Parser/ParserSIMIMG.cpp"
-    "emulator/Parser/ParserSIMTBUF.cpp"
-    "emulator/Parser/ParserSIMUBUF.cpp"
-    "emulator/Parser/ParserSISMRD.cpp"
-    "emulator/Parser/ParserSISOP1.cpp"
-    "emulator/Parser/ParserSISOP2.cpp"
-    "emulator/Parser/ParserSISOPC.cpp"
-    "emulator/Parser/ParserSISOPK.cpp"
-    "emulator/Parser/ParserSISOPP.cpp"
-    "emulator/Parser/ParserSIVINTRP.cpp"
-    "emulator/Parser/ParserSIVOP.cpp"
+    "Src/*.cpp"
+    "Include/*.h"
+    "Emulator/Parser/Instruction.cpp"
+    "Emulator/Parser/ISAParser.cpp"
+    "Emulator/Parser/ISAProgramGraph.cpp"
+    "Emulator/Parser/ParserSI.cpp"
+    "Emulator/Parser/ParserSIDS.cpp"
+    "Emulator/Parser/ParserSIEXP.cpp"
+    "Emulator/Parser/ParserSIMIMG.cpp"
+    "Emulator/Parser/ParserSIMTBUF.cpp"
+    "Emulator/Parser/ParserSIMUBUF.cpp"
+    "Emulator/Parser/ParserSISMRD.cpp"
+    "Emulator/Parser/ParserSISOP1.cpp"
+    "Emulator/Parser/ParserSISOP2.cpp"
+    "Emulator/Parser/ParserSISOPC.cpp"
+    "Emulator/Parser/ParserSISOPK.cpp"
+    "Emulator/Parser/ParserSISOPP.cpp"
+    "Emulator/Parser/ParserSIVINTRP.cpp"
+    "Emulator/Parser/ParserSIVOP.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/DynamicLibraryModule/DynamicLibraryModule.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/DynamicLibraryModule/ACLModule.cpp"
     "${PROJECT_SOURCE_DIR}/../../Common/Src/ACLModuleManager/ACLModuleManager.cpp"

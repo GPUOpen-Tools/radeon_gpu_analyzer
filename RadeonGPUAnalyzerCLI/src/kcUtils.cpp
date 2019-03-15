@@ -6,27 +6,33 @@
 #include <tinyxml2/Include/tinyxml2.h>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTBaseTools/Include/gtString.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osFile.h>
 #include <AMDTOSWrappers/Include/osDirectory.h>
 #include <AMDTOSWrappers/Include/osProcess.h>
+#include <AMDTOSWrappers/Include/osEnvironmentVariable.h>
+#include <UpdateCheckApi.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Backend.
-#include <RadeonGPUAnalyzerBackend/include/beStaticIsaAnalyzer.h>
-#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beStaticIsaAnalyzer.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommander.h>
-#include <Utils/include/rgaXMLConstants.h>
-#include <Utils/include/rgaSharedUtils.h>
-#include <Utils/include/rgLog.h>
-
-
-// Shared between CLI and GUI.
-#include <RadeonGPUAnalyzerCLI/../Utils/include/rgaVersionInfo.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCliStringConstants.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommander.h>
+#include <Utils/Include/rgaXMLConstants.h>
+#include <Utils/Include/rgaSharedUtils.h>
+#include <Utils/Include/rgLog.h>
+#include <Utils/Include/rgaVersionInfo.h>
 
 #ifndef _WIN32
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -43,6 +49,8 @@ static const gtString  RGA_CLI_TEMP_STDOUT_FILE_NAME   = L"rga_stdout";
 static const gtString  RGA_CLI_TEMP_STDOUT_FILE_EXT    = L"txt";
 static const gtString  RGA_CLI_TEMP_STDERR_FILE_NAME   = L"rga_stderr";
 static const gtString  RGA_CLI_TEMP_STDERR_FILE_EXT    = L"txt";
+
+static const char*     STR_FOPEN_MODE_APPEND           = "a";
 
 #ifdef WIN32
 const int  WINDOWS_DATE_STRING_LEN          = 14;
@@ -92,8 +100,9 @@ bool kcUtils::ValidateShaderOutputDir(const std::string& outputFileName, std::st
 }
 
 
-bool kcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& baseOutputFileName, const std::string& defaultExt,
-                                                     const std::string& device, beProgramPipeline& pipelineFiles)
+bool kcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& baseOutputFileName, const std::string& defaultSuffix,
+                                                     const std::string& defaultExt, const std::string& device,
+                                                     beProgramPipeline& pipelineFiles)
 {
     // Clear the existing pipeline.
     pipelineFiles.ClearAll();
@@ -136,23 +145,34 @@ bool kcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& baseOutp
 
         // Make the adjustments.
         gtString fixedFileName;
-        fixedFileName << outputDir.directoryPath().asString(true) << device.c_str() << "_";
-        pipelineFiles.m_vertexShader << fixedFileName << KA_CLI_STR_VERTEX_ABBREVIATION;
-        pipelineFiles.m_tessControlShader << fixedFileName << KA_CLI_STR_TESS_CTRL_ABBREVIATION;
-        pipelineFiles.m_tessEvaluationShader << fixedFileName << KA_CLI_STR_TESS_EVAL_ABBREVIATION;
-        pipelineFiles.m_geometryShader << fixedFileName << KA_CLI_STR_GEOMETRY_ABBREVIATION;
-        pipelineFiles.m_fragmentShader << fixedFileName << KA_CLI_STR_FRAGMENT_ABBREVIATION;
-        pipelineFiles.m_computeShader << fixedFileName << KA_CLI_STR_COMPUTE_ABBREVIATION;
+        fixedFileName << outputDir.directoryPath().asString(true) << device.c_str();
 
         if (!originalFileName.isEmpty())
         {
-            pipelineFiles.m_vertexShader << "_" << originalFileName.asASCIICharArray();
-            pipelineFiles.m_tessControlShader << "_" << originalFileName.asASCIICharArray();
-            pipelineFiles.m_tessEvaluationShader << "_" << originalFileName.asASCIICharArray();
-            pipelineFiles.m_geometryShader << "_" << originalFileName.asASCIICharArray();
-            pipelineFiles.m_fragmentShader << "_" << originalFileName.asASCIICharArray();
-            pipelineFiles.m_computeShader << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_vertexShader << fixedFileName << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_tessControlShader << fixedFileName << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_tessEvaluationShader << fixedFileName << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_geometryShader << fixedFileName << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_fragmentShader << fixedFileName << "_" << originalFileName.asASCIICharArray();
+            pipelineFiles.m_computeShader << fixedFileName << "_" << originalFileName.asASCIICharArray();
         }
+        else if (!defaultSuffix.empty())
+        {
+            pipelineFiles.m_vertexShader << "_" << defaultSuffix.c_str();
+            pipelineFiles.m_tessControlShader << "_" << defaultSuffix.c_str();
+            pipelineFiles.m_tessEvaluationShader << "_" << defaultSuffix.c_str();
+            pipelineFiles.m_geometryShader << "_" << defaultSuffix.c_str();
+            pipelineFiles.m_fragmentShader << "_" << defaultSuffix.c_str();
+            pipelineFiles.m_computeShader << "_" << defaultSuffix.c_str();
+        }
+
+        // Stage token.
+        pipelineFiles.m_vertexShader << "_" << KA_CLI_STR_VERTEX_ABBREVIATION;
+        pipelineFiles.m_tessControlShader << "_" << KA_CLI_STR_TESS_CTRL_ABBREVIATION;
+        pipelineFiles.m_tessEvaluationShader << "_" << KA_CLI_STR_TESS_EVAL_ABBREVIATION;
+        pipelineFiles.m_geometryShader << "_" << KA_CLI_STR_GEOMETRY_ABBREVIATION;
+        pipelineFiles.m_fragmentShader << "_" << KA_CLI_STR_FRAGMENT_ABBREVIATION;
+        pipelineFiles.m_computeShader << "_" << KA_CLI_STR_COMPUTE_ABBREVIATION;
 
         pipelineFiles.m_vertexShader << "." << (originalFileExtension.isEmpty() ? defaultExt.c_str() : originalFileExtension.asASCIICharArray());
         pipelineFiles.m_tessControlShader << "." << (originalFileExtension.isEmpty() ? defaultExt.c_str() : originalFileExtension.asASCIICharArray());
@@ -344,12 +364,19 @@ bool kcUtils::DeleteFile(const gtString& fileFullPath)
     return ret;
 }
 
+bool kcUtils::DeleteFile(const std::string& fileFullPath)
+{
+    gtString gPath;
+    gPath << fileFullPath.c_str();
+    return DeleteFile(gPath);
+}
+
 void kcUtils::ReplaceStatisticsFile(const gtString& statisticsFile, const Config& config,
                                     const std::string& device, IStatisticsParser& statsParser, LoggingCallBackFunc_t logCb)
 {
     // Parse the backend statistics.
     beKA::AnalysisData statistics;
-    statsParser.ParseStatistics(statisticsFile, statistics);
+    statsParser.ParseStatistics(device, statisticsFile, statistics);
 
     // Delete the older statistics file.
     kcUtils::DeleteFile(statisticsFile);
@@ -358,7 +385,7 @@ void kcUtils::ReplaceStatisticsFile(const gtString& statisticsFile, const Config
     kcUtils::CreateStatisticsFile(statisticsFile, config, device, statistics, logCb);
 }
 
-void kcUtils::PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName,
+bool kcUtils::PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName,
                                           LoggingCallBackFunc_t pCallback, bool printCmd)
 {
     // Call the backend.
@@ -404,9 +431,11 @@ void kcUtils::PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtS
             pCallback(errMsg);
         }
     }
+
+    return (rc == beStatus_SUCCESS);
 }
 
-void kcUtils::GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
+bool kcUtils::GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
                                        LoggingCallBackFunc_t pCallback, bool perInstCfg, bool printCmd)
 {
     // Call the backend.
@@ -453,10 +482,12 @@ void kcUtils::GenerateControlFlowGraph(const gtString& isaFileName, const gtStri
         }
     }
 
+    return (rc == beStatus_SUCCESS);
 }
 
-void kcUtils::ConstructOutputFileName(const std::string& baseOutputFileName, const std::string& defaultExtension,
-                                      const std::string& kernelName, const std::string& deviceName, gtString& generatedFileName)
+void kcUtils::ConstructOutputFileName(const std::string& baseOutputFileName, const std::string& defaultSuffix,
+                                      const std::string& defaultExtension, const std::string& kernelName,
+                                      const std::string& deviceName, gtString& generatedFileName)
 {
     // Convert the base output file name to gtString.
     gtString baseOutputFileNameAsGtStr;
@@ -476,8 +507,9 @@ void kcUtils::ConstructOutputFileName(const std::string& baseOutputFileName, con
     }
 
     // Fix the user's file name to generate a unique output file name in the Analyzer CLI format.
-    gtString fixedFileName;
+    gtString fixedFileName, suffix;
     fixedFileName << deviceName.c_str();
+    suffix << defaultSuffix.c_str();
 
     if (!kernelName.empty())
     {
@@ -489,14 +521,9 @@ void kcUtils::ConstructOutputFileName(const std::string& baseOutputFileName, con
         fixedFileName << kernelName.c_str();
     }
 
-    if (!fileName.isEmpty())
+    if (!suffix.isEmpty() || !fileName.isEmpty())
     {
-        if (!fixedFileName.isEmpty())
-        {
-            fixedFileName << "_";
-        }
-
-        fixedFileName << fileName;
+        fixedFileName << (fixedFileName.isEmpty() ? "" : "_") << (fileName.isEmpty() ? suffix : fileName);
     }
 
     outputFilePath.setFileName(fixedFileName);
@@ -513,6 +540,32 @@ void kcUtils::ConstructOutputFileName(const std::string& baseOutputFileName, con
 
     // Set the output string.
     generatedFileName = outputFilePath.asString();
+}
+
+void kcUtils::ConstructOutputFileName(const std::string& baseOutputFileName, const std::string& defaultSuffix,
+                                      const std::string& defaultExtension, const std::string& entryPointName,
+                                      const std::string& deviceName, std::string& generatedFileName)
+{
+    gtString  gOutFileName;
+    ConstructOutputFileName(baseOutputFileName, defaultSuffix, defaultExtension, entryPointName, deviceName, gOutFileName);
+    generatedFileName = gOutFileName.asASCIICharArray();
+}
+
+void kcUtils::AppendSuffix(std::string& fileName, const std::string& suffix)
+{
+    if (!suffix.empty())
+    {
+        gtString gFileName, gSuffix;
+        gFileName << fileName.c_str();
+        gSuffix << suffix.c_str();
+        osFilePath filePath(gFileName);
+        gtString baseFileName;
+        filePath.getFileName(baseFileName);
+        baseFileName += L"_";
+        baseFileName += gSuffix;
+        filePath.setFileName(baseFileName);
+        fileName = filePath.asString().asASCIICharArray();
+    }
 }
 
 gtString kcUtils::ConstructTempFileName(const gtString& prefix, const gtString & ext)
@@ -538,11 +591,15 @@ gtString kcUtils::ConstructTempFileName(const gtString& prefix, const gtString &
         tempFileName.append(ext);
         tempFilePath.setFileName(tempFileName);
 
+        // Ensure that the file name is unique for any invocation by the existing CLI process.
+        static unsigned uniqueSuffix = 0;
+
         uint32_t suffixNum = 0;
         while (tempFilePath.exists() && suffixNum < MAX_ATTEMPTS)
         {
             tempFileName = tempFileBaseName;
             tempFileName.appendUnsignedIntNumber(suffixNum++);
+            tempFileName.appendUnsignedIntNumber(uniqueSuffix++);
             tempFileName.append(L".");
             tempFileName.append(ext);
             tempFilePath.setFileName(tempFileName);
@@ -552,6 +609,15 @@ gtString kcUtils::ConstructTempFileName(const gtString& prefix, const gtString &
     }
 
     return ret;
+}
+
+std::string kcUtils::ConstructTempFileName(const std::string & prefix, const std::string & ext)
+{
+    gtString gPrefix, gExt, gFileName;
+    gPrefix << prefix.c_str();
+    gExt << ext.c_str();
+    gFileName = ConstructTempFileName(gPrefix, gExt);
+    return gFileName.asASCIICharArray();
 }
 
 bool kcUtils::GetMarketingNameToCodenameMapping(DeviceNameMap& cardsMap)
@@ -581,6 +647,7 @@ static bool ResolveMatchedDevices(const kcUtils::DeviceNameMap& matchedDevices, 
 {
     bool  status = false;
     std::stringstream  outMsg, errMsg;
+
     // Routine printing the architecture name and all its device names to required stream.
     auto  PrintArchAndDevices = [&](const kcUtils::DeviceNameMap::value_type& arch, std::stringstream& s)
     {
@@ -590,6 +657,7 @@ static bool ResolveMatchedDevices(const kcUtils::DeviceNameMap& matchedDevices, 
             s << "\t" << marketingName << std::endl;
         }
     };
+
     if (matchedDevices.size() == 0)
     {
         if (printInfo && printUnknownDeviceError)
@@ -618,11 +686,14 @@ static bool ResolveMatchedDevices(const kcUtils::DeviceNameMap& matchedDevices, 
             PrintArchAndDevices(arch, errMsg);
         }
     }
+
     rgLog::stdOut << outMsg.str() << rgLog::flush;
+
     if (!errMsg.str().empty())
     {
         rgLog::stdErr << errMsg.str() << std::endl;
     }
+
     return status;
 }
 
@@ -732,7 +803,7 @@ bool GetRGATempDir(osDirectory & dir)
     return ret;
 }
 
-bool kcUtils::PrintAsicList(std::ostream& log, const std::set<std::string>& disabledDevices, const std::set<std::string>& reqdDevices)
+bool kcUtils::PrintAsicList(const std::set<std::string>& requiredDevices, const std::set<std::string>& disabledDevices)
 {
     // We do not want to display names that contain these strings.
     const char* FILTER_INDICATOR_1 = ":";
@@ -749,20 +820,27 @@ bool kcUtils::PrintAsicList(std::ostream& log, const std::set<std::string>& disa
             // If "disdDevices" is provided, do not pring devices from this set.
             // The "reqdDevices" contains short arch names (like "gfx804"), while "cardsMapping" has extended names: "gfx804 (Graphics IP v8)".
             auto isInDeviceList = [](const std::set<std::string>& list, const std::string & device)
-                                    { for (auto & d : list) { if (device.find(d) != std::string::npos) return true; } return false; };
-
-            if ((reqdDevices.empty() || isInDeviceList(reqdDevices, pair.first)) && (disabledDevices.empty() || !isInDeviceList(disabledDevices, pair.first)))
             {
-                log << pair.first << std::endl;
+                for (auto & d : list)
+                    if (kcUtils::ToLower(device).find(kcUtils::ToLower(d)) != std::string::npos)
+                        return true;
+                return false;
+            };
+
+            if ((requiredDevices.empty() || isInDeviceList(requiredDevices, pair.first)) &&
+                (disabledDevices.empty() || !isInDeviceList(disabledDevices, pair.first)))
+            {
+                rgLog::stdOut << rgLog::noflush << pair.first << std::endl;
                 for (const std::string& card : pair.second)
                 {
                     // Filter out internal names.
                     if (card.find(FILTER_INDICATOR_1) == std::string::npos &&
                         card.find(FILTER_INDICATOR_2) == std::string::npos)
                     {
-                        log << "\t" << card << std::endl;
+                        rgLog::stdOut << "\t" << card << std::endl;
                     }
                 }
+                rgLog::stdOut << rgLog::flush;
             }
         }
         result = true;
@@ -782,6 +860,16 @@ bool kcUtils::GetLogFileName(std::string& logFileName)
         logFile.setFileName(RGA_CLI_LOG_FILE_NAME);
         logFile.setFileExtension(RGA_CLI_LOG_FILE_EXT);
         logFileName = logFile.asString().asASCIICharArray();
+
+        // Wrap the file name with double quotes in case that it
+        // contains a whitespace.
+        if (logFileName.find_first_not_of(' ') != std::string::npos)
+        {
+            std::stringstream wrappedFileName;
+            wrappedFileName << "\"" << logFileName << "\"";
+            logFileName = wrappedFileName.str();
+        }
+
         ret = true;
     }
     return ret;
@@ -801,6 +889,13 @@ bool kcUtils::GetParsedISAFileName(const std::string& isaFileName, std::string& 
 std::string kcUtils::Quote(const std::string& str)
 {
     return (str.find(' ') == std::string::npos ? str : (std::string("\"") + str + '"'));
+}
+
+std::string kcUtils::ToLower(const std::string& str)
+{
+    std::string lstr = str;
+    std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](const char& c) {return std::tolower(c);});
+    return lstr;
 }
 
 void kcUtils::DeletePipelineFiles(const beProgramPipeline & files)
@@ -826,8 +921,65 @@ void kcUtils::PrintRgaVersion()
     std::cout << STR_RGA_PRODUCT_NAME << " " << STR_RGA_VERSION_PREFIX << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM << std::endl;
 }
 
+#ifdef _WIN32
 kcUtils::ProcessStatus kcUtils::LaunchProcess(const std::string& execPath, const std::string& args, const std::string& dir,
-                                              unsigned long timeOut, bool printCmd, std::string& stdOut, std::string& stdErr, long& exitCode)
+    unsigned long timeOut, bool printCmd, std::string& stdOut, std::string& stdErr, long& exitCode)
+{
+    ProcessStatus status = ProcessStatus::Success;
+    exitCode = 0;
+
+    // Set working directory, executable and arguments.
+    osFilePath  workDir;
+    if (dir == "")
+    {
+        workDir.setPath(osFilePath::OS_CURRENT_DIRECTORY);
+    }
+    else
+    {
+        gtString  gtDir;
+        gtDir << dir.c_str();
+        workDir.setFileDirectory(gtDir);
+    }
+
+    // Log the invocation event.
+    std::stringstream msg;
+    msg << KC_STR_LAUNCH_EXTERNAL_PROCESS << execPath.c_str()
+        << " " << args.c_str();
+
+    rgLog::file << msg.str() << std::endl;
+
+    if (printCmd)
+    {
+        rgLog::stdOut << msg.str() << std::endl;
+    }
+
+    // Construct the invocation command.
+    std::stringstream cmd;
+    cmd << execPath.c_str() << " " << args.c_str();
+
+    // Launch the process.
+    bool shouldCancel = false;
+    gtString workingDir = workDir.asString();
+    gtString cmdOutput;
+    gtString cmdOutputErr;
+    bool isLaunchSuccess = osExecAndGrabOutputAndError(cmd.str().c_str(), shouldCancel,
+        workingDir, cmdOutput, cmdOutputErr);
+
+    // Read stdout and stderr.
+    stdOut = cmdOutput.asASCIICharArray();
+    stdErr = cmdOutputErr.asASCIICharArray();
+
+
+    if (!isLaunchSuccess)
+    {
+        status = ProcessStatus::LaunchFailed;
+    }
+
+    return status;
+}
+#else
+kcUtils::ProcessStatus kcUtils::LaunchProcess(const std::string& execPath, const std::string& args, const std::string& dir,
+    unsigned long timeOut, bool printCmd, std::string& stdOut, std::string& stdErr, long& exitCode)
 {
     osProcessId      cmplrProcID;
     osProcessHandle  cmplrProcHandle;
@@ -861,9 +1013,15 @@ kcUtils::ProcessStatus kcUtils::LaunchProcess(const std::string& execPath, const
     }
     else
     {
+        std::stringstream msg;
+        msg << KC_STR_LAUNCH_EXTERNAL_PROCESS << gtExecPath.asASCIICharArray()
+            << " " << gtArgs.asASCIICharArray();
+
+        rgLog::file << msg.str() << std::endl;
+
         if (printCmd)
         {
-            std::cout << std::endl << KC_STR_LAUNCH_EXTERNAL_PROCESS << gtExecPath.asASCIICharArray() << " " << gtArgs.asASCIICharArray() << std::endl;
+            rgLog::stdOut << msg.str() << std::endl;
         }
 
         gtArgs += L" >";
@@ -873,13 +1031,13 @@ kcUtils::ProcessStatus kcUtils::LaunchProcess(const std::string& execPath, const
 
         // Launch a process.
         bool  procStatus = osLaunchSuspendedProcess(gtExecPath,
-                                                    gtArgs,
-                                                    workDir,
-                                                    cmplrProcID,
-                                                    cmplrProcHandle,
-                                                    cmplrThreadHandle,
-                                                    false,  // Don't create a window
-                                                    true);  // Redirect stdout & stderr
+            gtArgs,
+            workDir,
+            cmplrProcID,
+            cmplrProcHandle,
+            cmplrThreadHandle,
+            false,  // Don't create a window
+            true);  // Redirect stdout & stderr
 
         if (procStatus && osResumeSuspendedProcess(cmplrProcID, cmplrProcHandle, cmplrThreadHandle, false))
         {
@@ -922,6 +1080,7 @@ kcUtils::ProcessStatus kcUtils::LaunchProcess(const std::string& execPath, const
 
     return status;
 }
+#endif
 
 bool kcUtils::FileNotEmpty(const std::string fileName)
 {
@@ -1063,401 +1222,6 @@ bool kcUtils::WriteTextFile(const std::string& fileName, const std::string& cont
     return ret;
 }
 
-// Creates an element that has value of any primitive type.
-template <typename T>
-static void AppendXMLElement(tinyxml2::XMLDocument &xmlDoc, tinyxml2::XMLElement* pParent, const char* pElemName, T elemValue)
-{
-    tinyxml2::XMLElement* pElem = xmlDoc.NewElement(pElemName);
-    pElem->SetText(elemValue);
-    pParent->InsertEndChild(pElem);
-}
-
-// Extract the CAL (generation) and code name.
-// Example of "deviceName" format: "Baffin (Graphics IP v8)"
-// Returned value: {"Graphics IP v8", "Baffin"}
-static std::pair<std::string, std::string>
-GetGenAndCodeNames(const std::string& deviceName)
-{
-    size_t  codeNameOffset = deviceName.find('(');
-    std::string  codeName = (codeNameOffset != std::string::npos ? deviceName.substr(0, codeNameOffset - 1) : deviceName);
-    std::string  genName  = (codeNameOffset != std::string::npos ? deviceName.substr(codeNameOffset + 1, deviceName.size() - codeNameOffset - 2) : "");
-    return { genName, codeName };
-}
-
-static bool AddSupportedGPUInfo(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement& parent, const std::set<std::string>& targets)
-{
-    const char* FILTER_INDICATOR_1 = ":";
-    const char* FILTER_INDICATOR_2 = "Not Used";
-    bool  ret;
-
-    tinyxml2::XMLElement*  pSupportedGPUs = doc.NewElement(XML_NODE_SUPPORTED_GPUS);
-
-    // Add supported GPUS info.
-    kcUtils::DeviceNameMap  cardsMap;
-    if ((ret = kcUtils::GetMarketingNameToCodenameMapping(cardsMap)) == true)
-    {
-        // Sort the devices by Generation name.
-        std::vector<std::pair<std::string, std::set<std::string>>>  devices(cardsMap.begin(), cardsMap.end());
-        std::sort(devices.begin(), devices.end(),
-                  [](const std::pair<std::string, std::set<std::string>>& d1, const std::pair<std::string, std::set<std::string>> &d2)
-                    { return (GetGenAndCodeNames(d1.first).first < GetGenAndCodeNames(d2.first).first); });
-
-        for (const auto& device : devices)
-        {
-            std::string  deviceName = device.first, codeName, genName;
-            std::tie(genName, codeName) = GetGenAndCodeNames(deviceName);
-            // Skip targets that are not supported in this mode.
-            if (targets.count(codeName) == 0)
-            {
-                continue;
-            }
-            tinyxml2::XMLElement*  pGPU = doc.NewElement(XML_NODE_GPU);
-            tinyxml2::XMLElement*  pGen = doc.NewElement(XML_NODE_GENERATION);
-            tinyxml2::XMLElement*  pCodeName = doc.NewElement(XML_NODE_CODENAME);
-            pGen->SetText(genName.c_str());
-            pCodeName->SetText(codeName.c_str());
-            pGPU->LinkEndChild(pGen);
-            pGPU->LinkEndChild(pCodeName);
-
-            // Add the list of marketing names.
-            std::stringstream  mktNames;
-            bool  first = true;
-            for (const std::string& mktName : device.second)
-            {
-                if (mktName.find(FILTER_INDICATOR_1) == std::string::npos && mktName.find(FILTER_INDICATOR_2) == std::string::npos)
-                {
-                    mktNames << (first ? "" : ", ") << mktName;
-                    first = false;
-                }
-            }
-
-            tinyxml2::XMLElement*  pPublicNames = doc.NewElement(XML_NODE_PRODUCT_NAMES);
-            pPublicNames->SetText(mktNames.str().c_str());
-            pGPU->LinkEndChild(pPublicNames);
-            pSupportedGPUs->LinkEndChild(pGPU);
-        }
-    }
-
-    if (ret)
-    {
-        parent.LinkEndChild(pSupportedGPUs);
-    }
-
-    return ret;
-}
-
-static bool  AddModeInfo(tinyxml2::XMLDocument& doc, SourceLanguage lang)
-{
-    std::set<std::string> targets;
-    std::string  mode;
-    bool  ret = true;
-
-    switch (lang)
-    {
-        case SourceLanguage::SourceLanguage_Rocm_OpenCL:  mode = XML_MODE_ROCM_CL; break;
-        case SourceLanguage::SourceLanguage_OpenCL:       mode = XML_MODE_CL;      break;
-        case SourceLanguage::SourceLanguage_HLSL:         mode = XML_MODE_HLSL;    break;
-        case SourceLanguage::SourceLanguage_GLSL_OpenGL:  mode = XML_MODE_OPENGL;  break;
-        case SourceLanguage::SourceLanguage_GLSL_Vulkan:  mode = XML_MODE_VULKAN;  break;
-
-        default: ret = false;
-    }
-
-    if (ret)
-    {
-        tinyxml2::XMLElement  *pNameElem, *pModeElem = doc.NewElement(XML_NODE_MODE);
-        ret = ret && (pModeElem != nullptr);
-        if (ret)
-        {
-            doc.LinkEndChild(pModeElem);
-            pNameElem = doc.NewElement(XML_NODE_NAME);
-            if ((ret = (pNameElem != nullptr)) == true)
-            {
-                pModeElem->LinkEndChild(pNameElem);
-                pNameElem->SetText(mode.c_str());
-            }
-        }
-
-        ret = ret && kcCLICommander::GetSupportedTargets(lang, targets);
-        ret = ret && AddSupportedGPUInfo(doc, *pModeElem, targets);
-    }
-
-    return ret;
-}
-
-bool kcUtils::GenerateVersionInfoFile(const std::string & fileName)
-{
-    bool  ret = true;
-
-    tinyxml2::XMLDocument  doc;
-
-    // Add the RGA CLI version.
-    tinyxml2::XMLElement*  pVersionElem = doc.NewElement(XML_NODE_VERSION);
-    std::stringstream  versionTag;
-    versionTag << STR_RGA_VERSION << "." << STR_RGA_BUILD_NUM;
-    pVersionElem->SetText(versionTag.str().c_str());
-    doc.LinkEndChild(pVersionElem);
-
-    // Add the RGA CLI build date.
-    // First, reformat the Windows date string provided in format "Day dd/mm/yyyy" to format "yyyy-mm-dd".
-    std::string  dateString = STR_RGA_BUILD_DATE;
-
-#ifdef WIN32
-    ret = rgaSharedUtils::ConvertDateString(dateString);
-#endif
-
-    tinyxml2::XMLElement*  pBuildDateElem = doc.NewElement(XML_NODE_BUILD_DATE);
-    pBuildDateElem->SetText(dateString.c_str());
-    doc.LinkEndChild(pBuildDateElem);
-
-    // Add supported devices for each mode.
-    ret = ret && AddModeInfo(doc, SourceLanguage::SourceLanguage_Rocm_OpenCL);
-    ret = ret && AddModeInfo(doc, SourceLanguage::SourceLanguage_OpenCL);
-    ret = ret && AddModeInfo(doc, SourceLanguage::SourceLanguage_HLSL);
-    ret = ret && AddModeInfo(doc, SourceLanguage::SourceLanguage_GLSL_OpenGL);
-    ret = ret && AddModeInfo(doc, SourceLanguage::SourceLanguage_GLSL_Vulkan);
-
-    if (ret)
-    {
-        if (fileName.empty())
-        {
-            doc.Print();
-        }
-        else
-        {
-            ret = (doc.SaveFile(fileName.c_str()) == tinyxml2::XML_SUCCESS);
-        }
-    }
-
-    return ret;
-}
-
-static bool AddOutputFile(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement& parent,
-                          const std::string& fileName, const char* tag)
-{
-    bool  ret = true;
-    if (!fileName.empty())
-    {
-        tinyxml2::XMLElement*  pElement = doc.NewElement(tag);
-        if (pElement != nullptr)
-        {
-            pElement->SetText(fileName.c_str());
-            ret = (parent.LinkEndChild(pElement) != nullptr);
-        }
-        else
-        {
-            ret = false;
-        }
-    }
-    return ret;
-}
-
-static bool AddEntryType(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* pEntry, rgEntryType entryType)
-{
-    bool  ret = (pEntry != nullptr);
-    tinyxml2::XMLElement*  pEntryType;
-    if (ret)
-    {
-        pEntryType = doc.NewElement(XML_NODE_TYPE);
-        ret = ret && (pEntryType != nullptr && pEntry->LinkEndChild(pEntryType) != nullptr);
-    }
-    if (ret)
-    {
-        std::string  entryTypeStr = "";
-        switch (entryType)
-        {
-        case rgEntryType::OpenCL_Kernel:
-            entryTypeStr = XML_SHADER_OPENCL;
-            break;
-        case rgEntryType::DX_Vertex:
-            entryTypeStr = XML_SHADER_DX_VERTEX;
-            break;
-        case rgEntryType::DX_Hull:
-            entryTypeStr = XML_SHADER_DX_HULL;
-            break;
-        case rgEntryType::DX_Domain:
-            entryTypeStr = XML_SHADER_DX_DOMAIN;
-            break;
-        case rgEntryType::DX_Geometry:
-            entryTypeStr = XML_SHADER_DX_GEOMETRY;
-            break;
-        case rgEntryType::DX_Pixel:
-            entryTypeStr = XML_SHADER_DX_PIXEL;
-            break;
-        case rgEntryType::DX_Compute:
-            entryTypeStr = XML_SHADER_DX_COMPUTE;
-            break;
-        case rgEntryType::GL_Vertex:
-            entryTypeStr = XML_SHADER_GL_VERTEX;
-            break;
-        case rgEntryType::GL_TessControl:
-            entryTypeStr = XML_SHADER_GL_TESS_CTRL;
-            break;
-        case rgEntryType::GL_TessEval:
-            entryTypeStr = XML_SHADER_GL_TESS_EVAL;
-            break;
-        case rgEntryType::GL_Geometry:
-            entryTypeStr = XML_SHADER_GL_GEOMETRY;
-            break;
-        case rgEntryType::GL_Fragment:
-            entryTypeStr = XML_SHADER_GL_FRAGMENT;
-            break;
-        case rgEntryType::GL_Compute:
-            entryTypeStr = XML_SHADER_GL_COMPUTE;
-            break;
-        case rgEntryType::Unknown:
-            entryTypeStr = XML_SHADER_UNKNOWN;
-            break;
-        default:
-            ret = false;
-            break;
-        }
-
-        if (ret)
-        {
-            pEntryType->SetText(entryTypeStr.c_str());
-        }
-    }
-
-    return ret;
-}
-
-static bool AddOutputFiles(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* pEntry,
-                           const std::string& target, const rgOutputFiles& outFiles)
-{
-    bool  ret = false;
-    tinyxml2::XMLElement* pOutput = doc.NewElement(XML_NODE_OUTPUT);
-    if (pEntry != nullptr && pOutput != nullptr && pEntry->LinkEndChild(pOutput) != nullptr)
-    {
-        // Add target GPU.
-        tinyxml2::XMLElement* pTarget = doc.NewElement(XML_NODE_TARGET);
-        ret = (pTarget != nullptr && pOutput->LinkEndChild(pTarget) != nullptr);
-        if (ret)
-        {
-            pTarget->SetText(target.c_str());
-        }
-        // Add output files.
-        if (!outFiles.m_isIsaFileTemp)
-        {
-            ret = ret && AddOutputFile(doc, *pOutput, outFiles.m_isaFile, XML_NODE_ISA);
-        }
-        ret = ret && AddOutputFile(doc, *pOutput, outFiles.m_isaCsvFile,  XML_NODE_CSV_ISA);
-        ret = ret && AddOutputFile(doc, *pOutput, outFiles.m_statFile,    XML_NODE_RES_USAGE);
-        ret = ret && AddOutputFile(doc, *pOutput, outFiles.m_liveregFile, XML_NODE_LIVEREG);
-        ret = ret && AddOutputFile(doc, *pOutput, outFiles.m_cfgFile,     XML_NODE_CFG);
-    }
-    return ret;
-}
-
-bool kcUtils::GenerateCliMetadataFile(const std::string& fileName, const rgFileEntryData& fileEntryData,
-                                      const rgOutputMetadata& outFiles)
-{
-    tinyxml2::XMLDocument  doc;
-    std::string  currentDevice = "";
-
-    tinyxml2::XMLElement* pDataModelElem = doc.NewElement(XML_NODE_DATA_MODEL);
-    bool  ret = (pDataModelElem != nullptr && doc.LinkEndChild(pDataModelElem) != nullptr);
-    if (ret)
-    {
-        pDataModelElem->SetText(STR_RGA_OUTPUT_MD_DATA_MODEL);
-    }
-    tinyxml2::XMLElement* pMetadata = doc.NewElement(XML_NODE_METADATA);
-    ret = ret && (pMetadata != nullptr && doc.LinkEndChild(pMetadata) != nullptr);
-
-    // Add binary name.
-    if (!outFiles.empty() && !outFiles.begin()->second.m_isBinFileTemp)
-    {
-        tinyxml2::XMLElement* pBinary = doc.NewElement(XML_NODE_BINARY);
-        ret = ret && (pBinary != nullptr && pMetadata->LinkEndChild(pBinary) != nullptr);
-        if (ret)
-        {
-            pBinary->SetText((outFiles.begin())->second.m_binFile.c_str());
-        }
-    }
-
-    if (ret)
-    {
-        // Map: kernel_name --> vector{pair{device, out_files}}.
-        std::map<std::string, std::vector<std::pair<std::string, rgOutputFiles>>>  outFilesMap;
-
-        // Map: input_file_name --> outFilesMap.
-        std::map<std::string, decltype(outFilesMap)>  metadataTable;
-
-        // Reorder the output file metadata in "kernel-first" order.
-        for (const auto& outFileSet : outFiles)
-        {
-            const std::string& device = outFileSet.first.first;
-            const std::string& kernel = outFileSet.first.second;
-
-            outFilesMap[kernel].push_back({ device, outFileSet.second });
-        }
-
-        // Now, try to find a source file for each entry in "outFilesMap" and fill the "metadataTable".
-        // Split the "outFilesMap" into parts so that each part contains entries from the same source file.
-        // If no source file is found for an entry, use "<Unknown>" source file name.
-        for (auto& outFileItem : outFilesMap)
-        {
-            const std::string&  entryName = outFileItem.first;
-            std::string  srcFileName;
-
-            // Try to find a source file corresponding to this entry name.
-            auto inputFileInfo = std::find_if(fileEntryData.begin(), fileEntryData.end(),
-                                              [&](rgFileEntryData::const_reference entryInfo)
-                                                 { for (auto entry : entryInfo.second) { if (std::get<0>(entry) == entryName) return true; } return false; });
-
-            srcFileName = (inputFileInfo == fileEntryData.end() ? XML_UNKNOWN_SOURCE_FILE : inputFileInfo->first);
-            metadataTable[srcFileName].insert(outFileItem);
-        }
-
-        // Store the "metadataTable" structure to the session metadata file.
-        for (auto& inputFileData : metadataTable)
-        {
-            if (ret)
-            {
-                // Add input file info.
-                tinyxml2::XMLElement* pInputFile = doc.NewElement(XML_NODE_INPUT_FILE);
-                ret = ret && (pInputFile != nullptr && pMetadata->LinkEndChild(pInputFile) != nullptr);
-                tinyxml2::XMLElement* pInputFilePath = doc.NewElement(XML_NODE_PATH);
-                ret = ret && (pInputFilePath != nullptr && pInputFile->LinkEndChild(pInputFilePath) != nullptr);
-
-                if (ret)
-                {
-                    pInputFilePath->SetText(inputFileData.first.c_str());
-
-                    // Add entry points info.
-                    for (auto& entryData : inputFileData.second)
-                    {
-                        tinyxml2::XMLElement* pEntry = doc.NewElement(XML_NODE_ENTRY);
-                        ret = (pEntry != nullptr && pInputFile->LinkEndChild(pEntry) != nullptr);
-                        // Add entry name & type.
-                        tinyxml2::XMLElement* pName = doc.NewElement(XML_NODE_NAME);
-                        ret = ret && (pName != nullptr && pEntry->LinkEndChild(pName) != nullptr);
-                        if (ret && entryData.second.size() > 0)
-                        {
-                            pName->SetText(entryData.first.c_str());
-                            rgOutputFiles  outFileData = entryData.second[0].second;
-                            ret = ret && AddEntryType(doc, pEntry, outFileData.m_entryType);
-                        }
-                        // Add "Output" nodes.
-                        for (const std::pair<std::string, rgOutputFiles>& deviceAndOutFiles : entryData.second)
-                        {
-                            ret = ret && AddOutputFiles(doc, pEntry, deviceAndOutFiles.first, deviceAndOutFiles.second);
-                            if (!ret)
-                            {
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    ret = ret && (doc.SaveFile(fileName.c_str()) == tinyxml2::XML_SUCCESS);
-
-    return ret;
-}
-
 // Get current system time.
 static bool  CurrentTime(struct tm& time)
 {
@@ -1503,7 +1267,7 @@ static bool  DeleteOldLogs()
                         time_t  curTime = std::mktime(&time);
                         if (std::difftime(curTime, fileTime) > oneWeekSeconds)
                         {
-                            std::remove(path.asString().asASCIICharArray());
+                            ret = (std::remove(path.asString().asASCIICharArray()) == 0);
                         }
                     }
                 }
@@ -1516,10 +1280,11 @@ static bool  DeleteOldLogs()
 // Perform log file initialization.
 bool  kcUtils::InitCLILogFile(const Config& config)
 {
-    struct tm   tt;
-
     bool  status = DeleteOldLogs();
-    status = status && CurrentTime(tt);
+    if (!status)
+    {
+        rgLog::stdErr << STR_WRN_FAILED_DELETE_LOG_FILES << std::endl;
+    }
 
     std::string  logFileName = config.m_logFile;
     if (logFileName.empty())
@@ -1528,19 +1293,31 @@ bool  kcUtils::InitCLILogFile(const Config& config)
         logFileName = gFileName.asASCIICharArray();
     }
 
-    if (status)
+    if ((status = !logFileName.empty()) == true)
     {
-        auto ZeroExt = [](int n) {std::string nS = std::to_string(n); return (n < 10 ? std::string("0") + nS : nS);};
+        struct tm   tt;
+        status = CurrentTime(tt);
 
-        // Append current date/time to the log file name.
-        std::stringstream  suffix;
-        suffix << "-" << std::to_string(tt.tm_year + 1900) << ZeroExt(tt.tm_mon + 1) << ZeroExt(tt.tm_mday) <<
-                    "-" << ZeroExt(tt.tm_hour) << ZeroExt(tt.tm_min) << ZeroExt(tt.tm_sec);
+        auto ZeroExt = [](int n) { std::string nS = std::to_string(n); return (n < 10 ? std::string("0") + nS : nS); };
 
-        size_t  extOffset = logFileName.rfind('.');
-        logFileName.insert((extOffset == std::string::npos ? logFileName.size() : extOffset), suffix.str());
+        // Add time prefix to the log file name if file name is not specified by the "--log" option.
+        if (config.m_logFile.empty())
+        {
+            // Append current date/time to the log file name.
+            std::stringstream  suffix;
+            suffix << "-" << std::to_string(tt.tm_year + 1900) << ZeroExt(tt.tm_mon + 1) << ZeroExt(tt.tm_mday) <<
+                "-" << ZeroExt(tt.tm_hour) << ZeroExt(tt.tm_min) << ZeroExt(tt.tm_sec);
 
-        if ((status = rgLog::OpenLogFile(logFileName)) == false)
+            size_t  extOffset = logFileName.rfind('.');
+            logFileName.insert((extOffset == std::string::npos ? logFileName.size() : extOffset), suffix.str());
+        }
+
+        // Open log file.
+        if ((status = rgLog::OpenLogFile(logFileName)) == true)
+        {
+            rgLog::file << KC_STR_CLI_LOG_HEADER << std::endl;
+        }
+        else
         {
             rgLog::stdErr << STR_ERR_FAILED_OPEN_LOG_FILE << logFileName << std::endl;
         }
@@ -1552,7 +1329,119 @@ bool  kcUtils::InitCLILogFile(const Config& config)
 bool kcUtils::StrCmpNoCase(const std::string & s1, const std::string & s2)
 {
     std::string s1_u = s1, s2_u = s2;
-    std::transform(s1_u.begin(), s1_u.end(), s1_u.begin(), [](unsigned char c) {return std::toupper(c); });
-    std::transform(s2_u.begin(), s2_u.end(), s2_u.begin(), [](unsigned char c) {return std::toupper(c); });
+    std::transform(s1_u.begin(), s1_u.end(), s1_u.begin(), [](unsigned char c) {return std::toupper(c);});
+    std::transform(s2_u.begin(), s2_u.end(), s2_u.begin(), [](unsigned char c) {return std::toupper(c);});
     return (s1_u == s2_u);
+}
+
+std::string kcUtils::GetFileExt(const std::string & filePath)
+{
+    // Try deducing from the extension.
+    gtString  gfilePath;
+    gfilePath << filePath.c_str();
+    osFilePath path(gfilePath);
+    gtString gFileExt;
+    return (path.getFileExtension(gFileExt) ? gFileExt.asASCIICharArray() : "");
+}
+
+bool kcUtils::SetEnvrironmentVariable(const::std::string& varName, const std::string varValue)
+{
+    // Convert to gtString.
+    gtString varNameGtStr;
+    gtString varValueGtStr;
+    varNameGtStr << varName.c_str();
+    varValueGtStr << varValue.c_str();
+
+    // Set the environment variable.
+    osEnvironmentVariable envVarVkLoaderDebug(varNameGtStr, varValueGtStr);
+    bool ret = osSetCurrentProcessEnvVariable(envVarVkLoaderDebug);
+
+    return ret;
+}
+
+void kcUtils::CheckForUpdates()
+{
+    UpdateCheck::VersionInfo rgaCliVersion;
+    std::string buildDateString(STR_RGA_BUILD_DATE);
+
+    if (buildDateString == STR_RGA_BUILD_DATE_DEV)
+    {
+        // Pretend a dev build has no version so that
+        // all public versions are reported as being newer.
+        rgaCliVersion.m_major = 0;
+        rgaCliVersion.m_minor = 0;
+        rgaCliVersion.m_patch = 0;
+        rgaCliVersion.m_build = 0;
+    }
+    else
+    {
+        rgaCliVersion.m_major = RGA_VERSION_MAJOR;
+        rgaCliVersion.m_minor = RGA_VERSION_MINOR;
+        rgaCliVersion.m_patch = RGA_VERSION_UPDATE;
+        rgaCliVersion.m_build = 0;
+    }
+
+    UpdateCheck::UpdateInfo updateInfo;
+    string errorMessage;
+
+    cout << "Checking for update... ";
+
+    bool checkedForUpdate = UpdateCheck::CheckForUpdates(rgaCliVersion, STR_RGA_UPDATECHECK_URL, STR_RGA_UPDATECHECK_ASSET_NAME, updateInfo, errorMessage);
+    if (!checkedForUpdate)
+    {
+        cout << "Unable to find update: " << errorMessage << endl;
+    }
+    else
+    {
+        if (!updateInfo.m_isUpdateAvailable)
+        {
+            cout << "No new updates available." << endl;
+        }
+        else
+        {
+            cout << "New version available!" << endl;
+
+            for (std::vector<UpdateCheck::ReleaseInfo>::const_iterator releaseIter = updateInfo.m_releases.cbegin(); releaseIter != updateInfo.m_releases.cend(); ++releaseIter)
+            {
+                cout << "Description: " << releaseIter->m_title << endl;
+                cout << "Version: " << releaseIter->m_version.ToString() << " (" << UpdateCheck::ReleaseTypeToString(releaseIter->m_type) << ")" << endl;
+                cout << "Released: " << releaseIter->m_date << endl;
+
+                if (!releaseIter->m_tags.empty())
+                {
+                    cout << "Tags: " << releaseIter->m_tags[0];
+
+                    for (uint32_t i = 1; i < releaseIter->m_tags.size(); ++i)
+                    {
+                        cout << ", " << releaseIter->m_tags[i];
+                    }
+
+                    cout << endl;
+                }
+
+                if (releaseIter->m_downloadLinks.size() > 0)
+                {
+                    cout << "Download a package from:" << endl;
+
+                    for (size_t packageIndex = 0; packageIndex < releaseIter->m_downloadLinks.size(); ++packageIndex)
+                    {
+                        cout << "   " << releaseIter->m_downloadLinks[packageIndex].m_url << endl;
+                    }
+                }
+
+                if (releaseIter->m_infoLinks.size() > 0)
+                {
+                    cout << "For more information, visit:" << endl;
+
+                    for (size_t infoLinkIndex = 0; infoLinkIndex < releaseIter->m_infoLinks.size(); ++infoLinkIndex)
+                    {
+                        cout << "   " << releaseIter->m_infoLinks[infoLinkIndex].m_url << endl;
+                    }
+                }
+
+                // Add an extra line at the end in case there are mutiple versions available.
+                cout << endl;
+            }
+        }
+    }
 }

@@ -1,3 +1,6 @@
 Build/CMake
-output
+Build/Windows
+Build/Linux
+Output
 .vscode
+Output_Test

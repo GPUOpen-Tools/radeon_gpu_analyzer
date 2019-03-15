@@ -3,7 +3,7 @@
 #include <cassert>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgBuildSettingsWidget.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildSettingsWidget.h>
 
 rgBuildSettingsWidget::rgBuildSettingsWidget(QWidget* pParent) : QFrame(pParent)
 {

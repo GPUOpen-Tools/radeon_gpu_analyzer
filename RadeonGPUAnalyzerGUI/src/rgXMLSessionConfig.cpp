@@ -6,19 +6,20 @@
 #include <tinyxml2/Include/tinyxml2.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgResourceUsageCsvFileParser.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
-#include <RadeonGPUAnalyzerGUI/include/rgXMLSessionConfig.h>
-#include <RadeonGPUAnalyzerGUI/include/rgXMLUtils.h>
-#include <Utils/include/rgaXMLConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgResourceUsageCsvFileParser.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgXMLSessionConfig.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgXMLUtils.h>
+#include <Utils/Include/rgaXMLConstants.h>
 
-bool rgXMLSessionConfig::ReadSessionMetadata(const std::string& sessionMetadataFilePath, std::shared_ptr<rgCliBuildOutput>& pCliOutput)
+bool rgXMLSessionConfig::ReadSessionMetadataOpenCL(const std::string& sessionMetadataFilePath, std::shared_ptr<rgCliBuildOutputOpenCL>& pCliOutput)
 {
     bool ret = false;
 
     // Create the CLI output variable.
-    pCliOutput = std::make_shared<rgCliBuildOutput>();
+    pCliOutput = std::make_shared<rgCliBuildOutputOpenCL>();
 
     // Load the XML document.
     tinyxml2::XMLDocument doc;
@@ -41,7 +42,6 @@ bool rgXMLSessionConfig::ReadSessionMetadata(const std::string& sessionMetadataF
                     // Read the full file path to the compiled binary output.
                     std::string binaryFullFilePath;
                     ret = rgXMLUtils::ReadNodeTextString(pBinaryFilePathNode, binaryFullFilePath);
-                    assert(ret);
 
                     if (ret)
                     {
@@ -55,6 +55,134 @@ bool rgXMLSessionConfig::ReadSessionMetadata(const std::string& sessionMetadataF
                             // Read all of the input file nodes.
                             ret = ReadInputFiles(pInputFileNode, pCliOutput);
                             assert(ret);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
+bool rgXMLSessionConfig::ReadSessionMetadataVulkan(const std::string& sessionMetadataFilePath, std::shared_ptr<rgCliBuildOutputPipeline>& pCliOutput)
+{
+    bool ret = false;
+
+    // Create the CLI output variable.
+    pCliOutput = std::make_shared<rgCliBuildOutputPipeline>();
+
+    // Load the XML document.
+    tinyxml2::XMLDocument doc;
+    tinyxml2::XMLError rc = doc.LoadFile(sessionMetadataFilePath.c_str());
+
+    if (rc == tinyxml2::XML_SUCCESS)
+    {
+        // Get the root pipeline metadata element. Pipeline outputs appear as children elements.
+        tinyxml2::XMLNode* pPipelineMetadataNode = doc.FirstChildElement(XML_NODE_METADATA_PIPELINE);
+        assert(pPipelineMetadataNode != nullptr);
+        if (pPipelineMetadataNode != nullptr)
+        {
+            // Get the XML declaration node.
+            tinyxml2::XMLNode* pPipelineNode = pPipelineMetadataNode->FirstChildElement(XML_NODE_PIPELINE);
+            if (pPipelineNode != nullptr)
+            {
+                // Determine the type of pipeline that was built.
+                tinyxml2::XMLNode* pPipelineTypeNode = pPipelineNode->FirstChildElement(XML_NODE_TYPE);
+                if (pPipelineTypeNode != nullptr)
+                {
+                    // Read the pipeline type string.
+                    std::string pipelineTypeString;
+                    ret = rgXMLUtils::ReadNodeTextString(pPipelineTypeNode, pipelineTypeString);
+
+                    assert(ret);
+                    if (ret)
+                    {
+                        // Set the pipeline type based on the node text.
+                        pCliOutput->m_type = (pipelineTypeString.compare(XML_NODE_PIPELINE_TYPE_GRAPHICS) == 0) ?
+                            rgPipelineType::Graphics : rgPipelineType::Compute;
+
+                        // Search for each stage element.
+                        tinyxml2::XMLNode* pStageNode = pPipelineNode->FirstChildElement(XML_NODE_STAGE);
+                        while (pStageNode != nullptr)
+                        {
+                            rgFileOutputs fileOutputs;
+
+                            rgEntryOutput stageEntry = {};
+                            stageEntry.m_entrypointName = STR_DEFAULT_VULKAN_GLSL_ENTRYPOINT_NAME;
+
+                            // Search for the stage type node.
+                            tinyxml2::XMLNode* pStageTypeNode = pStageNode->FirstChildElement(XML_NODE_TYPE);
+
+                            assert(pStageTypeNode != nullptr);
+                            if (pStageTypeNode != nullptr)
+                            {
+                                // Read the stage type node.
+                                std::string pipelineStageTypeString;
+                                ret = rgXMLUtils::ReadNodeTextString(pStageTypeNode, pipelineStageTypeString);
+
+                                assert(ret);
+                                if (ret)
+                                {
+                                    // Assign the stage type in the file's outputs struct.
+                                    stageEntry.m_kernelType = pipelineStageTypeString;
+                                }
+                            }
+
+                            assert(ret);
+                            if (ret)
+                            {
+                                // Search for the input file node.
+                                tinyxml2::XMLNode* pInputFileNode = pStageNode->FirstChildElement(XML_NODE_INPUT_FILE);
+                                assert(pInputFileNode != nullptr);
+                                if (pInputFileNode != nullptr)
+                                {
+                                    pInputFileNode = pInputFileNode->FirstChildElement(XML_NODE_PATH);
+                                    assert(pInputFileNode != nullptr);
+                                    if (pInputFileNode != nullptr)
+                                    {
+                                        // Read the input file path.
+                                        std::string inputFilePathString;
+                                        ret = rgXMLUtils::ReadNodeTextString(pInputFileNode, inputFilePathString);
+                                        if (ret)
+                                        {
+                                            stageEntry.m_inputFilePath = inputFilePathString;
+                                        }
+                                    }
+                                }
+                            }
+
+                            assert(ret);
+                            if (ret)
+                            {
+                                // Find the stage node's output node.
+                                tinyxml2::XMLNode* pStageOutputNode = pStageNode->FirstChildElement(XML_NODE_OUTPUT);
+                                assert(pStageOutputNode != nullptr);
+                                if (pStageOutputNode != nullptr)
+                                {
+                                    // Read the stage's output files.
+                                    ret = ret && ReadPipelineStageOutputs(pStageOutputNode, stageEntry);
+                                }
+                            }
+
+                            assert(ret);
+                            if (ret)
+                            {
+                                fileOutputs.m_inputFilePath = stageEntry.m_inputFilePath;
+
+                                fileOutputs.m_outputs.push_back(stageEntry);
+                                pCliOutput->m_perFileOutput[stageEntry.m_inputFilePath] = fileOutputs;
+
+                                // Search for the next stage node.
+                                pStageNode = pStageNode->NextSiblingElement(XML_NODE_STAGE);
+                            }
+
+
+                            // If anything went wrong, end this loop.
+                            if (!ret)
+                            {
+                                pStageNode = nullptr;
+                            }
                         }
                     }
                 }
@@ -155,7 +283,7 @@ bool rgXMLSessionConfig::ReadEntryOutputs(tinyxml2::XMLNode* pOutputEntryNode, r
         if (pKernelNameNode != nullptr)
         {
             // Read the full file path to the input file.
-            ret = rgXMLUtils::ReadNodeTextString(pKernelNameNode, entry.m_kernelName);
+            ret = rgXMLUtils::ReadNodeTextString(pKernelNameNode, entry.m_entrypointName);
             assert(ret);
 
             if (ret)
@@ -199,7 +327,7 @@ bool rgXMLSessionConfig::ReadEntryOutputs(tinyxml2::XMLNode* pOutputEntryNode, r
     return ret;
 }
 
-bool rgXMLSessionConfig::ReadInputFiles(tinyxml2::XMLNode* pInputFileNode, std::shared_ptr<rgCliBuildOutput>& pCliOutput)
+bool rgXMLSessionConfig::ReadInputFiles(tinyxml2::XMLNode* pInputFileNode, std::shared_ptr<rgCliBuildOutputOpenCL>& pCliOutput)
 {
     bool ret = false;
 
@@ -231,6 +359,69 @@ bool rgXMLSessionConfig::ReadInputFiles(tinyxml2::XMLNode* pInputFileNode, std::
         // Find the next input file sibling node.
         pInputFileNode = pInputFileNode->NextSibling();
     } while (pInputFileNode != nullptr);
+
+    return ret;
+}
+
+bool rgXMLSessionConfig::ReadPipelineStageOutputs(tinyxml2::XMLNode* pOutputsNode, rgEntryOutput& stageOutput)
+{
+    bool ret = false;
+
+    // Search for the listed stage output node strings.
+    static const std::string s_STAGE_OUTPUT_NODES[] =
+    {
+        XML_NODE_ISA,
+        XML_NODE_CSV_ISA,
+        XML_NODE_RES_USAGE
+    };
+
+    // Loop to search for each possible output type.
+    for (auto outputIter = std::begin(s_STAGE_OUTPUT_NODES);
+        outputIter != std::end(s_STAGE_OUTPUT_NODES); ++outputIter)
+    {
+        // Search for given output type.
+        const std::string& outputTypeString = *outputIter;
+        tinyxml2::XMLNode* pOutputNode = pOutputsNode->FirstChildElement(outputTypeString.c_str());
+        if (pOutputNode != nullptr)
+        {
+            rgOutputItem csvOutputItem = {};
+
+            // Read the output file path.
+            std::string outputFilePath;
+            ret = rgXMLUtils::ReadNodeTextString(pOutputNode, outputFilePath);
+            assert(ret);
+            if (ret)
+            {
+                // Assign the parsed file path into the output.
+                csvOutputItem.m_filePath = outputFilePath;
+
+                // Assign the file path in the output object.
+                if (outputTypeString.compare(XML_NODE_ISA) == 0)
+                {
+                    csvOutputItem.m_fileType = rgCliOutputFileType::IsaDisassemblyText;
+                }
+                else if (outputTypeString.compare(XML_NODE_CSV_ISA) == 0)
+                {
+                    csvOutputItem.m_fileType = rgCliOutputFileType::IsaDisassemblyCsv;
+                }
+                else if (outputTypeString.compare(XML_NODE_RES_USAGE) == 0)
+                {
+                    csvOutputItem.m_fileType = rgCliOutputFileType::HwResourceUsageFile;
+                }
+                else
+                {
+                    // The node text wasn't recognized.
+                    assert(false);
+                    ret = false;
+                }
+
+                if (ret)
+                {
+                    stageOutput.m_outputs.push_back(csvOutputItem);
+                }
+            }
+        }
+    }
 
     return ret;
 }

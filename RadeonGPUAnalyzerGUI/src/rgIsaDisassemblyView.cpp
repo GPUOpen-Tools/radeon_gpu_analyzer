@@ -21,18 +21,18 @@
 #include <QtCommon/Util/QtUtil.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgHideListWidgetEventFilter.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyTableModel.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyTableView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyTabView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgResourceUsageView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgViewContainer.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
-#include <RadeonGPUAnalyzerGUI/include/rgResourceUsageCsvFileParser.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgHideListWidgetEventFilter.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTableModel.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTableView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTabView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgResourceUsageView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgViewContainer.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgResourceUsageCsvFileParser.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
 // Names of special widgets within the disassembly view.
 static const char* STR_DISASSEMBLY_COLUMN_VISIBILITY_LIST = "DisassemblyColumnVisibilityList";
@@ -74,6 +74,11 @@ rgIsaDisassemblyView::rgIsaDisassemblyView(QWidget* pParent) :
 
     // Set the push button font sizes.
     SetFontSizes();
+
+    // Set the focus proxy of the view maximize button to be the title bar.
+    // This will cause the frame border to change to black when the maximize button loses focus.
+    // This is because the view title bar already handles its own loss of focus event.
+    ui.viewMaximizeButton->setFocusProxy(ui.viewTitlebar);
 }
 
 rgIsaDisassemblyView::~rgIsaDisassemblyView()
@@ -123,85 +128,6 @@ bool rgIsaDisassemblyView::IsEmpty() const
     return m_gpuTabViews.empty();
 }
 
-bool rgIsaDisassemblyView::PopulateDisassemblyView(const std::vector<rgSourceFileInfo>& sourceFiles, const rgBuildOutputsMap& buildOutput)
-{
-    bool isProblemFound = false;
-
-    // Iterate through each target GPU's output.
-    for (auto gpuOutputsIter = buildOutput.begin(); gpuOutputsIter != buildOutput.end(); ++gpuOutputsIter)
-    {
-        const std::string& familyName = gpuOutputsIter->first;
-        std::shared_ptr<rgCliBuildOutput> pGpuBuildOutput = gpuOutputsIter->second;
-        bool isValidOutput = pGpuBuildOutput != nullptr;
-        assert(isValidOutput);
-        if (isValidOutput)
-        {
-            // Step through the outputs map, and load the disassembly data for each input file.
-            for (auto outputIter = pGpuBuildOutput->m_perFileOutput.begin(); outputIter != pGpuBuildOutput->m_perFileOutput.end(); ++outputIter)
-            {
-                const std::string& sourceFilePath = outputIter->first;
-
-                // Only load build outputs for files in the given list of source files.
-                rgSourceFilePathSearcher sourceFileSearcher(sourceFilePath);
-                auto sourceFileIter = std::find_if(sourceFiles.begin(), sourceFiles.end(), sourceFileSearcher);
-                if (sourceFileIter != sourceFiles.end())
-                {
-                    // Get the list of outputs for the input file.
-                    rgFileOutputs& fileOutputs = outputIter->second;
-                    const std::vector<rgEntryOutput>& fileEntryOutputs = fileOutputs.m_outputs;
-
-                    // Transform the disassembled entries into a map of GPU -> Entries.
-                    // This will make populating the UI much simpler.
-                    std::map<std::string, std::vector<rgEntryOutput>> gpuToDisassemblyCsvEntries;
-                    std::map<std::string, std::vector<rgEntryOutput>> gpuToResourceUsageCsvEntries;
-                    for (const rgEntryOutput& entry : fileOutputs.m_outputs)
-                    {
-                        for (const rgOutputItem& outputs : entry.m_outputs)
-                        {
-                            if (outputs.m_fileType == IsaDisassemblyCsv)
-                            {
-                                std::vector<rgEntryOutput>& disassemblyCsvFilePaths = gpuToDisassemblyCsvEntries[familyName];
-                                disassemblyCsvFilePaths.push_back(entry);
-                            }
-                            else if (outputs.m_fileType == HwResourceUsageFile)
-                            {
-                                std::vector<rgEntryOutput>& entryCsvFilePaths = gpuToResourceUsageCsvEntries[familyName];
-                                entryCsvFilePaths.push_back(entry);
-                            }
-                        }
-                    }
-
-
-                    // Load the disassembly CSV entries from the build output.
-                    bool isDisassemblyDataLoaded = PopulateDisassemblyEntries(gpuToDisassemblyCsvEntries);
-                    assert(isDisassemblyDataLoaded);
-                    if (!isDisassemblyDataLoaded)
-                    {
-                        isProblemFound = true;
-                    }
-
-                    // Load the resource usage CSV entries from the build output.
-                    bool isResourceUsageDataLoaded = PopulateResourceUsageEntries(gpuToResourceUsageCsvEntries);
-                    assert(isResourceUsageDataLoaded);
-                    if (!isResourceUsageDataLoaded)
-                    {
-                        isProblemFound = true;
-                    }
-                }
-            }
-        }
-    }
-
-    // If the disassembly results loaded correctly, add the target GPU to the dropdown.
-    if (!isProblemFound)
-    {
-        // Populate the target GPU dropdown list with the targets from the build output.
-        PopulateTargetGpuList(buildOutput);
-    }
-
-    return !isProblemFound;
-}
-
 void rgIsaDisassemblyView::RemoveInputFileEntries(const std::string& inputFilePath)
 {
     // Clean up disassembly tables associated with the given file.
@@ -237,44 +163,26 @@ void rgIsaDisassemblyView::HandleSelectedEntrypointChanged(const std::string& ta
     if (pTargetTabView != nullptr)
     {
         // Switch the table to show the disassembly for the given entrypoint.
-        pTargetTabView->SwitchToEntryPoint(selectedEntrypointName);
+        pTargetTabView->SwitchToEntryPoint(inputFilePath, selectedEntrypointName);
     }
 
-    // Get a reference to the map of input file path to the entrypoint names map.
-    const auto& targetGpuResourceUsageViewsIter = m_gpuResourceUsageViews.find(targetGpu);
-    assert(targetGpuResourceUsageViewsIter != m_gpuResourceUsageViews.end());
-    if (targetGpuResourceUsageViewsIter != m_gpuResourceUsageViews.end())
-    {
-        InputToEntrypointViews& inputFileToEntrypointMap = targetGpuResourceUsageViewsIter->second;
+    // Get a reference to the map of input file path to the entry point names map.
+    InputToEntrypointViews& inputFileToEntrypointMap = m_gpuResourceUsageViews[targetGpu];
 
-        // Use the input file path to get a reference to a map of entrypoint names to resource usage views.
-        EntrypointToResourcesView& entrypointMap = inputFileToEntrypointMap[inputFilePath];
+    // Use the input file path to get a reference to a map of entry point names to resource usage views.
+    EntrypointToResourcesView& entrypointMap = inputFileToEntrypointMap[inputFilePath];
 
-        // Search the map to find the resource usage view associated with the given entrypoint.
-        auto resourceViewIter = entrypointMap.find(selectedEntrypointName);
-        if (resourceViewIter != entrypointMap.end())
-        {
-            // Display the resource usage view associated with the given entrypoint.
-            rgResourceUsageView* pResourceUsageView = resourceViewIter->second;
-            ui.resourceUsageHostStackedWidget->setCurrentWidget(pResourceUsageView);
-        }
-    }
-    else
+    // Search the map to find the resource usage view associated with the given entrypoint.
+    auto resourceViewIter = entrypointMap.find(selectedEntrypointName);
+    if (resourceViewIter != entrypointMap.end())
     {
-        std::string filenameOnly;
-        bool isOk = rgUtils::ExtractFileName(inputFilePath, filenameOnly);
-        assert(isOk);
-        if (isOk)
-        {
-            std::stringstream errorStream;
-            errorStream << STR_ERR_CANNOT_LOAD_RESOURCE_USAGE_CSV_FILE;
-            errorStream << filenameOnly;
-            rgUtils::ShowErrorMessageBox(errorStream.str().c_str());
-        }
+        // Display the resource usage view associated with the given entrypoint.
+        rgResourceUsageView* pResourceUsageView = resourceViewIter->second;
+        ui.resourceUsageHostStackedWidget->setCurrentWidget(pResourceUsageView);
     }
 }
 
-void rgIsaDisassemblyView::HandleColumnVisibilityArrowClicked(bool /*clicked*/)
+void rgIsaDisassemblyView::HandleColumnVisibilityButtonClicked(bool /*clicked*/)
 {
     // Make the list widget appear and process user selection from the list widget.
     bool visible = m_pDisassemblyColumnsListWidget->isVisible();
@@ -317,42 +225,35 @@ void rgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(const QStri
     const int firstColumn = rgIsaDisassemblyTableModel::GetTableColumnIndex(rgIsaDisassemblyTableColumns::Address);
     const int lastColumn = rgIsaDisassemblyTableModel::GetTableColumnIndex(rgIsaDisassemblyTableColumns::Count);
 
-    // Make sure that the user didn't uncheck the only checked box,
-    // nor did they uncheck the "All" button, since this will uncheck
-    // every single check box, which is something we do not want.
-    if (checked || QtCommon::QtUtil::VerifyOneCheckboxChecked(pGlobalSettings->m_visibleDisassemblyViewColumns, firstColumn, lastColumn))
+    // Get the current checked state of the UI.
+    // This will include changes from the check/uncheck that triggered this callback.
+    std::vector<bool> columnVisibility = ListWidget::GetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget);
+
+    // Make sure at least one check box is still checked.
+    bool isAtLeastOneChecked = std::any_of(columnVisibility.begin() + firstColumn, columnVisibility.begin() + lastColumn, [](bool b) { return b == true; });
+
+    if (checked || isAtLeastOneChecked)
     {
-        // Process the selected text accordingly
+        // If the user checked the "All" option, Step through each column and set to visible.
         if (text.compare(STR_DISASSEMBLY_TABLE_COLUMN_ALL) == 0 && (checked == true))
         {
-            // Step through each column and set to visible.
             for (int columnIndex = firstColumn; columnIndex < lastColumn; ++columnIndex)
             {
-                pGlobalSettings->m_visibleDisassemblyViewColumns[columnIndex] = checked;
-                configManager.SaveGlobalConfigFile();
+                columnVisibility[columnIndex] = checked;
             }
 
-            // Update the state of the dropdown checkboxes based on the visibility in the global settings.
-            ListWidget::SetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget, pGlobalSettings->m_visibleDisassemblyViewColumns);
+            // Update the state of the dropdown check boxes to reflect that all options are checked.
+            ListWidget::SetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget, columnVisibility);
         }
-        else
-        {
-            // Step through each column and set the visibility if the user changed the check state.
-            for (int columnIndex = firstColumn; columnIndex < lastColumn; ++columnIndex)
-            {
-                rgIsaDisassemblyTableColumns column = static_cast<rgIsaDisassemblyTableColumns>(columnIndex);
-                std::string columnName = GetDisassemblyColumnName(column);
-                if (text.compare(columnName.c_str()) == 0)
-                {
-                    pGlobalSettings->m_visibleDisassemblyViewColumns[columnIndex] = checked;
-                    configManager.SaveGlobalConfigFile();
-                }
-            }
-        }
+
+        // Save the changes.
+        configManager.Instance().SetDisassemblyColumnVisibility(columnVisibility);
+        configManager.SaveGlobalConfigFile();
     }
     else
     {
-        // Uncheck the check box since this is the only checked check box.
+        // The user tried to uncheck the last check box, but at least one box
+        // MUST be checked, so find that item in the ListWidget, and set it back to checked.
         for (int row = 0; row < m_pDisassemblyColumnsListWidget->count(); row++)
         {
             QListWidgetItem* pItem = m_pDisassemblyColumnsListWidget->item(row);
@@ -366,7 +267,7 @@ void rgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(const QStri
         }
     }
 
-    // See if the "All" box needs checking/unchecking
+    // See if the "All" box needs checking/unchecking.
     ListWidget::UpdateAllCheckbox(m_pDisassemblyColumnsListWidget);
 
     // Update the "All" checkbox text color to grey or black.
@@ -406,16 +307,11 @@ void rgIsaDisassemblyView::HandleTargetGpuArrowClicked(bool clicked)
     }
     else
     {
-        // The selected GPU hasn't been changed yet- we're only altering the visibility of the GPU
-        // dropdown in this handler. Block signals from being emitted from the dropdown while
-        // setting the focus. The "Target GPU Changed" handler will only be invoked when the user
-        // changes the selected row in the GPU dropdown list.
-        QSignalBlocker selectedGpuChangedBlocker(m_pTargetGpusListWidget);
-
         // Compute where to place the combo box relative to where the arrow button is.
         QWidget* pWidget = ui.targetGpuPushButton;
         m_pTargetGpusListWidget->show();
         m_pTargetGpusListWidget->setFocus();
+        m_pTargetGpusListWidget->setCursor(Qt::PointingHandCursor);
         QRect rect = pWidget->geometry();
         QPoint pos(0, 0);
         pos = pWidget->mapTo(this, pos);
@@ -462,11 +358,31 @@ void rgIsaDisassemblyView::HandleTargetGpuChanged(int currentIndex)
                 // Change the target GPU to the newly selected item.
                 SetTargetGpu(newTargetGpu);
 
+                // Strip the GPU name from the architecture if needed.
+                std::string strippedGpuName;
+                size_t bracketPos = newTargetGpu.find("(");
+                if (bracketPos != std::string::npos && newTargetGpu.size() > 2)
+                {
+                    strippedGpuName = newTargetGpu.substr(0, bracketPos - 1);
+                }
+                else
+                {
+                    strippedGpuName = newTargetGpu;
+                }
+
+                // Strip gfx notation if needed.
+                size_t slashPos = strippedGpuName.find("/");
+                if (slashPos != std::string::npos)
+                {
+                    strippedGpuName = strippedGpuName.substr(slashPos + 1);
+                }
+
                 // Emit a signal with the name of the target GPU to switch to.
-                emit SelectedTargetGpuChanged(newTargetGpu);
+                emit SelectedTargetGpuChanged(strippedGpuName);
             }
         }
     }
+
 }
 
 void rgIsaDisassemblyView::ClearListWidget(ListWidget* &pListWidget)
@@ -507,16 +423,101 @@ void rgIsaDisassemblyView::ConnectDisassemblyTabViewSignals(rgIsaDisassemblyTabV
     // Connect the disassembly view's column visibility updated signal.
     isConnected = connect(this, &rgIsaDisassemblyView::DisassemblyColumnVisibilityUpdated, pEntryView, &rgIsaDisassemblyTabView::HandleColumnVisibilityFilterStateChanged);
     assert(isConnected);
+
+    // Connect the disassembly view's set frame border red signal.
+    isConnected = connect(pEntryView, &rgIsaDisassemblyTabView::FrameFocusInSignal, this, &rgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+    assert(isConnected);
+
+    // Connect the disassembly view's set frame border black signal.
+    isConnected = connect(pEntryView, &rgIsaDisassemblyTabView::FrameFocusOutSignal, this, &rgIsaDisassemblyView::HandleDisassemblyTabViewLostFocus);
+    assert(isConnected);
+
+    // Connect the disassembly view's title bar's set frame border red signal.
+    isConnected = connect(ui.viewTitlebar, &rgIsaDisassemblyViewTitlebar::FrameFocusInSignal, this, &rgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+    assert(isConnected);
+
+    // Connect the disassembly view's enable scroll bar signal.
+    isConnected = connect(this, &rgIsaDisassemblyView::EnableScrollbarSignals, pEntryView, &rgIsaDisassemblyTabView::EnableScrollbarSignals);
+    assert(isConnected);
+
+    // Connect the disassembly view's disable scroll bar signal.
+    isConnected = connect(this, &rgIsaDisassemblyView::DisableScrollbarSignals, pEntryView, &rgIsaDisassemblyTabView::DisableScrollbarSignals);
+    assert(isConnected);
+
+    // Connect the disassembly table's target GPU push button focus in signal.
+    isConnected = connect(pEntryView, &rgIsaDisassemblyTabView::FocusTargetGpuPushButton, this, &rgIsaDisassemblyView::HandleFocusTargetGpuPushButton);
+    assert(isConnected);
+
+    // Connect the disassembly table's switch disassembly view size signal.
+    isConnected = connect(pEntryView, &rgIsaDisassemblyTabView::SwitchDisassemblyContainerSize, this, &rgIsaDisassemblyView::SwitchDisassemblyContainerSize);
+    assert(isConnected);
+
+    // Connect the disassembly table's columns push button focus in signal.
+    isConnected = connect(pEntryView, &rgIsaDisassemblyTabView::FocusColumnPushButton, this, &rgIsaDisassemblyView::HandleFocusColumnsPushButton);
+    assert(isConnected);
+
+    // Connect the disassembly table's cli output window focus in signal.
+    isConnected = connect(pEntryView, &rgIsaDisassemblyTabView::FocusSourceWindow, this, &rgIsaDisassemblyView::FocusSourceWindow);
+    assert(isConnected);
+
+    // Connect the disassembly view's update current sub widget signal.
+    isConnected = connect(this, &rgIsaDisassemblyView::UpdateCurrentSubWidget, pEntryView, &rgIsaDisassemblyTabView::UpdateCurrentSubWidget);
+    assert(isConnected);
 }
 
 void rgIsaDisassemblyView::ConnectSignals()
 {
     // Connect the column visibility selector arrow button.
-    bool isConnected = connect(ui.columnVisibilityArrowPushButton, &QPushButton::clicked, this, &rgIsaDisassemblyView::HandleColumnVisibilityArrowClicked);
+    bool isConnected = connect(ui.columnVisibilityArrowPushButton, &QPushButton::clicked, this, &rgIsaDisassemblyView::HandleColumnVisibilityButtonClicked);
     assert(isConnected);
 
     // Connect the handler to show/hide the target GPU list when the arrow button is clicked.
     isConnected = connect(ui.targetGpuPushButton, &QPushButton::clicked, this, &rgIsaDisassemblyView::HandleTargetGpuArrowClicked);
+    assert(isConnected);
+
+    // Connect the handler to give focus to frame on view maximize button click.
+    isConnected = connect(ui.viewMaximizeButton, &QPushButton::clicked, this, &rgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+    assert(isConnected);
+
+    // Connect the handler to give focus to frame on disassembly column list widget's gain of focus.
+    isConnected = connect(m_pDisassemblyColumnsListWidget, &ListWidget::FocusInEvent, this, &rgIsaDisassemblyView::HandleListWidgetFocusInEvent);
+    assert(isConnected);
+
+    // Connect the handler to remove focus from frame on disassembly column list widget's loss of focus.
+    isConnected = connect(m_pDisassemblyColumnsListWidget, &ListWidget::FocusOutEvent, this, &rgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
+    assert(isConnected);
+
+    // Connect the handler to give focus to frame on target GPUs list widget's gain of focus.
+    isConnected = connect(m_pTargetGpusListWidget, &ListWidget::FocusInEvent, this, &rgIsaDisassemblyView::HandleListWidgetFocusInEvent);
+    assert(isConnected);
+
+    // Connect the handler to give focus to frame on target GPUs list widget's loss of focus.
+    isConnected = connect(m_pTargetGpusListWidget, &ListWidget::FocusOutEvent, this, &rgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
+    assert(isConnected);
+
+    // Connect the handler to give focus to frame on columns push button click.
+    isConnected = connect(ui.columnVisibilityArrowPushButton, &QPushButton::clicked, this, &rgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+    assert(isConnected);
+
+    // Connect the handler to give focus to frame on target GPUs push button click.
+    isConnected = connect(ui.targetGpuPushButton, &QPushButton::clicked, this, &rgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+    assert(isConnected);
+
+    // Connect the handler to remove focus from frame on columns push button loss of focus.
+    isConnected = connect(ui.columnVisibilityArrowPushButton, &ArrowIconWidget::FocusOutEvent, this, &rgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
+    assert(isConnected);
+
+    // Connect the handler to give focus to frame on target GPUs push button loss of focus.
+    isConnected = connect(ui.targetGpuPushButton, &ArrowIconWidget::FocusOutEvent, this, &rgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
+    assert(isConnected);
+
+    // Select next GPU device action.
+    m_pSelectNextGPUTarget = new QAction(this);
+    m_pSelectNextGPUTarget->setShortcutContext(Qt::ApplicationShortcut);
+    m_pSelectNextGPUTarget->setShortcut(QKeySequence(gs_DISASSEMBLY_VIEW_HOTKEY_GPU_SELECTION));
+    addAction(m_pSelectNextGPUTarget);
+
+    isConnected = connect(m_pSelectNextGPUTarget, &QAction::triggered, this, &rgIsaDisassemblyView::HandleSelectNextGPUTargetAction);
     assert(isConnected);
 }
 
@@ -525,6 +526,24 @@ void rgIsaDisassemblyView::CreateColumnVisibilityControls()
     // Setup the list widget that opens when the user clicks the column visibility arrow.
     rgUtils::SetupComboList(this, m_pDisassemblyColumnsListWidget, ui.columnVisibilityArrowPushButton, m_pDisassemblyColumnsListEventFilter, false);
     m_pDisassemblyColumnsListWidget->setObjectName(STR_DISASSEMBLY_COLUMN_VISIBILITY_LIST);
+
+    // Handle the open gpu list widget signal and,
+    // the update current sub widget signal from the hide list widget event filter object.
+    if (m_pDisassemblyColumnsListEventFilter != nullptr)
+    {
+        rgHideListWidgetEventFilter* pEventFilter = static_cast<rgHideListWidgetEventFilter*>(m_pDisassemblyColumnsListEventFilter);
+        if (pEventFilter != nullptr)
+        {
+            bool isConnected = connect(pEventFilter, &rgHideListWidgetEventFilter::OpenGpuListWidget, this, &rgIsaDisassemblyView::HandleOpenGpuListWidget);
+            assert(isConnected);
+
+            isConnected = connect(pEventFilter, &rgHideListWidgetEventFilter::UpdateCurrentSubWidget, this, &rgIsaDisassemblyView::UpdateCurrentSubWidget);
+            assert(isConnected);
+
+            isConnected = connect(pEventFilter, &rgHideListWidgetEventFilter::FocusCliOutputWindow, this, &rgIsaDisassemblyView::FocusCliOutputWindow);
+            assert(isConnected);
+        }
+    }
 
     // Update scale factor for widgets.
     QFont font = ui.columnVisibilityArrowPushButton->font();
@@ -536,11 +555,32 @@ void rgIsaDisassemblyView::CreateColumnVisibilityControls()
     m_pDisassemblyColumnsListWidget->setCurrentRow(0);
 }
 
+void rgIsaDisassemblyView::HandleOpenColumnListWidget()
+{
+    if (m_pDisassemblyColumnsListWidget != nullptr)
+    {
+        ui.columnVisibilityArrowPushButton->clicked();
+    }
+}
+
 void rgIsaDisassemblyView::CreateTargetGpuListControls()
 {
     // Setup the list widget used to select the current target GPU.
     rgUtils::SetupComboList(this, m_pTargetGpusListWidget, ui.targetGpuPushButton, m_pTargetGpusListEventFilter, false);
     m_pTargetGpusListWidget->setObjectName(STR_DISASSEMBLY_TARGET_GPU_LIST);
+
+    if (m_pTargetGpusListEventFilter != nullptr)
+    {
+        rgHideListWidgetEventFilter* pEventFilter = static_cast<rgHideListWidgetEventFilter*>(m_pTargetGpusListEventFilter);
+        if (pEventFilter != nullptr)
+        {
+            bool isConnected = connect(pEventFilter, &rgHideListWidgetEventFilter::OpenColumnListWidget, this, &rgIsaDisassemblyView::HandleOpenColumnListWidget);
+            assert(isConnected);
+
+            isConnected = connect(pEventFilter, &rgHideListWidgetEventFilter::UpdateCurrentSubWidget, this, &rgIsaDisassemblyView::UpdateCurrentSubWidget);
+            assert(isConnected);
+        }
+    }
 
     // Update scale factor for widgets.
     QFont font = ui.targetGpuPushButton->font();
@@ -554,6 +594,14 @@ void rgIsaDisassemblyView::CreateTargetGpuListControls()
     // Connect the signal used to handle a change in the selected target GPU.
     bool isConnected = connect(m_pTargetGpusListWidget, &QListWidget::currentRowChanged, this, &rgIsaDisassemblyView::HandleTargetGpuChanged);
     assert(isConnected);
+}
+
+void rgIsaDisassemblyView::HandleOpenGpuListWidget()
+{
+    if (m_pTargetGpusListWidget != nullptr)
+    {
+        ui.targetGpuPushButton->clicked();
+    }
 }
 
 std::string rgIsaDisassemblyView::GetDisassemblyColumnName(rgIsaDisassemblyTableColumns column) const
@@ -600,23 +648,55 @@ rgIsaDisassemblyTabView* rgIsaDisassemblyView::GetTargetGpuTabWidgetByTabName(co
 
 void rgIsaDisassemblyView::PopulateTargetGpuList(const rgBuildOutputsMap& buildOutput)
 {
+    // Get a mapping of the compute capability to architecture.
+    std::map<std::string, std::string> computeCapabilityToArch;
+    bool hasArchMapping = rgUtils::GetComputeCapabilityToArchMapping(computeCapabilityToArch);
+
     // Block signals to stop updates when each new GPU is added to the list.
     m_pTargetGpusListWidget->blockSignals(true);
 
     m_pTargetGpusListWidget->clear();
 
-    for (auto targetGpuIter = buildOutput.begin(); targetGpuIter != buildOutput.end(); ++targetGpuIter)
+    for (auto targetGpuIter = buildOutput.rbegin(); targetGpuIter != buildOutput.rend(); ++targetGpuIter)
     {
         if (targetGpuIter->second != nullptr)
         {
             // Add each target GPU from the build outputs to the dropdown list.
             auto targetGpu = targetGpuIter->first;
-            m_pTargetGpusListWidget->addItem(targetGpu.c_str());
+
+            // Construct the presented name.
+            std::stringstream presentedName;
+
+            // If applicable, prepend the gfx notation (for example, "gfx802/Tonga" for "Tonga").
+            std::string gfxNotation;
+            bool hasGfxNotation = rgUtils::GetGfxNotation(targetGpu, gfxNotation);
+            if (hasGfxNotation && !gfxNotation.empty())
+            {
+                presentedName << gfxNotation << "/";
+            }
+            presentedName << targetGpu;
+
+            // If we have a mapping, let's construct a name that includes
+            // the GPU architecture as well: <compute capability> (<architecture>).
+            if (hasArchMapping)
+            {
+                auto iter = computeCapabilityToArch.find(targetGpu);
+                if (iter != computeCapabilityToArch.end())
+                {
+                    presentedName << " (" << iter->second << ")";
+                }
+            }
+
+            // Add the name to the list.
+            m_pTargetGpusListWidget->addItem(presentedName.str().c_str());
+
+            // Sort in descending order so that the newer targets are at the top.
+            m_pTargetGpusListWidget->sortItems(Qt::SortOrder::DescendingOrder);
         }
     }
 
-    // Switch to the last target GPU, which is the most recently released.
-    HandleTargetGpuChanged(static_cast<int>(buildOutput.size()) - 1);
+    // Switch to the first target GPU.
+    HandleTargetGpuChanged(0);
 
     // Re-enable signals emitted from the target GPU list.
     m_pTargetGpusListWidget->blockSignals(false);
@@ -681,7 +761,7 @@ bool rgIsaDisassemblyView::PopulateResourceUsageEntries(const GpuToEntryVector& 
             const std::vector<rgEntryOutput>& gpuEntries = gpuEntryIter->second;
 
             // Create a resource usage disassembly table for each entry, and add it to the layout.
-            // Only a single entrypoint table will be visible at a time, and the user can switch between the current entry.
+            // Only a single entry point table will be visible at a time, and the user can switch between the current entry.
             for (const rgEntryOutput& entry : gpuEntries)
             {
                 OutputFileTypeFinder outputFileTypeSearcher(rgCliOutputFileType::HwResourceUsageFile);
@@ -703,22 +783,27 @@ bool rgIsaDisassemblyView::PopulateResourceUsageEntries(const GpuToEntryVector& 
                         m_resourceUsageText = pResourceUsageView->GetResourceUsageText();
                         m_resourceUsageFont = pResourceUsageView->GetResourceUsageFont();
 
+                        // Register the resource usage view with the scaling manager.
+                        ScalingManager::Get().RegisterObject(pResourceUsageView);
+
+                        // Connect resource usage view signals.
+                        ConnectResourceUsageViewSignals(pResourceUsageView);
+
                         // Add the new resource usage view to the host widget.
                         ui.resourceUsageHostStackedWidget->addWidget(pResourceUsageView);
+                        ui.resourceUsageHostStackedWidget->setContentsMargins(0, 10, 0, 0);
 
-                        // Get a reference to the entrypoint views associated with the parsed device.
+                        // Get a reference to the entry point views associated with the parsed device.
                         InputToEntrypointViews& inputFileToEntrypointMap = m_gpuResourceUsageViews[gpuName];
 
                         // Get a reference to the resource views map for the source file.
                         EntrypointToResourcesView& entrypointMap = inputFileToEntrypointMap[entry.m_inputFilePath];
 
                         // Associate the entrypoint's name with the new rgResourceView.
-                        entrypointMap[entry.m_kernelName] = pResourceUsageView;
+                        entrypointMap[entry.m_entrypointName] = pResourceUsageView;
                     }
                     else
                     {
-                        // Display an error explaining why parsing failed.
-                        rgUtils::ShowErrorMessageBox(parseErrorString.c_str());
                         isLoadFailed = true;
                     }
                 }
@@ -727,6 +812,17 @@ bool rgIsaDisassemblyView::PopulateResourceUsageEntries(const GpuToEntryVector& 
     }
 
     return !isLoadFailed;
+}
+
+void rgIsaDisassemblyView::ConnectResourceUsageViewSignals(rgResourceUsageView * pResourceUsageView)
+{
+    // Connect to the resource usage view's mouse press event.
+    bool isConnected = connect(pResourceUsageView, &rgResourceUsageView::ResourceUsageViewClickedSignal, this, &rgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+    assert(isConnected);
+
+    // Connect to the resource usage view's focus out event.
+    isConnected = connect(pResourceUsageView, &rgResourceUsageView::ResourceUsageViewFocusOutEventSignal, this, &rgIsaDisassemblyView::HandleResourceUsageViewFocusOutEvent);
+    assert(isConnected);
 }
 
 void rgIsaDisassemblyView::PopulateColumnVisibilityList()
@@ -760,6 +856,23 @@ void rgIsaDisassemblyView::PopulateColumnVisibilityList()
 
     // Update the "All" checkbox text color to grey or black.
     UpdateAllCheckBoxText();
+
+    // Set list widget's check box's focus proxy to be the frame.
+    SetCheckBoxFocusProxies(m_pDisassemblyColumnsListWidget);
+}
+
+void rgIsaDisassemblyView::SetCheckBoxFocusProxies(const ListWidget* pListWidget) const
+{
+    for (int i = 0; i < pListWidget->count(); i++)
+    {
+        QListWidgetItem* pItem = pListWidget->item(i);
+        assert(pItem != nullptr);
+
+        QCheckBox* pCheckBox = qobject_cast<QCheckBox*>(pListWidget->itemWidget(pItem));
+        assert(pCheckBox != nullptr);
+
+        pCheckBox->setFocusProxy(ui.frame);
+    }
 }
 
 void rgIsaDisassemblyView::UpdateAllCheckBoxText()
@@ -931,7 +1044,7 @@ void rgIsaDisassemblyView::SetFontSizes()
     }
 }
 
-bool rgIsaDisassemblyView::IsLineCorrelatedInEntry(const std::string& targetGpu, const std::string& entrypoint, int srcLine) const
+bool rgIsaDisassemblyView::IsLineCorrelatedInEntry(const std::string& inputFilePath, const std::string& targetGpu, const std::string& entrypoint, int srcLine) const
 {
     bool  ret = false;
 
@@ -940,9 +1053,144 @@ bool rgIsaDisassemblyView::IsLineCorrelatedInEntry(const std::string& targetGpu,
     assert(pTargetGpuTab != nullptr);
     if (pTargetGpuTab != nullptr)
     {
-        ret = pTargetGpuTab->IsSourceLineCorrelatedForEntry(entrypoint, srcLine);
-
+        ret = pTargetGpuTab->IsSourceLineCorrelatedForEntry(inputFilePath, entrypoint, srcLine);
     }
 
     return ret;
+}
+
+void rgIsaDisassemblyView::HandleDisassemblyTabViewClicked()
+{
+    // Emit a signal to indicate that disassembly view was clicked.
+    emit DisassemblyViewClicked();
+
+    // Highlight the frame in the correct API color (give it focus).
+    SetBorderStylesheet();
+
+    // Remove the button focus in the file menu.
+    emit RemoveFileMenuButtonFocus();
+}
+
+void rgIsaDisassemblyView::HandleDisassemblyTabViewLostFocus()
+{
+    // Highlight the frame in black.
+    ui.frame->setStyleSheet(STR_DISASSEMBLY_FRAME_BORDER_BLACK_STYLESHEET);
+
+    // Remove the button focus in the file menu.
+    emit RemoveFileMenuButtonFocus();
+}
+
+void rgIsaDisassemblyView::HandleResourceUsageViewFocusOutEvent()
+{
+    // Highlight the frame in black.
+    ui.frame->setStyleSheet(STR_DISASSEMBLY_FRAME_BORDER_BLACK_STYLESHEET);
+
+    // Remove the button focus in the file menu.
+    emit RemoveFileMenuButtonFocus();
+}
+
+void rgIsaDisassemblyView::HandleTitlebarClickedEvent(QMouseEvent* pEvent)
+{
+    // Emit a signal to indicate that disassembly view was clicked.
+    emit DisassemblyViewClicked();
+
+    // Highlight the frame in the correct API color (give it focus).
+    SetBorderStylesheet();
+
+    // Remove the button focus in the file menu.
+    emit RemoveFileMenuButtonFocus();
+}
+
+void rgIsaDisassemblyView::HandleListWidgetFocusInEvent()
+{
+    // Emit a signal to indicate that disassembly view was clicked.
+    emit DisassemblyViewClicked();
+
+    // Highlight the frame in the correct API color (give it focus).
+    SetBorderStylesheet();
+
+    // Remove the button focus in the file menu.
+    emit RemoveFileMenuButtonFocus();
+}
+
+void rgIsaDisassemblyView::HandleListWidgetFocusOutEvent()
+{
+    ui.frame->setStyleSheet(STR_DISASSEMBLY_FRAME_BORDER_BLACK_STYLESHEET);
+}
+
+void rgIsaDisassemblyView::HandleFocusOutEvent()
+{
+    ui.frame->setStyleSheet(STR_DISASSEMBLY_FRAME_BORDER_BLACK_STYLESHEET);
+
+    // Remove the button focus in the file menu.
+    emit RemoveFileMenuButtonFocus();
+}
+
+void rgIsaDisassemblyView::HandleFocusTargetGpuPushButton()
+{
+    ui.targetGpuPushButton->clicked(false);
+}
+
+void rgIsaDisassemblyView::HandleFocusColumnsPushButton()
+{
+    ui.columnVisibilityArrowPushButton->clicked(false);
+}
+
+void rgIsaDisassemblyView::ConnectTitleBarDoubleClick(const rgViewContainer* pDisassemblyViewContainer)
+{
+    assert(pDisassemblyViewContainer != nullptr);
+    if (pDisassemblyViewContainer != nullptr)
+    {
+        bool isConnected = connect(ui.viewTitlebar, &rgIsaDisassemblyViewTitlebar::ViewTitleBarDoubleClickedSignal, pDisassemblyViewContainer, &rgViewContainer::MaximizeButtonClicked);
+        assert(isConnected);
+    }
+}
+
+bool rgIsaDisassemblyView::ReplaceInputFilePath(const std::string& oldFilePath, const std::string& newFilePath)
+{
+    bool result = true;
+
+    // Replace the file path in all disassembly tab views for all devices.
+    for (auto& gpuAndTabView : m_gpuTabViews)
+    {
+        rgIsaDisassemblyTabView* pTabView = gpuAndTabView.second;
+        if (!pTabView->ReplaceInputFilePath(oldFilePath, newFilePath))
+        {
+            result = false;
+            break;
+        }
+    }
+
+    // Replace the file path in the resource usage map.
+    if (result)
+    {
+        for (auto& gpuAndResourceUsage : m_gpuResourceUsageViews)
+        {
+            auto& fileAndResourceUsage = gpuAndResourceUsage.second;
+            auto it = fileAndResourceUsage.find(oldFilePath);
+            if ((result = (it != fileAndResourceUsage.end())) == true)
+            {
+                std::map<std::string, rgResourceUsageView*> resUsageView = it->second;
+                fileAndResourceUsage.erase(oldFilePath);
+                fileAndResourceUsage[newFilePath] = resUsageView;
+            }
+        }
+    }
+
+    return result;
+}
+
+void rgIsaDisassemblyView::HandleSelectNextGPUTargetAction()
+{
+    int currentRow = m_pTargetGpusListWidget->currentRow();
+
+    if (currentRow < m_pTargetGpusListWidget->count() - 1)
+    {
+        currentRow++;
+    }
+    else
+    {
+        currentRow = 0;
+    }
+    m_pTargetGpusListWidget->setCurrentRow(currentRow);
 }

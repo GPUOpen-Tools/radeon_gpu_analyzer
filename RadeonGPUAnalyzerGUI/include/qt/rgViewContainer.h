@@ -32,6 +32,12 @@ public:
     // Set maximization state of the view.
     void SetMaximizedState(bool isMaximized);
 
+    // Set hidden state of the view.
+    void SetHiddenState(bool isHidden);
+
+    // Returns true if this container is now in hidden state.
+    bool IsInHiddenState() const;
+
     // Set focused state of the view.
     void SetFocusedState(bool isFocused);
 
@@ -43,6 +49,9 @@ public:
 
     // Returns the main widget inside the container.
     QWidget* GetMainWidget() const;
+
+    // A handler to switch the size of the container.
+    void SwitchContainerSize();
 
 protected:
     void resizeEvent(QResizeEvent* pEvent) override;
@@ -80,6 +89,12 @@ private:
 
     // A flag used to determine if the container can be maximized.
     bool m_isMaximizable = true;
+
+    // A flag used to determine if the container is hidden.
+    bool m_isInHiddenState = false;
+
+    // Action to handle Ctrl+R to switch the container size.
+    QAction* m_pSwitchContainerSize = nullptr;
 
 signals:
     // Signal emitted when the maximize/minimize button is clicked.

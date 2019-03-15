@@ -8,8 +8,8 @@
 #include <QTextStream>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgCsvFileParser.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgCsvFileParser.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
 
 bool rgCsvFileParser::Parse(std::string& errorString)
 {

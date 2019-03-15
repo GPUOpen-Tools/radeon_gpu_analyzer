@@ -1,4 +1,8 @@
+// C++.
+#include <cassert>
+
 // Qt.
+#include <QAction>
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QResizeEvent>
@@ -7,8 +11,9 @@
 #include <QWidget>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgViewContainer.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgViewContainer.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
 // Identifying widget names.
 static const char* s_MAXIMIZE_BUTTON_NAME = "viewMaximizeButton";
@@ -28,6 +33,12 @@ rgViewContainer::rgViewContainer(QWidget* pParent) :
     setProperty(s_FOCUSED_STATE_PROPERTY_NAME, false);
 
     setFocusPolicy(Qt::StrongFocus);
+}
+
+void rgViewContainer::SwitchContainerSize()
+{
+    SetMaximizedState(!m_isInMaximizedState);
+    emit MaximizeButtonClicked();
 }
 
 void rgViewContainer::SetIsMaximizable(bool isEnabled)
@@ -115,9 +126,19 @@ bool rgViewContainer::IsInMaximizedState() const
     return m_isInMaximizedState;
 }
 
+void rgViewContainer::SetHiddenState(bool isHidden)
+{
+    m_isInHiddenState = isHidden;
+}
+
 bool rgViewContainer::IsMaximizable() const
 {
     return m_isMaximizable;
+}
+
+bool rgViewContainer::IsInHiddenState() const
+{
+    return m_isInHiddenState;
 }
 
 QWidget* rgViewContainer::GetMainWidget() const
@@ -274,6 +295,7 @@ void rgViewContainer::ExtractMaximizeButton()
     // Connect the button's signals/slots if a valid one is found.
     if (m_pMaximizeButton != nullptr)
     {
-        connect(m_pMaximizeButton, &QAbstractButton::clicked, this, &rgViewContainer::MaximizeButtonClicked);
+        bool isConnected = connect(m_pMaximizeButton, &QAbstractButton::clicked, this, &rgViewContainer::MaximizeButtonClicked);
+        assert(isConnected);
     }
 }

@@ -2,7 +2,7 @@
 #include <QResizeEvent>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgMainWindowTabWidget.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMainWindowTabWidget.h>
 
 rgMainWindowTabWidget::rgMainWindowTabWidget(QWidget* pParent) :
     QTabWidget(pParent)
@@ -13,6 +13,9 @@ rgMainWindowTabWidget::rgMainWindowTabWidget(QWidget* pParent) :
 
     // Replace the rgMainWindowTabWidget's QTabBar with a custom one.
     setTabBar(m_pTabBar);
+
+    // Set the focus policy.
+    setFocusPolicy(Qt::FocusPolicy::NoFocus);
 }
 
 QTabBar* rgMainWindowTabWidget::tabBar() const

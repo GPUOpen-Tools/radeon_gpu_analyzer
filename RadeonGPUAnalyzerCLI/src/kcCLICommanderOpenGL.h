@@ -8,11 +8,11 @@
 #include <map>
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommander.h>
-#include <RadeonGPUAnalyzerCLI/src/kcDataTypes.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommander.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcDataTypes.h>
 
 // Backend.
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderOpenGL.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderOpenGL.h>
 
 class kcCLICommanderOpenGL :
     public kcCLICommander
@@ -23,7 +23,7 @@ public:
 
     virtual void Version(Config& config, LoggingCallBackFunc_t callback) override;
 
-    virtual bool  PrintAsicList(std::ostream& log) override;
+    virtual bool  PrintAsicList(const Config&) override;
 
     virtual void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback) override;
 

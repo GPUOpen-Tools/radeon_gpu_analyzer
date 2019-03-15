@@ -2,8 +2,10 @@
 #include <cassert>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgFactory.h>
-#include <RadeonGPUAnalyzerGUI/include/rgOpenCLFactory.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgFactory.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypesOpenCL.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgFactoryOpenCL.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgFactoryVulkan.h>
 
 std::shared_ptr<rgFactory> rgFactory::CreateFactory(rgProjectAPI api)
 {
@@ -11,9 +13,14 @@ std::shared_ptr<rgFactory> rgFactory::CreateFactory(rgProjectAPI api)
 
     switch (api)
     {
-    case OpenCL:
+    case rgProjectAPI::OpenCL:
         {
-            pFactory = std::make_shared<rgOpenCLFactory>();
+            pFactory = std::make_shared<rgFactoryOpenCL>();
+        }
+        break;
+    case rgProjectAPI::Vulkan:
+        {
+            pFactory = std::make_shared<rgFactoryVulkan>();
         }
         break;
     default:

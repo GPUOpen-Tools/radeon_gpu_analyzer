@@ -5,9 +5,9 @@
 #include <QtCommon/Util/QtUtil.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgResourceUsageView.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgResourceUsageView.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
 
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - BEGIN ***
 
@@ -38,9 +38,6 @@ void rgResourceUsageView::PopulateView(const rgResourceUsageData& resourceUsage)
     // The size of the instruction cache in bytes.
     const int ICACHE_SIZE_IN_BYTES = 32768;
 
-    // Max LDS allocation is 64KB.
-    const int MAX_LDS_USAGE = 65536;
-
     // True if we should warn the user about resource usage info
     // that may imply a performance issue.
     bool isResourceUsageHazard = false;
@@ -50,7 +47,9 @@ void rgResourceUsageView::PopulateView(const rgResourceUsageData& resourceUsage)
     QString vgprSpills;
 
     bool isVgprHazard = false;
+    bool isVgprSpilled = false;
     bool isSgprHazard = false;
+    bool isSgprSpilled = false;
     bool isLdsHazard = false;
     bool isScratchMemoryHazard = false;
     bool isIcacheHazard = false;
@@ -60,15 +59,21 @@ void rgResourceUsageView::PopulateView(const rgResourceUsageData& resourceUsage)
     if (resourceUsage.m_sgprSpills > 0)
     {
         sgprSpills = QString::number(resourceUsage.m_sgprSpills);
-        isSgprHazard = true;
+        isSgprSpilled = true;
     }
+
+    // It's a SGPR hazard either if we spilled, or reached at our maximum usage.
+    isSgprHazard = isSgprSpilled || (resourceUsage.m_usedSgprs >= resourceUsage.m_availableSgprs);
 
     // VGPR spills.
     if (resourceUsage.m_vgprSpills > 0)
     {
         vgprSpills = QString::number(resourceUsage.m_vgprSpills);
-        isVgprHazard = true;
+        isVgprSpilled = true;
     }
+
+    // It's a VGPR hazard either if we spilled, or reached at our maximum usage.
+    isVgprHazard = isVgprSpilled || (resourceUsage.m_usedVgprs >= resourceUsage.m_availableVgprs);
 
     // Build the string to be presented.
     std::stringstream resourceUsageHeaderStream;
@@ -106,7 +111,7 @@ void rgResourceUsageView::PopulateView(const rgResourceUsageData& resourceUsage)
     QString ldsBytesUsed;
     QString ldsBytesAvailable;
     QtCommon::QtUtil::GetFilesizeAcronymFromByteCount(resourceUsage.m_availableLdsBytes, ldsBytesAvailable);
-    isLdsHazard = (resourceUsage.m_usedLdsBytes > MAX_LDS_USAGE);
+    isLdsHazard = (resourceUsage.m_usedLdsBytes >= resourceUsage.m_availableLdsBytes);
 
     // Set the LDS usage string in the view.
     resourceUsageHeaderStream << StartResourceSection(isLdsHazard) << "<b>" << STR_RESOURCE_USAGE_LDS << "</b>: " << resourceUsage.m_usedLdsBytes << (resourceUsage.m_usedLdsBytes > 0 ? " B" : "") << " / " << ldsBytesAvailable.toStdString() << EndResourceSection(isLdsHazard) << " | ";
@@ -131,7 +136,7 @@ void rgResourceUsageView::PopulateView(const rgResourceUsageData& resourceUsage)
     }
 
     // We have a hazard if any of the resources produces a hazard.
-    isResourceUsageHazard = isVgprHazard || isVgprHazard || isLdsHazard || isScratchMemoryHazard || isIcacheHazard;
+    isResourceUsageHazard = isVgprHazard || isSgprHazard || isLdsHazard || isScratchMemoryHazard || isIcacheHazard;
 
     // Show the warning icon if a hazard was detected.
     ui.warningLabel->setVisible(isResourceUsageHazard);
@@ -149,4 +154,20 @@ std::string rgResourceUsageView::GetResourceUsageText()
 QFont rgResourceUsageView::GetResourceUsageFont()
 {
     return ui.resourceUsageHeaderLabel->font();
+}
+
+void rgResourceUsageView::mousePressEvent(QMouseEvent* pEvent)
+{
+    emit ResourceUsageViewClickedSignal();
+
+    // Pass the event onto the base class.
+    QWidget::mousePressEvent(pEvent);
+}
+
+void rgResourceUsageView::focusOutEvent(QFocusEvent* pEvent)
+{
+    emit ResourceUsageViewFocusOutEventSignal();
+
+    // Pass the event onto the base class.
+    QWidget::focusOutEvent(pEvent);
 }

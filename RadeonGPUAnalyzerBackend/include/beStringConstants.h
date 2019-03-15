@@ -604,6 +604,7 @@
 #define DEVICE_NAME_STONEY   "Stoney"
 #define DEVICE_NAME_GFX900   "gfx900"
 #define DEVICE_NAME_GFX902   "gfx902"
+#define DEVICE_NAME_GFX906   "gfx906"
 
 // DUMMY SHADERS.
 #define BE_STR_DUMMY_VRTX_SHADER "#version 330 core\nlayout(location = 0) in vec3 vertexPosition_modelspace;\nvoid main()\n{}"
@@ -611,6 +612,8 @@
 
 #define BE_STR_FAILED_TO_PARSE_ISA_LINE L"Failed to parse ISA line: "
 #define BE_STR_LAUNCH_EXTERNAL_PROCESS  "Launching external process: \n"
+#define BE_STR_SET_ENV_VAR              "Setting environment variable: "
+#define BE_STR_UNSET_ENV_VAR            "Unsetting environment variable: "
 
 // Versions.
 #define BE_STR_VULKAN_VERSION L"Based on Vulkan 1.0 Specification."
@@ -618,11 +621,17 @@
 // ROCm.
 #ifdef __linux
 #define LC_OPENCL_ROOT_DIR          L"ROCm/OpenCL"
-#elif _WIN64
+#elif defined(_WIN64)
 #define LC_OPENCL_ROOT_DIR          L"x64/ROCm/OpenCL"
-#else
+#elif defined(_WIN32)
 #define LC_OPENCL_ROOT_DIR          L"x86/ROCm/OpenCL"
+#else
+#error Unknown platform.
 #endif
+
+#define  LC_OPENCL_BIN_DIR          L"bin"
+#define  LC_OPENCL_INCLUDE_DIR      L"include"
+#define  LC_OPENCL_LIB_DIR          L"lib/bitcode"
 
 #define LC_OPENCL_COMPILER_EXEC     L"clang"
 #define LC_AMDGPU_OBJDUMP_EXEC      L"amdgpu-objdump"
@@ -633,6 +642,42 @@
 #define LC_COMPILER_EXEC_EXT        L"exe"
 #else
 #define LC_COMPILER_EXEC_EXT        L""
+#endif
+
+// Vulkan
+#ifdef __linux
+#define GLSLANG_ROOT_DIR            L"Vulkan"
+#define VULKAN_BACKEND_ROOT_DIR     L"Vulkan"
+#elif defined(_WIN64)
+#define GLSLANG_ROOT_DIR            L"x64/Vulkan"
+#define VULKAN_BACKEND_ROOT_DIR     L"x64/Vulkan"
+#elif defined(_WIN32)
+#define GLSLANG_ROOT_DIR            L"x86/Vulkan"
+#define VULKAN_BACKEND_ROOT_DIR     L"x64/Vulkan"
+#else
+#error Unknown platform.
+#endif
+
+#if defined(_WIN32)
+#define  GLSLANG_BIN_DIR            L"bin"
+#define  VULKAN_BACKEND_BIN_DIR     L"bin"
+#else
+#define  GLSLANG_BIN_DIR            L""
+#define  VULKAN_BACKEND_BIN_DIR     L""
+#endif
+
+#define  GLSLANG_EXEC               L"glslangValidator"
+#define  SPIRV_AS_EXEC              L"spirv-as"
+#define  SPIRV_DIS_EXEC             L"spirv-dis"
+#define  SPIRV_LINK_EXEC            L"spirv-link"
+#define  VULKAN_BACKEND_EXEC        L"VulkanBackend"
+
+#if defined(_WIN32)
+#define GLSLANG_EXEC_EXT            L"exe"
+#define VULKAN_BACKEND_EXEC_EXT     L"exe"
+#else
+#define GLSLANG_EXEC_EXT            L""
+#define VULKAN_BACKEND_EXEC_EXT     L""
 #endif
 
 #define LC_EXTRA_TARGETS_FILE_NAME  L"additional-targets"

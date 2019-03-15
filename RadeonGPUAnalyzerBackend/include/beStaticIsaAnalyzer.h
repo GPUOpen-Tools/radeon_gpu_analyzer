@@ -6,14 +6,21 @@
 #define beStaticIsaAnalyzer_h__
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTBaseTools/Include/gtString.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local.
-#include <RadeonGPUAnalyzerBackend/include/beInclude.h>
+#include <RadeonGPUAnalyzerBackend/Include/beInclude.h>
 
 namespace beKA
 {
-class RGA_BACKEND_DECLDIR beStaticIsaAnalyzer
+class beStaticIsaAnalyzer
 {
 public:
 
@@ -42,4 +49,5 @@ private:
     ~beStaticIsaAnalyzer();
 };
 }
+
 #endif // beStaticIsaAnalyzer_h__

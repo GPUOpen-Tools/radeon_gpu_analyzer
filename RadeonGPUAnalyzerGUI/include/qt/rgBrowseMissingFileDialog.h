@@ -12,7 +12,7 @@
 
 // Forward declarations.
 struct rgProject;
-enum rgProjectAPI : char;
+enum class rgProjectAPI : char;
 
 // Delegate for the rgBrowseMissingFileDialog which draws the list of missing files with truncated text.
 class rgMissingFileItemDelegate : public QItemDelegate

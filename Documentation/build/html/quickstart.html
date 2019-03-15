@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Quickstart &mdash; Radeon GPU Analyzer 2.0.1 documentation</title>
+  <title>Quickstart &mdash; Radeon GPU Analyzer 2.1 documentation</title>
   
 
   
@@ -35,9 +35,9 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="Radeon GPU Analyzer 2.0.1 documentation" href="index.html"/>
+    <link rel="top" title="Radeon GPU Analyzer 2.1 documentation" href="index.html"/>
         <link rel="next" title="Help Manual" href="help_manual.html"/>
-        <link rel="prev" title="The Radeon GPU Analyzer" href="index.html"/> 
+        <link rel="prev" title="Radeon GPU Analyzer (RGA)" href="index.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                2.0.1
+                2.1
               </div>
             
           
@@ -93,9 +93,22 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#running-rga">Running RGA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#creating-a-project">Creating a Project</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#generating-disassembly">Generating Disassembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-and-running-rga">Installing and Running RGA</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#startup-dialog">Startup dialog</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#vulkan-mode">Vulkan® Mode</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-home-page">The Home Page</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-project">Creating a Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generating-disassembly">Generating Disassembly</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#rocm-opencl-mode">ROCm OpenCL™ Mode</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">The Home Page</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Creating a Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Generating Disassembly</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="help_manual.html">Help Manual</a></li>
@@ -164,12 +177,108 @@
             
   <div class="section" id="quickstart">
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="running-rga">
-<h2>Running RGA<a class="headerlink" href="#running-rga" title="Permalink to this headline">¶</a></h2>
-<p>The RGA app is a pure offline compiler without any dependency on the installed hardware or driver. To run the app, run the RadeonGPUAnalyzerGUI executable.</p>
+<div class="section" id="installing-and-running-rga">
+<h2>Installing and Running RGA<a class="headerlink" href="#installing-and-running-rga" title="Permalink to this headline">¶</a></h2>
+<p>The tool is available for download on the <a class="reference external" href="https://github.com/GPUOpen-Tools/RGA/releases">RGA GitHub releases page</a>.</p>
+<ul class="simple">
+<li>Windows: use the .msi installer or .zip archive from. For Vulkan®, the installer would also install the RGA Layer and hence is the recommended option.</li>
+<li>Linux: use the .tgz archive.</li>
+</ul>
+<p>To run the app, run the RadeonGPUAnalyzerGUI executable.</p>
+<div class="section" id="startup-dialog">
+<h3>Startup dialog<a class="headerlink" href="#startup-dialog" title="Permalink to this headline">¶</a></h3>
+<p>The graphical user interface has been extended to support more than a single API, so you will now be prompted to select your default API of choice on startup.
+You can check the “Do not ask me again” check box to always launch the app in the desired mode.</p>
+<a class="reference internal image-reference" href="_images/startup_page_vulkan.png"><img alt="_images/startup_page_vulkan.png" src="_images/startup_page_vulkan.png" style="width: 6.25532in; height: 3.47686in;" /></a>
+</div>
+</div>
+<div class="section" id="vulkan-mode">
+<h2>Vulkan® Mode<a class="headerlink" href="#vulkan-mode" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-home-page">
+<h3>The Home Page<a class="headerlink" href="#the-home-page" title="Permalink to this headline">¶</a></h3>
+<p>Select Vulkan® as the API of choice on startup. Then, in the home page, we have two options for a start:</p>
+<ul class="simple">
+<li>Create a graphics pipeline</li>
+<li>Create a compute pipeline</li>
+</ul>
 </div>
 <div class="section" id="creating-a-project">
-<h2>Creating a Project<a class="headerlink" href="#creating-a-project" title="Permalink to this headline">¶</a></h2>
+<h3>Creating a Project<a class="headerlink" href="#creating-a-project" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/home_page_vulkan.png"><img alt="_images/home_page_vulkan.png" src="_images/home_page_vulkan.png" style="width: 4.25532in; height: 2.47686in;" /></a>
+<p>Let’s start by creating a graphics pipeline.</p>
+<p>You will then be prompted for an optional rename of your project:</p>
+<a class="reference internal image-reference" href="_images/create_project_vulkan.png"><img alt="_images/create_project_vulkan.png" src="_images/create_project_vulkan.png" style="width: 4.25532in; height: 2.47686in;" /></a>
+<p>After the project is created, you can use this menu to add your shaders:</p>
+<a class="reference internal image-reference" href="_images/file_menu_vulkan.png"><img alt="_images/file_menu_vulkan.png" src="_images/file_menu_vulkan.png" style="width: 2.55532in; height: 1.47686in;" /></a>
+<p>When adding a shader file, you have two options:</p>
+<ul class="simple">
+<li>Create a template GLSL file, auto-generated by RGA. This is a good option if you are interested in rapid prototyping and just want something that compiles to use as a base line.</li>
+<li>Add an existing SPIR-V binary or GLSL source file.</li>
+</ul>
+<p>Let’s create template vertex and fragment shaders:</p>
+<a class="reference internal image-reference" href="_images/create_file_vulkan.png"><img alt="_images/create_file_vulkan.png" src="_images/create_file_vulkan.png" style="width: 4.95532in; height: 1.47686in;" /></a>
+<p>After creating/adding a file, you can edit the source code in the editor. This is true not only to GLSL textual code. It is possible to load a SPIR-V binary in RGA. If you do that, the binary would be disassembled, and you will be able to edit it as textual code. Upon compilation, RGA would reassemble the SPIR-V binary for you.</p>
+<a class="reference internal image-reference" href="_images/new_file_vulkan.png"><img alt="_images/new_file_vulkan.png" src="_images/new_file_vulkan.png" style="width: 6.08333in; height: 4.08568in;" /></a>
+<p>After we edited our shader source code, SPIR-V binaries or mix thereof, let’s make sure that the pipeline state matches our shaders. Clicking on Pipeline state would open the RGA’s pipeline state editor:</p>
+<a class="reference internal image-reference" href="_images/pipeline_state_vulkan.png"><img alt="_images/pipeline_state_vulkan.png" src="_images/pipeline_state_vulkan.png" style="width: 8.08333in; height: 6.08568in;" /></a>
+<p>The editor provides a tree representation of the Vulkan® pipeline state, allowing the user to edit a graphics or compute pipeline’s creation parameters.
+Different sections are available to be configured within this view depending on the project’s pipeline type:</p>
+<ul>
+<li><p class="first">Graphics pipeline</p>
+<blockquote>
+<div><ul class="simple">
+<li>VkGraphicsPipelineCreateInfo</li>
+<li>VkPipelineLayoutCreateInfo</li>
+<li>VkDescriptorSetLayoutCreateInfo array</li>
+<li>VkRenderPassCreateInfo</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Compute pipeline</p>
+<blockquote>
+<div><ul class="simple">
+<li>VkComputePipelineCreateInfo</li>
+<li>VkPipelineLayoutCreateInfo</li>
+<li>VkDescriptorSetLayoutCreateInfo array</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p>One nice thing about this view is that it allows you to visually see the create info structure relationships within the Vulkan® pipeline state, which is sometimes hard to do from just looking at the flat Vulkan® spec.</p>
+<p>You can use Ctrl+F to search the state:</p>
+<a class="reference internal image-reference" href="_images/pipeline_state_search_vulkan.png"><img alt="_images/pipeline_state_search_vulkan.png" src="_images/pipeline_state_search_vulkan.png" style="width: 4.25532in; height: 2.47686in;" /></a>
+<p>which would also scroll to the relevant occurrence:</p>
+<a class="reference internal image-reference" href="_images/pipeline_state_search_results_vulkan.png"><img alt="_images/pipeline_state_search_results_vulkan.png" src="_images/pipeline_state_search_results_vulkan.png" style="width: 6.08333in; height: 4.08568in;" /></a>
+<p>It is also possible to use the filter option while searching:</p>
+<a class="reference internal image-reference" href="_images/pipeline_state_search_viewport_vulkan.png"><img alt="_images/pipeline_state_search_viewport_vulkan.png" src="_images/pipeline_state_search_viewport_vulkan.png" style="width: 4.25532in; height: 2.47686in;" /></a>
+<p>Searching with this option on would only show the relevant parts of the tree:</p>
+<a class="reference internal image-reference" href="_images/pipeline_state_search_results_filter_vulkan.png"><img alt="_images/pipeline_state_search_results_filter_vulkan.png" src="_images/pipeline_state_search_results_filter_vulkan.png" style="width: 6.25532in; height: 3.47686in;" /></a>
+<p>Another useful option is loading the pipeline state file. RGA stores the Vulkan® pipeline state in a JSON file:</p>
+<ul class="simple">
+<li>.gpso file for graphics pipelines, with a representation of VkGraphicsPipelineCreateInfo</li>
+<li>.cpso file for compute pipelines, with a representation of VkComputePipelineCreateInfo</li>
+</ul>
+<p>These files can be serialized from your Vulkan® app in runtime using the RGA layer, a beta feature that ships with RGA 2.1. For more info about this feature, see the Vulkan® Help Manual section.</p>
+<p>When you build your project with RGA, the tool spawns a Vulkan® app that accepts the JSON representation of your state (based on the values in the UI),</p>
+</div>
+<div class="section" id="generating-disassembly">
+<h3>Generating Disassembly<a class="headerlink" href="#generating-disassembly" title="Permalink to this headline">¶</a></h3>
+<p>After the pipeline state matches our shaders, let’s build the project:</p>
+<a class="reference internal image-reference" href="_images/build_project_vulkan.png"><img alt="_images/build_project_vulkan.png" src="_images/build_project_vulkan.png" style="width: 3.25532in; height: 2.47686in;" /></a>
+<p>The compiler output can be viewed at the Build output pane at the bottom:</p>
+<a class="reference internal image-reference" href="_images/build_project_output_vulkan.png"><img alt="_images/build_project_output_vulkan.png" src="_images/build_project_output_vulkan.png" style="width: 8.08333in; height: 4.08568in;" /></a>
+<p>And, in case of a successful build, the disassembly and HW resource usage info would be shown on the right:</p>
+<a class="reference internal image-reference" href="_images/disassembly_view_vulkan.png"><img alt="_images/disassembly_view_vulkan.png" src="_images/disassembly_view_vulkan.png" style="width: 6.08333in; height: 4.08568in;" /></a>
+<p>That’s it - we got our first Vulkan® pipeline built with RGA.</p>
+</div>
+</div>
+<div class="section" id="rocm-opencl-mode">
+<h2>ROCm OpenCL™ Mode<a class="headerlink" href="#rocm-opencl-mode" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>The Home Page<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id2">
+<h3>Creating a Project<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <p>RGA Project is a vehicle that can contain any number of OpenCL™ source files (.cl), together with a set of build settings.
 When you build the project, the OpenCL™ source files are being compiled and linked together into a single HSA Code Object binary.</p>
 <p>RGA will automatically create for you the project when you add or create a file in the Home Page.</p>
@@ -180,10 +289,10 @@ When you build the project, the OpenCL™ source files are being compiled and li
 <p>In a similar way, you can create a project by creating an empty .cl file. Use the Ctrl+N shortcut or click on “Create new .cl file”.</p>
 <p>You will then be prompted for an optional rename of your project:</p>
 <img alt="_images/002_rename_project.png" src="_images/002_rename_project.png" />
-<p>RGA will use a yyyymmdd-hhmmss date-time string as a default name. Check the “Always use auto-generated project names” check box to instruct RGA to always use the default name without prompting for renaming.</p>
+<p>RGA will use a yymmdd-hhmmss date-time string as a default name. Check the “Always use auto-generated project names” check box to instruct RGA to always use the default name without prompting for renaming.</p>
 </div>
-<div class="section" id="generating-disassembly">
-<h2>Generating Disassembly<a class="headerlink" href="#generating-disassembly" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h3>Generating Disassembly<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <p>To build your project and generate the disassembly, use the Ctrl+Shift+B shortcut.
 Alternatively, you can use the Build -&gt; Build project menu item:</p>
 <a class="reference internal image-reference" href="_images/003_build_project.png"><img alt="_images/003_build_project.png" src="_images/003_build_project.png" style="width: 4.25532in; height: 1.82522in;" /></a>
@@ -215,6 +324,7 @@ The “Build output” window at the bottom will display the invocation command 
 </div></blockquote>
 </div>
 </div>
+</div>
 
 
            </div>
@@ -229,7 +339,7 @@ The “Build output” window at the bottom will display the invocation command 
         <a href="help_manual.html" class="btn btn-neutral float-right" title="Help Manual" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="The Radeon GPU Analyzer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral" title="Radeon GPU Analyzer (RGA)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -260,7 +370,7 @@ The “Build output” window at the bottom will display the invocation command 
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'2.0.1',
+            VERSION:'2.1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

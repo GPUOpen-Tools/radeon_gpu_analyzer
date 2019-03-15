@@ -1,7 +1,7 @@
 #pragma once
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgOrderedListDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgOrderedListDialog.h>
 
 class rgIncludeDirectoriesView : public rgOrderedListDialog
 {
@@ -31,12 +31,6 @@ private:
 
     // Set the button fonts.
     void SetButtonFonts();
-
-    // Set button shortcuts.
-    void SetButtonShortcuts();
-
-    // Button keyboard actions.
-    QAction* m_pBrowseAction = nullptr;
 
     // A "Browse" QPushButton used to browse new directories to add.
     QPushButton* m_pBrowsePushButton = nullptr;

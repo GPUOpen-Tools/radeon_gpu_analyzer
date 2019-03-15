@@ -4,7 +4,7 @@
 #include <memory>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
 
 // A class responsible for parsing the CLI's version-info results.
 class rgXMLCliVersionInfo

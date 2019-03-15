@@ -45,6 +45,9 @@ signals:
     // A signal emitted when the maximized container has been restored to normal size.
     void ViewRestored();
 
+    // A signal emitted when the container frame should get the focus.
+    void FrameInFocusSignal();
+
 private slots:
     // Handler invoked when the corner button is pressed for a view container in this splitter.
     void HandleCornerButtonClicked();

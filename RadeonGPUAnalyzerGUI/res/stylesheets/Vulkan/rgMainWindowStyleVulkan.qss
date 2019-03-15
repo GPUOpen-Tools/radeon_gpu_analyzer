@@ -1,0 +1,32 @@
+/********************************************************************/
+/* Main Window Tabs
+/********************************************************************/
+
+/* Tab basic styling */
+#mainTabWidget QTabBar::tab
+{
+    background: rgb(51,51,51);
+    bottom: 1px;
+    padding: 4px 8px;
+}
+
+/* Unselected tab */
+#mainTabWidget QTabBar::tab:!selected
+{
+    border-bottom: 4px solid transparent;
+    color: rgb(159, 159, 159);
+}
+
+/* Hovered tab */
+#mainTabWidget QTabBar::tab:hover
+{
+    border-bottom: 4px solid rgb(135,20,16);
+    color: rgb(153, 153, 153);
+}
+
+/* Selected tab */
+#mainTabWidget QTabBar::tab:selected
+{
+    border-bottom: 4px solid rgb(224,30,55);
+    color: white;
+}

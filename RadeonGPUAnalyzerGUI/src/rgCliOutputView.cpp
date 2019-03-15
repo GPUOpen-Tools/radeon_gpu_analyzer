@@ -8,9 +8,10 @@
 #include <QMouseEvent>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgCliOutputView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgFileMenu.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgCliOutputView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMenu.h>
 
 // Local constants
 static const QString  QSTR_CMPLR_ERROR_TOKEN          = ": error:";
@@ -48,6 +49,81 @@ rgCliOutputView::rgCliOutputView(QWidget *parent) :
 
     // Set the mouse cursor to pointing hand cursor.
     SetCursor();
+
+    // Create shortcut actions.
+    CreateActions();
+}
+
+void rgCliOutputView::CreateActions()
+{
+    // Tab key navigation.
+    m_pTabKeyAction = new QAction(this);
+    m_pTabKeyAction->setShortcut(QKeySequence(gs_ACTION_HOTKEY_FILE_MENU_ACTIVATE_TAB));
+    m_pTabKeyAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+
+    addAction(m_pTabKeyAction);
+    bool isConnected = connect(m_pTabKeyAction, &QAction::triggered, this, &rgCliOutputView::HandleTabFocusPressed);
+    assert(isConnected);
+
+    // Shift+Tab key navigation.
+    m_pShiftTabKeyAction = new QAction(this);
+    m_pShiftTabKeyAction->setShortcut(QKeySequence(gs_ACTION_HOTKEY_FILE_MENU_ACTIVATE_SHIFT_TAB));
+    m_pShiftTabKeyAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+
+    addAction(m_pShiftTabKeyAction);
+    isConnected = connect(m_pShiftTabKeyAction, &QAction::triggered, this, &rgCliOutputView::HandleShiftTabFocusPressed);
+    assert(isConnected);
+}
+
+void rgCliOutputView::HandleTabFocusPressed()
+{
+    // Switch focus to the next child widget,
+    // unless the focus is on the last child widget,
+    // in which case switch focus to file menu.
+    if (m_currentSubWidget == CliOutputWindowSubWidgets::OutputWindow)
+    {
+        ui.clearOutputPushButton->setFocus();
+        m_currentSubWidget = CliOutputWindowSubWidgets::ClearWindowButton;
+    }
+    else if (m_currentSubWidget == CliOutputWindowSubWidgets::ClearWindowButton)
+    {
+        m_currentSubWidget = CliOutputWindowSubWidgets::OutputWindow;
+        emit FocusNextView();
+    }
+}
+
+void rgCliOutputView::HandleShiftTabFocusPressed()
+{
+    // Switch focus to the next child widget,
+    // unless the focus is on the last child widget,
+    // in which case switch focus to file menu.
+    if (m_currentSubWidget == CliOutputWindowSubWidgets::OutputWindow)
+    {
+        emit FocusColumnPushButton();
+    }
+    else if (m_currentSubWidget == CliOutputWindowSubWidgets::ClearWindowButton)
+    {
+        m_currentSubWidget = CliOutputWindowSubWidgets::OutputWindow;
+        emit FocusOutputWindow();
+    }
+}
+
+void rgCliOutputView::mousePressEvent(QMouseEvent *pEvent)
+{
+    m_currentSubWidget = CliOutputWindowSubWidgets::OutputWindow;
+
+    // Pass the event onto the base class.
+    QWidget::mousePressEvent(pEvent);
+}
+
+std::string rgCliOutputView::GetText() const
+{
+    return ui.outputTextEdit->toPlainText().toStdString();
+}
+
+void rgCliOutputView::focusInEvent(QFocusEvent* pEvent)
+{
+    m_currentSubWidget = CliOutputWindowSubWidgets::OutputWindow;
 }
 
 void rgCliOutputView::ClearText()
@@ -55,22 +131,26 @@ void rgCliOutputView::ClearText()
     ui.outputTextEdit->clear();
 }
 
-bool rgCliOutputView::eventFilter(QObject* obj, QEvent* evnt)
+bool rgCliOutputView::eventFilter(QObject* pObject, QEvent* pEvent)
 {
-    // Intercept "mouse double-click" events for TextEdit area.
-    if (evnt->type() == QMouseEvent::MouseButtonDblClick)
+    assert(pEvent != nullptr);
+    if (pEvent != nullptr)
     {
-        const QPoint  clickedPos = static_cast<QMouseEvent*>(evnt)->pos();
-        QTextCursor   textPos = ui.outputTextEdit->cursorForPosition(clickedPos);
-        SwitchToErrorLocation(textPos.blockNumber());
+        // Intercept "mouse double-click" events for TextEdit area.
+        if (pEvent->type() == QMouseEvent::MouseButtonDblClick)
+        {
+            const QPoint  clickedPos = static_cast<QMouseEvent*>(pEvent)->pos();
+            QTextCursor   textPos = ui.outputTextEdit->cursorForPosition(clickedPos);
+            SwitchToErrorLocation(textPos.blockNumber());
+        }
+        else if (pEvent->type() == QMouseEvent::MouseButtonPress)
+        {
+            m_currentSubWidget = CliOutputWindowSubWidgets::OutputWindow;
+        }
+    }
 
-        return true;
-    }
-    else
-    {
-        // Continue default processing for all other events.
-        return QObject::eventFilter(obj, evnt);
-    }
+    // Continue default processing for all other events.
+    return QObject::eventFilter(pObject, pEvent);
 }
 
 void rgCliOutputView::ConnectSignals()

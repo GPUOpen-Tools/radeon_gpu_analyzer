@@ -1,14 +1,17 @@
 // C++.
 #include <cassert>
 
+// Qt.
+#include <QAction>
+
 // Infra.
 #include <QtCommon/Scaling/ScalingManager.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgOrderedListDialog.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgOrderedListDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
 rgOrderedListDialog::rgOrderedListDialog(const char* pDelimiter, QWidget* pParent) :
     QDialog(pParent),
@@ -68,17 +71,26 @@ void rgOrderedListDialog::SetListItems(const QString& entries)
     if (!entries.isEmpty())
     {
         // Process the incoming text.
-        m_itemsList = entries.split(m_pDelimiter);
+        QStringList entryList = entries.split(m_pDelimiter);
+
+        // Remove trailing and leading whitespace, and then only add non-empty strings.
+        // This could happen if the user manually typed invalid entries.
+        for (int i = 0; i < entryList.count(); ++i)
+        {
+            QString item = entryList[i].trimmed();
+
+            if (item != "")
+            {
+                m_itemsList.append(item);
+            }
+        }
 
         // Update the list widget.
         UpdateListWidget();
     }
 
-    // Insert an empty item to the list widget and highlight it.
+    // Insert an empty item to the list widget and select it.
     InsertBlankItem();
-
-    // Set the last item as editable.
-    ui.itemsList->editItem(ui.itemsList->item(ui.itemsList->count() - 1));
 }
 
 void rgOrderedListDialog::ConnectSignals()
@@ -115,7 +127,7 @@ void rgOrderedListDialog::ConnectSignals()
     isConnected = connect(ui.itemsList, &QListWidget::itemChanged, this, &rgOrderedListDialog::HandleListItemChanged);
     assert(isConnected);
 
-    isConnected = connect(ui.itemsList, &QListWidget::itemClicked, this, &rgOrderedListDialog::HandleListItemClicked);
+    isConnected = connect(ui.itemsList, &QListWidget::itemSelectionChanged, this, &rgOrderedListDialog::HandleListItemSelectionChanged);
     assert(isConnected);
 }
 
@@ -208,6 +220,9 @@ void rgOrderedListDialog::HandleMoveDownButtonClick(bool /* checked */)
             }
         }
     }
+
+    // Update buttons.
+    UpdateButtons();
 }
 
 void rgOrderedListDialog::HandleMoveUpButtonClick(bool /* checked */)
@@ -232,12 +247,15 @@ void rgOrderedListDialog::HandleMoveUpButtonClick(bool /* checked */)
             }
         }
     }
+
+    // Update buttons.
+    UpdateButtons();
 }
 
 void rgOrderedListDialog::HandleDeleteButtonClick(bool /* checked */)
 {
     // Display a confirmation message box.
-    bool isConfirmation = rgUtils::ShowConfirmationMessageBox(STR_INCLUDE_DIR_DIALOG_DELETE_BOX_TITLE, STR_INCLUDE_DIR_DIALOG_DELETE_BOX_MESSAGE);
+    bool isConfirmation = rgUtils::ShowConfirmationMessageBox(STR_INCLUDE_DIR_DIALOG_DELETE_BOX_TITLE, STR_INCLUDE_DIR_DIALOG_DELETE_BOX_MESSAGE, this);
 
     if (isConfirmation)
     {
@@ -248,8 +266,7 @@ void rgOrderedListDialog::HandleDeleteButtonClick(bool /* checked */)
         // Remove the selected item from the string list.
         if (pCurrentItem != nullptr)
         {
-            QString dirName = pCurrentItem->text();
-            m_itemsList.removeAll(dirName);
+            m_itemsList.removeAt(currentIndex);
 
             // Update buttons.
             UpdateButtons();
@@ -257,7 +274,7 @@ void rgOrderedListDialog::HandleDeleteButtonClick(bool /* checked */)
 
         // If this was the last item in the list widget,
         // add a blank place holder.
-        if (m_itemsList.isEmpty())
+        if (ui.itemsList->count() == 0)
         {
             // Insert an empty item to the list widget and highlight it.
             InsertBlankItem();
@@ -271,7 +288,7 @@ void rgOrderedListDialog::SetButtonShortcuts()
     m_pAddAction = new QAction(this);
     m_pAddAction->setShortcut(QKeySequence(Qt::Key_Alt | Qt::Key_N));
 
-    bool isConnected = connect(m_pAddAction, &QAction::triggered, this, &rgOrderedListDialog::HandleDeleteButtonClick);
+    bool isConnected = connect(m_pAddAction, &QAction::triggered, this, &rgOrderedListDialog::HandleNewButtonClick);
     assert(isConnected);
 
     // Delete button keyboard shortcut.
@@ -341,20 +358,34 @@ void rgOrderedListDialog::HandleEditButtonClick(bool /* checked */)
 
 void rgOrderedListDialog::UpdateButtons()
 {
-    // Disable Move up/down buttons if only one directory.
-    if (m_itemsList.count() < 2)
+    // Enable/disable move up/down buttons.
+    if (ShouldDisableMoveUpDownButtons())
     {
         ui.moveUpPushButton->setEnabled(false);
         ui.moveDownPushButton->setEnabled(false);
     }
     else
     {
-        ui.moveUpPushButton->setEnabled(true);
-        ui.moveDownPushButton->setEnabled(true);
+        // Get the current row.
+        const int currentRow = ui.itemsList->currentRow();
+
+        // Set both up/down buttons to disabled for now.
+        ui.moveUpPushButton->setEnabled(false);
+        ui.moveDownPushButton->setEnabled(false);
+
+        // Figure out which up/down buttons to enable.
+        if (currentRow > 0)
+        {
+            ui.moveUpPushButton->setEnabled(true);
+        }
+        if (currentRow >= 0 && currentRow < m_itemsList.count() - 1)
+        {
+            ui.moveDownPushButton->setEnabled(true);
+        }
     }
 
     // Enable/Disable the Edit and Delete buttons.
-    if (m_itemsList.count() == 0)
+    if (ui.itemsList->count() == 0)
     {
         ui.editPushButton->setEnabled(false);
         ui.deletePushButton->setEnabled(false);
@@ -364,6 +395,30 @@ void rgOrderedListDialog::UpdateButtons()
         ui.editPushButton->setEnabled(true);
         ui.deletePushButton->setEnabled(true);
     }
+}
+
+bool rgOrderedListDialog::ShouldDisableMoveUpDownButtons()
+{
+    bool shouldDisableButtons = false;
+
+    if (ui.itemsList->count() < 2)
+    {
+        shouldDisableButtons = true;
+    }
+    else if (ui.itemsList->count() == 2)
+    {
+        if (ui.itemsList->item(1)->text().isEmpty())
+        {
+            shouldDisableButtons = true;
+        }
+    }
+    else if (ui.itemsList->currentRow() >= 0 &&
+             ui.itemsList->item(ui.itemsList->currentRow())->text().isEmpty())
+    {
+        shouldDisableButtons = true;
+    }
+
+    return shouldDisableButtons;
 }
 
 void rgOrderedListDialog::UpdateToolTips()
@@ -384,28 +439,11 @@ void rgOrderedListDialog::InsertBlankItem()
     QListWidgetItem* pItem = new QListWidgetItem();
     pItem->setFlags(pItem->flags() | Qt::ItemIsEditable);
     ui.itemsList->addItem(pItem);
-    ui.itemsList->setCurrentRow(0);
-    ui.itemsList->setCurrentRow(0, QItemSelectionModel::SelectionFlags::enum_type::Select);
+    ui.itemsList->setCurrentItem(pItem);
     ui.itemsList->setFocus();
 }
 
-void rgOrderedListDialog::HandleListItemClicked(QListWidgetItem* pItem)
+void rgOrderedListDialog::HandleListItemSelectionChanged()
 {
-    assert(pItem);
-
-    // If the clicked on entry is empty, disable the up/down buttons.
-    if (pItem != nullptr)
-    {
-        QString text = pItem->text();
-        if (text.isEmpty())
-        {
-            ui.moveUpPushButton->setEnabled(false);
-            ui.moveDownPushButton->setEnabled(false);
-        }
-        else
-        {
-            ui.moveUpPushButton->setEnabled(true);
-            ui.moveDownPushButton->setEnabled(true);
-        }
-    }
+    UpdateButtons();
 }

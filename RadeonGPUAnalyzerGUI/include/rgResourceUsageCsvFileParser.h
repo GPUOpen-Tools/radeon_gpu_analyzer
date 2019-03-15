@@ -4,8 +4,8 @@
 #include <vector>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgCsvFileParser.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgCsvFileParser.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
 
 // A file parser used to process Resource Usage CSV files.
 class rgResourceUsageCsvFileParser : public rgCsvFileParser

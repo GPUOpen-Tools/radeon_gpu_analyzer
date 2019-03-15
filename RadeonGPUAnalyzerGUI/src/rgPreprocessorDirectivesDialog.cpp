@@ -2,9 +2,9 @@
 #include <sstream>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgPreprocessorDirectivesDialog.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgPreprocessorDirectivesDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
 rgPreprocessorDirectivesDialog::rgPreprocessorDirectivesDialog(const char* pDelimiter, QWidget* pParent) :
     rgOrderedListDialog(pDelimiter, pParent)
@@ -21,6 +21,8 @@ void rgPreprocessorDirectivesDialog::OnListItemChanged(QListWidgetItem* pItem)
     // Block signals from the list widget.
     ui.itemsList->blockSignals(true);
 
+    m_editingInvalidEntry = false;
+
     // Process the newly-entered data.
     if (pItem != nullptr)
     {
@@ -29,38 +31,48 @@ void rgPreprocessorDirectivesDialog::OnListItemChanged(QListWidgetItem* pItem)
         bool isDuplicateItem = m_itemsList.contains(newMacro);
         bool isContainsWhitespace = rgUtils::IsContainsWhitespace(newMacro.toStdString());
 
-        // If the new directory exists, and it is not a duplicate entry, update local data.
-        if (!isDuplicateItem && !isContainsWhitespace)
+        // If the new macro exists, and it is not a duplicate entry, update local data.
+        if (newMacro.isEmpty())
         {
-            if (!m_editingInvalidEntry)
-            {
-                // Update local data.
-                m_itemsList << newMacro;
-            }
-
-            // Update tool tips.
-            UpdateToolTips();
-
-            m_editingInvalidEntry = false;
+            // The user has emptied out the entry, so delete it.
+            // Simulate a click on the delete button to remove the entry from the UI.
+            ui.deletePushButton->click();
         }
         else
         {
-            // Display an error message box.
-            std::stringstream errorString;
-            if (isDuplicateItem)
+            if (isDuplicateItem || isContainsWhitespace)
             {
-                errorString << STR_PREPROCESSOR_DIRECTIVES_DIALOG_DIRECTIVE_IS_DUPLICATE;
-                errorString << newMacro.toStdString().c_str();
-            }
-            else if (isContainsWhitespace)
-            {
-                errorString << STR_PREPROCESSOR_DIRECTIVES_DIALOG_DIRECTIVE_CONTAINS_WHITESPACE;
-                errorString << newMacro.toStdString().c_str();
+                // Display an error message box.
+                std::stringstream errorString;
+                if (isDuplicateItem)
+                {
+                    errorString << STR_PREPROCESSOR_DIRECTIVES_DIALOG_DIRECTIVE_IS_DUPLICATE;
+                    errorString << newMacro.toStdString().c_str();
+                }
+                else if (isContainsWhitespace)
+                {
+                    errorString << STR_PREPROCESSOR_DIRECTIVES_DIALOG_DIRECTIVE_CONTAINS_WHITESPACE;
+                    errorString << newMacro.toStdString().c_str();
+                }
+
+                rgUtils::ShowErrorMessageBox(errorString.str().c_str(), this);
+                m_editingInvalidEntry = true;
             }
 
-            rgUtils::ShowErrorMessageBox(errorString.str().c_str(), this);
-            m_editingInvalidEntry = true;
+            // Update local data.
+            int itemRow = ui.itemsList->row(pItem);
+            if (itemRow < m_itemsList.count())
+            {
+                m_itemsList[itemRow] = newMacro;
+            }
+            else
+            {
+                m_itemsList.append(newMacro);
+            }
         }
+
+        // Update tool tips.
+        UpdateToolTips();
 
         // Unblock signals from the list widget.
         ui.itemsList->blockSignals(false);

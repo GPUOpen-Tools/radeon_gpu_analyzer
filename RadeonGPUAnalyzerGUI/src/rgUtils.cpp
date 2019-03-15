@@ -20,19 +20,34 @@
 #include <QWidget>
 
 // Infra.
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable:4309)
+#endif
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osDirectory.h>
 #include <AMDTBaseTools/Include/gtString.h>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
+
 #include <QtCommon/CustomWidgets/ArrowIconWidget.h>
 #include <QtCommon/CustomWidgets/ListWidget.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgBrowseMissingFileDialog.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgHideListWidgetEventFilter.h>
-#include <RadeonGPUAnalyzerGUI/include/rgConfigManager.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgBrowseMissingFileDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgHideListWidgetEventFilter.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgConfigManager.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypesOpenCL.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypesVulkan.h>
+
+// Static constants
+
+static const uint32_t  SPV_BINARY_MAGIC_NUMBER = 0x07230203;
+
 
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - START ***
 
@@ -59,7 +74,7 @@ static bool OpenMultipleFileDialogHelper(QWidget* pParent, const QString& captio
     bool ret = false;
     selectedFilePaths.clear();
 
-    QStringList filenames = QFileDialog::getOpenFileNames(pParent, caption, rgConfigManager::GetLastSelectedFolder().c_str(), filter);
+    QStringList filenames = QFileDialog::getOpenFileNames(pParent, caption, rgConfigManager::Instance().GetLastSelectedFolder().c_str(), filter);
 
     if (!filenames.isEmpty())
     {
@@ -68,6 +83,42 @@ static bool OpenMultipleFileDialogHelper(QWidget* pParent, const QString& captio
     }
 
     return ret;
+}
+
+// Build the file filter for Open File dialog in Vulkan mode.
+static QString ConstructVulkanOpenFileFilter()
+{
+    QString filter;
+    auto settings = rgConfigManager::Instance().GetGlobalConfig();
+    assert(settings != nullptr);
+    if (settings != nullptr)
+    {
+        // Convert the extensions stored in the Global Settings to the Qt file filter format.
+        QStringList glslExts   = QString(settings->m_inputFileExtGlsl.c_str()).split(';');
+        QStringList spvTxtExts = QString(settings->m_inputFileExtSpvTxt.c_str()).split(';');
+        QStringList spvBinExts = QString(settings->m_inputFileExtSpvBin.c_str()).split(';');
+
+        QString glslExtList, spvTxtExtList, spvBinExtList;
+
+        for (QString& ext : glslExts)   { glslExtList += ("*." + ext + " "); }
+        for (QString& ext : spvTxtExts) { spvTxtExtList += ("*." + ext + " "); }
+        for (QString& ext : spvBinExts) { spvBinExtList += ("*." + ext + " "); }
+
+        glslExtList.chop(1);
+        spvTxtExtList.chop(1);
+        spvBinExtList.chop(1);
+
+        filter += (QString(STR_FILE_DIALOG_FILTER_GLSL_SPIRV) + " (" + glslExtList + " " + spvTxtExtList + " " +
+            STR_FILE_DIALOG_FILTER_SPIRV_BINARY_EXT + " " + ");;");
+        filter += (QString(STR_FILE_DIALOG_FILTER_SPIRV) + ";;");
+        filter += (QString(STR_FILE_DIALOG_FILTER_GLSL) + " (" + glslExtList + ");;");
+        filter += (QString(STR_FILE_DIALOG_FILTER_SPV_TXT) + " (" + spvTxtExtList + ");;");
+        filter += (QString(STR_FILE_DIALOG_FILTER_SPIRV_BINARY_EXT) + " (" + spvBinExtList + ");;");
+
+        filter += STR_FILE_DIALOG_FILTER_ALL;
+    }
+
+    return filter;
 }
 
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - END ***
@@ -149,19 +200,6 @@ bool rgUtils::IsContainsWhitespace(const std::string& text)
     return isContainsWhitespace;
 }
 
-unsigned int rgUtils::FindIndexOf(const QString& textToFind, const QString& text, int startPosition)
-{
-    int findIndex = -1;
-
-    int position = textToFind.indexOf(text, startPosition);
-    if (position != startPosition && position != -1)
-    {
-        findIndex = position;
-    }
-
-    return findIndex;
-}
-
 void rgUtils::LeftTrim(const std::string& text, std::string& trimmedText)
 {
     trimmedText = text;
@@ -201,13 +239,12 @@ void rgUtils::Replace(std::string& text, const std::string& target, const std::s
     }
 }
 
-
 std::string rgUtils::GenerateTemplateCode(rgProjectAPI apiName, const std::string& entryPointPrefix)
 {
     std::stringstream strBuilder;
     switch (apiName)
     {
-    case OpenCL:
+    case rgProjectAPI::OpenCL:
     {
         strBuilder << STR_NEW_FILE_TEMPLATE_CODE_OPENCL_A;
         if (!entryPointPrefix.empty())
@@ -217,7 +254,7 @@ std::string rgUtils::GenerateTemplateCode(rgProjectAPI apiName, const std::strin
         strBuilder << STR_NEW_FILE_TEMPLATE_CODE_OPENCL_B;
         break;
     }
-    case Unknown:
+    case rgProjectAPI::Unknown:
     default:
         // We shouldn't get here.
         assert(false);
@@ -232,7 +269,7 @@ std::string rgUtils::GenerateDefaultProjectName()
 
     // Generate a timestamp to append to the base filename.
     QDateTime rightNow = QDateTime::currentDateTime();
-    QString localTime = rightNow.toString("yyyyMMdd-HHmmss");
+    QString localTime = rightNow.toString("yyMMdd-HHmmss");
     std::stringstream projectName(localTime.toStdString());
     return projectName.str();
 }
@@ -243,7 +280,8 @@ const char* rgUtils::GenerateProjectName(rgProjectAPI apiName)
     const char* pRet = nullptr;
     switch (apiName)
     {
-    case OpenCL:
+    case rgProjectAPI::OpenCL:
+    case rgProjectAPI::Vulkan:
         pRet = STR_FILE_MENU_PROJECT_NAME;
         break;
     default:
@@ -259,6 +297,136 @@ std::string rgUtils::GetProjectTitlePrefix(rgProjectAPI currentApi)
     std::stringstream str;
     str << "<b>" << rgUtils::GenerateProjectName(currentApi) << " name: </b>";
     return str.str();
+}
+
+bool rgUtils::GetStageShaderPath(const rgPipelineShaders& pipeline, rgPipelineStage stage, std::string& shaderPath)
+{
+    bool res = false;
+
+    size_t stageIndex = static_cast<size_t>(stage);
+    const auto& stageInputFilePath = pipeline.m_shaderStages[stageIndex];
+    if (!stageInputFilePath.empty())
+    {
+        // Extract the shader's file path.
+        shaderPath = stageInputFilePath;
+        res = true;
+    }
+
+    return res;
+}
+
+bool rgUtils::SetStageShaderPath(rgPipelineStage stage, const std::string& shaderPath, rgPipelineShaders& pipeline)
+{
+    bool res = false;
+
+    assert(!shaderPath.empty());
+    if (!shaderPath.empty())
+    {
+        // Set the shader's file path within the pipeline.
+        size_t stageIndex = static_cast<size_t>(stage);
+        pipeline.m_shaderStages[stageIndex] = shaderPath;
+        res = true;
+    }
+
+    return res;
+}
+
+bool rgUtils::GetComputeCapabilityToArchMapping(std::map<std::string, std::string>& deviceNameMapping)
+{
+    deviceNameMapping.clear();
+    bool ret = false;
+
+    // Get the current app mode.
+    const std::string& currentMode = rgConfigManager::Instance().GetCurrentModeString();
+
+    // Get the version info.
+    std::shared_ptr<rgCliVersionInfo> pVersionInfo = rgConfigManager::Instance().GetVersionInfo();
+
+    // Find the architecture node for our current mode.
+    auto currentModeArchitecturesIter = pVersionInfo->m_gpuArchitectures.find(currentMode);
+    bool isModeFound = (currentModeArchitecturesIter != pVersionInfo->m_gpuArchitectures.end());
+    assert(isModeFound);
+    if (isModeFound)
+    {
+        // Step through each GPU hardware architecture.
+        std::vector<rgGpuArchitecture> architectures = currentModeArchitecturesIter->second;
+        for (const rgGpuArchitecture& hardwareArchitecture : architectures)
+        {
+            const std::string& currentArchitecture = hardwareArchitecture.m_architectureName;
+
+            // Determine how many families are found within the architecture.
+            std::vector<rgGpuFamily> gpuFamilies = hardwareArchitecture.m_gpuFamilies;
+            int numFamiliesInArchitecture = static_cast<int>(gpuFamilies.size());
+
+            // Step through each family within the architecture.
+            for (int familyIndex = 0; familyIndex < numFamiliesInArchitecture; familyIndex++)
+            {
+                // Create a copy of the family info and sort by product name.
+                rgGpuFamily currentFamily = gpuFamilies[familyIndex];
+                deviceNameMapping[currentFamily.m_familyName] = currentArchitecture;
+            }
+        }
+    }
+
+    ret = !deviceNameMapping.empty();
+    return ret;
+}
+
+bool rgUtils::GetGfxNotation(const std::string& codeName, std::string& gfxNotation)
+{
+    bool ret = false;
+
+    // Mapping between codename and gfx compute capability notation.
+    static const std::map<std::string, std::string> gfxNotationMapping
+    {
+        std::make_pair<std::string, std::string>("Tahiti",              "gfx600"),
+        std::make_pair<std::string, std::string>("Hainan",              "gfx601"),
+        std::make_pair<std::string, std::string>("Oland",               "gfx601"),
+        std::make_pair<std::string, std::string>("Capeverde",           "gfx601"),
+        std::make_pair<std::string, std::string>("Pitcairn",            "gfx601"),
+        std::make_pair<std::string, std::string>("Kaveri",              "gfx700"),
+        std::make_pair<std::string, std::string>("Spectre",             "gfx700"),
+        std::make_pair<std::string, std::string>("Spooky",              "gfx700"),
+        std::make_pair<std::string, std::string>("Hawaii",              "gfx701"),
+        std::make_pair<std::string, std::string>("Kabini",              "gfx703"),
+        std::make_pair<std::string, std::string>("Kalindi",             "gfx703"),
+        std::make_pair<std::string, std::string>("Godavari",            "gfx703"),
+        std::make_pair<std::string, std::string>("Mullins",             "gfx703"),
+        std::make_pair<std::string, std::string>("Bonaire",             "gfx704"),
+        std::make_pair<std::string, std::string>("Carrizo",             "gfx801"),
+        std::make_pair<std::string, std::string>("Bristol Ridge",       "gfx801"),
+        std::make_pair<std::string, std::string>("Iceland",             "gfx802"),
+        std::make_pair<std::string, std::string>("Tonga",               "gfx802"),
+        std::make_pair<std::string, std::string>("Fiji",                "gfx803"),
+        std::make_pair<std::string, std::string>("Ellesmere",           "gfx803"),
+        std::make_pair<std::string, std::string>("Baffin",              "gfx803"),
+        std::make_pair<std::string, std::string>("Lexa",                "gfx803"),
+        std::make_pair<std::string, std::string>("Stoney",              "gfx810"),
+    };
+
+    auto iter = gfxNotationMapping.find(codeName);
+    if (iter != gfxNotationMapping.end())
+    {
+        gfxNotation = iter->second;
+        ret = true;
+    }
+
+    return ret;
+}
+
+std::string rgUtils::RemoveGfxNotation(const std::string& familyName)
+{
+    std::string fixedGroupName;
+    size_t bracketPos = familyName.find("/");
+    if (bracketPos != std::string::npos)
+    {
+        fixedGroupName = familyName.substr(bracketPos + 1);
+    }
+    else
+    {
+        fixedGroupName = familyName;
+    }
+    return fixedGroupName;
 }
 
 bool rgUtils::GetFirstValidOutputGpu(const rgBuildOutputsMap& buildOutputs, std::string& firstValidGpu, std::shared_ptr<rgCliBuildOutput>& pOutput)
@@ -326,12 +494,12 @@ std::string rgUtils::GetEntrypointsNameString(rgProjectAPI api)
 
     switch (api)
     {
-    case OpenCL:
+    case rgProjectAPI::OpenCL:
         {
             resultString = STR_MENU_BAR_FILE_ITEM_ENTRYPOINT_HEADER_OPENCL;
         }
         break;
-    case Unknown:
+    case rgProjectAPI::Unknown:
     default:
         {
             // All other cases use API-agnostic label text.
@@ -348,10 +516,13 @@ bool rgUtils::ProjectAPIToString(rgProjectAPI api, std::string& str)
     bool ret = true;
     switch (api)
     {
-    case OpenCL:
+    case rgProjectAPI::OpenCL:
         str = STR_API_NAME_OPENCL;
         break;
-    case Unknown:
+    case rgProjectAPI::Vulkan:
+        str = STR_API_NAME_VULKAN;
+        break;
+    case rgProjectAPI::Unknown:
     default:
         // We shouldn't get here.
         ret = false;
@@ -361,16 +532,34 @@ bool rgUtils::ProjectAPIToString(rgProjectAPI api, std::string& str)
     return ret;
 }
 
+rgProjectAPI rgUtils::ProjectAPIToEnum(const std::string& str)
+{
+    rgProjectAPI projectAPI = rgProjectAPI::Unknown;
+
+    if (str.compare(STR_API_NAME_OPENCL) == 0)
+    {
+        projectAPI = rgProjectAPI::OpenCL;
+    }
+    else if (str.compare(STR_API_NAME_VULKAN) == 0)
+    {
+        projectAPI = rgProjectAPI::Vulkan;
+    }
+
+    return projectAPI;
+}
+
 bool rgUtils::ProjectAPIToSourceFileExtension(rgProjectAPI api, std::string& extension)
 {
     bool ret = true;
     switch (api)
     {
-    case OpenCL:
-        extension = STR_CL_SOURCE_FILE_EXTENSION;
+    case rgProjectAPI::OpenCL:
+        extension = STR_SOURCE_FILE_EXTENSION_CL;
         break;
-
-    case Unknown:
+    case rgProjectAPI::Vulkan:
+        extension = STR_SOURCE_FILE_EXTENSION_VULKAN_GLSL;
+        break;
+    case rgProjectAPI::Unknown:
     default:
         // We shouldn't get here.
         ret = false;
@@ -429,7 +618,7 @@ bool rgUtils::IsSourceFileTypeValid(const std::string& str)
     QString qtString = str.c_str();
 
     // Check file headers.
-    if (qtString.endsWith(STR_CL_SOURCE_FILE_EXTENSION) || qtString.endsWith(STR_PROJECT_FILE_EXTENSION))
+    if (qtString.endsWith(STR_SOURCE_FILE_EXTENSION_CL) || qtString.endsWith(STR_PROJECT_FILE_EXTENSION))
     {
         ret = true;
     }
@@ -483,6 +672,9 @@ bool rgUtils::ShowBrowseMissingFilesDialog(std::shared_ptr<rgProject> pProject, 
             // Shouldn't get here.
             assert(false);
         }
+
+        // Free the memory.
+        delete pMissingFileDialog;
     }
 
     return ret;
@@ -490,19 +682,48 @@ bool rgUtils::ShowBrowseMissingFilesDialog(std::shared_ptr<rgProject> pProject, 
 
 void rgUtils::ShowErrorMessageBox(const char* pErrorMessage, QWidget* pWidget)
 {
-    QMessageBox messageBox;
-    messageBox.critical(pWidget, "Error", pErrorMessage);
-    messageBox.setFixedSize(500, 200);
+    if (pWidget == nullptr)
+    {
+        // The parent widget is null, so need to specify the Window icon
+        // in addition to all the other settings to recreate the 'critical' look.
+        QMessageBox messageBox;
+        messageBox.setWindowIcon(QIcon(gs_ICON_RESOURCE_RGA_LOGO));
+        messageBox.setFixedSize(500, 200);
+        messageBox.setIcon(QMessageBox::Icon::Critical);
+        messageBox.setText(pErrorMessage);
+        messageBox.setWindowTitle("Error");
+        messageBox.exec();
+    }
+    else
+    {
+        QMessageBox::critical(pWidget, "Error", pErrorMessage);
+    }
 }
 
 bool rgUtils::ShowConfirmationMessageBox(const char* pDialogTitle, const char* pDialogText, QWidget* pParent)
 {
     QMessageBox confirmationDialog(pParent);
+    confirmationDialog.setWindowIcon(QIcon(gs_ICON_RESOURCE_RGA_LOGO));
     confirmationDialog.setWindowTitle(pDialogTitle);
     confirmationDialog.setText(pDialogText);
     confirmationDialog.setIcon(QMessageBox::Question);
     confirmationDialog.setModal(true);
     confirmationDialog.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+
+    // Set button cursor to pointing hand cursor.
+    QAbstractButton* pButton = confirmationDialog.button(QMessageBox::Button::Yes);
+    assert(pButton != nullptr);
+    if (pButton != nullptr)
+    {
+        pButton->setCursor(Qt::PointingHandCursor);
+    }
+
+    pButton = confirmationDialog.button(QMessageBox::Button::No);
+    assert(pButton != nullptr);
+    if (pButton != nullptr)
+    {
+        pButton->setCursor(Qt::PointingHandCursor);
+    }
 
     // Return true if the user clicked yes, otherwise return false.
     return (confirmationDialog.exec() == QMessageBox::Yes);
@@ -513,11 +734,21 @@ bool rgUtils::OpenFileDialog(QWidget* pParent, rgProjectAPI api, std::string& se
     bool ret = false;
     switch (api)
     {
-    case OpenCL:
-        ret = OpenFileDialogHelper(pParent, STR_FILE_DIALOG_CL_CAPTION,
-            rgConfigManager::GetLastSelectedFolder(), STR_FILE_DIALOG_CL_FILTER, selectedFilePath);
+    case rgProjectAPI::OpenCL:
+    {
+        QString filter = QString(STR_FILE_DIALOG_FILTER_OPENCL) + ";;" + STR_FILE_DIALOG_FILTER_ALL;
+        ret = OpenFileDialogHelper(pParent, STR_FILE_DIALOG_CAPTION,
+            rgConfigManager::Instance().GetLastSelectedFolder(), filter, selectedFilePath);
         break;
-    case Unknown:
+    }
+    case rgProjectAPI::Vulkan:
+    {
+        QString filter = ConstructVulkanOpenFileFilter();
+        ret = OpenFileDialogHelper(pParent, STR_FILE_DIALOG_CAPTION,
+            rgConfigManager::Instance().GetLastSelectedFolder(), filter, selectedFilePath);
+        break;
+    }
+    case rgProjectAPI::Unknown:
     default:
         // We shouldn't get here.
         assert(false);
@@ -535,9 +766,17 @@ bool rgUtils::OpenFileDialog(QWidget* pParent, rgProjectAPI api, std::string& se
         if (isOk)
         {
             // Update last selected directory in global config.
-            rgConfigManager::SetLastSelectedDirectory(fileDirectory);
+            rgConfigManager::Instance().SetLastSelectedDirectory(fileDirectory);
         }
     }
+
+    return ret;
+}
+
+bool rgUtils::OpenFileDialog(QWidget* pParent, std::string& selectedFilePath, const std::string& caption, const std::string& filter)
+{
+    bool ret = OpenFileDialogHelper(pParent, caption.c_str(),
+        rgConfigManager::Instance().GetLastSelectedFolder(), filter.c_str(), selectedFilePath);
 
     return ret;
 }
@@ -547,10 +786,10 @@ bool rgUtils::OpenFileDialogForMultipleFiles(QWidget* pParent, rgProjectAPI api,
     bool ret = false;
     switch (api)
     {
-    case OpenCL:
-        ret = OpenMultipleFileDialogHelper(pParent, STR_FILE_DIALOG_CL_CAPTION, STR_FILE_DIALOG_CL_FILTER, selectedFilePaths);
+    case rgProjectAPI::OpenCL:
+        ret = OpenMultipleFileDialogHelper(pParent, STR_FILE_DIALOG_CAPTION, STR_FILE_DIALOG_FILTER_OPENCL, selectedFilePaths);
         break;
-    case Unknown:
+    case rgProjectAPI::Unknown:
     default:
         // We shouldn't get here.
         assert(false);
@@ -572,7 +811,7 @@ bool rgUtils::OpenFileDialogForMultipleFiles(QWidget* pParent, rgProjectAPI api,
         if (isOk)
         {
             // Update last selected directory in global config.
-            rgConfigManager::SetLastSelectedDirectory(fileDirectory);
+            rgConfigManager::Instance().SetLastSelectedDirectory(fileDirectory);
         }
     }
 
@@ -621,7 +860,7 @@ bool rgUtils::OpenProjectDialog(QWidget* pParent, std::string& selectedFilePath)
         if (isOk)
         {
             // Update last selected directory in global config.
-            rgConfigManager::SetLastSelectedDirectory(fileDirectory);
+            rgConfigManager::Instance().SetLastSelectedDirectory(fileDirectory);
         }
     }
 
@@ -695,6 +934,19 @@ bool rgUtils::ExtractFileExtension(const std::string& filePathString, std::strin
     ret = !fileExtension.empty();
 
     return ret;
+}
+
+void rgUtils::GetDisplayText(const std::string& fileName, std::string& displayText, const int availableSpace, QWidget* pWidget, const int numBackChars)
+{
+    std::string extension;
+    rgUtils::ExtractFileExtension(fileName, extension);
+
+    // Always include the file extension (the +1 is to include the '.' from the file extension too).
+    const int NUM_BACK_CHARS = numBackChars + static_cast<unsigned>(extension.length() + 1);
+    const int NUM_FRONT_CHARS = gs_TEXT_TRUNCATE_LENGTH_FRONT;
+
+    // Truncate filename within available space to get display text.
+    displayText = rgUtils::TruncateString(fileName, NUM_FRONT_CHARS, NUM_BACK_CHARS, availableSpace, pWidget->font(), rgUtils::EXPAND_NONE);
 }
 
 bool rgUtils::ReadTextFile(const std::string& fileFullPath, QString& txt)
@@ -799,6 +1051,12 @@ bool rgUtils::AppendPathSeparator(const std::string& basePath, std::string& upda
     return !updatedPath.empty();
 }
 
+void rgUtils::StandardizePathSeparator(std::string& path)
+{
+    rgUtils::Replace(path, "\\\\", "/");
+    rgUtils::Replace(path, "\\", "/");
+}
+
 bool rgUtils::IsFileExists(const std::string& fileFullPath)
 {
     // Convert the full path to gtString.
@@ -865,44 +1123,134 @@ bool rgUtils::IsValidFileName(const std::string& fileName)
     return isValid;
 }
 
-bool rgUtils::LoadAndApplyStyle(const std::string& fileName, QWidget* pWidget)
+bool rgUtils::IsSpvBinFile(const std::string& filePath)
 {
-    bool ret = false;
+    bool isSpv  = false;
 
-    std::string stylePath = STR_STYLESHEET_RESOURCE_PATH + fileName;
-
-    // Open file.
-    QFile stylesheetFile(stylePath.c_str());
-    ret = stylesheetFile.open(QFile::ReadOnly);
-    assert(ret);
-
-    if (ret)
+    if (rgUtils::IsFileExists(filePath))
     {
-        // Apply stylesheet.
-        QString style(stylesheetFile.readAll());
-        pWidget->setStyleSheet(style);
+        QFile file(filePath.c_str());
+        if (file.open(QFile::ReadOnly))
+        {
+            // Read the first 32-bit word of the file and check if it matches the SPIR-V binary magic number.
+            uint32_t word;
+            if (file.read(reinterpret_cast<char*>(&word), sizeof(word)))
+            {
+                isSpv = (word == SPV_BINARY_MAGIC_NUMBER);
+            }
+        }
+    }
+
+    return isSpv;
+}
+
+bool rgUtils::ConstructSpvDisasmFileName(const std::string& projFolder, const std::string& spvFileName, std::string& spvDisasmFileName)
+{
+    bool result = (!projFolder.empty() && !spvFileName.empty());
+    if (result)
+    {
+        std::stringstream outFileName;
+        std::string inFileName;
+        rgUtils::ExtractFileName(spvFileName, inFileName);
+        const std::string dirSep = QString(QDir::separator()).toStdString();
+
+        outFileName << projFolder << dirSep << STR_PROJECT_SUBFOLDER_GENERATED << dirSep << inFileName << "." << STR_VK_FILE_EXT_SPIRV_TXT;
+        spvDisasmFileName = outFileName.str();
+    }
+
+    return result;
+}
+
+std::pair<rgVulkanInputType, rgSrcLanguage> rgUtils::DetectInputFileType(const std::string& filePath)
+{
+    std::pair<rgVulkanInputType, rgSrcLanguage> ret = { rgVulkanInputType::Unknown, rgSrcLanguage::Unknown };
+
+    if (rgUtils::IsSpvBinFile(filePath))
+    {
+        ret = { rgVulkanInputType::Spirv, rgSrcLanguage::SPIRV_Text };
+    }
+    else
+    {
+        QFileInfo fileInfo(filePath.c_str());
+        const QString& ext = fileInfo.suffix().toLower();
+
+        rgConfigManager& configManager = rgConfigManager::Instance();
+        std::shared_ptr<rgGlobalSettings> pGlobalSettings = configManager.GetGlobalConfig();
+
+        if (QString(QString(pGlobalSettings->m_inputFileExtSpvTxt.c_str())).split(STR_VK_FILE_EXT_DELIMITER).contains(ext))
+        {
+            ret = { rgVulkanInputType::SpirvTxt, rgSrcLanguage::SPIRV_Text };
+        }
+        else if (QString(pGlobalSettings->m_inputFileExtGlsl.c_str()).split(STR_VK_FILE_EXT_DELIMITER).contains(ext))
+        {
+            ret = { rgVulkanInputType::Glsl, rgSrcLanguage::GLSL };
+        }
+        else if (QString(pGlobalSettings->m_inputFileExtHlsl.c_str()).split(STR_VK_FILE_EXT_DELIMITER).contains(ext))
+        {
+            ret = { rgVulkanInputType::Hlsl, rgSrcLanguage::HLSL };
+        }
     }
 
     return ret;
 }
 
-bool rgUtils::LoadAndApplyStyle(const std::string& fileName, QApplication* pApplication)
+bool rgUtils::LoadAndApplyStyle(const std::vector<std::string>& stylesheetFileNames, QWidget* pWidget)
 {
     bool ret = false;
+    QString styleSheet = "";
 
-    std::string stylePath = STR_STYLESHEET_RESOURCE_PATH + fileName;
-
-    // Open file.
-    QFile stylesheetFile(stylePath.c_str());
-    ret = stylesheetFile.open(QFile::ReadOnly);
-    assert(ret);
-
-    if (ret)
+    for (const auto& fileName : stylesheetFileNames)
     {
-        // Apply stylesheet.
-        QString style(stylesheetFile.readAll());
-        pApplication->setStyleSheet(style);
+        std::string stylePath = STR_STYLESHEET_RESOURCE_PATH + fileName;
+
+        // Open file.
+        QFile stylesheetFile(stylePath.c_str());
+        ret = stylesheetFile.open(QFile::ReadOnly);
+        assert(ret);
+
+        if (ret)
+        {
+            // Apply stylesheet.
+            QString style(stylesheetFile.readAll());
+            styleSheet += style;
+        }
+        else
+        {
+            break;
+        }
     }
+    pWidget->setStyleSheet(styleSheet);
+
+    return ret;
+}
+
+bool rgUtils::LoadAndApplyStyle(const std::vector<std::string>& stylesheetFileNames, QApplication* pApplication)
+{
+    bool ret = false;
+    QString styleSheet = "";
+
+    for (const auto& fileName : stylesheetFileNames)
+    {
+        std::string stylePath = STR_STYLESHEET_RESOURCE_PATH + fileName;
+
+        // Open file.
+        QFile stylesheetFile(stylePath.c_str());
+        ret = stylesheetFile.open(QFile::ReadOnly);
+        assert(ret);
+
+        if (ret)
+        {
+            // Apply stylesheet.
+            QString style(stylesheetFile.readAll());
+            styleSheet += style;
+        }
+        else
+        {
+            break;
+        }
+    }
+    pApplication->style()->unpolish(pApplication);
+    pApplication->setStyleSheet(styleSheet);
 
     return ret;
 }
@@ -913,6 +1261,16 @@ void rgUtils::SetToolAndStatusTip(const std::string& tip, QWidget* pWidget)
     {
         pWidget->setToolTip(tip.c_str());
 
+        // Remove any formatting from the incoming string.
+        const std::string plainText = GetPlainText(tip);
+        pWidget->setStatusTip(plainText.c_str());
+    }
+}
+
+void rgUtils::SetStatusTip(const std::string& tip, QWidget* pWidget)
+{
+    if (pWidget != nullptr)
+    {
         // Remove any formatting from the incoming string.
         const std::string plainText = GetPlainText(tip);
         pWidget->setStatusTip(plainText.c_str());
@@ -987,6 +1345,19 @@ void rgUtils::StyleRepolish(QWidget* pWidget, bool repolishChildren)
                 }
             }
         }
+    }
+}
+
+void rgUtils::SetBackgroundColor(QWidget* pWidget, const QColor& color)
+{
+    assert(pWidget != nullptr);
+    if (pWidget != nullptr)
+    {
+        // Set the background color.
+        QPalette palette = pWidget->palette();
+        palette.setColor(QPalette::Background, color);
+        pWidget->setAutoFillBackground(true);
+        pWidget->setPalette(palette);
     }
 }
 
@@ -1105,4 +1476,17 @@ std::string rgUtils::GetPlainText(const std::string& text)
     return plainText.toStdString();
 }
 
+bool rgUtils::IsInList(const std::string & list, const std::string & token, char delim)
+{
+    size_t start = 0, end = 0;
+    bool stop = false, ret = false;
+    while (!stop)
+    {
+        end = list.find(STR_VK_FILE_EXT_DELIMITER, start);
+        ret = (token == list.substr(start, (end == std::string::npos ? std::string::npos : end - start)));
+        stop = (ret || end == std::string::npos);
+        start = end + 1;
+    }
 
+    return ret;
+}

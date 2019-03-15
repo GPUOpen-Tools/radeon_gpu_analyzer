@@ -9,8 +9,8 @@
 #include <string>
 #include <sstream>
 
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilder.h>
-#include <RadeonGPUAnalyzerBackend/include/beOpenCLDefs.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilder.h>
+#include <RadeonGPUAnalyzerBackend/Include/beOpenCLDefs.h>
 
 #ifdef _WIN32
     #include <DXXModule.h>
@@ -32,7 +32,7 @@ using namespace beKA;
 
 class CElf;
 
-class RGA_BACKEND_DECLDIR beProgramBuilderOpenCL : public beProgramBuilder
+class beProgramBuilderOpenCL : public beProgramBuilder
 {
 public:
     virtual ~beProgramBuilderOpenCL(void);
@@ -311,5 +311,9 @@ private:
 
     bool m_isLegacyMode;
 };
+
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 #endif // _BEPROGRAMBUILDEROPENCL_H_

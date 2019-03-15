@@ -19,6 +19,9 @@ endif()
 # Add this definitions if static linkage is used with the other projects
 add_definitions(-DRGA_BACKEND_STATIC -DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC)
 
+# Add UpdateCheckAPI
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../../Common/Src/UpdateCheckAPI ${CMAKE_CURRENT_BINARY_DIR}/Common/Src/UpdateCheckAPI)
+
 # Configure a header file to pass some of the CMake settings
 # to the source code
 configure_file (
@@ -31,8 +34,8 @@ configure_file (
 include_directories("${PROJECT_BINARY_DIR}")
 
 # Include directories
-include_directories("${PROJECT_SOURCE_DIR}/../RadeonGPUAnalyzerBackend/include/Common")
-include_directories("${PROJECT_SOURCE_DIR}/../Utils/include")
+include_directories("${PROJECT_SOURCE_DIR}/../RadeonGPUAnalyzerBackend/Include/Common")
+include_directories("${PROJECT_SOURCE_DIR}/../Utils/Include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src")
 include_directories("${PROJECT_SOURCE_DIR}/../")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/CELF/Include")
@@ -43,6 +46,7 @@ include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/AMD/APPSDK/3-0/inclu
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/TSingleton")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src/DeviceInfo")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/")
+include_directories(${UPDATECHECKAPI_INC_DIRS})
 
 if (NOT IsDebian)
 # On Debian we use the native Boost libraries
@@ -60,16 +64,17 @@ endif()
 
 # Source files that are common to Windows and Linux
 file(GLOB COMMON_SRC
-    "../Utils/src/*.cpp"
-    "src/*.cpp"
-    "src/*.h"
+    "../Utils/Src/*.cpp"
+    "Src/*.cpp"
+    "Src/*.h"
+    ${UPDATECHECKAPI_SRC}
+    ${UPDATECHECKAPI_INC}
 )
 
 # Windows-specific include directories
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     file(GLOB  WINDOWS_INC
-        "../Utils/Res/*CLI.rc"
-        "../Utils/Res/*.h"
+        "../Utils/res/*CLI.rc"
     )
 endif()
 
@@ -137,21 +142,13 @@ endif()
 # Other libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-        if (CMAKE_64BIT_TARGET)
-            find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
-            find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Release")
-        else()
-            find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win32/Release/MD")
-            find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win32/Release")
-        endif()
+        find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
+        find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Release")
+        find_library(SPIRVCROSS_LIB "spirv-cross-core.lib" HINTS "${PROJECT_SOURCE_DIR}/../Core/Vulkan/tools/Win64/lib/Release")
     elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        if (CMAKE_64BIT_TARGET)
-            find_library(TINYXML_LIB "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
-            find_library(YAMLCPP_LIB "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Debug")
-        else()
-            find_library(TINYXML_LIB "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win32/Debug/MDd")
-            find_library(YAMLCPP_LIB "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win32/Debug")
-        endif()
+        find_library(TINYXML_LIB "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
+        find_library(YAMLCPP_LIB "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Debug")
+        find_library(SPIRVCROSS_LIB "spirv-cross-core.lib" HINTS "${PROJECT_SOURCE_DIR}/../Core/Vulkan/tools/Win64/lib/Debug")
     endif()
 else()
     find_library(TINYXML_LIB "libtinyxml2.a" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/Linux/x64/Release")
@@ -160,6 +157,7 @@ else()
     else()
         find_library(YAMLCPP_LIB "libyaml-cpp.a" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/linux/gcc4")
     endif()
+    find_library(SPIRVCROSS_LIB "libspirv-cross-core.a" HINTS "${PROJECT_SOURCE_DIR}/../Core/Vulkan/tools/Lnx64/lib")
 endif()
 
 # Set the name of the executable
@@ -182,16 +180,16 @@ endif()
 # Link settings
 if(NOT IsDebian)
 target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools
-                       ${BOOST_LIBRARY1} ${BOOST_LIBRARY2} ${BOOST_LIBRARY3} ${BOOST_LIBRARY4} ${TINYXML_LIB} ${YAMLCPP_LIB})
+                       ${BOOST_LIBRARY1} ${BOOST_LIBRARY2} ${BOOST_LIBRARY3} ${BOOST_LIBRARY4} ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB} ${UPDATECHECKAPI_LIBS})
 else()
 target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools
-                       ${Boost_LIBRARIES} ${TINYXML_LIB} ${YAMLCPP_LIB})
+                       ${Boost_LIBRARIES} ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB} ${UPDATECHECKAPI_LIBS})
 endif()
 
-if (CMAKE_64BIT_TARGET)
-    set(BUILD_32BIT "")
-else()
-    set(BUILD_32BIT "-x86")
+# Configure the post-build actions.
+set(INTERNAL_ARG "")
+if(AMD_INTERNAL)
+    set(INTERNAL_ARG "-internal")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -200,13 +198,13 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     endif()
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
                        POST_BUILD
-                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/windows/copy_post_build_cli.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${DEBUG_ARG} ${BUILD_32BIT}
-                       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/windows
+                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/Util/Windows/copy_post_build_cli.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${DEBUG_ARG} ${INTERNAL_ARG}
+                       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/Util/Windows
                       )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
                        POST_BUILD
-                       COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/linux/copy_post_build_cli.sh
-                       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/linux
+                       COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/Util/Linux/copy_post_build_cli.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} ${INTERNAL_ARG}
+                       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/Util/Linux
                       )
 endif()

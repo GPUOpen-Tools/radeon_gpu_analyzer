@@ -11,8 +11,9 @@
 #include <QtCommon/Scaling/ScalingManager.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgMaximizeSplitter.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgViewContainer.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMaximizeSplitter.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgViewContainer.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
 
 rgMaximizeSplitter::rgMaximizeSplitter(QWidget* pParent) :
     QSplitter(pParent)
@@ -51,6 +52,9 @@ void rgMaximizeSplitter::MaximizeWidget(QWidget* pWidget)
 {
     // Signal the view container to have the maximum width.
     emit ViewMaximized();
+
+    // Give the border focus.
+    emit FrameInFocusSignal();
 
     // If this splitter has a maximization container for the given widget, maximize the container instead.
     for (rgViewContainer* pContainer : m_maximizeContainers)
@@ -109,6 +113,14 @@ void rgMaximizeSplitter::Restore()
         {
             QWidget* pChildWidget = static_cast<QWidget*>(pChild);
             pChildWidget->show();
+
+            // If this widget is an rgViewContainer,
+            // set the hidden state to false.
+            rgViewContainer* pViewContainer = qobject_cast<rgViewContainer*>(pChildWidget);
+            if(pViewContainer != nullptr)
+            {
+                pViewContainer->SetHiddenState(false);
+            }
         }
 
         // Handle cases when this splitter's parent is an rgMaximizeSplitter.
@@ -141,6 +153,31 @@ void rgMaximizeSplitter::HandleCornerButtonClicked()
             MaximizeWidget(pContainer);
 
             pContainer->SetMaximizedState(true);
+            pContainer->SetHiddenState(false);
+
+            for (auto it = m_maximizeContainers.begin(); it != m_maximizeContainers.end(); it++)
+            {
+                rgViewContainer* pItem = *it;
+                if (pItem != pContainer)
+                {
+                    if (pContainer->objectName().compare(STR_RG_ISA_DISASSEMBLY_VIEW_CONTAINER) == 0)
+                    {
+                        if (pItem->objectName().compare(STR_RG_SOURCE_VIEW_CONTAINER) == 0)
+                        {
+                            pItem->SetHiddenState(true);
+                            break;
+                        }
+                    }
+                    else if (pContainer->objectName().compare(STR_RG_SOURCE_VIEW_CONTAINER) == 0)
+                    {
+                        if (pItem->objectName().compare(STR_RG_ISA_DISASSEMBLY_VIEW_CONTAINER) == 0)
+                        {
+                            pItem->SetHiddenState(true);
+                            break;
+                        }
+                    }
+                }
+            }
         }
         else
         {

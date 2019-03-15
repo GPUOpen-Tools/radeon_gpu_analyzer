@@ -7,7 +7,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <RadeonGPUAnalyzerBackend/include/beBackend.h>
+
+#include <RadeonGPUAnalyzerBackend/Include/beBackend.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcDataTypes.h>
 
 /// A place to collect command line options.
 /// This is a POD with a dump method.
@@ -17,33 +19,32 @@ public:
 
     static std::string sourceKindHLSL;
     static std::string sourceKindAMDIL;
-    static std::string sourceKindDXAsm;
-    static std::string sourceKindDXAsmT;
     static std::string sourceKindOpenCL;
-    static std::string sourceKindGLSL;
     static std::string sourceKindOpenGL;
-    static std::string sourceKindGLSLVulkan;
-    static std::string sourceKindSpirvBin;
-    static std::string sourceKindSpirvTxt;
+    static std::string sourceKindGLSLVulkanOffline;
+    static std::string sourceKindSpirvBinOffline;
+    static std::string sourceKindSpirvTxtOffline;
     static std::string sourceKindRocmOpenCL;
+    static std::string sourceKindVulkan;
 
     enum ConfigCommand
     {
         ccNone,
         ccInvalid,
         ccCompile,
-        ccListKernels,
+        ccListEntries,
         ccHelp,
         ccListAsics,
         ccListAdapters,
         ccVersion,
-        ccGenVersionInfoFile
+        ccGenVersionInfoFile,
+        ccUpdate
     };
 
     Config();
 
-    beKA::SourceLanguage     m_SourceLanguage;   ///<What language we want to work on. currently we support cl/hlsl
-    ConfigCommand            m_RequestedCommand; ///<What the user requested to do
+    beKA::RgaMode            m_mode;             ///< RGA mode.
+    ConfigCommand            m_RequestedCommand; ///< What the user requested to do
     std::vector<std::string> m_InputFiles;       ///< Source file for processing.
     std::string              m_AnalysisFile;     ///< Output analysis file.
     std::string              m_ILFile;           ///< Output IL Text file template.
@@ -86,27 +87,39 @@ public:
     std::string              m_GeometryShader;       ///< Geometry shader full path
     std::string              m_FragmentShader;       ///< Fragment shader full path
     std::string              m_ComputeShader;        ///< Compute shader full path
+    std::string              m_pso;                  ///< Vulkan Pipeline State Object file.
+    std::string              m_spvBin;               ///< Path to SPIR-V binary file.
+    std::string              m_icdFile;              ///< Full path to an alternative Vulkan ICD to load instead of loader.
+    std::string              m_loaderDebug;          ///< Value for the VK_LOADER_DEBUG environment variable.
+    std::string              m_glslangOpt;           ///< Additional options for glslang (the Vulkan front-end compiler).
+    std::string              m_spvTxt;               ///< Path to SPIR-V text file.
+    std::string              m_vulkanValidation;     ///< Path to output Vulkan validation info file.
+    std::string              m_parsedSpv;            ///< Path to parsed SPIR-V text output file.
+    rgVulkanInputType        m_vertShaderFileType;   ///< Type of vertex shader file.
+    rgVulkanInputType        m_tescShaderFileType;   ///< Type of tesselation control shader file.
+    rgVulkanInputType        m_teseShaderFileType;   ///< Type of tesselation evaluation shader file.
+    rgVulkanInputType        m_fragShaderFileType;   ///< Type of fragment shader file.
+    rgVulkanInputType        m_geomShaderFileType;   ///< Type of geometry shader file.
+    rgVulkanInputType        m_compShaderFileType;   ///< Type of compute shader file.
+    bool                     m_isHlslInput;          ///< Input files are HLSL shaders.
+    bool                     m_isGlslInput;          ///< Input files are GLSL shaders.
+    bool                     m_isSpvInput;           ///< Input files are SPIR-V binary files.
+    bool                     m_isSpvTxtInput;        ///< Input files are SPIR-V text files.
 
     // Compiler paths
     std::string              m_cmplrBinPath;         ///< Path to user-provided compiler "bin" folder.
     std::string              m_cmplrIncPath;         ///< Path to user-provided compiler "include" folder.
     std::string              m_cmplrLibPath;         ///< Path to user-provided compiler "lib" folder.
 
-    bool                     m_isSpirvBinariesRequired;          ///< True to generate SPIR-V binaries
     bool                     m_isAmdPalIlBinariesRequired;       ///< True to generate AMD PAL IL binaries
     bool                     m_isAmdPalIlDisassemblyRequired;    ///< True to generate AMD PAL IL disassembly
     bool                     m_isAmdIsaBinariesRequired;         ///< True to generate AMD ISA binaries
     bool                     m_isAmdIsaDisassemblyRequired;      ///< True to generate AMD ISA binaries
     bool                     m_isParsedISARequired;              ///< True to generate "parsed" ISA in CSV format.
     bool                     m_isLineNumbersRequired;            ///< True to generate source lines in the ISA disassembly.
+    bool                     m_isWarningsRequired;               ///< True to print warnings reported by the compiler.
 
     bool                     m_printProcessCmdLines;             ///< True to print command lines that RGA uses to launch
                                                                  ///  external processed.
-
 private:
-    // Disable copy
-    Config(const Config&);
-    // Disable assign
-    Config& operator= (const Config&);
-
 };

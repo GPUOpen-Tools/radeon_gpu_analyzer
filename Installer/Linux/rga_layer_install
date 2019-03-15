@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# Install VK_LAYER_RGA files in user space
+#    Assumes the scriptdir is the same folder as the .so and .json files
+#
+if ! [ -e ~/.local/share/vulkan/implicit_layer.d ]; then
+    mkdir -p ~/.local/share/vulkan/implicit_layer.d
+fi
+
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+cp $SCRIPTDIR/*.so ~/.local/share/vulkan/implicit_layer.d
+cp $SCRIPTDIR/*.json ~/.local/share/vulkan/implicit_layer.d
+

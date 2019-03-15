@@ -4,14 +4,20 @@ project (RGA)
 # Boolean option for enabling AMD Internal build mode
 option(AMD_INTERNAL "Add -DAMD_INTERNAL=ON for AMD Internal build mode." OFF)
 
+# Boolean option for enabling automated testing mode in the GUI executable
+option(GUI_AUTOMATION "Add -DGUI_AUTOMATION=ON to enable GUI automated testing mode." OFF)
+
 # Boolean option for disabling the GUI build (building CLI only)
-option(BUILD_CLI_ONLY "Add -DBUILD_CLI_ONLY=ON to disable the GUI build (build CLI only)" OFF)
+option(BUILD_CLI_ONLY "Add -DBUILD_CLI_ONLY=ON to disable the GUI build (build CLI only)." OFF)
 
 # Boolean option for disabling the CLI build (building GUI only)
-option(BUILD_GUI_ONLY "Add -DBUILD_GUI_ONLY=ON to disable the CLI build (build GUI only)" OFF)
+option(BUILD_GUI_ONLY "Add -DBUILD_GUI_ONLY=ON to disable the CLI build (build GUI only)." OFF)
 
 # Boolean option to disable looking for default Qt package
-option(NO_DEFAULT_QT "Add -DNO_DEFAULT_QT=ON to disable using default Qt package installed on the system" OFF)
+option(NO_DEFAULT_QT "Add -DNO_DEFAULT_QT=ON to disable using default Qt package installed on the system." OFF)
+
+# Boolean option to enable live Vulkan mode.
+option(RGA_ENABLE_VULKAN "Add -DRGA_ENABLE_VULKAN=OFF to build RGA without Vulkan mode support. By default, Vulkan mode is enabled." ON)
 
 # Define build level here
 add_definitions(-DAMDT_PUBLIC -DCMAKE_BUILD)
@@ -51,9 +57,15 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwi
     endif()
 
     # Output directories
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/bin")
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/lib")
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/arch")
+    if (GUI_AUTOMATION)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/bin")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/lib")
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/arch")
+    else()
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/bin")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/lib")
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/arch")
+    endif()
 
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 
@@ -61,15 +73,18 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_definitions(-D_USRDLL -DUNICODE -D_UNICODE)
 
     # Output directories
-    if (CMAKE_64BIT_TARGET)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/x64/bin")
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/x64/lib")
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/x64/arch")
+    if (GUI_AUTOMATION)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/bin")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/lib")
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/arch")
     else()
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/x86/bin")
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/x86/lib")
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/x86/arch")
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/bin")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/lib")
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/arch")
     endif()
+
+    # Use multiple cores to compile all projects.
+    add_definitions(/MP)
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -78,19 +93,29 @@ else()
     set(CMAKE_CONFIGURATION_TYPES "Release")
 endif()
 
+# Vulkan support
+if (RGA_ENABLE_VULKAN)
+    add_definitions("-DRGA_ENABLE_VULKAN")
+endif()
+
 # Add Common projects
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTBaseTools ${CMAKE_CURRENT_BINARY_DIR}/Common/Src/AMDTBaseTools)
 add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTOSWrappers ${CMAKE_CURRENT_BINARY_DIR}/Common/Src/AMDTOSWrappers)
 
-# Disable specific warnings for Common targets
+# Disable specific MS compiler warnings for Common targets
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    target_compile_options(AMDTOSWrappers PRIVATE "-wd 4275")
+    target_compile_options(AMDTBaseTools PRIVATE "/wd4309")
+    target_compile_options(AMDTOSWrappers PRIVATE "/wd4275" "/wd4309")
 endif()
 
 # Add RGA CLI projects
 if(NOT BUILD_GUI_ONLY)
     add_subdirectory (RadeonGPUAnalyzerBackend)
     add_subdirectory (RadeonGPUAnalyzerCLI)
+    if (RGA_ENABLE_VULKAN)
+        add_subdirectory (Core/Vulkan/Backend)
+        add_dependencies (RadeonGPUAnalyzerCLI VulkanBackend)
+    endif()
 endif()
 
 # Add RGA GUI

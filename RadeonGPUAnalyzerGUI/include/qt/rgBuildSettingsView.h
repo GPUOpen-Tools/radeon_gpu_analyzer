@@ -6,10 +6,13 @@
 // Qt.
 #include <QWidget>
 
+// Local.
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgSettingsView.h>
+
 // Forward declarations.
 struct rgBuildSettings;
 
-class rgBuildSettingsView : public QWidget
+class rgBuildSettingsView : public rgSettingsView
 {
     Q_OBJECT
 
@@ -28,13 +31,23 @@ public:
     virtual void RestoreDefaultSettings() = 0;
 
     // Save all pending settings to disk.
-    virtual void SaveSettings() = 0;
+    virtual bool SaveSettings() = 0;
+
+    // Get the title string.
+    virtual std::string GetTitleString() = 0;
 
 signals:
     // A signal emitted when the "has pending changes" state changes for the view.
     void PendingChangesStateChanged(bool hasPendingChanges);
 
 protected:
+    // Subclasses can use this to set whether they have pending changes;
+    // this will emit the pending changes signal as needed.
+    void SetHasPendingChanges(bool hasPendingChanges);
+
     // Flag used to indicate if the view relates to global or project-specific settings.
     bool m_isGlobalSettings = false;
+
+    // Flag used to store whether a signal was emited regarding pending changes.
+    bool m_hasPendingChanges = false;
 };

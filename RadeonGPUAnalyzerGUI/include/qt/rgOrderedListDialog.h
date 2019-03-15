@@ -2,7 +2,7 @@
 
 // Local.
 #include "ui_rgOrderedListViewDialog.h"
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
 
 class rgOrderedListDialog : public QDialog
 {
@@ -28,8 +28,8 @@ private slots :
     // Handler when an entry changes.
     void HandleListItemChanged(QListWidgetItem* pItem);
 
-    // Handler when an entry is clicked on.
-    void HandleListItemClicked(QListWidgetItem* pItem);
+    // Handler when an entry is selected, this supports both clicking, and also using the arrow keys to change selection.
+    void HandleListItemSelectionChanged();
 
     // Handler to move the selected item down one row.
     void HandleMoveDownButtonClick(bool /* checked */);
@@ -80,6 +80,9 @@ protected:
 private:
     // Connect the signals.
     void ConnectSignals();
+
+    // Find out if the Move up/down buttons need to be disabled.
+    bool ShouldDisableMoveUpDownButtons();
 
     // Set the button fonts.
     void SetButtonFonts();

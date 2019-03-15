@@ -10,16 +10,17 @@
 #include <set>
 
 // Local.
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilder.h>
-#include <RadeonGPUAnalyzerBackend/include/beDataTypes.h>
-#include <RadeonGPUAnalyzerBackend/include/beInclude.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilder.h>
+#include <RadeonGPUAnalyzerBackend/Include/beDataTypes.h>
+#include <RadeonGPUAnalyzerBackend/Include/beInclude.h>
 
 struct OpenGLOptions : public beKA::CompileOptions
 {
     OpenGLOptions() : m_chipFamily(0), m_chipRevision(0), m_isAmdIsaBinariesRequired(false),
-        m_isAmdIsaDisassemblyRequired(false), m_isScStatsRequired(false), m_isCfgRequired(false), m_isLiveRegisterAnalysisRequired(false)
+        m_isAmdIsaDisassemblyRequired(false), m_isIlDisassemblyRequired(false), m_isScStatsRequired(false),
+        m_isCfgRequired(false), m_isLiveRegisterAnalysisRequired(false)
     {
-        CompileOptions::m_SourceLanguage = beKA::SourceLanguage_GLSL;
+        CompileOptions::m_mode = beKA::RgaMode::Mode_OpenGL;
     }
 
     // The target device's chip family.
@@ -33,6 +34,9 @@ struct OpenGLOptions : public beKA::CompileOptions
 
     // ISA disassembly output file names.
     beProgramPipeline m_isaDisassemblyOutputFiles;
+
+    // AMDIL disassembly output file names.
+    beProgramPipeline m_ilDisassemblyOutputFiles;
 
     // Register liveness analysis output file names.
     beProgramPipeline m_liveRegisterAnalysisOutputFiles;
@@ -52,6 +56,9 @@ struct OpenGLOptions : public beKA::CompileOptions
     // True to generate AMD ISA disassembly.
     bool m_isAmdIsaDisassemblyRequired;
 
+    // True to generate AMD IL disassembly.
+    bool m_isIlDisassemblyRequired;
+
     // True to perform live register analysis.
     bool m_isLiveRegisterAnalysisRequired;
 
@@ -62,8 +69,7 @@ struct OpenGLOptions : public beKA::CompileOptions
     bool m_isScStatsRequired;
 };
 
-class RGA_BACKEND_DECLDIR beProgramBuilderOpenGL :
-    public beProgramBuilder
+class beProgramBuilderOpenGL : public beProgramBuilder
 {
 public:
     beProgramBuilderOpenGL();

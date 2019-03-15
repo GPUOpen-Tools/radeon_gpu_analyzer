@@ -8,17 +8,31 @@
 #include <vector>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTOSWrappers/Include/osFilePath.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcVulkanStatisticsParser.h>
-#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcVulkanStatisticsParser.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
 
 // Constants.
-const char* ISA_SIZE_TOKEN = "codeLenInByte";
-const char* USED_VGPRS_TOKEN = "NumVgprs";
-const char* USED_SGPRS_TOKEN = "NumSgprs";
-const char* END_OF_LINE_DELIMITER = ";";
+static const char* ISA_SIZE_TOKEN = "codeLenInByte";
+static const char* USED_VGPRS_TOKEN = "NumVgprs";
+static const char* USED_SGPRS_TOKEN = "NumSgprs";
+static const char* END_OF_LINE_DELIMITER = ";";
+static const char* VK_OFFLINE_DEVICE_NAME_TAHITI = "tahiti";
+static const char* VK_OFFLINE_DEVICE_NAME_TONGA = "tonga";
+static const char* VK_OFFLINE_DEVICE_NAME_CAPEVERDE = "capeverde";
+static const char* VK_OFFLINE_DEVICE_NAME_HAINAN = "hainan";
+static const char* VK_OFFLINE_DEVICE_NAME_OLAND = "oland";
+static const char* VK_OFFLINE_DEVICE_NAME_PITCAIRN = "pitcairn";
+static const char* VK_OFFLINE_DEVICE_NAME_ICELAND = "iceland";
 
 kcVulkanStatisticsParser::kcVulkanStatisticsParser()
 {
@@ -86,21 +100,49 @@ static bool ExtractUsedVgprs(const std::string& fileContent, size_t& isaSizeInBy
     return ExtractNumericStatistic(fileContent, USED_VGPRS_TOKEN, isaSizeInBytes);
 }
 
-bool kcVulkanStatisticsParser::ParseStatistics(const gtString& satisticsFilePath, beKA::AnalysisData& parsedStatistics)
+static bool IsGfx6Device(const std::string& device)
+{
+    std::string deviceLower = device;
+    std::transform(deviceLower.begin(), deviceLower.end(), deviceLower.begin(), ::tolower);
+    bool ret = deviceLower.find(VK_OFFLINE_DEVICE_NAME_TAHITI) != std::string::npos ||
+        deviceLower.find(VK_OFFLINE_DEVICE_NAME_CAPEVERDE) != std::string::npos ||
+        deviceLower.find(VK_OFFLINE_DEVICE_NAME_HAINAN) != std::string::npos ||
+        deviceLower.find(VK_OFFLINE_DEVICE_NAME_OLAND) != std::string::npos ||
+        deviceLower.find(VK_OFFLINE_DEVICE_NAME_PITCAIRN) != std::string::npos;
+    return ret;
+}
+
+bool kcVulkanStatisticsParser::ParseStatistics(const std::string& device, const gtString& statisticsFile, beKA::AnalysisData& statistics)
 {
     bool ret = false;
-    parsedStatistics.ISASize = 0;
-    parsedStatistics.numSGPRsUsed = 0;
-    parsedStatistics.numVGPRsUsed = 0;
+    statistics.ISASize = 0;
+    statistics.numSGPRsUsed = 0;
+    statistics.numVGPRsUsed = 0;
+    statistics.numVGPRsAvailable = 256;
+    statistics.numSGPRsAvailable = 104;
+    statistics.LDSSizeAvailable = 65536;
+
+    // Special cases.
+    std::string deviceLower = device;
+    std::transform(deviceLower.begin(), deviceLower.end(), deviceLower.begin(), ::tolower);
+    if (deviceLower.find(VK_OFFLINE_DEVICE_NAME_TONGA) != std::string::npos ||
+        deviceLower.find(VK_OFFLINE_DEVICE_NAME_ICELAND) != std::string::npos)
+    {
+        statistics.numSGPRsAvailable = 96;
+    }
+    if (IsGfx6Device(device))
+    {
+        statistics.LDSSizeAvailable = 32768;
+    }
 
     // Check if the file exists.
-    if (!satisticsFilePath.isEmpty())
+    if (!statisticsFile.isEmpty())
     {
-        osFilePath filePath(satisticsFilePath);
+        osFilePath filePath(statisticsFile);
 
         if (filePath.exists())
         {
-            std::ifstream file(satisticsFilePath.asASCIICharArray());
+            std::ifstream file(statisticsFile.asASCIICharArray());
             std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
             if (!fileContent.empty())
@@ -111,7 +153,7 @@ bool kcVulkanStatisticsParser::ParseStatistics(const gtString& satisticsFilePath
 
                 if (isIsaSizeExtracted)
                 {
-                    parsedStatistics.ISASize = isaSizeInBytes;
+                    statistics.ISASize = isaSizeInBytes;
                 }
 
                 // Extract the number of used SGPRs.
@@ -120,7 +162,7 @@ bool kcVulkanStatisticsParser::ParseStatistics(const gtString& satisticsFilePath
 
                 if (isSgprsExtracted)
                 {
-                    parsedStatistics.numSGPRsUsed = usedSgprs;
+                    statistics.numSGPRsUsed = usedSgprs;
                 }
 
                 // Extract the number of used VGPRs.
@@ -129,7 +171,7 @@ bool kcVulkanStatisticsParser::ParseStatistics(const gtString& satisticsFilePath
 
                 if (isVgprsExtracted)
                 {
-                    parsedStatistics.numVGPRsUsed = usedVgprs;
+                    statistics.numVGPRsUsed = usedVgprs;
                 }
 
                 // We succeeded if all data was extracted successfully.

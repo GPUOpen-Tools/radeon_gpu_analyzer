@@ -1,0 +1,7 @@
+SET CURRDIR=%CD%
+SET RGA_DATA_FOLDER="%APPDATA%\RadeonGPUAnalyzer"
+if EXIST %RGA_DATA_FOLDER% (
+    cd %RGA_DATA_FOLDER%
+    del /f /Q *
+    cd %CURRDIR%
+)

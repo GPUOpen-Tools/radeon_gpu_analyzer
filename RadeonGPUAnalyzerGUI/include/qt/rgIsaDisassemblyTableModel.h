@@ -34,7 +34,7 @@ public:
     void ClearLabelLines();
 
     // Copy the given range of data in the table to the clipboard.
-    void CopyRangeToClipboard(int startRow, int endRow);
+    void CopyRowsToClipboard(const QVector<int>& selectedRowNumbers);
 
     // Get the enum value of the incoming ISA table column.
     static int GetTableColumnIndex(rgIsaDisassemblyTableColumns column);
@@ -69,7 +69,7 @@ public:
     // Is the given source line correlated with some ISA line(s)?
     bool IsSourceLineCorrelated(int lineIndex) const;
 
-    // Is the given source file line number within the bounds of the entrypoint code?
+    // Is the given source file line number within the bounds of the entry point code?
     bool IsSourceLineInEntrypoint(int lineIndex) const;
 
     // Populate the model by loading a disassembly CSV file.
@@ -78,7 +78,7 @@ public:
     // Set the correlated input source line index to highlight.
     bool SetCorrelatedSourceLineIndex(int lineIndex);
 
-private:
+protected:
     // An enumeration specifying each column we expect to find in an ISA CSV file.
     enum class rgIsaDisassemblyCsvFileColumns
     {
@@ -176,7 +176,7 @@ private:
 
     // Get the maximum text length for each column in the ISA region from startRow to EndRow.
     // The values of maximum width for all visible columns are added to the "widths" vector.
-    void GetColumnMaxWigths(const int startRow, const int endRow, std::vector<int>& widths) const;
+    void GetColumnMaxWidths(const QVector<int>& selectedRowNumbers, std::vector<int>& widths) const;
 
     // A vector of all disassembled instructions loaded from file.
     std::vector<std::shared_ptr<rgIsaLine>> m_disassembledIsaLines;

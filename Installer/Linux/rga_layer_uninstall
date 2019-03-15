@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Uninstall VK_LAYER_RGA files in user space
+#
+if [ -e ~/.local/share/vulkan/implicit_layer.d ]; then
+    rm -f ~/.local/share/vulkan/implicit_layer.d/*VK_LAYER_RGA*.*
+fi
+

@@ -1,5 +1,5 @@
 /********************************************************************/
-/* Main Window Tabs
+/* Main Window
 /********************************************************************/
 
 /* Home page background (appears as background color for empty tab bar space) */
@@ -8,44 +8,12 @@
     background: rgb(51,51,51);
 }
 
-/* Tab basic styling */
-#mainTabWidget QTabBar::tab
-{
-    background: rgb(51,51,51);
-    font: bold 14px;
-    width: 100px;
-    height: 35px;
-    bottom: 1px;
-    padding: 4px 8px;
-}
-
-/* Unselected tab */
-#mainTabWidget QTabBar::tab:!selected
-{
-    border-bottom: 4px solid transparent;
-    color: rgb(159, 159, 159);
-}
-
-/* Hovered tab */
-#mainTabWidget QTabBar::tab:hover
-{
-    border-bottom: 4px solid rgb(135,20,16);
-    color: rgb(153, 153, 153);
-}
-
-/* Selected tab */
-#mainTabWidget QTabBar::tab:selected
-{
-    border-bottom: 4px solid rgb(224,30,55);
-    color: white;
-}
-
 /********************************************************************/
 /* Start page link buttons
 /********************************************************************/
 
 /* Link button basic styling */
-#startTab > QPushButton
+#rgStartTab > QPushButton
 {
     color: rgb(0, 0, 255);
     border: none;
@@ -54,7 +22,7 @@
 }
 
 /* Hovered link button */
-#startTab > QPushButton:hover
+#rgStartTab > QPushButton:hover
 {
     color: rgb(255, 128, 0);
 }
@@ -66,7 +34,7 @@
     border: none;
     text-align: left;
     font: 10pt;
-	spacing: 10;
+    spacing: 10;
 }
 
 /* Link button basic styling */
@@ -75,7 +43,7 @@ QPushButton#recentTracesOtherPushButton
     color: rgb(0, 0, 255);
     border: none;
     text-align: left;
-	text-decoration: underline;
+    text-decoration: underline;
     font: 10pt;
 }
 
@@ -91,14 +59,34 @@ QPushButton#noRecentSessionsDummyPushButton
     color: rgb(113, 115, 114);
     border: none;
     text-align: left;
-	font: 10pt;
+    font: 10pt;
 }
 
 /********************************************************************/
 /* SETTINGS tab.
 /********************************************************************/
 
-#settingsListWidget
+rgSettingsTab #rightFrame
+{
+    background: white;
+}
+
+rgSettingsTab #leftFrame
+{
+    background: rgb(240, 240, 240);
+}
+
+rgSettingsTab #scrollArea
+{
+    background: white;
+}
+
+rgSettingsTab #scrollAreaWidgetContents
+{
+    background: white;
+}
+
+rgSettingsTab #settingsListWidget
 {
     background: rgb(240, 240, 240);
     border-right: 2px groove gray;
@@ -107,17 +95,17 @@ QPushButton#noRecentSessionsDummyPushButton
     font: bold 8pt;
 }
 
-#settingsListWidget::item:hover
+rgSettingsTab #settingsListWidget::item:hover
 {
     background: rgb(214, 214, 214);
 }
 
-#settingsListWidget::item:selected
+rgSettingsTab #settingsListWidget::item:selected
 {
-    background: rgb(143, 193, 231);
+    background: rgb(253,255,174);
 }
 
-#settingsListWidget::item
+rgSettingsTab #settingsListWidget::item
 {
     border-bottom: none;
     padding: 7px;
@@ -125,12 +113,30 @@ QPushButton#noRecentSessionsDummyPushButton
     color: rgb(51, 51, 51);
 }
 
-#rightFrame > QFrame:focus
+rgSettingsTab #rightFrame > QFrame:focus
 {
     border: none;
 }
 
-#globalSettingsLabel
+rgSettingsTab #globalSettingsLabel
 {
     background:  rgb(240, 240, 240);
+}
+
+/********************************************************************/
+/* About Dialog buttons
+/********************************************************************/
+
+/* Link button basic styling */
+rgAboutDialog #checkForUpdatesButton
+{
+    color: rgb(0, 0, 255);
+    border: none;
+    text-align: left;
+    font: 8pt;
+}
+
+rgAboutDialog #checkForUpdatesButton:hover
+{
+    color: rgb(255, 128, 0);
 }

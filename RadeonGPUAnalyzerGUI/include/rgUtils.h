@@ -5,7 +5,7 @@
 #include <vector>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
 
 // Forward declarations.
 class QApplication;
@@ -37,6 +37,9 @@ public:
     // Translates the project API enum value to a string.
     static bool ProjectAPIToString(rgProjectAPI api, std::string& str);
 
+    // Translates the project API string to an enum.
+    static rgProjectAPI ProjectAPIToEnum(const std::string& str);
+
     // Translates the project API enum value to the file extension string.
     static bool ProjectAPIToSourceFileExtension(rgProjectAPI api, std::string& extension);
 
@@ -67,6 +70,9 @@ public:
     // Open a customized, per-API, file dialog for selecting source file.
     static bool OpenFileDialog(QWidget* pParent, rgProjectAPI api, std::string& selectedFilePath);
 
+    // Open a file dialog with the given caption and file filter.
+    static bool OpenFileDialog(QWidget* pParent, std::string& selectedFilePath, const std::string& caption, const std::string& filter);
+
     // Open a customized per-API, file dialog for selecting multiple source files.
     static bool OpenFileDialogForMultipleFiles(QWidget* pParent, rgProjectAPI api, QStringList& selectedFilePaths);
 
@@ -86,13 +92,16 @@ public:
     // ***********
 
     // Load and apply the widget's style from the given stylesheet file.
-    static bool LoadAndApplyStyle(const std::string& fileName, QWidget* pWidget);
+    static bool LoadAndApplyStyle(const std::vector<std::string>& stylesheetFileNames, QWidget* pWidget);
 
     // Load and apply the application's style from the given stylesheet file.
-    static bool LoadAndApplyStyle(const std::string& fileName, QApplication* pApplication);
+    static bool LoadAndApplyStyle(const std::vector<std::string>& stylesheetFileNames, QApplication* pApplication);
 
     // Set both tool and status tip for a widget.
     static void SetToolAndStatusTip(const std::string& tip, QWidget* pWidget);
+
+    // Set the status tip.
+    static void SetStatusTip(const std::string& tip, QWidget* pWidget);
 
     // Center a widget on another widget (mostly useful for centering QDialogs on the window).
     static void CenterOnWidget(QWidget* pWidget, QWidget* pCenterOn);
@@ -102,6 +111,9 @@ public:
 
     // Re-polish the widget from it's style (this is useful for applying style changes after modifying a dynamic property).
     static void StyleRepolish(QWidget* pWidget, bool repolishChildren = false);
+
+    // Set the background color for the given widget to the given color.
+    static void SetBackgroundColor(QWidget* pWidget, const QColor& color);
 
     // ***********
     // Qt - END.
@@ -121,6 +133,9 @@ public:
     // Return the file extension when given a file path.
     static bool ExtractFileExtension(const std::string& filePathString, std::string& fileExtension);
 
+    // Return the truncated file name to display.
+    static void GetDisplayText(const std::string& fileName, std::string& displayText, const int availableSpace, QWidget* pWidget, const int numBackChars);
+
     // Read a text file into a string.
     static bool ReadTextFile(const std::string& fileFullPath, QString& txt);
 
@@ -139,6 +154,9 @@ public:
     // Append a path separator to the given base path.
     static bool AppendPathSeparator(const std::string& basePath, std::string& updatedPath);
 
+    // Makes path separators consistent (a single forward slash '/').
+    static void StandardizePathSeparator(std::string& path);
+
     // Returns true if the given file exists.
     static bool IsFileExists(const std::string& fileFullPath);
 
@@ -151,6 +169,19 @@ public:
     // Returns true if the given file name does not contain illegal characters.
     static bool IsValidFileName(const std::string& fileName);
 
+    // Check if the provided file is a SPIR-V binary file.
+    static bool IsSpvBinFile(const std::string& filePath);
+
+    // Construct a name (full path) for SPIR-V disassembly file.
+    // The constructed name is returned in "spvDisasmFileName".
+    static bool ConstructSpvDisasmFileName(const std::string& projFolder,
+                                           const std::string& spvFileName,
+                                           std::string&       spvDisasmFileName);
+
+    // Detects the type of Vulkan input file.
+    // Returns detected file type and corresponding Code Editor language for syntax highlighting.
+    static std::pair<rgVulkanInputType, rgSrcLanguage>
+    DetectInputFileType(const std::string& filePath);
 
     // ************
     // Files - END.
@@ -191,10 +222,6 @@ public:
 
     // Return true when the incoming string contains whitespace, and false if it doesn't.
     static bool IsContainsWhitespace(const std::string& text);
-
-    // Find a string within another string. QStrings are used for compatibility with non-ASCII text.
-    static unsigned int FindIndexOf(const QString& target, const QString& text, int startPosition = 0);
-
     // Trim the whitespace off the left side of the incoming string.
     static void LeftTrim(const std::string& text, std::string& trimmedText);
 
@@ -209,6 +236,16 @@ public:
 
     // Remove instances of markup substrings (like "<b>") from a given text.
     static std::string GetPlainText(const std::string& text);
+
+    // Checks if "token" is present in the list of tokens specified by "list" string.
+    // The tokens in the list must be divided by the "delim" symbol.
+    // (The comparison is case-sensitive).
+    // Example:
+    //    list  = "red,black,white"
+    //    token = "black"
+    //    delim = ','
+    //    result --> true.
+    static bool IsInList(const std::string& list, const std::string& token, char delim);
 
     // **************
     // Strings - END.
@@ -228,6 +265,28 @@ public:
 
     // Generates the title prefix for the project name label.
     static std::string GetProjectTitlePrefix(rgProjectAPI currentApi);
+
+    // Retrieve the file path to a shader file for the given pipeline stage.
+    static bool GetStageShaderPath(const rgPipelineShaders& pipeline, rgPipelineStage stage, std::string& shaderPath);
+
+    // Set the input file path for a given stage within the provided pipeline.
+    static bool SetStageShaderPath(rgPipelineStage stage, const std::string& shaderPath, rgPipelineShaders& pipeline);
+
+    // Retrieves a map that maps between GPU compute capabilities and their architecture.
+    // For example: "gfx900" --> "Vega".
+    // Returns true if one or more mapping were found.
+    static bool GetComputeCapabilityToArchMapping(std::map<std::string, std::string>& deviceNameMapping);
+
+    // Retrieves the gfx123 notation for a compute capability.
+    // For example: "Tonga" --> "gfx802".
+    // Returns true if notation found, otherwise false.
+    static bool GetGfxNotation(const std::string& codeName, std::string& gfxNotation);
+
+    // Removes the gfx notation from the family name if it is required (i.e.
+    // it is of the form <codename>/<gfx notation>. For example, for "Tonga/gfx802"
+    // this would return "Tonga". If the family name is not of the relevant format,
+    // the same family name would be returned.
+    static std::string RemoveGfxNotation(const std::string& familyName);
 
     // **************
     // Content - END.

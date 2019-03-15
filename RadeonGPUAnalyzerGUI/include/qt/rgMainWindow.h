@@ -3,34 +3,60 @@
 // C++.
 #include <memory>
 
+// Qt.
 #include <QtWidgets/QMainWindow>
-#include "ui_rgMainWindow.h"
-#include <RadeonGPUAnalyzerGUI/include/qt/rgBuildView.h>
+#include <QTimer>
+
+// Local.
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildView.h>
+#include <ui_rgMainWindow.h>
 
 // Forward declarations.
 class QAction;
 class QButtonGroup;
 class QMenu;
 class QScrollArea;
+class rgAppState;
 class rgBuildView;
-class rgFileMenu;
+class rgMenu;
 class rgGoToLineDialog;
-class rgGlobalSettingsView;
-class rgSettingsButtonsView;
-class rgBuildSettingsView;
+class rgSettingsTab;
+class rgStatusBar;
 struct rgProject;
-struct rgBuildSettings;
 
+// The application's main window instance.
 class rgMainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
     rgMainWindow(QWidget* pParent = Q_NULLPTR);
+    virtual ~rgMainWindow() = default;
 
-protected:
-    // Re-implement eventFilter to handle up/down arrow keys.
-    virtual bool eventFilter(QObject* pObject, QEvent* pEvent);
+    // An enum containing the main views for the application.
+    enum class MainWindowView
+    {
+        Home,
+        BuildView
+    };
+
+    // Destroy the rgBuildView instance.
+    void DestroyBuildView();
+
+    // Initialize the API-specific components.
+    // The reason why we are using this init function and not a CTOR is that we need to initialize
+    // some API-specific components which are defined in classes that derive from rgMainWindow. Since
+    // these functions are virtual, we cannot call them from the CTOR.
+    void InitMainWindow();
+
+    // Resets the actions to the default state (where the app started and home page is visible).
+    void ResetActionsState();
+
+    // Switch to a new view.
+    void SwitchToView(MainWindowView tab);
+
+    // Use an event filter to hide the API mode buttons.
+    virtual bool eventFilter(QObject* obj, QEvent* event) override;
 
 signals:
     // Signal emitted when the user triggers the Edit menu's Find action.
@@ -39,33 +65,72 @@ signals:
     // A signal emitted when the project build status changes.
     void IsBuildInProgress(bool isBuilding);
 
-private:
-    // Apply any string constants where needed.
-    void ApplyStringConstants();
+    // A signal to switch current container's size.
+    void SwitchContainerSize();
+
+    // *** TEST SIGNALS - BEGIN ***
+
+    // A signal emitted when a project is loaded.
+    void TEST_ProjectLoaded();
+
+    // A signal emitted when the MainWindow has been created and initialized BuildView object.
+    void TEST_BuildViewCreated(void* pBuildView);
+
+    // *** TEST SIGNALS - END ***
+
+public slots:
+    // Handler for when a new project has been created.
+    void HandleProjectCreated();
+
+protected:
+    // The save action type.
+    enum SaveActionType
+    {
+        // Save the current source file being edited.
+        SaveFile,
+
+        // Save the current build or pipeline settings being edited.
+        SaveSettings
+    };
+
+    // Create the QAction objects.
+    virtual void CreateFileMenuActions();
+
+    // Add the build view interface to the MainWindow.
+    void AddBuildView();
+
+    // Create the application state.
+    void CreateAppState(rgProjectAPI api);
+
+    // Switch the current API mode.
+    void ChangeApiMode(rgProjectAPI api);
 
     // Connect the signals.
     void ConnectSignals();
 
-    // Create the build view interface.
-    void CreateBuildView();
+    // Create the settings tab.
+    void CreateSettingsTab();
 
-    // Create the global build settings view.
-    void CreateGlobalBuildSettingsView();
+    // Create the main window's start tab.
+    void CreateStartTab();
+
+    // Connect the signals for the current mode's start tab.
+    void ConnectStartTabSignals();
 
     // Connect the signals for the BuildView interface.
     void ConnectBuildViewSignals();
 
-    // Connect the signals for settings tab list widget.
-    void ConnectSettingsListWidgetSignals();
-
-    // Create the actions to be used by the File menu.
-    void CreateFileMenuActions();
+    // Connect the menu signals to the rgBuildView and rgMainWindow.
+    void ConnectMenuSignals();
 
     // Create the actions to be used by the Edit menu.
     void CreateEditMenuActions();
 
     // Create the actions to be used by the Build menu.
     void CreateBuildMenuActions();
+
+    // Create the main window's menu bar.
+    void CreateMenuBar();
 
     // Create the File menu items.
     void CreateFileMenu();
@@ -76,17 +141,20 @@ private:
     // Create the Help menu items.
     void CreateHelpMenu();
 
-    // Create the conetxt menu items.
-    void CreateContextMenu();
-
     // Create the Help menu actions.
     void CreateHelpMenuActions();
 
     // Create the Build menu items.
     void CreateBuildMenu();
 
-    // Destroy the rgBuildView instance.
-    void DestroyBuildView();
+    // Destroy the current file menu.
+    void DestroyFileMenu();
+
+    // Delete the existing start tab.
+    void DestroyStartTab();
+
+    // Delete the existing settings tab.
+    void DestroySettingsTab();
 
     // Toggle the enabledness of the Build menu items.
     void EnableBuildMenu(bool isEnabled);
@@ -94,40 +162,28 @@ private:
     // Toggle the enabledness of the Edit menu items.
     void EnableEditMenu(bool isEnabled);
 
-    // Ignore up/down key presses for top and bottom buttons.
-    bool ProcessKeyPress(QKeyEvent* pKeyEvent, const QString& objectName);
-
     // Open the program file at the given file path.
     bool OpenProjectFileAtPath(const std::string& programFilePath);
 
     // Set the main window title text.
     void SetWindowTitle(const std::string& windowTitle);
 
+    // Set the application stylesheet.
+    void SetApplicationStylesheet();
+
     // Clear the window title.
     void ResetWindowTitle();
-
-    // Switch to a new view.
-    void SwitchToView(QWidget* pWidget);
-
-    // Open the given files in the build view.
-    void OpenFilesInBuildView(const QStringList& filePaths);
-
-    // Reorder the tab order to allow for the recent projects list additions/removals.
-    void ReorderTabOrder(QLayout* pLayout);
 
     // Actions for the menus - START.
 
     QAction* m_pFocusNextWidgetAction = nullptr;
     QAction* m_pFocusPrevWidgetAction = nullptr;
-    QAction* m_pNewFileAction = nullptr;
-    QAction* m_pOpenFileAction = nullptr;
     QAction* m_pOpenProjectAction = nullptr;
-    QAction* m_pOpenRecentAction = nullptr;
-    QAction* m_pOpenContainingFolderAction = nullptr;
     QAction* m_pSaveAction = nullptr;
     QAction* m_pBackToHomeAction = nullptr;
     QAction* m_pBuildProjectAction = nullptr;
     QAction* m_pBuildSettingsAction = nullptr;
+    QAction* m_pPipelineStateAction = nullptr;
     QAction* m_pHelpAboutAction = nullptr;
     QAction* m_pExitAction = nullptr;
     QAction* m_pGoToLineAction = nullptr;
@@ -141,25 +197,19 @@ private:
     // The menu bar.
     QMenu* m_pMenuBar = nullptr;
 
-    // The build view.
-    rgBuildView* m_pBuildView = nullptr;
+    // The custom status bar.
+    rgStatusBar* m_pStatusBar = nullptr;
 
-    // A button group used to handle the array of recent program buttons.
-    QButtonGroup* m_pRecentProjectButtonGroup = nullptr;
+    // The app notification message widget.
+    QWidget* m_pAppNotificationWidget = nullptr;
+
+    // Timer to synchronize the blinking of the notification.
+    QTimer* m_pAppNotificationBlinkingTimer = new QTimer();
 
     Ui::rgMainWindow ui;
 
-    // The context menu for recent files
-    QMenu m_menu;
-
-    // The global settings view.
-    rgGlobalSettingsView* m_pGlobalSettingsView = nullptr;
-
-    // The settings buttons view.
-    rgSettingsButtonsView* m_pSettingsButtonsView = nullptr;
-
-    // The build settings view.
-    rgBuildSettingsView* m_pBuildSettingsView = nullptr;
+    // The settings tab.
+    rgSettingsTab* m_pSettingsTab = nullptr;
 
     // The save file action shortcut current state.
     bool m_saveFileActionActive = false;
@@ -167,44 +217,23 @@ private:
     // The save settings action shortcut current state.
     bool m_saveSettingsActionActive = false;
 
-    // A boolean to indicate a special resolution case.
-    bool m_isSpecialResolution = false;
+    // A pointer to the factory through which to create API-specific widgets.
+    std::shared_ptr<rgFactory> m_pFactory = nullptr;
 
-    // The scroll area for settings.
-    QFrame* m_pScrollAreaWidgetContents;
+    // A pointer to the application state.
+    std::shared_ptr<rgAppState> m_pAppState = nullptr;
 
-private:
-    // The entries in the setting list widget.
-    enum SettingsListWidgetEntries
-    {
-        Global,
-        OpenCL
-    };
-
-    // The save action type.
-    enum SaveActionType
-    {
-        SaveFile,
-        SaveBuildSettings
-    };
-
-    // Clear the list of recent program buttons.
-    void ClearRecentProjectsList();
-
-    // Get the currently-visible settings category.
-    SettingsListWidgetEntries GetSelectedSettingCategory() const;
-
-    // Populate the list of recent files in the welcome page.
-    void PopulateRecentProjectsList();
+    // Save the current view.
+    MainWindowView m_currentView = MainWindowView::Home;
 
     // Window close event override.
     virtual void closeEvent(QCloseEvent* pEvent) override;
 
-    // Window file drop event.
-    virtual void dropEvent(QDropEvent* pEvent) override;
-
     // Window file drag enter event.
     virtual void dragEnterEvent(QDragEnterEvent* pEvent) override;
+
+    // Window file drop event.
+    virtual void dropEvent(QDropEvent* pEvent) override;
 
     // Set the cursor to pointing hand cursor for various widgets.
     void SetCursor();
@@ -212,24 +241,24 @@ private:
     // Switch the save shortcut between file and settings.
     void SwitchSaveShortcut(SaveActionType saveActionType);
 
-    // Set build settings geometry according to the display dpi.
-    void SetBuildSettingsGeometry();
-
-    // Resets the actions to the default state (where the app started and home page is visible).
-    void ResetActionsState();
-
     // Adjusts the actions state to the build view's initial state.
     void EnableBuildViewActions();
 
-private slots:
-    // Handler for the settings list widget.
-    void HandleSettingsListWidgetClick(int index);
+    // Create a custom status bar with Mode button to replace the default one.
+    void CreateCustomStatusBar();
+
+    // Apply main window stylesheet.
+    void ApplyMainWindowStylesheet();
+
+    // Create the app notification message label.
+    void CreateAppNotificationMessageLabel(const std::string& message, const std::string& tooltip);
+
+protected slots:
+    // Handler for when the settings tab has pending changes.
+    void HandleHasSettingsPendingStateChanged(bool hasPendingChanges);
 
     // Handler for when the number of items in the project changed.
     void HandleProjectFileCountChanged(bool isProjectEmpty);
-
-    // Handler for the Create New File button click.
-    void HandleCreateNewFileEvent();
 
     // Handler for the build view edit mode changed signal.
     void HandleEditModeChanged(EditMode mode);
@@ -240,11 +269,11 @@ private slots:
     // Handler for the main tab widget's tab change.
     void HandleMainTabWidgetTabChanged(int currentIndex);
 
-    // Handler for the Open Existing File button click.
-    void HandleOpenExistingFileEvent();
-
     // Handler for the Open Program button click.
     void HandleOpenProjectFileEvent();
+
+    // Open the program file at the given file path.
+    void HandleOpenProjectFileAtPath(const std::string& programFilePath);
 
     // Handler for the Save File button click.
     void HandleSaveFileEvent();
@@ -274,11 +303,11 @@ private slots:
     // Handler for viewing the program build settings.
     void HandleBuildSettingsEvent();
 
+    // Handler for viewing the pipeline state.
+    void HandlePipelineStateEvent();
+
     // Handler for canceling the current build.
     void HandleCancelBuildEvent();
-
-    // Handler for a click on a recent program item.
-    void HandleRecentProjectClickedEvent(int buttonId);
 
     // Handler for when the selected file item is changed in the file menu.
     void HandleSelectedFileChanged(const std::string& oldFile, const std::string& newFile);
@@ -294,9 +323,6 @@ private slots:
 
     // Handler for when the shortcut to switch widget focus to previous widget is pressed.
     void HandleFocusPrevWidget();
-
-    // Handler for when the user requests a context menu for recent files
-    void HandleContextMenuRequest(const QPoint& pos);
 
     // Handler for when the program build fails.
     void HandleProjectBuildFailure();
@@ -316,21 +342,21 @@ private slots:
     // Handler invoked when the status bar text should be changed.
     void HandleStatusBarTextChanged(const std::string& statusBarText, int timeoutMs);
 
-    // Handler for when global settings data changes.
-    void HandleGlobalPendingChangesStateChanged(bool pendingChanges);
-
-    // Handler for when build settings data changes.
-    void HandleBuildSettingsPendingChangesStateChanged(bool pendingChanges);
-
     // Handler for when the "Save" button is clicked.
     void HandleSaveSettingsButtonClicked();
-
-    // Handler for when the "Restore defaults" button is clicked.
-    void HandleRestoreDefaultsSettingsClicked();
 
     // Handler for when the tab bar tab changes.
     void HandleTabBarTabChanged(bool saveChanges);
 
     // Handler for when the text of the status bar is changed.
     void HandleStatusBarMessageChange(const QString&  msg);
+
+    // Handler for when the custom status bar signals API change by user.
+    void HandleChangeAPIMode(rgProjectAPI switchToApi);
+
+    // Handler to update the app notification message widget.
+    void HandleUpdateAppNotificationMessage(const std::string& message, const std::string& tooltip);
+
+    // Handler for when the blinking notification message timer fires.
+    void HandleAppNotificationMessageTimerFired();
 };

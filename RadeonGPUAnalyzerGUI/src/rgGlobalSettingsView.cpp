@@ -17,14 +17,13 @@
 #include <QtCommon/Util/RestoreCursorPosition.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgConfigManager.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgGlobalSettingsModel.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgGlobalSettingsView.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgHideListWidgetEventFilter.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyTableModel.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgConfigManager.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgGlobalSettingsView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgHideListWidgetEventFilter.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTableModel.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
 // Names of special widgets within the build settings view.
 static const char* STR_GLOBAL_SETTINGS_COLUMN_VISIBILITY_LIST = "DisassemblyColumnVisibilityList";
@@ -34,8 +33,12 @@ static const char* STR_GLOBAL_SETTINGS_COLUMN_LIST_ITEM_ALL_CHECKBOX = "ListWidg
 // Columns push button font size.
 const int s_PUSH_BUTTON_FONT_SIZE = 11;
 
-rgGlobalSettingsView::rgGlobalSettingsView(QWidget* pParent, std::shared_ptr<rgGlobalSettings> pGlobalSettings) :
+// The maximum font size allowed in the font size combo box.
+static const int s_MAX_FONT_SIZE = 50;
+
+rgGlobalSettingsView::rgGlobalSettingsView(QWidget* pParent, const rgGlobalSettings& globalSettings) :
     rgBuildSettingsView(pParent, true),
+    m_initialSettings(globalSettings),
     m_pParent(pParent)
 {
     // Setup the UI.
@@ -47,52 +50,89 @@ rgGlobalSettingsView::rgGlobalSettingsView(QWidget* pParent, std::shared_ptr<rgG
     this->setAutoFillBackground(true);
     this->setPalette(pal);
 
-    // Make sure that the build settings that we received are valid.
-    assert(pGlobalSettings != nullptr);
-    if (pGlobalSettings != nullptr)
+    // Create the widget used to control column visibility.
+    CreateColumnVisibilityControls();
+
+    // Fill the column visibility dropdown with all of the possible column names.
+    PopulateColumnVisibilityList();
+
+    // Initialize the combo box for font size.
+    for (int i = 1; i < s_MAX_FONT_SIZE; i++)
     {
-        // Create the widget used to control column visibility.
-        CreateColumnVisibilityControls();
-
-        m_pSettingsModel = new rgGlobalSettingsModel(pGlobalSettings, rgGlobalSettingsControls::Count);
-
-        // Initialize the model by binding UI widgets to it.
-        InitializeModel();
-
-        // Initialize the values in the model.
-        assert(m_pSettingsModel != nullptr);
-        if (m_pSettingsModel != nullptr)
-        {
-            m_pSettingsModel->InitializeModelValues();
-        }
-
-        // Fill the column visibility dropdown with all of the possible column names.
-        PopulateColumnVisibilityList();
-
-        // Connect the signals.
-        ConnectSignals();
-
-        // Set the mouse cursor to the pointing hand cursor for various widgets.
-        SetCursor();
-
-        // Set the tool tip for default project name check box.
-        SetCheckboxToolTip(STR_GLOBAL_SETTINGS_CHECKBOX_TOOLTIP);
-
-        // Set the tool tip for the two edit boxes.
-        SetEditBoxToolTips();
-
-        // Set the tooltip for the log file location.
-        ui.logFileLocationLabel->setToolTip(STR_GLOBAL_SETTINGS_LOG_FILE_LOCATION);
-
-        // Set the tooltips for the disassembly columns.
-        ui.disassemblyViewLabel->setToolTip(STR_GLOBAL_SETTINGS_DISASSEMBLY_COLUMNS);
-
-        // Set the fonts for the list widget push button.
-        QFont font = ui.columnVisibilityArrowPushButton->font();
-        double scaleFactor = ScalingManager::Get().GetScaleFactor();
-        font.setPointSize(gs_BUTTON_POINT_FONT_SIZE * scaleFactor);
-        ui.columnVisibilityArrowPushButton->setFont(font);
+        ui.fontSizeComboBox->addItem(QString::number(i), QString::number(i));
     }
+
+    // Push values to various widgets.
+    PushToWidgets(globalSettings);
+
+    // Connect the signals.
+    ConnectSignals();
+
+    // Set the mouse cursor to the pointing hand cursor for various widgets.
+    SetCursor();
+
+    // Set the tool tip for default project name check box.
+    SetCheckboxToolTip(STR_GLOBAL_SETTINGS_CHECKBOX_TOOLTIP);
+
+    // Set the tool tip for the two edit boxes.
+    SetEditBoxToolTips();
+
+    // Set the tooltip for the log file location.
+    ui.logFileLocationLabel->setToolTip(STR_GLOBAL_SETTINGS_LOG_FILE_LOCATION);
+
+    // Set the tooltips for the disassembly section.
+    ui.disassemblyViewLabel->setToolTip(STR_GLOBAL_SETTINGS_DISASSEMBLY_SECTION_TOOLTIP);
+
+    // Set the tooltips for the disassembly columns.
+    ui.disassemblyViewColunnsLabel->setToolTip(STR_GLOBAL_SETTINGS_DISASSEMBLY_COLUMNS_TOOLTIP);
+
+    // Set the tooltips for the source code editor.
+    ui.sourceCodeEditorLabel->setToolTip(STR_GLOBAL_SETTINGS_SRC_VIEW_SECTION_TOOLTIP);
+
+    // Set the tooltips for the font type in the source code editor.
+    ui.fontFamilyLabel->setToolTip(STR_GLOBAL_SETTINGS_SRC_VIEW_FONT_TYPE_TOOLTIP);
+
+    // Set the tooltips for the font size in the source code editor.
+    ui.fontSizeLabel->setToolTip(STR_GLOBAL_SETTINGS_SRC_VIEW_FONT_SIZE_TOOLTIP);
+
+    // Set the tooltips for the include files viewer.
+    ui.includeFilesViewerLabel->setToolTip(STR_GLOBAL_SETTINGS_SRC_VIEW_INCLUDE_FILES_VIEWER_TOOLTIP);
+
+    // Set the tooltips for input files associations.
+    ui.assocExtGlslLabel->setToolTip(STR_GLOBAL_SETTNIGS_FILE_EXT_GLSL_TOOLTIP);
+    ui.assocExtHlslLabel->setToolTip(STR_GLOBAL_SETTNIGS_FILE_EXT_HLSL_TOOLTIP);
+    ui.assocExtSpvasLabel->setToolTip(STR_GLOBAL_SETTNIGS_FILE_EXT_SPV_TXT_TOOLTIP);
+
+    // Set the tooltip for the default source language.
+    ui.defaultLangLabel->setToolTip(STR_GLOBAL_SETTINGS_DEFAULT_SRC_LANG_TOOLTIP);
+
+    // Set the tooltip for the general section.
+    ui.generalLabel->setToolTip(STR_GLOBAL_SETTINGS_GENERAL_SECTION_TOOLTIP);
+
+    // Set the tooltip for the default API section.
+    ui.defaultApiOnStartupLabel->setToolTip(STR_GLOBAL_SETTINGS_DEFAULT_STARTUP_API_TOOLTIP);
+
+    // Set the tooltip for the Input Files section.
+    ui.inputFilesLabel->setToolTip(STR_GLOBAL_SETTINGS_INPUT_FILES_SECTION_TOOLTIP);
+
+    // Set the tooltip for the SPIR-V binary.
+    ui.assocExtSpvBinaryLabel->setToolTip(STR_GLOBAL_SETTINGS_SPV_EXTENSIONS_TOOLTIP);
+
+    // Set the fonts for the list widget push button.
+    QFont font = ui.columnVisibilityArrowPushButton->font();
+    double scaleFactor = ScalingManager::Get().GetScaleFactor();
+    font.setPointSize(gs_BUTTON_POINT_FONT_SIZE * scaleFactor);
+    ui.columnVisibilityArrowPushButton->setFont(font);
+
+    // Hide HLSL components until support for HLSL is added.
+    ui.assocExtHlslLabel->hide();
+    ui.assocExtHlslLineEdit->hide();
+    ui.defaultLangLabel->hide();
+    ui.defaultLangComboBox->hide();
+
+    // Hide the SPIR-V Text options until support for SPIR-V text files is added.
+    ui.assocExtSpvasLabel->setHidden(true);
+    ui.assocExtSpvasLineEdit->setHidden(true);
 }
 
 rgGlobalSettingsView::~rgGlobalSettingsView()
@@ -103,6 +143,116 @@ rgGlobalSettingsView::~rgGlobalSettingsView()
         m_pDisassemblyColumnsListWidget->removeEventFilter(m_pDisassemblyColumnsListEventFilter);
         qApp->removeEventFilter(m_pDisassemblyColumnsListEventFilter);
     }
+}
+
+void rgGlobalSettingsView::showEvent(QShowEvent* pEvent)
+{
+    QWidget::showEvent(pEvent);
+
+    // The global settings can be updated by other widgets in the application,
+    // so if this view does not think it has any pending changes, then reset
+    // the UI based on the config manager's global config, then update this
+    // view's intitialSettings to match and signal that there are no pending changes.
+    if (GetHasPendingChanges() == false)
+    {
+        std::shared_ptr<rgGlobalSettings> pSettings = rgConfigManager::Instance().GetGlobalConfig();
+        assert(pSettings != nullptr);
+        if (pSettings != nullptr)
+        {
+            PushToWidgets(*pSettings);
+        }
+
+        m_initialSettings = PullFromWidgets();
+
+        HandlePendingChangesStateChanged(false);
+    }
+}
+
+void rgGlobalSettingsView::PushToWidgets(const rgGlobalSettings& globalSettings)
+{
+    // Initialize the log file location.
+    QString logFileLocation(globalSettings.m_logFileLocation.c_str());
+    ui.logFileLocationLineEdit->setText(logFileLocation);
+
+    ListWidget::SetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget, globalSettings.m_visibleDisassemblyViewColumns);
+
+    // Initialize the use-generated project names checkbox.
+    ui.projectNameCheckBox->setChecked(globalSettings.m_useDefaultProjectName);
+
+    // Initialize the combo box for setting the default API.
+    ui.defaultApiOnStartupComboBox->setCurrentIndex(globalSettings.m_shouldPromptForAPI ? static_cast<int>(rgProjectAPI::Unknown) : static_cast<int>(globalSettings.m_defaultAPI));
+
+    // Font family.
+    QFont font;
+    font.setFamily(QString::fromStdString(globalSettings.m_fontFamily));
+    ui.fontFamilyComboBox->setCurrentFont(font);
+
+    // Font size.
+    const int index = ui.fontSizeComboBox->findData(globalSettings.m_fontSize);
+    if (index != -1)
+    {
+        ui.fontSizeComboBox->setCurrentIndex(index);
+    }
+
+    // Include files viewer.
+    ui.includeFilesViewerLineEdit->setText(globalSettings.m_includeFilesViewer.c_str());
+
+    // Input file associations.
+    ui.assocExtGlslLineEdit->setText(globalSettings.m_inputFileExtGlsl.c_str());
+    ui.assocExtHlslLineEdit->setText(globalSettings.m_inputFileExtHlsl.c_str());
+    ui.assocExtSpvasLineEdit->setText(globalSettings.m_inputFileExtSpvTxt.c_str());
+    ui.assocExtSpvBinaryLineEdit->setText(globalSettings.m_inputFileExtSpvBin.c_str());
+
+    // Default high level language.
+    ui.defaultLangComboBox->setCurrentIndex(globalSettings.m_defaultLang == rgSrcLanguage::GLSL ? 0 : 1);
+}
+
+rgGlobalSettings rgGlobalSettingsView::PullFromWidgets() const
+{
+    std::shared_ptr<rgGlobalSettings> pSettings = rgConfigManager::Instance().GetGlobalConfig();
+    assert(pSettings != nullptr);
+
+    // Make a local copy of this object so that it can be edited.
+    rgGlobalSettings settings(*pSettings);
+
+    // Log file location.
+    settings.m_logFileLocation = ui.logFileLocationLineEdit->text().toStdString();
+
+    // Column visibility.
+    settings.m_visibleDisassemblyViewColumns = ListWidget::GetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget);
+
+    // Use default project names.
+    settings.m_useDefaultProjectName = ui.projectNameCheckBox->isChecked();
+
+    // Default API.
+    int defaultApiComboBoxIndex = ui.defaultApiOnStartupComboBox->currentIndex();
+    if (defaultApiComboBoxIndex >= 0 && defaultApiComboBoxIndex < static_cast<int>(rgProjectAPI::ApiCount))
+    {
+        settings.m_defaultAPI = static_cast<rgProjectAPI>(defaultApiComboBoxIndex);
+
+        settings.m_shouldPromptForAPI = (defaultApiComboBoxIndex == static_cast<int>(rgProjectAPI::Unknown));
+    }
+
+    // Font family.
+    QFont font = ui.fontFamilyComboBox->currentFont();
+    settings.m_fontFamily = font.family().toStdString();
+
+    // Font size.
+    settings.m_fontSize = ui.fontSizeComboBox->itemData(ui.fontSizeComboBox->currentIndex()).toInt();
+
+    // Include files viewer.
+    settings.m_includeFilesViewer = ui.includeFilesViewerLineEdit->text().toStdString();
+
+    // Input file associations.
+    settings.m_inputFileExtGlsl   = ui.assocExtGlslLineEdit->text().toStdString();
+    settings.m_inputFileExtHlsl   = ui.assocExtHlslLineEdit->text().toStdString();
+    settings.m_inputFileExtSpvTxt = ui.assocExtSpvasLineEdit->text().toStdString();
+    settings.m_inputFileExtSpvBin = ui.assocExtSpvBinaryLineEdit->text().toStdString();
+
+    // Default high level language.
+    settings.m_defaultLang = (ui.defaultLangComboBox->currentIndex() == 0 ? rgSrcLanguage::GLSL : rgSrcLanguage::HLSL);
+
+    return settings;
 }
 
 void rgGlobalSettingsView::ConnectSignals()
@@ -127,47 +277,108 @@ void rgGlobalSettingsView::ConnectSignals()
     isConnected = connect(this->ui.projectNameCheckBox, &QCheckBox::stateChanged, this, &rgGlobalSettingsView::HandleProjectNameCheckboxStateChanged);
     assert(isConnected);
 
-    assert(m_pSettingsModel != nullptr);
-    if (m_pSettingsModel != nullptr)
-    {
-        isConnected = connect(m_pSettingsModel, &rgGlobalSettingsModel::PendingChangesStateChanged, this, &rgGlobalSettingsView::HandlePendingChangesStateChanged);
-        assert(isConnected);
-    }
+    // Connect the use default API combo box.
+    isConnected = connect(ui.defaultApiOnStartupComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &rgGlobalSettingsView::HandleComboBoxChanged);
+    assert(isConnected);
+
+    // Connect the font family combo box.
+    isConnected = connect(ui.fontFamilyComboBox, &QFontComboBox::currentFontChanged, this, &rgGlobalSettingsView::HandleFontFamilyChanged);
+    assert(isConnected);
+
+    // Connect the font size combo box.
+    isConnected = connect(ui.fontSizeComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &rgGlobalSettingsView::HandleComboBoxChanged);
+    assert(isConnected);
+
+    // GLSL File extension associations textChanged signal.
+    isConnected = connect(this->ui.assocExtGlslLineEdit, &QLineEdit::textChanged, this, &rgGlobalSettingsView::HandleTextBoxChanged);
+    assert(isConnected);
+
+    // HLSL File extension associations textChanged signal.
+    isConnected = connect(this->ui.assocExtHlslLineEdit, &QLineEdit::textChanged, this, &rgGlobalSettingsView::HandleTextBoxChanged);
+    assert(isConnected);
+
+    // SPV Text File extension associations textChanged signal.
+    isConnected = connect(this->ui.assocExtSpvasLineEdit, &QLineEdit::textChanged, this, &rgGlobalSettingsView::HandleTextBoxChanged);
+    assert(isConnected);
+
+    // SPV Binary File extension associations textChanged signal.
+    isConnected = connect(this->ui.assocExtSpvBinaryLineEdit, &QLineEdit::textChanged, this, &rgGlobalSettingsView::HandleTextBoxChanged);
+    assert(isConnected);
+
+    // Default shader language combobox currentIndexChanged signal.
+    isConnected = connect(this->ui.defaultLangComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &rgGlobalSettingsView::HandleComboBoxChanged);
+    assert(isConnected);
+
+    // Include files viewer browse button.
+    isConnected = connect(this->ui.includeFilesViewerBrowseButton, &QPushButton::clicked, this, &rgGlobalSettingsView::HandleIncludeFilesViewerBrowseButtonClick);
+    assert(isConnected);
+
+    // Include files viewer line edit.
+    isConnected = connect(this->ui.includeFilesViewerLineEdit, &QLineEdit::editingFinished, this, &rgGlobalSettingsView::HandleIncludeFilesViewerEditingFinished);
+    assert(isConnected);
+
+    // Include files viewer text changed.
+    isConnected = connect(this->ui.includeFilesViewerLineEdit, &QLineEdit::textChanged, this, &rgGlobalSettingsView::HandleTextBoxChanged);
+    assert(isConnected);
 }
 
 void rgGlobalSettingsView::HandlePendingChangesStateChanged(bool hasPendingChanges)
 {
-    emit PendingChangesStateChanged(hasPendingChanges);
+    // Let the base class determine if there is a need to signal listeners
+    // about the pending changes state.
+    rgBuildSettingsView::SetHasPendingChanges(hasPendingChanges);
 }
 
 void rgGlobalSettingsView::HandleLogFileLocationBrowseButtonClick(bool /* checked */)
 {
     // Get the current log file location.
-    assert(m_pSettingsModel != nullptr);
-    if (m_pSettingsModel != nullptr)
+    QString currentLogFileLocation = QString::fromStdString(m_initialSettings.m_logFileLocation);
+
+    // Open up a directory chooser.
+    QFileDialog dialog(this);
+    dialog.setFileMode(QFileDialog::Directory);
+    dialog.setDirectory(currentLogFileLocation);
+    if (dialog.exec())
     {
-        std::shared_ptr<rgGlobalSettings> pPendingGlobalSettings = m_pSettingsModel->GetPendingGlobalSettings();
-        assert(pPendingGlobalSettings != nullptr);
-        if (pPendingGlobalSettings != nullptr)
+        QStringList selectedDir = dialog.selectedFiles();
+
+        // Update the text box.
+        QString selectedDirectory = selectedDir.at(0);
+        if (!selectedDirectory.isEmpty())
         {
-            QString currentLogFileLocation = QString::fromStdString(pPendingGlobalSettings->m_logFileLocation);
+            ui.logFileLocationLineEdit->setText(selectedDirectory);
 
-            // Open up a directory chooser.
-            QFileDialog dialog(this);
-            dialog.setFileMode(QFileDialog::Directory);
-            dialog.setDirectory(currentLogFileLocation);
-            if (dialog.exec())
-            {
-                QStringList selectedDir = dialog.selectedFiles();
-
-                // Update the text box
-                QString selectedDirectory = selectedDir.at(0);
-                if (!selectedDirectory.isEmpty())
-                {
-                    m_pSettingsModel->UpdateModelValue(rgGlobalSettingsControls::LogFileLocation, selectedDirectory, false);
-                }
-            }
+            // Signal to any listeners that the values in the UI have changed.
+            HandlePendingChangesStateChanged(GetHasPendingChanges());
         }
+    }
+}
+
+void rgGlobalSettingsView::HandleIncludeFilesViewerBrowseButtonClick(bool checked)
+{
+    // Get the current viewer.
+    QString currentViewer = QString::fromStdString(m_initialSettings.m_logFileLocation);
+
+#ifdef _WIN32
+    const char* fileFilter = "Executable files (*.exe)|*.exe";
+#else
+    const char* fileFilter = "";
+#endif
+
+    // Open up a file dialog.
+    std::string selectedViewerPath;
+    bool isSelected = rgUtils::OpenFileDialog(this, selectedViewerPath,
+        STR_FILE_DIALOG_FILTER_INCLUDE_VIEWER, fileFilter) &&
+        rgUtils::IsFileExists(selectedViewerPath);
+
+    // If the user selected a path, and it is a valid one, process this request.
+    if (isSelected)
+    {
+        // Set the selected file path as the text in the text box.
+        ui.includeFilesViewerLineEdit->setText(selectedViewerPath.c_str());
+
+        // Signal to any listeners that the values in the UI have changed.
+        HandlePendingChangesStateChanged(GetHasPendingChanges());
     }
 }
 
@@ -184,9 +395,16 @@ void rgGlobalSettingsView::HandleViewColumnsButtonClick(bool /* checked */)
     }
     else
     {
-        // Update the check box values in case they were changed in disassembly view.
-        std::shared_ptr<rgGlobalSettings> pPendingGlobalSettings = m_pSettingsModel->GetPendingGlobalSettings();
-        ListWidget::SetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget, pPendingGlobalSettings->m_visibleDisassemblyViewColumns);
+        // If the initial settings are different than the global settings, then we know the checkbox values were
+        // changed in another view.
+        std::shared_ptr<rgGlobalSettings> pSettings = rgConfigManager::Instance().GetGlobalConfig();
+        if (m_initialSettings.m_visibleDisassemblyViewColumns != pSettings->m_visibleDisassemblyViewColumns)
+        {
+            if (pSettings != nullptr)
+            {
+                ListWidget::SetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget, pSettings->m_visibleDisassemblyViewColumns);
+            }
+        }
 
         // Compute where to place the combo box relative to where the arrow button is.
         QWidget* pWidget = ui.columnVisibilityArrowPushButton;
@@ -210,78 +428,61 @@ void rgGlobalSettingsView::SetCursor()
     ui.columnVisibilityArrowPushButton->setCursor(Qt::PointingHandCursor);
     ui.logFileLocationFolderOpenButton->setCursor(Qt::PointingHandCursor);
     ui.projectNameCheckBox->setCursor(Qt::PointingHandCursor);
+    ui.defaultApiOnStartupComboBox->setCursor(Qt::PointingHandCursor);
+    ui.fontFamilyComboBox->setCursor(Qt::PointingHandCursor);
+    ui.fontSizeComboBox->setCursor(Qt::PointingHandCursor);
+    ui.includeFilesViewerBrowseButton->setCursor(Qt::PointingHandCursor);
 }
 
-void rgGlobalSettingsView::HandleColumnVisibilityComboBoxItemClicked(const QString& text, const bool checked)
+void rgGlobalSettingsView::HandleColumnVisibilityComboBoxItemClicked(const QString& text, bool checked)
 {
     int firstColumn = rgIsaDisassemblyTableModel::GetTableColumnIndex(rgIsaDisassemblyTableColumns::Address);
     int lastColumn = rgIsaDisassemblyTableModel::GetTableColumnIndex(rgIsaDisassemblyTableColumns::Count);
 
-    assert(m_pSettingsModel != nullptr);
-    if (m_pSettingsModel != nullptr)
+    std::vector<bool> columnVisibility = ListWidget::GetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget);
+
+    // Make sure at least one check box is still checked.
+    bool isAtLeastOneChecked = std::any_of(columnVisibility.begin() + firstColumn, columnVisibility.begin() + lastColumn, [](bool b) { return b == true; });
+
+    if (checked || isAtLeastOneChecked)
     {
-        std::shared_ptr<rgGlobalSettings> pPendingGlobalSettings = m_pSettingsModel->GetPendingGlobalSettings();
-        assert(pPendingGlobalSettings != nullptr);
-        if (pPendingGlobalSettings != nullptr)
+        // If the user checked the "All" option, Step through each column and set to visible.
+        if (text.compare(STR_DISASSEMBLY_TABLE_COLUMN_ALL) == 0 && (checked == true))
         {
-            // Make sure that the user didn't uncheck the only checked box, nor did they uncheck the "All" button, since this will uncheck
-            // every single check box, which is something we do not want.
-            if (checked || QtCommon::QtUtil::VerifyOneCheckboxChecked(pPendingGlobalSettings->m_visibleDisassemblyViewColumns, firstColumn, lastColumn))
+            for (int columnIndex = firstColumn; columnIndex < lastColumn; ++columnIndex)
             {
-                // Process the selected text accordingly.
-                if (text.compare(STR_DISASSEMBLY_TABLE_COLUMN_ALL) == 0 && (checked == true))
-                {
-                    // Step through each column and set to visible.
-                    for (int columnIndex = firstColumn; columnIndex < lastColumn; ++columnIndex)
-                    {
-                        pPendingGlobalSettings->m_visibleDisassemblyViewColumns[columnIndex] = checked;
-                    }
-
-                    // Update the state of the dropdown check boxes based on the visibility in the global settings.
-                    ListWidget::SetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget, pPendingGlobalSettings->m_visibleDisassemblyViewColumns);
-                }
-                else
-                {
-                    // Step through each column and set the visibility if the user changed the check state.
-                    for (int columnIndex = firstColumn; columnIndex < lastColumn; ++columnIndex)
-                    {
-                        rgIsaDisassemblyTableColumns column = static_cast<rgIsaDisassemblyTableColumns>(columnIndex);
-                        std::string columnName = GetDisassemblyColumnName(column);
-                        if (text.compare(columnName.c_str()) == 0)
-                        {
-                            pPendingGlobalSettings->m_visibleDisassemblyViewColumns[columnIndex] = checked;
-                            break;
-                        }
-                    }
-                }
-
-                // Update the model value with each column's check state.
-                std::string columnVisibilityString = rgUtils::BuildSemicolonSeparatedBoolList(pPendingGlobalSettings->m_visibleDisassemblyViewColumns);
-                m_pSettingsModel->UpdateModelValue(rgGlobalSettingsControls::DisassemblyViewColumns, columnVisibilityString.c_str(), false);
-            }
-            else
-            {
-                // Uncheck the check box since this is the only checked check box.
-                for (int row = 0; row < m_pDisassemblyColumnsListWidget->count(); row++)
-                {
-                    QListWidgetItem* pItem = m_pDisassemblyColumnsListWidget->item(row);
-                    QCheckBox* pCheckBox = (QCheckBox*)m_pDisassemblyColumnsListWidget->itemWidget(pItem);
-                    QString checkBoxText = pCheckBox->text();
-                    if (checkBoxText.compare(text) == 0)
-                    {
-                        QCheckBox* pCheckBox = (QCheckBox*)m_pDisassemblyColumnsListWidget->itemWidget(pItem);
-                        pCheckBox->setChecked(true);
-                    }
-                }
+                columnVisibility[columnIndex] = checked;
             }
 
-            // See if the "All" box needs checking/un-checking.
-            ListWidget::UpdateAllCheckbox(m_pDisassemblyColumnsListWidget);
-
-            // Update the "All" checkbox text color to grey or black.
-            UpdateAllCheckBoxText();
+            // Update the state of the dropdown check boxes to reflect that all options are checked.
+            ListWidget::SetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget, columnVisibility);
         }
     }
+    else
+    {
+        // The user tried to uncheck the last check box, but at least one box
+        // MUST be checked, so find that item in the ListWidget, and set it back to checked.
+        for (int row = 0; row < m_pDisassemblyColumnsListWidget->count(); row++)
+        {
+            QListWidgetItem* pItem = m_pDisassemblyColumnsListWidget->item(row);
+            QCheckBox* pCheckBox = (QCheckBox*)m_pDisassemblyColumnsListWidget->itemWidget(pItem);
+            QString checkBoxText = pCheckBox->text();
+            if (checkBoxText.compare(text) == 0)
+            {
+                QCheckBox* pCheckBox = (QCheckBox*)m_pDisassemblyColumnsListWidget->itemWidget(pItem);
+                pCheckBox->setChecked(true);
+            }
+        }
+    }
+
+    // See if the "All" box needs checking/un-checking.
+    ListWidget::UpdateAllCheckbox(m_pDisassemblyColumnsListWidget);
+
+    // Update the "All" checkbox text color to grey or black.
+    UpdateAllCheckBoxText();
+
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
 
 void rgGlobalSettingsView::HandleColumnVisibilityFilterStateChanged(bool checked)
@@ -333,19 +534,6 @@ std::string rgGlobalSettingsView::GetDisassemblyColumnName(rgIsaDisassemblyTable
 
 }
 
-void rgGlobalSettingsView::InitializeModel()
-{
-    assert(m_pSettingsModel != nullptr);
-    if (m_pSettingsModel != nullptr)
-    {
-        m_pSettingsModel->InitializeModel(ui.logFileLocationLineEdit, rgGlobalSettingsControls::LogFileLocation, "text");
-
-        m_pSettingsModel->InitializeModel(m_pDisassemblyColumnsListWidget, rgGlobalSettingsControls::DisassemblyViewColumns, "checkStates");
-
-        m_pSettingsModel->InitializeModel(ui.projectNameCheckBox, rgGlobalSettingsControls::AlwaysUseGeneratedProjectNames, "checked");
-    }
-}
-
 void rgGlobalSettingsView::PopulateColumnVisibilityList()
 {
     // Set up the function pointer responsible for handling column visibility filter state change.
@@ -369,10 +557,6 @@ void rgGlobalSettingsView::PopulateColumnVisibilityList()
         std::string columnName = GetDisassemblyColumnName(static_cast<rgIsaDisassemblyTableColumns>(columnIndex));
         ListWidget::AddListWidgetCheckboxItem(columnName.c_str(), m_pDisassemblyColumnsListWidget, slotFunctionPointer, this, STR_GLOBAL_SETTINGS_COLUMN_VISIBILITY_LIST, STR_GLOBAL_SETTINGS_COLUMN_LIST_ITEM_CHECKBOX);
     }
-
-    // Populate the check box items with the model's pending settings.
-    std::shared_ptr<rgGlobalSettings> pPendingGlobalChanges = m_pSettingsModel->GetPendingGlobalSettings();
-    ListWidget::SetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget, pPendingGlobalChanges->m_visibleDisassemblyViewColumns);
 }
 
 void rgGlobalSettingsView::UpdateAllCheckBoxText()
@@ -432,12 +616,8 @@ void rgGlobalSettingsView::CreateColumnVisibilityControls()
 
 void rgGlobalSettingsView::HandleProjectNameCheckboxStateChanged(int checked)
 {
-    assert(m_pSettingsModel != nullptr);
-    if (m_pSettingsModel != nullptr)
-    {
-        bool value = checked == Qt::Checked ? true : false;
-        m_pSettingsModel->UpdateModelValue(rgGlobalSettingsControls::AlwaysUseGeneratedProjectNames, value, false);
-    }
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
 
 void rgGlobalSettingsView::ClearListWidget(ListWidget* &pListWidget)
@@ -490,6 +670,9 @@ void rgGlobalSettingsView::HandleLogFileEditingFinished()
         }
         this->ui.logFileLocationLineEdit->setFocus();
     }
+
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
 
 void rgGlobalSettingsView::SetEditBoxToolTips()
@@ -505,105 +688,123 @@ void rgGlobalSettingsView::HandleLogFileEditBoxChanged(const QString& text)
     // Restore the cursor to the original position when the text has changed.
     QtCommon::QtUtil::RestoreCursorPosition cursorPosition(ui.logFileLocationLineEdit);
 
-    assert(m_pSettingsModel != nullptr);
-    if (m_pSettingsModel != nullptr)
-    {
-        // Update the model value.
-        m_pSettingsModel->UpdateModelValue(rgGlobalSettingsControls::LogFileLocation, text, false);
-    }
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
 
-void rgGlobalSettingsView::HandleDefaultProjectNameCheckboxUpdate()
+void rgGlobalSettingsView::HandleTextBoxChanged(const QString& text)
 {
-    // Set the value for the project name check box.
-    std::shared_ptr<rgGlobalSettings> pGlobalConfig = rgConfigManager::Instance().GetGlobalConfig();
-    if (pGlobalConfig != nullptr)
-    {
-        ui.projectNameCheckBox->setChecked(pGlobalConfig->m_useDefaultProjectName);
-    }
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
+}
+
+void rgGlobalSettingsView::HandleComboBoxChanged(int index)
+{
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
 
 bool rgGlobalSettingsView::GetHasPendingChanges() const
 {
-    bool ret = false;
-    assert(m_pSettingsModel != nullptr);
-    if (m_pSettingsModel != nullptr)
-    {
-        ret = m_pSettingsModel->HasPendingChanges();
-    }
+    rgGlobalSettings currentSettings = PullFromWidgets();
 
-    return ret;
+    bool hasChanges = !m_initialSettings.HasSameSettings(currentSettings);
+
+    return hasChanges;
 }
 
 bool rgGlobalSettingsView::RevertPendingChanges()
 {
-    assert(m_pSettingsModel != nullptr);
-    if (m_pSettingsModel != nullptr)
+    std::shared_ptr<rgGlobalSettings> pSettings = rgConfigManager::Instance().GetGlobalConfig();
+    assert(pSettings != nullptr);
+    if (pSettings != nullptr)
     {
-        m_pSettingsModel->RevertPendingChanges();
-
-        // Populate the check box items with the model's pending settings.
-        std::shared_ptr<rgGlobalSettings> pGlobalChanges = m_pSettingsModel->GetGlobalSettings();
-        assert(pGlobalChanges != nullptr);
-        if (pGlobalChanges != nullptr)
-        {
-            ListWidget::SetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget, pGlobalChanges->m_visibleDisassemblyViewColumns);
-            auto pSettings = m_pSettingsModel->GetPendingGlobalSettings();
-            assert(pSettings != nullptr);
-            if (pSettings != nullptr)
-            {
-                *pSettings = *pGlobalChanges;
-            }
-        }
+        PushToWidgets(*pSettings);
     }
+
+    // Make sure the rest of the UI knows that the settings don't need to be saved.
+    HandlePendingChangesStateChanged(false);
 
     return false;
 }
 
 void rgGlobalSettingsView::RestoreDefaultSettings()
 {
-    rgConfigManager& configManager = rgConfigManager::Instance();
+    // Reset our initial settings back to the defaults
+    rgConfigManager::Instance().ResetToFactoryDefaults(m_initialSettings);
 
-    assert(m_pSettingsModel != nullptr);
-    if (m_pSettingsModel != nullptr)
-    {
-        std::shared_ptr<rgGlobalSettings> pPendingGlobalConfig = m_pSettingsModel->GetPendingGlobalSettings();
-        std::shared_ptr<rgGlobalSettings> pGlobalConfig = m_pSettingsModel->GetGlobalSettings();
-        assert(pPendingGlobalConfig != nullptr && pGlobalConfig != nullptr);
-        if (pPendingGlobalConfig != nullptr && pGlobalConfig != nullptr)
-        {
-            // Reset the pending and actual global settings to default values.
-            configManager.InitializeDefaultGlobalConfig(pPendingGlobalConfig);
-            configManager.InitializeDefaultGlobalConfig(pGlobalConfig);
+    // Update the UI to reflect the new initial settings
+    PushToWidgets(m_initialSettings);
 
-            // Save the config file.
-            configManager.SetGlobalConfig(pGlobalConfig);
-            configManager.SaveGlobalConfigFile();
+    // Update the ConfigManager to use the new settings.
+    rgConfigManager::Instance().SetGlobalConfig(m_initialSettings);
 
-            // Set the default settings in the model.
-            m_pSettingsModel->SetBuildSettings(pGlobalConfig);
+    // Save the settings file.
+    rgConfigManager::Instance().SaveGlobalConfigFile();
 
-            // Revert any pending changes in the settings model.
-            m_pSettingsModel->RevertPendingChanges();
-
-            // Populate the check box items by reading the global settings.
-            ListWidget::SetColumnVisibilityCheckboxes(m_pDisassemblyColumnsListWidget, pGlobalConfig->m_visibleDisassemblyViewColumns);
-        }
-    }
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
 
-void rgGlobalSettingsView::SaveSettings()
+bool rgGlobalSettingsView::SaveSettings()
 {
-    assert(m_pSettingsModel != nullptr);
-    if (m_pSettingsModel != nullptr)
+    // Reset the initial settings to match what the UI shows.
+    m_initialSettings = PullFromWidgets();
+
+    // Update the config manager to use these new settings.
+    rgConfigManager& configManager = rgConfigManager::Instance();
+    configManager.SetGlobalConfig(m_initialSettings);
+
+    // Save the settings.
+    bool isSaved = configManager.SaveGlobalConfigFile();
+
+    if (isSaved)
     {
-        m_pSettingsModel->SubmitPendingChanges();
-
-        rgConfigManager& configManager = rgConfigManager::Instance();
-
-        std::shared_ptr<rgGlobalSettings> pGlobalSettings = m_pSettingsModel->GetGlobalSettings();
-        configManager.SetGlobalConfig(pGlobalSettings);
-
-        configManager.SaveGlobalConfigFile();
+        // Make sure the rest of the UI knows that the settings have been saved.
+        HandlePendingChangesStateChanged(false);
     }
+
+    return isSaved;
+}
+
+std::string rgGlobalSettingsView::GetTitleString()
+{
+    std::string titleString = STR_SETTINGS_CONFIRMATION_APPLICATION_SETTINGS;
+
+    return titleString;
+}
+
+void rgGlobalSettingsView::HandleFontFamilyChanged(const QFont& font)
+{
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
+}
+
+void rgGlobalSettingsView::HandleIncludeFilesViewerEditingFinished()
+{
+    // Verify that the line edit text is not empty or the location is not invalid before losing the focus.
+    if (this->ui.includeFilesViewerLineEdit->text().isEmpty())
+    {
+        this->ui.includeFilesViewerLineEdit->setText(STR_GLOBAL_SETTINGS_SRC_VIEW_INCLUDE_VIEWER_DEFAULT);
+    }
+    else if (this->ui.includeFilesViewerLineEdit->text().compare(STR_GLOBAL_SETTINGS_SRC_VIEW_INCLUDE_VIEWER_DEFAULT) != 0 &&
+        !rgUtils::IsFileExists(this->ui.includeFilesViewerLineEdit->text().toStdString()))
+    {
+        // If empty or invalid, use the saved location.
+        std::shared_ptr<rgGlobalSettings> pGlobalConfig = rgConfigManager::Instance().GetGlobalConfig();
+        assert(pGlobalConfig != nullptr);
+        if (pGlobalConfig != nullptr)
+        {
+            this->ui.includeFilesViewerLineEdit->setText(pGlobalConfig->m_includeFilesViewer.c_str());
+        }
+        this->ui.includeFilesViewerLineEdit->setFocus();
+    }
+
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
+}
+
+void rgGlobalSettingsView::SetInitialWidgetFocus()
+{
+    ui.logFileLocationLineEdit->setFocus();
 }

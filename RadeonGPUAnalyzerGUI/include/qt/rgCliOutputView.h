@@ -12,6 +12,14 @@ namespace Ui
     class rgCliOutputView;
 }
 
+// Indices for sub widgets.
+enum class CliOutputWindowSubWidgets
+{
+    OutputWindow,
+    ClearWindowButton,
+    Count
+};
+
 // A widget embedded in the rgBuildView, used to display CLI invocation output.
 class rgCliOutputView : public QWidget
 {
@@ -28,9 +36,27 @@ public:
     // Used to intercept events going to TextEdit sub-widget.
     virtual bool eventFilter(QObject* obj, QEvent* event) override;
 
+    // Reimplement focus in event.
+    virtual void focusInEvent(QFocusEvent* pEvent) override;
+
+    // Reimplement mouse press event.
+    virtual void mousePressEvent(QMouseEvent *pEvent) override;
+
+    // Returns the text of the CLI build output window.
+    std::string GetText() const;
+
 signals:
     // A thread-safe signal used to send new text to the output window.
     void EmitSetText(const QString& str);
+
+    // Focus the next view.
+    void FocusNextView();
+
+    // Focus output window.
+    void FocusOutputWindow();
+
+    // Focus column push button in disassembly view.
+    void FocusColumnPushButton();
 
     // A signal used by rgCliOutputView to make File Menu and Main Menu to switch to required file/line.
     void SwitchToFile(const std::string& filePath, int lineNum) const;
@@ -49,9 +75,18 @@ private slots:
     // Handler invoked when the user clicks the "Clear" button.
     void HandleClearClicked();
 
+    // Handler invoked when the user hits the tab button.
+    void HandleTabFocusPressed();
+
+    // Handler invoked when the user hits the shift+tab buttons.
+    void HandleShiftTabFocusPressed();
+
 private:
     // Connect widget signals to slots.
     void ConnectSignals();
+
+    // Create shortcut actions.
+    void CreateActions();
 
     // Scroll the output window to the latest text at the bottom.
     void ScrollToBottom();
@@ -64,5 +99,14 @@ private:
      void SwitchToErrorLocation(int blockNum) const;
 
 private:
+    // The tab key action.
+    QAction* m_pTabKeyAction = nullptr;
+
+    // The shift+tab key action.
+    QAction* m_pShiftTabKeyAction = nullptr;
+
+    // Keep track of the current sub widget.
+    CliOutputWindowSubWidgets m_currentSubWidget = CliOutputWindowSubWidgets::OutputWindow;
+
     Ui::rgCliOutputView ui;
 };

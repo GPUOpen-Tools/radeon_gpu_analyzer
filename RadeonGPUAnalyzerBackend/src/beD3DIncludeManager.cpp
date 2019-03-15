@@ -7,8 +7,15 @@
 #include <fstream>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTBaseTools/Include/gtAssert.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 
 D3DIncludeManager::D3DIncludeManager(const std::string& shaderDir, const std::vector<std::string>& includeSearchDirs) : m_shaderDir(shaderDir), m_includeSearchDirs(includeSearchDirs)

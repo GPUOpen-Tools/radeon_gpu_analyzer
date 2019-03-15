@@ -1,13 +1,4 @@
 /********************************************************************/
-/* Frame focus border
-/********************************************************************/
-QFrame:focus,
-QLineEdit:focus
-{
-    border: 1px solid rgb(224, 30, 55);
-}
-
-/********************************************************************/
 /* Splitters
 /********************************************************************/
 QSplitter::handle
@@ -18,7 +9,7 @@ QSplitter::handle
 /********************************************************************/
 /* Titlebar background color
 /********************************************************************/
-rgFileMenuTitlebar #itemBackground,
+rgMenuTitlebar #itemBackground,
 rgViewContainer rgStandardTitlebar,
 rgViewContainer rgSourceEditorTitlebar,
 rgViewContainer #viewTitlebar
@@ -26,26 +17,10 @@ rgViewContainer #viewTitlebar
     background: rgb(51, 51, 51);
 }
 
-rgViewContainer[viewHovered="true"][viewFocused="false"] rgFileMenuTitlebar #itemBackground,
-rgViewContainer[viewHovered="true"][viewFocused="false"] rgStandardTitlebar,
-rgViewContainer[viewHovered="true"][viewFocused="false"] rgSourceEditorTitlebar,
-rgViewContainer[viewHovered="true"][viewFocused="false"] rgIsaDisassemblyView #viewTitlebar
-{
-    border-bottom: 3px solid rgb(135,20,16);
-}
-
-rgViewContainer[viewFocused="true"] rgFileMenuTitlebar #itemBackground,
-rgViewContainer[viewFocused="true"] rgStandardTitlebar,
-rgViewContainer[viewFocused="true"] rgSourceEditorTitlebar,
-rgViewContainer[viewFocused="true"] #viewTitlebar
-{
-    border-bottom: 3px solid rgb(224, 30, 55);
-}
-
 /********************************************************************/
-/* File menu titlebar (rgFileMenuTitlebar)
+/* Menu titlebar (rgMenuTitlebar)
 /********************************************************************/
-rgFileMenuTitlebar QLabel
+rgMenuTitlebar QLabel
 {
     font-size: 8pt;
     color: white;
@@ -76,6 +51,21 @@ rgIsaDisassemblyView #viewTitlebar #line
 }
 
 /********************************************************************/
+/* Disassembly custom table view treeview's column header
+/********************************************************************/
+rgIsaDisassemblyCustomTableView QHeaderView::section:hover
+{
+    background-color: white;
+    border: none;
+    padding-left: 6px white;
+}
+
+rgIsaDisassemblyCustomTableView QHeaderView
+{
+    font: normal 8pt;
+}
+
+/********************************************************************/
 /* CLI output view titlebar
 /********************************************************************/
 rgCliOutputView #viewTitlebar QLabel
@@ -94,6 +84,12 @@ rgCliOutputView QTextEdit
 rgCliOutputView #clearOutputPushButton
 {
     background: rgba(0, 0, 0, 0);
+}
+
+rgCliOutputView #clearOutputPushButton:focus
+{
+    background: rgba(255, 255, 255, 50);
+    border: 0px;
 }
 
 rgCliOutputView #clearOutputPushButton:hover
@@ -143,57 +139,202 @@ rgViewContainer[isMaximized="true"] #viewMaximizeButton:hover
 /********************************************************************/
 rgIncludeDirectoriesView #includeDirsList
 {
-	background: transparent;
-	border: 1px solid black;
+    background: transparent;
+    border: 1px solid black;
 }
 
 /********************************************************************/
 /* Global settings view.
 /********************************************************************/
-rgGlobalSettingsView #applicationSettingsLabel
+rgGlobalSettingsView #generalLabel
 {
-	background: rgb(240, 240, 240);
+    background: rgb(240, 240, 240);
+}
+
+rgGlobalSettingsView #disassemblyViewLabel
+{
+    background: rgb(240, 240, 240);
+}
+
+rgGlobalSettingsView #sourceCodeEditorLabel
+{
+    background: rgb(240, 240, 240);
+}
+
+rgGlobalSettingsView #inputFilesLabel
+{
+    background: rgb(240, 240, 240);
 }
 
 /********************************************************************/
 /* OpenCL build settings view.
 /********************************************************************/
-rgOpenCLBuildSettingsView #allOptionsTextEdit
+rgBuildSettingsViewOpenCL #allOptionsTextEdit
 {
     background: rgb(240, 240, 240);
 }
 
-rgOpenCLBuildSettingsView #additionalOptionsHeaderLabel
+rgBuildSettingsViewOpenCL #additionalOptionsHeaderLabel
 {
-	background: rgb(240, 240, 240);
+    background: rgb(240, 240, 240);
 }
 
-rgOpenCLBuildSettingsView #settingsCommandLineHeaderLabel
+rgBuildSettingsViewOpenCL #settingsCommandLineHeaderLabel
 {
-	background: rgb(240, 240, 240);
+    background: rgb(240, 240, 240);
 }
 
-rgOpenCLBuildSettingsView #generalHeaderLabel
+rgBuildSettingsViewOpenCL #generalHeaderLabel
 {
-	background: rgb(240, 240, 240);
+    background: rgb(240, 240, 240);
 }
 
-rgOpenCLBuildSettingsView #openCLOptionsHeaderLabel
+rgBuildSettingsViewOpenCL #openCLOptionsHeaderLabel
 {
-	background: rgb(240, 240, 240);
+    background: rgb(240, 240, 240);
 }
 
-rgOpenCLBuildSettingsView #alternativeCompilerLabel
+rgBuildSettingsViewOpenCL #alternativeCompilerLabel
 {
-	background: rgb(240, 240, 240);
+    background: rgb(240, 240, 240);
 }
 
-rgOpenCLBuildSettingsView #scrollAreaWidgetContents
+/********************************************************************/
+/* Vulkan build settings view.
+/********************************************************************/
+rgBuildSettingsViewVulkan #allOptionsTextEdit
 {
-    background: white;
+    background: rgb(240, 240, 240);
 }
 
-rgOpenCLBuildSettingsView #scrollArea
+rgBuildSettingsViewVulkan #settingsCommandLineHeaderLabel
 {
+    background: rgb(240, 240, 240);
+}
+
+rgBuildSettingsViewVulkan #generalHeaderLabel
+{
+    background: rgb(240, 240, 240);
+}
+
+rgBuildSettingsViewVulkan #vulkanOptionsHeaderLabel
+{
+    background: rgb(240, 240, 240);
+}
+
+rgBuildSettingsViewVulkan #vulkanSettingsHeaderLabel
+{
+    background: rgb(240, 240, 240);
+}
+
+rgBuildSettingsViewVulkan #alternativeCompilerHeaderLabel
+{
+    background: rgb(240, 240, 240);
+}
+
+/********************************************************************/
+/* Set the pipeline tree view's background color to yellow.
+/********************************************************************/
+rgPipelineStateView #settingsTree::item:selected
+{
+    background-color: rgb(253,255,174);
+    selection-color: black;
+}
+
+/********************************************************************/
+/* Set application-wide scroll bar format.
+/********************************************************************/
+QScrollBar::handle:vertical
+{
+    background: lightGrey;
+}
+
+QScrollBar::handle:horizontal
+{
+    background: lightGrey;
+}
+
+QScrollBar:vertical
+{
+    background: rgb(240,240,240);
+    width: 20px;
+    margin-top: 22px;
+    margin-right: 0;
+    margin-bottom: 22px;
+    margin-left: 0;
+}
+
+QScrollBar:horizontal
+{
+    background: rgb(240,240,240);
+    height: 20px;
+    margin-top: 0;
+    margin-right: 25px;
+    margin-bottom: 0;
+    margin-left: 25px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
+{
+    height: 20px;
+    width: 20px;
+    margin: 0;
+    background: rgb(240,240,240);
+    subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:horizontal
+{
+    width: 25px;
+    subcontrol-origin: margin;
+    background: rgb(240,240,240);
+}
+
+QScrollBar::sub-line:horizontal
+{
+    width: 25px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+    background: rgb(240,240,240);
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
+{
+    background: none;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal
+{
+    background: none;
+}
+
+QScrollBar::up-arrow:vertical
+{
+    width: 20px;
+    background: rgb(240,240,240);
+    image: url(:/icons/arrowUp.svg);
+}
+
+QScrollBar::down-arrow:vertical
+{
+    width: 20px;
     border: none;
+    background: rgb(240,240,240);
+    image: url(:/icons/arrowDown.svg);
+}
+
+QScrollBar::left-arrow:horizontal
+{
+    height: 20px;
+    border: none;
+    background: rgb(240,240,240);
+    image: url(:/icons/arrowLeft.svg);
+}
+
+QScrollBar::right-arrow:horizontal
+{
+    height: 20px;
+    border: none;
+    background: rgb(240,240,240);
+    image: url(:/icons/arrowRight.svg);
 }

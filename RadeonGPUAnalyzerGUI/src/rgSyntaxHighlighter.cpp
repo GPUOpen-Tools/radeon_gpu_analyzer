@@ -3,7 +3,7 @@
 #include <cassert>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgSyntaxHighlighter.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgSyntaxHighlighter.h>
 
 // Static types and constants
 
@@ -18,12 +18,16 @@ enum class BlockState {
 
 
 // Definitions of language descriptors.
-static const std::map<rgSyntaxHighlight::Language, rgSyntaxHighlight::LangDesc> LANG_DESC_MAP = {
+static const std::map<rgSrcLanguage, rgSyntaxHighlight::LangDesc> LANG_DESC_MAP = {
+    // ----------------
+    //     OpenCL
+    // ----------------
     {
-    /* language */ rgSyntaxHighlight::Language::OpenCL, {
+    /* language */ rgSrcLanguage::OpenCL, {
     /* keywords */ { "if", "else", "for", "while", "do", "repeat", "switch", "case", "default", "break", "continue", "return",  "kernel", "__kernel" , "__attribute__",
                      "static_cast", "reinterpret_cast", "struct", "class", "typedef", "enum", "namespace", "using", "template", "explicit", "constexpr",
                      "inline", "__inline", "private", "public", "protected" },
+    /* prefixes */ {},
     /* types */    { "void", "signed", "unsigned", "size_t", "ptrdiff_t", "intptr_t", "uintptr_t", "auto", "const", "__const", "static",
                      "global", "__global", "local", "__local", "private", "__private", "constant", "__constant",
                      "read_only", "__read_only", "write_only", "__write_only", "read_write", "__read_write",
@@ -42,43 +46,113 @@ static const std::map<rgSyntaxHighlight::Language, rgSyntaxHighlight::LangDesc> 
     /* preproc */  { "#include", "#define", "#undef", "#if", "#ifdef", "#ifndef", "#else", "#endif", "#error", "#pragma" },
     /* comments */ { "//", "/*", "*/" }
     } },
+
+    // ----------------
+    //     GLSL
+    // ----------------
     {
-    /* language */ rgSyntaxHighlight::Language::GLSL, {
-    /* keywords */ {/* TODO: Add GLSL keywords. */},
-    /* types */    {/* TODO: Add GLSL types. */},
-    /* preproc */  {/* TODO: Add preprocessor directives. */},
-    /* comments */ {/* TODO: Add comment start/end tokens. */}
+    /* language */ rgSrcLanguage::GLSL, {
+    /* keywords */ { "const", "uniform", "buffer", "shared", "attribute", "varying", "coherent", "volatile", "restrict", "readonly", "writeonly",
+                     "atomic_uint", "layout", "centroid", "flat", "smooth", "noperspective", "patch", "sample", "invariant", "precise", "break",
+                     "continue", "do", "for", "while", "switch", "case", "default", "if", "else", "subroutine", "in", "out", "inout",
+                     "discard", "return", "struct", "common", "partition", "active", "asm", "class", "union", "enum", "typedef", "template",
+                     "this", "resource", "goto", "inline", "noinline", "public", "static", "extern", "external", "interface", "input", "output",
+                     "filter", "sizeof", "cast", "namespace", "using", "require", "enable"},
+    /* prefixes */ {},
+    /* types */    { "void", "bool", "int", "uint", "float", "double", "vec2", "vec3", "vec4", "dvec2", "dvec3", "dvec4", "bvec2", "bvec3", "bvec4",
+                     "ivec2", "ivec3", "ivec4", "uvec2", "uvec3", "uvec4", "mat2", "mat3", "mat4", "mat2x2", "mat2x3", "mat2x4", "mat3x2", "mat3x3", "mat3x4",
+                     "mat4x2", "mat4x3", "mat4x4", "dmat2", "dmat3", "dmat4", "dmat2x2", "dmat2x3", "dmat2x4", "dmat3x2", "dmat3x3", "dmat3x4",
+                     "dmat4x2", "dmat4x3", "dmat4x4", "sampler1D", "image1D", "sampler1DShadow", "sampler1DArray", "image1DArray", "sampler1DArrayShadow",
+                     "sampler2D", "image2D", "sampler2DShadow", "sampler2DArray", "image2DArray", "sampler2DArrayShadow", "sampler2DMS", "image2DMS",
+                     "sampler2DMSArray", "image2DMSArray", "sampler2DRect", "image2DRect", "sampler2DRectShadow", "sampler3D", "image3D", "samplerCube",
+                     "imageCube", "samplerCubeShadow", "samplerCubeArray", "imageCubeArray", "samplerCubeArrayShadow", "samplerBuffer", "imageBuffer",
+                     "isampler1D", "iimage1D", "isampler1DArray", "iimage1DArray", "isampler2D", "iimage2D", "isampler2DArray", "iimage2DArray",
+                     "isampler2DMS", "iimage2DMS", "isampler2DMSArray", "iimage2DMSArray", "isampler2DRect", "iimage2DRect", "isampler3D", "iimage3D",
+                     "isamplerCube", "iimageCube", "isamplerCubeArray", "iimageCubeArray", "isamplerBuffer", "iimageBuffer", "usampler1D", "uimage1D",
+                     "usampler1DArray", "uimage1DArray", "usampler2D", "uimage2D", "usampler2DArray", "uimage2DArray", "usampler2DMS", "uimage2DMS",
+                     "usampler2DMSArray", "uimage2DMSArray", "usampler2DRect", "uimage2DRect", "usampler3D", "uimage3D", "usamplerCube", "uimageCube",
+                     "usamplerCubeArray", "uimageCubeArray", "usamplerBuffer", "uimageBuffer", "atomic_uint" },
+    /* preproc */  { "#include, #define", "#undef", "#if", "#ifdef", "#ifndef", "#else", "#elif", "#endif", "#error", "#pragma", "#extension", "#version", "#line" },
+    /* comments */ { "//", "/*", "*/" }
     } },
-    // TODO: Add HLSL and Vulkan.
+
+    // ----------------
+    //     HLSL
+    // ----------------
+    {
+    /* language */ rgSrcLanguage::HLSL, {
+    /* keywords */ { "extern", "nointerpolation", "precise", "shared", "groupshared", "static", "uniform", "volatile", "const", "row_major", "column_major",
+                     "asm", "asm_fragment", "BlendState", "break", "case", "cbuffer", "centroid", "class", "compile", "compile_fragment", "CompileShader",
+                     "continue", "ComputeShader", "default", "DepthStencilState", "DepthStencilView", "discard", "do", "else", "export", "extern", "false",
+                     "for", "fxgroup", "GeometryShader", "groupshared", "Hullshader", "if", "in", "inline", "inout", "InputPatch", "interface", "line",
+                     "lineadj", "linear", "LineStream", "namespace", "nointerpolation", "noperspective", "NULL", "out", "OutputPatch", "packoffset", "pass",
+                     "pixelfragment", "PixelShader", "point", "PointStream", "precise", "RasterizerState", "RenderTargetView", "return", "register",
+                     "row-major", "sample", "shared", "snorm", "stateblock", "stateblock_state", "static", "struct", "switch", "technique", "technique10",
+                     "technique11", "true", "typedef", "triangle", "triangleadj", "uniform", "unorm", "unroll", "vertexfragment", "VertexShader", "volatile",
+                     "while", "branch", "flatten", },
+    /* prefixes */ {},
+    /* types */    { "Buffer", "bool", "int", "uint", "dword", "half", "float", "double", "vector", "bool1", "bool2", "bool3", "bool4", "int1", "int2",
+                     "int3", "int4", "uint1", "uint2", "uint3", "uint4", "dword1", "dword2", "dword3", "dword4", "half1", "half2", "half3", "half4",
+                     "float1", "float2", "float3", "float4", "double1", "double2", "double3", "double4", "matrix", "bool1x1", "bool1x2", "bool1x3", "bool1x4",
+                     "bool2x1", "bool2x2", "bool2x3", "bool2x4", "bool3x1", "bool3x2", "bool3x3", "bool3x4", "bool4x1", "bool4x2", "bool4x3", "bool4x4",
+                     "int1x1", "int1x2", "int1x3", "int2x4", "int2x1", "int2x2", "int2x3", "int2x4", "int3x1", "int3x2", "int3x3", "int3x4",
+                     "int4x1", "int4x2", "int4x3", "int4x4", "uint1x1", "uint1x2", "uint1x3", "uint2x4", "uint2x1", "uint2x2", "uint2x3", "uint2x4",
+                     "uint3x1", "uint3x2", "uint3x3", "uint3x4", "uint4x1", "uint4x2", "uint4x3", "uint4x4", "dword1x1", "dword1x2", "dword1x3", "dword1x4",
+                     "dword2x1", "dword2x2", "dword2x3", "dword2x4", "dword3x1", "dword3x2", "dword3x3", "dword3x4", "dword4x1", "dword4x2", "dword4x3",
+                     "dword4x4", "half1x1", "half1x2", "half1x3", "half1x4", "half2x1", "half2x2", "half2x3", "half2x4", "half3x1", "half3x2", "half3x3",
+                     "half3x4", "half4x1", "half4x2", "half4x3", "half4x4", "float1x1", "float1x2", "float1x3", "float1x4", "float2x1", "float2x2",
+                     "float2x3", "float2x4", "float3x1", "float3x2", "float3x3", "float3x4", "float4x1", "float4x2", "float4x3", "float4x4",
+                     "double1x1", "double1x2", "double1x3", "double1x4", "double2x1", "double2x2", "double2x3", "double2x4", "double3x1", "double3x2",
+                     "double3x3", "double3x4", "double4x1", "double4x2", "double4x3", "double4x4", "sampler", "texture", "Texture1D", "Texture1DArray",
+                     "Texture2D", "Texture2DArray", "Texture3D", "TextureCube", "struct" },
+    /* preproc */  { "#define", "#undef", "#if", "#ifdef", "#ifndef", "#else", "#elif", "#endif", "#error", "#pragma", "#line", "#include" },
+    /* comments */ { "//", "/*", "*/" }
+    } },
+
+    // ----------------
+    //     SPIRV
+    // ----------------
+    {
+    /* language */ rgSrcLanguage::SPIRV_Text, {
+    /* keywords */ {},
+    /* prefixes */ { "Op" },
+    /* types */    {},
+    /* preproc */  {},
+    /* comments */ {";"}
+    } },
 };
 
-rgSyntaxHighlight::rgSyntaxHighlight(QTextDocument* pDoc, rgSyntaxHighlight::Language lang, const rgSyntaxHighlight::Style& style)
+rgSyntaxHighlight::rgSyntaxHighlight(QTextDocument* pDoc, rgSrcLanguage lang, const rgSyntaxHighlight::Style& style)
     : QSyntaxHighlighter(pDoc), m_style(style)
 {
     InitTokens(lang);
 }
 
-void rgSyntaxHighlight::InitTokens(rgSyntaxHighlight::Language lang)
+void rgSyntaxHighlight::InitTokens(rgSrcLanguage lang)
 {
-    assert(LANG_DESC_MAP.count(lang) == 1);
-    m_langDesc = LANG_DESC_MAP.at(lang);
-
-    // Initialize "keyword" tokens
-    for (const QString& keyword : m_langDesc.keywords)
+    bool foundLangDesc = (LANG_DESC_MAP.count(lang) == 1);
+    assert(foundLangDesc);
+    if (foundLangDesc)
     {
-        m_tokenTable[keyword[0]].push_back({keyword, m_style.keywords});
-    }
+        m_langDesc = LANG_DESC_MAP.at(lang);
 
-    // Initialize "type" tokens
-    for (const QString& type : m_langDesc.types)
-    {
-        m_tokenTable[type[0]].push_back({type, m_style.types});
-    }
+        // Initialize "keyword" tokens
+        for (const QString& keyword : m_langDesc.keywords)
+        {
+            m_tokenTable[keyword[0]].push_back({ keyword, m_style.keywords });
+        }
 
-    // Initialize "preprocessor directive" tokens
-    for (const QString& prepDir : m_langDesc.preproc)
-    {
-        m_tokenTable[prepDir[0]].push_back({prepDir, m_style.preproc});
+        // Initialize "type" tokens
+        for (const QString& type : m_langDesc.types)
+        {
+            m_tokenTable[type[0]].push_back({ type, m_style.types });
+        }
+
+        // Initialize "preprocessor directive" tokens
+        for (const QString& prepDir : m_langDesc.preproc)
+        {
+            m_tokenTable[prepDir[0]].push_back({ prepDir, m_style.preproc });
+        }
     }
 }
 
@@ -190,15 +264,31 @@ bool  rgSyntaxHighlight::ProcessToken(const QString& text, int begin, int end)
     bool  ret = false;
     QChar symbol = text[begin];
     int tokenSize = end - begin + 1;
-    // Look through all tokens from the TokenTable with matching 1st symbol
-    // and highlight the token if found the matching one.
-    for (Token& token : m_tokenTable[symbol])
+    const QStringRef token = QStringRef(&text, begin, tokenSize);
+
+    // Check if the token starts with one of predefined keyword prefixes.
+    for (const QString& prefix : m_langDesc.keywordPrefixes)
     {
-        if (token.token.size() == tokenSize && token.token.compare(QStringRef(&text, begin, tokenSize)) == 0)
+        if (token.startsWith(prefix))
         {
-            setFormat(begin, tokenSize, token.format);
+            setFormat(begin, tokenSize, m_style.keywords);
             ret = true;
             break;
+        }
+    }
+
+    if (!ret)
+    {
+        // Look through all tokens from the TokenTable with matching 1st symbol
+        // and highlight the token if found the matching one.
+        for (Token& langToken : m_tokenTable[symbol])
+        {
+            if (langToken.token.size() == tokenSize && langToken.token.compare(token) == 0)
+            {
+                setFormat(begin, tokenSize, langToken.format);
+                ret = true;
+                break;
+            }
         }
     }
 
@@ -212,7 +302,7 @@ void  rgSyntaxHighlight::highlightBlock(const QString& text)
     bool inToken = false;
 
     // Comment starting strings: single-line & multi-line
-    QString& SLCommentStart = m_langDesc.comments.singleLine;
+    QString& SLCommentStart = m_langDesc.comments.singleLineStart;
     QString& MLCommentStart = m_langDesc.comments.multiLineStart;
 
     // First, check if previous block has unfinished state that has to be continued in this block.

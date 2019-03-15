@@ -6,25 +6,23 @@
     #include <sstream>
 #endif
 
-#include <RadeonGPUAnalyzerCLI/src/kcConfig.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcConfig.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCliStringConstants.h>
 
 using namespace std;
 
-std::string Config::sourceKindHLSL       = "HLSL";
-std::string Config::sourceKindAMDIL      = "AMDIL";
-std::string Config::sourceKindDXAsm      = "DXAsm";
-std::string Config::sourceKindDXAsmT     = "DXAsmTxt";
-std::string Config::sourceKindOpenCL     = "CL";
-std::string Config::sourceKindGLSL       = "GLSL";
-std::string Config::sourceKindOpenGL     = "OPENGL";
-std::string Config::sourceKindGLSLVulkan = "VULKAN";
-std::string Config::sourceKindSpirvBin   = "VULKAN-SPV";
-std::string Config::sourceKindSpirvTxt   = "VULKAN-SPV-TXT";
-std::string Config::sourceKindRocmOpenCL = "ROCM-CL";
+std::string Config::sourceKindHLSL                = "HLSL";
+std::string Config::sourceKindAMDIL               = "AMDIL";
+std::string Config::sourceKindOpenCL              = "CL";
+std::string Config::sourceKindOpenGL              = "OPENGL";
+std::string Config::sourceKindGLSLVulkanOffline   = "VK-OFFLINE";
+std::string Config::sourceKindSpirvBinOffline     = "VK-SPV-OFFLINE";
+std::string Config::sourceKindSpirvTxtOffline     = "VK-SPV-TXT-OFFLINE";
+std::string Config::sourceKindVulkan              = "VULKAN";
+std::string Config::sourceKindRocmOpenCL          = "ROCM-CL";
 
 Config::Config() :
-    m_SourceLanguage(SourceLanguage_None),
+    m_mode(Mode_None),
     m_RequestedCommand(ccNone),
     m_AnalysisFile(),
     m_ILFile(),
@@ -42,6 +40,17 @@ Config::Config() :
     m_isRetainUserBinaryPath(false),
     m_isParsedISARequired(false),
     m_isLineNumbersRequired(false),
+    m_isWarningsRequired(false),
+    m_isHlslInput(false),
+    m_isGlslInput(false),
+    m_isSpvInput(false),
+    m_isSpvTxtInput(false),
+    m_vertShaderFileType(rgVulkanInputType::Unknown),
+    m_tescShaderFileType(rgVulkanInputType::Unknown),
+    m_teseShaderFileType(rgVulkanInputType::Unknown),
+    m_fragShaderFileType(rgVulkanInputType::Unknown),
+    m_geomShaderFileType(rgVulkanInputType::Unknown),
+    m_compShaderFileType(rgVulkanInputType::Unknown),
     m_SourceKind(),
     m_Profile(),
     m_DXFlags(0),

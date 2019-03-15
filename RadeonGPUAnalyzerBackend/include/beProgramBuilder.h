@@ -6,15 +6,18 @@
 #define _BEPROGRAMBUILDER_H_
 
 // Disable warning:
-#pragma warning( disable : 4996 )
-#pragma warning( disable : 4251 )
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning( disable : 4996 )
+    #pragma warning( disable : 4251 )
+#endif
 
-#include "RadeonGPUAnalyzerBackend/include/beInclude.h"
+#include "RadeonGPUAnalyzerBackend/Include/beInclude.h"
 #include <DeviceInfo.h>
 class backend;
 
 
-class RGA_BACKEND_DECLDIR beProgramBuilder
+class beProgramBuilder
 {
 public:
     virtual ~beProgramBuilder() {};
@@ -93,5 +96,9 @@ protected:
 
     std::string m_DriverVersion;
 };
+
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 #endif

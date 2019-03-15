@@ -1,18 +1,18 @@
 #include "rgAddCreateMenuItem.h"
 
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypesOpenCL.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
-rgAddCreateMenuItem::rgAddCreateMenuItem(rgFileMenu* pParent) :
-    rgFileMenuItem(pParent)
+rgAddCreateMenuItem::rgAddCreateMenuItem(rgMenu* pParent) :
+    rgMenuItem(pParent)
 {
     ui.setupUi(this);
     ui.addButton->setContentsMargins(0, 0, 0, 0);
     ui.createButton->setContentsMargins(0, 0, 0, 0);
 
     // Set button tooltips and status tips.
-    rgUtils::SetToolAndStatusTip(STR_MENU_BAR_OPEN_EXISTING_FILE_TOOLTIP, ui.addButton);
-    rgUtils::SetToolAndStatusTip(STR_MENU_BAR_CREATE_NEW_FILE_TOOLTIP, ui.createButton);
+    rgUtils::SetToolAndStatusTip(STR_MENU_BAR_OPEN_EXISTING_FILE_TOOLTIP_OPENCL, ui.addButton);
+    rgUtils::SetToolAndStatusTip(STR_MENU_BAR_CREATE_NEW_FILE_TOOLTIP_OPENCL, ui.createButton);
 
     // Set mouse pointer to pointing hand cursor.
     SetCursor();

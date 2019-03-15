@@ -1,7 +1,7 @@
 #pragma once
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgOrderedListDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgOrderedListDialog.h>
 
 class rgPreprocessorDirectivesDialog : public rgOrderedListDialog
 {

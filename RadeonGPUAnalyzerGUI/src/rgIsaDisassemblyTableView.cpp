@@ -15,12 +15,12 @@
 #include <QtCommon/Util/QtUtil.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyTableModel.h>
-#include <RadeonGPUAnalyzerGUI/include/qt/rgIsaDisassemblyTableView.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
-#include <RadeonGPUAnalyzerGUI/include/rgDefinitions.h>
-#include <RadeonGPUAnalyzerGUI/include/rgStringConstants.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTableModel.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTableView.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
 // A class used to filter the ISA disassembly table columns.
 class rgIsaDisassemblyTableModelFilteringModel : public QSortFilterProxyModel
@@ -65,14 +65,17 @@ rgIsaDisassemblyTableView::rgIsaDisassemblyTableView(QWidget* pParent) :
     // Set the filter model on the table.
     ui.instructionsTreeView->setModel(m_pIsaTableFilteringModel);
 
-    // Don't allow the last tab to stretch to an unreasonable width.
-    ui.instructionsTreeView->header()->setStretchLastSection(false);
+    // Allow the last column to stretch.
+    ui.instructionsTreeView->header()->setStretchLastSection(true);
 
     // Initialize the context menu.
     InitializeContextMenu();
 
     // Connect the table's selection model.
     ConnectSelectionSignals();
+
+    // Connect the signals.
+    ConnectSignals();
 }
 
 bool rgIsaDisassemblyTableView::IsLineInEntrypoint(int lineIndex)
@@ -218,20 +221,29 @@ void rgIsaDisassemblyTableView::HandleBranchLinkClicked(const QString& link)
 
 void rgIsaDisassemblyTableView::HandleCopyDisassemblyClicked()
 {
+    QVector<int> selectedRowNumbers;
+
     QItemSelectionModel* pSelectionModel = ui.instructionsTreeView->selectionModel();
     const QItemSelection selection = pSelectionModel->selection();
     if (!selection.isEmpty())
     {
-        // Get the range of the selected lines.
+        // Get the selected line numbers.
         int startRow = 0;
         int endRow = 0;
-        bool gotRange = GetSelectedRowRange(startRow, endRow);
-        assert(gotRange);
-        if (gotRange)
+        QItemSelectionModel* pTableSelectionModel = ui.instructionsTreeView->selectionModel();
+        QModelIndexList selectedRows = pTableSelectionModel->selectedRows();
+        for (auto& currentIndex : selectedRows)
         {
-            // Copy the range of row data to the user's clipboard.
-            m_pIsaTableModel->CopyRangeToClipboard(startRow, endRow);
+            int rowIndex = currentIndex.row();
+            selectedRowNumbers << rowIndex;
         }
+
+        // Make sure the row numbers are in descending order since the user could've made selections out of order.
+        std::sort(selectedRowNumbers.begin(), selectedRowNumbers.end());
+
+        // Copy the range of row data to the user's clipboard.
+        m_pIsaTableModel->CopyRowsToClipboard(selectedRowNumbers);
+
     }
 }
 
@@ -340,6 +352,49 @@ void rgIsaDisassemblyTableView::ConnectSelectionSignals()
     }
 }
 
+void rgIsaDisassemblyTableView::ConnectSignals()
+{
+    // Connect the disassembly table's focus in signal.
+    bool isConnected = connect(ui.instructionsTreeView, &rgIsaDisassemblyCustomTableView::FrameFocusInSignal, this, &rgIsaDisassemblyTableView::FrameFocusInSignal);
+    assert(isConnected);
+
+    // Connect the disassembly table's focus out signal.
+    isConnected = connect(ui.instructionsTreeView, &rgIsaDisassemblyCustomTableView::FrameFocusOutSignal, this, &rgIsaDisassemblyTableView::FrameFocusOutSignal);
+    assert(isConnected);
+
+    // Connect the disassembly table view's enable scroll bar signal.
+    isConnected = connect(this, &rgIsaDisassemblyTableView::EnableScrollbarSignals, ui.instructionsTreeView, &rgIsaDisassemblyCustomTableView::EnableScrollbarSignals);
+    assert(isConnected);
+
+    // Connect the disassembly table view's disable scroll bar signal.
+    isConnected = connect(this, &rgIsaDisassemblyTableView::DisableScrollbarSignals, ui.instructionsTreeView, &rgIsaDisassemblyCustomTableView::DisableScrollbarSignals);
+    assert(isConnected);
+
+    // Connect the disassembly table's target GPU push button focus in signal.
+    isConnected = connect(ui.instructionsTreeView, &rgIsaDisassemblyCustomTableView::FocusTargetGpuPushButton, this, &rgIsaDisassemblyTableView::FocusTargetGpuPushButton);
+    assert(isConnected);
+
+    // Connect the disassembly table's target GPU push button focus in signal.
+    isConnected = connect(ui.instructionsTreeView, &rgIsaDisassemblyCustomTableView::SwitchDisassemblyContainerSize, this, &rgIsaDisassemblyTableView::SwitchDisassemblyContainerSize);
+    assert(isConnected);
+
+    // Connect the disassembly table's columns push button focus in signal.
+    isConnected = connect(ui.instructionsTreeView, &rgIsaDisassemblyCustomTableView::FocusColumnPushButton, this, &rgIsaDisassemblyTableView::FocusColumnPushButton);
+    assert(isConnected);
+
+    // Connect the disassembly table's source window focus in signal.
+    isConnected = connect(ui.instructionsTreeView, &rgIsaDisassemblyCustomTableView::FocusSourceWindow, this, &rgIsaDisassemblyTableView::FocusSourceWindow);
+    assert(isConnected);
+
+    // Connect the disassembly table view's update current sub widget signal.
+    isConnected = connect(this, &rgIsaDisassemblyTableView::UpdateCurrentSubWidget, ui.instructionsTreeView, &rgIsaDisassemblyCustomTableView::HandleUpdateCurrentSubWidget);
+    assert(isConnected);
+
+    // Connect the disassembly table's focus cli output window signal.
+    isConnected = connect(ui.instructionsTreeView, &rgIsaDisassemblyCustomTableView::FocusCliOutputWindow, this, &rgIsaDisassemblyTableView::FocusCliOutputWindow);
+    assert(isConnected);
+}
+
 bool rgIsaDisassemblyTableView::GetSelectedRowRange(int& minRow, int& maxRow) const
 {
     bool gotRange = false;
@@ -369,6 +424,9 @@ void rgIsaDisassemblyTableView::InitializeContextMenu()
 {
     // Create the context menu instance.
     m_pContextMenu = new QMenu(this);
+
+    // Set the cursor for the context menu.
+    m_pContextMenu->setCursor(Qt::PointingHandCursor);
 
     // Create the menu items to insert into the context menu.
     m_pCopySelectedDisassembly = new QAction(STR_DISASSEMBLY_TABLE_CONTEXT_MENU_COPY, this);

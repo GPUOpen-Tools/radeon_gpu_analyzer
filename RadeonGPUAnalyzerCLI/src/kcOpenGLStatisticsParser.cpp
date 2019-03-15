@@ -3,10 +3,17 @@
 //=================================================================
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTOSWrappers/Include/osFilePath.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local.
-#include<RadeonGPUAnalyzerCLI/src/kcOpenGLStatisticsParser.h>
+#include<RadeonGPUAnalyzerCLI/Src/kcOpenGLStatisticsParser.h>
 
 // Constants.
 const char* GL_ISA_SIZE_TOKEN = "ISA_SIZE";
@@ -93,22 +100,22 @@ static bool ExtractScratchRegsGL(const std::string& fileContent, size_t& scratch
     return ExtractNumericStatistic(fileContent, GL_USED_SCRATCH_REGS_TOKEN, scratchRegs);
 }
 
-bool kcOpenGLStatisticsParser::ParseStatistics(const gtString& satisticsFilePath, beKA::AnalysisData& parsedStatistics)
+bool kcOpenGLStatisticsParser::ParseStatistics(const std::string& device, const gtString& statisticsFile, beKA::AnalysisData& statistics)
 {
     bool ret = false;
-    parsedStatistics.ISASize = 0;
-    parsedStatistics.numSGPRsUsed = 0;
-    parsedStatistics.numVGPRsUsed = 0;
-    parsedStatistics.scratchMemoryUsed = 0;
+    statistics.ISASize = 0;
+    statistics.numSGPRsUsed = 0;
+    statistics.numVGPRsUsed = 0;
+    statistics.scratchMemoryUsed = 0;
 
     // Check if the file exists.
-    if (!satisticsFilePath.isEmpty())
+    if (!statisticsFile.isEmpty())
     {
-        osFilePath filePath(satisticsFilePath);
+        osFilePath filePath(statisticsFile);
 
         if (filePath.exists())
         {
-            std::ifstream file(satisticsFilePath.asASCIICharArray());
+            std::ifstream file(statisticsFile.asASCIICharArray());
             std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
             if (!fileContent.empty())
@@ -119,7 +126,7 @@ bool kcOpenGLStatisticsParser::ParseStatistics(const gtString& satisticsFilePath
 
                 if (isIsaSizeExtracted)
                 {
-                    parsedStatistics.ISASize = isaSizeInBytes;
+                    statistics.ISASize = isaSizeInBytes;
                 }
 
                 // Extract the number of used SGPRs.
@@ -128,7 +135,7 @@ bool kcOpenGLStatisticsParser::ParseStatistics(const gtString& satisticsFilePath
 
                 if (isSgprsExtracted)
                 {
-                    parsedStatistics.numSGPRsUsed = usedSgprs;
+                    statistics.numSGPRsUsed = usedSgprs;
                 }
 
                 // Extract the number of used VGPRs.
@@ -137,7 +144,7 @@ bool kcOpenGLStatisticsParser::ParseStatistics(const gtString& satisticsFilePath
 
                 if (isVgprsExtracted)
                 {
-                    parsedStatistics.numVGPRsUsed = usedVgprs;
+                    statistics.numVGPRsUsed = usedVgprs;
                 }
 
                 // Extract the scratch registers size.
@@ -146,7 +153,7 @@ bool kcOpenGLStatisticsParser::ParseStatistics(const gtString& satisticsFilePath
 
                 if (isScratchRegsExtracted)
                 {
-                    parsedStatistics.scratchMemoryUsed = scratchRegs;
+                    statistics.scratchMemoryUsed = scratchRegs;
                 }
 
                 // We succeeded if all data was extracted successfully.

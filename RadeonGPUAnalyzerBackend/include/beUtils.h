@@ -11,8 +11,15 @@
 #include <string>
 #include <map>
 #include <DeviceInfo.h>
-#include <RadeonGPUAnalyzerBackend/include/beDataTypes.h>
+#include <RadeonGPUAnalyzerBackend/Include/beDataTypes.h>
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTBaseTools/Include/gtString.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 class beUtils
 {
@@ -28,7 +35,11 @@ public:
     static bool GfxCardInfoSortPredicate(const GDT_GfxCardInfo& a, const GDT_GfxCardInfo& b);
 
     // Gets all of the supported graphics cards.
-    static bool GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& cardList, std::set<std::string>& uniqueNamesOfPublishedDevices);
+    // If "convertToLower" is true, the device names returned in "uniqueNamesOfPublishedDevices" will be
+    // converted to lower case.
+    static bool GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& cardList,
+                                    std::set<std::string>& uniqueNamesOfPublishedDevices,
+                                    bool convertToLower = false);
 
     // Gets a mapping of the marketing names to the internal code names.
     static bool GetMarketingNameToCodenameMapping(std::map<std::string, std::set<std::string>>& cardsMap);
@@ -39,8 +50,11 @@ public:
     // Deletes a physical file from the file system.
     static void DeleteFile(const gtString& filePath);
 
-    // Checkss if file exists and is not empty.
-    static bool isFilePresent(const std::string& fileName);
+    // Checks if file exists and is not empty.
+    static bool IsFilePresent(const std::string& fileName);
+
+    // Retrieves the file extension.
+    static std::string GetFileExtension(const std::string& fileName);
 
     // Print "cmdLine" to stdout if "doPrint" is true.
     static void PrintCmdLine(const std::string& cmdLine, bool doPrint);

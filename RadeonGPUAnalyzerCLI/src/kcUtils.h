@@ -10,17 +10,30 @@
 #include <map>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTBaseTools/Include/gtString.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Backend.
-#include <RadeonGPUAnalyzerBackend/include/beDataTypes.h>
-#include <RadeonGPUAnalyzerBackend/include/beInclude.h>
+#include <RadeonGPUAnalyzerBackend/Include/beDataTypes.h>
+#include <RadeonGPUAnalyzerBackend/Include/beInclude.h>
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcDataTypes.h>
-#include <RadeonGPUAnalyzerCLI/src/kcConfig.h>
-#include <RadeonGPUAnalyzerCLI/src/kcIStatisticsParser.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcDataTypes.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcConfig.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcIStatisticsParser.h>
 
+// Constants.
+static const  unsigned long  PROCESS_WAIT_INFINITE = 0xFFFFFFFF;
+
+//
+// kcUtils class.
+//
 class kcUtils
 {
 public:
@@ -53,8 +66,8 @@ public:
     // Helper function to construct the output file name in Analyzer CLI's output format, which combines
     // the base output file name, the target device name and the rendering pipeline stage.
     // Returns true if succeeded and false in case of error.
-    static bool AdjustRenderingPipelineOutputFileNames(const std::string& baseOutputFileName, const std::string& defaultExt,
-                                                       const std::string& device, beProgramPipeline& pipelineFiles);
+    static bool AdjustRenderingPipelineOutputFileNames(const std::string& baseOutputFileName, const std::string& defaultSuffix,
+                                                       const std::string& defaultExt, const std::string& device, beProgramPipeline& pipelineFiles);
 
     // Creates the statistics file according to the user's configuration.
     // config: the user's configuration
@@ -86,6 +99,10 @@ public:
     // fileFullPath - the full path to the file to be deleted.
     static bool DeleteFile(const gtString& fileFullPath);
 
+    // Deletes the a file from the file system.
+    // fileFullPath - the full path to the file to be deleted.
+    static bool DeleteFile(const std::string& fileFullPath);
+
     // Replaces a backend statistics file with a CLI statistics file.
     // statisticsFile - full path to the file to be replaced
     // config - user configuration
@@ -101,7 +118,7 @@ public:
     // outputFileName - the output file name
     // pCallback - callback to log messages
     // printCmd - print command line to stdout
-    static void PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName,
+    static bool PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName,
                                             LoggingCallBackFunc_t pCallback, bool printCmd);
 
     // Generates control flow graph for the given ISA.
@@ -109,7 +126,7 @@ public:
     // outputFileName - the output file name
     // pCallback - callback to log messages
     // printCmd - print command line to stdout
-    static void GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
+    static bool GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
                                          LoggingCallBackFunc_t pCallback, bool perInstCfg, bool printCmd);
 
     // Generates an output file name in the Analyzer CLI format.
@@ -118,14 +135,27 @@ public:
     // entryPointName - the name of the entry point to which the output file refers (can be empty if not relevant)
     // deviceName - the name of the target device to which the output file refers (can be empty if not relevant)
     // generatedFileName - an output variable to hold the generated file name
-    static void ConstructOutputFileName(const std::string& baseOutputFileName, const std::string& defaultExtension,
-                                        const std::string& entryPointName, const std::string& deviceName, gtString& generatedFileName);
+    static void ConstructOutputFileName(const std::string& baseOutputFileName, const std::string& defaultSuffix,
+                                        const std::string& defaultExtension, const std::string& entryPointName,
+                                        const std::string& deviceName, gtString& generatedFileName);
+
+    // std::string version of ConstructOutputFileName().
+    static void ConstructOutputFileName(const std::string& baseOutputFileName, const std::string& defaultSuffix,
+                                        const std::string& defaultExtension, const std::string& entryPointName,
+                                        const std::string& deviceName, std::string& generatedFileName);
+
+    // Append suffix to the provided file name.
+    // If the file name has an extension, the suffix will be appended before the extension.
+    static void AppendSuffix(std::string& fileName, const std::string& suffix);
 
     // Generates a name for a temporary file in the OS temp directory. Makes sure the file with generated name
     // does not exist.
     // The generated name starts with the "prefix" and ends with the "ext".
     // Returns full path including the file name.
     static gtString ConstructTempFileName(const gtString& prefix, const gtString& ext);
+
+    // std::string version of ConstructTempFileName().
+    static std::string ConstructTempFileName(const std::string& prefix, const std::string& ext);
 
     // Get all available graphics cards public names, grouped by the internal code name.
     static bool GetMarketingNameToCodenameMapping(DeviceNameMap& cardsMap);
@@ -169,16 +199,8 @@ public:
     // Prints the list of required devices, or the names of the devices that appear
     // in the given set in case that the required devices set is empty.
     // Does not print the devices that are present in the "disabledDevices" set.
-    static bool PrintAsicList(std::ostream& log,
-                              const std::set<std::string>& disabledDevices = std::set<std::string>(),
-                              const std::set<std::string>& reqdDevices = std::set<std::string>());
-
-    // Generates the RGA CLI version info file with the privided name.
-    static bool GenerateVersionInfoFile(const std::string& fileName);
-
-    // Generates the RGA CLI metadata file that contains the list of output
-    // files generated by RGA CLI.
-    static bool GenerateCliMetadataFile(const std::string& fileName, const rgFileEntryData& kernelData, const rgOutputMetadata& outFiles);
+    static bool PrintAsicList(const std::set<std::string>& requiredDevices = std::set<std::string>(),
+                              const std::set<std::string>& disabledDevices = std::set<std::string>());
 
     // Constructs full path for RGA log file.
     // Returns "true" if succeeded or "false" otherwise.
@@ -190,6 +212,9 @@ public:
 
     // Quote the provided string if it contains spaces.
     static std::string Quote(const std::string& str);
+
+    // Converts the given string to its lower-case version.
+    static std::string ToLower(const std::string& str);
 
     // Delete the files specified in pipeline structure.
     static void DeletePipelineFiles(const beProgramPipeline& files);
@@ -214,11 +239,21 @@ public:
                                        unsigned long timeOut, bool printCmd, std::string& stdOut, std::string& stdErr, long& exitCode);
 
     // Open new CLI log file and delete old files (older than 1 week).
-    static bool InitCLILogFile(const Config& config);
+    static bool  InitCLILogFile(const Config& config);
 
     // Case-insensitive string compare.
     // Returns "true" if provided strings are equal or "false" otherwise.
-    static bool StrCmpNoCase(const std::string& s1, const std::string& s2);
+    static bool  StrCmpNoCase(const std::string& s1, const std::string& s2);
+
+    // Returns file extension.
+    static std::string  GetFileExt(const std::string& filePath);
+
+    // Set environment variable varName to varValue.
+    // Returns true on success, false otherwise.
+    static bool SetEnvrironmentVariable(const::std::string& varName, const std::string varValue);
+
+    // Checks for available updates.
+    static void CheckForUpdates();
 
 private:
     // This is a static class (no instances).

@@ -6,14 +6,22 @@
 #include <sstream>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTBaseTools/Include/gtAssert.h>
 #include <AMDTOSWrappers/Include/osDirectory.h>
 #include <AMDTOSWrappers/Include/osProcess.h>
+#include <AMDTOSWrappers/Include/osThread.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local.
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderOpenGL.h>
-#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
-#include <RadeonGPUAnalyzerBackend/include/beBackend.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderOpenGL.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beBackend.h>
 
 // Device info.
 #include <DeviceInfoUtils.h>
@@ -23,7 +31,7 @@
 // *****************************************
 
 // The list of devices not supported by VirtualContext.
-static const std::set<std::string>  RGA_OPENGL_DISABLED_DEVICES = {"gfx900", "gfx902"};
+static const std::set<std::string>  RGA_OPENGL_DISABLED_DEVICES = {};
 
 // ***************************************
 // *** INTERNALLY LINKED SYMBOLS - END ***
@@ -108,34 +116,68 @@ static bool  VerifyVirtualContextOutput(const OpenGLOptions& options)
     bool  ret = true;
     if (options.m_isAmdIsaDisassemblyRequired)
     {
-        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_computeShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_geometryShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_vertexShader.asASCIICharArray()));
+        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::IsFilePresent(options.m_isaDisassemblyOutputFiles.m_computeShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::IsFilePresent(options.m_isaDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::IsFilePresent(options.m_isaDisassemblyOutputFiles.m_geometryShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::IsFilePresent(options.m_isaDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::IsFilePresent(options.m_isaDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::IsFilePresent(options.m_isaDisassemblyOutputFiles.m_vertexShader.asASCIICharArray()));
+        assert(ret);
+    }
+    if (options.m_isIlDisassemblyRequired)
+    {
+        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty() || beUtils::IsFilePresent(options.m_ilDisassemblyOutputFiles.m_computeShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty() || beUtils::IsFilePresent(options.m_ilDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty() || beUtils::IsFilePresent(options.m_ilDisassemblyOutputFiles.m_geometryShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty() || beUtils::IsFilePresent(options.m_ilDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::IsFilePresent(options.m_ilDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty() || beUtils::IsFilePresent(options.m_ilDisassemblyOutputFiles.m_vertexShader.asASCIICharArray()));
+        assert(ret);
     }
     if (ret && options.m_isAmdIsaBinariesRequired)
     {
-        ret &= beUtils::isFilePresent(options.m_programBinaryFile.asASCIICharArray());
+        ret &= beUtils::IsFilePresent(options.m_programBinaryFile.asASCIICharArray());
+        assert(ret);
     }
     if (ret && options.m_isCfgRequired)
     {
-        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::isFilePresent(options.m_controlFlowGraphOutputFiles.m_computeShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::isFilePresent(options.m_controlFlowGraphOutputFiles.m_fragmentShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::isFilePresent(options.m_controlFlowGraphOutputFiles.m_geometryShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::isFilePresent(options.m_controlFlowGraphOutputFiles.m_tessControlShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::isFilePresent(options.m_controlFlowGraphOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::isFilePresent(options.m_controlFlowGraphOutputFiles.m_vertexShader.asASCIICharArray()));
+        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_computeShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_fragmentShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_geometryShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_tessControlShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_vertexShader.asASCIICharArray()));
+        assert(ret);
     }
     if (ret && options.m_isScStatsRequired)
     {
-        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_computeShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_fragmentShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_geometryShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_tessControlShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_vertexShader.asASCIICharArray()));
+        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::IsFilePresent(options.m_scStatisticsOutputFiles.m_computeShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::IsFilePresent(options.m_scStatisticsOutputFiles.m_fragmentShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::IsFilePresent(options.m_scStatisticsOutputFiles.m_geometryShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::IsFilePresent(options.m_scStatisticsOutputFiles.m_tessControlShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::IsFilePresent(options.m_scStatisticsOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
+        assert(ret);
+        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::IsFilePresent(options.m_scStatisticsOutputFiles.m_vertexShader.asASCIICharArray()));
+        assert(ret);
     }
 
     return ret;
@@ -197,13 +239,38 @@ beKA::beStatus beProgramBuilderOpenGL::Compile(const OpenGLOptions& glOptions, b
 
         // An additional delimiter for the version slot.
         cmd << VC_CMD_DELIMITER;
+
+        // IL disassembly output.
+        cmd << glOptions.m_ilDisassemblyOutputFiles.m_vertexShader.asASCIICharArray() << VC_CMD_DELIMITER;
+        cmd << glOptions.m_ilDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray() << VC_CMD_DELIMITER;
+        cmd << glOptions.m_ilDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray() << VC_CMD_DELIMITER;
+        cmd << glOptions.m_ilDisassemblyOutputFiles.m_geometryShader.asASCIICharArray() << VC_CMD_DELIMITER;
+        cmd << glOptions.m_ilDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray() << VC_CMD_DELIMITER;
+        cmd << glOptions.m_ilDisassemblyOutputFiles.m_computeShader.asASCIICharArray() << VC_CMD_DELIMITER;
         cmd << "\"";
 
         // Build the GL program.
         bool isCompilerOutputRelevant = false;
         beUtils::PrintCmdLine(cmd.str(), printCmd);
 
+        // Workaround for random VirtualContext failures: make 3 attempts with increasing intervals.
+        static const unsigned long VC_WAIT_INTERVAL_1 = 2000;
+        static const unsigned long VC_WAIT_INTERVAL_2 = 4000;
         bool isLaunchSuccess = osExecAndGrabOutput(cmd.str().c_str(), cancelSignal, vcOutput);
+        if (!isLaunchSuccess || vcOutput.isEmpty())
+        {
+            // First attempt failed, wait and make a second attempt.
+            osSleep(VC_WAIT_INTERVAL_1);
+            isLaunchSuccess = osExecAndGrabOutput(cmd.str().c_str(), cancelSignal, vcOutput);
+
+            // Second attempt failed, wait and make the last attempt.
+            if (!isLaunchSuccess || vcOutput.isEmpty())
+            {
+                osSleep(VC_WAIT_INTERVAL_2);
+                isLaunchSuccess = osExecAndGrabOutput(cmd.str().c_str(), cancelSignal, vcOutput);
+            }
+        }
+        assert(isLaunchSuccess && !vcOutput.isEmpty());
 
         if (isLaunchSuccess)
         {
@@ -284,6 +351,8 @@ bool beProgramBuilderOpenGL::GetDeviceGLInfo(const std::string& deviceName, size
         glBackendValues["Ellesmere"] = std::pair<int, int>(130, 89);
         glBackendValues["gfx804"] = std::pair<int, int>(130, 100);
         glBackendValues["gfx900"] = std::pair<int, int>(141, 1);
+        glBackendValues["gfx902"] = std::pair<int, int>(141, 27);
+        glBackendValues["gfx906"] = std::pair<int, int>(141, 40);
     }
 
     // Fetch the relevant value.

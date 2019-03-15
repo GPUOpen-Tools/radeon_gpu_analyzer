@@ -9,8 +9,8 @@
 #include <set>
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommander.h>
-#include <RadeonGPUAnalyzerCLI/src/kcDataTypes.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommander.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcDataTypes.h>
 
 using namespace std;
 
@@ -22,10 +22,12 @@ public:
     kcCLICommanderCL();
     virtual ~kcCLICommanderCL();
 
+    // Parse the source file and extract list of entry points (for example, kernels for OpenCL).
+    // Dump the extracted entry points to stdout.
+    virtual bool ListEntries(const Config& config, LoggingCallBackFunc_t callback) override;
 
     /// Output multiple commands for all commands that requires compilation: GetBinary, GetIL, GetISA, GetAnlysis, GetMetadata, GetDebugIL,ListKernels
     void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback);
-
 
 private: // functions
 

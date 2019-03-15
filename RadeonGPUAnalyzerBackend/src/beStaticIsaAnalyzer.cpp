@@ -7,13 +7,20 @@
 #include <sstream>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTOSWrappers/Include/osProcess.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osFile.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local.
-#include <RadeonGPUAnalyzerBackend/include/beStaticIsaAnalyzer.h>
-#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beStaticIsaAnalyzer.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
 
 using namespace beKA;
 

@@ -7,16 +7,23 @@
 
 // Backend.
 #include <DeviceInfo.h>
-#include <RadeonGPUAnalyzerBackend/include/beBackend.h>
+#include <RadeonGPUAnalyzerBackend/Include/beBackend.h>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTBaseTools/Include/gtAssert.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcCLICommanderOpenGL.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
-#include <RadeonGPUAnalyzerCLI/src/kcOpenGLStatisticsParser.h>
-#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderOpenGL.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCliStringConstants.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcOpenGLStatisticsParser.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
 
 struct kcCLICommanderOpenGL::OpenGLDeviceInfo
 {
@@ -89,17 +96,19 @@ void kcCLICommanderOpenGL::Version(Config& config, LoggingCallBackFunc_t callbac
     }
 }
 
-bool kcCLICommanderOpenGL::PrintAsicList(std::ostream & log)
+bool kcCLICommanderOpenGL::PrintAsicList(const Config&)
 {
-    return kcUtils::PrintAsicList(log, beProgramBuilderOpenGL::GetDisabledDevices());
+    std::set<std::string> targets;
+
+    return kcUtils::PrintAsicList(targets);
 }
 
 // Helper function to remove unnecessary file paths.
-static bool GenerateRenderingPipelineOutputPaths(const Config& config, const std::string& baseOutputFileName, const std::string& defaultExt,
-                                                 const std::string& device, beProgramPipeline& pipelineToAdjust)
+static bool GenerateRenderingPipelineOutputPaths(const Config& config, const std::string& baseOutputFileName, const std::string& defaultSuffix,
+                                                 const std::string& defaultExt, const std::string& device, beProgramPipeline& pipelineToAdjust)
 {
     // Generate the output file paths.
-    bool  ret = kcUtils::AdjustRenderingPipelineOutputFileNames(baseOutputFileName, defaultExt, device, pipelineToAdjust);
+    bool  ret = kcUtils::AdjustRenderingPipelineOutputFileNames(baseOutputFileName, defaultSuffix, defaultExt, device, pipelineToAdjust);
 
     if (ret)
     {
@@ -115,30 +124,54 @@ static bool GenerateRenderingPipelineOutputPaths(const Config& config, const std
         {
             pipelineToAdjust.m_vertexShader.makeEmpty();
         }
+        else
+        {
+            kcUtils::DeleteFile(pipelineToAdjust.m_vertexShader);
+        }
 
         if (!isTessControlShaderPresent)
         {
             pipelineToAdjust.m_tessControlShader.makeEmpty();
+        }
+        else
+        {
+            kcUtils::DeleteFile(pipelineToAdjust.m_tessControlShader);
         }
 
         if (!isTessEvaluationShaderPresent)
         {
             pipelineToAdjust.m_tessEvaluationShader.makeEmpty();
         }
+        else
+        {
+            kcUtils::DeleteFile(pipelineToAdjust.m_tessEvaluationShader);
+        }
 
         if (!isGeometryexShaderPresent)
         {
             pipelineToAdjust.m_geometryShader.makeEmpty();
+        }
+        else
+        {
+            kcUtils::DeleteFile(pipelineToAdjust.m_geometryShader);
         }
 
         if (!isFragmentShaderPresent)
         {
             pipelineToAdjust.m_fragmentShader.makeEmpty();
         }
+        else
+        {
+            kcUtils::DeleteFile(pipelineToAdjust.m_fragmentShader);
+        }
 
         if (!isComputeShaderPresent)
         {
             pipelineToAdjust.m_computeShader.makeEmpty();
+        }
+        else
+        {
+            kcUtils::DeleteFile(pipelineToAdjust.m_computeShader);
         }
     }
 
@@ -161,6 +194,7 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
     bool isComputeShaderPresent = (!config.m_ComputeShader.empty());
     bool isIsaRequired = (!config.m_ISAFile.empty() || !config.m_LiveRegisterAnalysisFile.empty() ||
                           !config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty() || !config.m_AnalysisFile.empty());
+    bool isIlRequired = !config.m_ILFile.empty();
     bool isLiveRegAnalysisRequired = (!config.m_LiveRegisterAnalysisFile.empty());
     bool isBlockCfgRequired = (!config.m_blockCFGFile.empty());
     bool isInstCfgRequired = (!config.m_instCFGFile.empty());
@@ -228,6 +262,11 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
         shouldAbort = !kcUtils::ValidateShaderOutputDir(config.m_ISAFile, logMsg);
     }
 
+    if (!shouldAbort && isIlRequired && !config.m_ILFile.empty())
+    {
+        shouldAbort = !kcUtils::ValidateShaderOutputDir(config.m_ILFile, logMsg);
+    }
+
     if (!shouldAbort && isLiveRegAnalysisRequired)
     {
         shouldAbort = !kcUtils::ValidateShaderOutputDir(config.m_LiveRegisterAnalysisFile, logMsg);
@@ -276,7 +315,7 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
 
         if (!shouldAbort)
         {
-            InitRequestedAsicList(config, m_supportedDevicesCache, targetDevices, false);
+            InitRequestedAsicList(config.m_ASICs, config.m_mode, m_supportedDevicesCache, targetDevices, false);
 
             for (const std::string& device : targetDevices)
             {
@@ -298,41 +337,48 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                     if (isIsaRequired)
                     {
                         glOptions.m_isAmdIsaDisassemblyRequired = true;
-                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_ISAFile, KC_STR_DEFAULT_ISA_SUFFIX, device, glOptions.m_isaDisassemblyOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_ISAFile, "", KC_STR_DEFAULT_ISA_EXT, device, glOptions.m_isaDisassemblyOutputFiles);
+                    }
+
+                    if (isIlRequired)
+                    {
+                        glOptions.m_isIlDisassemblyRequired = true;
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_ILFile, "", KC_STR_DEFAULT_AMD_IL_EXT, device, glOptions.m_ilDisassemblyOutputFiles);
                     }
 
                     if (isLiveRegAnalysisRequired)
                     {
                         glOptions.m_isLiveRegisterAnalysisRequired = true;
-                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVE_REG_ANALYSIS_SUFFIX,
-                                                                       device, glOptions.m_liveRegisterAnalysisOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVEREG_SUFFIX,
+                                                                       KC_STR_DEFAULT_LIVEREG_EXT, device, glOptions.m_liveRegisterAnalysisOutputFiles);
                     }
 
                     if (isBlockCfgRequired)
                     {
                         glOptions.m_isLiveRegisterAnalysisRequired = true;
-                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_blockCFGFile,
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_blockCFGFile, KC_STR_DEFAULT_CFG_SUFFIX,
                                                                        KC_STR_DEFAULT_CFG_EXT, device, glOptions.m_controlFlowGraphOutputFiles);
                     }
 
                     if (isInstCfgRequired)
                     {
                         glOptions.m_isLiveRegisterAnalysisRequired = true;
-                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_instCFGFile,
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_instCFGFile, KC_STR_DEFAULT_CFG_SUFFIX,
                                                                        KC_STR_DEFAULT_CFG_EXT, device, glOptions.m_controlFlowGraphOutputFiles);
                     }
 
                     if (isStatisticsRequired)
                     {
                         glOptions.m_isScStatsRequired = true;
-                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_AnalysisFile, KC_STR_DEFAULT_STATISTICS_SUFFIX,
-                                                                       device, glOptions.m_scStatisticsOutputFiles);
+                        status &= GenerateRenderingPipelineOutputPaths(config, config.m_AnalysisFile, KC_STR_DEFAULT_STATS_SUFFIX,
+                                                                       KC_STR_DEFAULT_STATS_EXT, device, glOptions.m_scStatisticsOutputFiles);
                     }
 
                     if (isIsaBinary)
                     {
                         glOptions.m_isAmdIsaBinariesRequired = true;
-                        kcUtils::ConstructOutputFileName(config.m_BinaryOutputFile, KC_STR_DEFAULT_BIN_SUFFIX, "", device, glOptions.m_programBinaryFile);
+                        kcUtils::ConstructOutputFileName(config.m_BinaryOutputFile, "", KC_STR_DEFAULT_BIN_EXT,
+                                                         "", device, glOptions.m_programBinaryFile);
                     }
                     else
                     {

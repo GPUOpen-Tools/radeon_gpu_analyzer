@@ -24,6 +24,7 @@ public:
     int GetLineNumber() const;
 
 private slots:
+    // Handler for when the user enters a line number.
     void HandleLineNumberEntered(const QString& text);
 
 private:

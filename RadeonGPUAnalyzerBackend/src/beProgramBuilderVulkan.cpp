@@ -1,598 +1,723 @@
 //=================================================================
-// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2018 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
-// C++.
-#include <sstream>
+// C++
+#include <cassert>
+#include <stdlib.h>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
+#include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osDirectory.h>
-#include <AMDTOSWrappers/Include/osProcess.h>
+#include <AMDTOSWrappers/Include/osApplication.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local.
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderVulkan.h>
-#include <RadeonGPUAnalyzerBackend/include/beInclude.h>
-#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
-#include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
-#include <DeviceInfoUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderVulkan.h>
+#include <RadeonGPUAnalyzerBackend/Include/beStringConstants.h>
+#include <RadeonGPUAnalyzerBackend/Include/beDataTypes.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
+#include <Utils/Include/rgLog.h>
+#include <Utils/Include/rgaCliDefs.h>
 
-// *****************************************
-// *** INTERNALLY LINKED SYMBOLS - START ***
-// *****************************************
+using namespace beKA;
 
-static const std::string  STR_VERT_SPV_OUTPUT_FILE_NAME = "vert.spv";
-static const std::string  STR_TESC_SPV_OUTPUT_FILE_NAME = "tesc.spv";
-static const std::string  STR_TESE_SPV_OUTPUT_FILE_NAME = "tese.spv";
-static const std::string  STR_GEOM_SPV_OUTPUT_FILE_NAME = "geom.spv";
-static const std::string  STR_FRAG_SPV_OUTPUT_FILE_NAME = "frag.spv";
-static const std::string  STR_COMP_SPV_OUTPUT_FILE_NAME = "comp.spv";
+// Constants.
 
-static const std::string  STR_VERT_PALIL_OUTPUT_FILE_NAME = "vert.palIl";
-static const std::string  STR_TESC_PALIL_OUTPUT_FILE_NAME = "tesc.palIl";
-static const std::string  STR_TESE_PALIL_OUTPUT_FILE_NAME = "tese.palIl";
-static const std::string  STR_GEOM_PALIL_OUTPUT_FILE_NAME = "geom.palIl";
-static const std::string  STR_FRAG_PALIL_OUTPUT_FILE_NAME = "frag.palIl";
-static const std::string  STR_COMP_PALIL_OUTPUT_FILE_NAME = "comp.palIl";
+// Glslang option: output file.
+static const std::string  STR_GLSLANG_OPT_OUTPUT       = "-o";
 
-static const std::string  STR_AMDSPV_DEVICE_GFX900 = "900";
-static const std::string  STR_AMDSPV_DEVICE_GFX902 = "902";
+// Glslang option: SPIR-V binary output file.
+static const std::string  STR_GLSLANG_OPT_SPIRV_OUTPUT = "-V";
 
-// ***************************************
-// *** INTERNALLY LINKED SYMBOLS - END ***
-// ***************************************
+// Glslang option: Input file is an HLSL shader.
+static const std::string  STR_GLSLANG_OPT_HLSL_INPUT   = "-D";
 
-// Internally-linked utilities.
-static bool GetAmdspvPath(std::string& amdspvPath)
+// Glslang option: Macro (yes, it is the same as HLSL shader).
+// For macros, the usage a different as an argument is being
+// appended to the command line switch of glslang.
+static const std::string  STR_GLSLANG_OPT_MACRO_DEFINE = "-D";
+
+// Glslang option: explicitly specify shader stage.
+static const std::string  STR_GLSLANG_OPT_SHADER_STAGE = "-S";
+
+// Glslang option: Include directory.
+static const std::string  STR_GLSLANG_OPT_INCLUDE_DIR = "-I";
+
+// Glslang option: Preprocess input GLSL/HLSL file to stdout.
+static const std::string  STR_GLSLANG_OPT_PREPROCESS   = "-E";
+
+// Glslang option: Pipeline stage.
+static const std::string  STR_GLSLANG_OPT_STAGE        = "-S";
+
+// Glslang options: Pipeline stage names.
+static const std::string  STR_GLSLANG_OPT_STAGE_VERT   = "vert";
+static const std::string  STR_GLSLANG_OPT_STAGE_TESC   = "tesc";
+static const std::string  STR_GLSLANG_OPT_STAGE_TESE   = "tese";
+static const std::string  STR_GLSLANG_OPT_STAGE_GEOM   = "geom";
+static const std::string  STR_GLSLANG_OPT_STAGE_FRAG   = "frag";
+static const std::string  STR_GLSLANG_OPT_STAGE_COMP   = "comp";
+
+// Info messages.
+static const char* STR_LOADER_DEBUG_INFO_BEGIN = "*** Loader debug info - BEGIN ***";
+static const char* STR_LOADER_DEBUG_INFO_END = "*** Loader debug info - END ***";
+
+// A container for all valid glslang extensions for GLSL automatic stage detection.
+static const vector<std::string> VALID_GLSLANG_GLSL_EXTENSIONS =
 {
-#ifdef __linux
-    amdspvPath = "amdspv";
-#elif _WIN64
-    amdspvPath = "x64\\amdspv.exe";
-#elif _WIN32
-    amdspvPath = "x86\\amdspv.exe";
-#endif
-    return true;
+    STR_GLSLANG_OPT_STAGE_VERT,
+    STR_GLSLANG_OPT_STAGE_TESC,
+    STR_GLSLANG_OPT_STAGE_TESE,
+    STR_GLSLANG_OPT_STAGE_GEOM,
+    STR_GLSLANG_OPT_STAGE_FRAG,
+    STR_GLSLANG_OPT_STAGE_COMP
+};
+
+// SPIR-V disassembler option: output file.
+static const std::string  STR_SPV_DIS_OPT_OUTPUT       = "-o";
+
+// VulkanBackend options: input spv files.
+static const std::array<std::string, bePipelineStage::Count>
+STR_VULKAN_BACKEND_OPT_STAGE_INPUT_FILE =
+{
+    "--vert",
+    "--tesc",
+    "--tese",
+    "--geom",
+    "--frag",
+    "--comp"
+};
+
+// VulkanBackend options: output ISA disassembly files.
+static const std::array<std::string, bePipelineStage::Count>
+STR_VULKAN_BACKEND_OPT_STAGE_ISA_FILE =
+{
+    "--vert-isa",
+    "--tesc-isa",
+    "--tese-isa",
+    "--geom-isa",
+    "--frag-isa",
+    "--comp-isa"
+};
+
+// VulkanBackend options: output statistics files.
+static const std::array<std::string, bePipelineStage::Count>
+STR_VULKAN_BACKEND_OPT_STAGE_STATS_FILE =
+{
+    "--vert-stats",
+    "--tesc-stats",
+    "--tese-stats",
+    "--geom-stats",
+    "--frag-stats",
+    "--comp-stats"
+};
+
+// VulkanBackend options: output binary file.
+static const std::string  STR_VULKAN_BACKEND_OPT_BIN_FILE = "--bin";
+
+// VulkanBackend options: input pipeline object file.
+static const std::string  STR_VULKAN_BACKEND_OPT_PSO_FILE = "--pso";
+
+// VulkanBackend options: input alternative ICD path.
+static const std::string  STR_VULKAN_BACKEND_OPT_ICD_PATH = "--icd";
+
+// VulkanBackend options: value for VK_LOADER_DEBUG environment variable.
+static const std::string  STR_VULKAN_BACKEND_OPT_VK_LOADER_DEBUG = "--loader-debug";
+
+// VulkanBackend options: list target GPUs.
+static const std::string  STR_VULKAN_BACKEND_OPT_LIST_TARGETS = "--list-targets";
+
+// VulkanBackend options: list physical GPU adapters.
+static const std::string  STR_VULKAN_BACKEND_OPT_LIST_ADAPTERS = "--list-adapters";
+
+// VulkanBackend options: enable Vulkan validation layers.
+static const std::string  STR_VULKAN_BACKEND_OPT_ENABLE_LAYERS = "--enable-layers";
+
+// VulkanBackend options: path to the validation output text file.
+static const std::string  STR_VULKAN_BACKEND_OPT_LAYERS_FILE = "--layers-file";
+
+// VulkanBackend options: target GPU.
+static const std::string  STR_VULKAN_BACKEND_OPT_TARGET = "--target";
+
+// Copy the Vulkan Validation layers info from temp file ("tempInfoFile") to the Log file and user-provided validation info file ("outputFile").
+// Delete the temp info file after copying its content.
+static void CopyValidatioInfo(const std::string& tempInfoFile, const std::string& outputFile)
+{
+    static const char* STR_WRN_VULKAN_FAILED_EXTRACT_VALIDATION_INFO = "<stdout>";
+
+    bool result = false;
+    std::string info;
+    if ((result = kcUtils::ReadTextFile(tempInfoFile, info, nullptr)) == true)
+    {
+        rgLog::file << info << std::endl;
+        if (outputFile == KC_STR_VK_VALIDATION_INFO_STDOUT)
+        {
+            rgLog::stdOut << std::endl << info << std::endl;
+        }
+        else
+        {
+            result = kcUtils::WriteTextFile(outputFile, info, nullptr);
+        }
+    }
+
+    if (!kcUtils::DeleteFile(tempInfoFile))
+    {
+        result = false;
+    }
+
+    if (!result)
+    {
+        rgLog::stdErr << STR_WRN_VULKAN_FAILED_EXTRACT_VALIDATION_INFO << std::endl;
+    }
 }
 
-static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* pDeviceInfo, const VulkanOptions& vulkanOptions, std::string& gfxIpStr)
+// Construct command line options for Vulkan Backend.
+static std::string ConstructVulkanBackendOptions(const std::string& loaderDebug,
+                                                 const beVkPipelineFiles& spvFiles,
+                                                 const beVkPipelineFiles& isaFiles,
+                                                 const beVkPipelineFiles& statsFiles,
+                                                 const std::string& binFile,
+                                                 const std::string& psoFile,
+                                                 const std::string& icdFile,
+                                                 const std::string& validationOutput,
+                                                 const std::string& device)
 {
-    bool ret = false;
-    gfxIpStr.clear();
+    std::stringstream opts;
 
-    if (vulkanOptions.m_targetDeviceName.compare(DEVICE_NAME_KALINDI) == 0 ||
-        vulkanOptions.m_targetDeviceName.compare(DEVICE_NAME_GODAVARI) == 0)
+    // Add target option.
+    if (!device.empty())
     {
-        // Special case #1: 7.x devices.
-        gfxIpStr = "7.x";
-        ret = true;
+        opts << STR_VULKAN_BACKEND_OPT_TARGET << " " << device;
     }
-    else if (vulkanOptions.m_targetDeviceName.compare(DEVICE_NAME_STONEY) == 0 ||
-        vulkanOptions.m_targetDeviceName.compare(DEVICE_NAME_AMUR) == 0 ||
-        vulkanOptions.m_targetDeviceName.compare(DEVICE_NAME_NOLAN) == 0)
+
+    // Add per-stage input & output files names.
+    for (int stage = 0; stage < bePipelineStage::Count; stage++)
     {
-        // Special case #2: 8.1 devices.
-        gfxIpStr = "8.1";
-        ret = true;
+        if (!spvFiles[stage].empty())
+        {
+            assert(!isaFiles[stage].empty() && !statsFiles[stage].empty());
+            if (!isaFiles[stage].empty() && !statsFiles[stage].empty())
+            {
+                opts << " " << STR_VULKAN_BACKEND_OPT_STAGE_INPUT_FILE[stage] << " " << kcUtils::Quote(spvFiles[stage]) << " "
+                            << STR_VULKAN_BACKEND_OPT_STAGE_ISA_FILE[stage]   << " " << kcUtils::Quote(isaFiles[stage]) << " "
+                            << STR_VULKAN_BACKEND_OPT_STAGE_STATS_FILE[stage] << " " << kcUtils::Quote(statsFiles[stage]) << " ";
+            }
+        }
     }
-    else if (vulkanOptions.m_targetDeviceName.compare(DEVICE_NAME_GFX900) == 0 ||
-             vulkanOptions.m_targetDeviceName.compare(DEVICE_NAME_GFX902) == 0)
+
+    // Output binary file name.
+    if (!binFile.empty())
     {
-        // Special case #3: gfx9 devices.
-        gfxIpStr =
-            vulkanOptions.m_targetDeviceName == DEVICE_NAME_GFX900 ? STR_AMDSPV_DEVICE_GFX900 :
-            vulkanOptions.m_targetDeviceName == DEVICE_NAME_GFX902 ? STR_AMDSPV_DEVICE_GFX902 :
-            "";
-        ret = !gfxIpStr.empty();
+        opts << " " << STR_VULKAN_BACKEND_OPT_BIN_FILE << " " << kcUtils::Quote(binFile);
+    }
+
+    // Pipeline state file.
+    if (!psoFile.empty())
+    {
+        opts << " " << STR_VULKAN_BACKEND_OPT_PSO_FILE << " " << kcUtils::Quote(psoFile);
+    }
+
+    // Alternative ICD full path.
+    if (!icdFile.empty())
+    {
+        opts << " " << STR_VULKAN_BACKEND_OPT_ICD_PATH << " " << kcUtils::Quote(icdFile);
+    }
+
+    // Value for VK_LOADER_DEBUG.
+    if (!loaderDebug.empty())
+    {
+        opts << " " << STR_VULKAN_BACKEND_OPT_VK_LOADER_DEBUG << " " << kcUtils::Quote(loaderDebug);
+    }
+
+    // Add valdiation enabling option if required.
+    if (!validationOutput.empty())
+    {
+        opts << " " << STR_VULKAN_BACKEND_OPT_ENABLE_LAYERS;
+        opts << " " << STR_VULKAN_BACKEND_OPT_LAYERS_FILE << " " << validationOutput;
+    }
+
+    return opts.str();
+}
+
+// Construct command line options for SPIR-V disassembler.
+static std::string ConstructSpvDisOptions(const std::string& spvFileName, const std::string& spvDisFileName)
+{
+    std::stringstream opts;
+
+    if (!spvFileName.empty())
+    {
+        if (!spvDisFileName.empty())
+        {
+            opts << STR_SPV_DIS_OPT_OUTPUT << " " << kcUtils::Quote(spvDisFileName);
+        }
+        opts << " " << kcUtils::Quote(spvFileName);
+    }
+
+    return opts.str();
+}
+
+// Construct command line options for SPIR-V assembler.
+static std::string ConstructSpvAsmOptions(const std::string& spvTxtFileName, const std::string& spvFileName)
+{
+    std::stringstream opts;
+
+    if (!spvTxtFileName.empty())
+    {
+        if (!spvFileName.empty())
+        {
+            opts << STR_SPV_DIS_OPT_OUTPUT << " " << kcUtils::Quote(spvFileName);
+        }
+        opts << " " << kcUtils::Quote(spvTxtFileName);
+    }
+
+    return opts.str();
+}
+
+// Construct command line options for Glslang compiler.
+static std::string ConstructGlslangOptions(const Config& config, const std::string& srcFileName,
+    const std::string& spvFileName, size_t stage, bool isHlsl, bool isPreprocess = false)
+{
+    std::stringstream opts;
+
+    // Append any additional options from the user.
+    if (!config.m_glslangOpt.empty())
+    {
+        // Unwrap the argument from the token.
+        std::string fixedOptions = config.m_glslangOpt;
+        fixedOptions.erase(std::remove(fixedOptions.begin(),
+            fixedOptions.end(), CLI_OPT_GLSLANG_TOKEN), fixedOptions.end());
+        opts << fixedOptions;
+    }
+
+    if (isHlsl)
+    {
+        opts << " " << STR_GLSLANG_OPT_HLSL_INPUT;
+    }
+
+    if (isPreprocess)
+    {
+        opts << " " << STR_GLSLANG_OPT_PREPROCESS;
+
+        // Glslang preprocessor requires specifying the pipeline stage for some reason.
+        // Always use "vert" since preprocessor is stage-agnostic.
+        opts << " " << STR_GLSLANG_OPT_STAGE << " " << STR_GLSLANG_OPT_STAGE_VERT;
     }
     else
     {
-        // The standard case.
-        size_t deviceGfxIp = 0;
-        GDT_HW_GENERATION hwGeneration;
-        bool isDeviceHwGenExtracted = pDeviceInfo->GetHardwareGeneration(vulkanOptions.m_targetDeviceName.c_str(), hwGeneration) &&
-            beUtils::GdtHwGenToNumericValue(hwGeneration, deviceGfxIp);
-
-        if (isDeviceHwGenExtracted && deviceGfxIp > 0)
+        // Add the switches for any given include paths.
+        if (!config.m_IncludePath.empty())
         {
-            gfxIpStr = std::to_string(deviceGfxIp);
-            ret = true;
+            for (const std::string& includePath : config.m_IncludePath)
+            {
+                opts << " " << STR_GLSLANG_OPT_INCLUDE_DIR << includePath << " ";
+            }
         }
+
+        // Add the switches for any given macro/define directives..
+        if (!config.m_Defines.empty())
+        {
+            for (const std::string& givenMacro : config.m_Defines)
+            {
+                opts << " " << STR_GLSLANG_OPT_MACRO_DEFINE << givenMacro << " ";
+            }
+        }
+
+        // Get the file extension.
+        std::string ext = beUtils::GetFileExtension(srcFileName);
+
+        // If the file extension is not one of the "default" file extensions:
+        // vert, tesc, tese, geom, frag, comp, we need to explicitly specify for glslang the stage.
+        if (std::find(VALID_GLSLANG_GLSL_EXTENSIONS.cbegin(),
+            VALID_GLSLANG_GLSL_EXTENSIONS.cend(), ext) == VALID_GLSLANG_GLSL_EXTENSIONS.cend())
+        {
+            assert(stage < VALID_GLSLANG_GLSL_EXTENSIONS.size());
+            if(stage < VALID_GLSLANG_GLSL_EXTENSIONS.size())
+            {
+                opts << " " << STR_GLSLANG_OPT_SHADER_STAGE << " " <<
+                    VALID_GLSLANG_GLSL_EXTENSIONS[stage] << " ";
+            }
+        }
+
+        opts << " " << STR_GLSLANG_OPT_SPIRV_OUTPUT;
+        opts << " " << STR_GLSLANG_OPT_OUTPUT << " " << kcUtils::Quote(spvFileName);
     }
 
-    return ret;
+    opts << " " << kcUtils::Quote(srcFileName);
+
+    return opts.str();
 }
 
-// An internal auxiliary function that returns the correct input prefix for the backend invocation,
-// according to the input type. If the input type is GLSL, it simply returns the given GLSL prefix.
-// Otherwise, it returns the relevant, fixed, prefix.
-static std::string GetInputPrefix(const VulkanOptions& vulkanOptions, const std::string& glslPrefix)
+// Check if ISA disassembly and statistics files are not empty for corresponding input spv files.
+static bool VerifyOutputFiles(const beVkPipelineFiles& spvFiles,
+                              const beVkPipelineFiles& isaFiles,
+                              const beVkPipelineFiles& statsFiles)
 {
-    const char* SPIRV_BIN_INPUT_PREFIX = "in.spv=\"";
-    const char* SPIRV_TXT_INPUT_PREFIX = "in.spvText=\"";
+    bool result = true;
 
-    std::string ret;
-    if (vulkanOptions.m_SourceLanguage == beKA::SourceLanguage_GLSL_Vulkan)
+    for (int stage = 0; stage < bePipelineStage::Count; stage++)
     {
-        ret = glslPrefix;
+        if (!spvFiles[stage].empty())
+        {
+            if (!kcUtils::FileNotEmpty(isaFiles[stage]) || !kcUtils::FileNotEmpty(statsFiles[stage]))
+            {
+                result = false;
+                break;
+            }
+        }
     }
-    else if (vulkanOptions.m_SourceLanguage == beKA::SourceLanguage_SPIRV_Vulkan)
-    {
-        ret = SPIRV_BIN_INPUT_PREFIX;
-    }
-    else if (vulkanOptions.m_SourceLanguage == beKA::SourceLanguage_SPIRVTXT_Vulkan)
-    {
-        ret = SPIRV_TXT_INPUT_PREFIX;
-    }
-    return ret;
+
+    return result;
 }
 
-static beKA::beStatus  AddInputFileNames(const VulkanOptions& options, std::stringstream& cmd)
+beKA::beStatus beProgramBuilderVulkan::GetVulkanDriverTargetGPUs(const std::string& loaderDebug, const std::string& icdFile, std::set<std::string>& targetGPUs,
+                                                           bool printCmd, std::string& errText)
 {
-    beKA::beStatus  status = beKA::beStatus_SUCCESS;
+    std::string stdOutText, stdErrText;
+    std::string opts = STR_VULKAN_BACKEND_OPT_LIST_TARGETS;
 
-    // Indicates that a stage-less input file name was provided.
-    bool  isNonStageInput = false;
-
-    // Indicates that some of stage-specific file names was provided (--frag, --vert, etc.).
-    bool isStageInput = false;
-
-    if (options.m_SourceLanguage == beKA::SourceLanguage_SPIRV_Vulkan || options.m_SourceLanguage == beKA::SourceLanguage_SPIRVTXT_Vulkan)
+    // Alternative ICD library path.
+    if (!icdFile.empty())
     {
-        if (!options.m_stagelessInputFile.empty())
-        {
-            cmd << GetInputPrefix(options, "") << options.m_stagelessInputFile << "\" ";
-            isNonStageInput = true;
-        }
+        opts += (" " + STR_VULKAN_BACKEND_OPT_ICD_PATH + " " + kcUtils::Quote(icdFile));
     }
 
-    // You cannot mix compute and non-compute shaders in Vulkan,
-    // so this has to be mutually exclusive.
-    if (options.m_pipelineShaders.m_computeShader.isEmpty())
+    // Launch the VulkanBacked and get the list of devices.
+    beStatus status = InvokeVulkanBackend(opts, printCmd, stdOutText, stdErrText);
+
+    // If the VulkanBackend provided any warning/errors, display them.
+    if (!stdErrText.empty())
     {
-        // Vertex shader.
-        if (!options.m_pipelineShaders.m_vertexShader.isEmpty())
-        {
-            cmd << GetInputPrefix(options, "in.vert.glsl=\"") << options.m_pipelineShaders.m_vertexShader.asASCIICharArray() << "\" ";
-            isStageInput = true;
-        }
-
-        // Tessellation control shader.
-        if (!options.m_pipelineShaders.m_tessControlShader.isEmpty())
-        {
-            cmd << GetInputPrefix(options, "in.tesc.glsl=\"") << options.m_pipelineShaders.m_tessControlShader.asASCIICharArray() << "\" ";
-            isStageInput = true;
-        }
-
-        // Tessellation evaluation shader.
-        if (!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty())
-        {
-            cmd << GetInputPrefix(options, "in.tese.glsl=\"") << options.m_pipelineShaders.m_tessEvaluationShader.asASCIICharArray() << "\" ";
-            isStageInput = true;
-        }
-
-        // Geometry shader.
-        if (!options.m_pipelineShaders.m_geometryShader.isEmpty())
-        {
-            cmd << GetInputPrefix(options, "in.geom.glsl=\"") << options.m_pipelineShaders.m_geometryShader.asASCIICharArray() << "\" ";
-            isStageInput = true;
-        }
-
-        // Fragment shader.
-        if (!options.m_pipelineShaders.m_fragmentShader.isEmpty())
-        {
-            cmd << GetInputPrefix(options, "in.frag.glsl=\"") << options.m_pipelineShaders.m_fragmentShader.asASCIICharArray() << "\" ";
-            isStageInput = true;
-        }
-    }
-    else
-    {
-        // Compute shader.
-        cmd << GetInputPrefix(options, "in.comp.glsl=\"") << options.m_pipelineShaders.m_computeShader.asASCIICharArray() << "\" ";
-        isStageInput = true;
+        rgLog::stdOut << stdErrText << std::endl;
     }
 
-    if (!isNonStageInput && !isStageInput)
+    // Process the target list.
+    // The format of device list returned by VulkanBackend:
+    // BONAIRE:gfx700
+    // CARRIZO:gfx801
+    // FIJI:gfx803:gfx804
+    // ...
+
+    if (status == beStatus_SUCCESS)
     {
-        status = beKA::beStatus_VulkanNoInputFile;
-    }
-    else if (isNonStageInput && isStageInput)
-    {
-        status = beKA::beStatus_VulkanMixedInputFiles;
+        size_t start = 0, end = 0;
+        std::string devicesStr = kcUtils::ToLower(stdOutText);
+
+        while (start < devicesStr.size() && (end = devicesStr.find_first_of(":\n", start)) != std::string::npos)
+        {
+            targetGPUs.insert(devicesStr.substr(start, end - start));
+            start = end + 1;
+        }
     }
 
     return status;
 }
 
-static void AddOutputFileNames(const VulkanOptions& options, std::stringstream& cmd)
+beStatus beProgramBuilderVulkan::GetPhysicalGPUs(const std::string& icdFile, std::vector<beVkPhysAdapterInfo>& gpuInfo,
+                                                 bool printCmd, std::string& errText)
 {
-    bool isSpv = (options.m_SourceLanguage == beKA::SourceLanguage_SPIRV_Vulkan ||
-                  options.m_SourceLanguage == beKA::SourceLanguage_SPIRVTXT_Vulkan);
+    // The format of physical adapter list returned by VulkanBackend:
+    //
+    // Adapter 0:
+    //     Name: Radeon(TM) RX 480 Graphics
+    //     Vulkan driver version : 2.0.0
+    //     Supported Vulkan API version : 1.1.77
+    // ...
 
-    auto  AddOutputFile = [&](bool flag, const std::string& option, const std::string& fileName)
+    std::string stdOutText, stdErrText;
+    std::string opts = STR_VULKAN_BACKEND_OPT_LIST_ADAPTERS;
+
+    // Alternative ICD library path.
+    if (!icdFile.empty())
     {
-        if (flag || isSpv)
+        opts += (" " + STR_VULKAN_BACKEND_OPT_ICD_PATH + " " + kcUtils::Quote(icdFile));
+    }
+
+    // Invoke "VulkanBackend --list-adapters" to get the list of physical adapters installed on the system.
+    beStatus status = InvokeVulkanBackend(opts, printCmd, stdOutText, stdErrText);
+
+    if (status == beStatus_SUCCESS)
+    {
+        errText = stdErrText;
+        std::stringstream outStream(stdOutText);
+        std::string line;
+        uint32_t id = 0;
+        size_t offset = 0;
+
+        // Parse the VulkanBackend output.
+        while (std::getline(outStream, line))
         {
-            cmd << option << "\"" << fileName << "\"" << " ";
-        }
-    };
+            beVkPhysAdapterInfo info;
 
-    // SPIR-V binaries generation.
-    if (options.m_isSpirvBinariesRequired)
-    {
-        // Compute.
-        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.spv=", STR_COMP_SPV_OUTPUT_FILE_NAME);
-
-        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
-        {
-            // Vertex.
-            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.spv=", STR_VERT_SPV_OUTPUT_FILE_NAME);
-            // Tessellation control.
-            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.spv=", STR_TESC_SPV_OUTPUT_FILE_NAME);
-            // Tessellation evaluation.
-            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.spv=", STR_TESE_SPV_OUTPUT_FILE_NAME);
-            // Geometry.
-            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.spv=", STR_GEOM_SPV_OUTPUT_FILE_NAME);
-            // Fragment.
-            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.spv=", STR_FRAG_SPV_OUTPUT_FILE_NAME);
-        }
-    }
-
-    // AMD IL Binaries generation (for now we only support PAL IL).
-    if (options.m_isAmdPalIlBinariesRequired)
-    {
-        // Compute.
-        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.palIl=", STR_COMP_PALIL_OUTPUT_FILE_NAME);
-
-        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
-        {
-            // Vertex.
-            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.palIl=", STR_VERT_PALIL_OUTPUT_FILE_NAME);
-            // Tessellation control.
-            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.palIl=", STR_TESC_PALIL_OUTPUT_FILE_NAME);
-            // Tessellation evaluation.
-            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.palIl=", STR_TESE_PALIL_OUTPUT_FILE_NAME);
-            // Geometry.
-            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.palIl=", STR_GEOM_PALIL_OUTPUT_FILE_NAME);
-            // Fragment.
-            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.palIl=", STR_FRAG_PALIL_OUTPUT_FILE_NAME);
-        }
-    }
-
-    // AMD IL disassembly generation (for now we only support PAL IL).
-    if (options.m_isAmdPalIlDisassemblyRequired)
-    {
-        // Compute.
-        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_computeShader.asASCIICharArray());
-
-        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
-        {
-            // Vertex.
-            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_vertexShader.asASCIICharArray());
-            // Tessellation control.
-            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray());
-            // Tessellation evaluation.
-            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray());
-            // Geometry.
-            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_geometryShader.asASCIICharArray());
-            // Fragment.
-            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.palIlText=", options.m_pailIlDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray());
-        }
-    }
-
-    // AMD ISA binary generation.
-    if (options.m_isAmdIsaBinariesRequired)
-    {
-        // Compute.
-        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.isa=", options.m_isaBinaryFiles.m_computeShader.asASCIICharArray());
-
-        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
-        {
-            // Vertex.
-            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.isa=", options.m_isaBinaryFiles.m_vertexShader.asASCIICharArray());
-            // Tessellation control.
-            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.isa=", options.m_isaBinaryFiles.m_tessControlShader.asASCIICharArray());
-            // Tessellation evaluation.
-            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.isa=", options.m_isaBinaryFiles.m_tessEvaluationShader.asASCIICharArray());
-            // Geometry.
-            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.isa=", options.m_isaBinaryFiles.m_geometryShader.asASCIICharArray());
-            // Fragment.
-            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.isa=", options.m_isaBinaryFiles.m_fragmentShader.asASCIICharArray());
-        }
-    }
-
-    // AMD ISA disassembly generation.
-    if (options.m_isAmdIsaDisassemblyRequired)
-    {
-        // Compute.
-        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.isaText=", options.m_isaDisassemblyOutputFiles.m_computeShader.asASCIICharArray());
-
-        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
-        {
-            // Vertex.
-            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.isaText=", options.m_isaDisassemblyOutputFiles.m_vertexShader.asASCIICharArray());
-            // Tessellation control.
-            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.isaText=", options.m_isaDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray());
-            // Tessellation evaluation.
-            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.isaText=", options.m_isaDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray());
-            // Geometry.
-            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.isaText=", options.m_isaDisassemblyOutputFiles.m_geometryShader.asASCIICharArray());
-            // Fragment.
-            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.isaText=", options.m_isaDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray());
-        }
-    }
-
-    // Shader compiler statistics disassembly generation.
-    if (options.m_isScStatsRequired)
-    {
-        // Compute.
-        AddOutputFile(!options.m_pipelineShaders.m_computeShader.isEmpty(), "out.comp.isaInfo=", options.m_scStatisticsOutputFiles.m_computeShader.asASCIICharArray());
-
-        if (options.m_pipelineShaders.m_computeShader.isEmpty() || isSpv)
-        {
-            // Vertex.
-            AddOutputFile(!options.m_pipelineShaders.m_vertexShader.isEmpty(), "out.vert.isaInfo=", options.m_scStatisticsOutputFiles.m_vertexShader.asASCIICharArray());
-            // Tessellation control.
-            AddOutputFile(!options.m_pipelineShaders.m_tessControlShader.isEmpty(), "out.tesc.isaInfo=", options.m_scStatisticsOutputFiles.m_tessControlShader.asASCIICharArray());
-            // Tessellation evaluation.
-            AddOutputFile(!options.m_pipelineShaders.m_tessEvaluationShader.isEmpty(), "out.tese.isaInfo=", options.m_scStatisticsOutputFiles.m_tessEvaluationShader.asASCIICharArray());
-            // Geometry.
-            AddOutputFile(!options.m_pipelineShaders.m_geometryShader.isEmpty(), "out.geom.isaInfo=", options.m_scStatisticsOutputFiles.m_geometryShader.asASCIICharArray());
-            // Fragment.
-            AddOutputFile(!options.m_pipelineShaders.m_fragmentShader.isEmpty(), "out.frag.isaInfo=", options.m_scStatisticsOutputFiles.m_fragmentShader.asASCIICharArray());
-        }
-    }
-}
-
-beProgramBuilderVulkan::beProgramBuilderVulkan()
-{
-}
-
-beProgramBuilderVulkan::~beProgramBuilderVulkan()
-{
-}
-
-beKA::beStatus beProgramBuilderVulkan::GetBinary(const std::string& device, const beKA::BinaryOptions& binopts, std::vector<char>& binary)
-{
-    GT_UNREFERENCED_PARAMETER(device);
-    GT_UNREFERENCED_PARAMETER(binopts);
-    GT_UNREFERENCED_PARAMETER(binary);
-
-    // TODO: remove as part of refactoring.
-    // In the executable-oriented architecture, this operation is no longer meaningful.
-    return beKA::beStatus_Invalid;
-}
-
-beKA::beStatus beProgramBuilderVulkan::GetKernelILText(const std::string& device, const std::string& kernel, std::string& il)
-{
-    GT_UNREFERENCED_PARAMETER(device);
-    GT_UNREFERENCED_PARAMETER(kernel);
-    GT_UNREFERENCED_PARAMETER(il);
-
-    // TODO: remove as part of refactoring.
-    // In the executable-oriented architecture, this operation is no longer meaningful.
-    return beKA::beStatus_Invalid;
-}
-
-beKA::beStatus beProgramBuilderVulkan::GetKernelISAText(const std::string& device, const std::string& kernel, std::string& isa)
-{
-    GT_UNREFERENCED_PARAMETER(device);
-    GT_UNREFERENCED_PARAMETER(kernel);
-    GT_UNREFERENCED_PARAMETER(isa);
-
-    // TODO: remove as part of refactoring.
-    // In the executable-oriented architecture, this operation is no longer meaningful.
-    return beKA::beStatus_Invalid;
-}
-
-beKA::beStatus beProgramBuilderVulkan::GetStatistics(const std::string& device, const std::string& kernel, beKA::AnalysisData& analysis)
-{
-    GT_UNREFERENCED_PARAMETER(device);
-    GT_UNREFERENCED_PARAMETER(kernel);
-    GT_UNREFERENCED_PARAMETER(analysis);
-
-    // TODO: remove as part of refactoring.
-    // In the executable-oriented architecture, this operation is no longer meaningful.
-    return beKA::beStatus_Invalid;
-}
-
-beKA::beStatus beProgramBuilderVulkan::GetDeviceTable(std::vector<GDT_GfxCardInfo>& table)
-{
-    (void)table;
-    return beKA::beStatus_Invalid;
-}
-
-// Checks if the required output files are generated by the amdspv.
-// Only verifies the files requested in the "options.m_pipelineShaders" name list.
-static bool  VerifyAmdspvOutput(const VulkanOptions& options)
-{
-    bool  ret = true;
-    if (options.m_isAmdIsaDisassemblyRequired)
-    {
-        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_computeShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_geometryShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::isFilePresent(options.m_isaDisassemblyOutputFiles.m_vertexShader.asASCIICharArray()));
-    }
-    if (ret && options.m_isAmdIsaBinariesRequired)
-    {
-        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::isFilePresent(options.m_isaBinaryFiles.m_computeShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::isFilePresent(options.m_isaBinaryFiles.m_fragmentShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::isFilePresent(options.m_isaBinaryFiles.m_geometryShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::isFilePresent(options.m_isaBinaryFiles.m_tessControlShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::isFilePresent(options.m_isaBinaryFiles.m_tessEvaluationShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::isFilePresent(options.m_isaBinaryFiles.m_vertexShader.asASCIICharArray()));
-    }
-    if (ret && options.m_isSpirvBinariesRequired)
-    {
-        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::isFilePresent(STR_COMP_SPV_OUTPUT_FILE_NAME));
-        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::isFilePresent(STR_FRAG_SPV_OUTPUT_FILE_NAME));
-        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::isFilePresent(STR_GEOM_SPV_OUTPUT_FILE_NAME));
-        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::isFilePresent(STR_TESC_SPV_OUTPUT_FILE_NAME));
-        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::isFilePresent(STR_TESE_SPV_OUTPUT_FILE_NAME));
-        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::isFilePresent(STR_VERT_SPV_OUTPUT_FILE_NAME));
-    }
-    if (ret && options.m_isAmdPalIlBinariesRequired)
-    {
-        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::isFilePresent(STR_COMP_PALIL_OUTPUT_FILE_NAME));
-        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::isFilePresent(STR_FRAG_PALIL_OUTPUT_FILE_NAME));
-        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::isFilePresent(STR_GEOM_PALIL_OUTPUT_FILE_NAME));
-        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::isFilePresent(STR_TESC_PALIL_OUTPUT_FILE_NAME));
-        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::isFilePresent(STR_TESE_PALIL_OUTPUT_FILE_NAME));
-        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::isFilePresent(STR_VERT_PALIL_OUTPUT_FILE_NAME));
-    }
-    if (ret && options.m_isAmdPalIlDisassemblyRequired)
-    {
-        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_computeShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_fragmentShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_geometryShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_tessControlShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::isFilePresent(options.m_pailIlDisassemblyOutputFiles.m_vertexShader.asASCIICharArray()));
-    }
-    if (ret && options.m_isScStatsRequired)
-    {
-        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_computeShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_fragmentShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_geometryShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_tessControlShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
-        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::isFilePresent(options.m_scStatisticsOutputFiles.m_vertexShader.asASCIICharArray()));
-    }
-
-    return ret;
-}
-
-beKA::beStatus beProgramBuilderVulkan::Compile(const VulkanOptions& vulkanOptions, bool& cancelSignal, bool printCmd, gtString& buildLog)
-{
-    GT_UNREFERENCED_PARAMETER(cancelSignal);
-    beKA::beStatus ret = beKA::beStatus_General_FAILED;
-    buildLog.makeEmpty();
-
-    // Get amdspv's path.
-    std::string ambdbilPath;
-    GetAmdspvPath(ambdbilPath);
-
-    AMDTDeviceInfoUtils* pDeviceInfo = AMDTDeviceInfoUtils::Instance();
-
-    if (pDeviceInfo != nullptr)
-    {
-        // Numerical representation of the HW generation.
-        std::string deviceGfxIp;
-
-        // Convert the HW generation to the amdspv string.
-        bool isDeviceHwGenExtracted = GetGfxIpForVulkan(pDeviceInfo, vulkanOptions, deviceGfxIp);
-
-        if (isDeviceHwGenExtracted && !deviceGfxIp.empty())
-        {
-            // Build the command for invoking amdspv.
-            std::stringstream cmd;
-            cmd << ambdbilPath;
-
-            if (vulkanOptions.m_optLevel != -1)
+            if (line.find(CLI_VK_BACKEND_STR_ADAPTER) == 0)
             {
-                cmd << " -O" << std::to_string(vulkanOptions.m_optLevel) << " ";
-            }
-
-            cmd << " -Dall -l -gfxip " << deviceGfxIp << " -set ";
-
-            if ((ret = AddInputFileNames(vulkanOptions, cmd)) == beKA::beStatus_SUCCESS)
-            {
-                AddOutputFileNames(vulkanOptions, cmd);
-
-                // Redirect build log to a temporary file.
-                const gtString AMPSPV_TMP_OUTPUT_FILE = L"amdspvTempFile.txt";
-                osFilePath tmpFilePath(osFilePath::OS_TEMP_DIRECTORY);
-                tmpFilePath.setFileName(AMPSPV_TMP_OUTPUT_FILE);
-
-                // Delete the log file if it already exists.
-                if (tmpFilePath.exists())
+                info.id = id++;
+                if (std::getline(outStream, line) && (offset = line.find(CLI_VK_BACKEND_STR_ADAPTER_NAME)) != std::string::npos)
                 {
-                    osFile tmpLogFile(tmpFilePath);
-                    tmpLogFile.deleteFile();
+                    info.name = line.substr(offset + CLI_VK_BACKEND_STR_ADAPTER_NAME.size());
                 }
-
-                cmd << "out.glslLog=\"" << tmpFilePath.asString().asASCIICharArray() << "\" ";
-
-                // No default output (only generate the output files that we explicitly specified).
-                cmd << "defaultOutput=0";
-
-                // Launch amdspv.
-                gtString amdspvOutput;
-                beUtils::PrintCmdLine(cmd.str(), printCmd);
-                bool isLaunchSuccess = osExecAndGrabOutput(cmd.str().c_str(), cancelSignal, amdspvOutput);
-
-                if (isLaunchSuccess)
+                if (std::getline(outStream, line) && (offset = line.find(CLI_VK_BACKEND_STR_ADAPTER_DRIVER)) != std::string::npos)
                 {
-                    // This is how amdspv signals success.
-                    const gtString AMDSPV_SUCCESS_TOKEN = L"SUCCESS!";
-
-                    // Check if the output files were generated and amdspv returned "success".
-                    if (amdspvOutput.find(AMDSPV_SUCCESS_TOKEN) == std::string::npos)
-                    {
-                        ret = beKA::beStatus_VulkanAmdspvCompilationFailure;
-
-                        // Read the build log.
-                        if (tmpFilePath.exists())
-                        {
-                            // Read the build log.
-                            gtString compilerOutput;
-                            std::ifstream file(tmpFilePath.asString().asASCIICharArray());
-                            std::string tmpCmdOutput((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-                            buildLog << tmpCmdOutput.c_str();
-
-                            // Delete the temporary file.
-                            osFile fileToDelete(tmpFilePath);
-                            fileToDelete.deleteFile();
-                        }
-
-                        // Let's end the build log with the error that was provided by the backend.
-                        if (!amdspvOutput.isEmpty())
-                        {
-                            buildLog << "Error: " << amdspvOutput << L"\n";
-                        }
-                    }
-                    else if (!VerifyAmdspvOutput(vulkanOptions))
-                    {
-                        ret = beKA::beStatus_FailedOutputVerification;
-                    }
-                    else
-                    {
-                        ret = beKA::beStatus_SUCCESS;
-
-                        // Delete the ISA binaries if they are not required.
-                        if (!vulkanOptions.m_isAmdIsaBinariesRequired)
-                        {
-                            beUtils::DeleteOutputFiles(vulkanOptions.m_isaBinaryFiles);
-                        }
-                    }
+                    info.vkDriverVersion = line.substr(offset + CLI_VK_BACKEND_STR_ADAPTER_DRIVER.size());
                 }
-                else
+                if (std::getline(outStream, line) && (offset = line.find(CLI_VK_BACKEND_STR_ADAPTER_VULKAN)) != std::string::npos)
                 {
-                    ret = beKA::beStatus_VulkanAmdspvLaunchFailure;
+                    info.vkAPIVersion = line.substr(offset + CLI_VK_BACKEND_STR_ADAPTER_VULKAN.size());
                 }
+                gpuInfo.push_back(info);
             }
         }
-        else
+    }
+
+    return status;
+}
+
+beKA::beStatus beProgramBuilderVulkan::CompileSrcToSpirvBinary(const Config& config,
+                                                         const std::string& srcFile,
+                                                         const std::string& spvFile,
+                                                         bePipelineStage stage,
+                                                         bool isHlsl,
+                                                         std::string& errText)
+{
+    beStatus status = beStatus_Vulkan_EmptyInputFile;
+    std::string outText;
+
+    if (!srcFile.empty())
+    {
+        std::string glslangOpts = ConstructGlslangOptions(config, srcFile, spvFile, stage, isHlsl);
+        assert(!glslangOpts.empty());
+        if (!glslangOpts.empty())
         {
-            ret = beKA::beStatus_GLUnknownHardwareFamily;
+            status = InvokeGlslang(config.m_cmplrBinPath, glslangOpts,
+                config.m_printProcessCmdLines, outText, errText);
         }
     }
 
-    return ret;
+    return status;
 }
 
-
-bool beProgramBuilderVulkan::GetVulkanVersion(gtString& vkVersion)
+beStatus beProgramBuilderVulkan::InvokeGlslang(const std::string& glslangBinDir, const std::string& cmdLineOptions,
+                                               bool printCmd, std::string& outText, std::string& errText)
 {
-    vkVersion = BE_STR_VULKAN_VERSION;
-    return true;
+    osFilePath  glslangExec;
+    long        exitCode = 0;
+
+    // Use the glslang folder provided by user if it's not empty.
+    // Otherwise, use the default location.
+    if (!glslangBinDir.empty())
+    {
+        gtString  binFolder;
+        binFolder << glslangBinDir.c_str();
+        glslangExec.setFileDirectory(binFolder);
+    }
+    else
+    {
+        osGetCurrentApplicationPath(glslangExec, false);
+        glslangExec.appendSubDirectory(GLSLANG_ROOT_DIR);
+        glslangExec.appendSubDirectory(GLSLANG_BIN_DIR);
+    }
+    glslangExec.setFileName(GLSLANG_EXEC);
+    glslangExec.setFileExtension(GLSLANG_EXEC_EXT);
+
+    // Clear the error message buffer.
+    errText.clear();
+
+    kcUtils::ProcessStatus  status = kcUtils::LaunchProcess(glslangExec.asString().asASCIICharArray(),
+                                                            cmdLineOptions,
+                                                            "",
+                                                            PROCESS_WAIT_INFINITE,
+                                                            printCmd,
+                                                            outText,
+                                                            errText,
+                                                            exitCode);
+
+    // If the output was streamed to stdout, grab it from there.
+    if (errText.empty() && !outText.empty())
+    {
+        errText = outText;
+    }
+
+    return (status == kcUtils::ProcessStatus::Success ? beStatus_SUCCESS : beStatus_Vulkan_GlslangLaunchFailed);
 }
 
-bool beProgramBuilderVulkan::GetSupportedDevices(std::set<std::string>& deviceList)
+beStatus beProgramBuilderVulkan::InvokeSpvTool(beSpvTool tool, const std::string& spvToolsBinDir, const std::string& cmdLineOptions,
+                                               bool printCmd, std::string& outMsg, std::string& errMsg)
 {
-    std::vector<GDT_GfxCardInfo> tmpCardList;
-    bool ret = beUtils::GetAllGraphicsCards(tmpCardList, deviceList);
-    return ret;
+    osFilePath  spvDisExec;
+    long        exitCode = 0;
+
+    if (!spvToolsBinDir.empty())
+    {
+        gtString  binFolder;
+        binFolder << spvToolsBinDir.c_str();
+        spvDisExec.setFileDirectory(binFolder);
+    }
+    else
+    {
+        osGetCurrentApplicationPath(spvDisExec, false);
+        spvDisExec.appendSubDirectory(GLSLANG_ROOT_DIR);
+        spvDisExec.appendSubDirectory(GLSLANG_BIN_DIR);
+    }
+
+    const gtString spvToolExecName = ( tool == beSpvTool::Assembler ? SPIRV_AS_EXEC :
+                                       tool == beSpvTool::Disassembler ? SPIRV_DIS_EXEC :
+                                       L"");
+
+    spvDisExec.setFileName(spvToolExecName);
+    spvDisExec.setFileExtension(VULKAN_BACKEND_EXEC_EXT);
+
+    kcUtils::ProcessStatus  status = kcUtils::LaunchProcess(spvDisExec.asString().asASCIICharArray(),
+                                                            cmdLineOptions,
+                                                            "",
+                                                            PROCESS_WAIT_INFINITE,
+                                                            printCmd,
+                                                            outMsg,
+                                                            errMsg,
+                                                            exitCode);
+
+    return (status == kcUtils::ProcessStatus::Success ? beStatus_SUCCESS : beStatus_Vulkan_SpvToolLaunchFailed);
+}
+
+beStatus beProgramBuilderVulkan::InvokeVulkanBackend(const std::string& cmdLineOptions, bool printCmd,
+                                                     std::string& outText, std::string& errText)
+{
+    osFilePath  vkBackendExec;
+    long        exitCode = 0;
+
+    // Construct the path to the VulkanBackend executable.
+    osGetCurrentApplicationPath(vkBackendExec, false);
+    vkBackendExec.appendSubDirectory(VULKAN_BACKEND_ROOT_DIR);
+    vkBackendExec.appendSubDirectory(VULKAN_BACKEND_BIN_DIR);
+    vkBackendExec.setFileName(VULKAN_BACKEND_EXEC);
+    vkBackendExec.setFileExtension(VULKAN_BACKEND_EXEC_EXT);
+
+    kcUtils::ProcessStatus  status = kcUtils::LaunchProcess(vkBackendExec.asString().asASCIICharArray(),
+                                                            cmdLineOptions,
+                                                            "",
+                                                            PROCESS_WAIT_INFINITE,
+                                                            printCmd,
+                                                            outText,
+                                                            errText,
+                                                            exitCode);
+
+    return (status == kcUtils::ProcessStatus::Success ? beStatus_SUCCESS : beStatus_Vulkan_BackendLaunchFailed);
+}
+
+beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string& loaderDebug,
+                                                    const beVkPipelineFiles& spirvFiles,
+                                                    const beVkPipelineFiles& isaFiles,
+                                                    const beVkPipelineFiles& statsFiles,
+                                                    const std::string& binFile,
+                                                    const std::string& psoFile,
+                                                    const std::string& icdFile,
+                                                    const std::string& validationOutput,
+                                                    const std::string& validationOutputRedirection,
+                                                    const std::string& device,
+                                                    bool printCmd,
+                                                    std::string& errMsg)
+{
+    beStatus  status = beStatus_Vulkan_BackendLaunchFailed;
+    std::string stdOutText, stdErrText;
+
+    // Construct the command for invoking the Vulkan backend.
+    std::string opts = ConstructVulkanBackendOptions(loaderDebug, spirvFiles, isaFiles, statsFiles, binFile, psoFile, icdFile, validationOutput, device);
+    assert(!opts.empty());
+    if (!opts.empty())
+    {
+        status = InvokeVulkanBackend(opts, printCmd, stdOutText, stdErrText);
+
+        // Check if some output files have not been generated for some reason.
+        if (status == beStatus_SUCCESS && !VerifyOutputFiles(spirvFiles, isaFiles, statsFiles))
+        {
+            status = beStatus_Vulkan_BackendCompileFailed;
+            errMsg = stdErrText;
+        }
+        else if (!loaderDebug.empty())
+        {
+            rgLog::stdOut << std::endl << STR_LOADER_DEBUG_INFO_BEGIN << std::endl <<
+                std::endl << stdErrText << std::endl << STR_LOADER_DEBUG_INFO_END << std::endl;
+        }
+
+        // Print the Vulkan backend's output.
+        if (!stdOutText.empty())
+        {
+            rgLog::stdOut << std::endl << stdOutText << std::endl;
+        }
+
+        // Dump the Vulkan validation info to the output file/stdout and log file.
+        if (!validationOutputRedirection.empty())
+        {
+            CopyValidatioInfo(validationOutput, validationOutputRedirection);
+        }
+    }
+
+    return status;
+}
+
+beStatus beProgramBuilderVulkan::DisassembleSpv(const std::string& spvToolsBinDir, const std::string& spvFilePath,
+                                                const std::string& spvDisFilePath, bool printCmd, std::string& errMsg)
+{
+    beStatus status = beStatus_Vulkan_SpvDisasmFailed;
+    const std::string& opts = ConstructSpvDisOptions(spvFilePath, spvDisFilePath);
+    if (!opts.empty())
+    {
+        std::string outMsg;
+        status = InvokeSpvTool(beSpvTool::Disassembler, spvToolsBinDir, opts, printCmd, outMsg, errMsg);
+
+        // Check if the spv-dis has generated expected output file.
+        if (status == beStatus_SUCCESS)
+        {
+            // Dump disassembly output to the stdout if no output file name is specified.
+            if (spvDisFilePath.empty())
+            {
+                rgLog::stdOut << outMsg << std::endl;
+            }
+            else if (!kcUtils::FileNotEmpty(spvDisFilePath))
+            {
+                status = beStatus_Vulkan_SpvDisasmFailed;
+            }
+        }
+    }
+
+    return status;
+}
+
+beStatus beProgramBuilderVulkan::AssembleSpv(const std::string& spvToolsBinDir, const std::string& spvTxtFilePath,
+                                             const std::string& spvFilePath, bool printCmd, std::string& errMsg)
+{
+    beStatus status = beStatus_Vulkan_SpvAsmFailed;
+    const std::string& opts = ConstructSpvAsmOptions(spvTxtFilePath, spvFilePath);
+    if (!opts.empty())
+    {
+        std::string outMsg;
+        status = InvokeSpvTool(beSpvTool::Assembler, spvToolsBinDir, opts, printCmd, outMsg, errMsg);
+
+        // Check if the assembler has generated expected output file.
+        if (status == beStatus_SUCCESS && !kcUtils::FileNotEmpty(spvFilePath))
+        {
+            status = beStatus_Vulkan_SpvAsmFailed;
+        }
+    }
+
+    return status;
+}
+
+beKA::beStatus beProgramBuilderVulkan::PreprocessSource(const Config& config, const std::string& glslangBinDir, const std::string& inputFile,
+                                                  bool isHlsl, bool printCmd, std::string& output, std::string& errMsg)
+{
+    beStatus status = beStatus_Vulkan_PreprocessFailed;
+    const std::string& opts = ConstructGlslangOptions(config, inputFile, "", bePipelineStage::Count, isHlsl, true);
+    assert(!opts.empty());
+    if (!opts.empty())
+    {
+        status = InvokeGlslang(glslangBinDir, opts, printCmd, output, errMsg);
+    }
+
+    return status;
 }

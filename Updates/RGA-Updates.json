@@ -1,0 +1,67 @@
+{
+    "SchemaVersion": "1.6",
+    "Releases" : [
+        {
+            "ReleaseVersion" : {
+                "Major" : 2,
+                "Minor" : 1,
+                "Patch" : 0,
+                "Build" : 1029
+            },
+            "ReleaseDate": "2019-03-15",
+            "ReleaseTitle": "Radeon GPU Analyzer 2.1",
+            "ReleasePlatforms": [ "Windows" ],
+            "ReleaseType" : "GA",
+            "ReleaseTags" : [ "Windows", "GA", "OpenCL", "Vulkan" ],
+            "InfoPageLinks": [
+                {
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases",
+                    "Description": "The Radeon GPU Analyzer Releases page on Github."
+                },
+                {
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.1/RGA-2.1-ReleaseNotes.pdf",
+                    "Description": "Release Notes."
+                }
+            ],
+            "DownloadLinks": [
+                {
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.1/rga-windows-2.1.msi",
+                    "PackageType" : "MSI"
+                },
+                {
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.1/rga-windows-x64-2.1.zip",
+                    "PackageType" : "ZIP"
+                }
+            ]
+        },
+        {
+            "ReleaseVersion" : {
+                "Major" : 2,
+                "Minor" : 1,
+                "Patch" : 0,
+                "Build" : 971
+            },
+            "ReleaseDate": "2019-03-15",
+            "ReleaseTitle": "Radeon GPU Analyzer 2.1",
+            "ReleasePlatforms": [ "Ubuntu" ],
+            "ReleaseType" : "GA",
+            "ReleaseTags" : [ "Ubuntu", "GA", "OpenCL", "Vulkan" ],
+            "InfoPageLinks": [
+                {
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases",
+                    "Description": "The Radeon GPU Analyzer Releases page on Github."
+                },
+                {
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.1/RGA-2.1-ReleaseNotes.pdf",
+                    "Description": "Release Notes."
+                }
+            ],
+            "DownloadLinks": [
+                {
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.1/rga-linux-2.1.tgz",
+                    "PackageType" : "TAR"
+                }
+            ]
+        }
+    ]
+}

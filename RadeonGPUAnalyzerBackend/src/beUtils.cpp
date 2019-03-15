@@ -7,23 +7,39 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include <cctype>
 
 // Infra.
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTBaseTools/Include/gtAssert.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osFile.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local.
-#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
-#include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beStringConstants.h>
 #include <DeviceInfoUtils.h>
 #include <DeviceInfo.h>
 
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - BEGIN ***
 
+// Converts string to its lower-case version.
+std::string ToLower(const std::string& str)
+{
+    std::string lstr = str;
+    std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](const char& c) {return std::tolower(c); });
+    return lstr;
+}
+
 // Retrieves the list of devices according to the given HW generation.
 static void AddGenerationDevices(GDT_HW_GENERATION hwGen, std::vector<GDT_GfxCardInfo>& cardList,
-    std::set<std::string> &uniqueNamesOfPublishedDevices)
+                                 std::set<std::string> &uniqueNamesOfPublishedDevices, bool convertToLower = false)
 {
     std::vector<GDT_GfxCardInfo> cardListBuffer;
     if (AMDTDeviceInfoUtils::Instance()->GetAllCardsInHardwareGeneration(hwGen, cardListBuffer))
@@ -32,7 +48,7 @@ static void AddGenerationDevices(GDT_HW_GENERATION hwGen, std::vector<GDT_GfxCar
 
         for (const GDT_GfxCardInfo& cardInfo : cardList)
         {
-            uniqueNamesOfPublishedDevices.insert(cardInfo.m_szCALName);
+            uniqueNamesOfPublishedDevices.insert(convertToLower ? ToLower(cardInfo.m_szCALName) : cardInfo.m_szCALName);
         }
     }
 }
@@ -139,20 +155,20 @@ bool beUtils::GfxCardInfoSortPredicate(const GDT_GfxCardInfo& a, const GDT_GfxCa
     return a.m_deviceID < b.m_deviceID;
 }
 
-bool beUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& cardList, std::set<std::string>& uniqueNamesOfPublishedDevices)
+bool beUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& cardList,
+                                  std::set<std::string>& uniqueNamesOfPublishedDevices,
+                                  bool convertToLower)
 {
-    bool ret = true;
-
-    // Retrieve the list of devices for every relevant hardware generations.
-    AddGenerationDevices(GDT_HW_GENERATION_SOUTHERNISLAND, cardList, uniqueNamesOfPublishedDevices);
-    AddGenerationDevices(GDT_HW_GENERATION_SEAISLAND, cardList, uniqueNamesOfPublishedDevices);
-    AddGenerationDevices(GDT_HW_GENERATION_VOLCANICISLAND, cardList, uniqueNamesOfPublishedDevices);
-    AddGenerationDevices(GDT_HW_GENERATION_GFX9, cardList, uniqueNamesOfPublishedDevices);
+     // Retrieve the list of devices for every relevant hardware generations.
+    AddGenerationDevices(GDT_HW_GENERATION_SOUTHERNISLAND, cardList, uniqueNamesOfPublishedDevices, convertToLower);
+    AddGenerationDevices(GDT_HW_GENERATION_SEAISLAND, cardList, uniqueNamesOfPublishedDevices, convertToLower);
+    AddGenerationDevices(GDT_HW_GENERATION_VOLCANICISLAND, cardList, uniqueNamesOfPublishedDevices, convertToLower);
+    AddGenerationDevices(GDT_HW_GENERATION_GFX9, cardList, uniqueNamesOfPublishedDevices, convertToLower);
 
     // Sort the data.
     std::sort(cardList.begin(), cardList.end(), beUtils::GfxCardInfoSortPredicate);
 
-    return ret;
+    return (!cardList.empty() && !uniqueNamesOfPublishedDevices.empty());
 }
 
 bool beUtils::GetMarketingNameToCodenameMapping(std::map<std::string, std::set<std::string>>& cardsMap)
@@ -211,7 +227,7 @@ void beUtils::DeleteFile(const gtString& filePath)
     }
 }
 
-bool  beUtils::isFilePresent(const std::string& fileName)
+bool  beUtils::IsFilePresent(const std::string& fileName)
 {
     bool  ret = true;
     if (!fileName.empty())
@@ -222,10 +238,17 @@ bool  beUtils::isFilePresent(const std::string& fileName)
     return ret;
 }
 
+std::string beUtils::GetFileExtension(const std::string& fileName)
+{
+    size_t offset = fileName.rfind('.');
+    const std::string& ext = (offset != std::string::npos && ++offset < fileName.size()) ? fileName.substr(offset) : "";
+    return ext;
+}
+
 void beUtils::PrintCmdLine(const std::string & cmdLine, bool doPrint)
 {
     if (doPrint)
     {
-        std::cout << std::endl << BE_STR_LAUNCH_EXTERNAL_PROCESS << cmdLine << std::endl;
+        std::cout << std::endl << BE_STR_LAUNCH_EXTERNAL_PROCESS << cmdLine << std::endl << std::endl;
     }
 }

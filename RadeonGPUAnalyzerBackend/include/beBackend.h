@@ -16,7 +16,7 @@
 #define USE_POINTER_SINGLETON 1
 #include <TSingleton.h>
 
-#include "RadeonGPUAnalyzerBackend/include/beProgramBuilder.h"
+#include "RadeonGPUAnalyzerBackend/Include/beProgramBuilder.h"
 
 
 #ifdef _WIN32
@@ -37,7 +37,7 @@ using namespace beKA;
 
 /// Kernel Analyzer Backend: control the flow from UI/CLI to compiler dll's
 //       Note: Don't include inline member functions here. It will make the Windows linker complain about duplicate functions.
-class RGA_BACKEND_DECLDIR Backend : public TSingleton<Backend>
+class Backend : public TSingleton<Backend>
 {
     /// TSingleton needs to be able to use our constructor.
     friend class TSingleton<Backend>;

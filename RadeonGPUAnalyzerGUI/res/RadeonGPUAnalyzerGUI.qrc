@@ -3,20 +3,42 @@
         <file>stylesheets/rgFileMenuStyle.qss</file>
         <file>stylesheets/rgMainWindowStyle.qss</file>
         <file>stylesheets/rgApplicationStyle.qss</file>
+        <file>icons/addElementIcon.svg</file>
         <file>icons/addFileIcon.svg</file>
+        <file>icons/arrowDown.svg</file>
+        <file>icons/arrowLeft.svg</file>
+        <file>icons/arrowRight.svg</file>
+        <file>icons/arrowUp.svg</file>
         <file>icons/newFileIcon.svg</file>
         <file>icons/closeIcon.svg</file>
         <file>icons/clearIcon.svg</file>
+        <file>icons/collapsedArrow.svg</file>
         <file>icons/contractFileItem.svg</file>
         <file>icons/expandFileItem.svg</file>
+        <file>icons/filterRowsIcon.svg</file>
+        <file>icons/trashCan.svg</file>
         <file>icons/viewMinimizeIcon.svg</file>
         <file>icons/viewMinimizeIconHover.svg</file>
         <file>icons/viewMaximizeIcon.svg</file>
         <file>icons/viewMaximizeIconHover.svg</file>
         <file>icons/gearIcon.svg</file>
         <file>icons/rgaIcon.svg</file>
+        <file>icons/findPreviousIcon.svg</file>
         <file>icons/findNextIcon.svg</file>
         <file>icons/magnifyingGlassIcon.svg</file>
         <file>icons/correlationWarningIcon.svg</file>
+        <file>icons/ApiLogos/openCLIconWide.png</file>
+        <file>icons/ApiLogos/vulkanIcon.png</file>
+        <file>stylesheets/OpenCL/rgApplicationStyleOpenCL.qss</file>
+        <file>stylesheets/OpenCL/rgMainWindowStyleOpenCL.qss</file>
+        <file>stylesheets/OpenCL/rgFileMenuStyleOpenCL.qss</file>
+        <file>stylesheets/Vulkan/rgApplicationStyleVulkan.qss</file>
+        <file>stylesheets/Vulkan/rgMainWindowStyleVulkan.qss</file>
+        <file>icons/gearIconWhite.svg</file>
+        <file>icons/checkedDisabledIcon.svg</file>
+        <file>icons/stateSettingsCube.svg</file>
+        <file>stylesheets/Vulkan/rgFileMenuStyleVulkan.qss</file>
+        <file>icons/deleteIcon.svg</file>
+        <file>icons/notificationIcon.svg</file>
     </qresource>
 </RCC>

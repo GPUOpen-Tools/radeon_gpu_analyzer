@@ -11,23 +11,30 @@
 #include <iterator>
 
 // Local.
-#include <RadeonGPUAnalyzerBackend/include/beD3DIncludeManager.h>
-#include <RadeonGPUAnalyzerBackend/include/beProgramBuilderDX.h>
-#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
-#include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
+#include <RadeonGPUAnalyzerBackend/Include/beD3DIncludeManager.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderDX.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beStringConstants.h>
 #include <DX10AsmInterface.h>
 #include <DX10AsmBuffer.h>
 #include <DeviceInfoUtils.h>
 #include <D3D10ShaderObject.h>
 
 // Infra.
-#include <AMDTBaseTools/Include/gtAssert.h>
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTBaseTools/Include/gtString.h>
+#include <AMDTBaseTools/Include/gtAssert.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osDirectory.h>
 #include <AMDTOSWrappers/Include/osModule.h>
 #include <AMDTOSWrappers/Include/osApplication.h>
 #include <AMDTOSWrappers/Include/osProcess.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 using namespace std;
 using namespace D3D10ShaderObject;
@@ -564,7 +571,7 @@ beKA::beStatus beProgramBuilderDX::CompileDXAsm(const string& programSource, con
     return beStatus_SUCCESS;
 }
 
-beKA::beStatus beProgramBuilderDX::Compile(beKA::SourceLanguage sourceLanguage, const string& programSource, const DXOptions& dxOptions)
+beKA::beStatus beProgramBuilderDX::Compile(RgaMode mode, const string& programSource, const DXOptions& dxOptions)
 {
     if (!m_bIsInitialized)
     {
@@ -576,19 +583,11 @@ beKA::beStatus beProgramBuilderDX::Compile(beKA::SourceLanguage sourceLanguage, 
 
     beStatus beRet = beStatus_General_FAILED;
 
-    if (sourceLanguage == SourceLanguage_HLSL)
+    if (mode == Mode_HLSL)
     {
         beRet = CompileHLSL(programSource, dxOptions);
     }
-    else if (sourceLanguage == SourceLanguage_DXasm)
-    {
-        beRet = CompileDXAsm(programSource, dxOptions);
-    }
-    else if (sourceLanguage == SourceLanguage_DXasmT)
-    {
-        beRet = CompileDXAsmT(programSource, dxOptions);
-    }
-    else if (sourceLanguage == SourceLanguage_AMDIL)
+    else if (mode == Mode_AMDIL)
     {
         beRet = CompileAMDIL(programSource, dxOptions);
     }
@@ -697,6 +696,18 @@ beKA::beStatus beProgramBuilderDX::GetStatistics(const string& device, const str
                 analysis.numAluInst = pStats->numAluInst;
                 analysis.numControlFlowInst = pStats->numControlFlowInst;
                 analysis.numTfetchInst = pStats->numTfetchInst;
+
+                // Workaround for LDS driver issue.
+                std::string deviceLowerCase = device;
+                std::transform(deviceLowerCase.begin(), deviceLowerCase.end(), deviceLowerCase.begin(), ::tolower);
+                if (deviceLowerCase.compare("capeverde") != 0 &&
+                    deviceLowerCase.compare("pitcairn") != 0 &&
+                    deviceLowerCase.compare("oland") != 0 &&
+                    deviceLowerCase.compare("tahiti") != 0)
+                {
+                    // GFX7 or later has 64KB of LDS available.
+                    analysis.LDSSizeAvailable = 65536;
+                }
 
                 // We are done.
                 ret = beKA::beStatus_SUCCESS;

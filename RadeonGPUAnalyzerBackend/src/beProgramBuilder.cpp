@@ -3,8 +3,8 @@
 //=================================================================
 
 // Local.
-#include <include/beProgramBuilder.h>
-#include <RadeonGPUAnalyzerBackend/emulator/Parser/ISAParser.h>
+#include <Include/beProgramBuilder.h>
+#include <RadeonGPUAnalyzerBackend/Emulator/Parser/ISAParser.h>
 
 using namespace std;
 

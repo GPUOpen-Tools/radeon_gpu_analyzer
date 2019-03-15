@@ -4,9 +4,10 @@
 // Qt.
 #include <QFileDialog>
 #include <QSignalMapper>
+#include <QValidator>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgGoToLineDialog.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgGoToLineDialog.h>
 
 
 rgGoToLineDialog::rgGoToLineDialog(int maxLineNumber, QWidget* pParent) :

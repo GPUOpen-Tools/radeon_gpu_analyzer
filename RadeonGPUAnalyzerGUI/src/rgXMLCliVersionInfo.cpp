@@ -6,11 +6,11 @@
 #include <tinyxml2/Include/tinyxml2.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgConfigFile.h>
-#include <RadeonGPUAnalyzerGUI/include/rgXMLCliVersionInfo.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
-#include <RadeonGPUAnalyzerGUI/include/rgXMLUtils.h>
-#include <Utils/include/rgaXMLConstants.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgConfigFile.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgXMLCliVersionInfo.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgXMLUtils.h>
+#include <Utils/Include/rgaXMLConstants.h>
 
 struct ArchitectureNameSearcher
 {

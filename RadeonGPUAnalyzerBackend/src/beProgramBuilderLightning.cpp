@@ -1,29 +1,31 @@
 
 // Infra
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osDirectory.h>
 #include <AMDTBaseTools/Include/gtAssert.h>
 #include <AMDTOSWrappers/Include/osProcess.h>
 #include <AMDTOSWrappers/Include/osApplication.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Yaml
 #include <yaml-cpp/yaml.h>
 
 // Local
-#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
-#include <RadeonGPUAnalyzerBackend/include/beUtils.h>
-#include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
-#include <RadeonGPUAnalyzerBackend/emulator/Parser/ISAParser.h>
-#include "../include/beProgramBuilderLightning.h"
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beStringConstants.h>
+#include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderLightning.h>
+#include <RadeonGPUAnalyzerBackend/Emulator/Parser/ISAParser.h>
 
 // *****************************************
 // *** INTERNALLY LINKED SYMBOLS - START ***
 // *****************************************
-
-// The include and lib folders are relative to the LC_OPENCL_ROOT_FOLDER.
-const gtString  LC_OPENCL_BIN_DIR     = L"bin";
-const gtString  LC_OPENCL_INCLUDE_DIR = L"include";
-const gtString  LC_OPENCL_LIB_DIR     = L"lib/bitcode";
 
 const gtString               LC_OPENCL_INCLUDE_FILE = L"opencl-c.h";
 const std::vector<gtString>  LC_OPENCL_LIB_FILES    = { L"opencl.amdgcn.bc", L"ockl.amdgcn.bc", L"irif.amdgcn.bc", L"ocml.amdgcn.bc",
@@ -45,13 +47,16 @@ const std::string  CODEOBJ_METADATA_END_TOKEN    = "\n...";
 
 const std::string  OBJDUMP_METADATA_OPTION_TOKEN = "-amdgpu-code-object-metadata";
 
-const std::string  COMPILER_OCL_TRIPLE_SWITCH    = "--target=amdgcn-amd-amdhsa-amdgizcl";
+const std::string  COMPILER_OCL_TRIPLE_SWITCH    = "--target=amdgcn-amd-amdhsa";
 const std::string  COMPILER_OCL_INCLUDE_SWITCH   = "-include ";
 const std::string  COMPILER_OCL_LIB_SWITCH       = "-Xclang -mlink-bitcode-file -Xclang ";
 const std::string  COMPILER_DEVICE_SWITCH        = "-mcpu=";
 const std::string  COMPILER_VERSION_SWITCH       = "--version";
 const std::string  COMPILER_PREPROC_SWITCH       = "-E";
-const std::string  COMPILER_DUMP_IL_SWITCH       = "-mllvm --print-after-all";
+
+// This flag is set to dump LLVM IR for 1st pass only instead of all passes.
+// This is used to prevent compilation hanging for real world kernels.
+const std::string  COMPILER_DUMP_IL_SWITCH       = "-mllvm --print-before=amdgpu-opencl-12-adapter";
 const std::string  COMPILER_DEBUG_INFO_SWITCH    = "-g";
 const std::string  COMPILER_OPT_LEVEL_SWITCH     = "-O";
 
@@ -88,8 +93,6 @@ const std::string  BINARY_SYMBOL_SIZE_KEY        = "Size: ";
 // ***************************************
 
 // Constants
-
-static const  unsigned long  PROCESS_WAIT_INFINITE             = 0xFFFFFFFF;
 
 static const  unsigned long  RGA_ROCM_COMPILER_EXEC_TIMEOUT_MS = PROCESS_WAIT_INFINITE;
 static const  unsigned long  RGA_ROCM_PREPROC_TIMEOUT_MS       = PROCESS_WAIT_INFINITE;
@@ -138,21 +141,21 @@ beKA::beStatus beProgramBuilderLightning::GetDeviceTable(std::vector<GDT_GfxCard
     return beKA::beStatus();
 }
 
-beKA::beStatus beProgramBuilderLightning::GetCompilerVersion(SourceLanguage lang, const std::string& userBinFolder, bool printCmd, std::string& outText)
+beKA::beStatus beProgramBuilderLightning::GetCompilerVersion(RgaMode mode, const std::string& userBinFolder, bool printCmd, std::string& outText)
 {
     std::string  errText;
 
-    beKA::beStatus  status = InvokeCompiler(lang, userBinFolder, COMPILER_VERSION_SWITCH, printCmd, outText, errText);
+    beKA::beStatus  status = InvokeCompiler(mode, userBinFolder, COMPILER_VERSION_SWITCH, printCmd, outText, errText);
 
     return status;
 }
 
-beKA::beStatus beProgramBuilderLightning::AddCompilerStandardOptions(beKA::SourceLanguage lang, const CmplrPaths& cmplrPaths, std::string& options)
+beKA::beStatus beProgramBuilderLightning::AddCompilerStandardOptions(RgaMode mode, const CmplrPaths& cmplrPaths, std::string& options)
 {
     std::stringstream  optsStream;
     beKA::beStatus  status = beKA::beStatus_SUCCESS;
 
-    if (lang == beKA::SourceLanguage_Rocm_OpenCL)
+    if (mode == Mode_Rocm_OpenCL)
     {
         // Add target triple.
         optsStream << COMPILER_OCL_TRIPLE_SWITCH;
@@ -216,7 +219,7 @@ beKA::beStatus beProgramBuilderLightning::ConstructOpenCLCompilerOptions(const C
 {
     beKA::beStatus status;
     std::string  standardOptions = "";
-    status = AddCompilerStandardOptions(beKA::SourceLanguage_Rocm_OpenCL, cmplrPaths, standardOptions);
+    status = AddCompilerStandardOptions(Mode_Rocm_OpenCL, cmplrPaths, standardOptions);
     if (status == beKA::beStatus_SUCCESS)
     {
         std::stringstream options;
@@ -299,7 +302,7 @@ beKA::beStatus beProgramBuilderLightning::CompileOpenCLToBinary(const CmplrPaths
     if (status == beKA::beStatus_SUCCESS)
     {
         // Run LC compiler.
-        status = InvokeCompiler(beKA::SourceLanguage_Rocm_OpenCL, cmplrPaths.m_bin, options, printCmd, outText, errText);
+        status = InvokeCompiler(Mode_Rocm_OpenCL, cmplrPaths.m_bin, options, printCmd, outText, errText);
     }
 
     if (status == beKA::beStatus_SUCCESS)
@@ -311,7 +314,7 @@ beKA::beStatus beProgramBuilderLightning::CompileOpenCLToBinary(const CmplrPaths
 }
 
 
-beKA::beStatus beProgramBuilderLightning::InvokeCompiler(beKA::SourceLanguage   lang,
+beKA::beStatus beProgramBuilderLightning::InvokeCompiler(RgaMode                mode,
                                                          const std::string    & userBinFolder,
                                                          const std::string    & cmdLineOptions,
                                                          bool                   printCmd,
@@ -340,7 +343,7 @@ beKA::beStatus beProgramBuilderLightning::InvokeCompiler(beKA::SourceLanguage   
     }
     else
     {
-        if (lang == beKA::SourceLanguage::SourceLanguage_Rocm_OpenCL)
+        if (mode == Mode_Rocm_OpenCL)
         {
             osGetCurrentApplicationPath(lcCompilerExec, false);
             lcCompilerExec.appendSubDirectory(LC_OPENCL_ROOT_DIR);
@@ -409,7 +412,7 @@ beStatus beProgramBuilderLightning::PreprocessOpenCL(const std::string& userBinD
     compilerArgs << " " << LC_OPENCL_DEFS;
     std::string  stdOut, stdErr;
 
-    beStatus  status = InvokeCompiler(SourceLanguage::SourceLanguage_Rocm_OpenCL, userBinDir, compilerArgs.str(),
+    beStatus  status = InvokeCompiler(Mode_Rocm_OpenCL, userBinDir, compilerArgs.str(),
                                       printCmd, stdOut, stdErr, RGA_ROCM_PREPROC_TIMEOUT_MS);
 
     if (status == beStatus_SUCCESS)
@@ -568,7 +571,7 @@ beKA::beStatus beProgramBuilderLightning::ExtractKernelNames(const std::string& 
 
 bool beProgramBuilderLightning::VerifyOutputFile(const std::string & fileName)
 {
-    bool  ret = beUtils::isFilePresent(fileName);
+    bool  ret = beUtils::IsFilePresent(fileName);
 
     return ret;
 }

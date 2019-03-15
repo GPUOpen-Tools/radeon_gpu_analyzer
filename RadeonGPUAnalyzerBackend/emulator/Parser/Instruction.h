@@ -19,10 +19,9 @@
 #include <unordered_map>
 
 #include "DeviceInfo.h"
-#include <RadeonGPUAnalyzerBackend/include/beRGADllBuild.h>
 #include <AMDTBaseTools/Include/gtIgnoreCompilerWarnings.h>
 #include <AMDTBaseTools/Include/gtAssert.h>
-#include <RadeonGPUAnalyzerBackend/include/beStringConstants.h>
+#include <RadeonGPUAnalyzerBackend/Include/beStringConstants.h>
 
 const int NO_LABEL = -1;
 
@@ -84,7 +83,7 @@ const int NO_LABEL = -1;
     /// ISA Instruction
     /// Defines all possible instruction categories [InstructionCategory] and
     /// defines general data/functionality for all instruction`s kinds
-    class RGA_BACKEND_DECLDIR Instruction
+    class Instruction
     {
     public:
 

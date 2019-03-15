@@ -3,7 +3,7 @@
 #include <cassert>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/qt/rgComboBox.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgComboBox.h>
 
 rgComboBox::rgComboBox(QWidget* pParent) : QComboBox(pParent)
 {

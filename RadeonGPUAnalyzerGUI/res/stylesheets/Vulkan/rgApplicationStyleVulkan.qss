@@ -1,0 +1,42 @@
+/********************************************************************/
+/* Frame focus border
+/********************************************************************/
+QFrame:focus,
+QLineEdit:focus,
+rgCheckBox:focus
+{
+    border: 1px solid rgb(224, 30, 55);
+}
+
+rgBuildSettingsViewVulkan #addTargetGPUsButton:focus,
+rgBuildSettingsViewVulkan #includeDirsBrowseButton:focus,
+rgBuildSettingsViewVulkan #predefinedMacrosBrowseButton:focus,
+rgBuildSettingsViewVulkan #ICDLocationBrowseButton:focus,
+rgBuildSettingsViewVulkan #compilerBrowseButton:focus,
+rgBuildSettingsViewVulkan #addTargetGPUsButton:hover,
+rgBuildSettingsViewVulkan #includeDirsBrowseButton:hover,
+rgBuildSettingsViewVulkan #predefinedMacrosBrowseButton:hover,
+rgBuildSettingsViewVulkan #ICDLocationBrowseButton:hover,
+rgBuildSettingsViewVulkan #compilerBrowseButton:hover
+{
+    border: 1px solid rgb(224, 30, 55);
+    background: rgb(240, 240, 240);
+}
+
+rgViewContainer[viewHovered="true"][viewFocused="false"] rgMenuTitlebar #itemBackground,
+rgViewContainer[viewHovered="true"][viewFocused="false"] rgFileMenuTitlebar #itemBackground,
+rgViewContainer[viewHovered="true"][viewFocused="false"] rgStandardTitlebar,
+rgViewContainer[viewHovered="true"][viewFocused="false"] rgSourceEditorTitlebar,
+rgViewContainer[viewHovered="true"][viewFocused="false"] #viewTitlebar
+{
+    border-bottom: 3px solid rgb(135,20,16);
+}
+
+rgViewContainer[viewFocused="true"] rgMenuTitlebar #itemBackground,
+rgViewContainer[viewFocused="true"] rgFileMenuTitlebar #itemBackground,
+rgViewContainer[viewFocused="true"] rgStandardTitlebar,
+rgViewContainer[viewFocused="true"] rgSourceEditorTitlebar,
+rgViewContainer[viewFocused="true"] #viewTitlebar
+{
+    border-bottom: 3px solid rgb(224, 30, 55);
+}

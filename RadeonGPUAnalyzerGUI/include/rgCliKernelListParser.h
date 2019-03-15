@@ -5,8 +5,9 @@
 #include <sstream>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
-#include <RadeonGPUAnalyzerGUI/include/rgUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypesOpenCL.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
 class rgCliKernelListParser
 {
@@ -37,7 +38,7 @@ public:
                 assert(isTokenCountCorrect);
                 if (isTokenCountCorrect)
                 {
-                    // The first token is the entrypoint name.
+                    // The first token is the entry point name.
                     const std::string& entrypointName = nameAndLines[0];
 
                     // The second token is the starting and ending line numbers separated by '-' symbol.

@@ -5,7 +5,7 @@
 #pragma once
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcIStatisticsParser.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcIStatisticsParser.h>
 
 class kcVulkanStatisticsParser :
     public IStatisticsParser
@@ -14,6 +14,6 @@ public:
     kcVulkanStatisticsParser();
     virtual ~kcVulkanStatisticsParser();
 
-    virtual bool ParseStatistics(const gtString& statisticsFilePath, beKA::AnalysisData& parsedStatistics) override;
+    virtual bool ParseStatistics(const std::string& device, const gtString& statisticsFile, beKA::AnalysisData& statistics) override;
 
 };

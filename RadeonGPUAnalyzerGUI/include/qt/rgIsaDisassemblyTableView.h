@@ -31,7 +31,7 @@ public:
     explicit rgIsaDisassemblyTableView(QWidget* pParent = nullptr);
     virtual ~rgIsaDisassemblyTableView() = default;
 
-    // Does the given source file line contribute to this entrypoint disassembly?
+    // Does the given source file line contribute to this entry point disassembly?
     bool IsLineInEntrypoint(int lineIndex);
 
     // Load a disassembly CSV file at the given file path.
@@ -59,7 +59,7 @@ public:
     bool IsSourceLineCorrelated(int lineIndex) const;
 
 protected:
-    // Re-implement keyPressEvent
+    // Re-implement keyPressEvent.
     virtual void keyPressEvent(QKeyEvent* pEvent) override;
 
 signals:
@@ -68,6 +68,36 @@ signals:
 
     // A signal emitted when the requested width of the disassembly table is changed.
     void DisassemblyTableWidthResizeRequested(int tableWidth);
+
+    // A signal emitted when the user clicks on the disassembly table.
+    void FrameFocusInSignal();
+
+    // A signal emitted when the user clicks outside of the disassembly table.
+    void FrameFocusOutSignal();
+
+    // A signal to disable table scroll bar signals.
+    void DisableScrollbarSignals();
+
+    // A signal to enable table scroll bar signals.
+    void EnableScrollbarSignals();
+
+    // A signal to indicate that the target GPU push button gained the focus.
+    void FocusTargetGpuPushButton();
+
+    // A signal to indicate that the column push button gained the focus.
+    void FocusColumnPushButton();
+
+    // A signal to update the current sub widget.
+    void UpdateCurrentSubWidget(DisassemblyViewSubWidgets subWidget);
+
+    // A signal to focus the cli output window.
+    void FocusCliOutputWindow();
+
+    // A signal to focus the source window.
+    void FocusSourceWindow();
+
+    // A signal to switch disassembly view size.
+    void SwitchDisassemblyContainerSize();
 
 public slots:
     // A handler invoked when the user clicks a branch operand label link.
@@ -86,12 +116,15 @@ private slots:
     // Handler invoked when the table's context menu should be opened.
     void HandleOpenContextMenu(const QPoint& widgetClickPosition);
 
-private:
+protected:
     // Connect signals used for the right-click context menu.
     void ConnectContextMenuSignals();
 
     // Connect signals emitted through the table's selection model.
     void ConnectSelectionSignals();
+
+    // Connect signals.
+    void ConnectSignals();
 
     // Determine the begin and end row indices for the current selection.
     bool GetSelectedRowRange(int& minRow, int& maxRow) const;

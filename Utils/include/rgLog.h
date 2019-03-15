@@ -336,7 +336,7 @@ public:
     static void  flush(const Log<DST, LVL>&)
     {
         bool  doFlush = true;
-        if (auto  stream = ms_data.m_streamTable.GetStream(std::this_thread::get_id(), doFlush, true))
+        if (auto stream = ms_data.m_streamTable.GetStream(std::this_thread::get_id(), doFlush, true))
         {
             Push<DST>(stream.get());
         }
@@ -346,7 +346,7 @@ public:
     template<LogDst DST, LogLvl LVL, typename T> friend
     const Log<DST, LVL>&  operator<<(const Log<DST, LVL>& log, const T& data)
     {
-        if (CheckLevel<DST>(LVL))
+        if (CheckLevel<DST>(LVL) && ms_data.m_pLogger != nullptr)
         {
             bool  doFlush;
             if (auto stream = ms_data.m_streamTable.GetStream(std::this_thread::get_id(), doFlush))
@@ -376,13 +376,14 @@ public:
     template<LogDst DST, LogLvl LVL> friend
     const Log<DST, LVL>& operator<<(const Log<DST, LVL>& log, std::ostream&(*f)(std::ostream&))
     {
-        if (CheckLevel<DST>(LVL))
+        if (CheckLevel<DST>(LVL) && ms_data.m_pLogger != nullptr)
         {
             bool  doFlush;
-            if (auto  stream = ms_data.m_streamTable.GetStream(std::this_thread::get_id(), doFlush))
+            if (auto stream = ms_data.m_streamTable.GetStream(std::this_thread::get_id(), doFlush))
             {
                 f(stream.get());
-                if (f == static_cast<std::ostream& (*)(std::ostream&)>(std::endl))
+                if (f == static_cast<std::ostream& (*)(std::ostream&)>(std::endl) ||
+                    f == static_cast<std::ostream& (*)(std::ostream&)>(std::flush))
                 {
                     Push<DST>(stream.get());
                 }
@@ -495,8 +496,15 @@ private:
         assert(ms_data.m_pLogger != nullptr);
         try
         {
-            ms_data.m_pLogger->error(msg);
-            ms_data.m_pLogger->flush();
+            if (ms_data.m_pLogger != nullptr)
+            {
+                ms_data.m_pLogger->error(msg);
+                ms_data.m_pLogger->flush();
+            }
+            else
+            {
+                std::cerr << msg << std::endl;
+            }
         }
         catch (...)
         {
@@ -543,9 +551,24 @@ inline void  rgLog::Push<rgLog::LogDst::_StdOut_>(std::stringstream& stream)
 template<>
 inline void  rgLog::Push<rgLog::LogDst::_StdErr_>(std::stringstream& stream)
 {
-    std::lock_guard<std::mutex>  lock(ms_data.m_consoleLock);
-    std::cerr << stream.str();
-    std::cerr.flush();
+    {
+        std::lock_guard<std::mutex>  lock(ms_data.m_consoleLock);
+        std::cerr << stream.str();
+        std::cerr.flush();
+    }
+
+    // Copy the message to the log file.
+    try
+    {
+        ms_data.m_pLogger->info(stream.str());
+        ms_data.m_pLogger->flush();
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+    catch (...) {}
+
     stream.str("");
 }
 

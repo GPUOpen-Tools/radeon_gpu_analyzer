@@ -6,10 +6,10 @@
 #include <functional>
 
 // Local.
-#include <RadeonGPUAnalyzerCLI/src/kcConfig.h>
-#include <RadeonGPUAnalyzerCLI/src/kcDataTypes.h>
-#include <RadeonGPUAnalyzerCLI/src/kcCliStringConstants.h>
-#include <RadeonGPUAnalyzerCLI/src/kcUtils.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcConfig.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcDataTypes.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCliStringConstants.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
 
 using namespace std;
 
@@ -23,40 +23,44 @@ public:
     // List the adapters installed on the system.
     virtual void ListAdapters(Config& config, LoggingCallBackFunc_t callback);
 
-    // list the driver version
+    // Print the driver version.
     virtual void Version(Config& config, LoggingCallBackFunc_t callback);
 
-    // Print list of known devices
-    virtual bool PrintAsicList(std::ostream& log)
+    // Print list of supported devices.
+    virtual bool PrintAsicList(const Config&)
     {
-        return kcUtils::PrintAsicList(log);
+        return kcUtils::PrintAsicList();
     }
 
-    // Output multiple commands for all commands that requires compilation:
-    // GetBinary, GetIL, GetISA, GetAnlysis, GetMetadata, GetDebugIL, ListKernels
+    // Perform compilation steps.
     virtual void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback) = 0;
 
     // Perform post-compile actions.
-    virtual bool RunPostCompileSteps(const Config& config) const;
+    virtual bool RunPostCompileSteps(const Config& config);
 
-    // Delete all temporary files created by RGA.
-    void DeleteTempFiles() const;
+    // Generates the RGA CLI version info file with the provided name.
+    static bool GenerateVersionInfoFile(const Config& config);
 
-    // Get the list of supported targets for the given mode (source language).
-    static bool  GetSupportedTargets(SourceLanguage lang, std::set<std::string>& targets);
+    // Parse the source file and extract list of entry points (for example, kernels for OpenCL).
+    // Dump the extracted entry points to stdout.
+    virtual bool ListEntries(const Config& config, LoggingCallBackFunc_t callback);
 
 protected:
     // -- Functions --
 
-    // Initialize the list of GPU targets based on device(s) specified in the config.
-    // "supportedDevices" is the list of supported devices. Only targets from this list will be considered.
+    // Convert ISA text to CSV form with additional data.
+    bool GetParsedIsaCSVText(const std::string& isaText, const std::string& device, bool addLineNumbers, std::string& csvText);
+
+    // Initialize the list of GPU targets based on device(s) specified in "devices".
+    // "supportedDevices" is the list of supported devices for the given mode. Only targets from this list will be considered.
     // The matched devices are returned in "matchedDevices" set.
     // If "allowUnknownDevice" is true, no error message will be printed if no matched devices are found.
-    static bool InitRequestedAsicList(const Config& config, const std::set<std::string>& supportedDevices,
+    static bool InitRequestedAsicList(const std::vector<std::string>& devices, RgaMode mode,
+                                      const std::set<std::string>& supportedDevices,
                                       std::set<std::string>& matchedDevices, bool allowUnknownDevice);
 
-    // Generate RGA CLI session metadata file.
-    virtual bool  GenerateSessionMetadata(const Config& config, const rgOutputMetadata& outMetadata) const { return true; }
+    // Store ISA text in the file.
+    beStatus WriteISAToFile(const std::string& fileName, const std::string& isaText);
 
     // Logging callback type.
     bool LogCallBack(const std::string& theString) const
@@ -76,6 +80,4 @@ protected:
 
     // Log callback function
     LoggingCallBackFunc_t   m_LogCallback;
-    // Output Metadata
-    rgOutputMetadata        m_outputMetadata;
 };

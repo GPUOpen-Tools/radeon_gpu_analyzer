@@ -8,6 +8,9 @@
 #include <QTextCharFormat>
 #include <QRegularExpression>
 
+// Local
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
+
 // Hash class for QChar
 namespace std
 {
@@ -52,14 +55,6 @@ class rgSyntaxHighlight : public QSyntaxHighlighter
 public:
     // -- Types --
 
-    // Supported languages
-    enum class Language {
-        OpenCL,
-        GLSL,
-        HLSL,
-        Vulkan
-    };
-
     // Syntax highlighting style
     struct Style {
         QTextCharFormat    keywords;
@@ -72,12 +67,21 @@ public:
 
     // A Language Descriptor structure that contains lists of keywords, types, comment specifiers etc. to be highlighted.
     struct LangDesc {
+        // List of language keywords.
         std::vector<QString>  keywords;
+
+        // List of keyword prefixes. All tokens that start with these prefixes will be highlighted as keywords.
+        std::vector<QString>  keywordPrefixes;
+
+        // List of language types.
         std::vector<QString>  types;
+
+        // List of preprocessor directives.
         std::vector<QString>  preproc;
 
+        // Comments: single-line and multi-line.
         struct {
-            QString    singleLine;
+            QString    singleLineStart;
             QString    multiLineStart;
             QString    multiLineEnd;
         } comments;
@@ -86,10 +90,13 @@ public:
     // -- Methods --
 
     // Constructors
-    rgSyntaxHighlight(QTextDocument *pDoc, Language lang)
+    rgSyntaxHighlight(QTextDocument *pDoc, rgSrcLanguage lang)
         : rgSyntaxHighlight(pDoc, lang, GetDefaultStyle()) {}
 
-    rgSyntaxHighlight(QTextDocument *pDoc, Language lang, const Style& style);
+    rgSyntaxHighlight(QTextDocument *pDoc, rgSrcLanguage lang, const Style& style);
+
+    // Destructor
+    ~rgSyntaxHighlight() = default;
 
     // Change highlighting style
     void SetStyle(Style& style);
@@ -101,28 +108,28 @@ private:
     void highlightBlock(const QString& text) override final;
 
     // Return the default style.
-    Style   GetDefaultStyle();
+    Style GetDefaultStyle();
 
     // Process string. Highlights a string enclosed in quotes (') or double quotes (").
     // Returns offset of first symbol after the closing quote.
-    int     ProcessString(const QString& text, int offset, bool doubleQuote);
+    int ProcessString(const QString& text, int offset, bool doubleQuote);
 
     // Process a function or macro name. Returns "true" and highlight the token if it's a function or macro name.
     // Returns "false" otherwise.
     // "endOffset" is the offset of the last symbol in the token.
-    bool    ProcessFuncName(const QString& text, int beginOffset, int endOffset);
+    bool ProcessFuncName(const QString& text, int beginOffset, int endOffset);
 
     // Process comment. Highlights a single-line comment or a part of multi-line comment belonging to the current block.
     // Returns offset of first symbol after the comment end.
-    int     ProcessComment(const QString& text, int offset, bool isMultiLine);
+    int ProcessComment(const QString& text, int offset, bool isMultiLine);
 
     // Process general token. Highlights the token between "begin" and "end" offsets if it matches with any
     // token from the Token Table.
     // Returns "true" if the token was recognized and highlighted.
-    bool    ProcessToken(const QString& text, int begin, int end);
+    bool ProcessToken(const QString& text, int begin, int end);
 
     // Initialize the Token Table with language elements from corresponding LangDesc and Style structures.
-    void InitTokens(Language lang);
+    void InitTokens(rgSrcLanguage lang);
 
     // -- Types & Data --
 

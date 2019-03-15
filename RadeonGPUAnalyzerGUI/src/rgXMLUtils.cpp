@@ -2,8 +2,9 @@
 #include <tinyxml2/Include/tinyxml2.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
-#include <RadeonGPUAnalyzerGUI/include/rgXMLUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgXMLUtils.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgConfigFileDefinitions.h>
 
 bool rgXMLUtils::ReadNodeTextString(tinyxml2::XMLNode* pNode, std::string& str)
 {
@@ -55,7 +56,5 @@ bool rgXMLUtils::ReadNodeTextBool(tinyxml2::XMLNode* pNode, bool& val)
 
 std::string rgXMLUtils::GetRGADataModelVersion()
 {
-    // The RGA data model version that this build uses.
-    static const char* RGA_DATA_MODEL_VERSION = "2.0";
-    return RGA_DATA_MODEL_VERSION;
+    return RGA_DATA_MODEL;
 }

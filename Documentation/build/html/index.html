@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>The Radeon GPU Analyzer &mdash; Radeon GPU Analyzer 2.0.1 documentation</title>
+  <title>Radeon GPU Analyzer (RGA) &mdash; Radeon GPU Analyzer 2.1 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="Radeon GPU Analyzer 2.0.1 documentation" href="#"/>
+    <link rel="top" title="Radeon GPU Analyzer 2.1 documentation" href="#"/>
         <link rel="next" title="Quickstart" href="quickstart.html"/> 
 
   
@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                2.0.1
+                2.1
               </div>
             
           
@@ -137,7 +137,7 @@
     
       <li><a href="#">Docs</a> &raquo;</li>
         
-      <li>The Radeon GPU Analyzer</li>
+      <li>Radeon GPU Analyzer (RGA)</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -156,24 +156,31 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="the-radeon-gpu-analyzer">
-<h1>The Radeon GPU Analyzer<a class="headerlink" href="#the-radeon-gpu-analyzer" title="Permalink to this headline">¶</a></h1>
-<p>The Radeon GPU Analyzer (RGA) GUI application is an offline compiler and a code analysis tool for OpenCL™ on top of AMD’s LLVM-based Lightning Compiler.</p>
+  <div class="section" id="radeon-gpu-analyzer-rga">
+<h1>Radeon GPU Analyzer (RGA)<a class="headerlink" href="#radeon-gpu-analyzer-rga" title="Permalink to this headline">¶</a></h1>
+<p>Radeon GPU Analyzer (RGA) GUI application is a compiler and code analysis tool.</p>
 <p>The GUI application works on top of the RGA command line tool, which supports a rich set of APIs including Vulkan™, DirectX11® and OpenGL®.</p>
-<p>This documentation will focus on the GUI application. More information about the RGA command line tool can be found in its help manual (“-h” option), or on the <a class="reference external" href="https://github.com/GPUOpen-Tools/RGA">RGA Github page</a>.</p>
+<p>This documentation will focus on the GUI application, which currently supports:</p>
+<ul class="simple">
+<li>Vulkan™ live-driver mode</li>
+<li>OpenCL™ for Rocm, on top AMD’s LLVM-based Lightning compiler</li>
+</ul>
+<p>More information about the RGA command line tool can be found in its help manual (“-h” option), or on the <a class="reference external" href="https://github.com/GPUOpen-Tools/RGA">RGA Github page</a>.</p>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#running-rga">Running RGA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#creating-a-project">Creating a Project</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#generating-disassembly">Generating Disassembly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#installing-and-running-rga">Installing and Running RGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#vulkan-mode">Vulkan® Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#rocm-opencl-mode">ROCm OpenCL™ Mode</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="help_manual.html">Help Manual</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="help_manual.html#the-home-page">The Home Page</a></li>
-<li class="toctree-l2"><a class="reference internal" href="help_manual.html#the-build-view">The Build View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="help_manual.html#installing-and-running-rga">Installing and Running RGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="help_manual.html#vulkan-mode">Vulkan® Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="help_manual.html#rocm-opencl-mode">ROCm OpenCL™ Mode</a></li>
 <li class="toctree-l2"><a class="reference internal" href="help_manual.html#how-to">How To…</a></li>
+<li class="toctree-l2"><a class="reference internal" href="help_manual.html#keyboard-shortcuts">Keyboard Shortcuts</a></li>
 </ul>
 </li>
 </ul>
@@ -222,7 +229,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'2.0.1',
+            VERSION:'2.1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

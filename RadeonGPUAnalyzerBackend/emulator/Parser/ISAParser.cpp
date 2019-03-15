@@ -20,10 +20,17 @@
 // Boost.
 #include <boost/regex.hpp>
 
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4309)
+#endif
 #include <AMDTOSWrappers/Include/osDebugLog.h>
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local.
-#include <include/beStringConstants.h>
+#include <Include/beStringConstants.h>
 #include "ISAParser.h"
 #include "ParserSISOP2.h"
 #include "ParserSISOPK.h"
@@ -48,7 +55,6 @@ static const std::string  ISA_LABEL_TOKEN_1 = "label_";
 static const std::string  ISA_LABEL_TOKEN_2 = "BB";
 static const std::string  ISA_BRANCH_TOKEN  = "branch";
 static const std::string  ISA_CALL_TOKEN    = "call";
-static const std::string  OCL_HEADER_EXT    = ".h";
 
 // ***************************************
 // *** INTERNALLY LINKED SYMBOLS - END ***
@@ -446,20 +452,10 @@ static bool  GetSourceLineInfo(const std::string& isaLine, const std::string& pr
     const size_t  srcLineOffset = 2;
     size_t  colonOffset = 0;
     bool  ret = false;
-
     if (prevIsaLine.find(';') == 0 && isaLine.find(';') == 0 && ((colonOffset = prevIsaLine.rfind(':')) != std::string::npos))
     {
-        // Put zero line numbers for header files since they are not supported by the GUI.
-        if (prevIsaLine.find(OCL_HEADER_EXT) != std::string::npos)
-        {
-            srcLine = "";
-            srcLineNum = 0;
-        }
-        else
-        {
-            srcLine = isaLine.substr(srcLineOffset);
-            srcLineNum = std::atoi(prevIsaLine.substr(colonOffset + 1).c_str());
-        }
+        srcLine = isaLine.substr(srcLineOffset);
+        srcLineNum = std::atoi(prevIsaLine.substr(colonOffset + 1).c_str());
         ret = true;
     }
 

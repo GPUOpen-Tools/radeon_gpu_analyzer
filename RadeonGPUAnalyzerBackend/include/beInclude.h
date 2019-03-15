@@ -31,8 +31,7 @@
 // TODO Where should I get these?
 // For now I've copied them from .../drivers/inc/asic_reg to KernelAnalyzer/Common/asic_reg.
 // ../Common/Src is one plausible location.
-#include "RadeonGPUAnalyzerBackend/include/beRGADllBuild.h"
-#include <RadeonGPUAnalyzerBackend/include/Common/asic_reg/devices.h>
+#include <RadeonGPUAnalyzerBackend/Include/Common/AsicReg/devices.h>
 
 /// Logging callback type.
 typedef void(*LoggingCallBackFuncP)(const std::string&);
@@ -46,21 +45,19 @@ static const CALuint64 CAL_NA_Value_64 = (CALuint64) - 1;
 static const CALuint64 CAL_ERR_Value_64 = (CALuint64) - 2;
 
 /// Supported source language
-enum SourceLanguage
+enum RgaMode
 {
-    SourceLanguage_None,
-    SourceLanguage_Invalid,
-    SourceLanguage_OpenCL,          // cl source of OpenCL kernels.
-    SourceLanguage_GLSL,            // glsl input language for OpenGL (standalone, obsolete).
-    SourceLanguage_GLSL_OpenGL,     // glsl input language for OpenGL Programs.
-    SourceLanguage_GLSL_Vulkan,     // glsl input language for Vulkan Programs.
-    SourceLanguage_SPIRV_Vulkan,    // Binary SPIR-V input for Vulkan Programs.
-    SourceLanguage_SPIRVTXT_Vulkan, // Textual SPIR-V input for Vulkan Programs.
-    SourceLanguage_HLSL,            // D3D/DX input language.
-    SourceLanguage_AMDIL,           // AMDIL.
-    SourceLanguage_DXasm,           // The other D3D/DX input language.
-    SourceLanguage_DXasmT,          // D3D/DX Assembly as Text input language.
-    SourceLanguage_Rocm_OpenCL      // ROCm OpenCL
+    Mode_Invalid  = -1,
+    Mode_None     =  0,
+    Mode_OpenCL,              // Legacy OpenCL (online) mode. Supports OpenCL input files.
+    Mode_Rocm_OpenCL,         // ROCm OpenCL (offline) mode. Supports OpenCL input files.
+    Mode_OpenGL,              // OpenGL mode. Supports GLSL input files.
+    Mode_Vulkan,              // Online Vulkan mode (leverages AMD Graphics driver). Supports GLSL, HLSL and SPIR-V input files.
+    Mode_Vk_Offline,          // Offline Vulkan mode. Supports GLSL input files.
+    Mode_Vk_Offline_Spv,      // Offline Vulkan mode. Supports SPIR-V binary input files.
+    Mode_Vk_Offline_SpvTxt,   // Offline Vulkan mode. Supports SPIR-V text input files.
+    Mode_HLSL,                // DirectX mode. Supports HLSL input files.
+    Mode_AMDIL,               // AMDIL mode. Supports AMDIL input files.
 };
 
 enum BuiltProgramKind
@@ -115,6 +112,19 @@ enum beStatus
     beStatus_VulkanAmdspvLaunchFailure,
     beStatus_VulkanAmdspvCompilationFailure,
     beStatus_VulkanNoInputFile,
+    beStatus_Vulkan_EmptyInputFile,
+    beStatus_Vulkan_GlslangLaunchFailed,
+    beStatus_Vulkan_FrontendCompileFailed,
+    beStatus_Vulkan_BackendLaunchFailed,
+    beStatus_Vulkan_BackendCompileFailed,
+    beStatus_Vulkan_SetEnvVarFailed,
+    beStatus_Vulkan_SpvToolLaunchFailed,
+    beStatus_Vulkan_SpvAsmFailed,
+    beStatus_Vulkan_SpvDisasmFailed,
+    beStatus_Vulkan_ParseStatsFailed,
+    beStatus_Vulkan_ConstructOutFileNameFailed,
+    beStatus_Vulkan_FailedExtractValidationInfo,
+    beStatus_Vulkan_PreprocessFailed,
     beStatus_FailedOutputVerification,
     beStatus_VulkanMixedInputFiles,
     beStatus_shaeCannotLocateAnalyzer,
@@ -126,6 +136,7 @@ enum beStatus
     beStatus_NoISAFileNameProvided,
     beStatus_NoOutputFileGenerated,
     beStatus_ParseIsaToCsvFailed,
+    beStatus_ConstructIsaFileNameFailed,
     beStatus_ConstructParsedIsaFileNameFailed,
     beStatus_WriteParsedIsaFileFailed,
     beStatus_LC_CompilerLaunchFailed,
@@ -171,7 +182,7 @@ enum DeviceTableKind
 struct CompileOptions
 {
     // Source language
-    SourceLanguage      m_SourceLanguage;
+    RgaMode  m_mode;
 
     // Optimization level.
     // -1 : Use compiler default value (not specified by user).
@@ -179,13 +190,13 @@ struct CompileOptions
     //  1 : Minimal optimization.
     //  2 : Optimize for speed (usually, compiler default level).
     //  3 : Maximum optimization (may significantly slow down compilation).
-    int                 m_optLevel    = -1;
+    int   m_optLevel    = -1;
 
     // Indicates whether IL dump is required or not.
-    bool                m_dumpIL      = false;
+    bool  m_dumpIL      = false;
 
     // Indicates whether line number info is required or not.
-    bool                m_lineNumbers = false;
+    bool  m_lineNumbers = false;
 };
 
 /// Object to customize binary output strings.

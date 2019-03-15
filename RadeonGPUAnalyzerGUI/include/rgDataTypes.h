@@ -1,13 +1,101 @@
 #pragma once
 
 // C++.
+#include <array>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
+
+// Qt.
+#include <QMetaType>
+
+// Infra.
+#include <Utils/Include/rgaSharedDataTypes.h>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/include/rgConfigManager.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgConfigManager.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
+
+// The type of the project.
+enum class rgProjectAPI : char
+{
+    // Unknown.
+    Unknown,
+
+    // OpenCL.
+    OpenCL,
+
+    // Vulkan.
+    Vulkan,
+
+    // The count of known APIs.
+    ApiCount
+};
+
+// Supported textual source languages.
+enum class rgSrcLanguage {
+    OpenCL,
+    GLSL,
+    HLSL,
+    SPIRV_Text,
+
+    Unknown
+};
+
+// Indices for disassembly view sub widgets.
+enum class DisassemblyViewSubWidgets
+{
+    TableView,
+    TargetGpuPushButton,
+    ColumnPushButton,
+    OutputWindow,
+    SourceWindow,
+    None,
+    Count
+};
+
+Q_DECLARE_METATYPE(DisassemblyViewSubWidgets);
+
+// The type of pipeline.
+enum class rgPipelineType : char
+{
+    // A multi-stage graphics pipeline.
+    Graphics,
+
+    // A single-stage compute pipeline.
+    Compute
+};
+
+// An array of file paths for each pipeline stage. An empty string indicates an unused stage.
+typedef std::array<std::string, rgPipelineStage::Count> ShaderInputFileArray;
+
+// The base class for pipeline objects.
+struct rgPipelineShaders
+{
+    // The type of pipeline.
+    rgPipelineType m_type;
+
+    // An array of input source file paths per pipeline stage.
+    ShaderInputFileArray m_shaderStages;
+};
+
+// The state for an individual pipeline object.
+struct rgPipelineState
+{
+    // The pipeline name.
+    std::string m_name;
+
+    // The full path to the serialized pipeline state file.
+    std::string m_pipelineStateFilePath;
+
+    // The full path to the original pipeline state file loaded to the PSO editor.
+    std::string m_originalPipelineStateFilePath;
+
+    // A flag used to indicate if the pipeline is currently active.
+    bool m_isActive = false;
+};
 
 // General RGA settings structure.
 struct rgBuildSettings
@@ -23,6 +111,18 @@ struct rgBuildSettings
         m_additionalOptions(other.m_additionalOptions),
         m_compilerPaths(other.m_compilerPaths) {}
 
+    virtual bool HasSameSettings(const rgBuildSettings& other) const
+    {
+        bool isSame =
+            (m_targetGpus == other.m_targetGpus) &&
+            (m_predefinedMacros == other.m_predefinedMacros) &&
+            (m_additionalIncludeDirectories == other.m_additionalIncludeDirectories) &&
+            (m_additionalOptions == other.m_additionalOptions) &&
+            (m_compilerPaths == other.m_compilerPaths);
+
+        return isSame;
+    }
+
     // General build settings.
     std::vector<std::string> m_targetGpus;
     std::vector<std::string> m_predefinedMacros;
@@ -31,42 +131,6 @@ struct rgBuildSettings
 
     // Alternative compiler paths: {bin, include, lib}.
     std::tuple<std::string, std::string, std::string>  m_compilerPaths;
-};
-
-// OpenCL build settings.
-struct rgCLBuildSettings : public rgBuildSettings
-{
-    rgCLBuildSettings() = default;
-    virtual ~rgCLBuildSettings() = default;
-
-    // Copy constructor used to initialize using another instance.
-    rgCLBuildSettings(const rgCLBuildSettings& other) :
-        rgBuildSettings(other),
-        m_optimizationLevel(other.m_optimizationLevel),
-        m_isTreatDoubleAsSingle(other.m_isTreatDoubleAsSingle),
-        m_isDenormsAsZeros(other.m_isDenormsAsZeros),
-        m_isStrictAliasing(other.m_isStrictAliasing),
-        m_isEnableMAD(other.m_isEnableMAD),
-        m_isIgnoreZeroSignedness(other.m_isIgnoreZeroSignedness),
-        m_isUnsafeOptimizations(other.m_isUnsafeOptimizations),
-        m_isNoNanNorInfinite(other.m_isNoNanNorInfinite),
-        m_isAggressiveMathOptimizations(other.m_isAggressiveMathOptimizations),
-        m_isCorrectlyRoundDivSqrt(other.m_isCorrectlyRoundDivSqrt) {}
-
-    // Default values for specific settings.
-    const std::string OPENCL_DEFAULT_OPT_LEVEL   = "Default";
-
-    // OpenCL-specific build settings.
-    std::string m_optimizationLevel = OPENCL_DEFAULT_OPT_LEVEL;
-    bool m_isTreatDoubleAsSingle = false;
-    bool m_isDenormsAsZeros= false;
-    bool m_isStrictAliasing = false;
-    bool m_isEnableMAD = false;
-    bool m_isIgnoreZeroSignedness = false;
-    bool m_isUnsafeOptimizations = false;
-    bool m_isNoNanNorInfinite = false;
-    bool m_isAggressiveMathOptimizations = false;
-    bool m_isCorrectlyRoundDivSqrt = false;
 };
 
 // An info structure for each source file in a project.
@@ -88,29 +152,38 @@ struct rgProjectClone
     rgProjectClone(const std::string& cloneName, std::shared_ptr<rgBuildSettings> pBuildSettings) :
         m_cloneName(cloneName), m_pBuildSettings(pBuildSettings){}
 
+    // Returns "true" if the clone does not have any source files or "false" otherwise.
+    virtual bool IsEmpty() const { return m_sourceFiles.empty(); }
+
     unsigned m_cloneId = 0;
     std::string m_cloneName;
     std::vector<rgSourceFileInfo> m_sourceFiles;
-    std::shared_ptr<rgBuildSettings> m_pBuildSettings = std::make_shared<rgCLBuildSettings>();
+    std::shared_ptr<rgBuildSettings> m_pBuildSettings = nullptr;
 };
 
-// A clone of an OpenCL project.
-struct rgCLProjectClone : public rgProjectClone
+// A project clone containing graphics or compute pipeline state info.
+struct rgGraphicsProjectClone : rgProjectClone
 {
-    rgCLProjectClone() = default;
+    rgGraphicsProjectClone() = default;
+    virtual ~rgGraphicsProjectClone() = default;
 
-    rgCLProjectClone(const std::string& cloneName, std::shared_ptr<rgCLBuildSettings> pBuildSettings) :
-        rgProjectClone(cloneName, pBuildSettings){}
-};
+    // CTOR used to initialize with existing build settings.
+    rgGraphicsProjectClone(const std::string& cloneName, std::shared_ptr<rgBuildSettings> pBuildSettings) :
+        rgProjectClone(cloneName, pBuildSettings) {}
 
-// The type of the project.
-enum rgProjectAPI : char
-{
-    // Unknown.
-    Unknown,
+    // Returns "true" if the clone does not have any source files or "false" otherwise.
+    virtual bool IsEmpty() const override
+    {
+        return std::all_of(m_pipeline.m_shaderStages.cbegin(), m_pipeline.m_shaderStages.cend(),
+                           [&](const std::string& file) { return file.empty(); });
+    }
 
-    // OpenCL.
-    OpenCL
+    // A list of pipeline states within the clone.
+    std::vector<rgPipelineState> m_psoStates;
+
+    // The pipeline object, which specifies the pipeline type, and
+    // includes full paths to shader files associated with the pipeline's stages.
+    rgPipelineShaders m_pipeline;
 };
 
 // This structure represents a family of GPU products.
@@ -162,6 +235,13 @@ struct rgProject
     rgProject(const std::string& projectName, const std::string& projectFileFullPath, rgProjectAPI api, const std::vector<std::shared_ptr<rgProjectClone>>& clones) :
         m_projectName(projectName), m_projectFileFullPath(projectFileFullPath), m_api(api),  m_clones(clones) {}
 
+    // Returns "true" if all clones of this project are empty.
+    bool IsEmpty()
+    {
+        return (std::all_of(m_clones.cbegin(), m_clones.cend(),
+                            [](const std::shared_ptr<rgProjectClone>& pClone) { return pClone->IsEmpty(); }));
+    }
+
     // Project name.
     std::string m_projectName;
 
@@ -173,22 +253,6 @@ struct rgProject
 
     // Project clones.
     std::vector<std::shared_ptr<rgProjectClone>> m_clones;
-};
-
-
-// An OpenCL project.
-struct rgCLProject : public rgProject
-{
-    rgCLProject() : rgProject("", "", rgProjectAPI::OpenCL){}
-
-    // CTOR #1.
-    rgCLProject(const std::string& projectName, const std::string& projectFileFullPath) : rgProject(projectName,
-        projectFileFullPath, rgProjectAPI::OpenCL){}
-
-    // CTOR #2.
-    rgCLProject(const std::string& projectName, const std::string& projectFileFullPath,
-        const std::vector<std::shared_ptr<rgProjectClone>>& clones) :
-        rgProject(projectName, projectFileFullPath, rgProjectAPI::OpenCL, clones) {}
 };
 
 // Splitter config structure for saving/restoring GUI layout.
@@ -222,6 +286,13 @@ struct rgResourceUsageData
     int m_isaSize;
 };
 
+// A structure used to hold project path and api type for each RGA project.
+struct rgRecentProject
+{
+    std::string projectPath;
+    rgProjectAPI apiType;
+};
+
 // ****************
 // Global settings.
 // ****************
@@ -238,7 +309,37 @@ struct rgGlobalSettings
         m_pDefaultBuildSettings(other.m_pDefaultBuildSettings),
         m_recentProjects(other.m_recentProjects),
         m_lastSelectedDirectory(other.m_lastSelectedDirectory),
-        m_useDefaultProjectName(other.m_useDefaultProjectName) {}
+        m_useDefaultProjectName(other.m_useDefaultProjectName),
+        m_shouldPromptForAPI(other.m_shouldPromptForAPI),
+        m_defaultAPI(other.m_defaultAPI),
+        m_fontFamily(other.m_fontFamily),
+        m_fontSize(other.m_fontSize),
+        m_includeFilesViewer(other.m_includeFilesViewer),
+        m_inputFileExtGlsl(other.m_inputFileExtGlsl),
+        m_inputFileExtHlsl(other.m_inputFileExtHlsl),
+        m_inputFileExtSpvTxt(other.m_inputFileExtSpvTxt),
+        m_inputFileExtSpvBin(other.m_inputFileExtSpvBin),
+        m_defaultLang(other.m_defaultLang)
+    {}
+
+    bool HasSameSettings(const rgGlobalSettings& other) const
+    {
+        bool isSame = (m_logFileLocation.compare(other.m_logFileLocation) == 0) &&
+                      (m_visibleDisassemblyViewColumns == other.m_visibleDisassemblyViewColumns) &&
+                      (m_useDefaultProjectName == other.m_useDefaultProjectName) &&
+                      (m_shouldPromptForAPI == other.m_shouldPromptForAPI) &&
+                      (m_defaultAPI == other.m_defaultAPI) &&
+                      (m_fontFamily == other.m_fontFamily) &&
+                      (m_fontSize == other.m_fontSize) &&
+                      (m_includeFilesViewer == other.m_includeFilesViewer) &&
+                      (m_inputFileExtGlsl == other.m_inputFileExtGlsl) &&
+                      (m_inputFileExtHlsl == other.m_inputFileExtHlsl) &&
+                      (m_inputFileExtSpvTxt == other.m_inputFileExtSpvTxt) &&
+                      (m_inputFileExtSpvBin == other.m_inputFileExtSpvBin) &&
+                      (m_defaultLang == other.m_defaultLang);
+
+        return isSame;
+    }
 
     // A full path to the location where RGA's log file will be saved.
     std::string m_logFileLocation;
@@ -253,8 +354,8 @@ struct rgGlobalSettings
     // We keep a mapping, each API will have its entry pointing to its default settings.
     std::map<std::string, std::shared_ptr<rgBuildSettings>> m_pDefaultBuildSettings;
 
-    // An array of recently-accessed projects.
-    std::vector<std::string> m_recentProjects;
+    // A vector of recently-accessed projects with their api types.
+    std::vector<std::shared_ptr<rgRecentProject>> m_recentProjects;
 
     // A full path to the most recently opened directory.
     std::string m_lastSelectedDirectory;
@@ -262,6 +363,32 @@ struct rgGlobalSettings
     // If true, RGA will always use the auto-generated project name,
     // without prompting the user for renaming when creating a new project.
     bool m_useDefaultProjectName = false;
+
+    // When RGA starts, should it prompt the user to select the API mode?
+    // This can be modified by the user using the "Do not ask me again" option in the startup dialog.
+    bool m_shouldPromptForAPI = true;
+
+    // The default API mode to use in the GUI if the user has selected an API
+    // and then selected "Do not ask me again" in the startup dialog.
+    rgProjectAPI m_defaultAPI = rgProjectAPI::Unknown;
+
+    // The font family.
+    std::string m_fontFamily;
+
+    // The font size.
+    int m_fontSize;
+
+    // The app to use to open include files.
+    std::string m_includeFilesViewer = STR_GLOBAL_SETTINGS_SRC_VIEW_INCLUDE_VIEWER_DEFAULT;
+
+    // Extensions of input files: GLSL, HLSL, SPIR-V text, and SPIR-V binary.
+    std::string m_inputFileExtGlsl;
+    std::string m_inputFileExtHlsl;
+    std::string m_inputFileExtSpvTxt;
+    std::string m_inputFileExtSpvBin;
+
+    // Default high-level language.
+    rgSrcLanguage m_defaultLang = rgSrcLanguage::GLSL;
 };
 
 // The possible types of build output files.
@@ -309,7 +436,7 @@ struct rgEntryOutput
     std::string m_inputFilePath;
 
     // The name of the kernel that was compiled to emit the outputs.
-    std::string m_kernelName;
+    std::string m_entrypointName;
 
     // The type of kernel that was compiled.
     std::string m_kernelType;
@@ -327,17 +454,36 @@ struct rgFileOutputs
     std::vector<rgEntryOutput> m_outputs;
 };
 
-// This structure represents the output of the command line backend.
+// A map of input file full path to a build output structure for the input.
+typedef std::map<std::string, rgFileOutputs> InputFileToBuildOutputsMap;
+
 struct rgCliBuildOutput
 {
+    virtual ~rgCliBuildOutput() = default;
+
     // The output as printed by the RGA command line.
     std::string m_cliConsoleOutput;
 
+    // Mapping between each input file and its outputs.
+    InputFileToBuildOutputsMap m_perFileOutput;
+};
+
+// This structure represents the output of the command line backend when building an OpenCL project.
+struct rgCliBuildOutputOpenCL : rgCliBuildOutput
+{
+    virtual ~rgCliBuildOutputOpenCL() = default;
+
     // The full path to the project binary.
     std::string m_projectBinary;
+};
 
-    // Mapping between each input file and its outputs.
-    std::map<std::string, rgFileOutputs> m_perFileOutput;
+// This structure represents the output of the command line backend when building a pipeline object.
+struct rgCliBuildOutputPipeline : rgCliBuildOutput
+{
+    virtual ~rgCliBuildOutputPipeline() = default;
+
+    // The type of pipeline built by the CLI.
+    rgPipelineType m_type;
 };
 
 // A map of GPU name to the project build outputs for the GPU.
@@ -358,7 +504,7 @@ struct OutputFileTypeFinder
     rgCliOutputFileType m_targetFileType;
 };
 
-// A map that associates an entrypoint name with the starting line number and ending line number.
+// A map that associates an entry point name with the starting line number and ending line number.
 typedef std::map<std::string, std::pair<int, int>> EntryToSourceLineRange;
 
 // Enum that specifies the alternative compiler folder view: bin, include or lib.
@@ -367,4 +513,23 @@ enum CompilerFolderType
     Bin,
     Include,
     Lib
+};
+
+// This structure has style sheets for various widgets.
+struct rgStylesheetPackage
+{
+    // The file menu stylesheet.
+    std::string m_fileMenuStylesheet;
+
+    // The API-specific file menu stylesheet.
+    std::string m_fileMenuApiStylesheet;
+
+    // The main window stylesheet.
+    std::string m_mainWindowStylesheet;
+
+    // The application stylesheet.
+    std::string m_applicationStylesheet;
+
+    // The main window api-specific stylesheet.
+    std::string m_mainWindowAPIStylesheet;
 };

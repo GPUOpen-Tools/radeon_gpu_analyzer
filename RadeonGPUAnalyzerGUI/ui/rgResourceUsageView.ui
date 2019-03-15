@@ -80,7 +80,7 @@
          <number>6</number>
         </property>
         <property name="bottomMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <item>
          <widget class="QLabel" name="warningLabel">

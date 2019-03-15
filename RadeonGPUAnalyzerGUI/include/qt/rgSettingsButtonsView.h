@@ -9,7 +9,7 @@
 
 // Local.
 #include "ui_rgSettingsButtonsView.h"
-#include <RadeonGPUAnalyzerGUI/include/rgDataTypes.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
 
 // Forward declarations.
 class QWidget;
@@ -26,9 +26,16 @@ public:
     // Enable/disable save button.
     void EnableSaveButton(bool isEnabled);
 
+    // Hide / show the Restore defaultSettings button.
+    void HideRestoreDefaultSettingsButton(bool isHidden);
+
+    // Re-implement mousePressEvent method.
+    virtual void mousePressEvent(QMouseEvent *pEvent) override;
+
 signals:
     void RestoreDefaultSettingsButtonClickedSignal();
     void SaveSettingsButtonClickedSignal();
+    void SettingsButtonsViewClickedSignal();
 
 private slots:
     void HandleRestoreDefaultSettingsButtonClick();
