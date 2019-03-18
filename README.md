@@ -46,14 +46,14 @@ As a preliminary step, make sure that you have the following installed on your s
 
 cd to the Build sub-folder, and run:
 
-prebuild.bat --qt C:\Qt\Qt5.9.2\msvc2017_64 --vs 2017 --build release (or: debug)
+Prebuild.bat --qt C:\Qt\Qt5.9.2\msvc2017_64 --vs 2017 --build release (or: debug)
 
-Running the prebuild script will fetch all the dependencies, and generate the solution file for Visual Studio. 
+Running the Prebuild script will fetch all the dependencies, and generate the solution file for Visual Studio. 
 After successfully running the preuild script, open RGA.sln from Build\CMake\VS2017 (or VS2015), and build:
 * RadeonGPUAnalyzerCLI project for the command line exectuable
 * RadeonGPUAnalyzerGUI project for the GUI app
 
-Some useful options of the prebuild script:
+Some useful options of the Prebuild script:
 * --vs <VS version>: generate the solution files for a specific Visual Studio version. For example, to target VS 2017, add --vs 2017 to the command.
 * --qt <path>: full path to the folder from where you would like the Qt binaries to be retrieved. By default, CMake would try to auto-detect Qt on the system.
 * --vk-include and --vk-lib: full paths to where the Vulkan SDK include and Vulkan lib folders. By default, CMake would try to auto-detect the Vulkan SDK on the system.
@@ -66,9 +66,9 @@ named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dl
 
 -=-
    
-If for some reason you do not want to use the prebuild.bat script, you can also manually fetch the dependencies and generate the solution and project files:
+If for some reason you do not want to use the Prebuild.bat script, you can also manually fetch the dependencies and generate the solution and project files:
    
-Start by running the fetch_dependencies.py script to fetch the solution's dependencies.
+Start by running the FetchDependencies.py script to fetch the solution's dependencies.
    
 To generate the files for an x64 VS 2017 Release build, use:
    
@@ -95,7 +95,7 @@ named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dl
    
    On Linux, it is recommended to explicitly pass to CMake the location of the Vulkan SDK include and lib directories as well as the location of Qt. For example:
    
-   ./Prebuild.sh --qt ~/Qt-5.9.2/5.9.2/gcc_64 --vk-include ~/work/vulkan-sdk/1.1.82.1/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.82.1/x86_64/lib/ 
+   ./Prebuild.sh --qt ~/Qt-5.9.2/5.9.2/gcc_64 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/ 
    
    This will fetch all the dependencies, and generate the makefiles.
 
@@ -103,9 +103,9 @@ named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dl
 
    -=-
 
-   If for some reason you do not want to use the prebuild.sh script, you can also manually fetch the dependencies and generate the makefiles:
+   If for some reason you do not want to use the Prebuild.sh script, you can also manually fetch the dependencies and generate the makefiles:
 
-  * run: fetch_dependencies.py
+  * run: FetchDependencies.py
   * run: cmake –DCMAKE_BUILD_TYPE=Release (or: Debug) <full or relative path to the RGA repo directory>
 
 	It is recommended to create a directory to hold all build files, and launch cmake from that directory.
