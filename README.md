@@ -6,14 +6,14 @@ performance statistics and static analysis reports for each target platform.
 
 This product can be used to produce the following output:
 * AMD GPU ISA disassembly for different GCN generations
-* Intermediate langauge disassebly: AMDIL, HSAIL, DX ASM for DirectX shaders, LLVM IR for ROCm OpenCL, SPIR-V for Vulkan
+* Intermediate language disassembly: AMDIL, HSAIL, DX ASM for DirectX shaders, LLVM IR for ROCm OpenCL, SPIR-V for Vulkan
 * Compiled binaries
 * Performance statistics
 * Live register analysis (see http://gpuopen.com/live-vgpr-analysis-radeon-gpu-analyzer/ for more info)
 * Control-Flow graphs
 * Build errors and warnings
 
-The RGA package contains both a GUI app and a command-line exectuable.
+The RGA package contains both a GUI app and a command-line executable.
 
 The supported platforms by the **GUI app** are:
 * Vulkan - GLSL/SPIR-V as input, together with the Vulkan pipeline state, through AMD's Vulkan driver
@@ -49,8 +49,8 @@ cd to the Build sub-folder, and run:
 Prebuild.bat --qt C:\Qt\Qt5.9.2\msvc2017_64 --vs 2017 --build release (or: debug)
 
 Running the Prebuild script will fetch all the dependencies, and generate the solution file for Visual Studio. 
-After successfully running the preuild script, open RGA.sln from Build\CMake\VS2017 (or VS2015), and build:
-* RadeonGPUAnalyzerCLI project for the command line exectuable
+After successfully running the prebuild script, open RGA.sln from Build\CMake\VS2017 (or VS2015), and build:
+* RadeonGPUAnalyzerCLI project for the command line executable
 * RadeonGPUAnalyzerGUI project for the GUI app
 
 Some useful options of the Prebuild script:
@@ -119,7 +119,7 @@ named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dl
   
 ## Running ##
 ### GUI App ###
-Run the RadeonGPUAnalyzerGUI exectuable. The app provides a quickstart guide and a help manual under Help. 
+Run the RadeonGPUAnalyzerGUI executable. The app provides a quickstart guide and a help manual under Help.
 
 ### Command Line Executable ###
 
