@@ -61,8 +61,5 @@ IF DEFINED AUTOMATION (
     XCopy /r /d /y "..\..\..\..\RGA-Internal\Tests-GUI\run.py" "%OUTPUT_DIR%\"
 )
 
-rem Copy documentation files
-XCopy /r /e /d /y "..\..\..\Documentation\Build\html" "%OUTPUT_DIR%\Documentation\html\"
-
 rem Copy AMDToolsDownloader.
 XCopy /r /d /y "..\..\..\..\Common\Src\UpdateCheckAPI\AMDToolsDownloader\Windows\AMDToolsDownloader.exe" "%OUTPUT_DIR%\"
