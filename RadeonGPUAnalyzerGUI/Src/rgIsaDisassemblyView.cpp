@@ -10,6 +10,7 @@
 #include <sstream>
 
 // Qt.
+#include <QAction>
 #include <QCheckBox>
 #include <QListWidgetItem>
 
