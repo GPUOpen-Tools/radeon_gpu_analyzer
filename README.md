@@ -20,6 +20,7 @@ The supported platforms by the **GUI app** are:
 * OpenCL - AMD's LLVM-based Lightning Compiler for ROCm
 
 The supported platforms by the **command-line tool** are:
+* D3D12 (compute only)
 * D3D11
 * OpenCL - AMD's LLVM-based Lightning Compiler for ROCm (-s rocm-cl)
 * OpenCL - Legacy compiler (-s cl)
@@ -127,9 +128,10 @@ Run the rga executable.
 
 * Usage:
   * General: rga -h
-  * DirectX: rga -s hlsl -h
+  * DirectX 12 compute: rga -s dx12 -h
+  * DirectX 11: rga -s dx11 -h
         
-    Note: RGA's HLSL mode requires Microsoft's D3D Compiler DLL in runtime. If you copy the relevant D3D Compiler DLL to the x64 
+    Note: RGA's DX11 mode requires Microsoft's D3D Compiler DLL in runtime. If you copy the relevant D3D Compiler DLL to the x64 
 	subdirectory under the executable's directory, RGA will use that DLL in runtime. The default D3D compiler that RGA public releases ship with
 	is d3dcompiler_47.dll.
   * OpenGL:  rga -s opengl -h
