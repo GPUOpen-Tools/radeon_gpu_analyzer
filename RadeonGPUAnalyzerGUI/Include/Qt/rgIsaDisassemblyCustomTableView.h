@@ -50,6 +50,9 @@ protected:
     // Override the focus out event to color the frame black.
     virtual void focusOutEvent(QFocusEvent* pEvent) override;
 
+    // Override the focus in event to color the frame red.
+    virtual void focusInEvent(QFocusEvent* pEvent) override;
+
 signals:
     // A signal to indicate frame lost focus.
     void FrameFocusOutSignal();

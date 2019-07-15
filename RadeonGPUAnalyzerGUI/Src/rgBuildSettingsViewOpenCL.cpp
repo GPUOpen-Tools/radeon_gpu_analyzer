@@ -919,6 +919,9 @@ bool rgBuildSettingsViewOpenCL::SaveSettings()
         }
     }
 
+    // Set focus to target GPUs browse button.
+    ui.addTargetGPUsButton->setFocus();
+
     return isValid;
 }
 

@@ -605,6 +605,7 @@
 #define DEVICE_NAME_GFX900   "gfx900"
 #define DEVICE_NAME_GFX902   "gfx902"
 #define DEVICE_NAME_GFX906   "gfx906"
+#define DEVICE_NAME_GFX1010  "gfx1010"
 
 // DUMMY SHADERS.
 #define BE_STR_DUMMY_VRTX_SHADER "#version 330 core\nlayout(location = 0) in vec3 vertexPosition_modelspace;\nvoid main()\n{}"
@@ -682,4 +683,11 @@
 
 #define LC_EXTRA_TARGETS_FILE_NAME  L"additional-targets"
 
+// DX12.
+#ifdef _WIN32
+#define DX12_BACKEND_DIR            L"x64/DX12"
+#define DX12_BACKEND_EXE            L"DX12Backend"
+#define DX12_DXC_DIR                L"x64/DX12/DXC"
+#define DX12_DXC_EXE                L"dxc"
+#endif
 #endif // __beStringConstants_h

@@ -4,12 +4,12 @@
         {
             "ReleaseVersion" : {
                 "Major" : 2,
-                "Minor" : 1,
+                "Minor" : 2,
                 "Patch" : 0,
-                "Build" : 1029
+                "Build" : 85
             },
-            "ReleaseDate": "2019-03-15",
-            "ReleaseTitle": "Radeon GPU Analyzer 2.1",
+            "ReleaseDate": "2019-07-15",
+            "ReleaseTitle": "Radeon GPU Analyzer 2.2",
             "ReleasePlatforms": [ "Windows" ],
             "ReleaseType" : "GA",
             "ReleaseTags" : [ "Windows", "GA", "OpenCL", "Vulkan" ],
@@ -19,17 +19,17 @@
                     "Description": "The Radeon GPU Analyzer Releases page on Github."
                 },
                 {
-                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.1/RGA-2.1-ReleaseNotes.pdf",
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.2/RGA-2.2-ReleaseNotes.pdf",
                     "Description": "Release Notes."
                 }
             ],
             "DownloadLinks": [
                 {
-                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.1/rga-windows-2.1.msi",
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.2/rga-windows-2.2.msi",
                     "PackageType" : "MSI"
                 },
                 {
-                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.1/rga-windows-x64-2.1.zip",
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.2/rga-windows-x64-2.2.zip",
                     "PackageType" : "ZIP"
                 }
             ]
@@ -37,12 +37,12 @@
         {
             "ReleaseVersion" : {
                 "Major" : 2,
-                "Minor" : 1,
+                "Minor" : 2,
                 "Patch" : 0,
-                "Build" : 971
+                "Build" : 87
             },
-            "ReleaseDate": "2019-03-15",
-            "ReleaseTitle": "Radeon GPU Analyzer 2.1",
+            "ReleaseDate": "2019-07-15",
+            "ReleaseTitle": "Radeon GPU Analyzer 2.2",
             "ReleasePlatforms": [ "Ubuntu" ],
             "ReleaseType" : "GA",
             "ReleaseTags" : [ "Ubuntu", "GA", "OpenCL", "Vulkan" ],
@@ -52,13 +52,13 @@
                     "Description": "The Radeon GPU Analyzer Releases page on Github."
                 },
                 {
-                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.1/RGA-2.1-ReleaseNotes.pdf",
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.2/RGA-2.2-ReleaseNotes.pdf",
                     "Description": "Release Notes."
                 }
             ],
             "DownloadLinks": [
                 {
-                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.1/rga-linux-2.1.tgz",
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.2/rga-linux-2.2.tgz",
                     "PackageType" : "TAR"
                 }
             ]

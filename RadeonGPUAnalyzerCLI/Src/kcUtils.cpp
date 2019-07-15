@@ -391,7 +391,7 @@ bool kcUtils::PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtS
     // Call the backend.
     beStatus rc = beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isaFileName, outputFileName, printCmd);
 
-    if (rc != beStatus_SUCCESS && pCallback != nullptr)
+    if (rc != beStatus_SUCCESS)
     {
         // Inform the user in case of an error.
         std::stringstream msg;
@@ -425,14 +425,34 @@ bool kcUtils::PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtS
         }
 
         const std::string& errMsg = msg.str();
-
-        if (!errMsg.empty() && pCallback != nullptr)
+        if (!errMsg.empty())
         {
-            pCallback(errMsg);
+            if (pCallback != nullptr)
+            {
+
+                pCallback(errMsg);
+            }
+            else
+            {
+                std::cout << errMsg << std::endl;
+            }
         }
     }
 
     return (rc == beStatus_SUCCESS);
+}
+
+
+bool kcUtils::PerformLiveRegisterAnalysis(const std::string& isaFileName, const std::string& outputFileName, LoggingCallBackFunc_t pCallback, bool printCmd)
+{
+    // Convert the arguments to gtString.
+    gtString isaNameGtStr;
+    isaNameGtStr << isaFileName.c_str();
+    gtString outputFileNameGtStr;
+    outputFileNameGtStr << outputFileName.c_str();
+
+    // Invoke the routine.
+    return PerformLiveRegisterAnalysis(isaNameGtStr, outputFileNameGtStr, pCallback, printCmd);
 }
 
 bool kcUtils::GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
@@ -483,6 +503,19 @@ bool kcUtils::GenerateControlFlowGraph(const gtString& isaFileName, const gtStri
     }
 
     return (rc == beStatus_SUCCESS);
+}
+
+bool kcUtils::GenerateControlFlowGraph(const std::string& isaFileName, const std::string& outputFileName,
+    LoggingCallBackFunc_t pCallback, bool perInstCfg, bool printCmd)
+{
+    // Convert the arguments to gtString.
+    gtString isaNameGtStr;
+    isaNameGtStr << isaFileName.c_str();
+    gtString outputFileNameGtStr;
+    outputFileNameGtStr << outputFileName.c_str();
+
+    // Invoke the routine.
+    return GenerateControlFlowGraph(isaNameGtStr, outputFileNameGtStr, pCallback, perInstCfg, printCmd);
 }
 
 void kcUtils::ConstructOutputFileName(const std::string& baseOutputFileName, const std::string& defaultSuffix,
@@ -549,6 +582,49 @@ void kcUtils::ConstructOutputFileName(const std::string& baseOutputFileName, con
     gtString  gOutFileName;
     ConstructOutputFileName(baseOutputFileName, defaultSuffix, defaultExtension, entryPointName, deviceName, gOutFileName);
     generatedFileName = gOutFileName.asASCIICharArray();
+}
+
+
+bool kcUtils::ConstructOutFileName(const std::string& baseFileName, const std::string& stage,
+    const std::string& device, const std::string& ext, std::string& outFileName)
+{
+    static const std::string  STR_TEMP_FILE_NAME = "rga-temp-out";
+    bool        status = false;
+    gtString    name = L"";
+    std::string baseName = baseFileName;
+
+    // If base output file name is not provided, create a temp file name (in the temp folder).
+    if (!baseName.empty())
+    {
+        status = true;
+    }
+    else
+    {
+        baseName = kcUtils::ConstructTempFileName(STR_TEMP_FILE_NAME, ext);
+        status = !baseName.empty();
+        if (!status)
+        {
+            rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
+        }
+    }
+
+    if (status)
+    {
+        std::string outName;
+        kcUtils::ConstructOutputFileName(baseName, stage, ext, "", device, outName);
+        if (!outName.empty())
+        {
+            kcUtils::AppendSuffix(outName, stage);
+            outFileName = outName;
+            status = true;
+        }
+        else
+        {
+            rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
+        }
+    }
+
+    return status;
 }
 
 void kcUtils::AppendSuffix(std::string& fileName, const std::string& suffix)
@@ -668,7 +744,7 @@ static bool ResolveMatchedDevices(const kcUtils::DeviceNameMap& matchedDevices, 
     }
     else if (matchedDevices.size() == 1)
     {
-        // Found exactly one GPU architectire. Success.
+        // Found exactly one GPU architecture. Success.
         if (printInfo)
         {
             outMsg << STR_TARGET_DETECTED << std::endl << std::endl;
@@ -812,13 +888,20 @@ bool kcUtils::PrintAsicList(const std::set<std::string>& requiredDevices, const 
     bool  result = false;
     std::map<std::string, std::set<std::string>> cardsMapping;
     bool rc = kcUtils::GetMarketingNameToCodenameMapping(cardsMapping);
-    if (rc && !cardsMapping.empty())
+
+    // Sort the mappings.
+    std::map<std::string, std::set<std::string>,
+        decltype(&beUtils::DeviceNameLessThan)> cardsMappingSorted(cardsMapping.begin(),
+        cardsMapping.end(), &beUtils::DeviceNameLessThan);
+
+    if (rc && !cardsMappingSorted.empty())
     {
-        for (const auto& pair : cardsMapping)
+        for (const auto& pair : cardsMappingSorted)
         {
             // If "reqdDevices" is provided, print only devices from this set.
             // If "disdDevices" is provided, do not pring devices from this set.
-            // The "reqdDevices" contains short arch names (like "gfx804"), while "cardsMapping" has extended names: "gfx804 (Graphics IP v8)".
+            // The "reqdDevices" contains short arch names (like "gfx804"), while
+            // the container has extended names: "gfx804 (Graphics IP v8)".
             auto isInDeviceList = [](const std::set<std::string>& list, const std::string & device)
             {
                 for (auto & d : list)
@@ -1444,4 +1527,18 @@ void kcUtils::CheckForUpdates()
             }
         }
     }
+}
+
+bool kcUtils::IsNaviTarget(const std::string& targetName)
+{
+    // Token to identify Navi targets.
+    static const char* NAVI_TARGET_TOKEN = "gfx1";
+    return (targetName.find(NAVI_TARGET_TOKEN) != std::string::npos);
+}
+
+bool kcUtils::IsVegaTarget(const std::string& targetName)
+{
+    // Token to identify Vega targets.
+    static const char* VEGA_TARGET_TOKEN = "gfx9";
+    return (targetName.find(VEGA_TARGET_TOKEN) != std::string::npos);
 }

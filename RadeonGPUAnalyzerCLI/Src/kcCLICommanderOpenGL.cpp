@@ -24,6 +24,7 @@
 #include <RadeonGPUAnalyzerCLI/Src/kcCliStringConstants.h>
 #include <RadeonGPUAnalyzerCLI/Src/kcOpenGLStatisticsParser.h>
 #include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
 
 struct kcCLICommanderOpenGL::OpenGLDeviceInfo
 {
@@ -317,7 +318,11 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
         {
             InitRequestedAsicList(config.m_ASICs, config.m_mode, m_supportedDevicesCache, targetDevices, false);
 
-            for (const std::string& device : targetDevices)
+            // Sort the targets.
+            std::set<std::string, decltype(&beUtils::DeviceNameLessThan)> sortedUniqueNames(targetDevices.begin(),
+                targetDevices.end(), beUtils::DeviceNameLessThan);
+
+            for (const std::string& device : sortedUniqueNames)
             {
                 if (!shouldAbort)
                 {
@@ -476,80 +481,94 @@ void kcCLICommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallB
                         // Perform live register analysis if required.
                         if (isLiveRegAnalysisRequired)
                         {
-                            if (isVertexShaderPresent)
+                            if (!kcUtils::IsNaviTarget(device))
                             {
-                                kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_vertexShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_vertexShader, callback, config.m_printProcessCmdLines);
-                            }
+                                if (isVertexShaderPresent)
+                                {
+                                    kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_vertexShader,
+                                        glOptions.m_liveRegisterAnalysisOutputFiles.m_vertexShader, callback, config.m_printProcessCmdLines);
+                                }
 
-                            if (isTessControlShaderPresent)
-                            {
-                                kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_tessControlShader, callback, config.m_printProcessCmdLines);
-                            }
+                                if (isTessControlShaderPresent)
+                                {
+                                    kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
+                                        glOptions.m_liveRegisterAnalysisOutputFiles.m_tessControlShader, callback, config.m_printProcessCmdLines);
+                                }
 
-                            if (isTessEvaluationShaderPresent)
-                            {
-                                kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_tessEvaluationShader, callback, config.m_printProcessCmdLines);
-                            }
+                                if (isTessEvaluationShaderPresent)
+                                {
+                                    kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader,
+                                        glOptions.m_liveRegisterAnalysisOutputFiles.m_tessEvaluationShader, callback, config.m_printProcessCmdLines);
+                                }
 
-                            if (isGeometryexShaderPresent)
-                            {
-                                kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_geometryShader, callback, config.m_printProcessCmdLines);
-                            }
+                                if (isGeometryexShaderPresent)
+                                {
+                                    kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
+                                        glOptions.m_liveRegisterAnalysisOutputFiles.m_geometryShader, callback, config.m_printProcessCmdLines);
+                                }
 
-                            if (isFragmentShaderPresent)
-                            {
-                                kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_fragmentShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_fragmentShader, callback, config.m_printProcessCmdLines);
-                            }
+                                if (isFragmentShaderPresent)
+                                {
+                                    kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_fragmentShader,
+                                        glOptions.m_liveRegisterAnalysisOutputFiles.m_fragmentShader, callback, config.m_printProcessCmdLines);
+                                }
 
-                            if (isComputeShaderPresent)
+                                if (isComputeShaderPresent)
+                                {
+                                    kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_computeShader,
+                                        glOptions.m_liveRegisterAnalysisOutputFiles.m_computeShader, callback, config.m_printProcessCmdLines);
+                                }
+                            }
+                            else
                             {
-                                kcUtils::PerformLiveRegisterAnalysis(glOptions.m_isaDisassemblyOutputFiles.m_computeShader,
-                                                                     glOptions.m_liveRegisterAnalysisOutputFiles.m_computeShader, callback, config.m_printProcessCmdLines);
+                                std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED_TO_NAVI << std::endl;
                             }
                         }
 
                         // Generate control flow graph if required.
                         if (isBlockCfgRequired || isInstCfgRequired)
                         {
-                            if (isVertexShaderPresent)
+                            if (!kcUtils::IsNaviTarget(device))
                             {
-                                kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_vertexShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_vertexShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
-                            }
+                                if (isVertexShaderPresent)
+                                {
+                                    kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_vertexShader,
+                                        glOptions.m_controlFlowGraphOutputFiles.m_vertexShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                                }
 
-                            if (isTessControlShaderPresent)
-                            {
-                                kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_tessControlShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
-                            }
+                                if (isTessControlShaderPresent)
+                                {
+                                    kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
+                                        glOptions.m_controlFlowGraphOutputFiles.m_tessControlShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                                }
 
-                            if (isTessControlShaderPresent)
-                            {
-                                kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_tessEvaluationShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
-                            }
+                                if (isTessControlShaderPresent)
+                                {
+                                    kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_tessEvaluationShader,
+                                        glOptions.m_controlFlowGraphOutputFiles.m_tessEvaluationShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                                }
 
-                            if (isGeometryexShaderPresent)
-                            {
-                                kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
-                            }
+                                if (isGeometryexShaderPresent)
+                                {
+                                    kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
+                                        glOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                                }
 
-                            if (isFragmentShaderPresent)
-                            {
-                                kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_fragmentShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_fragmentShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
-                            }
+                                if (isFragmentShaderPresent)
+                                {
+                                    kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_fragmentShader,
+                                        glOptions.m_controlFlowGraphOutputFiles.m_fragmentShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                                }
 
-                            if (isComputeShaderPresent)
+                                if (isComputeShaderPresent)
+                                {
+                                    kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_computeShader,
+                                        glOptions.m_controlFlowGraphOutputFiles.m_computeShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                                }
+                            }
+                            else
                             {
-                                kcUtils::GenerateControlFlowGraph(glOptions.m_isaDisassemblyOutputFiles.m_computeShader,
-                                                                  glOptions.m_controlFlowGraphOutputFiles.m_computeShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                                std::cout << STR_WARNING_CFG_NOT_SUPPORTED_TO_NAVI << std::endl;
                             }
                         }
                     }

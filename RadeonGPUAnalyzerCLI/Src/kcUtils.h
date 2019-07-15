@@ -121,6 +121,15 @@ public:
     static bool PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName,
                                             LoggingCallBackFunc_t pCallback, bool printCmd);
 
+    // Performs live register analysis for the ISA in the given file, and dumps
+    // the output to the given output file name.
+    // isaFileName - the disassembled ISA file name
+    // outputFileName - the output file name
+    // pCallback - callback to log messages
+    // printCmd - print command line to stdout
+    static bool PerformLiveRegisterAnalysis(const std::string& isaFileName, const std::string& outputFileName,
+        LoggingCallBackFunc_t pCallback, bool printCmd);
+
     // Generates control flow graph for the given ISA.
     // isaFileName - the disassembled ISA file name
     // outputFileName - the output file name
@@ -128,6 +137,14 @@ public:
     // printCmd - print command line to stdout
     static bool GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName,
                                          LoggingCallBackFunc_t pCallback, bool perInstCfg, bool printCmd);
+
+    // Generates control flow graph for the given ISA.
+    // isaFileName - the disassembled ISA file name
+    // outputFileName - the output file name
+    // pCallback - callback to log messages
+    // printCmd - print command line to stdout
+    static bool GenerateControlFlowGraph(const std::string& isaFileName, const std::string& outputFileName,
+        LoggingCallBackFunc_t pCallback, bool perInstCfg, bool printCmd);
 
     // Generates an output file name in the Analyzer CLI format.
     // baseOutputFileName - the base output file name as configured by the user's command
@@ -143,6 +160,15 @@ public:
     static void ConstructOutputFileName(const std::string& baseOutputFileName, const std::string& defaultSuffix,
                                         const std::string& defaultExtension, const std::string& entryPointName,
                                         const std::string& deviceName, std::string& generatedFileName);
+
+    // Construct output file name based on provided base name, device name and extension.
+    // The file name is the full path.
+    // If base name is empty, the (temp folder name + temp file name) will be used.
+    static bool ConstructOutFileName(const std::string& baseFileName,
+        const std::string& stage,
+        const std::string& device,
+        const std::string& ext,
+        std::string&       outFileName);
 
     // Append suffix to the provided file name.
     // If the file name has an extension, the suffix will be appended before the extension.
@@ -254,6 +280,12 @@ public:
 
     // Checks for available updates.
     static void CheckForUpdates();
+
+    // Returns true if the target is of the Navi generation and false otherwise.
+    static bool IsNaviTarget(const std::string& targetName);
+
+    // Returns true if the target is of the Vega generation and false otherwise.
+    static bool IsVegaTarget(const std::string& targetName);
 
 private:
     // This is a static class (no instances).

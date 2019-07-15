@@ -109,7 +109,7 @@ void rgMenuTitlebar::StopEditing()
     std::string updatedProjectName = m_pTitleTextEdit->text().toStdString();
     rgUtils::TrimLeadingAndTrailingWhitespace(updatedProjectName, updatedProjectName);
 
-    if (rgUtils::IsValidFileName(updatedProjectName))
+    if (rgUtils::IsValidProjectName(updatedProjectName))
     {
         // Check if the text has changed during editing.
         std::string labelText = m_pTitleLabel->text().toStdString();
@@ -192,10 +192,15 @@ void rgMenuTitlebar::RefreshTooltip(const std::string& updatedTooltip)
     std::string tooltip = updatedTooltip + STR_FILE_MENU_PROJECT_TITLE_TOOLTIP_B;
 
     // Set tooltip.
-    rgUtils::SetToolAndStatusTip(tooltip, this);
+    QString tooltipFormatted = "<p style='white-space:pre'>";
+    tooltipFormatted += QString::fromStdString(tooltip);
+    tooltipFormatted += "</p>";
 
-    // Resize tooltip box.
-    ResizeTooltipBox(tooltip);
+    // Set tool and status tip.
+    rgUtils::SetToolAndStatusTip(tooltipFormatted.toStdString(), this);
+
+    // Set status tip since we do not want the formatted string for the status bar.
+    rgUtils::SetStatusTip(tooltip, this);
 }
 
 void rgMenuTitlebar::HandleReturnPressed()
@@ -212,27 +217,4 @@ void rgMenuTitlebar::SetCursor()
 {
     // Set mouse cursor to pointing hand cursor.
     setCursor(Qt::PointingHandCursor);
-}
-
-void rgMenuTitlebar::ResizeTooltipBox(const std::string& tooltip)
-{
-    const static int s_TOOLTIP_VERTICAL_MARGIN = 7;
-
-    // Get the font metrics.
-    QFontMetrics fontMetrics(font());
-
-    // Calculate the width of the tooltip string.
-    QRect boundingRect = fontMetrics.boundingRect(QString::fromStdString(tooltip));
-    int width = boundingRect.width();
-    width = width * ScalingManager::Get().GetScaleFactor();
-
-    // Calculate the height of the tooltip string.
-    const int height = (boundingRect.height() + s_TOOLTIP_VERTICAL_MARGIN) * ScalingManager::Get().GetScaleFactor();
-
-    // Create a width and a height string.
-    const QString widthString = QString(s_STR_FILEMENU_TITLE_BAR_TOOLTIP_WIDTH).arg(width).arg(width);
-    const QString heightString = QString(s_STR_FILEMENU_TITLE_BAR_TOOLTIP_HEIGHT).arg(height).arg(height).arg(height);
-
-    // Set the stylesheet.
-    setStyleSheet("QToolTip {" + widthString + heightString + "}");
 }

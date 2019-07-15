@@ -11,7 +11,8 @@
 
 using namespace std;
 
-std::string Config::sourceKindHLSL                = "HLSL";
+std::string Config::sourceKindDx11                = "DX11";
+std::string Config::sourceKindDx12                = "DX12";
 std::string Config::sourceKindAMDIL               = "AMDIL";
 std::string Config::sourceKindOpenCL              = "CL";
 std::string Config::sourceKindOpenGL              = "OPENGL";

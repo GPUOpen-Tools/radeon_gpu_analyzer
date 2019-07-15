@@ -3,20 +3,12 @@
 //=================================================================
 
 #ifdef _WIN32
-#include <Include/beD3DIncludeManager.h>
+#include <beD3DIncludeManager.h>
+#include <cassert>
 #include <fstream>
-
-// Infra.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
-#include <AMDTOSWrappers/Include/osFilePath.h>
-#include <AMDTBaseTools/Include/gtAssert.h>
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
-
+#pragma warning(push)
+#pragma warning(disable:4309)
+#pragma warning(pop)
 
 D3DIncludeManager::D3DIncludeManager(const std::string& shaderDir, const std::vector<std::string>& includeSearchDirs) : m_shaderDir(shaderDir), m_includeSearchDirs(includeSearchDirs)
 {
@@ -94,7 +86,7 @@ static void AdjustIncludePath(std::string& includePath)
 
 STDMETHODIMP D3DIncludeManager::Open(THIS_ D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes)
 {
-    GT_UNREFERENCED_PARAMETER(pParentData);
+    (void)pParentData;
     bool isDone = false;
 
     if (pFileName != nullptr)
@@ -173,7 +165,8 @@ STDMETHODIMP D3DIncludeManager::Open(THIS_ D3D_INCLUDE_TYPE IncludeType, LPCSTR 
             }
 
             default:
-                GT_ASSERT_EX(false, L"Unknown D3D include type.");
+                // Unknown D3D include type.
+                assert(false);
                 break;
         }
     }

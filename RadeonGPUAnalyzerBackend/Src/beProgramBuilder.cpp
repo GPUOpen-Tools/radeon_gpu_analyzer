@@ -62,11 +62,16 @@ beKA::beStatus beProgramBuilder::ParseISAToCSV(const std::string& isaText, const
 
     if (parser.Parse(inputIsa))
     {
+        // Padding instruction to be ignored.
+        const char* CODE_END_PADDING = "s_code_end";
         for (const Instruction* pInst : parser.GetInstructions())
         {
             std::string instStr;
             pInst->GetCSVString(device, addLineNumbers, instStr);
-            parsedIsa << instStr;
+            if (pInst->GetInstructionOpCode().find(CODE_END_PADDING) == std::string::npos)
+            {
+                parsedIsa << instStr;
+            }
         }
         parsedIsaText = parsedIsa.str();
         status = beKA::beStatus_SUCCESS;

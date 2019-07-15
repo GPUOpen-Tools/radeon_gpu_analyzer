@@ -236,6 +236,11 @@ void rgIsaDisassemblyCustomTableView::focusOutEvent(QFocusEvent* pEvent)
     emit FrameFocusOutSignal();
 }
 
+void rgIsaDisassemblyCustomTableView::focusInEvent(QFocusEvent* pEvent)
+{
+    emit FrameFocusInSignal();
+}
+
 void rgIsaDisassemblyCustomTableView::HandleHeaderClicked(int /* sectionNumber */)
 {
     // Highlight the frame container.
@@ -293,7 +298,7 @@ void rgIsaDisassemblyCustomTableView::HandleUpdateCurrentSubWidget(DisassemblyVi
 
 bool rgIsaDisassemblyCustomTableView::eventFilter(QObject* pObject, QEvent* pEvent)
 {
-    bool filtered = false;
+    bool isFiltered = false;
 
     if (pEvent->type() == QEvent::KeyPress)
     {
@@ -326,7 +331,7 @@ bool rgIsaDisassemblyCustomTableView::eventFilter(QObject* pObject, QEvent* pEve
                     emit FocusCliOutputWindow();
                 }
 
-                filtered = true;
+                isFiltered = true;
             }
             else if (pKeyEvent->key() == Qt::Key_Backtab)
             {
@@ -353,7 +358,7 @@ bool rgIsaDisassemblyCustomTableView::eventFilter(QObject* pObject, QEvent* pEve
                     emit FocusTargetGpuPushButton();
                 }
 
-                filtered = true;
+                isFiltered = true;
             }
             else if ((keyboardModifiers & Qt::ControlModifier) && (pKeyEvent->key() == Qt::Key_R))
             {
@@ -362,5 +367,5 @@ bool rgIsaDisassemblyCustomTableView::eventFilter(QObject* pObject, QEvent* pEve
     }
     }
 
-    return filtered;
+    return isFiltered;
 }

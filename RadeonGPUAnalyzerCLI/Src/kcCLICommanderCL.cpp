@@ -8,6 +8,7 @@
 #include <utility>
 #include <sstream>
 #include <algorithm>
+#include <set>
 
 // Infra.
 #ifdef _WIN32
@@ -34,6 +35,7 @@
 
 // Backend.
 #include <DeviceInfoUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
 
 // *****************************************
 // *** INTERNALLY LINKED SYMBOLS - START ***
@@ -135,6 +137,16 @@ bool kcCLICommanderCL::Init(const Config& config, LoggingCallBackFunc_t callback
         beRet = be->theOpenCLBuilder()->GetDevices(devices);
         ret = (beRet == beKA::beStatus_SUCCESS);
 
+        // This mode does not support Navi, so filter the unsupported devices.
+        std::set<std::string> filteredTargets;
+        for (const std::string& target : devices)
+        {
+            if (target.find("gfx1") == std::string::npos)
+            {
+                filteredTargets.insert(target);
+            }
+        }
+
         // Only external (non-placeholder) and based on CXL version devices should be used.
         if (ret)
         {
@@ -145,7 +157,7 @@ bool kcCLICommanderCL::Init(const Config& config, LoggingCallBackFunc_t callback
             {
                 for (vector<GDT_GfxCardInfo>::const_iterator it = m_table.begin(); it != m_table.end(); ++it)
                 {
-                    if ((devices.find(it->m_szCALName) != devices.end()) && UnsupportedTargets.count(it->m_szCALName) == 0)
+                    if ((filteredTargets.find(it->m_szCALName) != filteredTargets.end()) && UnsupportedTargets.count(it->m_szCALName) == 0)
                     {
                         m_externalDevices.insert(it->m_szCALName);
                     }
@@ -240,6 +252,48 @@ void kcCLICommanderCL::RunCompileCommands(const Config& config, LoggingCallBackF
             }
         }
     }
+}
+
+
+bool kcCLICommanderCL::PrintAsicList(const Config&)
+{
+    // We do not want to display names that contain these strings.
+    const char* FILTER_INDICATOR_1 = ":";
+    const char* FILTER_INDICATOR_2 = "Not Used";
+
+    bool  result = false;
+    std::map<std::string, std::set<std::string>> cardsMapping;
+    bool rc = kcUtils::GetMarketingNameToCodenameMapping(cardsMapping);
+
+    // Sort the mappings.
+    std::map<std::string, std::set<std::string>,
+        decltype(&beUtils::DeviceNameLessThan)> cardsMappingSorted(cardsMapping.begin(),
+            cardsMapping.end(), &beUtils::DeviceNameLessThan);
+
+    if (rc && !cardsMappingSorted.empty())
+    {
+        for (const auto& pair : cardsMappingSorted)
+        {
+            // Navi is not supported in this mode, so filter the targets.
+            if (pair.first.find("gfx1") == std::string::npos)
+            {
+                std::cout << pair.first << std::endl;
+                for (const std::string& card : pair.second)
+                {
+                    // Filter out internal names.
+                    if (card.find(FILTER_INDICATOR_1) == std::string::npos &&
+                        card.find(FILTER_INDICATOR_2) == std::string::npos)
+                    {
+                        std::cout << "\t" << card << std::endl;
+                    }
+                }
+                std::cout << std::endl;
+            }
+        }
+        result = true;
+    }
+
+    return result;
 }
 
 void kcCLICommanderCL::Analysis(const Config& config)

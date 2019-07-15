@@ -10,6 +10,7 @@
 #include <Utils/Include/rgaXMLConstants.h>
 #include <Utils/Include/rgaVersionInfo.h>
 #include <Utils/Include/rgaSharedUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
 
 // Static constants.
 static const char*     STR_FOPEN_MODE_APPEND = "a";
@@ -51,7 +52,41 @@ static bool AddSupportedGPUInfo(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement
         std::vector<std::pair<std::string, std::set<std::string>>>  devices(cardsMap.begin(), cardsMap.end());
         std::sort(devices.begin(), devices.end(),
             [](const std::pair<std::string, std::set<std::string>>& d1, const std::pair<std::string, std::set<std::string>> &d2)
-        { return (GetGenAndCodeNames(d1.first).first < GetGenAndCodeNames(d2.first).first); });
+        {
+            bool isLessThan = true;
+            const char * STR_IPV6_IPV_7_IPV8_TOKEN = "Graphics";
+            const char * STR_NAVI_TOKEN = "Navi";
+            const char * STR_VEGA_TOKEN = "Vega";
+            auto genDevicePair1 = GetGenAndCodeNames(d1.first);
+            auto genDevicePair2 = GetGenAndCodeNames(d2.first);
+
+            size_t gfxTokenPos1 = genDevicePair1.first.find(STR_IPV6_IPV_7_IPV8_TOKEN);
+            size_t gfxTokenPos2 = genDevicePair2.first.find(STR_IPV6_IPV_7_IPV8_TOKEN);
+            size_t vegaTokenPos1 = genDevicePair1.first.find(STR_VEGA_TOKEN);
+            size_t vegaTokenPos2 = genDevicePair2.first.find(STR_VEGA_TOKEN);
+            size_t naviTokenPos1 = genDevicePair1.first.find(STR_NAVI_TOKEN);
+            size_t naviTokenPos2 = genDevicePair2.first.find(STR_NAVI_TOKEN);
+
+            if (vegaTokenPos2 != std::string::npos && naviTokenPos1 != std::string::npos)
+            {
+                isLessThan = false;
+            }
+            else if (gfxTokenPos1 != std::string::npos &&
+                gfxTokenPos2 != std::string::npos)
+            {
+                isLessThan = genDevicePair1.first < genDevicePair2.first;
+            }
+            else if (gfxTokenPos1 == std::string::npos && gfxTokenPos2 != std::string::npos)
+            {
+                isLessThan = false;
+            }
+            else if (!(vegaTokenPos1 != std::string::npos && naviTokenPos2 != std::string::npos))
+            {
+                isLessThan = GetGenAndCodeNames(d1.first).first < GetGenAndCodeNames(d2.first).first;
+            }
+
+            return isLessThan;
+        });
 
         for (const auto& device : devices)
         {

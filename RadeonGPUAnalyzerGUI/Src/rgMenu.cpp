@@ -64,7 +64,7 @@ void rgMenu::CreateActions()
     m_pNextItemAction->setShortcutContext(Qt::WidgetShortcut);
 
     addAction(m_pNextItemAction);
-    bool isConnected = connect(m_pNextItemAction, &QAction::triggered, this, &rgMenu::HandleNextItemAction);
+    bool isConnected = connect(m_pNextItemAction, &QAction::triggered, this, &rgMenu::HandleTabFocusPressed);
     assert(isConnected);
 
     // File menu previous item.
@@ -73,7 +73,7 @@ void rgMenu::CreateActions()
     m_pPrevItemAction->setShortcutContext(Qt::WidgetShortcut);
 
     addAction(m_pPrevItemAction);
-    isConnected = connect(m_pPrevItemAction, &QAction::triggered, this, &rgMenu::HandlePreviousItemAction);
+    isConnected = connect(m_pPrevItemAction, &QAction::triggered, this, &rgMenu::HandleShiftTabFocusPressed);
     assert(isConnected);
 
     // File menu context menu shortcut.

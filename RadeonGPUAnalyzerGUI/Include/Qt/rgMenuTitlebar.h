@@ -37,9 +37,6 @@ private:
     // Refresh the tooltip to reflect the new label text.
     void RefreshTooltip(const std::string& tooltip);
 
-    // Resize the project name tooltip box.
-    void ResizeTooltipBox(const std::string& tooltip);
-
     // Set mouse cursor to pointing hand cursor.
     void SetCursor();
 

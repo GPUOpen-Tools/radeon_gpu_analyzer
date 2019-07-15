@@ -6,7 +6,7 @@ performance statistics and static analysis reports for each target platform.
 
 This product can be used to produce the following output:
 * AMD GPU ISA disassembly for different GCN generations
-* Intermediate langauge disassebly: AMDIL, HSAIL, DX ASM for DirectX shaders, LLVM IR for ROCm OpenCL, SPIR-V for Vulkan
+* Intermediate langauge disassembly: AMDIL, HSAIL, DX ASM for DirectX shaders, LLVM IR for ROCm OpenCL, SPIR-V for Vulkan
 * Compiled binaries
 * Performance statistics
 * Live register analysis (see http://gpuopen.com/live-vgpr-analysis-radeon-gpu-analyzer/ for more info)
@@ -72,7 +72,7 @@ Start by running the FetchDependencies.py script to fetch the solution's depende
    
 To generate the files for an x64 VS 2017 Release build, use:
    
-  cmake.exe -G "Visual Studio 14 2017 Win64" –DCMAKE_BUILD_TYPE=Release (or: Debug) <full path to the RGA repo directory>
+  cmake.exe -G "Visual Studio 15 2017 Win64" –DCMAKE_BUILD_TYPE=Release (or: Debug) <full path to the RGA repo directory>
    
 If you are intending to analyze DirectX shaders using RGA, copy the x64 version of Microsoft's D3D compiler to a subdirectory
 named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dll).
@@ -80,7 +80,7 @@ named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dl
   
 ### Building on Ubuntu ###
 * One time setup:
-  * Install the Vulkan SDK (version 1.1.82 or above). To download the Vulkan SDK, visit https://vulkan.lunarg.com/
+  * Install the Vulkan SDK (version 1.1.97.0 or above). To download the Vulkan SDK, visit https://vulkan.lunarg.com/
   * sudo apt-get install libboost-all-dev
   * sudo apt-get install gcc-multilib g++-multilib
   * sudo apt-get install libglu1-mesa-dev mesa-common-dev libgtk2.0-dev

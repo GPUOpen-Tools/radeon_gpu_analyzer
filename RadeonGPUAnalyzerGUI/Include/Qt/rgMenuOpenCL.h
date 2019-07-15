@@ -118,7 +118,7 @@ protected:
 
 private:
     // The default menu item.
-    rgAddCreateMenuItem* m_pDefaultMenuItem = nullptr;
+    rgAddCreateMenuItem* m_pAddCreateMenuItem = nullptr;
 
     // A flag used to determine if the kernel list in file items are able to expand.
     bool m_isShowEntrypointListEnabled = true;

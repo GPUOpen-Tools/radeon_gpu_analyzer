@@ -9,10 +9,8 @@
 // D3D.
 #include <d3dcommon.h>
 
-// Infra.
-#include <vector>
-
 // C++.
+#include <vector>
 #include <string>
 
 class D3DIncludeManager :

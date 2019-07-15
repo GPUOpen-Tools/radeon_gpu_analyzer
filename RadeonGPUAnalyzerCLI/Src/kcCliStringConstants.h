@@ -130,6 +130,8 @@ const char* const STR_ERR_FAILED_ISA_FILE_WRITE = "Error: failed to write ISA fi
 const char* const STR_ERR_FAILED_ISA_TO_CSV_FILE_NAME = "Error: CSV conversion failed in file: ";
 const char* const STR_ERR_FAILED_ISA_TO_CSV_CONVERSION = "Error: failed to convert ISA text to CSV format.";
 const char* const STR_ERR_NO_TARGET_DEVICE_SPECIFIED = "Error: no target device specified. Use the -c or --asic options to specify the target device. For the list of all supported device use the -l option.";
+const char* const STR_ERR_FAILED_TO_CONSTRUCT_LIVEREG_OUTPUT_FILE = "Error: failed to construct live register analysis output file name.";
+const char* const STR_ERR_FAILED_TO_CONSTRUCT_CFG_OUTPUT_FILE = "Error: failed to construct control-flow graph output file name.";
 
 // Warnings.
 #define STR_WRN_DX_MIN_SUPPORTED_VERSION "Warning: AMD DirectX driver supports DX10 and above."
@@ -147,10 +149,20 @@ const char* const STR_ERR_NO_TARGET_DEVICE_SPECIFIED = "Error: no target device 
 static const char* STR_WRN_VULKAN_FAILED_SET_ENV_VAR_A = "Warning: failed to set the ";
 static const char* STR_WRN_VULKAN_FAILED_SET_ENV_VAR_B = "environment variable.";
 static const char* STR_WRN_VULKAN_FALLBACK_TO_VK_OFFLIINE_MODE = "Warning: falling back to building using Vulkan offline mode (-s vk-spv-offline). The generated ISA disassembly and HW resource usage information might be inaccurate. To get the most accurate results, adjust the pipeline state to match the shaders and rebuild.";
+static const char* STR_WARNING_LIVEREG_NOT_SUPPORTED_TO_NAVI = "Warning: live register analysis is not supported for Navi in this version, skipping.";
+static const char* STR_WARNING_CFG_NOT_SUPPORTED_TO_NAVI = "Warning: control-flow generations is not supported for Navi in this version, skipping.";
 
 // Info.
 static const char* STR_INFO_USING_CUSTOM_ICD_FILE = "Info: forcing the Vulkan runtime to load a custom ICD: ";
 static const char* STR_INFO_GENERATING_VERSION_INFO_FILE = "Generating version info header in file: ";
+const char* const STR_INFO_POST_PROCESSING_SEPARATOR = "-=-=-=-=-=-=-";
+const char* const STR_INFO_POST_PROCESSING = "Post-processing...";
+const char* const STR_INFO_PERFORMING_LIVEREG_ANALYSIS_A = "Performing live register analysis for ";
+const char* const STR_INFO_PERFORMING_LIVEREG_ANALYSIS_B = " shader...";
+const char* const STR_INFO_CONSTRUCTING_BLOCK_CFG_A = "Generating per-block control-flow graph for ";
+const char* const STR_INFO_CONSTRUCTING_BLOCK_CFG_B = " shader...";
+const char* const STR_INFO_CONSTRUCTING_INSTRUCTION_CFG_A = "Generating per-instruction control-flow graph for ";
+const char* const STR_INFO_CONSTRUCTING_INSTRUCTION_CFG_B = " shader...";
 
 // Environment variables.
 #define STR_OCL_ENV_VAR_GPU_FORCE_64BIT_PTR_NAME  L"GPU_FORCE_64BIT_PTR"
@@ -239,7 +251,8 @@ static const char* STR_INFO_GENERATING_VERSION_INFO_FILE = "Generating version i
 
 // Default file names.
 #define KC_STR_DEFAULT_LIVEREG_OUTPUT_FILE_NAME "livereg"
-#define KC_STR_DEFAULT_ISA_OUTPUT_FILE_NAME     "isa"
+#define KC_STR_DEFAULT_ISA_OUTPUT_FILE_NAME "isa"
+#define KC_STR_DEFAULT_ISA_PREPROCESSED_OUTPUT_FILE_NAME "preprocessed_isa"
 
 // Front-End strings
 // Family names:

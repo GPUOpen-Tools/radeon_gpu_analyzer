@@ -1123,6 +1123,14 @@ bool rgUtils::IsValidFileName(const std::string& fileName)
     return isValid;
 }
 
+bool rgUtils::IsValidProjectName(const std::string& fileName)
+{
+    const int MAX_PROJECT_NAME_LENGTH = 50;
+    return IsValidFileName(fileName) &&
+        !fileName.empty() &&
+        fileName.size() <= MAX_PROJECT_NAME_LENGTH;
+}
+
 bool rgUtils::IsSpvBinFile(const std::string& filePath)
 {
     bool isSpv  = false;

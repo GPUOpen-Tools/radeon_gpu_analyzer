@@ -374,10 +374,13 @@ void rgViewManager::SetFocusedViewIndex(int index)
 void rgViewManager::ClearFocusedView()
 {
     // Clear focused state of currently focused view container.
+    // Having this on Linux causes a crash, so leaving it out of Linux build.
+#ifndef __linux
     if (m_pFocusViewContainer != nullptr)
     {
         m_pFocusViewContainer->SetFocusedState(false);
     }
+#endif // __linux
 
     // Invalidate focus index.
     m_focusViewIndex = -1;

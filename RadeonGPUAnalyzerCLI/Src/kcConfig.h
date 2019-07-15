@@ -17,7 +17,8 @@ class Config
 {
 public:
 
-    static std::string sourceKindHLSL;
+    static std::string sourceKindDx11;
+    static std::string sourceKindDx12;
     static std::string sourceKindAMDIL;
     static std::string sourceKindOpenCL;
     static std::string sourceKindOpenGL;
@@ -78,6 +79,47 @@ public:
     bool                     m_EnableShaderIntrinsics; /// true to enable DX shader intrinsics.
     bool                     m_AMDILInput;             /// true when the input language is AMDIL rather than HLSL.
     int                      m_UAVSlot;                /// User-defined UAV slot for shader intrinsics.
+
+    // DX12.
+    std::string m_vsHlsl;   ///< Full path to the hlsl file where the vertex shader is defined.
+    std::string m_hsHlsl;   ///< Full path to the hlsl file where the hull shader is defined.
+    std::string m_dsHlsl;   ///< Full path to the hlsl file where the domain shader is defined.
+    std::string m_gsHlsl;   ///< Full path to the hlsl file where the geometry shader is defined.
+    std::string m_psHlsl;   ///< Full path to the hlsl file where the pixel shader is defined.
+    std::string m_csHlsl;   ///< Full path to the hlsl file where the compute shader is defined.
+
+    std::string m_vsDxbc;   ///< Full path to the compiled DXBC binary where the vertex shader is defined.
+    std::string m_hsDxbc;   ///< Full path to the compiled DXBC binary where the hull shader is defined.
+    std::string m_dsDxbc;   ///< Full path to the compiled DXBC binary where the domain shader is defined.
+    std::string m_gsDxbc;   ///< Full path to the compiled DXBC binary where the geometry shader is defined.
+    std::string m_psDxbc;   ///< Full path to the compiled DXBC binary where the pixel shader is defined.
+    std::string m_csDxbc;   ///< Full path to the compiled DXBC binary where the compute shader is defined.
+
+    std::string m_vsDxilDisassembly;   ///< Full path to the DXIL disassembly output file for vertex shader.
+    std::string m_hsDxilDisassembly;   ///< Full path to the DXIL disassembly output file for hull shader.
+    std::string m_gsDxilDisassembly;   ///< Full path to the DXIL disassembly output file for domain shader.
+    std::string m_dsDxilDisassembly;   ///< Full path to the DXIL disassembly output file for geometry shader.
+    std::string m_psDxilDisassembly;   ///< Full path to the DXIL disassembly output file for pixel shader.
+    std::string m_csDxilDisassembly;   ///< Full path to the DXIL disassembly output file for compute shader.
+
+    std::string m_vsEntryPoint; ///< Entry point name of vertex shader.
+    std::string m_hsEntryPoint; ///< Entry point name of hull shader.
+    std::string m_dsEntryPoint; ///< Entry point name of domain shader.
+    std::string m_gsEntryPoint; ///< Entry point name of geometry shader.
+    std::string m_psEntryPoint; ///< Entry point name of pixel shader.
+    std::string m_csEntryPoint; ///< Entry point name of compute shader.
+
+    std::string m_vsModel; ///< Shader model for vertex shader.
+    std::string m_hsModel; ///< Shader model for hull shader.
+    std::string m_dsModel; ///< Shader model for domain shader.
+    std::string m_gsModel; ///< Shader model for geometry shader.
+    std::string m_psModel; ///< Shader model for pixel shader.
+    std::string m_csModel; ///< Shader model for compute shader.
+
+    std::string m_rsBin;          ///< Full path to the binary file that contains the compiled root signature.
+    std::string m_rsHlsl;         ///< Full path to the hlsl file that contains the root signature definition.
+    std::string m_rsMacro;        ///< The name of the RootSignature macro in the HLSL code.
+    std::string m_rsMacroVersion; ///< Version of the hlsl-defined root signature.
 
     // Vulkan.
     std::string              m_programOutputDir;     ///< Output directory for the compiler.

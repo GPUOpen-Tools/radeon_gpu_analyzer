@@ -11,14 +11,14 @@
 
 // Infra.
 #ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
+#pragma warning(push)
+#pragma warning(disable:4309)
 #endif
 #include <AMDTBaseTools/Include/gtAssert.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osFile.h>
 #ifdef _WIN32
-    #pragma warning(pop)
+#pragma warning(pop)
 #endif
 
 // Local.
@@ -39,14 +39,14 @@ std::string ToLower(const std::string& str)
 
 // Retrieves the list of devices according to the given HW generation.
 static void AddGenerationDevices(GDT_HW_GENERATION hwGen, std::vector<GDT_GfxCardInfo>& cardList,
-                                 std::set<std::string> &uniqueNamesOfPublishedDevices, bool convertToLower = false)
+    std::set<std::string> &uniqueNamesOfPublishedDevices, bool convertToLower = false)
 {
     std::vector<GDT_GfxCardInfo> cardListBuffer;
     if (AMDTDeviceInfoUtils::Instance()->GetAllCardsInHardwareGeneration(hwGen, cardListBuffer))
     {
         cardList.insert(cardList.end(), cardListBuffer.begin(), cardListBuffer.end());
 
-        for (const GDT_GfxCardInfo& cardInfo : cardList)
+        for (const GDT_GfxCardInfo& cardInfo : cardListBuffer)
         {
             uniqueNamesOfPublishedDevices.insert(convertToLower ? ToLower(cardInfo.m_szCALName) : cardInfo.m_szCALName);
         }
@@ -61,35 +61,40 @@ bool beUtils::GdtHwGenToNumericValue(GDT_HW_GENERATION hwGen, size_t& gfxIp)
     const size_t BE_GFX_IP_7 = 7;
     const size_t BE_GFX_IP_8 = 8;
     const size_t BE_GFX_IP_9 = 9;
+    const size_t BE_GFX_IP_10 = 10;
 
     bool ret = true;
 
     switch (hwGen)
     {
-        case GDT_HW_GENERATION_SOUTHERNISLAND:
-            gfxIp = BE_GFX_IP_6;
-            break;
+    case GDT_HW_GENERATION_SOUTHERNISLAND:
+        gfxIp = BE_GFX_IP_6;
+        break;
 
-        case GDT_HW_GENERATION_SEAISLAND:
-            gfxIp = BE_GFX_IP_7;
-            break;
+    case GDT_HW_GENERATION_SEAISLAND:
+        gfxIp = BE_GFX_IP_7;
+        break;
 
-        case GDT_HW_GENERATION_VOLCANICISLAND:
-            gfxIp = BE_GFX_IP_8;
-            break;
+    case GDT_HW_GENERATION_VOLCANICISLAND:
+        gfxIp = BE_GFX_IP_8;
+        break;
 
-        case GDT_HW_GENERATION_GFX9:
-            gfxIp = BE_GFX_IP_9;
-            break;
+    case GDT_HW_GENERATION_GFX9:
+        gfxIp = BE_GFX_IP_9;
+        break;
 
-        case GDT_HW_GENERATION_NONE:
-        case GDT_HW_GENERATION_NVIDIA:
-        case GDT_HW_GENERATION_LAST:
-        default:
-            // We should not get here.
-            GT_ASSERT_EX(false, L"Unsupported HW Generation.");
-            ret = false;
-            break;
+    case GDT_HW_GENERATION_GFX10:
+        gfxIp = BE_GFX_IP_10;
+        break;
+
+    case GDT_HW_GENERATION_NONE:
+    case GDT_HW_GENERATION_NVIDIA:
+    case GDT_HW_GENERATION_LAST:
+    default:
+        // We should not get here.
+        GT_ASSERT_EX(false, L"Unsupported HW Generation.");
+        ret = false;
+        break;
     }
 
     return ret;
@@ -105,26 +110,26 @@ bool beUtils::GdtHwGenToString(GDT_HW_GENERATION hwGen, std::string& hwGenAsStr)
 
     switch (hwGen)
     {
-        case GDT_HW_GENERATION_SOUTHERNISLAND:
-            hwGenAsStr = BE_GFX_IP_6;
-            break;
+    case GDT_HW_GENERATION_SOUTHERNISLAND:
+        hwGenAsStr = BE_GFX_IP_6;
+        break;
 
-        case GDT_HW_GENERATION_SEAISLAND:
-            hwGenAsStr = BE_GFX_IP_7;
-            break;
+    case GDT_HW_GENERATION_SEAISLAND:
+        hwGenAsStr = BE_GFX_IP_7;
+        break;
 
-        case GDT_HW_GENERATION_VOLCANICISLAND:
-            hwGenAsStr = BE_GFX_IP_8;
-            break;
+    case GDT_HW_GENERATION_VOLCANICISLAND:
+        hwGenAsStr = BE_GFX_IP_8;
+        break;
 
-        case GDT_HW_GENERATION_NONE:
-        case GDT_HW_GENERATION_NVIDIA:
-        case GDT_HW_GENERATION_LAST:
-        default:
-            // We should not get here.
-            GT_ASSERT_EX(false, L"Unsupported HW Generation.");
-            ret = false;
-            break;
+    case GDT_HW_GENERATION_NONE:
+    case GDT_HW_GENERATION_NVIDIA:
+    case GDT_HW_GENERATION_LAST:
+    default:
+        // We should not get here.
+        GT_ASSERT_EX(false, L"Unsupported HW Generation.");
+        ret = false;
+        break;
     }
 
     return ret;
@@ -155,18 +160,23 @@ bool beUtils::GfxCardInfoSortPredicate(const GDT_GfxCardInfo& a, const GDT_GfxCa
     return a.m_deviceID < b.m_deviceID;
 }
 
+struct lex_compare {
+    bool operator() (const int64_t& lhs, const int64_t& rhs) const
+    {
+
+    }
+};
+
 bool beUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& cardList,
-                                  std::set<std::string>& uniqueNamesOfPublishedDevices,
-                                  bool convertToLower)
+    std::set<std::string>& uniqueNamesOfPublishedDevices,
+    bool convertToLower /*= false*/)
 {
-     // Retrieve the list of devices for every relevant hardware generations.
+    // Retrieve the list of devices for every relevant hardware generations.
     AddGenerationDevices(GDT_HW_GENERATION_SOUTHERNISLAND, cardList, uniqueNamesOfPublishedDevices, convertToLower);
     AddGenerationDevices(GDT_HW_GENERATION_SEAISLAND, cardList, uniqueNamesOfPublishedDevices, convertToLower);
     AddGenerationDevices(GDT_HW_GENERATION_VOLCANICISLAND, cardList, uniqueNamesOfPublishedDevices, convertToLower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX9, cardList, uniqueNamesOfPublishedDevices, convertToLower);
-
-    // Sort the data.
-    std::sort(cardList.begin(), cardList.end(), beUtils::GfxCardInfoSortPredicate);
+    AddGenerationDevices(GDT_HW_GENERATION_GFX10, cardList, uniqueNamesOfPublishedDevices, convertToLower);
 
     return (!cardList.empty() && !uniqueNamesOfPublishedDevices.empty());
 }
@@ -208,15 +218,15 @@ bool beUtils::GetMarketingNameToCodenameMapping(std::map<std::string, std::set<s
 
 void beUtils::DeleteOutputFiles(const beProgramPipeline& outputFilePaths)
 {
-    DeleteFile(outputFilePaths.m_vertexShader);
-    DeleteFile(outputFilePaths.m_tessControlShader);
-    DeleteFile(outputFilePaths.m_tessEvaluationShader);
-    DeleteFile(outputFilePaths.m_geometryShader);
-    DeleteFile(outputFilePaths.m_fragmentShader);
-    DeleteFile(outputFilePaths.m_computeShader);
+    DeleteFileFromDisk(outputFilePaths.m_vertexShader);
+    DeleteFileFromDisk(outputFilePaths.m_tessControlShader);
+    DeleteFileFromDisk(outputFilePaths.m_tessEvaluationShader);
+    DeleteFileFromDisk(outputFilePaths.m_geometryShader);
+    DeleteFileFromDisk(outputFilePaths.m_fragmentShader);
+    DeleteFileFromDisk(outputFilePaths.m_computeShader);
 }
 
-void beUtils::DeleteFile(const gtString& filePath)
+void beUtils::DeleteFileFromDisk(const gtString& filePath)
 {
     osFilePath osPath(filePath);
 
@@ -225,6 +235,13 @@ void beUtils::DeleteFile(const gtString& filePath)
         osFile osFile(osPath);
         osFile.deleteFile();
     }
+}
+
+void beUtils::DeleteFileFromDisk(const std::string& filePath)
+{
+    gtString gPath;
+    gPath << filePath.c_str();
+    return DeleteFileFromDisk(gPath);
 }
 
 bool  beUtils::IsFilePresent(const std::string& fileName)
@@ -251,4 +268,50 @@ void beUtils::PrintCmdLine(const std::string & cmdLine, bool doPrint)
     {
         std::cout << std::endl << BE_STR_LAUNCH_EXTERNAL_PROCESS << cmdLine << std::endl << std::endl;
     }
+}
+
+void beUtils::splitString(const std::string& str, char delim, std::vector<std::string>& dst)
+{
+    std::stringstream ss;
+    ss.str(str);
+    std::string substr;
+    while (std::getline(ss, substr, delim))
+    {
+        dst.push_back(substr);
+    }
+}
+
+bool beUtils::DeviceNameLessThan(const std::string& a, const std::string& b)
+{
+    const char* GFX_NOTATION_TOKEN = "gfx";
+    bool ret = true;
+    size_t szA = a.find(GFX_NOTATION_TOKEN);
+    size_t szB = b.find(GFX_NOTATION_TOKEN);
+    if (szA == std::string::npos && szB == std::string::npos)
+    {
+        // Neither name is in gfx-notation, compare using standard string logic.
+        ret = a.compare(b) < 0;
+    }
+    else if (!(szA != std::string::npos && szB != std::string::npos))
+    {
+        // Only one name has the gfx notation, assume that it is a newer generation.
+        ret = (szB != std::string::npos);
+    }
+    else
+    {
+        // Both names are in gfx notation, compare according to the number.
+        std::vector<std::string> splitA;
+        std::vector<std::string> splitB;
+        beUtils::splitString(a, 'x', splitA);
+        beUtils::splitString(b, 'x', splitB);
+        assert(splitA.size() > 1);
+        assert(splitB.size() > 1);
+        if (splitA.size() > 1 && splitB.size() > 1)
+        {
+            int numA = std::stoi(splitA[1], nullptr);
+            int numB = std::stoi(splitB[1], nullptr);
+            ret = ((numB - numA) > 0);
+        }
+    }
+    return ret;
 }

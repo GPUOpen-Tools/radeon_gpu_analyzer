@@ -65,7 +65,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("livereg", po::value<string>(&config.m_LiveRegisterAnalysisFile), "Path to live register analysis output file(s).")
             ("cfg", po::value<string>(&config.m_blockCFGFile), "Path to per-block control flow graph output file(s).")
             ("cfg-i", po::value<string>(&config.m_instCFGFile), "Path to per-instruction control flow graph output file(s).")
-            ("source-kind,s", po::value<string>(&config.m_SourceKind), "Source platform: cl for OpenCL, hlsl for DirectX, opengl for OpenGL, vulkan for Vulkan and amdil for AMDIL.")
+            ("source-kind,s", po::value<string>(&config.m_SourceKind), "Source platform: dx12 for DirectX 12, dx11 for DirectX 11, vulkan for Vulkan, opengl for OpenGL, cl for OpenCL legacy, rocm-cl for OpenCL Lightning Compiler and amdil for AMDIL.")
             ("parse-isa", "Generate a CSV file with a breakdown of each ISA instruction into opcode, operands. etc.")
             ("updates,u", "Check for available updates.")
             ("verbose,v", "Print command line strings that RGA uses to launch external processes.")
@@ -75,7 +75,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         std::string  adaptersDesc = "List all of the supported display adapters that are installed on the system.\n" + std::string(STR_DX_ADAPTERS_HELP_COMMON_TEXT);
         std::string  setAdaptDesc = "Specify the id of the display adapter whose driver you would like RGA to use.\n" + std::string(STR_DX_ADAPTERS_HELP_COMMON_TEXT);
 
-        po::options_description dxOpt("DirectX Shader Analyzer options");
+        po::options_description dxOpt("DirectX 11 mode options");
         dxOpt.add_options()
             ("function,f", po::value<string>(&config.m_Function), "DX shader entry point.")
             ("profile,p", po::value<string>(&config.m_Profile), "Profile to use for compilation.  REQUIRED.\nFor example: vs_5_0, ps_5_0, etc.")
@@ -159,12 +159,67 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("assemble-spv", po::value<string>(&config.m_spvBin), "Assemble SPIR-V textual code to a SPIR-V binary file. arg is the full path to the output SPIR-V binary file.");
 #endif
 
+        // DX12-specific.
+        po::options_description dx12Opt("DirectX 12 mode options");
+        dx12Opt.add_options()
+            // HLSL.
+#ifdef _DX12_GRAPHICS_ENABLED
+            ("vs", po::value<string>(&config.m_vsHlsl), "Full path to hlsl file where vertex shader is defined.")
+            ("hs", po::value<string>(&config.m_hsHlsl), "Full path to hlsl file where hull shader is defined.")
+            ("ds", po::value<string>(&config.m_dsHlsl), "Full path to hlsl file where domain shader is defined.")
+            ("gs", po::value<string>(&config.m_gsHlsl), "Full path to hlsl file where geometry shader is defined.")
+            ("ps", po::value<string>(&config.m_psHlsl), "Full path to hlsl file where pixel shader is defined.")
+#endif
+            ("cs", po::value<string>(&config.m_csHlsl), "Full path to hlsl file where compute shader is defined.")
+            // DXBC.
+#ifdef _DX12_GRAPHICS_ENABLED
+            ("vs-dxbc", po::value<string>(&config.m_vsDxbc), "Full path to compiled DXBC binary where vertex shader is found.")
+            ("hs-dxbc", po::value<string>(&config.m_hsDxbc), "Full path to compiled DXBC binary where hull shader is found.")
+            ("ds-dxbc", po::value<string>(&config.m_dsDxbc), "Full path to compiled DXBC binary where domain shader is found.")
+            ("gs-dxbc", po::value<string>(&config.m_gsDxbc), "Full path to compiled DXBC binary where geometry shader is found.")
+            ("ps-dxbc", po::value<string>(&config.m_psDxbc), "Full path to compiled DXBC binary where pixel shader is found.")
+#endif
+            ("cs-blob", po::value<string>(&config.m_csDxbc), "Full path to compiled DXBC or DXIL binary where compute shader is found.")
+            ("cs-dxil-dis", po::value<string>(&config.m_csDxilDisassembly), "Full path to the DXIL or DXBC disassembly output file for compute shader. "
+                "Note that this option is only valid for textual input (HLSL).")
+            // Target.
+#ifdef _DX12_GRAPHICS_ENABLED
+            ("vs-entry", po::value<string>(&config.m_vsEntryPoint), "Entry-point name of vertex shader.")
+            ("hs-entry", po::value<string>(&config.m_hsEntryPoint), "Entry-point name of hull shader.")
+            ("ds-entry", po::value<string>(&config.m_dsEntryPoint), "Entry-point name of domain shader.")
+            ("gs-entry", po::value<string>(&config.m_gsEntryPoint), "Entry-point name of geometry shader.")
+            ("ps-entry", po::value<string>(&config.m_psEntryPoint), "Entry-point name of pixel shader.")
+#endif
+            ("cs-entry", po::value<string>(&config.m_csEntryPoint), "Entry-point name of compute shader.")
+            // Shader model.
+#ifdef _DX12_GRAPHICS_ENABLED
+            ("vs-model", po::value<string>(&config.m_vsModel), "Shader model of vertex shader (e.g. vs_5_1 or vs_6_0).")
+            ("hs-model", po::value<string>(&config.m_hsModel), "Shader model of hull shader (e.g. hs_5_1 or hs_6_0).")
+            ("ds-model", po::value<string>(&config.m_dsModel), "Shader model of domain shader (e.g. ds_5_1 or ds_6_0).")
+            ("gs-model", po::value<string>(&config.m_gsModel), "Shader model of geometry shader (e.g. gs_5_1 or gs_6_0).")
+            ("ps-model", po::value<string>(&config.m_psModel), "Shader model of pixel shader (e.g. ps_5_1 or ps_6_0).")
+#endif
+            ("cs-model", po::value<string>(&config.m_csModel), "Shader model of compute shader (e.g. cs_5_1 or cs_6_0).")
+            // Root signature.
+            ("rs-bin", po::value<string>(&config.m_rsBin), "The full path to the serialized root signature "
+                "to be used in the compilation process.")
+            ("rs-hlsl", po::value<string>(&config.m_rsHlsl), "Full path to the HLSL file where the "
+                "RootSignature macro is defined in.If there is only a "
+                "single hlsl input file, this option is not required.")
+            ("rs-macro", po::value<string>(&config.m_rsMacro), "The name of the RootSignature macro in the HLSL "
+                "code.If specified, the root signature would be compiled from the HLSL source.Use this if your "
+                "shader does not include the[RootSignature()] attribute but has a root signature macro defined"
+                "in the source code.")
+            ("rs-macro-version", po::value<string>(&config.m_rsMacroVersion), "The version of the RootSignature macro "
+                "specified through the rs - macro option.By default, 'rootsig_1_1' would be assumed.")
+            ;
+
         // Legacy OpenCL options.
         po::options_description legacyClOpt("");
         legacyClOpt.add_options()
             ("suppress", po::value<vector<string> >(&config.m_SuppressSection), "Section to omit from binary output.  Repeatable. Available options: .source, .amdil, .debugil,"
-                                                                                ".debug_info, .debug_abbrev, .debug_line, .debug_pubnames, .debug_pubtypes, .debug_loc, .debug_str,"
-                                                                                ".llvmir, .text\nNote: Debug sections are valid only with \"-g\" compile option");
+                ".debug_info, .debug_abbrev, .debug_line, .debug_pubnames, .debug_pubtypes, .debug_loc, .debug_str,"
+                ".llvmir, .text\nNote: Debug sections are valid only with \"-g\" compile option");
 
         // IL dump.
         po::options_description ilDumpOpt("");
@@ -218,7 +273,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
         // all options available from command line
         po::options_description allOpt;
-        allOpt.add(genericOpt).add(macroAndIncludeOpt).add(clOpt).add(legacyClOpt).add(hiddenOpt).add(dxOpt).add(pipelinedOpt)
+        allOpt.add(genericOpt).add(macroAndIncludeOpt).add(clOpt).add(legacyClOpt).add(hiddenOpt).add(dxOpt).add(dx12Opt).add(pipelinedOpt)
               .add(ilDumpOpt).add(lineNumsOpt).add(warningsOpt).add(optLevelOpt2).add(rocmCmplrPathsOpt);
 
 #ifdef RGA_ENABLE_VULKAN
@@ -365,9 +420,13 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             }
             bSourceSpecified = false;
         }
-        else if (srcKind == Config::sourceKindHLSL)
+        else if (srcKind == Config::sourceKindDx11)
         {
-            config.m_mode = Mode_HLSL;
+            config.m_mode = Mode_DX11;
+        }
+        else if (srcKind == Config::sourceKindDx12)
+        {
+            config.m_mode = Mode_DX12;
         }
         else if (srcKind == Config::sourceKindAMDIL)
         {
@@ -449,9 +508,6 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << ", DirectX";
 #endif
             cout << ", OpenGL and Vulkan" << std::endl << std::endl;
-            cout << "To view help for ROCm OpenCL mode: -h -s rocm-cl" << std::endl;
-            cout << "To view help for legacy OpenCL mode: -h -s cl" << std::endl;
-            cout << "To view help for OpenGL mode: -h -s opengl" << endl;
 #ifdef RGA_ENABLE_VULKAN
             cout << "To view help for Vulkan mode: -h -s vulkan" << endl;
 #endif
@@ -459,9 +515,13 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << "To view help for offline Vulkan (SPIR-V binary) mode: -h -s vk-spv-offline" << endl;
             cout << "To view help for offline Vulkan (SPIR-V text) mode: -h -s vk-spv-txt-offline" << endl;
 #if _WIN32
-            cout << "To view help for DirectX mode: -h -s hlsl" << std::endl;
+            cout << "To view help for DirectX 12 mode: -h -s dx12" << std::endl;
+            cout << "To view help for DirectX 11 mode: -h -s dx11" << std::endl;
             cout << "To view help for AMDIL mode: -h -s amdil" << std::endl;
 #endif
+            cout << "To view help for OpenGL mode: -h -s opengl" << endl;
+            cout << "To view help for ROCm OpenCL mode: -h -s rocm-cl" << std::endl;
+            cout << "To view help for legacy OpenCL mode: -h -s cl" << std::endl;
             cout << std::endl;
             cout << "To see the current RGA version: --version" << std::endl;
             cout << "To check for available updates: --updates" << std::endl;
@@ -471,8 +531,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             // Put all options valid for this mode to one group to make the description aligned.
             po::options_description  oclOptions;
             oclOptions.add(genericOpt).add(ilDumpOpt).add(macroAndIncludeOpt).add(clOpt).add(legacyClOpt);
-            cout << "*** Legacy OpenCL Instructions & Options ***" << endl;
-            cout << "============================================" << endl;
+            cout << "*** Legacy OpenCL mode options ***" << endl;
+            cout << "==================================" << endl;
             cout << "Warning: this mode does not support the Vega architecture, and is about to be deprecated in RGA." << endl << endl;
             cout << "Usage: " << programName << " [options] source_file" << endl;
             cout << oclOptions << endl;
@@ -496,8 +556,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             // Put all options valid for this mode to one group to make the description aligned.
             po::options_description  oclOptions;
             oclOptions.add(genericOpt).add(ilDumpOpt).add(warningsOpt).add(macroAndIncludeOpt).add(clOpt).add(lineNumsOpt).add(optLevelOpt2).add(rocmCmplrPathsOpt);
-            cout << "*** ROCm OpenCL Instructions & Options ***" << endl;
-            cout << "==========================================" << endl << endl;
+            cout << "*** ROCm OpenCL mode options ***" << endl;
+            cout << "================================" << endl << endl;
             cout << "Usage: " << programName << " [options] source_file(s)" << endl;
             cout << oclOptions << endl;
             cout << "Note: In case that your alternative compiler supports targets which are not known to the RGA build that you are using, "
@@ -520,10 +580,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
             cout << endl;
         }
-        else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_mode == Mode_HLSL))
+        else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_mode == Mode_DX11))
         {
-            cout << "*** DX Instructions & Options (Windows Only) ***" << endl;
-            cout << "================================================" << endl << endl;
+            cout << "*** DirectX 11 mode options (Windows Only) ***" << endl;
+            cout << "==============================================" << endl << endl;
             cout << "Usage: " << programName << " [options] source_file" << endl << endl;
             cout << genericOpt << endl;
             cout << ilDumpOpt << endl;
@@ -531,18 +591,37 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << dxOpt << endl;
             cout << "Examples:" << endl;
             cout << "  View supported ASICS for DirectX:" << endl;
-            cout << "    " << programName << " -s hlsl -l" << endl;
+            cout << "    " << programName << " -s dx11 -l" << endl;
             cout << "  Compile myShader.hlsl for all supported targets and extract the ISA disassembly:" << endl;
-            cout << "    " << programName << " -s hlsl -f VsMain -p vs_5_0 --isa output/myShader_isa.txt src/myShader.hlsl" << endl;
+            cout << "    " << programName << " -s dx11 -f VsMain -p vs_5_0 --isa output/myShader_isa.txt src/myShader.hlsl" << endl;
             cout << "  Compile myShader.hlsl for Fiji; extract the ISA and perform live register analysis:" << endl;
-            cout << "    " << programName << " -s hlsl -c Fiji -f VsMain -p vs_5_0 --isa output/myShader_isa.txt --livereg output/regs.txt myShader.hlsl" << endl;
+            cout << "    " << programName << " -s dx11 -c Fiji -f VsMain -p vs_5_0 --isa output/myShader_isa.txt --livereg output/regs.txt myShader.hlsl" << endl;
             cout << "  Compile myShader.hlsl for Radeon R9 390; perform static analysis and save the statistics to myShader.csv:" << endl;
-            cout << "    " << programName << " -s hlsl -c r9-390 -f VsMain -p vs_5_0 -a output/myShader.csv shaders/myShader.hlsl" << endl;
+            cout << "    " << programName << " -s dx11 -c r9-390 -f VsMain -p vs_5_0 -a output/myShader.csv shaders/myShader.hlsl" << endl;
+        }
+        else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_mode == Mode_DX12))
+        {
+        cout << "*** DirectX 12 mode options (Windows only) ***" << endl;
+        cout << "==============================================" << endl << endl;
+        cout << "Usage: " << programName << " [options]" << endl << endl;
+        cout << "Note that the DX12 mode currently only supports compute pipelines." << endl << endl;
+        cout << genericOpt << endl;
+        cout << macroAndIncludeOpt << endl;
+        cout << dx12Opt << endl;
+        cout << "Examples:" << endl;
+        cout << "  View supported ASICS for DX12:" << endl;
+        cout << "    " << programName << " -s dx12 -l" << endl;
+        cout << "  Compile a cs_5_1 compute shader named \"CSMain\" for gfx1010, where the root signature is referenced through a [RootSignature()] attribute. Generate ISA disassembly and resource usage statistics:" << endl;
+        cout << "    " << programName << "-s dx12 -c gfx1010 --cs C:\\shaders\\FillLightGridCS_8.hlsl --cs-model cs_5_1 --cs-entry main --isa C:\\output\\lightcs_dis.txt " << endl;
+        cout << "  Compile a cs_5_1 compute shader named \"CSMain\" for Radeon VII (gfx906), where the root signature is in a binary file (C:\\RS\\FillLightRS.rs.fxo). Generate ISA disassembly and resource usage statistics:" << endl;
+        cout << "    " << programName << "-s dx12 -c gfx906 --cs C:\\shaders\\FillLightGridCS_8.hlsl --cs-model cs_5_1 --cs-entry main --isa C:\\output\\lightcs_dis.txt --rs-bin C:\\RS\\FillLightRS.rs.fxo" << endl;
+        cout << "  Compile a DXIL or DXBC blob for Radeon VII (gfx906) and generate ISA disassembly:" << endl;
+        cout << "    " << programName << "rga -s dx12 -c gfx1010 --cs-blob C:\\shaders\\FillLightGridCS_8.obj --isa C:\\output\\lightcs_dis.txt" << endl;
         }
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_mode == Mode_AMDIL))
         {
-            cout << "*** AMDIL Instructions & Options (Windows Only) ***" << endl;
-            cout << "===================================================" << endl << endl;
+            cout << "*** AMDIL mode options (Windows only) ***" << endl;
+            cout << "=========================================" << endl << endl;
             cout << "Usage: " << programName << " [options] source_file" << endl << endl;
             cout << genericOpt << endl;
             cout << "Examples:" << endl;
@@ -584,8 +663,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             // Convert the mode name string to lower case for presentation.
             std::transform(rgaModeName.begin(), rgaModeName.end(), rgaModeName.begin(), ::tolower);
 
-            cout << "*** Vulkan Offline Instructions & Options ***" << endl;
-            cout << "=============================================" << endl << endl;
+            cout << "*** Vulkan Offline mode options ***" << endl;
+            cout << "===================================" << endl << endl;
             cout << "The Vulkan offline mode is independent of the installed driver and may not provide assembly code and resource"
                     " usage that reflect the real-life case. To get results that reflect the real-life performance of your code, "
                     "please use RGA's Vulkan live-driver mode (-s vulkan)." << endl << endl;
@@ -620,8 +699,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         }
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_mode == Mode_OpenGL))
         {
-            cout << "*** OpenGL Instructions & Options ***" << endl;
-            cout << "=====================================" << endl << endl;
+            cout << "*** OpenGL mode options ***" << endl;
+            cout << "===========================" << endl << endl;
             cout << "Usage: " << programName << " [options]" << endl << endl;
             cout << genericOpt << endl;
             cout << ilDumpOpt << endl;
@@ -637,8 +716,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 #ifdef RGA_ENABLE_VULKAN
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_mode == Mode_Vulkan))
         {
-            cout << "*** Vulkan Instructions & Options ***" << endl;
-            cout << "=====================================" << endl << endl;
+            cout << "*** Vulkan mode options ***" << endl;
+            cout << "===========================" << endl << endl;
             cout << "Usage: " << programName << " [options]" << endl << endl;
             cout << genericOpt << endl;
             cout << macroAndIncludeOpt << endl;

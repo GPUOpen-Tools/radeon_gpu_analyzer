@@ -102,7 +102,7 @@ static const char* STR_ERR_CANNOT_LOAD_VERSION_INFO_FILE = "RGA Failed to load v
 static const char* STR_ERR_CANNOT_LOAD_SUPPORTED_GPUS_LIST_FOR_MODE_A = "Failed to load list of supported GPUs for '";
 static const char* STR_ERR_CANNOT_LOAD_SUPPORTED_GPUS_LIST_FOR_MODE_B = "' mode.";
 static const char* STR_ERR_CANNOT_LOAD_DISASSEMBLY_CSV_FILE = "Failed to load disassembly output file at ";
-static const char* STR_ERR_ILLEGAL_PROJECT_NAME = "Project name is not a legal file name: ";
+static const char* STR_ERR_ILLEGAL_PROJECT_NAME = "Project name is not a legal file name or exceeds 50 characters: ";
 static const char* STR_ERR_FAILED_TO_OPEN_FILE_BROWSER = "Failed to open the system's file explorer.";
 static const char* STR_ERR_CSV_PARSING_FAILED_A = "Failed to parse ";
 static const char* STR_ERR_CSV_PARSING_FAILED_B = " at line ";
@@ -243,7 +243,7 @@ static const char* STR_FILE_MENU_REMOVE_FILE_TOOLTIP_SUFFIX = " from this projec
 
 // Tooltip for the project title at the top of the file menu.
 static const char* STR_FILE_MENU_PROJECT_TITLE_TOOLTIP_A = "<b>Project name: </b>";
-static const char* STR_FILE_MENU_PROJECT_TITLE_TOOLTIP_B = "\n(double-click to rename).";
+static const char* STR_FILE_MENU_PROJECT_TITLE_TOOLTIP_B = " (double-click to rename).";
 
 // *** FILE CONTEXT MENU STRINGS - END ***
 

@@ -26,8 +26,11 @@ public:
     // Dump the extracted entry points to stdout.
     virtual bool ListEntries(const Config& config, LoggingCallBackFunc_t callback) override;
 
-    /// Output multiple commands for all commands that requires compilation: GetBinary, GetIL, GetISA, GetAnlysis, GetMetadata, GetDebugIL,ListKernels
+    // Output multiple commands for all commands that requires compilation: GetBinary, GetIL, GetISA, GetAnlysis, GetMetadata, GetDebugIL,ListKernels
     void RunCompileCommands(const Config& config, LoggingCallBackFunc_t callback);
+
+    // Print the list of target devices.
+    virtual bool PrintAsicList(const Config&) override;
 
 private: // functions
 

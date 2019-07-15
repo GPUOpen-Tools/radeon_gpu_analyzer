@@ -227,6 +227,27 @@ bool rgConfigFileReaderVulkan::ReadApiBuildSettings(tinyxml2::XMLNode* pNode, st
                     pNode = pNodeOriginal;
                 }
             }
+
+            // Alternative compiler paths.
+            if (ret && pNode != nullptr)
+            {
+                // Alternative compiler paths.
+                if (pNode != nullptr)
+                {
+                    pNode = pNode->NextSiblingElement(XML_NODE_ALTERNATIVE_COMPILER_BIN_DIR);
+                    rgXMLUtils::ReadNodeTextString(pNode, std::get<CompilerFolderType::Bin>(pBuildSettingsVulkan->m_compilerPaths));
+                }
+                if (pNode != nullptr)
+                {
+                    pNode = pNode->NextSiblingElement(XML_NODE_ALTERNATIVE_COMPILER_INC_DIR);
+                    rgXMLUtils::ReadNodeTextString(pNode, std::get<CompilerFolderType::Include>(pBuildSettingsVulkan->m_compilerPaths));
+                }
+                if (pNode != nullptr)
+                {
+                    pNode = pNode->NextSiblingElement(XML_NODE_ALTERNATIVE_COMPILER_LIB_DIR);
+                    rgXMLUtils::ReadNodeTextString(pNode, std::get<CompilerFolderType::Lib>(pBuildSettingsVulkan->m_compilerPaths));
+                }
+            }
         }
     }
 
@@ -315,6 +336,11 @@ bool rgConfigFileWriterVulkan::WriteBuildSettingsElement(const std::shared_ptr<r
 
             // Glslang additional options.
             rgXMLUtils::AppendXMLElement(doc, pBuildSettingsElem, XML_NODE_VULKAN_GLSLANG_OPTIONS_LOCATION, pBuildSettingsVulkan->m_glslangOptions.c_str());
+
+            // Alternative compiler paths.
+            rgXMLUtils::AppendXMLElement(doc, pBuildSettingsElem, XML_NODE_ALTERNATIVE_COMPILER_BIN_DIR, std::get<CompilerFolderType::Bin>(pBuildSettingsVulkan->m_compilerPaths).c_str());
+            rgXMLUtils::AppendXMLElement(doc, pBuildSettingsElem, XML_NODE_ALTERNATIVE_COMPILER_INC_DIR, std::get<CompilerFolderType::Include>(pBuildSettingsVulkan->m_compilerPaths).c_str());
+            rgXMLUtils::AppendXMLElement(doc, pBuildSettingsElem, XML_NODE_ALTERNATIVE_COMPILER_LIB_DIR, std::get<CompilerFolderType::Lib>(pBuildSettingsVulkan->m_compilerPaths).c_str());
         }
     }
 

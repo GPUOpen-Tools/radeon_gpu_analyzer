@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1200</width>
-    <height>490</height>
+    <height>500</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,7 @@
   <property name="minimumSize">
    <size>
     <width>0</width>
-    <height>490</height>
+    <height>500</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -93,7 +93,13 @@
     </widget>
    </item>
    <item row="15" column="2">
-    <widget class="QPushButton" name="ICDLocationBrowseButton">
+    <widget class="rgBrowseButton" name="ICDLocationBrowseButton">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>25</height>
+      </size>
+     </property>
      <property name="maximumSize">
       <size>
        <width>30</width>
@@ -161,23 +167,23 @@
      </property>
     </widget>
    </item>
-   <item row="21" column="0">
-    <spacer name="verticalSpacer_42">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Fixed</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="23" column="0" colspan="3">
+    <item row="21" column="0">
+      <spacer name="verticalSpacer_81">
+        <property name="orientation">
+          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+          <size>
+            <width>20</width>
+            <height>20</height>
+          </size>
+        </property>
+      </spacer>
+    </item>
+   <item row="22" column="0" colspan="3">
     <widget class="QLabel" name="settingsCommandLineHeaderLabel">
      <property name="minimumSize">
       <size>
@@ -238,7 +244,7 @@
     </widget>
    </item>
    <item row="2" column="2">
-    <widget class="QPushButton" name="addTargetGPUsButton">
+    <widget class="rgBrowseButton" name="addTargetGPUsButton">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -376,7 +382,7 @@
     <widget class="rgLineEdit" name="compilerBinariesLineEdit"/>
    </item>
    <item row="20" column="2">
-    <widget class="QPushButton" name="compilerBrowseButton">
+    <widget class="rgBrowseButton" name="compilerBrowseButton">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -435,22 +441,6 @@
       <string>Additional include directories:</string>
      </property>
     </widget>
-   </item>
-   <item row="22" column="0">
-    <spacer name="verticalSpacer_3">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Expanding</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>0</height>
-      </size>
-     </property>
-    </spacer>
    </item>
    <item row="1" column="0">
     <spacer name="verticalSpacer_5">
@@ -516,22 +506,6 @@
      </property>
     </spacer>
    </item>
-   <item row="22" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Fixed</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>5</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
    <item row="11" column="1">
     <widget class="QLabel" name="useHLSLIOMappingLabel">
      <property name="enabled">
@@ -542,7 +516,7 @@
      </property>
     </widget>
    </item>
-   <item row="24" column="0" colspan="3">
+   <item row="23" column="0" colspan="3">
     <widget class="QPlainTextEdit" name="allOptionsTextEdit">
      <property name="minimumSize">
       <size>
@@ -561,6 +535,22 @@
      </property>
     </widget>
    </item>
+    <item row="24" column="0">
+      <spacer name="verticalSpacer_50">
+        <property name="orientation">
+          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+          <enum>QSizePolicy::Expanding</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+          <size>
+            <width>20</width>
+            <height>20</height>
+          </size>
+        </property>
+      </spacer>
+    </item>
    <item row="10" column="1">
     <widget class="QLabel" name="useHLSLBlockOffsetsLabel">
      <property name="enabled">
@@ -585,7 +575,7 @@
     </widget>
    </item>
    <item row="3" column="2">
-    <widget class="QPushButton" name="predefinedMacrosBrowseButton">
+    <widget class="rgBrowseButton" name="predefinedMacrosBrowseButton">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -633,7 +623,7 @@
     </widget>
    </item>
    <item row="4" column="2">
-    <widget class="QPushButton" name="includeDirsBrowseButton">
+    <widget class="rgBrowseButton" name="includeDirsBrowseButton">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -713,6 +703,11 @@
    <class>rgCheckBox</class>
    <extends>QCheckBox</extends>
    <header>rgCheckBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>rgBrowseButton</class>
+   <extends>QPushButton</extends>
+   <header>rgBrowseButton.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

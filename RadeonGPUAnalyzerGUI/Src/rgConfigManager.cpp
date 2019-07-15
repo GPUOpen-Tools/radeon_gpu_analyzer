@@ -12,6 +12,7 @@
 #include <Common/Src/AMDTOSWrappers/Include/osFilePath.h>
 
 // Local.
+#include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTableModel.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgConfigManager.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgConfigFile.h>
@@ -88,7 +89,7 @@ private:
     // Add default target GPU hardware. Suitable default target GPUs are discovered by looking at
     // the list of supported devices and choosing the last item in the list. Items at the end of
     // the list are the most recently released products.
-    static void AddDefaultTargetGpus(std::shared_ptr<rgBuildSettings> pBuildSettings)
+    static void AddDefaultTargetGpus(std::shared_ptr<rgBuildSettings> pBuildSettings, const std::string& apiMode)
     {
         // Use the version info's list of supported GPUs to determine the most recent
         // hardware to build for by default.
@@ -99,7 +100,6 @@ private:
         if (pVersionInfo != nullptr)
         {
             // Find the set of GPU architectures supported in the current mode.
-            const std::string& apiMode = configManager.GetCurrentModeString();
             auto modeArchitecturesIter = pVersionInfo->m_gpuArchitectures.find(apiMode);
             if (modeArchitecturesIter != pVersionInfo->m_gpuArchitectures.end())
             {
@@ -127,7 +127,7 @@ private:
         assert(pRet != nullptr);
         if (pRet != nullptr)
         {
-            AddDefaultTargetGpus(pRet);
+            AddDefaultTargetGpus(pRet, STR_MODE_STRING_OPENCL);
         }
 
         return pRet;
@@ -141,7 +141,7 @@ private:
         assert(pRet != nullptr);
         if (pRet != nullptr)
         {
-            AddDefaultTargetGpus(pRet);
+            AddDefaultTargetGpus(pRet, STR_MODE_STRING_VULKAN);
         }
 
         return pRet;
@@ -313,7 +313,7 @@ void rgConfigManager::ResetToFactoryDefaults(rgGlobalSettings& globalSettings)
     // Only the Address, Opcode and Operands columns are visible by default.
     globalSettings.m_visibleDisassemblyViewColumns =
     {
-        true,   // rgIsaDisassemblyTableColumns::Address
+        false,  // rgIsaDisassemblyTableColumns::Address
         true,   // rgIsaDisassemblyTableColumns::Opcode
         true,   // rgIsaDisassemblyTableColumns::Operands
         false,  // rgIsaDisassemblyTableColumns::FunctionalUnit

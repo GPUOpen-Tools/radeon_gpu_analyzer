@@ -7,7 +7,7 @@
     #include <codecvt>
 #endif
 #include <string>
-
+#include <cassert>
 
 #ifdef _WIN32
     // DX is Windows only.
@@ -180,6 +180,12 @@ beStatus Backend::GetDeviceChipFamilyRevision(
 
     switch (tableEntry.m_asicType)
     {
+    case GDT_GFX10_1_0:
+        chipFamily = FAMILY_NV;
+        chipRevision = NV_NAVI10_P_A0;
+        retVal = beStatus_SUCCESS;
+        break;
+
     case GDT_GFX9_0_6:
         chipFamily = FAMILY_AI;
         chipRevision = AI_VEGA20_P_A0;
@@ -299,6 +305,7 @@ beStatus Backend::GetDeviceChipFamilyRevision(
         // The 600's EG, and NI are no longer supported by OpenCL.
         // For GSA the earliest DX/GL support is SI.
         retVal = beStatus_NO_DEVICE_FOUND;
+        assert(false);
         break;
     }
 

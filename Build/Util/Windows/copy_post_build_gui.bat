@@ -25,8 +25,6 @@ IF NOT exist %OUTPUT_DIR% mkdir %OUTPUT_DIR%
 IF NOT exist %OUTPUT_DIR%\platforms mkdir %OUTPUT_DIR%\platforms
 IF NOT exist %OUTPUT_DIR%\iconengines mkdir %OUTPUT_DIR%\iconengines
 IF NOT exist %OUTPUT_DIR%\imageformats mkdir %OUTPUT_DIR%\imageformats
-IF NOT exist %OUTPUT_DIR%\Documentation mkdir %OUTPUT_DIR%\Documentation
-IF NOT exist %OUTPUT_DIR%\Documentation\html mkdir %OUTPUT_DIR%\Documentation\html
 
 rem Copy Qt5 dlls
 IF NOT [%QT_LIB_DIR%]==[] (

@@ -250,25 +250,6 @@ void kcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
                     }
                 }
 
-                if (isLiveRegAnalysisRequired)
-                {
-                    vulkanOptions.m_isLiveRegisterAnalysisRequired = true;
-                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVEREG_SUFFIX,
-                                                                              KC_STR_DEFAULT_LIVEREG_EXT, deviceToLower, vulkanOptions.m_liveRegisterAnalysisOutputFiles);
-                }
-
-                if (isBlockCfgRequired)
-                {
-                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_blockCFGFile, KC_STR_DEFAULT_CFG_SUFFIX, KC_STR_DEFAULT_CFG_EXT,
-                        deviceToLower, vulkanOptions.m_controlFlowGraphOutputFiles);
-                }
-
-                if (isInstCfgRequired)
-                {
-                    status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_instCFGFile, KC_STR_DEFAULT_CFG_SUFFIX, KC_STR_DEFAULT_CFG_EXT,
-                        deviceToLower, vulkanOptions.m_controlFlowGraphOutputFiles);
-                }
-
                 if (isIlRequired)
                 {
                     vulkanOptions.m_isAmdPalIlDisassemblyRequired = true;
@@ -280,9 +261,49 @@ void kcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
                 {
                     vulkanOptions.m_isScStatsRequired = true;
                     status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_AnalysisFile, KC_STR_DEFAULT_STATS_SUFFIX,
-                                                                              KC_STR_DEFAULT_STATS_EXT, deviceToLower, vulkanOptions.m_scStatisticsOutputFiles);
+                        KC_STR_DEFAULT_STATS_EXT, deviceToLower, vulkanOptions.m_scStatisticsOutputFiles);
                 }
 
+                // Live register analysis and cfg generation.
+                if (isLiveRegAnalysisRequired)
+                {
+                    if (!kcUtils::IsNaviTarget(device))
+                    {
+                        vulkanOptions.m_isLiveRegisterAnalysisRequired = true;
+                        status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVEREG_SUFFIX,
+                            KC_STR_DEFAULT_LIVEREG_EXT, deviceToLower, vulkanOptions.m_liveRegisterAnalysisOutputFiles);
+                    }
+                    else
+                    {
+                        std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED_TO_NAVI << std::endl;
+                    }
+                }
+
+                if (isBlockCfgRequired)
+                {
+                    if (!kcUtils::IsNaviTarget(device))
+                    {
+                        status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_blockCFGFile, KC_STR_DEFAULT_CFG_SUFFIX, KC_STR_DEFAULT_CFG_EXT,
+                            deviceToLower, vulkanOptions.m_controlFlowGraphOutputFiles);
+                    }
+                    else
+                    {
+                        std::cout << STR_WARNING_CFG_NOT_SUPPORTED_TO_NAVI << std::endl;
+                    }
+                }
+
+                if (isInstCfgRequired)
+                {
+                    if (!kcUtils::IsNaviTarget(device))
+                    {
+                        status &= kcUtils::AdjustRenderingPipelineOutputFileNames(config.m_instCFGFile, KC_STR_DEFAULT_CFG_SUFFIX, KC_STR_DEFAULT_CFG_EXT,
+                            deviceToLower, vulkanOptions.m_controlFlowGraphOutputFiles);
+                    }
+                    else
+                    {
+                        std::cout << STR_WARNING_CFG_NOT_SUPPORTED_TO_NAVI << std::endl;
+                    }
+                }
                 if (!status)
                 {
                     logMsg << STR_ERR_FAILED_ADJUST_FILE_NAMES << std::endl;
@@ -370,7 +391,7 @@ void kcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
                     }
 
                     // Perform live register analysis if required.
-                    if (isLiveRegAnalysisRequired)
+                    if (isLiveRegAnalysisRequired && !kcUtils::IsNaviTarget(device))
                     {
                         if (isVertexShaderPresent)
                         {
@@ -380,8 +401,12 @@ void kcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
 
                         if (isTessControlShaderPresent)
                         {
-                            kcUtils::PerformLiveRegisterAnalysis(vulkanOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
-                                                                 vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_tessControlShader, callback, config.m_printProcessCmdLines);
+                            // When tessellation is enabled on Vega and Navi, Vertex and Tesc are merged.
+                            if (!kcUtils::IsNaviTarget(device) && !kcUtils::IsVegaTarget(device))
+                            {
+                                kcUtils::PerformLiveRegisterAnalysis(vulkanOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
+                                    vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_tessControlShader, callback, config.m_printProcessCmdLines);
+                            }
                         }
 
                         if (isTessEvaluationShaderPresent)
@@ -392,8 +417,12 @@ void kcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
 
                         if (isGeometryexShaderPresent)
                         {
-                            kcUtils::PerformLiveRegisterAnalysis(vulkanOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
-                                                                 vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_geometryShader, callback, config.m_printProcessCmdLines);
+                            // When tessellation evaluation is present on Vega and Navi, GS and Tesc are merged.
+                            if (!isTessEvaluationShaderPresent || (!kcUtils::IsNaviTarget(device) && !kcUtils::IsVegaTarget(device)))
+                            {
+                                kcUtils::PerformLiveRegisterAnalysis(vulkanOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
+                                    vulkanOptions.m_liveRegisterAnalysisOutputFiles.m_geometryShader, callback, config.m_printProcessCmdLines);
+                            }
                         }
 
                         if (isFragmentShaderPresent)
@@ -428,7 +457,7 @@ void kcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
                     }
 
                     // Generate control flow graph if required.
-                    if (isInstCfgRequired || isBlockCfgRequired)
+                    if ((isInstCfgRequired || isBlockCfgRequired) && !kcUtils::IsNaviTarget(device))
                     {
                         if (isVertexShaderPresent)
                         {
@@ -438,8 +467,12 @@ void kcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
 
                         if (isTessControlShaderPresent)
                         {
-                            kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
-                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_tessControlShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                            // When tessellation is enabled on Vega and Navi, Vertex and Tesc are merged.
+                            if (!kcUtils::IsNaviTarget(device) && !kcUtils::IsVegaTarget(device))
+                            {
+                                kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_tessControlShader,
+                                    vulkanOptions.m_controlFlowGraphOutputFiles.m_tessControlShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                            }
                         }
 
                         if (isTessEvaluationShaderPresent)
@@ -450,8 +483,12 @@ void kcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
 
                         if (isGeometryexShaderPresent)
                         {
-                            kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
-                                                              vulkanOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                            // When tessellation evaluation is present on Vega and Navi, GS and Tesc are merged.
+                            if (!isTessEvaluationShaderPresent || (!kcUtils::IsNaviTarget(device) && !kcUtils::IsVegaTarget(device)))
+                            {
+                                kcUtils::GenerateControlFlowGraph(vulkanOptions.m_isaDisassemblyOutputFiles.m_geometryShader,
+                                    vulkanOptions.m_controlFlowGraphOutputFiles.m_geometryShader, callback, isInstCfgRequired, config.m_printProcessCmdLines);
+                            }
                         }
 
                         if (isFragmentShaderPresent)

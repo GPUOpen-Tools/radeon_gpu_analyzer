@@ -11,13 +11,13 @@
 #include <algorithm>
 
 #ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
+#pragma warning(push)
+#pragma warning(disable:4309)
 #endif
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <Core/Vulkan/tools/include/spirv_cross/spirv_cross.hpp>
 #ifdef _WIN32
-    #pragma warning(pop)
+#pragma warning(pop)
 #endif
 
 #include <Utils/Include/rgLog.h>
@@ -56,7 +56,6 @@ static const std::string  STR_VULKAN_STATS_TAG_LDS_USAGE      = "resourceUsage.l
 static const std::string  STR_VULKAN_STATS_TAG_SCRATCH_MEM    = "resourceUsage.scratchMemUsageInBytes";
 
 // Default name for temporary files.
-static const std::string  STR_VULKAN_TEMP_FILE_NAME                 = "rga-vk-temp-out";
 static const std::string  STR_VULKAN_TEMP_VALIDATION_INFO_FILE_NAME = "rga-vk-validation-info";
 
 // Temp file suffix for all devices.
@@ -84,16 +83,6 @@ STR_VULKAN_STAGE_FILE_SUFFIXES_1 =
     "vs",
     "fs",
     "glsl"
-};
-
-// A vector of pairs that keeps the correspondence between some non-standard Vulkan device names
-// returned by Vulkan driver and the "standard" names that can be found in the Device Info lib.
-static const std::vector<std::pair<std::string, std::string>>
-VULKAN_DRIVER_DEVICES =
-{
-    {"bristol",        "bristol ridge"},
-    {"polaris10",      "ellesmere"},
-    {"polaris11",      "baffin"}
 };
 
 // The name of the VK_LOADER_DEBUG environment variable.
@@ -137,8 +126,8 @@ STR_PIPELINE_STAGE_FULL_NAMES =
 };
 
 // File extensions for HLSL, SPIRV binary and SPIRV text files.
-static const std::string  STR_HLSL_FILE_EXTENSION      = "hlsl";
-static const std::string  STR_SPIRV_FILE_EXTENSION     = "spv";
+static const std::string  STR_HLSL_FILE_EXTENSION = "hlsl";
+static const std::string  STR_SPIRV_FILE_EXTENSION = "spv";
 static const std::string  STR_SPIRV_TXT_FILE_EXTENSION = "spvas";
 
 // Output metadata entry types for OpenGL pipeline stages.
@@ -271,8 +260,8 @@ private:
         if (SkipSpaces() != TEXT_END)
         {
             while (m_caret < m_textSize &&
-                   ((m_text[m_caret] >= 'A' && m_text[m_caret] <= 'z') ||
-                    (m_text[m_caret] >= '0' && m_text[m_caret] <= '9') || m_text[m_caret] == '_'))
+                ((m_text[m_caret] >= 'A' && m_text[m_caret] <= 'z') ||
+                (m_text[m_caret] >= '0' && m_text[m_caret] <= '9') || m_text[m_caret] == '_'))
             {
                 ret.push_back(m_text[m_caret++]);
             }
@@ -298,8 +287,8 @@ private:
         {
             m_caret--;
             while (m_caret + 1 > 0 &&
-                   ((m_text[m_caret] >= 'A' && m_text[m_caret] <= 'z') ||
-                    (m_text[m_caret] >= '0' && m_text[m_caret] <= '9') || m_text[m_caret] == '_'))
+                ((m_text[m_caret] >= 'A' && m_text[m_caret] <= 'z') ||
+                (m_text[m_caret] >= '0' && m_text[m_caret] <= '9') || m_text[m_caret] == '_'))
             {
                 ret.push_back(m_text[m_caret--]);
             }
@@ -320,9 +309,9 @@ private:
     }
 
     std::string  m_text;
-    size_t       m_textSize  = 0;
-    size_t       m_caret     = 0;
-    const size_t TEXT_END    = std::numeric_limits<size_t>::max();
+    size_t       m_textSize = 0;
+    size_t       m_caret = 0;
+    const size_t TEXT_END = std::numeric_limits<size_t>::max();
 };
 
 // Callback for printing to stdout.
@@ -331,81 +320,35 @@ static void loggingCallback(const string& s)
     rgLog::stdOut << s.c_str() << std::flush;
 }
 
-// Construct output file name based on provided base name, device name and extension.
-// The file name is the full path.
-// If base name is empty, the (temp folder name + temp file name) will be used.
-static bool ConstructOutFileName(const std::string& baseFileName,
-                                 const std::string& stage,
-                                 const std::string& device,
-                                 const std::string& ext,
-                                 std::string&       outFileName)
-{
-    bool        status = false;
-    gtString    name = L"";
-    std::string baseName = baseFileName;
-
-    // If base output file name is not provided, create a temp file name (in the temp folder).
-    if (!baseName.empty())
-    {
-        status = true;
-    }
-    else
-    {
-        baseName = kcUtils::ConstructTempFileName(STR_VULKAN_TEMP_FILE_NAME, ext);
-        status = !baseName.empty();
-        if (!status)
-        {
-            rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
-        }
-    }
-
-    if (status)
-    {
-        std::string outName;
-        kcUtils::ConstructOutputFileName(baseName, stage, ext, "", device, outName);
-        if (!outName.empty())
-        {
-            kcUtils::AppendSuffix(outName, stage);
-            outFileName = outName;
-            status = true;
-        }
-        else
-        {
-            rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
-        }
-    }
-
-    return status;
-}
 
 // Construct per-stage output file names for binary, ISA disassembly and statistics based on base file
 // names specified by a user and target GPU name ("device"). "spvFileNames" contains the names of input
 // spv files. The output ISA file names will be generated for corresponding non-empty spv file names.
 static bool ConstructVkOutputFileNames(const std::string&       baseBinFileName,
-                                       const std::string&       baseIsaFileName,
-                                       const std::string&       baseStatsFileName,
-                                       const std::string&       device,
-                                       const beVkPipelineFiles& spvFileNames,
-                                       std::string&             binFileName,
-                                       beVkPipelineFiles&       isaFileNames,
-                                       beVkPipelineFiles&       statsFileNames)
+    const std::string&       baseIsaFileName,
+    const std::string&       baseStatsFileName,
+    const std::string&       device,
+    const beVkPipelineFiles& spvFileNames,
+    std::string&             binFileName,
+    beVkPipelineFiles&       isaFileNames,
+    beVkPipelineFiles&       statsFileNames)
 {
     bool status = true;
 
     if (!baseBinFileName.empty())
     {
-        status = ConstructOutFileName(baseBinFileName, "", device, STR_VULKAN_BIN_FILE_EXT, binFileName);
+        status = kcUtils::ConstructOutFileName(baseBinFileName, "", device, STR_VULKAN_BIN_FILE_EXT, binFileName);
     }
 
     for (int stage = 0; stage < bePipelineStage::Count && status; stage++)
     {
         if (!spvFileNames[stage].empty() && status)
         {
-            status = status && ConstructOutFileName(baseIsaFileName, STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage], device,
-                                                    STR_VULKAN_ISA_FILE_EXT, isaFileNames[stage]);
+            status = status && kcUtils::ConstructOutFileName(baseIsaFileName, STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage], device,
+                STR_VULKAN_ISA_FILE_EXT, isaFileNames[stage]);
 
-            status = status && ConstructOutFileName(baseStatsFileName, STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage], device,
-                                                    STR_VULKAN_STATS_FILE_EXT, statsFileNames[stage]);
+            status = status && kcUtils::ConstructOutFileName(baseStatsFileName, STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage], device,
+                STR_VULKAN_STATS_FILE_EXT, statsFileNames[stage]);
         }
     }
 
@@ -477,7 +420,7 @@ static void  LogErrorStatus(beStatus status, const std::string& errMsg)
 }
 
 // Parse the content of Vulkan stats and store values to "data" structure.
-static bool ParseVulkanStats(const std::string isaText, std::string statsText, beKA::AnalysisData& data)
+static bool ParseVulkanStats(const std::string isaText, const std::string& statsText, beKA::AnalysisData& data)
 {
     bool result = false;
     std::string line, tag, dash, equals;
@@ -495,13 +438,34 @@ static bool ParseVulkanStats(const std::string isaText, std::string statsText, b
             sLine >> dash >> tag >> equals >> value;
             if ((result = (dash == "-" && equals == "=")) == true)
             {
-                if (tag == STR_VULKAN_STATS_TAG_NUM_USED_VGPRS) { data.numVGPRsUsed = value; } else
-                if (tag == STR_VULKAN_STATS_TAG_NUM_AVL_VGPRS)  { data.numVGPRsAvailable = value;} else
-                if (tag == STR_VULKAN_STATS_TAG_NUM_USED_SGPRS) { data.numSGPRsUsed = value; } else
-                if (tag == STR_VULKAN_STATS_TAG_NUM_AVL_SGPRS)  { data.numSGPRsAvailable = value; } else
-                if (tag == STR_VULKAN_STATS_TAG_LDS_SIZE)       { data.LDSSizeAvailable = value;} else
-                if (tag == STR_VULKAN_STATS_TAG_LDS_USAGE)      { data.LDSSizeUsed = value;} else
-                if (tag == STR_VULKAN_STATS_TAG_SCRATCH_MEM)    { data.scratchMemoryUsed = value; }
+                if (tag == STR_VULKAN_STATS_TAG_NUM_USED_VGPRS)
+                {
+                    data.numVGPRsUsed = value;
+                }
+                else if (tag == STR_VULKAN_STATS_TAG_NUM_AVL_VGPRS)
+                {
+                    data.numVGPRsAvailable = value;
+                }
+                else if (tag == STR_VULKAN_STATS_TAG_NUM_USED_SGPRS)
+                {
+                    data.numSGPRsUsed = value;
+                }
+                else if (tag == STR_VULKAN_STATS_TAG_NUM_AVL_SGPRS)
+                {
+                    data.numSGPRsAvailable = value;
+                }
+                else if (tag == STR_VULKAN_STATS_TAG_LDS_SIZE)
+                {
+                    data.LDSSizeAvailable = value;
+                }
+                else if (tag == STR_VULKAN_STATS_TAG_LDS_USAGE)
+                {
+                    data.LDSSizeUsed = value;
+                }
+                else if (tag == STR_VULKAN_STATS_TAG_SCRATCH_MEM)
+                {
+                    data.scratchMemoryUsed = value;
+                }
             }
         }
     }
@@ -525,7 +489,7 @@ static bool ParseVulkanStats(const std::string isaText, std::string statsText, b
 
 // Convert statistics file from Vulkan mode into normal RGA stats format.
 static beStatus ConvertStats(const beVkPipelineFiles& isaFiles, const beVkPipelineFiles& statsFiles,
-                             const Config& config, const std::string& device)
+    const Config& config, const std::string& device)
 {
     beStatus status = beStatus_SUCCESS;
 
@@ -691,8 +655,8 @@ DetectInputFiles(const Config& config)
     {
         // 2. If the input type for all stages is not explicitly specified.
         std::array<rgVulkanInputType, bePipelineStage::Count> userFileTypes =
-            { config.m_vertShaderFileType, config.m_tescShaderFileType, config.m_teseShaderFileType,
-              config.m_geomShaderFileType, config.m_fragShaderFileType, config.m_compShaderFileType };
+        { config.m_vertShaderFileType, config.m_tescShaderFileType, config.m_teseShaderFileType,
+          config.m_geomShaderFileType, config.m_fragShaderFileType, config.m_compShaderFileType };
 
         beVkPipelineFiles files = { config.m_VertexShader, config.m_TessControlShader, config.m_TessEvaluationShader,
                                     config.m_GeometryShader, config.m_FragmentShader, config.m_ComputeShader };
@@ -708,7 +672,7 @@ DetectInputFiles(const Config& config)
             if (!files[stage].empty())
             {
                 ret[stage] = (userFileTypes[stage] != rgVulkanInputType::Unknown ?
-                                  userFileTypes[stage] : DetectInputTypeByFileExt(files[stage]));
+                    userFileTypes[stage] : DetectInputTypeByFileExt(files[stage]));
             }
         }
     }
@@ -925,7 +889,7 @@ bool kcCLICommanderVulkan::ListEntries(const Config& config, LoggingCallBackFunc
         {
             // Preprocess the input file.
             beStatus status = beProgramBuilderVulkan::PreprocessSource(config, config.m_cmplrBinPath, config.m_InputFiles[0], true,
-                                                                       config.m_printProcessCmdLines, preprocText, errMsg);
+                config.m_printProcessCmdLines, preprocText, errMsg);
             if (status != beStatus_SUCCESS || preprocText.empty())
             {
                 rgLog::stdOut << STR_ERR_VULKAN_PREPROCESS_FAILED << config.m_InputFiles[0] << std::endl;
@@ -988,18 +952,18 @@ bool kcCLICommanderVulkan::GetSupportedTargets(const Config& config, std::set<st
                 // Some device names are returned by Vulkan driver in non-standard form.
                 // Try looking for corrected name in the map. If found, replace the device name
                 // in the "vulkanDevices" set with the corrected name.
-                auto correctedName = std::find_if(VULKAN_DRIVER_DEVICES.cbegin(), VULKAN_DRIVER_DEVICES.cend(),
-                                                  [&](const std::pair<std::string, std::string>& device) { return (device.first == *it); });
+                auto correctedName = std::find_if(PAL_DEVICE_NAME_MAPPING.cbegin(), PAL_DEVICE_NAME_MAPPING.cend(),
+                    [&](const std::pair<std::string, std::string>& device) { return (device.first == *it); });
 
-                const std::string& device = (correctedName == VULKAN_DRIVER_DEVICES.end() ? *it : correctedName->second);
+                const std::string& device = (correctedName == PAL_DEVICE_NAME_MAPPING.end() ? *it : correctedName->second);
 
-                if (correctedName != VULKAN_DRIVER_DEVICES.end())
+                if (correctedName != PAL_DEVICE_NAME_MAPPING.end())
                 {
                     vulkanDevices.insert(correctedName->second);
                 }
 
-                it = (knownArchNames.find(device) == knownArchNames.end() || correctedName != VULKAN_DRIVER_DEVICES.end() ?
-                         vulkanDevices.erase(it) : ++it);
+                it = (knownArchNames.find(device) == knownArchNames.end() || correctedName != PAL_DEVICE_NAME_MAPPING.end() ?
+                    vulkanDevices.erase(it) : ++it);
             }
         }
     }
@@ -1069,7 +1033,7 @@ bool kcCLICommanderVulkan::InitRequestedAsicListVulkan(const Config& config)
             std::string errMsg;
             std::vector<beVkPhysAdapterInfo> physAdapters;
             beStatus status = beProgramBuilderVulkan::GetPhysicalGPUs(config.m_icdFile, physAdapters,
-                                                                      config.m_printProcessCmdLines, errMsg);
+                config.m_printProcessCmdLines, errMsg);
             if (status == beStatus_SUCCESS)
             {
                 m_physAdapterName = physAdapters[0].name;
@@ -1092,14 +1056,14 @@ bool kcCLICommanderVulkan::InitRequestedAsicListVulkan(const Config& config)
     if (m_asics.empty() && !usePhysicalAdapter)
     {
         rgLog::stdOut << STR_ERR_VULKAN_DEVICES_NOT_SUPPORTED <<
-                         [&](){std::string s; for (auto& d : config.m_ASICs) s += (d + " "); return s;}() << std::endl;
+            [&]() {std::string s; for (auto& d : config.m_ASICs) s += (d + " "); return s; }() << std::endl;
     }
 
     return result;
 }
 
 bool kcCLICommanderVulkan::CompileSourceToSpv(const Config& conf, const beVkPipelineFiles& glslFiles,
-                                              const beVkPipelineFiles& hlslFiles, beVkPipelineFiles& outSpvFiles)
+    const beVkPipelineFiles& hlslFiles, beVkPipelineFiles& outSpvFiles)
 {
     bool result = true;
     std::string errMsg;
@@ -1117,8 +1081,8 @@ bool kcCLICommanderVulkan::CompileSourceToSpv(const Config& conf, const beVkPipe
 
             // Construct a name for temporary spv file.
             beStatus status = beStatus_SUCCESS;
-            if (ConstructOutFileName("", STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage], STR_VULKAN_FILE_SUFFIX_ALL_DEVICES,
-                                     STR_VULKAN_SPIRV_FILE_EXT, outSpvFiles[stage]))
+            if (kcUtils::ConstructOutFileName("", STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage], STR_VULKAN_FILE_SUFFIX_ALL_DEVICES,
+                STR_VULKAN_SPIRV_FILE_EXT, outSpvFiles[stage]))
             {
                 m_tempFiles.push_back(outSpvFiles[stage]);
             }
@@ -1183,7 +1147,7 @@ void kcCLICommanderVulkan::CompileSpvToIsa(const Config& conf, const beVkPipelin
 }
 
 void kcCLICommanderVulkan::CompileSpvToIsaForDevice(const Config& config, const beVkPipelineFiles& spvFiles,
-                                                    const std::string& device, bool isPhysAdapter)
+    const std::string& device, bool isPhysAdapter)
 {
     const std::string& deviceSuffix = (isPhysAdapter ? "" : device);
 
@@ -1200,13 +1164,13 @@ void kcCLICommanderVulkan::CompileSpvToIsaForDevice(const Config& config, const 
 
     // Construct names for output files.
     result = ConstructVkOutputFileNames(binFileBaseName, isaFileBaseName, statsFileBaseName,
-                                        deviceSuffix, spvFiles, binFileName, isaFiles, statsFiles);
+        deviceSuffix, spvFiles, binFileName, isaFiles, statsFiles);
 
     if (result && !config.m_vulkanValidation.empty())
     {
         // Construct name for Vulkan validation info output file.
         validationFileName = kcUtils::ConstructTempFileName(STR_VULKAN_TEMP_VALIDATION_INFO_FILE_NAME,
-                                                            STR_VULKAN_VALIDATION_INFO_FILE_EXT);
+            STR_VULKAN_VALIDATION_INFO_FILE_EXT);
         result = !validationFileName.empty();
     }
 
@@ -1216,15 +1180,15 @@ void kcCLICommanderVulkan::CompileSpvToIsaForDevice(const Config& config, const 
     if (result)
     {
         // If the Vulkan driver uses non-standard name for this device, convert it back to the driver format.
-        auto correctedDevice = std::find_if(VULKAN_DRIVER_DEVICES.cbegin(), VULKAN_DRIVER_DEVICES.cend(),
-                                            [&](const std::pair<std::string, std::string>& d) { return (d.second == device); });
+        auto correctedDevice = std::find_if(PAL_DEVICE_NAME_MAPPING.cbegin(), PAL_DEVICE_NAME_MAPPING.cend(),
+            [&](const std::pair<std::string, std::string>& d) { return (d.second == device); });
 
-        const std::string& vulkanDevice = (correctedDevice == VULKAN_DRIVER_DEVICES.end() ? device : correctedDevice->first);
+        const std::string& vulkanDevice = (correctedDevice == PAL_DEVICE_NAME_MAPPING.end() ? device : correctedDevice->first);
 
         // Perform the compilation.
         status = beProgramBuilderVulkan::CompileSpirv(config.m_loaderDebug, spvFiles, isaFiles, statsFiles, binFileName, config.m_pso,
-                                                      config.m_icdFile, validationFileName, config.m_vulkanValidation,
-                                                      (isPhysAdapter ? "" : vulkanDevice), config.m_printProcessCmdLines, errMsg);
+            config.m_icdFile, validationFileName, config.m_vulkanValidation,
+            (isPhysAdapter ? "" : vulkanDevice), config.m_printProcessCmdLines, errMsg);
 
         if (status != beStatus_SUCCESS)
         {
@@ -1292,7 +1256,7 @@ void kcCLICommanderVulkan::CompileSpvToIsaForDevice(const Config& config, const 
         if (!isVkOffline && isaFileBaseName.empty())
         {
             std::copy_if(isaFiles.cbegin(), isaFiles.cend(), std::back_inserter(m_tempFiles),
-                         [&](const std::string& s) { return !s.empty(); });
+                [&](const std::string& s) { return !s.empty(); });
         }
     }
     else
@@ -1333,7 +1297,7 @@ bool kcCLICommanderVulkan::AssembleSpv(const Config& conf)
         LogPreStep(KA_CLI_STR_ASSEMBLING + inputSpvTxtFile);
 
         beStatus status = beProgramBuilderVulkan::AssembleSpv(conf.m_cmplrBinPath, inputSpvTxtFile, conf.m_spvBin,
-                                                              conf.m_printProcessCmdLines, errMsg);
+            conf.m_printProcessCmdLines, errMsg);
 
         result = (status == beStatus_SUCCESS);
         LogResult(result);
@@ -1375,7 +1339,7 @@ bool kcCLICommanderVulkan::DisassembleSpv(const Config& conf)
         LogPreStep(KA_CLI_STR_DISASSEMBLING + inputSpvFile);
 
         beStatus status = beProgramBuilderVulkan::DisassembleSpv(conf.m_cmplrBinPath, inputSpvFile, outputSpvDisFile,
-                                                                 conf.m_printProcessCmdLines, errMsg);
+            conf.m_printProcessCmdLines, errMsg);
 
         result = (status == beStatus_SUCCESS);
         LogResult(result);
@@ -1471,7 +1435,7 @@ bool kcCLICommanderVulkan::ParseSpv(const Config& conf)
         // Classify entries by shader stage (execution model).
         for (const spirv_cross::EntryPoint& entry : entries)
         {
-            entryMap.insert({entry.execution_model, entry.name});
+            entryMap.insert({ entry.execution_model, entry.name });
         }
 
         if (outputInfoFile.empty())
@@ -1509,12 +1473,12 @@ bool kcCLICommanderVulkan::AssembleSpvTxtInputFiles(const Config& conf, const be
             LogPreStep(KA_CLI_STR_PRECOMPILING_A + STR_PIPELINE_STAGE_NAMES[stage] + KA_CLI_STR_PRECOMPILING_B);
 
             // Construct a name for temporary spv file.
-            result = ConstructOutFileName("", STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage], "", STR_VULKAN_SPIRV_FILE_EXT, outSpvFiles[stage]);
+            result = kcUtils::ConstructOutFileName("", STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage], "", STR_VULKAN_SPIRV_FILE_EXT, outSpvFiles[stage]);
 
             if (result)
             {
                 beStatus status = beProgramBuilderVulkan::AssembleSpv(conf.m_cmplrBinPath, spvTxtFiles[stage],
-                                                                      outSpvFiles[stage], conf.m_printProcessCmdLines, errMsg);
+                    outSpvFiles[stage], conf.m_printProcessCmdLines, errMsg);
                 LogResult(status == beStatus_SUCCESS);
 
                 if (status != beStatus_SUCCESS)
@@ -1604,40 +1568,46 @@ bool kcCLICommanderVulkan::PerformLiveRegAnalysis(const Config& conf) const
 {
     bool  ret = true;
 
-    LogPreStep(KA_CLI_STR_STARTING_LIVEREG);
-
     for (const auto& deviceMDNode : m_outputMD)
     {
         const std::string& device = deviceMDNode.first;
         const std::string& deviceSuffix = (conf.m_ASICs.empty() && !m_physAdapterName.empty() ? "" : device);
         const rgVkOutputMetadata& deviceMD = deviceMDNode.second;
 
-        for (int stage = 0; stage < bePipelineStage::Count && ret; stage++)
+        std::cout << KA_CLI_STR_STARTING_LIVEREG << " for " << device << "... ";
+        if (!kcUtils::IsNaviTarget(device))
         {
-            const rgOutputFiles& stageMD = deviceMD[stage];
-
-            if (!stageMD.m_inputFile.empty())
+            for (int stage = 0; stage < bePipelineStage::Count && ret; stage++)
             {
-                std::string outFileName;
-                gtString gOutFileName, gIsaFileName;
+                const rgOutputFiles& stageMD = deviceMD[stage];
 
-                // Construct a name for the livereg output file.
-                ret = ConstructOutFileName(conf.m_LiveRegisterAnalysisFile, STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage],
-                                           deviceSuffix, KC_STR_DEFAULT_LIVEREG_EXT, outFileName);
-
-                if (ret && !outFileName.empty())
+                if (!stageMD.m_inputFile.empty())
                 {
-                    gOutFileName << outFileName.c_str();
-                    gIsaFileName << stageMD.m_isaFile.c_str();
+                    std::string outFileName;
+                    gtString gOutFileName, gIsaFileName;
 
-                    kcUtils::PerformLiveRegisterAnalysis(gIsaFileName, gOutFileName, m_LogCallback, conf.m_printProcessCmdLines);
-                    ret = beUtils::IsFilePresent(outFileName);
-                }
-                else
-                {
-                    rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
+                    // Construct a name for the livereg output file.
+                    ret = kcUtils::ConstructOutFileName(conf.m_LiveRegisterAnalysisFile, STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage],
+                        deviceSuffix, KC_STR_DEFAULT_LIVEREG_EXT, outFileName);
+
+                    if (ret && !outFileName.empty())
+                    {
+                        gOutFileName << outFileName.c_str();
+                        gIsaFileName << stageMD.m_isaFile.c_str();
+
+                        kcUtils::PerformLiveRegisterAnalysis(gIsaFileName, gOutFileName, m_LogCallback, conf.m_printProcessCmdLines);
+                        ret = beUtils::IsFilePresent(outFileName);
+                    }
+                    else
+                    {
+                        rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
+                    }
                 }
             }
+        }
+        else
+        {
+            std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED_TO_NAVI << std::endl;
         }
     }
 
@@ -1650,42 +1620,48 @@ bool kcCLICommanderVulkan::ExtractCFG(const Config& conf) const
 {
     bool  ret = true;
 
-    LogPreStep(KA_CLI_STR_STARTING_CFG);
-
     for (const auto& deviceMDNode : m_outputMD)
     {
         const std::string& device = deviceMDNode.first;
         const std::string& deviceSuffix = (conf.m_ASICs.empty() && !m_physAdapterName.empty() ? "" : device);
         const rgVkOutputMetadata& deviceMD = deviceMDNode.second;
 
-        for (int stage = 0; stage < bePipelineStage::Count && ret; stage++)
+        std::cout << KA_CLI_STR_STARTING_CFG << " for " << device << "... ";
+        if (!kcUtils::IsNaviTarget(device))
         {
-            const rgOutputFiles& stageMD = deviceMD[stage];
-
-            if (!stageMD.m_inputFile.empty())
+            for (int stage = 0; stage < bePipelineStage::Count && ret; stage++)
             {
-                std::string outFileName;
-                gtString gOutFileName, gIsaFileName;
-                bool perInstCfg = (!conf.m_instCFGFile.empty());
+                const rgOutputFiles& stageMD = deviceMD[stage];
 
-                // Construct a name for the CFG output file.
-                ret = ConstructOutFileName((perInstCfg ? conf.m_instCFGFile : conf.m_blockCFGFile),
-                                           STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage],
-                                           deviceSuffix, KC_STR_DEFAULT_CFG_EXT, outFileName);
-
-                if (ret && !outFileName.empty())
+                if (!stageMD.m_inputFile.empty())
                 {
-                    gOutFileName << outFileName.c_str();
-                    gIsaFileName << stageMD.m_isaFile.c_str();
+                    std::string outFileName;
+                    gtString gOutFileName, gIsaFileName;
+                    bool perInstCfg = (!conf.m_instCFGFile.empty());
 
-                    kcUtils::GenerateControlFlowGraph(gIsaFileName, gOutFileName, m_LogCallback, perInstCfg, conf.m_printProcessCmdLines);
-                    ret = beUtils::IsFilePresent(outFileName);
-                }
-                else
-                {
-                    rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
+                    // Construct a name for the CFG output file.
+                    ret = kcUtils::ConstructOutFileName((perInstCfg ? conf.m_instCFGFile : conf.m_blockCFGFile),
+                        STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage],
+                        deviceSuffix, KC_STR_DEFAULT_CFG_EXT, outFileName);
+
+                    if (ret && !outFileName.empty())
+                    {
+                        gOutFileName << outFileName.c_str();
+                        gIsaFileName << stageMD.m_isaFile.c_str();
+
+                        kcUtils::GenerateControlFlowGraph(gIsaFileName, gOutFileName, m_LogCallback, perInstCfg, conf.m_printProcessCmdLines);
+                        ret = beUtils::IsFilePresent(outFileName);
+                    }
+                    else
+                    {
+                        rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
+                    }
                 }
             }
+        }
+        else
+        {
+            std::cout << STR_WARNING_CFG_NOT_SUPPORTED_TO_NAVI << std::endl;
         }
     }
 
@@ -1731,7 +1707,7 @@ void kcCLICommanderVulkan::StoreInputFilesToOutputMD(const beVkPipelineFiles& in
 }
 
 void kcCLICommanderVulkan::StoreOutputFilesToOutputMD(const std::string& device, const beVkPipelineFiles& spvFiles,
-                                                      const beVkPipelineFiles& isaFiles, const beVkPipelineFiles& statsFiles)
+    const beVkPipelineFiles& isaFiles, const beVkPipelineFiles& statsFiles)
 {
     // Check if the output Metadata for this device already exists.
     // It exists if some of shader files are GLSL/HLSL or SPIR-V text files. In that case,

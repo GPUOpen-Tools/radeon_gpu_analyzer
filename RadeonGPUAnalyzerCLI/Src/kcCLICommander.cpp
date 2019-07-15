@@ -38,7 +38,7 @@ std::string  GetInputlLanguageString(beKA::RgaMode mode)
     case beKA::RgaMode::Mode_Vk_Offline_Spv:
     case beKA::RgaMode::Mode_Vk_Offline_SpvTxt:
         return "Vulkan Offline";
-    case beKA::Mode_HLSL:
+    case beKA::RgaMode::Mode_DX11:
         return "DX";
     default:
         assert(false && STR_ERR_UNKNOWN_MODE);

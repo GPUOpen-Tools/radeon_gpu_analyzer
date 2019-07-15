@@ -56,7 +56,8 @@ enum RgaMode
     Mode_Vk_Offline,          // Offline Vulkan mode. Supports GLSL input files.
     Mode_Vk_Offline_Spv,      // Offline Vulkan mode. Supports SPIR-V binary input files.
     Mode_Vk_Offline_SpvTxt,   // Offline Vulkan mode. Supports SPIR-V text input files.
-    Mode_HLSL,                // DirectX mode. Supports HLSL input files.
+    Mode_DX11,                // DirectX 11 mode.
+    Mode_DX12,                // DirectX 12 mode.
     Mode_AMDIL,               // AMDIL mode. Supports AMDIL input files.
 };
 
@@ -131,6 +132,8 @@ enum beStatus
     beStatus_shaeIsaFileNotFound,
     beStatus_shaeFailedToLaunch,
     beStatus_dxDriverLaunchFailure,
+    beStatus_dx12BackendLaunchFailure,
+    beStatus_dx12CompileFailure,
     beStatus_UnknownInputLang,
     beStatus_UnknownObjDumpOperation,
     beStatus_NoISAFileNameProvided,

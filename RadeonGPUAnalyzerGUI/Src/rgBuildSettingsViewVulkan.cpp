@@ -327,6 +327,12 @@ void rgBuildSettingsViewVulkan::HandleAlternativeCompilerBrowseButtonClicked()
         if (!selectedDirectory.isEmpty())
         {
             ui.compilerBinariesLineEdit->setText(selectedDirectory);
+
+            // Inform the UI of a possible change to the pending state.
+            HandlePendingChangesStateChanged(GetHasPendingChanges());
+
+            // Update the command line preview text.
+            UpdateCommandLineText();
         }
     }
 }
@@ -366,6 +372,60 @@ void rgBuildSettingsViewVulkan::ConnectLineEditFocusEvents()
     assert(isConnected);
 
     isConnected = connect(this->ui.targetGPUsLineEdit, &rgLineEdit::LineEditFocusOutEvent, this, &rgBuildSettingsViewVulkan::HandleLineEditFocusOutEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.ICDLocationLineEdit, &rgLineEdit::LineEditFocusInEvent, this, &rgBuildSettingsViewVulkan::HandleLineEditFocusInEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.ICDLocationLineEdit, &rgLineEdit::LineEditFocusOutEvent, this, &rgBuildSettingsViewVulkan::HandleLineEditFocusOutEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.glslangOptionsLineEdit, &rgLineEdit::LineEditFocusInEvent, this, &rgBuildSettingsViewVulkan::HandleLineEditFocusInEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.glslangOptionsLineEdit, &rgLineEdit::LineEditFocusOutEvent, this, &rgBuildSettingsViewVulkan::HandleLineEditFocusOutEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.compilerBinariesLineEdit, &rgLineEdit::LineEditFocusInEvent, this, &rgBuildSettingsViewVulkan::HandleLineEditFocusInEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.compilerBinariesLineEdit, &rgLineEdit::LineEditFocusOutEvent, this, &rgBuildSettingsViewVulkan::HandleLineEditFocusOutEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.addTargetGPUsButton, &rgBrowseButton::BrowseButtonFocusInEvent, this, &rgBuildSettingsViewVulkan::HandleBrowseButtonFocusInEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.addTargetGPUsButton, &rgBrowseButton::BrowseButtonFocusOutEvent, this, &rgBuildSettingsViewVulkan::HandleBrowseButtonFocusOutEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.predefinedMacrosBrowseButton, &rgBrowseButton::BrowseButtonFocusInEvent, this, &rgBuildSettingsViewVulkan::HandleBrowseButtonFocusInEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.predefinedMacrosBrowseButton, &rgBrowseButton::BrowseButtonFocusOutEvent, this, &rgBuildSettingsViewVulkan::HandleBrowseButtonFocusOutEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.includeDirsBrowseButton, &rgBrowseButton::BrowseButtonFocusInEvent, this, &rgBuildSettingsViewVulkan::HandleBrowseButtonFocusInEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.includeDirsBrowseButton, &rgBrowseButton::BrowseButtonFocusOutEvent, this, &rgBuildSettingsViewVulkan::HandleBrowseButtonFocusOutEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.ICDLocationBrowseButton, &rgBrowseButton::BrowseButtonFocusInEvent, this, &rgBuildSettingsViewVulkan::HandleBrowseButtonFocusInEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.ICDLocationBrowseButton, &rgBrowseButton::BrowseButtonFocusOutEvent, this, &rgBuildSettingsViewVulkan::HandleBrowseButtonFocusOutEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.compilerBrowseButton, &rgBrowseButton::BrowseButtonFocusInEvent, this, &rgBuildSettingsViewVulkan::HandleBrowseButtonFocusInEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.compilerBrowseButton, &rgBrowseButton::BrowseButtonFocusOutEvent, this, &rgBuildSettingsViewVulkan::HandleBrowseButtonFocusOutEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.enableValidationLayersCheckBox, &rgCheckBox::CheckBoxFocusInEvent, this, &rgBuildSettingsViewVulkan::HandleCheckBoxFocusInEvent);
+    assert(isConnected);
+
+    isConnected = connect(this->ui.enableValidationLayersCheckBox, &rgCheckBox::CheckBoxFocusOutEvent, this, &rgBuildSettingsViewVulkan::HandleCheckBoxFocusOutEvent);
     assert(isConnected);
 }
 
@@ -683,6 +743,26 @@ void rgBuildSettingsViewVulkan::HandleLineEditFocusOutEvent()
     emit SetFrameBorderBlackSignal();
 }
 
+void rgBuildSettingsViewVulkan::HandleBrowseButtonFocusInEvent()
+{
+    emit SetFrameBorderRedSignal();
+}
+
+void rgBuildSettingsViewVulkan::HandleBrowseButtonFocusOutEvent()
+{
+    emit SetFrameBorderBlackSignal();
+}
+
+void rgBuildSettingsViewVulkan::HandleCheckBoxFocusInEvent()
+{
+    emit SetFrameBorderRedSignal();
+}
+
+void rgBuildSettingsViewVulkan::HandleCheckBoxFocusOutEvent()
+{
+    emit SetFrameBorderBlackSignal();
+}
+
 void rgBuildSettingsViewVulkan::HandleCheckBoxClickedEvent()
 {
     emit SetFrameBorderRedSignal();
@@ -809,6 +889,9 @@ bool rgBuildSettingsViewVulkan::SaveSettings()
         }
     }
 
+    // Set focus to target GPUs browse button.
+    ui.addTargetGPUsButton->setFocus();
+
     return canBeSaved;
 }
 
@@ -821,7 +904,7 @@ void rgBuildSettingsViewVulkan::mousePressEvent(QMouseEvent* pEvent)
 
 bool rgBuildSettingsViewVulkan::eventFilter(QObject* pObject, QEvent* pEvent)
 {
-    // Intercept events for "All "Options" widget.
+    // Intercept events for "All Options" widget.
     if (pEvent != nullptr)
     {
         if (pEvent->type() == QEvent::FocusIn)

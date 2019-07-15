@@ -3,8 +3,10 @@
 //=================================================================
 
 // C++.
+#include <cassert>
 #include <string>
 #include <sstream>
+#include <fstream>
 
 // Infra.
 #ifdef _WIN32
@@ -21,6 +23,9 @@
 // Local.
 #include <RadeonGPUAnalyzerBackend/Include/beStaticIsaAnalyzer.h>
 #include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
+
+// CLI.
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
 
 using namespace beKA;
 
@@ -55,6 +60,38 @@ static bool GetLiveRegAnalyzerPath(std::string& analyzerPath)
     return true;
 }
 
+beKA::beStatus beKA::beStaticIsaAnalyzer::PreprocessIsaFile(const std::string& isaFileName, const std::string& outputFileName)
+{
+    beStatus ret = beStatus_General_FAILED;
+
+    // Filter out the relevant lines.
+    const char* SGPR_TOKEN = "sgpr_count";
+    const char* VGPR_TOKEN = "vgpr_count";
+    std::stringstream prcessedContent;
+    std::ifstream infile(isaFileName);
+    std::string line;
+    while (std::getline(infile, line))
+    {
+        if (line.find(SGPR_TOKEN) == std::string::npos &&
+            line.find(VGPR_TOKEN) == std::string::npos)
+        {
+            prcessedContent << line << std::endl;
+        }
+    }
+
+    bool isContentValid = !prcessedContent.str().empty();
+    assert(isContentValid);
+    if (isContentValid)
+    {
+        bool isFileWritten = kcUtils::WriteTextFile(outputFileName , prcessedContent.str(), nullptr);
+        assert(isFileWritten);
+        if (isFileWritten)
+        {
+            ret = beStatus_SUCCESS;
+        }
+    }
+    return ret;
+}
 
 beKA::beStatus beKA::beStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName, bool printCmd)
 {

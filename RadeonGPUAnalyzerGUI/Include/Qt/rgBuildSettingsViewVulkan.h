@@ -65,6 +65,18 @@ signals:
     void SetFrameBorderBlackSignal();
 
 private slots:
+    // Handler for when the browse buttons get the focus.
+    void HandleBrowseButtonFocusInEvent();
+
+    // Handler for when the browse buttons lose the focus.
+    void HandleBrowseButtonFocusOutEvent();
+
+    // Handler for when the check box gets the focus.
+    void HandleCheckBoxFocusInEvent();
+
+    // Handler for when the check box loses the focus.
+    void HandleCheckBoxFocusOutEvent();
+
     // Handler for when the line edits get the focus.
     void HandleLineEditFocusInEvent();
 

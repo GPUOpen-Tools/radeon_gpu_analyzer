@@ -30,6 +30,21 @@ public:
     // Clear all entries from the list model.
     void ClearEntries();
 
+    // Set the width of the entry point widget.
+    void SetEntryPointWidgetWidth(int width);
+
+    // Set the entry point label widget.
+    void SetEntryPointTreeWidget(rgMenuEntryPointTree* pTree);
+
+    // Get the entry point names.
+    void GetEntryPointNames(std::vector<std::string>& entrypointNames);
+
+    // Get the entry point name at a given index.
+    std::string GetEntryPointName(const int index) const;
+
+    // Get the entry point name from the display name.
+    std::string GetEntryPointName(const std::string& displayEntrypointName) const;
+
 signals:
     // A signal emitted when the user changes the selected entry point in the entry point list.
     void SelectedEntrypointChanged(const std::string& inputFilePath, int selectedIndex);
@@ -37,6 +52,18 @@ signals:
 private:
     // A model responsible for holding the entry point item list.
     QStandardItemModel* m_pEntrypointItemModel = nullptr;
+
+    // The width of the entry point widget.
+    int m_entryPointWidgetWidth = 0;
+
+    // The entry point tree.
+    rgMenuEntryPointTree* m_pEntryPointTree = nullptr;
+
+    // Keep track of entry point name.
+    std::vector<std::string> m_entryPointNames;
+
+    //Keep track of the display name.
+    std::vector<std::string> m_displayNames;
 };
 
 // An object used to represent a single shader file within the file menu.

@@ -963,10 +963,6 @@ size_t rgMenuGraphics::GetNumberPipelineStagesToCycleThrough(FileMenuActionType 
     switch (actionType)
     {
     case FileMenuActionType::ArrowAction:
-    {
-        totalOccupiedPipelineStages = m_menuItems.size();
-        break;
-    }
     case FileMenuActionType::TabAction:
     {
         if (m_pipelineType == rgPipelineType::Compute)
@@ -1000,10 +996,6 @@ std::vector<rgMenuFileItem*> rgMenuGraphics::GetFileMenuItemsToProcess(FileMenuA
     switch (actionType)
     {
     case FileMenuActionType::ArrowAction:
-    {
-        vectorToProcess = m_menuItems;
-        break;
-    }
     case FileMenuActionType::TabAction:
     {
         std::vector<rgMenuFileItem*> vectorToProcess(std::begin(m_shaderStageItems), std::end(m_shaderStageItems));

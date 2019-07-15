@@ -24,13 +24,20 @@ class beStaticIsaAnalyzer
 {
 public:
 
+    // Pre-processes the ISA disassembly to allow it to be parsed by the static analysis engine.
+    /// Params:
+    ///     isaFileName: the file name that contains the ISA disassembly to be pre-processed.
+    ///     outputFileName: the output file name (will contain the pre-processed disassembly).
+    /// Returns: beStatus_SUCCESS if succeeded or other error code if failed.
+    static beStatus PreprocessIsaFile(const std::string& isaFileName, const std::string& outputFileName);
+
     /// Perform live register analysis on the ISA contained in the given file,
     /// and dump the analysis output to another file.
     /// Params:
     ///     isaFileName: the file name that contains the ISA to be analyzed.
     ///     outputFileName: the output file name (will contain the analysis output).
     ///     printCmd: print the command line.
-    /// Returns: true if the operation succeeded, false otherwise.
+    /// Returns: beStatus_SUCCESS if succeeded or other error code if failed.
     static beStatus PerformLiveRegisterAnalysis(const gtString& isaFileName, const gtString& outputFileName, bool printCmd);
 
     /// Generate control flow graph for the given ISA code.
@@ -39,7 +46,7 @@ public:
     ///     outputFileName: the output file name (will contain the graph representation in dot format).
     //      perInst:  generate per-instruction CFG.
     ///     printCmd: print the command line.
-    /// Returns: true if the operation succeeded, false otherwise.
+    /// Returns: beStatus_SUCCESS if succeeded or other error code if failed.
     static beStatus GenerateControlFlowGraph(const gtString& isaFileName, const gtString& outputFileName, bool perInst, bool printCmd);
 
 private:

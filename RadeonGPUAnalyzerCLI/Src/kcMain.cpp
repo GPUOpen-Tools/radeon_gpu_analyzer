@@ -35,6 +35,7 @@
 
 #ifdef _WIN32
     #include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderDX.h>
+    #include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderDX12.h>
 #endif
 
 using namespace beKA;
@@ -84,9 +85,12 @@ int main(int argc, char* argv[])
             break;
 
 #ifdef _WIN32
-        case Mode_HLSL:
+        case Mode_DX11:
         case Mode_AMDIL:
             pCommander = std::make_shared<kcCLICommanderDX>();
+            break;
+        case Mode_DX12:
+            pCommander = std::make_shared<kcCLICommanderDX12>();
             break;
 #endif
 

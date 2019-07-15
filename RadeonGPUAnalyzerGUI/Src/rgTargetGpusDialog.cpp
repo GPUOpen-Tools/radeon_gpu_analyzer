@@ -478,6 +478,37 @@ void rgTargetGpusDialog::PopulateTableData(std::shared_ptr<rgCliVersionInfo> pVe
         {
             // Most recent hardware appears at the end of the architectures list. Reverse it so that it appears at the top of the table.
             std::vector<rgGpuArchitecture> architectures = currentModeArchitecturesIter->second;
+            std::sort(architectures.begin(), architectures.end(), [&](const rgGpuArchitecture& arch1,
+                const rgGpuArchitecture& arch2)
+            {
+                bool is1LessThan2 = true;
+                const char* GRAPHICS_TOKEN = "Graphics";
+                size_t posGraphics1 = arch1.m_architectureName.find(GRAPHICS_TOKEN);
+                size_t posGraphics2 = arch2.m_architectureName.find(GRAPHICS_TOKEN);
+                if (posGraphics1 != std::string::npos &&
+                    posGraphics2 != std::string::npos)
+                {
+                    is1LessThan2 = (arch1.m_architectureName.compare(arch2.m_architectureName) < 0);
+                }
+                else if (posGraphics1 == std::string::npos && posGraphics2 != std::string::npos)
+                {
+                    is1LessThan2 = false;
+                }
+                else if (posGraphics1 == std::string::npos && posGraphics2 == std::string::npos)
+                {
+                    const char* NAVI_TOKEN = "Navi";
+                    size_t naviPos1 = arch1.m_architectureName.find(NAVI_TOKEN);
+                    size_t naviPos2 = arch2.m_architectureName.find(NAVI_TOKEN);
+
+                    if (naviPos1 != std::string::npos && naviPos2 == std::string::npos)
+                    {
+                        is1LessThan2 = false;
+                    }
+                }
+
+                return is1LessThan2;
+            });
+
             std::reverse(architectures.begin(), architectures.end());
 
             // Step through each GPU hardware architecture.

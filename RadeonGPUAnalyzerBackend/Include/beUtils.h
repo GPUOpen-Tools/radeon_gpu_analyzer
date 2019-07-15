@@ -21,6 +21,16 @@
     #pragma warning(pop)
 #endif
 
+// A container that keeps the mapping between some "non-standard" PAL NULL device names
+// returned by driver and the "standard" names that can be found in the Device Info lib.
+static const std::vector<std::pair<std::string, std::string>>
+PAL_DEVICE_NAME_MAPPING =
+{
+    {"bristol",        "bristol ridge"},
+    {"polaris10",      "ellesmere"},
+    {"polaris11",      "baffin"}
+};
+
 class beUtils
 {
 public:
@@ -48,7 +58,10 @@ public:
     static void DeleteOutputFiles(const beProgramPipeline& outputFilePaths);
 
     // Deletes a physical file from the file system.
-    static void DeleteFile(const gtString& filePath);
+    static void DeleteFileFromDisk(const gtString& filePath);
+
+    // Deletes a physical file from the file system.
+    static void DeleteFileFromDisk(const std::string& filePath);
 
     // Checks if file exists and is not empty.
     static bool IsFilePresent(const std::string& fileName);
@@ -58,6 +71,20 @@ public:
 
     // Print "cmdLine" to stdout if "doPrint" is true.
     static void PrintCmdLine(const std::string& cmdLine, bool doPrint);
+
+    // Split the given string according to the given delimiter,
+    // and store the results in the destination vector.
+    static void splitString(const std::string& str, char delim, std::vector<std::string>& dst);
+
+    // Returns true if the given string represents a numeric value, and false otherwise.
+    static bool IsNumericValue(const std::string& str);
+
+    // Returns true if device name a is "less than" b. This is used when sorting containers.
+    // A gfx-notation device name, which indicates a Vega+ target, will never be "less than"
+    // a non-gfx notation name. Two non-gfx notation names would be compared using the usual
+    // string comparison logic, and two gfx-notation names would be compared according to the
+    // number (e.g. gfx900 is less than gfx902 and gfx902 is less than gfx906).
+    static bool DeviceNameLessThan(const std::string& a, const std::string& b);
 
 private:
     // No instances for this class, as this is a static utility class.

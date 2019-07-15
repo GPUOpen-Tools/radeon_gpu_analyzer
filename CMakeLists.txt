@@ -116,6 +116,10 @@ if(NOT BUILD_GUI_ONLY)
         add_subdirectory (Core/Vulkan/Backend)
         add_dependencies (RadeonGPUAnalyzerCLI VulkanBackend)
     endif()
+    if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+        add_subdirectory (Core/DX12/Backend)
+        add_dependencies (RadeonGPUAnalyzerCLI DX12Backend)
+    endif()
 endif()
 
 # Add RGA GUI

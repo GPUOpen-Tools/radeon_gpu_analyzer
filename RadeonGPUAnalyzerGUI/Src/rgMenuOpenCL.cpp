@@ -34,30 +34,30 @@ void rgMenuOpenCL::InitializeDefaultMenuItems(const std::shared_ptr<rgProjectClo
     m_pLayout->insertWidget(0, m_pBuildSettingsMenuItem);
 
     // Insert the "Add/Create" menu item to the top of the menu.
-    m_pDefaultMenuItem = new rgAddCreateMenuItem(this);
-    m_pLayout->insertWidget(0, m_pDefaultMenuItem);
+    m_pAddCreateMenuItem = new rgAddCreateMenuItem(this);
+    m_pLayout->insertWidget(0, m_pAddCreateMenuItem);
 
     ConnectDefaultItemSignals();
 
     ConnectButtonSignals();
 
     // Make the menu as wide as the items.
-    const int height = m_pDefaultMenuItem->height();
-    this->resize(m_pDefaultMenuItem->width(), 2 * (height));
+    const int height = m_pAddCreateMenuItem->height();
+    this->resize(m_pAddCreateMenuItem->width(), 2 * (height));
 
     // Register the buttons with the scaling manager.
     ScalingManager::Get().RegisterObject(m_pBuildSettingsMenuItem);
-    ScalingManager::Get().RegisterObject(m_pDefaultMenuItem);
+    ScalingManager::Get().RegisterObject(m_pAddCreateMenuItem);
 }
 
 void rgMenuOpenCL::ConnectDefaultItemSignals()
 {
     // Handler invoked when the "Add File" button is clicked within an API item.
-    bool isConnected = connect(m_pDefaultMenuItem->GetAddButton(), &QPushButton::clicked, this, &rgMenu::OpenFileButtonClicked);
+    bool isConnected = connect(m_pAddCreateMenuItem->GetAddButton(), &QPushButton::clicked, this, &rgMenu::OpenFileButtonClicked);
     assert(isConnected);
 
     // Handler invoked when the "Create File" button is clicked within an API item.
-    isConnected = connect(m_pDefaultMenuItem->GetCreateButton(), &QPushButton::clicked, this, &rgMenu::CreateFileButtonClicked);
+    isConnected = connect(m_pAddCreateMenuItem->GetCreateButton(), &QPushButton::clicked, this, &rgMenu::CreateFileButtonClicked);
     assert(isConnected);
 }
 
@@ -299,8 +299,8 @@ void rgMenuOpenCL::HandleBuildStarted()
     SetIsShowEntrypointListEnabled(false);
 
     // While a build is in progress, disable adding/creating files or changing the build settings.
-    m_pDefaultMenuItem->GetAddButton()->setEnabled(false);
-    m_pDefaultMenuItem->GetCreateButton()->setEnabled(false);
+    m_pAddCreateMenuItem->GetAddButton()->setEnabled(false);
+    m_pAddCreateMenuItem->GetCreateButton()->setEnabled(false);
 }
 
 void rgMenuOpenCL::HandleBuildEnded()
@@ -312,8 +312,8 @@ void rgMenuOpenCL::HandleBuildEnded()
     SetIsShowEntrypointListEnabled(true);
 
     // After the build is over, re-enable the menu items.
-    m_pDefaultMenuItem->GetAddButton()->setEnabled(true);
-    m_pDefaultMenuItem->GetCreateButton()->setEnabled(true);
+    m_pAddCreateMenuItem->GetAddButton()->setEnabled(true);
+    m_pAddCreateMenuItem->GetCreateButton()->setEnabled(true);
 }
 
 void rgMenuOpenCL::SelectFocusItem(FileMenuActionType actionType)
@@ -326,8 +326,8 @@ void rgMenuOpenCL::SelectFocusItem(FileMenuActionType actionType)
         {
             m_pBuildSettingsMenuItem->GetBuildSettingsButton()->setStyleSheet("");
         }
-        QPushButton* pAddButton = m_pDefaultMenuItem->GetAddButton();
-        QPushButton* pCreateButton = m_pDefaultMenuItem->GetCreateButton();
+        QPushButton* pAddButton = m_pAddCreateMenuItem->GetAddButton();
+        QPushButton* pCreateButton = m_pAddCreateMenuItem->GetCreateButton();
         assert(pAddButton != nullptr);
         assert(pCreateButton != nullptr);
         if (pAddButton != nullptr)
@@ -402,8 +402,8 @@ void rgMenuOpenCL::SelectFocusItem(FileMenuActionType actionType)
 
 void rgMenuOpenCL::HandleActivateItemAction()
 {
-    assert(m_pDefaultMenuItem != nullptr);
-    if (m_pDefaultMenuItem != nullptr)
+    assert(m_pAddCreateMenuItem != nullptr);
+    if (m_pAddCreateMenuItem != nullptr)
     {
         // If focus index is in the range of the menu file items, select the appropriate file item.
         if (m_focusIndex < m_menuItems.size())
@@ -444,7 +444,7 @@ void rgMenuOpenCL::HandleActivateItemAction()
             {
             case static_cast<size_t>(FileMenuFocusItems::AddButton):
             {
-                QPushButton * pAddButton = m_pDefaultMenuItem->GetAddButton();
+                QPushButton * pAddButton = m_pAddCreateMenuItem->GetAddButton();
                 assert(pAddButton != nullptr);
                 if (pAddButton != nullptr)
                 {
@@ -454,7 +454,7 @@ void rgMenuOpenCL::HandleActivateItemAction()
             }
             case static_cast<size_t>(FileMenuFocusItems::CreateButton):
             {
-                QPushButton * pCreateButton = m_pDefaultMenuItem->GetCreateButton();
+                QPushButton * pCreateButton = m_pAddCreateMenuItem->GetCreateButton();
                 assert(pCreateButton != nullptr);
                 if (pCreateButton != nullptr)
                 {

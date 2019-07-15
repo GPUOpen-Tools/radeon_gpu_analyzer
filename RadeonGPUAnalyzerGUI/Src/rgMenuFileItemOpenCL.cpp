@@ -60,15 +60,24 @@ QStandardItemModel* rgMenuItemEntryListModel::GetEntryItemModel() const
 
 void rgMenuItemEntryListModel::AddEntry(const std::string& entrypointName)
 {
+    std::string displayText;
+
     int currentRowCount = m_pEntrypointItemModel->rowCount();
     int newRowCount = currentRowCount + 1;
+
+    // Truncate long entry point names.
+    rgUtils::GetDisplayText(entrypointName, displayText, m_entryPointWidgetWidth, m_pEntryPointTree, gs_TEXT_TRUNCATE_LENGTH_BACK_OPENCL);
+
+    // Save the entry point name and the possibly truncated display name.
+    m_entryPointNames.push_back(entrypointName);
+    m_displayNames.push_back(displayText);
 
     // Update the number of row items in the model.
     m_pEntrypointItemModel->setRowCount(newRowCount);
 
     // Set the data for the new item row, and left-align the entry point name string.
     QModelIndex modelIndex = m_pEntrypointItemModel->index(currentRowCount, 0);
-    m_pEntrypointItemModel->setData(modelIndex, QString(entrypointName.c_str()));
+    m_pEntrypointItemModel->setData(modelIndex, QString(displayText.c_str()));
     m_pEntrypointItemModel->setData(modelIndex, Qt::AlignLeft, Qt::TextAlignmentRole);
     m_pEntrypointItemModel->dataChanged(modelIndex, modelIndex);
 
@@ -84,6 +93,49 @@ void rgMenuItemEntryListModel::ClearEntries()
     // Clear the model data by removing all existing rows.
     int numRows = m_pEntrypointItemModel->rowCount();
     m_pEntrypointItemModel->removeRows(0, numRows);
+}
+
+void rgMenuItemEntryListModel::SetEntryPointWidgetWidth(const int width)
+{
+    m_entryPointWidgetWidth = width;
+}
+
+void rgMenuItemEntryListModel::SetEntryPointTreeWidget(rgMenuEntryPointTree* pTree)
+{
+    m_pEntryPointTree = pTree;
+}
+
+void rgMenuItemEntryListModel::GetEntryPointNames(std::vector<std::string>& entrypointNames)
+{
+    entrypointNames = m_entryPointNames;
+}
+
+std::string rgMenuItemEntryListModel::GetEntryPointName(const int index) const
+{
+    return m_entryPointNames[index];
+}
+
+std::string rgMenuItemEntryListModel::GetEntryPointName(const std::string& displayEntrypointName) const
+{
+    int index = 0;
+
+    for (const std::string& name : m_displayNames)
+    {
+        if (name.compare(displayEntrypointName) == 0)
+        {
+            break;
+        }
+        index++;
+    }
+
+    std::string value = QString().toStdString();
+    assert(index < m_entryPointNames.size());
+    if (index < m_entryPointNames.size())
+    {
+        value = m_entryPointNames[index];
+    }
+
+    return value;
 }
 
 rgMenuFileItemOpenCL::rgMenuFileItemOpenCL(const std::string& fileFullPath, rgMenu* pParent) :
@@ -182,19 +234,7 @@ void rgMenuFileItemOpenCL::ClearEntrypointsList()
 
 void rgMenuFileItemOpenCL::GetEntrypointNames(std::vector<std::string>& entrypointNames) const
 {
-    // Step through each row in the entry point item model.
-    QStandardItemModel* pItemModel = m_pEntryListModel->GetEntryItemModel();
-    for (int entrypointIndex = 0; entrypointIndex < pItemModel->rowCount(); ++entrypointIndex)
-    {
-        // Find the index of the selected row.
-        QModelIndex itemIndex = pItemModel->index(entrypointIndex, 0);
-        if (itemIndex.isValid())
-        {
-            // Extract the entry point name string and add it to the output list.
-            QString entryString = pItemModel->data(itemIndex).toString();
-            entrypointNames.push_back(entryString.toStdString());
-        }
-    }
+    m_pEntryListModel->GetEntryPointNames(entrypointNames);
 }
 
 bool rgMenuFileItemOpenCL::GetSelectedEntrypointName(std::string& entrypointName) const
@@ -330,6 +370,12 @@ void rgMenuFileItemOpenCL::InitializeEntrypointsList()
     ui.entrypointListView->setModel(m_pEntryListModel->GetEntryItemModel());
     ui.entrypointListView->hide();
 
+    // Set the widget width so the entry point names get truncated correctly.
+    m_pEntryListModel->SetEntryPointWidgetWidth(ui.entrypointListView->contentsRect().width());
+
+    // Set the widget.
+    m_pEntryListModel->SetEntryPointTreeWidget(ui.entrypointListView);
+
     m_pEntrypointStyleDelegate = new rgEntrypointItemStyleDelegate(ui.entrypointListView);
     ui.entrypointListView->setItemDelegate(m_pEntrypointStyleDelegate);
 }
@@ -369,16 +415,16 @@ void rgMenuFileItemOpenCL::ShowEntrypointsList(bool showList)
     }
 }
 
-void rgMenuFileItemOpenCL::SwitchToEntrypointByName(const std::string& entrypointName)
+void rgMenuFileItemOpenCL::SwitchToEntrypointByName(const std::string& displayName)
 {
     // Get the list of entry point names for this file item.
     std::vector<std::string> entrypointNames;
     GetEntrypointNames(entrypointNames);
 
     int selectedEntrypointIndex = 0;
-    for (const std::string& currentName : entrypointNames)
+    for (const std::string& currentEntry : entrypointNames)
     {
-        if (entrypointName.compare(currentName) == 0)
+        if (displayName.compare(currentEntry) == 0)
         {
             break;
         }
@@ -392,14 +438,14 @@ void rgMenuFileItemOpenCL::SwitchToEntrypointByName(const std::string& entrypoin
     {
         QModelIndex selectedRowIndex = m_pEntryListModel->GetEntryItemModel()->index(selectedEntrypointIndex, 0);
         pSelectionModel->setCurrentIndex(selectedRowIndex, QItemSelectionModel::SelectCurrent);
-        m_lastSelectedEntryName = entrypointName;
+        m_lastSelectedEntryName = entrypointNames[selectedEntrypointIndex];
     }
 }
 
 void rgMenuFileItemOpenCL::UpdateBuildOutputs(const std::vector<rgEntryOutput>& entryOutputs)
 {
-    std::string currentEntrypointName;
-    bool isEntrypointSelected = GetSelectedEntrypointName(currentEntrypointName);
+    std::string currentDisplayEntrypointName;
+    bool isEntrypointSelected = GetSelectedEntrypointName(currentDisplayEntrypointName);
 
     assert(m_pEntryListModel != nullptr);
     if (m_pEntryListModel != nullptr)
@@ -426,11 +472,11 @@ void rgMenuFileItemOpenCL::UpdateBuildOutputs(const std::vector<rgEntryOutput>& 
                 if (isEntrypointSelected)
                 {
                     // Attempt to re-select the same entry point from the new build outputs.
-                    auto entryIter = std::find(entrypointNames.begin(), entrypointNames.end(), currentEntrypointName);
+                    auto entryIter = std::find(entrypointNames.begin(), entrypointNames.end(), currentDisplayEntrypointName);
                     if (entryIter != entrypointNames.end())
                     {
                         // Re-select the previously selected entrypoint.
-                        SwitchToEntrypointByName(currentEntrypointName);
+                        SwitchToEntrypointByName(m_pEntryListModel->GetEntryPointName(currentDisplayEntrypointName));
                     }
                     else
                     {
@@ -448,10 +494,10 @@ void rgMenuFileItemOpenCL::UpdateBuildOutputs(const std::vector<rgEntryOutput>& 
                 if (selectFirstEntrypoint)
                 {
                     // If the user didn't have an entry point selected previously, automatically select the first entrypoint.
-                    currentEntrypointName = entrypointNames[0];
+                    currentDisplayEntrypointName = entrypointNames[0];
 
                     const std::string& inputFilePath = GetFilename();
-                    emit SelectedEntrypointChanged(inputFilePath, currentEntrypointName);
+                    emit SelectedEntrypointChanged(inputFilePath, currentDisplayEntrypointName);
                 }
             }
         }

@@ -8,7 +8,7 @@ set SOLUTION_PATH=%1
 set ARCH=%2
 set CONFIG=%3
 
-msbuild /m:4 /t:Clean /p:Configuration=%CONFIG% /p:Platform=%ARCH% /p:OutputPath=%OUTPUT_PATH% %SOLUTION_PATH%
+msbuild /nodeReuse:false /m:4 /t:Clean /p:Configuration=%CONFIG% /p:Platform=%ARCH% /p:OutputPath=%OUTPUT_PATH% %SOLUTION_PATH%
 if not %ERRORLEVEL%==0 (
     echo Clean of solution %SOLUTION_PATH% failed!
     exit 1

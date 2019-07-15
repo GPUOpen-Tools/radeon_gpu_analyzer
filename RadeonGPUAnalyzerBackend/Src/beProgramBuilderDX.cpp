@@ -583,7 +583,7 @@ beKA::beStatus beProgramBuilderDX::Compile(RgaMode mode, const string& programSo
 
     beStatus beRet = beStatus_General_FAILED;
 
-    if (mode == Mode_HLSL)
+    if (mode == Mode_DX11)
     {
         beRet = CompileHLSL(programSource, dxOptions);
     }
@@ -696,18 +696,6 @@ beKA::beStatus beProgramBuilderDX::GetStatistics(const string& device, const str
                 analysis.numAluInst = pStats->numAluInst;
                 analysis.numControlFlowInst = pStats->numControlFlowInst;
                 analysis.numTfetchInst = pStats->numTfetchInst;
-
-                // Workaround for LDS driver issue.
-                std::string deviceLowerCase = device;
-                std::transform(deviceLowerCase.begin(), deviceLowerCase.end(), deviceLowerCase.begin(), ::tolower);
-                if (deviceLowerCase.compare("capeverde") != 0 &&
-                    deviceLowerCase.compare("pitcairn") != 0 &&
-                    deviceLowerCase.compare("oland") != 0 &&
-                    deviceLowerCase.compare("tahiti") != 0)
-                {
-                    // GFX7 or later has 64KB of LDS available.
-                    analysis.LDSSizeAvailable = 65536;
-                }
 
                 // We are done.
                 ret = beKA::beStatus_SUCCESS;

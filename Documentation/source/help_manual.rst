@@ -262,7 +262,7 @@ The pipeline state can be loaded from an RGA pipeline state file. RGA stores the
 - .gpso file for graphics pipelines, with a representation of VkGraphicsPipelineCreateInfo
 - .cpso file for compute pipelines, with a representation of VkComputePipelineCreateInfo
 
-These files can be serialized from your Vulkan® app in runtime using the RGA layer, a beta feature that ships with RGA 2.1. For more info about this feature, see the "Use the RGA Layer" section.
+These files can be serialized from your Vulkan® app in runtime using the RGA layer, a beta feature that ships with RGA. For more info about this feature, see the "Use the RGA Layer" section.
 
 Source Code View
 ````````````````

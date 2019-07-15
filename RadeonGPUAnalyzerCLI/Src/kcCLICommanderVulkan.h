@@ -17,7 +17,7 @@ public:
     // Perform post-compile actions.
     virtual bool RunPostCompileSteps(const Config& config) override;
 
-    // Pring the list of supported Vulkan target GPUs.
+    // Print the list of supported Vulkan target GPUs.
     virtual bool PrintAsicList(const Config& config) override;
 
     // Parse the source file and extract list of shader functions.

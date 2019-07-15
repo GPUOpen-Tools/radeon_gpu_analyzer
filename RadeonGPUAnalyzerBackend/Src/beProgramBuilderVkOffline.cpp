@@ -45,6 +45,8 @@ static const std::string  STR_AMDSPV_DEVICE_GFX900 = "900";
 static const std::string  STR_AMDSPV_DEVICE_GFX902 = "902";
 static const std::string  STR_AMDSPV_DEVICE_GFX906 = "906";
 
+static const std::string  STR_AMDSPV_DEVICE_GFX1010 = "1010";
+
 // ***************************************
 // *** INTERNALLY LINKED SYMBOLS - END ***
 // ***************************************
@@ -91,6 +93,14 @@ static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* pDeviceInfo, const VkOfflineO
             vulkanOptions.m_targetDeviceName == DEVICE_NAME_GFX900 ? STR_AMDSPV_DEVICE_GFX900 :
             vulkanOptions.m_targetDeviceName == DEVICE_NAME_GFX902 ? STR_AMDSPV_DEVICE_GFX902 :
             vulkanOptions.m_targetDeviceName == DEVICE_NAME_GFX906 ? STR_AMDSPV_DEVICE_GFX906 :
+            "";
+        ret = !gfxIpStr.empty();
+    }
+    else if (vulkanOptions.m_targetDeviceName.compare(DEVICE_NAME_GFX1010) == 0)
+    {
+        // Special case #4: gfx10 devices.
+        gfxIpStr =
+            vulkanOptions.m_targetDeviceName == DEVICE_NAME_GFX1010 ? STR_AMDSPV_DEVICE_GFX1010 :
             "";
         ret = !gfxIpStr.empty();
     }

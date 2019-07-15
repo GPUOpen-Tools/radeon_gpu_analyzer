@@ -8,9 +8,10 @@
 #include <cassert>
 #include <memory>
 #include <sstream>
+#include <vector>
+#include <algorithm>
 
 // Qt.
-#include <QAction>
 #include <QCheckBox>
 #include <QListWidgetItem>
 
@@ -384,6 +385,8 @@ void rgIsaDisassemblyView::HandleTargetGpuChanged(int currentIndex)
         }
     }
 
+    // Set focus to disassembly view.
+    setFocus();
 }
 
 void rgIsaDisassemblyView::ClearListWidget(ListWidget* &pListWidget)
@@ -658,6 +661,8 @@ void rgIsaDisassemblyView::PopulateTargetGpuList(const rgBuildOutputsMap& buildO
 
     m_pTargetGpusListWidget->clear();
 
+    std::vector<std::string> targets;
+
     for (auto targetGpuIter = buildOutput.rbegin(); targetGpuIter != buildOutput.rend(); ++targetGpuIter)
     {
         if (targetGpuIter->second != nullptr)
@@ -689,11 +694,51 @@ void rgIsaDisassemblyView::PopulateTargetGpuList(const rgBuildOutputsMap& buildO
             }
 
             // Add the name to the list.
-            m_pTargetGpusListWidget->addItem(presentedName.str().c_str());
-
-            // Sort in descending order so that the newer targets are at the top.
-            m_pTargetGpusListWidget->sortItems(Qt::SortOrder::DescendingOrder);
+            targets.push_back(presentedName.str());
         }
+    }
+    assert(!targets.empty());
+
+    // Sort and choose the latest target.
+    std::sort(targets.begin(),
+        targets.end(), [&](const std::string& a, const std::string& b)
+    {
+        const char* GFX_NOTATION_TOKEN = "gfx";
+        bool ret = true;
+        size_t szA = a.find(GFX_NOTATION_TOKEN);
+        size_t szB = b.find(GFX_NOTATION_TOKEN);
+        if (szA == std::string::npos && szB == std::string::npos)
+        {
+            // Neither name is in gfx-notation, compare using standard string logic.
+            ret = a.compare(b) < 0;
+        }
+        else if (!(szA != std::string::npos && szB != std::string::npos))
+        {
+            // Only one name has the gfx notation, assume that it is a newer generation.
+            ret = (szB != std::string::npos);
+        }
+        else
+        {
+            // Both names are in gfx notation, compare according to the number.
+            std::vector<std::string> splitA;
+            std::vector<std::string> splitB;
+            rgUtils::splitString(a, 'x', splitA);
+            rgUtils::splitString(b, 'x', splitB);
+            assert(splitA.size() > 1);
+            assert(splitB.size() > 1);
+            if (splitA.size() > 1 && splitB.size() > 1)
+            {
+                int numA = std::stoi(splitA[1], nullptr);
+                int numB = std::stoi(splitB[1], nullptr);
+                ret = ((numB - numA) > 0);
+            }
+        }
+        return !ret;
+    });
+
+    for (const std::string& str : targets)
+    {
+        m_pTargetGpusListWidget->addItem(str.c_str());
     }
 
     // Switch to the first target GPU.

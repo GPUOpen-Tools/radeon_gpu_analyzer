@@ -17,6 +17,7 @@
 // Backend.
 #include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderDX.h>
 #include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
+#include <RadeonGPUAnalyzerBackend/Include/beStaticIsaAnalyzer.h>
 #include <CElf.h>
 #include <DeviceInfoUtils.h>
 
@@ -148,16 +149,40 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
             // If we managed to detect the ISA size, don't do it again.
             shouldDetectIsaSize = !isIsaSizeDetected;
 
+            // We need to pre-process the ISA in case that any post-processing
+            // operation is going to be performed.
+            bool shouldPreProcessIsa = !config.m_LiveRegisterAnalysisFile.empty() ||
+                !config.m_instCFGFile.empty() || !config.m_blockCFGFile.empty();
+
+            std::string preProcessedIsaFile;
+            if (shouldPreProcessIsa)
+            {
+                // Generate a pre-processed ISA file before passing the ISA for analysis.
+                // This is required since, sometimes, depending on the order of compilation,
+                // the ISA disassembly for even pre-Navi targets would be in the Navi format.
+                preProcessedIsaFile = kcUtils::ConstructTempFileName(KC_STR_DEFAULT_ISA_PREPROCESSED_OUTPUT_FILE_NAME, "txt");
+                assert(!preProcessedIsaFile.empty());
+
+                if (config.m_printProcessCmdLines)
+                {
+                    std::cout << "Creating temporary file for pre-processed ISA: " << preProcessedIsaFile << std::endl;
+                }
+
+                // Pre-process the ISA.
+                beStaticIsaAnalyzer::PreprocessIsaFile(isaOutputFileName.asASCIICharArray(), preProcessedIsaFile);
+            }
+
             if (!config.m_LiveRegisterAnalysisFile.empty())
             {
+                // Perform the live register analysis.
                 gtString liveRegAnalysisOutputFileName;
                 kcUtils::ConstructOutputFileName(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVEREG_SUFFIX,
-                                                 KC_STR_DEFAULT_LIVEREG_EXT, config.m_Function, deviceName, liveRegAnalysisOutputFileName);
+                    KC_STR_DEFAULT_LIVEREG_EXT, config.m_Function,
+                    deviceName, liveRegAnalysisOutputFileName);
 
-                // Call the kcUtils routine to analyze <generatedFileName> and write
-                // the analysis file.
-                kcUtils::PerformLiveRegisterAnalysis(isaOutputFileName, liveRegAnalysisOutputFileName,
-                                                     m_LogCallback, config.m_printProcessCmdLines);
+                // Call the kcUtils routine to analyze <generatedFileName> and write the analysis file.
+                kcUtils::PerformLiveRegisterAnalysis(preProcessedIsaFile, liveRegAnalysisOutputFileName.asASCIICharArray(),
+                    m_LogCallback, config.m_printProcessCmdLines);
             }
 
             if (!config.m_instCFGFile.empty() || !config.m_blockCFGFile.empty())
@@ -165,10 +190,16 @@ void kcCLICommanderDX::ExtractISA(const string& deviceName, const Config& config
                 gtString cfgOutputFileName;
                 std::string baseName = (!config.m_instCFGFile.empty() ? config.m_instCFGFile : config.m_blockCFGFile);
                 kcUtils::ConstructOutputFileName(baseName, KC_STR_DEFAULT_CFG_SUFFIX, KC_STR_DEFAULT_CFG_EXT,
-                                                 config.m_Function, deviceName, cfgOutputFileName);
+                    config.m_Function, deviceName, cfgOutputFileName);
 
-                kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName, m_LogCallback,
-                                                  !config.m_instCFGFile.empty(),  config.m_printProcessCmdLines);
+                kcUtils::GenerateControlFlowGraph(preProcessedIsaFile, cfgOutputFileName.asASCIICharArray(), m_LogCallback,
+                    !config.m_instCFGFile.empty(), config.m_printProcessCmdLines);
+            }
+
+            // Delete the temporary pre-processed ISA file.
+            if (shouldPreProcessIsa)
+            {
+                beUtils::DeleteFileFromDisk(preProcessedIsaFile);
             }
 
             // Delete temporary ISA file.
@@ -328,7 +359,7 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         vector <string> DeviceAnalysisDataVec;
 
         // Check flags first.
-        if (config.m_Profile.length() == 0 && config.m_mode == Mode_HLSL)
+        if (config.m_Profile.length() == 0 && config.m_mode == Mode_DX11)
         {
             std::stringstream s_Log;
             s_Log << "-p Must be specified. Check compiler target: vs_5_0, ps_5_0 etc.";
@@ -336,7 +367,7 @@ void kcCLICommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
             return;
         }
 
-        if (config.m_mode != Mode_HLSL && config.m_mode != Mode_AMDIL)
+        if (config.m_mode != Mode_DX11 && config.m_mode != Mode_AMDIL)
         {
             std::stringstream s_Log;
             s_Log << "Source language is not supported. Please use ";
@@ -653,7 +684,7 @@ bool kcCLICommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
         if (beRet != beStatus_SUCCESS)
         {
             // the use must have got the asics spelled wrong- let him know and continue
-            s_Log << "Error: could not find device named: " << sDevicenametoLog << ". Run \'-s HLSL -l to view available devices." << endl;
+            s_Log << "Error: could not find device named: " << sDevicenametoLog << ". Run \'-s dx11 -l to view available devices." << endl;
             ret = false;
         }
         else

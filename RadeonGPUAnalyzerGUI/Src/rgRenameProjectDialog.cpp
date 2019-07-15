@@ -63,7 +63,7 @@ void rgRenameProjectDialog::accept()
     rgUtils::TrimLeadingAndTrailingWhitespace(projectName, projectName);
 
     // Input validation.
-    if (rgUtils::IsValidFileName(projectName))
+    if (rgUtils::IsValidProjectName(projectName))
     {
         // Save the project name.
         m_projectName = projectName;

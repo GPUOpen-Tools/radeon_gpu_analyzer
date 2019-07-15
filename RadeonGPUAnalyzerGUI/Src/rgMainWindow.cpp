@@ -1954,7 +1954,6 @@ void rgMainWindow::EnableBuildViewActions()
     assert(pBuildView != nullptr);
     if (pBuildView != nullptr)
     {
-
         bool isProjectEmpty = pBuildView->GetMenu()->IsEmpty();
         EnableBuildMenu(!isProjectEmpty);
         m_pBuildSettingsAction->setEnabled(true);
