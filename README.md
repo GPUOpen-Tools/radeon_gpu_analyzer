@@ -20,7 +20,7 @@ The supported platforms by the **GUI app** are:
 * OpenCL - AMD's LLVM-based Lightning Compiler for ROCm
 
 The supported platforms by the **command-line tool** are:
-* D3D12 (compute only)
+* D3D12 (compute only, see https://gpuopen.com/radeon-gpu-analyzer-2-2-direct3d12-compute/ for more info)
 * D3D11
 * OpenCL - AMD's LLVM-based Lightning Compiler for ROCm (-s rocm-cl)
 * OpenCL - Legacy compiler (-s cl)
