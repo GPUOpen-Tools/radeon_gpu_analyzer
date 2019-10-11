@@ -63,6 +63,9 @@ public:
     // Get the global application settings view stylesheet for this state.
     virtual std::string GetGlobalSettingsViewStylesheet() const = 0;
 
+    // Get the build application settings view stylesheet for this state.
+    virtual std::string GetBuildSettingsViewStylesheet() const = 0;
+
     // Open the specified files in build view.
     virtual void OpenFilesInBuildView(const QStringList& filePaths) = 0;
 

@@ -27,6 +27,9 @@ public:
     // Add the files to the file menu.
     virtual bool PopulateMenu() override;
 
+    // Set the default focus widget for build settings view.
+    void SetDefaultFocusWidget() const override;
+
     // Check if the given source file has been successfully disassembled.
     virtual bool IsGcnDisassemblyGenerated(const std::string& inputFilePath) const override;
 

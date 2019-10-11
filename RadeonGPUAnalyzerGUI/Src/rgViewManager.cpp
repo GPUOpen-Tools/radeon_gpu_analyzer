@@ -95,10 +95,10 @@ void rgViewManager::AddView(rgViewContainer* pViewContainer, bool isActive, int 
 
 void rgViewManager::FocusNextView()
 {
-    // If the current view is output window, and it is
-    // currently maximized, do not process this action.
     if (m_focusViewIndex >= 0)
     {
+        // If the current view is output window, and it is
+        // currently maximized, do not process this action.
         rgViewContainer* pViewContainer = m_viewContainers.at(m_focusViewIndex);
         bool focusNextView = !(pViewContainer->IsInMaximizedState() && (pViewContainer->objectName().compare(STR_RG_BUILD_OUTPUT_VIEW_CONTAINER) == 0));
         if (focusNextView)
@@ -414,6 +414,11 @@ void rgViewManager::HandleApplicationAboutToQuit()
     // Remove all references to existing containers so widgets aren't re-polished during shutdown.
     m_viewContainers.clear();
     m_inactiveViewContainers.clear();
+}
+
+void rgViewManager::SetCurrentFocusedView(rgCurrentFocusedIndex currentFocusIndex)
+{
+    m_currentFocusedView = currentFocusIndex;
 }
 
 void rgViewManager::HandleFocusNextViewAction()

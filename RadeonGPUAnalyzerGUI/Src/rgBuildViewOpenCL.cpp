@@ -442,6 +442,15 @@ bool rgBuildViewOpenCL::CreateNewSourceFileInProject()
     return ret;
 }
 
+void rgBuildViewOpenCL::SetDefaultFocusWidget() const
+{
+    assert(m_pBuildSettingsView != nullptr);
+    if (m_pBuildSettingsView != nullptr)
+    {
+        m_pBuildSettingsView->SetInitialWidgetFocus();
+    }
+}
+
 bool rgBuildViewOpenCL::CreateNewSourceFile(const std::string& sourceFileName, std::string& fullSourceFilePath)
 {
     bool ret = false;

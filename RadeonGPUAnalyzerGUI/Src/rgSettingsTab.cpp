@@ -79,6 +79,7 @@ void rgSettingsTab::Initialize()
     if (pAppState != nullptr)
     {
         SetGlobalSettingsStylesheet(pAppState->GetGlobalSettingsViewStylesheet());
+        SetBuildSettingsStylesheet(pAppState->GetBuildSettingsViewStylesheet());
     }
 
     // Set the cursor type for specific widgets in the view.
@@ -208,6 +209,29 @@ bool rgSettingsTab::eventFilter(QObject* pObject, QEvent* pEvent)
     }
 
     return isFiltered;
+}
+
+void rgSettingsTab::SelectNextListWidgetItem(const int keyPressed)
+{
+    const int currentRow = ui.settingsListWidget->currentRow();
+    if (keyPressed == Qt::Key_Up)
+    {
+        // Process the key up event only if the existing selection is not the top one.
+        if (currentRow == static_cast<int>(SettingsListWidgetEntries::Api))
+        {
+            const int nextRow = static_cast<int>(SettingsListWidgetEntries::Global);
+            ui.settingsListWidget->setCurrentRow(nextRow);
+        }
+    }
+    else if (keyPressed == Qt::Key_Down)
+    {
+        // Process the key down event only if the existing selection is not the bottom one.
+        if (currentRow == static_cast<int>(SettingsListWidgetEntries::Global))
+        {
+            const int nextRow = static_cast<int>(SettingsListWidgetEntries::Api);
+            ui.settingsListWidget->setCurrentRow(nextRow);
+        }
+    }
 }
 
 void rgSettingsTab::HandleSaveSettingsButtonClicked()
@@ -390,6 +414,15 @@ void rgSettingsTab::SetGlobalSettingsStylesheet(const std::string& stylesheet)
     }
 }
 
+void rgSettingsTab::SetBuildSettingsStylesheet(const std::string& stylesheet)
+{
+    assert(m_pBuildSettingsView != nullptr);
+    if (m_pBuildSettingsView != nullptr)
+    {
+        m_pBuildSettingsView->setStyleSheet(stylesheet.c_str());
+    }
+}
+
 void rgSettingsTab::HandleSettingsListWidgetClick(int index)
 {
     assert(m_pBuildSettingsView != nullptr);
@@ -444,6 +477,9 @@ void rgSettingsTab::HandleSettingsListWidgetClick(int index)
 
     // Set the list widget cursor to arrow cursor.
     ui.settingsListWidget->setCursor(Qt::ArrowCursor);
+
+    // Set the focus to settings buttons view.
+    ui.settingsButtonsView->setFocus();
 }
 
 void rgSettingsTab::HandleBuildSettingsPendingChangesStateChanged(bool hasPendingChanges)

@@ -35,6 +35,9 @@ signals:
     // Signal to indicate API change.
     void ChangeAPIModeSignal(rgProjectAPI api);
 
+    // A signal to prompt saving any pending changes.
+    void SavePendingChanges();
+
 protected slots:
     // Handler for when the mode button is clicked.
     void HandleModePushButtonClicked(bool /*checked */);

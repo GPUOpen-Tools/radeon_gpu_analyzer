@@ -31,7 +31,7 @@ rgSourceCodeEditor::rgSourceCodeEditor(QWidget* pParent, rgSrcLanguage lang) : Q
     // Create the syntax highlighter.
     if (lang != rgSrcLanguage::Unknown)
     {
-        m_pSyntaxHighlight = new rgSyntaxHighlight(document(), lang);
+        m_pSyntaxHighlighter = new rgSyntaxHighlighter(document(), lang);
     }
 
     UpdateLineNumberAreaWidth(0);
@@ -470,11 +470,11 @@ bool rgSourceCodeEditor::SetSyntaxHighlighting(rgSrcLanguage lang)
     bool result = (lang != rgSrcLanguage::Unknown);
     if (result)
     {
-        if (m_pSyntaxHighlight != nullptr)
+        if (m_pSyntaxHighlighter != nullptr)
         {
-            delete m_pSyntaxHighlight;
+            delete m_pSyntaxHighlighter;
         }
-        m_pSyntaxHighlight = new rgSyntaxHighlight(document(), lang);
+        m_pSyntaxHighlighter = new rgSyntaxHighlighter(document(), lang);
     }
 
     return result;

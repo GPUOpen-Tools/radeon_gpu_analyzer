@@ -42,6 +42,12 @@
 // *****************************************
 
 static const std::string  STR_GFX804_TARGET_NAME = "gfx804";
+static const char*  STR_WARNING_LIVEREG_NOT_SUPPORTED_FOR_ISA_A = "Warning: live register analysis cannot be performed on the generated ISA for ";
+static const char*  STR_WARNING_LIVEREG_NOT_SUPPORTED_FOR_ISA_B = " - skipping.";
+static const char*  STR_WARNING_CFG_NOT_SUPPORTED_FOR_ISA_A = "Warning: cfg cannot be generated from the ISA for ";
+static const char*  STR_WARNING_CFG_NOT_SUPPORTED_FOR_ISA_B = " -skipping.";
+static const char*  STR_WARNING_IL_NOT_SUPPORTED_FOR_RDNA_A = "Warning: IL disassembly extraction not supported for RDNA target ";
+static const char*  STR_WARNING_IL_NOT_SUPPORTED_FOR_RDNA_B = " - skipping.";
 
 static const std::set<std::string>  UnsupportedTargets = { STR_GFX804_TARGET_NAME };
 
@@ -118,8 +124,6 @@ doNAFormat(T ui, T sentinal, T err, char listSeparator)
     return s.str();
 }
 
-
-
 bool kcCLICommanderCL::Init(const Config& config, LoggingCallBackFunc_t callback)
 {
     GT_UNREFERENCED_PARAMETER(config);
@@ -137,11 +141,11 @@ bool kcCLICommanderCL::Init(const Config& config, LoggingCallBackFunc_t callback
         beRet = be->theOpenCLBuilder()->GetDevices(devices);
         ret = (beRet == beKA::beStatus_SUCCESS);
 
-        // This mode does not support Navi, so filter the unsupported devices.
+        // Apply any filters to the targets here.
         std::set<std::string> filteredTargets;
         for (const std::string& target : devices)
         {
-            if (target.find("gfx1") == std::string::npos)
+            if (target.find("gfx900") == std::string::npos)
             {
                 filteredTargets.insert(target);
             }
@@ -157,7 +161,8 @@ bool kcCLICommanderCL::Init(const Config& config, LoggingCallBackFunc_t callback
             {
                 for (vector<GDT_GfxCardInfo>::const_iterator it = m_table.begin(); it != m_table.end(); ++it)
                 {
-                    if ((filteredTargets.find(it->m_szCALName) != filteredTargets.end()) && UnsupportedTargets.count(it->m_szCALName) == 0)
+                    if ((filteredTargets.find(it->m_szCALName) != filteredTargets.end()) &&
+                        UnsupportedTargets.count(it->m_szCALName) == 0)
                     {
                         m_externalDevices.insert(it->m_szCALName);
                     }
@@ -171,7 +176,7 @@ bool kcCLICommanderCL::Init(const Config& config, LoggingCallBackFunc_t callback
 
 bool kcCLICommanderCL::Compile(const Config& config)
 {
-    bool bRet = false;
+    bool ret = false;
 
     // Verify that an input file was specified
     if (config.m_InputFiles.size() != 1 || config.m_InputFiles[0].empty())
@@ -183,9 +188,9 @@ bool kcCLICommanderCL::Compile(const Config& config)
     else
     {
         string sSource;
-        bRet = kcUtils::ReadProgramSource(config.m_InputFiles[0], sSource);
+        ret = kcUtils::ReadProgramSource(config.m_InputFiles[0], sSource);
 
-        if (!bRet)
+        if (!ret)
         {
             std::stringstream logStream;
             logStream << STR_ERR_CANNOT_READ_FILE << config.m_InputFiles[0] << endl;
@@ -195,7 +200,7 @@ bool kcCLICommanderCL::Compile(const Config& config)
         {
             OpenCLOptions options;
             options.m_mode = Mode_OpenCL;
-            options.m_selectedDevices = m_asics;
+            options.m_selectedDevicesSorted = m_asicsSorted;
             options.m_defines = config.m_Defines;
             options.m_openCLCompileOptions = config.m_OpenCLOptions;
 
@@ -213,16 +218,16 @@ bool kcCLICommanderCL::Compile(const Config& config)
 
             if (beRet == beKA::beStatus_SUCCESS)
             {
-                bRet = true;
+                ret = true;
             }
             else
             {
-                bRet = false;
+                ret = false;
             }
         }
     }
 
-    return bRet;
+    return ret;
 }
 
 bool kcCLICommanderCL::ListEntries(const Config& config, LoggingCallBackFunc_t callback)
@@ -236,9 +241,17 @@ void kcCLICommanderCL::RunCompileCommands(const Config& config, LoggingCallBackF
     {
         if (InitRequestedAsicList(config.m_ASICs, config.m_mode, m_externalDevices, m_asics, false))
         {
+
+            // Sort the targets.
+            for (const std::string& target : m_asics)
+            {
+                m_asicsSorted.push_back(target);
+            }
+            std::sort(m_asicsSorted.begin(), m_asicsSorted.end(), &beUtils::DeviceNameLessThan);
+
             if (Compile(config))
             {
-                InitRequiredKernels(config, m_asics, m_requiredKernels);
+                InitRequiredKernels(config, m_asicsSorted, m_requiredKernels);
 
                 GetBinary(config);
 
@@ -253,7 +266,6 @@ void kcCLICommanderCL::RunCompileCommands(const Config& config, LoggingCallBackF
         }
     }
 }
-
 
 bool kcCLICommanderCL::PrintAsicList(const Config&)
 {
@@ -274,20 +286,15 @@ bool kcCLICommanderCL::PrintAsicList(const Config&)
     {
         for (const auto& pair : cardsMappingSorted)
         {
-            // Navi is not supported in this mode, so filter the targets.
-            if (pair.first.find("gfx1") == std::string::npos)
+            std::cout << pair.first << std::endl;
+            for (const std::string& card : pair.second)
             {
-                std::cout << pair.first << std::endl;
-                for (const std::string& card : pair.second)
+                // Filter out internal names.
+                if (card.find(FILTER_INDICATOR_1) == std::string::npos &&
+                    card.find(FILTER_INDICATOR_2) == std::string::npos)
                 {
-                    // Filter out internal names.
-                    if (card.find(FILTER_INDICATOR_1) == std::string::npos &&
-                        card.find(FILTER_INDICATOR_2) == std::string::npos)
-                    {
-                        std::cout << "\t" << card << std::endl;
-                    }
+                    std::cout << "\t" << card << std::endl;
                 }
-                std::cout << std::endl;
             }
         }
         result = true;
@@ -298,129 +305,67 @@ bool kcCLICommanderCL::PrintAsicList(const Config&)
 
 void kcCLICommanderCL::Analysis(const Config& config)
 {
-    if (config.m_AnalysisFile.size() == 0)
+    if (!config.m_AnalysisFile.empty())
     {
-        return;
-    }
-
-    if (m_requiredKernels.size() == 0)
-    {
-        std::stringstream s_Log;
-        s_Log << STR_ERR_NO_KERNELS_FOR_ANALYSIS << endl;
-        LogCallBack(s_Log.str());
-    }
-
-    if ((config.m_SuppressSection.size() > 0) && (config.m_BinaryOutputFile.size() == 0))
-    {
-        std::stringstream s_Log;
-        s_Log << STR_WRN_CL_SUPPRESS_WIHTOUT_BINARY << std::endl;
-        LogCallBack(s_Log.str());
-    }
-
-    // Get the separator for CSV list items.
-    char csvSeparator = kcUtils::GetCsvSeparator(config);
-
-    // Get analysis for devices.
-    for (const std::string& deviceName : m_asics)
-    {
-        for (const std::string& kernelName : m_requiredKernels)
+        for (const std::string& requiredTarget : m_asicsSorted)
         {
-            // Show the analysis only for external devices.
-            if (m_externalDevices.find(deviceName) == m_externalDevices.end())
+            if (!be->theOpenCLBuilder()->HasCodeObjectBinary(requiredTarget))
             {
-                continue;
-            }
-
-            beStatus status;
-
-            // Only do GPU devices.
-            cl_device_type deviceType;
-            status = be->theOpenCLBuilder()->GetDeviceType(deviceName, deviceType);
-
-            if (status != beStatus_SUCCESS ||
-                deviceType != CL_DEVICE_TYPE_GPU)
-            {
-                std::stringstream s_Log;
-                s_Log << "Info: Skipping analysis of CPU device '" << deviceName << "'." << endl;
-                LogCallBack(s_Log.str());
-                continue;
-            }
-
-            AnalysisData analysis;
-            (void)memset(&analysis, 0, sizeof(analysis));
-            status = be->theOpenCLBuilder()->GetStatistics(deviceName, kernelName, analysis);
-
-            if (status != beStatus_SUCCESS)
-            {
-                if (status == beStatus_WrongKernelName)
+                if (m_requiredKernels.size() == 0)
                 {
                     std::stringstream s_Log;
-                    s_Log << "Info: Skipping analysis, wrong kernel name provided: '" << config.m_Function << "'." << endl;
+                    s_Log << STR_ERR_NO_KERNELS_FOR_ANALYSIS << endl;
                     LogCallBack(s_Log.str());
                 }
 
-                continue;
-            }
-
-            // Create the output file.
-            ofstream output;
-            gtString statsOutputFileName;
-            kcUtils::ConstructOutputFileName(config.m_AnalysisFile, KC_STR_DEFAULT_STATS_SUFFIX,
-                                             KC_STR_DEFAULT_STATS_EXT, kernelName, deviceName, statsOutputFileName);
-            osFilePath analysisOutputPath;
-            analysisOutputPath.setFullPathFromString(statsOutputFileName);
-            osDirectory targetDir;
-            analysisOutputPath.getFileDirectory(targetDir);
-            gtString targetDirAsStr = targetDir.directoryPath().asString(true);
-            analysisOutputPath.setFileDirectory(targetDirAsStr);
-
-            // Create the target directory if it does not exist.
-            if (!targetDir.IsEmpty() && !targetDir.exists())
-            {
-                bool isTargetDirCreated(targetDir.create());
-
-                if (!isTargetDirCreated)
+                if ((config.m_SuppressSection.size() > 0) && (config.m_BinaryOutputFile.size() == 0))
                 {
-                    std::stringstream errMsg;
-                    errMsg << STR_ERR_CANNOT_FIND_OUTPUT_DIR << std::endl;
-                    LogCallBack(errMsg.str());
+                    std::stringstream s_Log;
+                    s_Log << STR_WRN_CL_SUPPRESS_WIHTOUT_BINARY << std::endl;
+                    LogCallBack(s_Log.str());
                 }
-            }
 
-            output.open(analysisOutputPath.asString().asASCIICharArray());
+                for (const std::string& kernelName : m_requiredKernels)
+                {
+                    // Show the analysis only for external devices.
+                    if (m_externalDevices.find(requiredTarget) == m_externalDevices.end())
+                    {
+                        continue;
+                    }
 
-            if (!output.is_open())
-            {
-                std::stringstream s_Log;
-                s_Log << "Error: Unable to open " << config.m_AnalysisFile << " for write.\n";
-                LogCallBack(s_Log.str());
+                    AnalysisData analysis;
+                    (void)memset(&analysis, 0, sizeof(analysis));
+                    beStatus status = be->theOpenCLBuilder()->GetStatistics(requiredTarget, kernelName, analysis);
+                    if (status != beStatus_SUCCESS)
+                    {
+                        if (status == beStatus_WrongKernelName)
+                        {
+                            std::stringstream s_Log;
+                            s_Log << "Info: Skipping analysis, wrong kernel name provided: '" << config.m_Function << "'." << endl;
+                            LogCallBack(s_Log.str());
+                        }
+
+                        continue;
+                    }
+
+                    // Write the stats file.
+                    WriteAnalysisFile(config, kernelName, requiredTarget, analysis);
+                }
             }
             else
             {
-                // Write the headers.
-                output << kcUtils::GetStatisticsCsvHeaderString(csvSeparator) << std::endl;
-
-                // Write a line of CSV.
-                output << deviceName << csvSeparator;
-                output << analysis.scratchMemoryUsed << csvSeparator;
-                output << analysis.numThreadPerGroup << csvSeparator;
-                output << doNAFormat(analysis.wavefrontSize, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
-                output << analysis.LDSSizeAvailable << csvSeparator;
-                output << analysis.LDSSizeUsed << csvSeparator;
-                output << doNAFormat(analysis.numSGPRsAvailable, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
-                output << doNAFormat(analysis.numSGPRsUsed, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
-                output << doNAFormat(CAL_NA_Value_64, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
-                output << doNAFormat(analysis.numVGPRsAvailable, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
-                output << doNAFormat(analysis.numVGPRsUsed, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
-                output << doNAFormat(CAL_NA_Value_64, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
-                output << doNAFormat(analysis.numThreadPerGroupX, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
-                output << doNAFormat(analysis.numThreadPerGroupY, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
-                output << doNAFormat(analysis.numThreadPerGroupZ, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
-                output << doNAFormat(analysis.ISASize, (CALuint64)0, CAL_ERR_Value_64, csvSeparator, false);
-                output << std::endl;
-
-                // Close the output file.
-                output.close();
+                // Handle the CodeObject case.
+                std::map<std::string, beKA::AnalysisData> statsMap;
+                bool isStatsExtracted = be->theOpenCLBuilder()->ExtractStatisticsCodeObject(requiredTarget, statsMap);
+                assert(isStatsExtracted);
+                if (isStatsExtracted)
+                {
+                    for (auto iter = statsMap.begin(); iter != statsMap.end(); iter++)
+                    {
+                        // Write the stats file.
+                        WriteAnalysisFile(config, iter->first, requiredTarget, iter->second);
+                    }
+                }
             }
         }
     }
@@ -450,36 +395,44 @@ void kcCLICommanderCL::GetILText(const Config& config)
                 // Get IL text and make output files.
                 for (const std::string& deviceName : m_asics)
                 {
-                    for (const std::string& kernelName : m_requiredKernels)
+                    if (!kcUtils::IsNaviTarget(deviceName))
                     {
-                        beKA::beStatus status = pBuilder->GetKernelILText(deviceName, kernelName, ilTextBuffer);
-
-                        if (status == beStatus_SUCCESS)
+                        for (const std::string& kernelName : m_requiredKernels)
                         {
-                            gtString ilOutputFileName;
-                            kcUtils::ConstructOutputFileName(config.m_ILFile, "", KC_STR_DEFAULT_AMD_IL_EXT,
-                                                             kernelName, deviceName, ilOutputFileName);
-                            kcUtils::WriteTextFile(ilOutputFileName.asASCIICharArray(), ilTextBuffer, m_LogCallback);
-                        }
-                        else
-                        {
-                            // Inform the user.
-                            std::stringstream msg;
-                            msg << STR_ERR_CANNOT_DISASSEMBLE_AMD_IL << " for " << deviceName;
+                            beKA::beStatus status = pBuilder->GetKernelILText(deviceName, kernelName, ilTextBuffer);
 
-                            // If we have the kernel name - specify it in the error message.
-                            if (!kernelName.empty())
+                            if (status == beStatus_SUCCESS)
                             {
-                                msg << " (kernel: " << kernelName << ")";
+                                gtString ilOutputFileName;
+                                kcUtils::ConstructOutputFileName(config.m_ILFile, "", KC_STR_DEFAULT_AMD_IL_EXT,
+                                    kernelName, deviceName, ilOutputFileName);
+                                kcUtils::WriteTextFile(ilOutputFileName.asASCIICharArray(), ilTextBuffer, m_LogCallback);
+                            }
+                            else
+                            {
+                                // Inform the user.
+                                std::stringstream msg;
+                                msg << STR_ERR_CANNOT_DISASSEMBLE_AMD_IL << " for " << deviceName;
+
+                                // If we have the kernel name - specify it in the error message.
+                                if (!kernelName.empty())
+                                {
+                                    msg << " (kernel: " << kernelName << ")";
+                                }
+
+                                // Print the message.
+                                msg << "." << std::endl;
+                                m_LogCallback(msg.str().c_str());
                             }
 
-                            // Print the message.
-                            msg << "." << std::endl;
-                            m_LogCallback(msg.str().c_str());
+                            // Clear the output buffer.
+                            ilTextBuffer.clear();
                         }
-
-                        // Clear the output buffer.
-                        ilTextBuffer.clear();
+                    }
+                    else
+                    {
+                        std::cout << STR_WARNING_IL_NOT_SUPPORTED_FOR_RDNA_A <<
+                            deviceName << STR_WARNING_IL_NOT_SUPPORTED_FOR_RDNA_B << std::endl;
                     }
                 }
             }
@@ -492,8 +445,6 @@ void kcCLICommanderCL::GetISAText(const Config& config)
     if (!config.m_ISAFile.empty() || !config.m_AnalysisFile.empty() ||
         !config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty() || !config.m_LiveRegisterAnalysisFile.empty())
     {
-        bool isIsaFileTemp = config.m_ISAFile.empty();
-
         if ((config.m_SuppressSection.size() > 0) && (config.m_BinaryOutputFile.size() == 0))
         {
             // Print the warning message.
@@ -510,86 +461,165 @@ void kcCLICommanderCL::GetISAText(const Config& config)
             bool shouldCreateSubDirectories = m_isAllKernels && !m_requiredKernels.empty();
             GT_UNREFERENCED_PARAMETER(shouldCreateSubDirectories);
 
-            // Get ISA text and make output files.
-            for (const std::string& deviceName : m_asics)
-            {
-                for (const std::string& kernelName : m_requiredKernels)
-                {
-                    beKA::beStatus status = pClBuilder->GetKernelISAText(deviceName, kernelName, sISAIL);
+            // Perform live register analysis - blocked until analysis engine is improved to support
+            // OpenCL disassembly with better stability.
+            bool isPostProcessingEnabled = false;
+            bool wasPostProcessingMsgPrintedLivereg = false;
+            bool wasPostProcessingMsgPrintedCfg = false;
+            bool isLiveregRequired = !config.m_LiveRegisterAnalysisFile.empty();
+            bool isCfgRequired = !config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty();
 
-                    if (status == beStatus_SUCCESS)
+            std::map<std::string, std::string> deviceToCodeObjectDisassemblyMapping;
+            pClBuilder->GetDeviceToCodeObjectDisassemblyMapping(deviceToCodeObjectDisassemblyMapping);
+
+            if (!config.m_ISAFile.empty() || !config.m_ILFile.empty())
+            {
+                // Get ISA text and make output files.
+                for (const std::string& deviceName : m_asics)
+                {
+                    auto iter = deviceToCodeObjectDisassemblyMapping.find(deviceName);
+                    if (iter != deviceToCodeObjectDisassemblyMapping.end())
                     {
                         gtString isaOutputFileName;
-                        if (isIsaFileTemp)
+                        kcUtils::ConstructOutputFileName(config.m_ISAFile, "", KC_STR_DEFAULT_ISA_EXT, "", deviceName, isaOutputFileName);
+                        kcUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), iter->second, m_LogCallback);
+
+                        if (isLiveregRequired)
                         {
-                            gtString  isaFileName, isaFileExt;
-                            isaFileName << (std::string(KC_STR_DEFAULT_ISA_OUTPUT_FILE_NAME) + deviceName + kernelName).c_str();
-                            isaFileExt << KC_STR_DEFAULT_ISA_EXT;
-                            isaOutputFileName = kcUtils::ConstructTempFileName(isaFileName, isaFileExt);
-                        }
-                        else
-                        {
-                            kcUtils::ConstructOutputFileName(config.m_ISAFile, "", KC_STR_DEFAULT_ISA_EXT, kernelName, deviceName, isaOutputFileName);
-                        }
-                        kcUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), sISAIL, m_LogCallback);
-
-                        // Perform live register analysis.
-                        bool isRegLivenessRequired = !config.m_LiveRegisterAnalysisFile.empty();
-
-                        if (isRegLivenessRequired)
-                        {
-                            gtString liveRegAnalysisOutputFileName;
-                            kcUtils::ConstructOutputFileName(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVEREG_SUFFIX,
-                                                             KC_STR_DEFAULT_LIVEREG_EXT, kernelName, deviceName, liveRegAnalysisOutputFileName);
-
-                            // Call the kcUtils routine to analyze <generatedFileName> and write
-                            // the analysis file.
-                            kcUtils::PerformLiveRegisterAnalysis(isaOutputFileName, liveRegAnalysisOutputFileName,
-                                                                 m_LogCallback, config.m_printProcessCmdLines);
-                        }
-
-                        // Generate control flow graph.
-                        if (!config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty())
-                        {
-                            gtString cfgOutputFileName;
-                            std::string baseName = (!config.m_blockCFGFile.empty() ? config.m_blockCFGFile : config.m_instCFGFile);
-                            kcUtils::ConstructOutputFileName(baseName, KC_STR_DEFAULT_CFG_SUFFIX, KC_STR_DEFAULT_CFG_EXT,
-                                                             kernelName, deviceName, cfgOutputFileName);
-
-                            // Call the kcUtils routine to analyze <generatedFileName> and write
-                            // the analysis file.
-                            kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName, m_LogCallback,
-                                                              !config.m_instCFGFile.empty(), config.m_printProcessCmdLines);
-                        }
-
-                        // Delete temporary files.
-                        if (config.m_ISAFile.empty())
-                        {
-                            if (kcUtils::FileNotEmpty(isaOutputFileName.asASCIICharArray()))
+                            if (isPostProcessingEnabled)
                             {
-                                kcUtils::DeleteFile(isaOutputFileName);
+                                std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED_FOR_ISA_A << deviceName <<
+                                    STR_WARNING_LIVEREG_NOT_SUPPORTED_FOR_ISA_B << std::endl;
+                            }
+                            else if (!wasPostProcessingMsgPrintedLivereg)
+                            {
+                                std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
+                                wasPostProcessingMsgPrintedLivereg = true;
+                            }
+                        }
+
+                        if (isCfgRequired)
+                        {
+                            if (isPostProcessingEnabled)
+                            {
+                                // Generate control flow graph.
+                                std::cout << STR_WARNING_CFG_NOT_SUPPORTED_FOR_ISA_A << deviceName <<
+                                    STR_WARNING_CFG_NOT_SUPPORTED_FOR_ISA_B << std::endl;
+                            }
+                            else if (!wasPostProcessingMsgPrintedCfg)
+                            {
+                                std::cout << STR_WARNING_CFG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
+                                wasPostProcessingMsgPrintedCfg = true;
                             }
                         }
                     }
                     else
                     {
-                        // Inform the user.
-                        std::stringstream msg;
-                        msg << STR_ERR_CANNOT_DISASSEMBLE_ISA << " for " << deviceName;
-
-                        // If we have the kernel name - specify it in the error message.
-                        if (!kernelName.empty())
+                        bool isIsaFileTemp = config.m_ISAFile.empty();
+                        for (const std::string& kernelName : m_requiredKernels)
                         {
-                            msg << " (kernel: " << kernelName << ")";
+                            beKA::beStatus status = pClBuilder->GetKernelISAText(deviceName, kernelName, sISAIL);
+
+                            if (status == beStatus_SUCCESS)
+                            {
+                                gtString isaOutputFileName;
+                                if (isIsaFileTemp)
+                                {
+                                    gtString  isaFileName, isaFileExt;
+                                    isaFileName << (std::string(KC_STR_DEFAULT_ISA_OUTPUT_FILE_NAME) + deviceName + kernelName).c_str();
+                                    isaFileExt << KC_STR_DEFAULT_ISA_EXT;
+                                    isaOutputFileName = kcUtils::ConstructTempFileName(isaFileName, isaFileExt);
+                                }
+                                else
+                                {
+                                    kcUtils::ConstructOutputFileName(config.m_ISAFile, "", KC_STR_DEFAULT_ISA_EXT, kernelName, deviceName, isaOutputFileName);
+                                }
+                                kcUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), sISAIL, m_LogCallback);
+
+                                // Perform live register analysis.
+                                if (isPostProcessingEnabled)
+                                {
+                                    if (isLiveregRequired)
+                                    {
+                                        gtString liveRegAnalysisOutputFileName;
+                                        kcUtils::ConstructOutputFileName(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVEREG_SUFFIX,
+                                            KC_STR_DEFAULT_LIVEREG_EXT, kernelName, deviceName, liveRegAnalysisOutputFileName);
+
+                                        // Call the kcUtils routine to analyze <generatedFileName> and write the analysis file.
+                                        kcUtils::PerformLiveRegisterAnalysis(isaOutputFileName, liveRegAnalysisOutputFileName,
+                                            m_LogCallback, config.m_printProcessCmdLines);
+                                    }
+                                }
+                                else if(!wasPostProcessingMsgPrintedLivereg && isLiveregRequired)
+                                {
+                                    std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
+                                    wasPostProcessingMsgPrintedLivereg = true;
+                                }
+
+                                // Generate control flow graph.
+                                if (isPostProcessingEnabled)
+                                {
+                                    if (!config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty())
+                                    {
+                                        gtString cfgOutputFileName;
+                                        std::string baseName = (!config.m_blockCFGFile.empty() ? config.m_blockCFGFile : config.m_instCFGFile);
+                                        kcUtils::ConstructOutputFileName(baseName, KC_STR_DEFAULT_CFG_SUFFIX, KC_STR_DEFAULT_CFG_EXT,
+                                            kernelName, deviceName, cfgOutputFileName);
+
+                                        // Call the kcUtils routine to analyze <generatedFileName> and write
+                                        // the analysis file.
+                                        kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName, m_LogCallback,
+                                            !config.m_instCFGFile.empty(), config.m_printProcessCmdLines);
+                                    }
+                                }
+                                else if (!wasPostProcessingMsgPrintedCfg && isCfgRequired)
+                                {
+                                    std::cout << STR_WARNING_CFG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
+                                    wasPostProcessingMsgPrintedCfg = true;
+                                }
+
+                                // Delete temporary files.
+                                if (config.m_ISAFile.empty())
+                                {
+                                    if (kcUtils::FileNotEmpty(isaOutputFileName.asASCIICharArray()))
+                                    {
+                                        kcUtils::DeleteFile(isaOutputFileName);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Inform the user.
+                                std::stringstream msg;
+                                msg << STR_ERR_CANNOT_DISASSEMBLE_ISA << " for " << deviceName;
+
+                                // If we have the kernel name - specify it in the error message.
+                                if (!kernelName.empty())
+                                {
+                                    msg << " (kernel: " << kernelName << ")";
+                                }
+
+                                // Print the message.
+                                msg << "." << std::endl;
+                                m_LogCallback(msg.str().c_str());
+                            }
+
+                            // Clear the output buffer.
+                            sISAIL.clear();
                         }
-
-                        // Print the message.
-                        msg << "." << std::endl;
-                        m_LogCallback(msg.str().c_str());
                     }
+                }
+            }
 
-                    // Clear the output buffer.
-                    sISAIL.clear();
+            if (config.m_ISAFile.empty())
+            {
+                if (isLiveregRequired && !wasPostProcessingMsgPrintedLivereg)
+                {
+                    std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
+                }
+                if (isCfgRequired && !wasPostProcessingMsgPrintedCfg)
+                {
+                    std::cout << STR_WARNING_CFG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
                 }
             }
         }
@@ -689,14 +719,14 @@ void kcCLICommanderCL::GetMetadata(const Config& config)
     }
 }
 
-void kcCLICommanderCL::InitRequiredKernels(const Config& config, const std::set<std::string>& requiredDevices, std::vector<std::string>& requiredKernels)
+void kcCLICommanderCL::InitRequiredKernels(const Config& config, const std::vector<std::string>& requiredDevices, std::vector<std::string>& requiredKernels)
 {
     requiredKernels.clear();
 
     if (!requiredDevices.empty())
     {
         // We only need a single device name.
-        std::set<std::string>::const_iterator firstDevice = requiredDevices.begin();
+        auto firstDevice = requiredDevices.begin();
         const std::string& deviceName = *firstDevice;
         std::string requestedKernel = config.m_Function;
         std::transform(requestedKernel.begin(), requestedKernel.end(), requestedKernel.begin(), ::tolower);
@@ -715,5 +745,78 @@ void kcCLICommanderCL::InitRequiredKernels(const Config& config, const std::set<
                 requiredKernels.push_back(config.m_Function);
             }
         }
+    }
+}
+
+void kcCLICommanderCL::WriteAnalysisFile(const Config& config, const std::string& kernelName,
+    const std::string& deviceName, const beKA::AnalysisData& analysis)
+{
+    // Create the output file.
+    ofstream output;
+    gtString statsOutputFileName;
+    kcUtils::ConstructOutputFileName(config.m_AnalysisFile, KC_STR_DEFAULT_STATS_SUFFIX,
+        KC_STR_DEFAULT_STATS_EXT, kernelName, deviceName, statsOutputFileName);
+    osFilePath analysisOutputPath;
+    analysisOutputPath.setFullPathFromString(statsOutputFileName);
+    osDirectory targetDir;
+    analysisOutputPath.getFileDirectory(targetDir);
+    gtString targetDirAsStr = targetDir.directoryPath().asString(true);
+    analysisOutputPath.setFileDirectory(targetDirAsStr);
+
+    // Create the target directory if it does not exist.
+    if (!targetDir.IsEmpty() && !targetDir.exists())
+    {
+        bool isTargetDirCreated(targetDir.create());
+
+        if (!isTargetDirCreated)
+        {
+            std::stringstream errMsg;
+            errMsg << STR_ERR_CANNOT_FIND_OUTPUT_DIR << std::endl;
+            LogCallBack(errMsg.str());
+        }
+    }
+
+
+    // Get the separator for CSV list items.
+    char csvSeparator = kcUtils::GetCsvSeparator(config);
+
+    // Generate the content for the file.
+    std::stringstream fileContent;
+
+    // Headers.
+    fileContent << kcUtils::GetStatisticsCsvHeaderString(csvSeparator) << std::endl;
+
+    // CSV line.
+    fileContent << deviceName << csvSeparator;
+    fileContent << analysis.scratchMemoryUsed << csvSeparator;
+    fileContent << analysis.numThreadPerGroup << csvSeparator;
+    fileContent << doNAFormat(analysis.wavefrontSize, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+    fileContent << analysis.LDSSizeAvailable << csvSeparator;
+    fileContent << analysis.LDSSizeUsed << csvSeparator;
+    fileContent << doNAFormat(analysis.numSGPRsAvailable, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+    fileContent << doNAFormat(analysis.numSGPRsUsed, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+    fileContent << doNAFormat(analysis.numSGPRSpills, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+    fileContent << doNAFormat(analysis.numVGPRsAvailable, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+    fileContent << doNAFormat(analysis.numVGPRsUsed, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+    fileContent << doNAFormat(analysis.numVGPRSpills, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+    fileContent << doNAFormat(analysis.numThreadPerGroupX, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+    fileContent << doNAFormat(analysis.numThreadPerGroupY, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+    fileContent << doNAFormat(analysis.numThreadPerGroupZ, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+    fileContent << doNAFormat(analysis.ISASize, (CALuint64)0, CAL_ERR_Value_64, csvSeparator, false);
+    fileContent << std::endl;
+
+    // Write the file.
+    output.open(analysisOutputPath.asString().asASCIICharArray());
+    if (!output.is_open())
+    {
+        std::stringstream s_Log;
+        s_Log << "Error: Unable to open " << config.m_AnalysisFile << " for write.\n";
+        LogCallBack(s_Log.str());
+    }
+    else
+    {
+        // Write the contents.
+        output << fileContent.str();
+        output.close();
     }
 }

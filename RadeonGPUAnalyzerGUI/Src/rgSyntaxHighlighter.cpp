@@ -18,7 +18,7 @@ enum class BlockState {
 
 
 // Definitions of language descriptors.
-static const std::map<rgSrcLanguage, rgSyntaxHighlight::LangDesc> LANG_DESC_MAP = {
+static const std::map<rgSrcLanguage, rgSyntaxHighlighter::LangDesc> LANG_DESC_MAP = {
     // ----------------
     //     OpenCL
     // ----------------
@@ -122,13 +122,13 @@ static const std::map<rgSrcLanguage, rgSyntaxHighlight::LangDesc> LANG_DESC_MAP 
     } },
 };
 
-rgSyntaxHighlight::rgSyntaxHighlight(QTextDocument* pDoc, rgSrcLanguage lang, const rgSyntaxHighlight::Style& style)
+rgSyntaxHighlighter::rgSyntaxHighlighter(QTextDocument* pDoc, rgSrcLanguage lang, const rgSyntaxHighlighter::Style& style)
     : QSyntaxHighlighter(pDoc), m_style(style)
 {
     InitTokens(lang);
 }
 
-void rgSyntaxHighlight::InitTokens(rgSrcLanguage lang)
+void rgSyntaxHighlighter::InitTokens(rgSrcLanguage lang)
 {
     bool foundLangDesc = (LANG_DESC_MAP.count(lang) == 1);
     assert(foundLangDesc);
@@ -156,7 +156,7 @@ void rgSyntaxHighlight::InitTokens(rgSrcLanguage lang)
     }
 }
 
-rgSyntaxHighlight::Style  rgSyntaxHighlight::GetDefaultStyle()
+rgSyntaxHighlighter::Style  rgSyntaxHighlighter::GetDefaultStyle()
 {
     Style  style;
     style.keywords.setForeground(Qt::blue);
@@ -169,7 +169,7 @@ rgSyntaxHighlight::Style  rgSyntaxHighlight::GetDefaultStyle()
     return style;
 }
 
-bool rgSyntaxHighlight::ProcessFuncName(const QString & text, int beginOffset, int endOffset)
+bool rgSyntaxHighlighter::ProcessFuncName(const QString & text, int beginOffset, int endOffset)
 {
     bool  ret = false;
     // Check if the next symbol after endOffset is "(".
@@ -184,7 +184,7 @@ bool rgSyntaxHighlight::ProcessFuncName(const QString & text, int beginOffset, i
     return ret;
 }
 
-int  rgSyntaxHighlight::ProcessComment(const QString& text, int offset, bool isMultiLine)
+int  rgSyntaxHighlighter::ProcessComment(const QString& text, int offset, bool isMultiLine)
 {
     int size = text.size();
     assert(offset >= 0 && offset <= size);
@@ -224,7 +224,7 @@ int  rgSyntaxHighlight::ProcessComment(const QString& text, int offset, bool isM
     return endOffset;
 }
 
-int  rgSyntaxHighlight::ProcessString(const QString& text, int offset, bool doubleQuote)
+int  rgSyntaxHighlighter::ProcessString(const QString& text, int offset, bool doubleQuote)
 {
     int  size = text.size();
     assert(offset >= 0 && offset <= size);
@@ -250,7 +250,7 @@ int  rgSyntaxHighlight::ProcessString(const QString& text, int offset, bool doub
     return endOffset;
 }
 
-bool  rgSyntaxHighlight::ProcessToken(const QString& text, int begin, int end)
+bool  rgSyntaxHighlighter::ProcessToken(const QString& text, int begin, int end)
 {
     // text
     //  |
@@ -295,7 +295,7 @@ bool  rgSyntaxHighlight::ProcessToken(const QString& text, int begin, int end)
     return ret;
 }
 
-void  rgSyntaxHighlight::highlightBlock(const QString& text)
+void  rgSyntaxHighlighter::highlightBlock(const QString& text)
 {
     int  tokenStart = 0, offset = 0;
     int  textSize = text.size();

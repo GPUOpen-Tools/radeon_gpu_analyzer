@@ -63,18 +63,7 @@ protected:
     beStatus WriteISAToFile(const std::string& fileName, const std::string& isaText);
 
     // Logging callback type.
-    bool LogCallBack(const std::string& theString) const
-    {
-        bool bRet = false;
-
-        if (m_LogCallback)
-        {
-            m_LogCallback(theString);
-            bRet = true;
-        }
-
-        return bRet;
-    }
+    bool LogCallBack(const std::string& str) const;
 
     // -- Data --
 

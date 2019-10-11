@@ -15,6 +15,7 @@
 #include <QtCommon/Scaling/ScalingManager.h>
 
 // Local.
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgMainWindow.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgModePushButton.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgStatusBar.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgTreeWidget.h>
@@ -438,15 +439,22 @@ void rgStatusBar::HandleTreeWidgetItemClicked(QTreeWidgetItem* pItem, const int 
 
             if (status)
             {
-                // Update the mode button string.
-                QString modeButtonString = s_STR_MODE + text;
-                m_pModePushButton->setText(modeButtonString);
+                // Save any pending changes.
+                bool isNotCancelled = false;
+                rgMainWindow* pMainWindow = static_cast<rgMainWindow*>(m_pParent);
+                if (pMainWindow != nullptr)
+                {
+                    isNotCancelled = pMainWindow->HandleSavePendingChanges();
+                }
 
                 // Emit a signal to indicate API change.
-                emit ChangeAPIModeSignal(rgUtils::ProjectAPIToEnum((text.toStdString())));
+                if (isNotCancelled)
+                {
+                    emit ChangeAPIModeSignal(rgUtils::ProjectAPIToEnum((text.toStdString())));
 
-                // Disable the selected item so the user cannot select it next time around.
-                pItem->setFlags(pItem->flags() & ~Qt::ItemIsSelectable);
+                    // Disable the selected item so the user cannot select it next time around.
+                    pItem->setFlags(pItem->flags() & ~Qt::ItemIsSelectable);
+                }
             }
         }
     }

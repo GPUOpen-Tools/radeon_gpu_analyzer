@@ -496,7 +496,7 @@ void rgTargetGpusDialog::PopulateTableData(std::shared_ptr<rgCliVersionInfo> pVe
                 }
                 else if (posGraphics1 == std::string::npos && posGraphics2 == std::string::npos)
                 {
-                    const char* NAVI_TOKEN = "Navi";
+                    const char* NAVI_TOKEN = "RDNA";
                     size_t naviPos1 = arch1.m_architectureName.find(NAVI_TOKEN);
                     size_t naviPos2 = arch2.m_architectureName.find(NAVI_TOKEN);
 

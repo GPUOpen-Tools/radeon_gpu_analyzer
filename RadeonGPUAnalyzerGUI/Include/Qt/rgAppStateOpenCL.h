@@ -53,6 +53,9 @@ public:
     // Get the stylesheet for the application settings.
     virtual std::string GetGlobalSettingsViewStylesheet() const override;
 
+    // Get the stylesheet for the build settings.
+    virtual std::string GetBuildSettingsViewStylesheet() const override;
+
 private slots:
     // A handler invoked when the "Create new CL file" signal is emitted.
     void HandleCreateNewCLFile();

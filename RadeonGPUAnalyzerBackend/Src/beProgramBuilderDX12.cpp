@@ -13,6 +13,7 @@
 #include <AMDTBaseTools/Include/gtString.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osApplication.h>
+#include <AMDTOSWrappers/Include/osDirectory.h>
 
 // Local.
 #include <RadeonGPUAnalyzerBackend/Include/beStringConstants.h>
@@ -35,10 +36,14 @@ static const char* STR_ERROR_INVALID_SHADER_MODEL = "Error: invalid shader model
 static const char* STR_ERROR_HLSL_TO_DXIL_COMPILATION_FAILED_A = "Error: DXC HLSL->DXIL compilation of ";
 static const char* STR_ERROR_HLSL_TO_DXIL_COMPILATION_FAILED_B = " shader failed.";
 static const char* STR_ERROR_DXC_LAUNCH_FAILED = "failed to launch DXC.";
-static const char* STR_INFO_FRONT_END_COMPILATION_WITH_DXC = "Performing front-end compilation through DXC... ";
+static const char* STR_INFO_FRONT_END_COMPILATION_WITH_DXC_A = "Performing front-end compilation of ";
+static const char* STR_INFO_FRONT_END_COMPILATION_WITH_DXC_B = " shader through DXC... ";
 static const char* STR_INFO_FRONT_END_COMPILATION_SUCCESS = "front-end compilation success.";
 static const char* STR_INFO_DXC_OUTPUT_PROLOGUE = "*** Output from DXC - START ***";
 static const char* STR_INFO_DXC_OUTPUT_EPILOGUE = "*** Output from DXC - END ***";
+static const char* STR_INFO_DXC_USING_DXC_FROM_USER_PATH = "Using DXC from user-provided path: ";
+static const char* STR_WARNING_DXC_PATH_NOT_FOUND_A = "Warning: could not detect DXC in path: ";
+static const char* STR_WARNING_DXC_PATH_NOT_FOUND_B = ". Falling back to using the DXC package that ships with RGA.";
 
 // Suffixes for stage-specific output files.
 static const std::array<std::string, bePipelineStage::Count>
@@ -51,6 +56,38 @@ STR_DX12_STAGE_SUFFIX =
     "pixel",
     "comp"
 };
+
+static std::string GetShaderModelPrefix(bePipelineStage stage)
+{
+    std::string ret;
+    switch (stage)
+    {
+    case Vertex:
+        ret = "vs";
+        break;
+    case TessellationControl:
+        ret = "hs";
+        break;
+    case TessellationEvaluation:
+        ret = "ds";
+        break;
+    case Geometry:
+        ret = "gs";
+        break;
+    case Fragment:
+        ret = "ps";
+        break;
+    case Compute:
+        ret = "cs";
+        break;
+    case Count:
+    default:
+        // We shouldn't get here.
+        assert(false);
+        break;
+    }
+    return ret;
+}
 
 static void FixIncludePath(const std::string& includePath, std::string& fixedIncludePath)
 {
@@ -70,7 +107,7 @@ static bool InvokDxc(const Config& config, const std::string& shaderHlsl, const 
 {
     bool ret = false;
 
-    // Use FXC to compile shader model 5.1 or above.
+    // Use DXC to compile shader model 5.1 or above.
     const char* STR_DXC_OPTION_TARGET_PROFILE = "-T";
     const char* STR_DXC_OPTION_OUTPUT_FILE = "-Fo";
     const char* STR_DXC_OPTION_ENTRY_POINT = "-E";
@@ -110,15 +147,72 @@ static bool InvokDxc(const Config& config, const std::string& shaderHlsl, const 
     {
         cmd << STR_DXC_OPTION_DXIL_DISASSEMBLY_OUTPUT_FILE << " \"" << config.m_csDxilDisassembly << "\" ";
     }
+    else if (!config.m_vsDxilDisassembly.empty() && shaderModel.find("vs_") == 0)
+    {
+        cmd << STR_DXC_OPTION_DXIL_DISASSEMBLY_OUTPUT_FILE << " \"" << config.m_vsDxilDisassembly << "\" ";
+    }
+    else if (!config.m_hsDxilDisassembly.empty() && shaderModel.find("hs_") == 0)
+    {
+        cmd << STR_DXC_OPTION_DXIL_DISASSEMBLY_OUTPUT_FILE << " \"" << config.m_hsDxilDisassembly << "\" ";
+    }
+    else if (!config.m_dsDxilDisassembly.empty() && shaderModel.find("ds_") == 0)
+    {
+        cmd << STR_DXC_OPTION_DXIL_DISASSEMBLY_OUTPUT_FILE << " \"" << config.m_dsDxilDisassembly << "\" ";
+    }
+    else if (!config.m_gsDxilDisassembly.empty() && shaderModel.find("gs_") == 0)
+    {
+        cmd << STR_DXC_OPTION_DXIL_DISASSEMBLY_OUTPUT_FILE << " \"" << config.m_gsDxilDisassembly << "\" ";
+    }
+    else if (!config.m_psDxilDisassembly.empty() && shaderModel.find("ps_") == 0)
+    {
+        cmd << STR_DXC_OPTION_DXIL_DISASSEMBLY_OUTPUT_FILE << " \"" << config.m_psDxilDisassembly << "\" ";
+    }
+
+    // Additional options from the user if given.
+    if (!config.m_dxcOpt.empty())
+    {
+        // Strip double quotes if necessary.
+        std::string fixedOpt = config.m_dxcOpt;
+        if (fixedOpt.size() > 3 && fixedOpt[0] == '"' && fixedOpt[fixedOpt.size() - 1] == '"')
+        {
+            fixedOpt = fixedOpt.substr(0, fixedOpt.size() - 1);
+        }
+        cmd << fixedOpt << " ";
+    }
 
     // Shader HLSL file.
     cmd << "\"" << shaderHlsl << "\"";
 
     long        exitCode = 0;
+
     osFilePath  dxcExe;
-    osGetCurrentApplicationPath(dxcExe, false);
-    dxcExe.appendSubDirectory(DX12_DXC_DIR);
-    dxcExe.setFileName(DX12_DXC_EXE);
+    bool isUserDxcPathValid = false;
+    if (!config.m_dxcPath.empty())
+    {
+        osDirectory dxcDir;
+        std::cout << STR_INFO_DXC_USING_DXC_FROM_USER_PATH << config.m_dxcPath << std::endl;
+        gtString userDxcPath;
+        userDxcPath << config.m_dxcPath.c_str();
+        dxcDir.setDirectoryFullPathFromString(userDxcPath);
+        dxcExe.setFileDirectory(dxcDir);
+        if (dxcExe.exists())
+        {
+            dxcExe.setFileName(DX12_DXC_EXE);
+            isUserDxcPathValid = true;
+        }
+        else
+        {
+            std::cout << STR_WARNING_DXC_PATH_NOT_FOUND_A <<
+                config.m_dxcPath << STR_WARNING_DXC_PATH_NOT_FOUND_B << std::endl;
+        }
+    }
+
+    if (!isUserDxcPathValid)
+    {
+        osGetCurrentApplicationPath(dxcExe, false);
+        dxcExe.appendSubDirectory(DX12_DXC_DIR);
+        dxcExe.setFileName(DX12_DXC_EXE);
+    }
 
     // Clear the error message buffer.
     dxcOutput.clear();
@@ -134,7 +228,7 @@ static bool InvokDxc(const Config& config, const std::string& shaderHlsl, const 
         exitCode);
 
     assert(status == kcUtils::ProcessStatus::Success);
-    ret = (status == kcUtils::ProcessStatus::Success ? beStatus_SUCCESS : beStatus_dx12BackendLaunchFailure);
+    ret = (status == kcUtils::ProcessStatus::Success);
 
     return ret;
 }
@@ -151,7 +245,8 @@ bool CompileHlslWithDxc(const Config& config, const std::string& hlslFile, bePip
     if (!shouldAbort)
     {
         // Notify the user.
-        std::cout << STR_INFO_FRONT_END_COMPILATION_WITH_DXC;
+        std::cout << STR_INFO_FRONT_END_COMPILATION_WITH_DXC_A << STR_DX12_STAGE_NAMES[stage] <<
+            STR_INFO_FRONT_END_COMPILATION_WITH_DXC_B << std::endl;
 
         // Perform the front-end compilation through DXC.
         std::string dxcOutput;
@@ -216,49 +311,57 @@ bool CompileHlslWithDxc(const Config& config, const std::string& hlslFile, bePip
 // is return. Otherwise, true is returned.
 static bool IsLegacyShaderModel(const std::string& shaderModel, bool& isLegacy)
 {
+    const char* ERROR_FAILED_PARSING_SHADER_MODEL = "Error: failed parsing shader model string.";
     bool ret = true;
-    std::vector<std::string> modelComponents;
-    beUtils::splitString(shaderModel, '_', modelComponents);
-    assert(modelComponents.size() > 2);
-    if (modelComponents.size() > 2)
+    try
     {
-        bool isNumericValue = beUtils::IsNumericValue(modelComponents[1]);
-        assert(isNumericValue);
-        if (isNumericValue)
+        std::vector<std::string> modelComponents;
+        beUtils::splitString(shaderModel, '_', modelComponents);
+        assert(modelComponents.size() > 2);
+        if (modelComponents.size() > 2)
         {
-            int versionMajor = std::stoi(modelComponents[1]);
-            if (versionMajor < 5)
+            bool isNumericValue = beUtils::IsNumericValue(modelComponents[1]);
+            assert(isNumericValue);
+            if (isNumericValue)
             {
-                // If shader model is lower than 5, it's legacy.
-                isLegacy = true;
-            }
-            else if (versionMajor == 5)
-            {
-                bool isNumericValue = beUtils::IsNumericValue(modelComponents[2]);
-                assert(isNumericValue);
-                if (isNumericValue)
+                int versionMajor = std::stoi(modelComponents[1]);
+                if (versionMajor < 5)
                 {
-                    int versionMinor = std::stoi(modelComponents[2]);
-                    if (versionMinor == 0)
+                    // If shader model is lower than 5, it's legacy.
+                    isLegacy = true;
+                }
+                else if (versionMajor == 5)
+                {
+                    bool isNumericValue = beUtils::IsNumericValue(modelComponents[2]);
+                    assert(isNumericValue);
+                    if (isNumericValue)
                     {
-                        // If shader model is 5.0, it's legacy.
-                        isLegacy = true;
+                        int versionMinor = std::stoi(modelComponents[2]);
+                        if (versionMinor == 0)
+                        {
+                            // If shader model is 5.0, it's legacy.
+                            isLegacy = true;
+                        }
+                    }
+                    else
+                    {
+                        // Invalid shader model.
+                        ret = false;
                     }
                 }
-                else
-                {
-                    // Invalid shader model.
-                    ret = false;
-                }
+            }
+            else
+            {
+                // Invalid shader model.
+                ret = false;
             }
         }
-        else
-        {
-            // Invalid shader model.
-            ret = false;
-        }
     }
-
+    catch (...)
+    {
+        std::cout << ERROR_FAILED_PARSING_SHADER_MODEL << std::endl;
+        ret = false;
+    }
     return ret;
 }
 
@@ -364,15 +467,25 @@ beKA::beStatus beProgramBuilderDX12::GetSupportGpus(const Config& config,
                             assert(splitTriangularBracket.size() > 1);
                             if (splitTriangularBracket.size() > 1)
                             {
-                                // Track the ID for both codename and gfx name.
-                                int id = std::stoi(splitTriangularBracket[1], nullptr);
-                                driverIds[splitNamesColon[0]] = id;
-                                driverIds[splitNamesArrow[0]] = id;
 
-                                // If we corrected the name, track the corrected codename as well.
-                                if (correctedName != PAL_DEVICE_NAME_MAPPING.end())
+                                const char* ERROR_FAILED_TO_PARSE_DEVICE_ID = "Error: failed to parse device ID: ";
+                                try
                                 {
-                                    driverIds[correctedName->second] = id;
+                                    // Track the ID for both codename and gfx name.
+                                    int id = std::stoi(splitTriangularBracket[1], nullptr);
+                                    driverIds[splitNamesColon[0]] = id;
+                                    driverIds[splitNamesArrow[0]] = id;
+
+                                    // If we corrected the name, track the corrected codename as well.
+                                    if (correctedName != PAL_DEVICE_NAME_MAPPING.end())
+                                    {
+                                        driverIds[correctedName->second] = id;
+                                    }
+                                }
+                                catch (...)
+                                {
+                                    std::cout << ERROR_FAILED_TO_PARSE_DEVICE_ID <<
+                                        splitTriangularBracket[1] << std::endl;
                                 }
                             }
                         }
@@ -415,36 +528,72 @@ beKA::beStatus beProgramBuilderDX12::GetSupportGpus(const Config& config,
 }
 
 
+std::string GenerateShaderModel(const std::string &shaderModel, const Config &config, bePipelineStage stage)
+{
+    std::string ret;
+    if (!shaderModel.empty())
+    {
+        ret = shaderModel;
+    }
+    else
+    {
+        // Auto-generate the shader model.
+        bool isShaderModelGenerated = false;
+        if (!config.m_allModel.empty())
+        {
+            std::stringstream model;
+            std::string shaderModelPrefix = GetShaderModelPrefix(stage);
+            if (!shaderModelPrefix.empty())
+            {
+                model << shaderModelPrefix << "_" << config.m_allModel;
+                ret = model.str();
+                isShaderModelGenerated = true;
+            }
+        }
+    }
+    return ret;
+}
+
 bool HandleHlslArgument(const Config &config, bePipelineStage stage,
     const char* stageCmdName, const std::string& hlslFile,
     const std::string& shaderModel, const std::string& entryPoint,
     bool& isLegacyShaderModel, std::stringstream &cmd, std::string &dxilCompiled)
 {
     bool ret = false;
-    bool isShaderModelValid = IsLegacyShaderModel(shaderModel, isLegacyShaderModel);
-    assert(isShaderModelValid);
-    if (isShaderModelValid)
+
+    // Auto-generate the shader model if needed.
+    std::string shaderModelGenerated = GenerateShaderModel(shaderModel, config, stage);
+    if (!shaderModelGenerated.empty())
     {
-        if (isLegacyShaderModel)
+        bool isShaderModelValid = IsLegacyShaderModel(shaderModelGenerated, isLegacyShaderModel);
+        assert(isShaderModelValid);
+        if (isShaderModelValid)
         {
-            cmd << "--" << stageCmdName << " " << "\"" << hlslFile << "\" ";
-            ret = true;
+            if (isLegacyShaderModel)
+            {
+                cmd << "--" << stageCmdName << " " << "\"" << hlslFile << "\" ";
+                ret = true;
+            }
+            else
+            {
+                // Compile the HLSL file through DXC.
+                ret = CompileHlslWithDxc(config, hlslFile,
+                    stage, shaderModelGenerated, entryPoint, dxilCompiled);
+                if (ret)
+                {
+                    // Pass the compilation output to the backend as a binary.
+                    cmd << "--" << stageCmdName << "-dxbc " << "\"" << dxilCompiled << "\" ";
+                }
+            }
         }
         else
         {
-            // Compile the HLSL file through DXC.
-            ret = CompileHlslWithDxc(config, hlslFile,
-                stage, shaderModel, entryPoint, dxilCompiled);
-            if (ret)
-            {
-                // Pass the compilation output to the backend as a binary.
-                cmd << "--" << stageCmdName << "-dxbc " << "\"" << dxilCompiled << "\" ";
-            }
+            std::cout << STR_ERROR_INVALID_SHADER_MODEL << shaderModelGenerated << std::endl;
         }
     }
     else
     {
-        std::cout << STR_ERROR_INVALID_SHADER_MODEL << shaderModel << std::endl;
+        std::cout << "Error: failed to auto-generate shader model for " << STR_DX12_STAGE_NAMES[stage] << " stage." << std::endl;
     }
     return ret;
 }
@@ -466,7 +615,10 @@ beKA::beStatus beProgramBuilderDX12::Compile(const Config& config, const std::st
     if (!m_codeNameToDriverId.empty())
     {
         // Target device.
-        auto iter = m_codeNameToDriverId.find(targetDevice);
+        std::string targetDeviceLower = targetDevice;
+        std::transform(targetDeviceLower.begin(), targetDeviceLower.end(),
+            targetDeviceLower.begin(), ::tolower);
+        auto iter = m_codeNameToDriverId.find(targetDeviceLower);
         if (iter != m_codeNameToDriverId.end())
         {
             const wchar_t* STR_ENV_VAR_NAME = L"AmdVirtualGpuId";
@@ -503,7 +655,7 @@ beKA::beStatus beProgramBuilderDX12::Compile(const Config& config, const std::st
                 // Input files - HLSL.
                 if (!shouldAbort && !config.m_vsHlsl.empty())
                 {
-                    shouldAbort = !HandleHlslArgument(config, bePipelineStage::Geometry, "vert", config.m_vsHlsl,
+                    shouldAbort = !HandleHlslArgument(config, bePipelineStage::Vertex, "vert", config.m_vsHlsl,
                         config.m_vsModel, config.m_vsEntryPoint, isLegacyShaderModelVs, cmd, dxilCompiledVs);
                 }
                 if (!shouldAbort && !config.m_hsHlsl.empty())
@@ -596,29 +748,36 @@ beKA::beStatus beProgramBuilderDX12::Compile(const Config& config, const std::st
                     }
 
                     // Shader model.
-                    if (!config.m_vsModel.empty())
+                    std::string vsModelGenerated = !config.m_vsHlsl.empty() ? GenerateShaderModel(config.m_vsModel, config, bePipelineStage::Vertex) : "";
+                    std::string hsModelGenerated = !config.m_hsHlsl.empty() ? GenerateShaderModel(config.m_hsModel, config, bePipelineStage::TessellationControl) : "";
+                    std::string dsModelGenerated = !config.m_dsHlsl.empty() ? GenerateShaderModel(config.m_dsModel, config, bePipelineStage::TessellationEvaluation) : "";
+                    std::string gsModelGenerated = !config.m_gsHlsl.empty() ? GenerateShaderModel(config.m_gsModel, config, bePipelineStage::Geometry) : "";
+                    std::string psModelGenerated = !config.m_psHlsl.empty() ? GenerateShaderModel(config.m_psModel, config, bePipelineStage::Fragment) : "";
+                    std::string csModelGenerated = !config.m_csHlsl.empty() ? GenerateShaderModel(config.m_csModel, config, bePipelineStage::Compute) : "";
+
+                    if (!vsModelGenerated.empty())
                     {
-                        cmd << "--vert-target " << config.m_vsModel << " ";
+                        cmd << "--vert-target " << vsModelGenerated << " ";
                     }
-                    if (!config.m_hsModel.empty())
+                    if (!hsModelGenerated.empty())
                     {
-                        cmd << "--hull-target " << config.m_hsModel << " ";
+                        cmd << "--hull-target " << hsModelGenerated << " ";
                     }
-                    if (!config.m_dsModel.empty())
+                    if (!dsModelGenerated.empty())
                     {
-                        cmd << "--domain-target " << config.m_dsModel << " ";
+                        cmd << "--domain-target " << dsModelGenerated << " ";
                     }
-                    if (!config.m_gsModel.empty())
+                    if (!gsModelGenerated.empty())
                     {
-                        cmd << "--geom-target " << config.m_gsModel << " ";
+                        cmd << "--geom-target " << gsModelGenerated << " ";
                     }
-                    if (!config.m_psModel.empty())
+                    if (!psModelGenerated.empty())
                     {
-                        cmd << "--pixel-target " << config.m_psModel << " ";
+                        cmd << "--pixel-target " << psModelGenerated << " ";
                     }
-                    if (!config.m_csModel.empty())
+                    if (!csModelGenerated.empty())
                     {
-                        cmd << "--comp-target " << config.m_csModel << " ";
+                        cmd << "--comp-target " << csModelGenerated << " ";
                     }
 
                     // Root signature.
@@ -629,6 +788,10 @@ beKA::beStatus beProgramBuilderDX12::Compile(const Config& config, const std::st
                     if (!config.m_rsHlsl.empty())
                     {
                         cmd << "--rs-hlsl " << "\"" << config.m_rsHlsl << "\" ";
+                    }
+                    else if (!config.m_allHlsl.empty())
+                    {
+                        cmd << "--rs-hlsl " << "\"" << config.m_allHlsl << "\" ";
                     }
                     if (!config.m_rsMacro.empty())
                     {
@@ -690,7 +853,7 @@ beKA::beStatus beProgramBuilderDX12::Compile(const Config& config, const std::st
                             if (!config.m_ISAFile.empty())
                             {
                                 bool isFileNameConstructed = kcUtils::ConstructOutFileName(config.m_ISAFile,
-                                    STR_DX12_STAGE_SUFFIX[stage], targetDevice, "isa", generatedIsaFiles[stage]);
+                                    STR_DX12_STAGE_SUFFIX[stage], targetDeviceLower, "isa", generatedIsaFiles[stage]);
                                 assert(isFileNameConstructed);
                                 if (isFileNameConstructed && !generatedIsaFiles[stage].empty())
                                 {
@@ -708,7 +871,7 @@ beKA::beStatus beProgramBuilderDX12::Compile(const Config& config, const std::st
                             if (!config.m_AnalysisFile.empty())
                             {
                                 bool isFileNameConstructed = kcUtils::ConstructOutFileName(config.m_AnalysisFile,
-                                    STR_DX12_STAGE_SUFFIX[stage], targetDevice,
+                                    STR_DX12_STAGE_SUFFIX[stage], targetDeviceLower,
                                     "csv", generatedStatFiles[stage]);
                                 assert(isFileNameConstructed);
                                 if (isFileNameConstructed && !generatedStatFiles[stage].empty())
@@ -729,42 +892,49 @@ beKA::beStatus beProgramBuilderDX12::Compile(const Config& config, const std::st
                     // For the newer shader models, this has already been done offline through DXC.
                     bool isLegacyShaderModel = false;
                     if (!config.m_vsHlsl.empty() && !config.m_vsDxilDisassembly.empty() &&
-                        IsLegacyShaderModel(config.m_vsModel, isLegacyShaderModel) &&
+                        IsLegacyShaderModel(vsModelGenerated, isLegacyShaderModel) &&
                         isLegacyShaderModel)
                     {
                         cmd << "--vert-dxbc-dis \"" << config.m_vsDxilDisassembly << "\" ";
                     }
                     if (!config.m_hsHlsl.empty() && !config.m_hsDxilDisassembly.empty() &&
-                        IsLegacyShaderModel(config.m_hsModel, isLegacyShaderModel) &&
+                        IsLegacyShaderModel(hsModelGenerated, isLegacyShaderModel) &&
                         isLegacyShaderModel)
                     {
                         cmd << "--hull-dxbc-dis \"" << config.m_hsDxilDisassembly << "\" ";
                     }
                     if (!config.m_dsHlsl.empty() && !config.m_dsDxilDisassembly.empty() &&
-                        IsLegacyShaderModel(config.m_dsModel, isLegacyShaderModel) &&
+                        IsLegacyShaderModel(dsModelGenerated, isLegacyShaderModel) &&
                         isLegacyShaderModel)
                     {
                         cmd << "--domain-dxbc-dis \"" << config.m_dsDxilDisassembly << "\" ";
                     }
                     if (!config.m_gsHlsl.empty() && !config.m_gsDxilDisassembly.empty() &&
-                        IsLegacyShaderModel(config.m_gsModel, isLegacyShaderModel) &&
+                        IsLegacyShaderModel(gsModelGenerated, isLegacyShaderModel) &&
                         isLegacyShaderModel)
                     {
                         cmd << "--geom-dxbc-dis \"" << config.m_gsDxilDisassembly << "\" ";
                     }
                     if (!config.m_psHlsl.empty() && !config.m_psDxilDisassembly.empty() &&
-                        IsLegacyShaderModel(config.m_psModel, isLegacyShaderModel) &&
+                        IsLegacyShaderModel(psModelGenerated, isLegacyShaderModel) &&
                         isLegacyShaderModel)
                     {
                         cmd << "--pixel-dxbc-dis \"" << config.m_psDxilDisassembly << "\" ";
                     }
                     if (!config.m_csHlsl.empty() && !config.m_csDxilDisassembly.empty() &&
-                        IsLegacyShaderModel(config.m_csModel, isLegacyShaderModel) &&
+                        IsLegacyShaderModel(csModelGenerated, isLegacyShaderModel) &&
                         isLegacyShaderModel)
                     {
                         cmd << "--comp-dxbc-dis \"" << config.m_csDxilDisassembly << "\" ";
                     }
 
+                    // Graphics pipeline state.
+                    if (!config.m_psoDx12.empty())
+                    {
+                        cmd << "--pso \"" << config.m_psoDx12 << "\" ";
+                    }
+
+                    // Invoke the backend to perform the actual build.
                     ret = InvokeDx12Backend(cmd.str().c_str(), config.m_printProcessCmdLines, outText, errorMsg);
                     assert(ret == beStatus_SUCCESS);
                     if (ret == beStatus_SUCCESS)

@@ -830,6 +830,8 @@ Help manual                                F1
 Find Next & Find Previous                  F3 & Shift+F3
 Build settings                             F8
 Pipeline state                             F9
+Navigate between home page tabs            Ctrl+Tab & Ctrl+Shift+Tab
+Navigate Settings tab views                Ctrl+up/down arrow
 **Build view**
 Find                                       Ctrl+F
 Go to (source line)                        Ctrl+G
@@ -839,6 +841,8 @@ Build project                              Ctrl+Shift+B
 Cancel build                               Ctrl+Shift+C
 Cycle thru various views in build view     Ctrl+Tab & Ctrl+Shift+Tab
 Cycle thru various widgets in build view   Tab & Shift+Tab
+**Settings view**
+Restore default settings                   Ctrl+R
 **Vulkan® mode**
 Create new Vulkan® compute pipeline        Ctrl+Shift+C
 Create new Vulkan® graphics pipeline       Ctrl+Shift+G

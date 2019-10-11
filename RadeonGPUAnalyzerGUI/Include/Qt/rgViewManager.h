@@ -71,6 +71,9 @@ public:
     // Switch the container size.
     void SwitchContainerSize();
 
+    // Set the currently focused view.
+    void SetCurrentFocusedView(rgCurrentFocusedIndex rgCurrentFocusIndex);
+
 signals:
     // A signal to indicate the frame gaining the focus.
     void FrameFocusInSignal();

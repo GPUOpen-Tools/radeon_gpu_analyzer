@@ -606,6 +606,7 @@
 #define DEVICE_NAME_GFX902   "gfx902"
 #define DEVICE_NAME_GFX906   "gfx906"
 #define DEVICE_NAME_GFX1010  "gfx1010"
+#define DEVICE_NAME_GFX1012  "gfx1012"
 
 // DUMMY SHADERS.
 #define BE_STR_DUMMY_VRTX_SHADER "#version 330 core\nlayout(location = 0) in vec3 vertexPosition_modelspace;\nvoid main()\n{}"
@@ -619,13 +620,13 @@
 // Versions.
 #define BE_STR_VULKAN_VERSION L"Based on Vulkan 1.0 Specification."
 
-// ROCm.
+// LLVM Lightning Compiler.
 #ifdef __linux
-#define LC_OPENCL_ROOT_DIR          L"ROCm/OpenCL"
+#define LC_OPENCL_ROOT_DIR          L"LC/OpenCL"
 #elif defined(_WIN64)
-#define LC_OPENCL_ROOT_DIR          L"x64/ROCm/OpenCL"
+#define LC_OPENCL_ROOT_DIR          L"x64/LC/OpenCL"
 #elif defined(_WIN32)
-#define LC_OPENCL_ROOT_DIR          L"x86/ROCm/OpenCL"
+#define LC_OPENCL_ROOT_DIR          L"x86/LC/OpenCL"
 #else
 #error Unknown platform.
 #endif
@@ -682,6 +683,13 @@
 #endif
 
 #define LC_EXTRA_TARGETS_FILE_NAME  L"additional-targets"
+#ifdef _WIN32
+#define LC_DISASSEMBLER_DIR         L"x64/LC/Disassembler"
+#else
+#define LC_DISASSEMBLER_DIR         L"LC/Disassembler"
+#endif
+#define LC_DISASSEMBLER_EXE         L"amdgpu-dis"
+
 
 // DX12.
 #ifdef _WIN32
@@ -690,4 +698,10 @@
 #define DX12_DXC_DIR                L"x64/DX12/DXC"
 #define DX12_DXC_EXE                L"dxc"
 #endif
+
+// Info messages.
+static const char* STR_INFO_VULKAN_GEOM_VERT_MERGED = "Info: geometry shader merged with vertex shader.";
+static const char* STR_INFO_VULKAN_GEOM_TESE_MERGED = "Info: geometry shader merged with tessellation control shader.";
+static const char* STR_INFO_VULKAN_TESC_VERT_MERGED = "Info: tessellation control shader merged with vertex shader.";
+
 #endif // __beStringConstants_h

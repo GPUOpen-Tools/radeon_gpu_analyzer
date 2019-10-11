@@ -64,10 +64,13 @@ static bool ExtractNumericStatistic(const std::string& fileContent, const char* 
 
                     if (value.empty() == false)
                     {
-                        extractedValue = std::stoi(value);
-                        ret = true;
+                        try
+                        {
+                            extractedValue = std::stoi(value);
+                            ret = true;
+                        }
+                        catch (...){}
                     }
-
                 }
             }
         }

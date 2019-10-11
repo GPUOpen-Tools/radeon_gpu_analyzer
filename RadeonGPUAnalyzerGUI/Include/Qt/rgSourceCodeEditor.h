@@ -148,7 +148,7 @@ protected:
     QWidget* m_pLineNumberArea = nullptr;
 
     // The syntax highlighter used to alter the rendering of keywords in the source editor.
-    rgSyntaxHighlight* m_pSyntaxHighlight = nullptr;
+    rgSyntaxHighlighter* m_pSyntaxHighlighter = nullptr;
 
     // The notification text shown in the Code Editor title bar.
     std::string m_titleBarNotificationText;

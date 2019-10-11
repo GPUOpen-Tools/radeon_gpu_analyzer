@@ -175,6 +175,9 @@ signals:
     // A signal emitted when the source code editor gets the focus.
     void FileMenuFocusInEvent();
 
+    // A signal emitted when the user clicks graphics file menu.
+    void MenuClicked();
+
 protected:
     // Retrieve the number of extra buttons that get added to the menu after the file items.
     virtual int GetButtonCount() const = 0;

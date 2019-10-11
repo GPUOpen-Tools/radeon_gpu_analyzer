@@ -413,7 +413,7 @@ namespace rga
         bool ret = m_pAmdShaderAnalyzerExt != nullptr;
         if (ret)
         {
-            AmdExtD3DPipelineHandle* pPipelineHandle = NULL;
+            AmdExtD3DPipelineHandle* pPipelineHandle = new AmdExtD3DPipelineHandle{};;
             ID3D12PipelineState* pPipeline = NULL;
             AmdExtD3DGraphicsShaderStats stats;
             HRESULT hr = m_pAmdShaderAnalyzerExt->CreateGraphicsPipelineState(pGraphicsPso,

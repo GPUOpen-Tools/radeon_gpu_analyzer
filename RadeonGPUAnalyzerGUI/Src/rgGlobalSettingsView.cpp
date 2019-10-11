@@ -30,6 +30,10 @@ static const char* STR_GLOBAL_SETTINGS_COLUMN_VISIBILITY_LIST = "DisassemblyColu
 static const char* STR_GLOBAL_SETTINGS_COLUMN_LIST_ITEM_CHECKBOX = "ListWidgetCheckBox";
 static const char* STR_GLOBAL_SETTINGS_COLUMN_LIST_ITEM_ALL_CHECKBOX = "ListWidgetAllCheckBox";
 
+// API-specific colors.
+static const QColor s_API_COLOR_OPENCL = QColor(18, 152, 0);
+static const QColor s_API_COLOR_VULKAN = QColor(135, 20, 16);
+
 // Columns push button font size.
 const int s_PUSH_BUTTON_FONT_SIZE = 11;
 
@@ -130,9 +134,23 @@ rgGlobalSettingsView::rgGlobalSettingsView(QWidget* pParent, const rgGlobalSetti
     ui.defaultLangLabel->hide();
     ui.defaultLangComboBox->hide();
 
-    // Hide the SPIR-V Text options until support for SPIR-V text files is added.
-    ui.assocExtSpvasLabel->setHidden(true);
-    ui.assocExtSpvasLineEdit->setHidden(true);
+    // Set column visibility arrow push button properties.
+    rgProjectAPI currentApi = rgConfigManager::Instance().GetCurrentAPI();
+    if (currentApi == rgProjectAPI::OpenCL)
+    {
+        ui.columnVisibilityArrowPushButton->SetBorderColor(s_API_COLOR_OPENCL);
+        ui.columnVisibilityArrowPushButton->SetShowBorder(true);
+    }
+    else if (currentApi == rgProjectAPI::Vulkan)
+    {
+        ui.columnVisibilityArrowPushButton->SetBorderColor(s_API_COLOR_VULKAN);
+        ui.columnVisibilityArrowPushButton->SetShowBorder(true);
+    }
+    else
+    {
+        // Should not get here.
+        assert(false);
+    }
 }
 
 rgGlobalSettingsView::~rgGlobalSettingsView()

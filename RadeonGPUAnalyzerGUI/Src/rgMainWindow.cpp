@@ -305,27 +305,35 @@ void rgMainWindow::ConnectBuildViewSignals()
             bool isConnected = connect(pBuildView, &rgBuildView::CurrentEditorModificationStateChanged, this, &rgMainWindow::OnCurrentEditorModificationStateChanged);
             assert(isConnected);
 
+            // Connect the project count changed signal.
             isConnected = connect(pBuildView, &rgBuildView::ProjectFileCountChanged, this, &rgMainWindow::HandleProjectFileCountChanged);
             assert(isConnected);
 
+            // Connect the project loaded signal.
             isConnected = connect(pBuildView, &rgBuildView::ProjectLoaded, this, &rgMainWindow::HandleProjectLoaded);
             assert(isConnected);
 
+            // Connect the current file modified signal.
             isConnected = connect(pBuildView, &rgBuildView::CurrentFileModified, this, &rgMainWindow::HandleCurrentFileModifiedOutsideEnv);
             assert(isConnected);
 
+            // Connect the project build success signal.
             isConnected = connect(pBuildView, &rgBuildView::ProjectBuildSuccess, this, &rgMainWindow::HandleProjectBuildSuccess);
             assert(isConnected);
 
+            // Connect the project build started signal.
             isConnected = connect(pBuildView, &rgBuildView::ProjectBuildStarted, this, &rgMainWindow::HandleProjectBuildStarted);
             assert(isConnected);
 
+            // Connect the update application notification message signal.
             isConnected = connect(pBuildView, &rgBuildView::UpdateApplicationNotificationMessageSignal, this, &rgMainWindow::HandleUpdateAppNotificationMessage);
             assert(isConnected);
 
+            // Connect the project build failure signal.
             isConnected = connect(pBuildView, &rgBuildView::ProjectBuildFailure, this, &rgMainWindow::HandleProjectBuildFailure);
             assert(isConnected);
 
+            // Connect the project build canceled signal.
             isConnected = connect(pBuildView, &rgBuildView::ProjectBuildCanceled, this, &rgMainWindow::HandleProjectBuildCanceled);
             assert(isConnected);
 
@@ -2028,8 +2036,24 @@ void rgMainWindow::CreateCustomStatusBar()
             // Connect the custom status bar's change API mode signal.
             bool isConnected = connect(m_pStatusBar, &rgStatusBar::ChangeAPIModeSignal, this, &rgMainWindow::HandleChangeAPIMode);
             assert(isConnected);
+
+            // Connect the custom status bar's save pending settings changes signal.
+            isConnected = connect(m_pStatusBar, &rgStatusBar::SavePendingChanges, this, &rgMainWindow::HandleSavePendingChanges);
+            assert(isConnected);
         }
     }
+}
+
+bool rgMainWindow::HandleSavePendingChanges()
+{
+    bool isNotCancelled = false;
+    assert(m_pSettingsTab != nullptr);
+    if (m_pSettingsTab != nullptr)
+    {
+        isNotCancelled = m_pSettingsTab->PromptToSavePendingChanges();
+    }
+
+    return isNotCancelled;
 }
 
 void rgMainWindow::HandleChangeAPIMode(rgProjectAPI switchToApi)

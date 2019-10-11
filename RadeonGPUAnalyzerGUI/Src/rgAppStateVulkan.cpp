@@ -270,6 +270,8 @@ std::string rgAppStateVulkan::GetGlobalSettingsViewStylesheet() const
         "rgGlobalSettingsView #fontFamilyComboBox:hover,"
         "rgGlobalSettingsView #fontSizeComboBox:focus,"
         "rgGlobalSettingsView #fontSizeComboBox:hover,"
+        "rgGlobalSettingsView #logFileLocationLineEdit:focus,"
+        "rgGlobalSettingsView #logFileLocationLineEdit:hover,"
         "rgGlobalSettingsView #includeFilesViewerLineEdit:focus,"
         "rgGlobalSettingsView #includeFilesViewerLineEdit:hover,"
         "rgGlobalSettingsView #includeFilesViewerBrowseButton:focus,"
@@ -287,6 +289,30 @@ std::string rgAppStateVulkan::GetGlobalSettingsViewStylesheet() const
         "background: rgb(240, 240, 240);"
         "}";
     return STR_VULKAN_APP_SETTINGS_STYLESHEET;
+}
+
+std::string rgAppStateVulkan::GetBuildSettingsViewStylesheet() const
+{
+    const char* STR_VULKAN_BUILD_SETTINGS_STYLESHEET =
+        "rgBuildSettingsView #predefinedMacrosLineEdit:focus,"
+        "rgBuildSettingsView #predefinedMacrosLineEdit:hover,"
+        "rgBuildSettingsView #includeDirectoriesLineEdit:focus,"
+        "rgBuildSettingsView #includeDirectoriesLineEdit:hover,"
+        "rgBuildSettingsView #ICDLocationLineEdit:focus,"
+        "rgBuildSettingsView #ICDLocationLineEdit:hover,"
+        "rgBuildSettingsView #glslangOptionsLineEdit:focus,"
+        "rgBuildSettingsView #glslangOptionsLineEdit:hover,"
+        "rgBuildSettingsView #compilerBinariesLineEdit:focus,"
+        "rgBuildSettingsView #compilerBinariesLineEdit:hover,"
+        "rgBuildSettingsView #compilerIncludesLineEdit:focus,"
+        "rgBuildSettingsView #compilerIncludesLineEdit:hover,"
+        "rgBuildSettingsView #compilerLibrariesLineEdit:focus,"
+        "rgBuildSettingsView #compilerLibrariesLineEdit:hover"
+        "{"
+        "border: 1px solid rgb(224, 30, 55);"
+        "background: rgb(240, 240, 240);"
+        "}";
+    return STR_VULKAN_BUILD_SETTINGS_STYLESHEET;
 }
 
 void rgAppStateVulkan::OpenFilesInBuildView(const QStringList& filePaths)

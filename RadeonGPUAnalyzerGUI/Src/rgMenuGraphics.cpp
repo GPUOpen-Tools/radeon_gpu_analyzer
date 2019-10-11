@@ -1047,3 +1047,9 @@ void rgMenuGraphics::RemoveFileMenuButtonFocus()
         }
     }
 }
+
+void rgMenuGraphics::mousePressEvent(QMouseEvent* pEvent)
+{
+    emit MenuClicked();
+    emit FileMenuFocusInEvent();
+}

@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <cctype>
+#include <cwctype>
 
 // Infra.
 #ifdef _WIN32
@@ -17,6 +18,7 @@
 #include <AMDTBaseTools/Include/gtAssert.h>
 #include <AMDTOSWrappers/Include/osFilePath.h>
 #include <AMDTOSWrappers/Include/osFile.h>
+#include <AMDTOSWrappers/Include/osApplication.h>
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
@@ -26,6 +28,13 @@
 #include <RadeonGPUAnalyzerBackend/Include/beStringConstants.h>
 #include <DeviceInfoUtils.h>
 #include <DeviceInfo.h>
+
+// CLI.
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
+
+// Constants.
+static const char* STR_ERROR_CODE_OBJECT_PARSE_FAILURE = "Error: failed to parse Code Object .text section.";
+static const char* STR_ERROR_LC_DISASSEMBLER_LAUNCH_FAILURE = "Error: failed to launch the LC disassembler.";
 
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - BEGIN ***
 
@@ -262,6 +271,29 @@ std::string beUtils::GetFileExtension(const std::string& fileName)
     return ext;
 }
 
+bool beUtils::ReadBinaryFile(const std::string& fileName, std::vector<char>& content)
+{
+    bool ret = false;
+    std::ifstream input;
+    input.open(fileName.c_str(), std::ios::binary);
+
+    if (input.is_open())
+    {
+        content = std::vector<char>(std::istreambuf_iterator<char>(input), {});
+        ret = !content.empty();
+    }
+    return ret;
+}
+
+bool beUtils::IsFilesIdentical(const std::string& fileName1, const std::string& fileName2)
+{
+    std::vector<char> content1;
+    std::vector<char> content2;
+    bool isFileRead1 = beUtils::ReadBinaryFile(fileName1, content1);
+    bool isFileRead2 = beUtils::ReadBinaryFile(fileName2, content2);
+    return (isFileRead1 && isFileRead2 && std::equal(content1.begin(), content1.end(), content2.begin()));
+}
+
 void beUtils::PrintCmdLine(const std::string & cmdLine, bool doPrint)
 {
     if (doPrint)
@@ -308,10 +340,247 @@ bool beUtils::DeviceNameLessThan(const std::string& a, const std::string& b)
         assert(splitB.size() > 1);
         if (splitA.size() > 1 && splitB.size() > 1)
         {
-            int numA = std::stoi(splitA[1], nullptr);
-            int numB = std::stoi(splitB[1], nullptr);
-            ret = ((numB - numA) > 0);
+            try
+            {
+                int numA = std::stoi(splitA[1], nullptr);
+                int numB = std::stoi(splitB[1], nullptr);
+                ret = ((numB - numA) > 0);
+            }
+            catch (...)
+            {
+                ret = false;
+            }
         }
     }
+    return ret;
+}
+
+bool beUtils::DisassembleCodeObject(const std::string& coFileName, bool shouldPrintCmd,
+    std::string& disassemblyWhole, std::string& disassemblyText, std::string& errorMsg)
+{
+    // Build the command.
+    std::stringstream cmd;
+    cmd << coFileName;
+
+    osFilePath  lcDisassemblerExe;
+    long        exitCode = 0;
+
+    osGetCurrentApplicationPath(lcDisassemblerExe, false);
+    lcDisassemblerExe.appendSubDirectory(LC_DISASSEMBLER_DIR);
+
+    lcDisassemblerExe.setFileName(LC_DISASSEMBLER_EXE);
+
+    // Clear the error message buffer.
+    errorMsg.clear();
+    std::string outText;
+
+    kcUtils::ProcessStatus status = kcUtils::LaunchProcess(lcDisassemblerExe.asString().asASCIICharArray(),
+        cmd.str(),
+        "",
+        PROCESS_WAIT_INFINITE,
+        shouldPrintCmd,
+        outText,
+        errorMsg,
+        exitCode);
+
+    // Extract the .text disassembly.
+    assert(!outText.empty());
+    disassemblyWhole = outText;
+
+    if (!disassemblyWhole.empty())
+    {
+        // Find where the .text section starts.
+        size_t textOffsetStart = disassemblyWhole.find(".text");
+        assert(textOffsetStart != std::string::npos);
+        assert(textOffsetStart != std::string::npos &&
+            textOffsetStart < disassemblyWhole.size() + 5);
+        if (textOffsetStart < disassemblyWhole.size() + 5)
+        {
+            // Skip .text identifier.
+            textOffsetStart += 5;
+
+            // Find where the relevant portion of the disassembly ends.
+            size_t textOffsetEnd = disassemblyWhole.find("s_code_end");
+            assert(textOffsetEnd != std::string::npos);
+            if (textOffsetEnd != std::string::npos)
+            {
+                // Extract the relevant section.
+                size_t numCharacters = textOffsetEnd - textOffsetStart;
+                assert(numCharacters > 0);
+                assert(numCharacters < disassemblyWhole.size() - textOffsetStart);
+                if (numCharacters > 0 && numCharacters < disassemblyWhole.size() - textOffsetStart)
+                {
+                    disassemblyText = disassemblyWhole.substr(textOffsetStart, numCharacters);
+                }
+                else if (errorMsg.empty())
+                {
+                    errorMsg = STR_ERROR_CODE_OBJECT_PARSE_FAILURE;
+                }
+            }
+            else if (errorMsg.empty())
+            {
+                errorMsg = STR_ERROR_CODE_OBJECT_PARSE_FAILURE;
+            }
+        }
+    }
+
+    if (disassemblyText.empty())
+    {
+        if (status == kcUtils::ProcessStatus::Success && errorMsg.empty())
+        {
+            errorMsg = STR_ERROR_LC_DISASSEMBLER_LAUNCH_FAILURE;
+        }
+    }
+
+    return (status == kcUtils::ProcessStatus::Success ? beStatus_SUCCESS : beStatus_dx12BackendLaunchFailure);
+}
+
+
+static bool ExtractAttributeValue(const std::string &disassemblyWhole, size_t kdPos, const std::string& attributeName, uint32_t& value)
+{
+    bool ret = false;
+    bool shouldAbort = false;
+    bool isBefore = false;
+    try
+    {
+        // Offset where our attribute is within the string.
+        size_t startPosTemp = 0;
+
+        // The reference symbol.
+        const std::string KD_SYMBOL_TOKEN = ".symbol:";
+        if (attributeName < KD_SYMBOL_TOKEN)
+        {
+            // Look before the reference symbol.
+           startPosTemp = disassemblyWhole.rfind(attributeName, kdPos);
+           isBefore = true;
+        }
+        else if (attributeName > KD_SYMBOL_TOKEN)
+        {
+            // Look after the reference symbol.
+            startPosTemp = disassemblyWhole.find(attributeName, kdPos);
+        }
+        else
+        {
+            // We shouldn't get here.
+            assert(false);
+            shouldAbort = true;
+        }
+
+        if (!shouldAbort)
+        {
+            startPosTemp += attributeName.size();
+            assert((isBefore && startPosTemp < kdPos) || (!isBefore && startPosTemp > kdPos));
+            if ((isBefore && startPosTemp < kdPos) || (!isBefore && startPosTemp > kdPos))
+            {
+                while (std::iswspace(disassemblyWhole[++startPosTemp]));
+                assert((isBefore && startPosTemp < kdPos) || (!isBefore && startPosTemp > kdPos));
+                if ((isBefore && startPosTemp < kdPos) || (!isBefore && startPosTemp > kdPos))
+                {
+                    size_t endPos = startPosTemp;
+                    while (!std::iswspace(disassemblyWhole[++endPos]));
+                    assert(startPosTemp < endPos);
+                    if (startPosTemp < endPos)
+                    {
+                        // Extract the string representing the value and convert to non-negative decimal number.
+                        std::string valueAsStr = disassemblyWhole.substr(startPosTemp, endPos - startPosTemp);
+                        std::stringstream conversionStream;
+                        conversionStream << std::hex << valueAsStr;
+                        conversionStream >> value;
+                        ret = true;
+                    }
+                }
+            }
+        }
+    }
+    catch (...)
+    {
+        // Failure occurred.
+        ret = false;
+    }
+    return ret;
+}
+
+bool beUtils::ExtractCodeObjectStatistics(const std::string& disassemblyWhole,
+    std::map<std::string, beKA::AnalysisData>& dataMap)
+{
+    bool ret = false;
+    dataMap.clear();
+    const char* KERNEL_SYMBOL_TOKEN = ".kd";
+    size_t startPos = disassemblyWhole.find(KERNEL_SYMBOL_TOKEN);
+    while (startPos != std::string::npos)
+    {
+        // Extract the kernel name.
+        std::string kernelName;
+        size_t startPosTemp = startPos;
+        std::stringstream kernelNameStream;
+        while (--startPosTemp > 0 && !std::iswspace(disassemblyWhole[startPosTemp]));
+        assert(startPosTemp + 1 < startPos - 1);
+        if (startPosTemp + 1 < startPos - 1)
+        {
+            kernelName = disassemblyWhole.substr(startPosTemp + 1, startPos - startPosTemp - 1);
+            auto iter = dataMap.find(kernelName);
+            assert(iter == dataMap.end());
+            if (iter == dataMap.end())
+            {
+                // LDS.
+                const std::string LDS_USAGE_TOKEN = ".group_segment_fixed_size:";
+                uint32_t ldsUsage = 0;
+                bool isOk = ExtractAttributeValue(disassemblyWhole, startPos, LDS_USAGE_TOKEN, ldsUsage);
+                assert(isOk);
+
+                // SGPR count.
+                const std::string SGPR_COUNT_TOKEN = ".sgpr_count:";
+                uint32_t sgprCount = 0;
+                isOk = ExtractAttributeValue(disassemblyWhole, startPos, SGPR_COUNT_TOKEN, sgprCount);
+                assert(isOk);
+
+                // SGPR spill count.
+                const std::string SGPR_SPILL_COUNT_TOKEN = ".sgpr_spill_count:";
+                uint32_t sgprSpillCount = 0;
+                isOk = ExtractAttributeValue(disassemblyWhole, startPos, SGPR_SPILL_COUNT_TOKEN, sgprSpillCount);
+                assert(isOk);
+
+                // VGPR count.
+                const std::string VGPR_COUNT_TOKEN = ".vgpr_count:";
+                uint32_t vgprCount = 0;
+                isOk = ExtractAttributeValue(disassemblyWhole, startPos, VGPR_COUNT_TOKEN, vgprCount);
+                assert(isOk);
+
+                // VGPR spill count.
+                const std::string VGPR_SPILL_COUNT_TOKEN = ".vgpr_spill_count";
+                uint32_t vgprSpillCount = 0;
+                isOk = ExtractAttributeValue(disassemblyWhole, startPos, VGPR_SPILL_COUNT_TOKEN, vgprSpillCount);
+                assert(isOk);
+
+                // Wavefront size.
+                const std::string WAVEFRONT_SIZE_TOKEN = ".wavefront_size:";
+                uint32_t wavefrontSize = 0;
+                isOk = ExtractAttributeValue(disassemblyWhole, startPos, WAVEFRONT_SIZE_TOKEN, wavefrontSize);
+                assert(isOk);
+
+                // Add values which were extracted from the Code Object meta data.
+                AnalysisData data;
+                data.LDSSizeUsed = ldsUsage;
+                data.numSGPRsUsed = sgprCount;
+                data.numSGPRSpills = sgprSpillCount;
+                data.numVGPRsUsed = vgprCount;
+                data.numVGPRSpills = vgprSpillCount;
+                data.wavefrontSize = wavefrontSize;
+
+                // Add fixed values.
+                data.LDSSizeAvailable = 65536;
+                data.numVGPRsAvailable = 256;
+                data.numSGPRsAvailable = 104;
+
+                // Add the kernel's stats to the map.
+                dataMap[kernelName] = data;
+
+                // Move to the next kernel.
+                startPos = disassemblyWhole.find(KERNEL_SYMBOL_TOKEN, startPos + 1);
+            }
+        }
+    }
+
+    ret = !dataMap.empty();
     return ret;
 }

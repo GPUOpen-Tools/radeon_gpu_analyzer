@@ -4,7 +4,6 @@
 // Qt.
 #include <QWidget>
 #include <QDialog>
-#include <QSignalMapper>
 #include <QPainter>
 
 // Local.
@@ -49,27 +48,16 @@ rgUnsavedItemsDialog::~rgUnsavedItemsDialog()
 
 void rgUnsavedItemsDialog::ConnectSignals()
 {
-    // Create a signal mapper to map the button clicks to the done(int) slot
-    // with appropriate result values.
-    QSignalMapper* pButtonSignalMapper = new QSignalMapper(this);
-
     // Yes button.
-    bool isConnected = connect(ui.yesPushButton, SIGNAL(clicked()), pButtonSignalMapper, SLOT(map()));
+    bool isConnected = connect(ui.yesPushButton, &QPushButton::clicked, [=] { done(UnsavedFileDialogResult::Yes); });
     assert(isConnected);
-    pButtonSignalMapper->setMapping(ui.yesPushButton, UnsavedFileDialogResult::Yes);
 
     // No button.
-    isConnected = connect(ui.noPushButton, SIGNAL(clicked()), pButtonSignalMapper, SLOT(map()));
+    isConnected = connect(ui.noPushButton, &QPushButton::clicked, [=] { done(UnsavedFileDialogResult::No); });
     assert(isConnected);
-    pButtonSignalMapper->setMapping(ui.noPushButton, UnsavedFileDialogResult::No);
 
     // Cancel button.
-    isConnected = connect(ui.cancelPushButton, SIGNAL(clicked()), pButtonSignalMapper, SLOT(map()));
-    assert(isConnected);
-    pButtonSignalMapper->setMapping(ui.cancelPushButton, UnsavedFileDialogResult::Cancel);
-
-    // Signal mapper.
-    isConnected = connect(pButtonSignalMapper, SIGNAL(mapped(int)), this, SLOT(done(int)));
+    isConnected = connect(ui.cancelPushButton, &QPushButton::clicked, [=] { done(UnsavedFileDialogResult::Cancel); });
     assert(isConnected);
 }
 

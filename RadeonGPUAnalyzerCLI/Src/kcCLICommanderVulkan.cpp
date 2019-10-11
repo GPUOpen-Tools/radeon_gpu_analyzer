@@ -20,14 +20,20 @@
 #pragma warning(pop)
 #endif
 
+// Shared.
+#include <Utils/Include/rgaCliDefs.h>
 #include <Utils/Include/rgLog.h>
-#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderVulkan.h>
-#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderVkOffline.h>
-#include <RadeonGPUAnalyzerCLI/Src/kcXmlWriter.h>
+
+// Backend.
 #include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderVulkan.h>
 #include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
 #include <RadeonGPUAnalyzerBackend/Emulator/Parser/ISAParser.h>
-#include <Utils/Include/rgaCliDefs.h>
+#include <RadeonGPUAnalyzerBackend/Include/beStringConstants.h>
+
+// Local.
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderVulkan.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcCLICommanderVkOffline.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcXmlWriter.h>
 
 using namespace beKA;
 
@@ -705,6 +711,12 @@ void kcCLICommanderVulkan::RunCompileCommands(const Config& config, LoggingCallB
         shouldAbort = true;
     }
 
+    if (!config.m_psoDx12.empty())
+    {
+        std::cout << STR_ERR_VULKAN_GPSO_OPTION_NOT_SUPPORTED << std::endl;
+        shouldAbort = true;
+    }
+
     if (!shouldAbort)
     {
         if (!config.m_icdFile.empty())
@@ -1185,6 +1197,24 @@ void kcCLICommanderVulkan::CompileSpvToIsaForDevice(const Config& config, const 
 
         const std::string& vulkanDevice = (correctedDevice == PAL_DEVICE_NAME_MAPPING.end() ? device : correctedDevice->first);
 
+        // Remove ISA output files if they exist before attempting to compile.
+        for (const std::string& outFileName : isaFiles)
+        {
+            if (!outFileName.empty())
+            {
+                kcUtils::DeleteFile(outFileName);
+            }
+        }
+
+        // Remove stats files if they exist before attempting to compile.
+        for (const std::string& outFileName : statsFiles)
+        {
+            if (!outFileName.empty())
+            {
+                kcUtils::DeleteFile(outFileName);
+            }
+        }
+
         // Perform the compilation.
         status = beProgramBuilderVulkan::CompileSpirv(config.m_loaderDebug, spvFiles, isaFiles, statsFiles, binFileName, config.m_pso,
             config.m_icdFile, validationFileName, config.m_vulkanValidation,
@@ -1244,6 +1274,51 @@ void kcCLICommanderVulkan::CompileSpvToIsaForDevice(const Config& config, const 
 
         if (!isVkOffline && status == beStatus_SUCCESS)
         {
+            // Notify the user about shader merge if happened.
+            if (kcUtils::IsNaviTarget(device) || kcUtils::IsVegaTarget(device))
+            {
+                bool isFirstMsg = true;
+                if (!spvFiles[bePipelineStage::Geometry].empty() && spvFiles[bePipelineStage::TessellationEvaluation].empty())
+                {
+                    if (beUtils::IsFilesIdentical(isaFiles[bePipelineStage::Vertex], isaFiles[bePipelineStage::Geometry]))
+                    {
+                        if (isFirstMsg)
+                        {
+                            std::cout << std::endl;
+                            isFirstMsg = false;
+                        }
+                        std::cout << STR_INFO_VULKAN_GEOM_VERT_MERGED << std::endl;
+                     }
+                    isFirstMsg = true;
+                }
+                else if (!spvFiles[bePipelineStage::Geometry].empty() && !spvFiles[bePipelineStage::TessellationEvaluation].empty())
+                {
+                    if (beUtils::IsFilesIdentical(isaFiles[bePipelineStage::TessellationEvaluation], isaFiles[bePipelineStage::Geometry]))
+                    {
+                        if (isFirstMsg)
+                        {
+                            std::cout << std::endl;
+                            isFirstMsg = false;
+                        }
+                        std::cout << STR_INFO_VULKAN_GEOM_TESE_MERGED << std::endl;
+                    }
+                }
+
+                if (!spvFiles[bePipelineStage::TessellationControl].empty())
+                {
+                    if (beUtils::IsFilesIdentical(isaFiles[bePipelineStage::Vertex], isaFiles[bePipelineStage::TessellationControl]))
+                    {
+                        if (isFirstMsg)
+                        {
+                            std::cout << std::endl;
+                            isFirstMsg = false;
+                        }
+                        std::cout << STR_INFO_VULKAN_TESC_VERT_MERGED << std::endl;
+                    }
+                }
+            }
+
+
             status = ConvertStats(isaFiles, statsFiles, config, device);
         }
 
@@ -1574,40 +1649,34 @@ bool kcCLICommanderVulkan::PerformLiveRegAnalysis(const Config& conf) const
         const std::string& deviceSuffix = (conf.m_ASICs.empty() && !m_physAdapterName.empty() ? "" : device);
         const rgVkOutputMetadata& deviceMD = deviceMDNode.second;
 
-        std::cout << KA_CLI_STR_STARTING_LIVEREG << " for " << device << "... ";
-        if (!kcUtils::IsNaviTarget(device))
+        std::cout << STR_INFO_PERFORMING_LIVEREG_ANALYSIS_A << device << "... " << std::endl;
+
+        for (int stage = 0; stage < bePipelineStage::Count && ret; stage++)
         {
-            for (int stage = 0; stage < bePipelineStage::Count && ret; stage++)
+            const rgOutputFiles& stageMD = deviceMD[stage];
+
+            if (!stageMD.m_inputFile.empty())
             {
-                const rgOutputFiles& stageMD = deviceMD[stage];
+                std::string outFileName;
+                gtString gOutFileName, gIsaFileName;
 
-                if (!stageMD.m_inputFile.empty())
+                // Construct a name for the livereg output file.
+                ret = kcUtils::ConstructOutFileName(conf.m_LiveRegisterAnalysisFile, STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage],
+                    deviceSuffix, KC_STR_DEFAULT_LIVEREG_EXT, outFileName);
+
+                if (ret && !outFileName.empty())
                 {
-                    std::string outFileName;
-                    gtString gOutFileName, gIsaFileName;
+                    gOutFileName << outFileName.c_str();
+                    gIsaFileName << stageMD.m_isaFile.c_str();
 
-                    // Construct a name for the livereg output file.
-                    ret = kcUtils::ConstructOutFileName(conf.m_LiveRegisterAnalysisFile, STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage],
-                        deviceSuffix, KC_STR_DEFAULT_LIVEREG_EXT, outFileName);
-
-                    if (ret && !outFileName.empty())
-                    {
-                        gOutFileName << outFileName.c_str();
-                        gIsaFileName << stageMD.m_isaFile.c_str();
-
-                        kcUtils::PerformLiveRegisterAnalysis(gIsaFileName, gOutFileName, m_LogCallback, conf.m_printProcessCmdLines);
-                        ret = beUtils::IsFilePresent(outFileName);
-                    }
-                    else
-                    {
-                        rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
-                    }
+                    kcUtils::PerformLiveRegisterAnalysis(gIsaFileName, gOutFileName, m_LogCallback, conf.m_printProcessCmdLines);
+                    ret = beUtils::IsFilePresent(outFileName);
+                }
+                else
+                {
+                    rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
                 }
             }
-        }
-        else
-        {
-            std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED_TO_NAVI << std::endl;
         }
     }
 
@@ -1625,43 +1694,38 @@ bool kcCLICommanderVulkan::ExtractCFG(const Config& conf) const
         const std::string& device = deviceMDNode.first;
         const std::string& deviceSuffix = (conf.m_ASICs.empty() && !m_physAdapterName.empty() ? "" : device);
         const rgVkOutputMetadata& deviceMD = deviceMDNode.second;
+        bool perInstCfg = (!conf.m_instCFGFile.empty());
 
-        std::cout << KA_CLI_STR_STARTING_CFG << " for " << device << "... ";
-        if (!kcUtils::IsNaviTarget(device))
+        std::cout << (perInstCfg ? STR_INFO_CONSTRUCTING_INSTRUCTION_CFG_A:
+            STR_INFO_CONSTRUCTING_BLOCK_CFG_A) << device << "..." << std::endl;
+
+        for (int stage = 0; stage < bePipelineStage::Count && ret; stage++)
         {
-            for (int stage = 0; stage < bePipelineStage::Count && ret; stage++)
+            const rgOutputFiles& stageMD = deviceMD[stage];
+
+            if (!stageMD.m_inputFile.empty())
             {
-                const rgOutputFiles& stageMD = deviceMD[stage];
+                std::string outFileName;
+                gtString gOutFileName, gIsaFileName;
 
-                if (!stageMD.m_inputFile.empty())
+                // Construct a name for the CFG output file.
+                ret = kcUtils::ConstructOutFileName((perInstCfg ? conf.m_instCFGFile : conf.m_blockCFGFile),
+                    STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage],
+                    deviceSuffix, KC_STR_DEFAULT_CFG_EXT, outFileName);
+
+                if (ret && !outFileName.empty())
                 {
-                    std::string outFileName;
-                    gtString gOutFileName, gIsaFileName;
-                    bool perInstCfg = (!conf.m_instCFGFile.empty());
+                    gOutFileName << outFileName.c_str();
+                    gIsaFileName << stageMD.m_isaFile.c_str();
 
-                    // Construct a name for the CFG output file.
-                    ret = kcUtils::ConstructOutFileName((perInstCfg ? conf.m_instCFGFile : conf.m_blockCFGFile),
-                        STR_VULKAN_STAGE_FILE_SUFFIXES_DEFAULT[stage],
-                        deviceSuffix, KC_STR_DEFAULT_CFG_EXT, outFileName);
-
-                    if (ret && !outFileName.empty())
-                    {
-                        gOutFileName << outFileName.c_str();
-                        gIsaFileName << stageMD.m_isaFile.c_str();
-
-                        kcUtils::GenerateControlFlowGraph(gIsaFileName, gOutFileName, m_LogCallback, perInstCfg, conf.m_printProcessCmdLines);
-                        ret = beUtils::IsFilePresent(outFileName);
-                    }
-                    else
-                    {
-                        rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
-                    }
+                    kcUtils::GenerateControlFlowGraph(gIsaFileName, gOutFileName, m_LogCallback, perInstCfg, conf.m_printProcessCmdLines);
+                    ret = beUtils::IsFilePresent(outFileName);
+                }
+                else
+                {
+                    rgLog::stdOut << STR_ERR_FAILED_CREATE_OUTPUT_FILE_NAME << std::endl;
                 }
             }
-        }
-        else
-        {
-            std::cout << STR_WARNING_CFG_NOT_SUPPORTED_TO_NAVI << std::endl;
         }
     }
 

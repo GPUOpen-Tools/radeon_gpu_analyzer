@@ -69,15 +69,19 @@ protected:
         // Create an array of object with the new dimension.
         T* pResizedArray = new T[newSize]{};
 
-        // If the element count was increased, copy all old contents.
-        // If it was reduced, copy as many as will fit in the new array.
-        uint32_t elementCount = newSize > oldSize ? oldSize : newSize;
-
-        // Copy existing element data into the resized elements.
-        for (uint32_t index = 0; index < elementCount; ++index)
+        assert(pResizedArray != nullptr);
+        if (pResizedArray != nullptr)
         {
-            // Copy all member data into the new array elements.
-            memcpy(pResizedArray + index, pOriginalArray + index, sizeof(T));
+            // If the element count was increased, copy all old contents.
+            // If it was reduced, copy as many as will fit in the new array.
+            uint32_t elementCount = newSize > oldSize ? oldSize : newSize;
+
+            // Copy existing element data into the resized elements.
+            for (uint32_t index = 0; index < elementCount; ++index)
+            {
+                // Copy all member data into the new array elements.
+                memcpy(pResizedArray + index, pOriginalArray + index, sizeof(T));
+            }
         }
 
         return pResizedArray;
@@ -140,27 +144,31 @@ protected:
                 }
                 else
                 {
-                    // Allocate the new element array with the updated size.
-                    T* pResized =
-                        ResizeArray(pArrayPointer, static_cast<uint32_t>(numExistingElements), static_cast<uint32_t>(newElementCount));
-
-                    // Remove all existing child element items from the array root node.
-                    pRootElement->ClearChildren();
-
-                    // Create a new element row for each item in the resized array.
-                    CreateArrayElements(newElementCount, pElementTypeName, pArrayRoot, initializationHandler, pResized);
-
-                    // Destroy the old model data.
-                    RG_SAFE_DELETE(pArrayPointer);
-                    pArrayPointer = pResized;
-
-                    // Invoke the array's resized callback.
-                    pArrayRoot->InvokeElementResizedCallback();
-
-                    if (!isFirstInit)
+                    assert(pArrayPointer != nullptr);
+                    if (pArrayPointer != nullptr)
                     {
-                        // Expand the array root node that was resized.
-                        emit ExpandNode(pArrayRoot);
+                        // Allocate the new element array with the updated size.
+                        T* pResized =
+                            ResizeArray(pArrayPointer, static_cast<uint32_t>(numExistingElements), static_cast<uint32_t>(newElementCount));
+
+                        // Remove all existing child element items from the array root node.
+                        pRootElement->ClearChildren();
+
+                        // Create a new element row for each item in the resized array.
+                        CreateArrayElements(newElementCount, pElementTypeName, pArrayRoot, initializationHandler, pResized);
+
+                        // Destroy the old model data.
+                        RG_SAFE_DELETE(pArrayPointer);
+                        pArrayPointer = pResized;
+
+                        // Invoke the array's resized callback.
+                        pArrayRoot->InvokeElementResizedCallback();
+
+                        if (!isFirstInit)
+                        {
+                            // Expand the array root node that was resized.
+                            emit ExpandNode(pArrayRoot);
+                        }
                     }
                 }
             }

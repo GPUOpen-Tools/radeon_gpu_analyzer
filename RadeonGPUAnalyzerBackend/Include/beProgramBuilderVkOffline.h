@@ -78,8 +78,8 @@ struct VkOfflineOptions : public beKA::CompileOptions
 class beProgramBuilderVkOffline : public beProgramBuilder
 {
 public:
-    beProgramBuilderVkOffline();
-    ~beProgramBuilderVkOffline();
+    beProgramBuilderVkOffline() = default;
+    ~beProgramBuilderVkOffline() = default;
 
     virtual beKA::beStatus GetBinary(const std::string& device, const beKA::BinaryOptions& binopts, std::vector<char>& binary) override;
 

@@ -12,6 +12,8 @@
 
 // Local.
 #include <RadeonGPUAnalyzerBackend/Include/beUtils.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
+#include "RadeonGPUAnalyzerCLI/Src/kcCliStringConstants.h"
 
 #define CL_STATUS_TABLE \
     X(CL_SUCCESS) \
@@ -78,9 +80,9 @@
     X(CL_INVALID_PARTITION_COUNT_EXT) \
     X(CL_INVALID_PARTITION_NAME_EXT)
 
-// statics/utils
-/// return a string from the cl error code
-// TODO: this should be a Common utility.  It gets used in at least 4 projects.
+// Constants.
+static const char* STR_ERROR_KERNEL_SYMBOL_NOT_FOUND = "Error: failed to locate kernel symbol in ELF file.";
+
 static std::string GetCLErrorString(cl_int err)
 {
     switch (err)
@@ -93,7 +95,7 @@ static std::string GetCLErrorString(cl_int err)
     }
 }
 
-/// Predicate for characters we want to allow through.
+// Predicate for characters we want to allow through.
 static bool IsNotNormalChar(char c)
 {
     std::locale loc;
@@ -104,9 +106,9 @@ std::string* beProgramBuilderOpenCL::s_pISAString = NULL;
 std::string beProgramBuilderOpenCL::s_HSAILDisassembly;
 size_t beProgramBuilderOpenCL::gs_DisassembleCounter = 0;
 
-/// Filter buildLog of temporary OpenCL file names.
-/// \param buildLog The log to be filtered.
-/// \returns A new log string with the temporary file names removed.
+// Filter buildLog of temporary OpenCL file names.
+// \param buildLog The log to be filtered.
+// \returns A new log string with the temporary file names removed.
 static std::string PostProcessOpenCLBuildLog(const std::string& buildLog, const std::string& sourceCodeFullPathName)
 {
     std::istringstream in(buildLog);
@@ -162,7 +164,7 @@ static std::string PostProcessOpenCLBuildLog(const std::string& buildLog, const 
             line.replace(pos, sizeof(suffix2) / sizeof(char), "Line");
         }
 
-        // chop off summary message at the end.
+        // Chop-off summary message at the end.
         // It also contains the temporary file name.
         pos = line.find(" detected in the compilation of ");
 
@@ -243,7 +245,7 @@ beKA::beStatus beProgramBuilderOpenCL::InitializeOpenCL()
         return beKA::beStatus_OpenCL_MODULE_TOO_OLD;
     }
 
-    // continue with initialization
+    // Continue with initialization.
     retVal = beKA::beStatus_SUCCESS;
     cl_uint numPlatforms = 0;
     cl_int status;
@@ -450,7 +452,6 @@ beKA::beStatus beProgramBuilderOpenCL::InitializeOpenCL()
                 std::stringstream ss;
                 ss << "OpenCL Error: clGetPlatformInfo failed (" + GetCLErrorString(status) + ")." << endl;
                 LogCallBack(ss.str());
-                // Just log the error and move on...
             }
             else
             {
@@ -467,7 +468,6 @@ beKA::beStatus beProgramBuilderOpenCL::InitializeOpenCL()
                     std::stringstream ss;
                     ss << "OpenCL Error: clGetPlatformInfo failed (" + GetCLErrorString(status) + ")." << endl;
                     LogCallBack(ss.str());
-                    // Just log the error and move on...
                 }
                 else
                 {
@@ -478,7 +478,7 @@ beKA::beStatus beProgramBuilderOpenCL::InitializeOpenCL()
         }
     }
 
-    if (retVal == beKA::beStatus_SUCCESS) // no point checking the version if nothing is loaded
+    if (retVal == beKA::beStatus_SUCCESS)
     {
         m_IsIntialized = true;
         m_OpenCLVersionInfo += string("\nGraphics Driver Version: ") + m_DriverVersion;
@@ -494,7 +494,7 @@ bool beProgramBuilderOpenCL::isOpenClModuleLoaded()
     if ((m_TheOpenCLModule.OpenCLLoaded() == OpenCLModule::OpenCL_None) ||
         ((m_TheOpenCLModule.GetPlatformIDs == NULL) || (m_TheOpenCLModule.GetPlatformInfo == NULL) || (m_TheOpenCLModule.CreateContextFromType == NULL) ||
          (m_TheOpenCLModule.GetContextInfo == NULL) || (m_TheOpenCLModule.GetDeviceInfo == NULL) || (m_TheOpenCLModule.ReleaseContext == NULL) || (m_TheOpenCLModule.CreateKernel == NULL) ||
-         (m_TheOpenCLModule.GetKernelWorkGroupInfo == NULL) || (m_TheOpenCLModule.ReleaseKernel == NULL) ||/* (m_TheOpenCLModule.GetKernelInfoAMD == NULL) || */ (m_TheOpenCLModule.CreateProgramWithSource == NULL) ||
+         (m_TheOpenCLModule.GetKernelWorkGroupInfo == NULL) || (m_TheOpenCLModule.ReleaseKernel == NULL) ||(m_TheOpenCLModule.CreateProgramWithSource == NULL) ||
          (m_TheOpenCLModule.GetProgramBuildInfo == NULL) || (m_TheOpenCLModule.GetProgramInfo == NULL) || (m_TheOpenCLModule.GetProgramInfo == NULL)))
     {
         retVal = false;
@@ -505,15 +505,11 @@ bool beProgramBuilderOpenCL::isOpenClModuleLoaded()
 
 beKA::beStatus beProgramBuilderOpenCL::GetKernels(const std::string& device, std::vector<std::string>& kernels)
 {
-    // interface guard
+    beKA::beStatus retVal = beKA::beStatus_SUCCESS;
     if (!m_IsIntialized)
     {
         return beStatus_OpenCL_MODULE_NOT_LOADED;
     }
-
-    //end guard
-
-    beKA::beStatus retVal = beKA::beStatus_SUCCESS;
 
     if (m_ElvesMap.count(device) == 0)
     {
@@ -597,6 +593,11 @@ beKA::beStatus beProgramBuilderOpenCL::GetKernels(const std::string& device, std
         {
             retVal = beKA::beStatus_NO_BINARY_FOR_DEVICE;
         }
+
+        if (retVal == beKA::beStatus_SUCCESS && kernels.empty())
+        {
+            retVal = beStatus_General_FAILED;
+        }
     }
 
     return retVal;
@@ -604,15 +605,11 @@ beKA::beStatus beProgramBuilderOpenCL::GetKernels(const std::string& device, std
 
 beKA::beStatus beProgramBuilderOpenCL::GetBinary(const std::string& device, const beKA::BinaryOptions& binopts, std::vector<char>& binary)
 {
-    // interface guard
+    beKA::beStatus retVal = beKA::beStatus_SUCCESS;
     if (!m_IsIntialized)
     {
         return beStatus_OpenCL_MODULE_NOT_LOADED;
     }
-
-    //end guard
-
-    beKA::beStatus retVal = beKA::beStatus_SUCCESS;
 
     if (m_ElvesMap.count(device) == 0)
     {
@@ -628,8 +625,7 @@ beKA::beStatus beProgramBuilderOpenCL::GetBinary(const std::string& device, cons
 
         if (binopts.m_SuppressSection.size() == 0)
         {
-            // TODO: If CElf::Store were a const member, this could be const. Unfortunately, Store updates some CElf internal state. Maybe that can be improved.
-            elf.Store(&binary); // not sure why this is here
+            elf.Store(&binary);
             return beKA::beStatus_SUCCESS;
         }
 
@@ -656,9 +652,7 @@ beKA::beStatus beProgramBuilderOpenCL::GetBinary(const std::string& device, cons
 beKA::beStatus beProgramBuilderOpenCL::GetBinaryFromFile(const std::string& pathToBinary, const beKA::BinaryOptions& binopts, std::vector<char>& outputPath)
 {
     beKA::beStatus retVal = beKA::beStatus_SUCCESS;
-
     CElf elf(pathToBinary);
-
     if (elf.good())
     {
         if (binopts.m_SuppressSection.size() == 0)
@@ -688,57 +682,61 @@ beKA::beStatus beProgramBuilderOpenCL::GetBinaryFromFile(const std::string& path
 
 beKA::beStatus beProgramBuilderOpenCL::GetStatistics(const std::string& device, const std::string& kernel, beKA::AnalysisData& analysis)
 {
-    // interface guard
-    if (!m_IsIntialized)
+    beKA::beStatus ret = beStatus_General_FAILED;
+    auto iter = m_DeviceToCoDisassemblyWhole.find(device);
+    bool isCodeObjectTarget = iter != m_DeviceToCoDisassemblyWhole.end();
+    if (!isCodeObjectTarget)
     {
-        return beStatus_OpenCL_MODULE_NOT_LOADED;
-    }
-
-    //end guard
-
-    beKA::beStatus bRet;
-
-    if (m_KernelAnalysis.find(device) != m_KernelAnalysis.end())
-    {
-        std::map<std::string, beKA::AnalysisData> kernel_analysis;
-        kernel_analysis = m_KernelAnalysis[device];
-        std::map<std::string, beKA::AnalysisData>::const_iterator iter = kernel_analysis.find(kernel);
-
-        if (iter != kernel_analysis.end())
+        if (!m_IsIntialized)
         {
-            analysis = kernel_analysis[kernel];
+            return beStatus_OpenCL_MODULE_NOT_LOADED;
+        }
 
-            if (analysis.ISASize == 0)
+        if (m_KernelAnalysis.find(device) != m_KernelAnalysis.end())
+        {
+            std::map<std::string, beKA::AnalysisData> kernel_analysis;
+            kernel_analysis = m_KernelAnalysis[device];
+            std::map<std::string, beKA::AnalysisData>::const_iterator iter = kernel_analysis.find(kernel);
+
+            if (iter != kernel_analysis.end())
             {
-                std::string isaText;
-                bRet = GetKernelISAText(device, kernel, isaText);
+                analysis = kernel_analysis[kernel];
 
-                if (bRet == beStatus_SUCCESS)
+                if (analysis.ISASize == 0)
                 {
-                    ParserISA isaParser;
-                    bool isParseSuccess = isaParser.ParseForSize(isaText);
+                    std::string isaText;
+                    ret = GetKernelISAText(device, kernel, isaText);
 
-                    if (isParseSuccess)
+                    if (ret == beStatus_SUCCESS)
                     {
-                        analysis.ISASize = isaParser.GetCodeLen();
+                        ParserISA isaParser;
+                        bool isParseSuccess = isaParser.ParseForSize(isaText);
+
+                        if (isParseSuccess)
+                        {
+                            analysis.ISASize = isaParser.GetCodeLen();
+                        }
                     }
                 }
-            }
 
-            bRet = beKA::beStatus_SUCCESS;
+                ret = beKA::beStatus_SUCCESS;
+            }
+            else
+            {
+                ret = beKA::beStatus_WrongKernelName;
+            }
         }
         else
         {
-            bRet = beKA::beStatus_WrongKernelName;
+            ret = beKA::beStatus_NO_DEVICE_FOUND;
         }
     }
     else
     {
-        bRet = beKA::beStatus_NO_DEVICE_FOUND;
+        // Assume success if not relevant.
+        ret = beStatus_SUCCESS;
     }
-
-    return bRet;
-
+    return ret;
 }
 
 void beProgramBuilderOpenCL::ReleaseProgram()
@@ -907,17 +905,12 @@ beKA::beStatus beProgramBuilderOpenCL::GetAnalysisInternal(cl_program& program, 
 
 beKA::beStatus beProgramBuilderOpenCL::GetKernelDebugILText(const std::string& device, const std::string& kernel, std::string& debugil)
 {
-    (void)(&kernel); // Unreferenced parameter
-
-    // interface guard
+    (void)(&kernel);
+    beKA::beStatus retVal = beKA::beStatus_SUCCESS;
     if (!m_IsIntialized)
     {
         return beStatus_OpenCL_MODULE_NOT_LOADED;
     }
-
-    //end guard
-
-    beKA::beStatus retVal = beKA::beStatus_SUCCESS;
 
     if (m_ElvesMap.count(device) == 0)
     {
@@ -1031,15 +1024,11 @@ beKA::beStatus beProgramBuilderOpenCL::GetKernelILText(const std::string& device
 
 beKA::beStatus beProgramBuilderOpenCL::GetKernelSectionText(const std::string& device, const std::string& kernel, std::string& il)
 {
-    // interface guard
+    beKA::beStatus retVal = beKA::beStatus_SUCCESS;
     if (!m_IsIntialized)
     {
         return beStatus_OpenCL_MODULE_NOT_LOADED;
     }
-
-    //end guard
-
-    beKA::beStatus retVal = beKA::beStatus_SUCCESS;
 
     if (m_ElvesMap.count(device) == 0)
     {
@@ -1403,8 +1392,8 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
         string definesAndOptions;
 
         for (vector<string>::const_iterator it = oclOptions.m_defines.begin();
-             it != oclOptions.m_defines.end();
-             ++it)
+            it != oclOptions.m_defines.end();
+            ++it)
         {
             definesAndOptions += "-D" + *it + " ";
         }
@@ -1423,8 +1412,8 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
         bool bIsHoptionRequested = false;
 
         for (vector<string>::const_iterator it = oclOptions.m_openCLCompileOptions.begin();
-             it != oclOptions.m_openCLCompileOptions.end();
-             ++it)
+            it != oclOptions.m_openCLCompileOptions.end();
+            ++it)
         {
             if (((*it).compare("-h")) || ((*it).compare("-H")))
             {
@@ -1440,7 +1429,7 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
         // Which devices do we care about?
         vector<cl_device_id> requestedDevices;
 
-        if (oclOptions.m_selectedDevices.empty())
+        if (oclOptions.m_selectedDevicesSorted.empty())
         {
             // None were specified by the user, so do them all.
             requestedDevices = m_OpenCLDeviceIDs;
@@ -1448,9 +1437,9 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
         else
         {
             // Make a vector of device IDs from the requested device list.
-            for (set<string>::const_iterator it = oclOptions.m_selectedDevices.begin();
-                 it != oclOptions.m_selectedDevices.end();
-                 ++it)
+            for (auto it = oclOptions.m_selectedDevicesSorted.begin();
+                it != oclOptions.m_selectedDevicesSorted.end();
+                ++it)
             {
                 if (m_NameDeviceIdMap.count(*it) > 0)
                 {
@@ -1459,17 +1448,14 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
                 else
                 {
                     std::stringstream ss;
-                    ss << "Error: Unknown device: " << *it << endl;
+                    ss << "Error: Unknown device " << *it << endl;
                     LogCallBack(ss.str());
-                    //                return Status_CL_DEVICE_NOT_SUPPORTED;
                 }
             }
         }
 
         m_Elves.resize(m_NumOpenCLDevices);
-
         vector<cl_device_id>::iterator iterDeviceId = requestedDevices.begin();
-
         for (int iCompilationNo = 0; iterDeviceId < requestedDevices.end(); iterDeviceId++, iCompilationNo++)
         {
             if (m_forceEnding)
@@ -1485,8 +1471,6 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
             ss << "... ";
 
             LogCallBack(ss.str());
-
-
             retStatus = CompileOpenCLInternal(sourceCodeFullPathName, programSource, oclOptions, *iterDeviceId, program, definesAndOptions, iCompilationNo, errString);
 
             if (retStatus == beKA::beStatus_SUCCESS)
@@ -1497,7 +1481,6 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
                 if (retStatus == beKA::beStatus_SUCCESS)
                 {
                     m_ElvesMap[m_DeviceIdNameMap[*iterDeviceId]] = m_Elves[iCompilationNo];
-                    //m_BinDeviceMap[m_DeviceIdNameMap[*iterDeviceId]] = vBin;
                 }
 
                 if (retStatus == beKA::beStatus_SUCCESS)
@@ -1508,7 +1491,9 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
                     if (bIsHoptionRequested)
                     {
                         ssInner << errString;
-                        bIsHoptionRequested = false; // we want to print it only once
+
+                        // Print this only once.
+                        bIsHoptionRequested = false;
                     }
 
                     LogCallBack(ssInner.str());
@@ -1518,62 +1503,97 @@ beKA::beStatus beProgramBuilderOpenCL::Compile(const std::string& programSource,
                 }
             }
 
-            // log and try another device
+            // Log and try another device.
             if (retStatus != beKA::beStatus_SUCCESS)
             {
-                std::stringstream sss;
-                sss << "failed.\n";
-                sss << errString;
-                LogCallBack(sss.str());
+                std::stringstream msg;
+                msg << "failed.\n";
+                msg << errString;
+                LogCallBack(msg.str());
 
-                continue; //- don't try to get the analysis
+                // Stop here.
+                continue;
             }
 
-
-            // get the kernel list
+            // Get the kernel list.
             vector<string> pKernels;
-            beStatus retStatusAnalysis = beStatus_Invalid; // don't fail because statistics fail
+            beStatus retStatusAnalysis = beStatus_Invalid;
             retStatus = GetKernels(m_DeviceIdNameMap[*iterDeviceId], pKernels);
 
-            // go over the kernels and get the statistics now
-            if (m_forceEnding)
+            // Go over the kernels and get the statistics.
+            if (!m_forceEnding)
             {
-                retStatus = beKA::beStatus_Invalid;
-            }
-
-            if (retStatus == beKA::beStatus_SUCCESS)
-            {
-                // Pass through all the kernels:
-                size_t numKernels = pKernels.size();
-                std::map<std::string, beKA::AnalysisData> kernel_analysys;
-
-                for (size_t nKernel = 0; nKernel < numKernels; nKernel++)
+                // If we succeeded in extracting the symbol from the ELF file, it means
+                // that the ELF file is in the older format and we can continue.
+                if (retStatus == beKA::beStatus_SUCCESS)
                 {
-                    string kernel = (pKernels.at(nKernel));
-                    beKA::AnalysisData ad;
-                    retStatusAnalysis = GetAnalysisInternal(program, m_DeviceIdNameMap[*iterDeviceId], kernel, &ad);
+                    // Pass through all the kernels:
+                    size_t numKernels = pKernels.size();
+                    std::map<std::string, beKA::AnalysisData> kernel_analysys;
 
-                    if (m_forceEnding)
+                    for (size_t nKernel = 0; nKernel < numKernels; nKernel++)
                     {
-                        retStatus = beKA::beStatus_Invalid;
+                        string kernel = (pKernels.at(nKernel));
+                        beKA::AnalysisData ad;
+                        retStatusAnalysis = GetAnalysisInternal(program, m_DeviceIdNameMap[*iterDeviceId], kernel, &ad);
+
+                        if (m_forceEnding)
+                        {
+                            retStatus = beKA::beStatus_Invalid;
+                        }
+
+                        if (retStatusAnalysis != beKA::beStatus_SUCCESS)
+                        {
+                            break;
+                        }
+
+                        kernel_analysys[kernel] = ad;
                     }
 
-                    if (retStatusAnalysis != beKA::beStatus_SUCCESS)
+                    if (retStatusAnalysis == beKA::beStatus_SUCCESS)
                     {
-                        break;
+                        m_KernelAnalysis[m_DeviceIdNameMap[*iterDeviceId]] = kernel_analysys;
                     }
-
-                    kernel_analysys[kernel] = ad;
                 }
-
-                if (retStatusAnalysis == beKA::beStatus_SUCCESS)
+                else
                 {
-                    m_KernelAnalysis[m_DeviceIdNameMap[*iterDeviceId]] = kernel_analysys;
+                    // Write the binary to a file.
+                    std::vector<char> binVec;
+                    m_Elves[iCompilationNo]->Store(&binVec);
+
+                    // Create a temporary file with the binary data for the disassembler to work on.
+                    std::string tempFile = kcUtils::ConstructTempFileName("lc_co", "bin");
+                    kcUtils::WriteBinaryFile(tempFile, binVec, nullptr);
+                    std::string disassemblyWhole;
+                    std::string disassemblyText;
+                    std::string errorMsg;
+
+                    // Disassemble the binary.
+                    beUtils::DisassembleCodeObject(tempFile, false,
+                        disassemblyWhole, disassemblyText, errorMsg);
+
+                    if (!disassemblyText.empty())
+                    {
+                        // Set the disassembly, we would retrieve it later when writing the output files.
+                        m_DeviceToCoDisassembly[m_DeviceIdNameMap[*iterDeviceId]] = disassemblyText;
+                        m_DeviceToCoDisassemblyWhole[m_DeviceIdNameMap[*iterDeviceId]] = disassemblyWhole;
+                    }
+
+                    // Delete the temporary file.
+                    beUtils::DeleteFileFromDisk(tempFile);
+
+                    // Try to extract the disassembly and statistics using amdgpu-dis, since we probably
+                    // are dealing with a new format Code Object ELF binary.
+                    retStatus = disassemblyText.empty() ? beKA::beStatus_Invalid : beKA::beStatus::beStatus_SUCCESS;
+                    assert(retStatus == beKA::beStatus_SUCCESS);
+                    if (retStatus != beKA::beStatus_SUCCESS)
+                    {
+                        std::cout << STR_ERROR_KERNEL_SYMBOL_NOT_FOUND << std::endl;
+                    }
                 }
             }
         }
-    } // end CreateProgramWithSource
-
+    }
 
     return retStatus;
 }
@@ -1615,12 +1635,11 @@ beKA::beStatus beProgramBuilderOpenCL::CompileOpenCLInternal(const std::string& 
         errString += GetCLErrorString(status);
         errString += ").\n";
         bIsBuildSucceeded = false;
-        //return Status_BuildOpenCLProgramWrapper_FAILED;
     }
 
     for (size_t i = 0; i < requestedDevices.size(); i++)
     {
-        // show the build log (error and warnings)
+        // Show the build log (error and warnings)
         size_t buildLogSize = 0;
         cl_int logStatus = m_TheOpenCLModule.GetProgramBuildInfo(
                                program,
@@ -1661,11 +1680,6 @@ beKA::beStatus beProgramBuilderOpenCL::CompileOpenCLInternal(const std::string& 
         return beKA::beStatus_BuildOpenCLProgramWrapper_FAILED;
     }
 
-    // Don't bail out here.
-    // The compilation may have worked for some devices, but not others.
-    // I've seen failures happen only with the RV7xx devices.
-
-
     // Get the CL_PROGRAM_DEVICES.
     // These may be in a different order than the CL_CONTEXT_DEVICES.
     // This happens when we specify a subset --
@@ -1704,14 +1718,9 @@ beKA::beStatus beProgramBuilderOpenCL::CompileOpenCLInternal(const std::string& 
         return beKA::beStatus_clGetProgramInfo_FAILED;
     }
 
-    // Get the CL binaries
-    // TODO: if this were vector<vector<char> >,
-    // there would be no cleanup code for the allocated storage.
-    // But we would still need to create a char** binaries to pass to clGetProgramInfo.
+    // Get the CL binaries.
     vector<char*> binaries;
     binaries.resize(iNumOfOpenCLDevices);
-
-    // we have only one
     size_t size = binarySizes[0];
     binaries[0] = size ? new char[binarySizes[0]] : NULL;
 
@@ -1748,8 +1757,6 @@ beKA::beStatus beProgramBuilderOpenCL::CompileOpenCLInternal(const std::string& 
         {
             bRet = beKA::beStatus_ACLCompile_FAILED;
         }
-
-        // programDevices[i] -> Elf.
         m_ElvesMap[m_DeviceIdNameMap[requestedDeviceId]] = m_Elves[iCompilationNo];
     }
 
@@ -1890,7 +1897,7 @@ void beProgramBuilderOpenCL::disassembleLogFunction(const char* pMsg, size_t siz
 
 
 bool beProgramBuilderOpenCL::BuildOpenCLProgramWrapper(
-    cl_int&             status,                 ///< the normal return value
+    cl_int&             status,
     cl_program          program,
     cl_uint             num_devices,
     const cl_device_id* device_list,
@@ -1956,7 +1963,6 @@ beStatus beProgramBuilderOpenCL::GetDeviceType(const std::string& deviceName, cl
     return retVal;
 }
 
-
 beStatus beProgramBuilderOpenCL::GetDeviceTable(std::vector<GDT_GfxCardInfo>& table)
 {
     table = m_OpenCLDeviceTable;
@@ -1975,6 +1981,38 @@ void beProgramBuilderOpenCL::ForceEnd()
 void beProgramBuilderOpenCL::GetSupportedPublicDevices(std::set<std::string>& devices) const
 {
     devices = m_DeviceNames;
+}
+
+
+void beProgramBuilderOpenCL::GetDeviceToCodeObjectDisassemblyMapping(std::map<std::string, std::string>& mapping)
+{
+    mapping = m_DeviceToCoDisassembly;
+}
+
+
+bool beProgramBuilderOpenCL::HasCodeObjectBinary(const std::string& device) const
+{
+    auto iter = m_DeviceToCoDisassembly.find(device);
+    return iter != m_DeviceToCoDisassembly.end();
+}
+
+
+bool beProgramBuilderOpenCL::ExtractStatisticsCodeObject(const std::string& device,
+    std::map<std::string, beKA::AnalysisData>& stats)
+{
+    bool ret = false;
+    auto iter = m_DeviceToCoDisassemblyWhole.find(device);
+    assert(iter != m_DeviceToCoDisassemblyWhole.end());
+    if (iter != m_DeviceToCoDisassemblyWhole.end())
+    {
+        ret = beUtils::ExtractCodeObjectStatistics(iter->second, stats);
+        assert(ret);
+        if (!ret)
+        {
+            std::cout << ERROR_FAILED_TO_EXTRACT_CODE_OBJECT_STATS << device << std::endl;
+        }
+    }
+    return ret;
 }
 
 double beProgramBuilderOpenCL::getOpenCLPlatformVersion()
@@ -2008,8 +2046,7 @@ void beProgramBuilderOpenCL::RemoveNamesOfUnpublishedDevices(const set<string>& 
     // Take advantage of the fact that the m_OpenCLDeviceTable collection contains only published devices,
     // so we look for each name that the OpenCL driver provided in the table, and remove it if it is not found
 
-    for (set<string>::iterator iter = m_DeviceNames.begin();
-         iter != m_DeviceNames.end(); /* advancing the iterator is done inside the loop*/)
+    for (set<string>::iterator iter = m_DeviceNames.begin(); iter != m_DeviceNames.end();)
     {
         bool isDevicePublished = false;
         const string& deviceName = *iter;

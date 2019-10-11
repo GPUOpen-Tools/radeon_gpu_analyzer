@@ -149,21 +149,6 @@ static bool  VerifyVirtualContextOutput(const OpenGLOptions& options)
         ret &= beUtils::IsFilePresent(options.m_programBinaryFile.asASCIICharArray());
         assert(ret);
     }
-    if (ret && options.m_isCfgRequired)
-    {
-        ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_computeShader.asASCIICharArray()));
-        assert(ret);
-        ret &= (options.m_pipelineShaders.m_fragmentShader.isEmpty()       || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_fragmentShader.asASCIICharArray()));
-        assert(ret);
-        ret &= (options.m_pipelineShaders.m_geometryShader.isEmpty()       || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_geometryShader.asASCIICharArray()));
-        assert(ret);
-        ret &= (options.m_pipelineShaders.m_tessControlShader.isEmpty()    || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_tessControlShader.asASCIICharArray()));
-        assert(ret);
-        ret &= (options.m_pipelineShaders.m_tessEvaluationShader.isEmpty() || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_tessEvaluationShader.asASCIICharArray()));
-        assert(ret);
-        ret &= (options.m_pipelineShaders.m_vertexShader.isEmpty()         || beUtils::IsFilePresent(options.m_controlFlowGraphOutputFiles.m_vertexShader.asASCIICharArray()));
-        assert(ret);
-    }
     if (ret && options.m_isScStatsRequired)
     {
         ret &= (options.m_pipelineShaders.m_computeShader.isEmpty()        || beUtils::IsFilePresent(options.m_scStatisticsOutputFiles.m_computeShader.asASCIICharArray()));
@@ -354,6 +339,7 @@ bool beProgramBuilderOpenGL::GetDeviceGLInfo(const std::string& deviceName, size
         glBackendValues["gfx902"] = std::pair<int, int>(141, 27);
         glBackendValues["gfx906"] = std::pair<int, int>(141, 40);
         glBackendValues["gfx1010"] = std::pair<int, int>(143, 1);
+        glBackendValues["gfx1012"] = std::pair<int, int>(143, 20);
     }
 
     // Fetch the relevant value.

@@ -208,6 +208,9 @@ static const char* STR_MENU_BAR_BACK_TO_HOME_TOOLTIP = "Close the existing proje
 static const char* STR_MENU_BAR_EXIT = "&Exit";
 static const char* STR_MENU_BAR_EXIT_TOOLTIP = "Exit the application (Alt+F4).";
 
+// Settings view Restore default settings action.
+static const char* STR_RESTORE_DEFAULT_SETTINGS = "Restore default settings.";
+
 // *** MENUS STRINGS - END ***
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

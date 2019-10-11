@@ -185,6 +185,9 @@ void rgAboutDialog::HandleCheckForUpdatesCompleted(UpdateCheck::ThreadController
         UpdateCheckResultsDialog* pResultsDialog = new UpdateCheckResultsDialog(this);
         if (pResultsDialog != nullptr)
         {
+            // Hide the tag label.
+            pResultsDialog->SetShowTags(false);
+
             // Change from default title.
             pResultsDialog->setWindowTitle(STR_UPDATES_RESULTS_WINDOW_TITLE);
 

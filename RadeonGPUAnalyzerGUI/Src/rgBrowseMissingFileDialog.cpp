@@ -63,23 +63,12 @@ void rgBrowseMissingFileDialog::ConnectSignals()
     isConnected = connect(ui.browsePushButton, &QPushButton::clicked, this, &rgBrowseMissingFileDialog::HandleBrowseButtonClicked);
     assert(isConnected);
 
-    // Create a signal mapper to map the button clicks to the done(int) slot
-    // with appropriate result values.
-    QSignalMapper* pButtonSignalMapper = new QSignalMapper(this);
-
-    // Note: Using the SIGNAL/SLOT syntax below to simplify use of QSignalMapper.
     // OK button.
-    isConnected = connect(ui.okPushButton, SIGNAL(clicked()), pButtonSignalMapper, SLOT(map()));
+    isConnected = connect(ui.okPushButton, &QPushButton::clicked, [=] { done(MissingFileDialogResult::OK); });
     assert(isConnected);
-    pButtonSignalMapper->setMapping(ui.okPushButton, MissingFileDialogResult::OK);
 
     // Cancel button.
-    isConnected = connect(ui.cancelPushButton, SIGNAL(clicked()), pButtonSignalMapper, SLOT(map()));
-    assert(isConnected);
-    pButtonSignalMapper->setMapping(ui.cancelPushButton, MissingFileDialogResult::Cancel);
-
-    // Signal mapper.
-    isConnected = connect(pButtonSignalMapper, SIGNAL(mapped(int)), this, SLOT(done(int)));
+    isConnected = connect(ui.cancelPushButton, &QPushButton::clicked, [=] { done(MissingFileDialogResult::Cancel); });
     assert(isConnected);
 
     isConnected = connect(this, &QDialog::rejected, this, &rgBrowseMissingFileDialog::HandleRejected);

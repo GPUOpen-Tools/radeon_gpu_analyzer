@@ -70,10 +70,14 @@ static bool ExtractNumericStatistic(const std::string& fileContent, const char* 
                     // Extract the value.
                     std::string value = fileContent.substr(valueBeginIndex, valueLength);
                     std::string::iterator end_pos = std::remove_if(value.begin(),
-                    value.end(), [&value](char c) { return (c == ' ' || !std::isdigit(c)); });
+                        value.end(), [&value](char c) { return (c == ' ' || !std::isdigit(c)); });
                     value.erase(end_pos, value.end());
-                    extractedValue = std::stoi(value);
-                    ret = true;
+                    try
+                    {
+                        extractedValue = std::stoi(value);
+                        ret = true;
+                    }
+                    catch (...){}
                 }
             }
         }

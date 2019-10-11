@@ -5,13 +5,20 @@
 #ifndef beUtils_h__
 #define beUtils_h__
 
-// Device info.
+// C++.
 #include <vector>
 #include <set>
 #include <string>
 #include <map>
+
+// Device info.
 #include <DeviceInfo.h>
+
+// Local.
 #include <RadeonGPUAnalyzerBackend/Include/beDataTypes.h>
+#include <RadeonGPUAnalyzerBackend/Include/beInclude.h>
+
+// Infra.
 #ifdef _WIN32
     #pragma warning(push)
     #pragma warning(disable:4309)
@@ -66,8 +73,14 @@ public:
     // Checks if file exists and is not empty.
     static bool IsFilePresent(const std::string& fileName);
 
+    // Returns true if the contents of the two given files is identical, and false otherwise.
+    static bool IsFilesIdentical(const std::string& fileName1, const std::string& fileName2);
+
     // Retrieves the file extension.
     static std::string GetFileExtension(const std::string& fileName);
+
+    // Reads a binary file into the vector.
+    static bool ReadBinaryFile(const std::string& fileName, std::vector<char>& content);
 
     // Print "cmdLine" to stdout if "doPrint" is true.
     static void PrintCmdLine(const std::string& cmdLine, bool doPrint);
@@ -85,6 +98,17 @@ public:
     // string comparison logic, and two gfx-notation names would be compared according to the
     // number (e.g. gfx900 is less than gfx902 and gfx902 is less than gfx906).
     static bool DeviceNameLessThan(const std::string& a, const std::string& b);
+
+    // Disassembles the given Code Object, sets the output variables with the entire disassembly
+    // and with the .text section disassembly. If shouldPrintCmd is set to true, the invocation
+    // command of the external process would be printed to the console.
+    static bool DisassembleCodeObject(const std::string& coFileName, bool shouldPrintCmd,
+        std::string& disassemblyAll, std::string& disassemblyText, std::string& errorMsg);
+
+    // Extracts statistics from a given Code Object's disassembly.
+    // Returns true on success and false otherwise.
+    static bool ExtractCodeObjectStatistics(const std::string& disassemblyWhole ,
+        std::map<std::string, beKA::AnalysisData>& data);
 
 private:
     // No instances for this class, as this is a static utility class.

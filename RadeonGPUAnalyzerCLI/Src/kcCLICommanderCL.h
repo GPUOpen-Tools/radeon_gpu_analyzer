@@ -32,27 +32,31 @@ public:
     // Print the list of target devices.
     virtual bool PrintAsicList(const Config&) override;
 
-private: // functions
-
+private:
     bool Init(const Config& config, LoggingCallBackFunc_t callback);
     bool Compile(const Config& config);
 
-    /// output for all commands that requires compilation
+    // output for all commands that requires compilation
     void Analysis(const Config& config);
     void GetILText(const Config& config);
     void GetISAText(const Config& config);
     void GetBinary(const Config& config);
     void GetMetadata(const Config& config);
 
-    /// Returns the list of required kernels according to the user's configurations.
-    /// \param[in]  config - the configuration as given by the user.
-    /// \param[out] requiredKernels - a container of the required kernels.
-    void InitRequiredKernels(const Config& config, const std::set<std::string>& requiredDevices, std::vector<std::string>& requiredKernels);
+    // Returns the list of required kernels according to the user's configurations.
+    // \param[in]  config - the configuration as given by the user.
+    // \param[out] requiredKernels - a container of the required kernels.
+    void InitRequiredKernels(const Config& config, const std::vector<std::string>& requiredDevices, std::vector<std::string>& requiredKernels);
 
-private: //members
+    // Writes a statistics CSV file.
+    void WriteAnalysisFile(const Config& config, const std::string& kernelName,
+        const std::string& deviceName, const beKA::AnalysisData& analysis);
+
+private:
     std::set<string>             m_externalDevices;
     std::vector<GDT_GfxCardInfo> m_table;
     std::set<std::string>        m_asics;
+    std::vector<std::string>     m_asicsSorted;
 
     // Holds the name of the kernels to be built.
     std::vector<std::string> m_requiredKernels;

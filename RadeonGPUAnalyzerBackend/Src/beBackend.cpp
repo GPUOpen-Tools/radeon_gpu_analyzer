@@ -9,11 +9,6 @@
 #include <string>
 #include <cassert>
 
-#ifdef _WIN32
-    // DX is Windows only.
-    #include <D3D10ShaderObject.h>
-#endif
-
 #define KA_BACKEND_DLL_EXPORT
 
 // This is from ADL's include directory.
@@ -25,7 +20,7 @@
 #include <RadeonGPUAnalyzerBackend/Include/beProgramBuilderLightning.h>
 #include <RadeonGPUAnalyzerBackend/Include/beStringConstants.h>
 #ifdef _WIN32
-    #include <Include/beProgramBuilderDX.h>
+    #include <Include/beProgramBuilderDX11.h>
 #endif
 
 // Infra.
@@ -180,6 +175,12 @@ beStatus Backend::GetDeviceChipFamilyRevision(
 
     switch (tableEntry.m_asicType)
     {
+    case GDT_GFX10_1_2:
+        chipFamily = FAMILY_NV;
+        chipRevision = NV_NAVI14_M_A0;
+        retVal = beStatus_SUCCESS;
+        break;
+
     case GDT_GFX10_1_0:
         chipFamily = FAMILY_NV;
         chipRevision = NV_NAVI10_P_A0;

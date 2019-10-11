@@ -119,22 +119,15 @@ std::string rgMenuItemEntryListModel::GetEntryPointName(const std::string& displ
 {
     int index = 0;
 
-    for (const std::string& name : m_displayNames)
+    std::string value;
+    if (!displayEntrypointName.empty())
     {
-        if (name.compare(displayEntrypointName) == 0)
+        auto iter = std::find(m_displayNames.begin(), m_displayNames.end(), displayEntrypointName);
+        if (iter != m_displayNames.end())
         {
-            break;
+            value = *iter;
         }
-        index++;
     }
-
-    std::string value = QString().toStdString();
-    assert(index < m_entryPointNames.size());
-    if (index < m_entryPointNames.size())
-    {
-        value = m_entryPointNames[index];
-    }
-
     return value;
 }
 
@@ -422,23 +415,28 @@ void rgMenuFileItemOpenCL::SwitchToEntrypointByName(const std::string& displayNa
     GetEntrypointNames(entrypointNames);
 
     int selectedEntrypointIndex = 0;
+    bool foundEntryPoint = false;
     for (const std::string& currentEntry : entrypointNames)
     {
         if (displayName.compare(currentEntry) == 0)
         {
+            foundEntryPoint = true;
             break;
         }
         selectedEntrypointIndex++;
     }
 
     // Compute the model index for the selected entrypoint's row, and set the selection in the selection model.
-    QItemSelectionModel* pSelectionModel = ui.entrypointListView->selectionModel();
-    assert(pSelectionModel != nullptr);
-    if (pSelectionModel != nullptr)
+    if (foundEntryPoint)
     {
-        QModelIndex selectedRowIndex = m_pEntryListModel->GetEntryItemModel()->index(selectedEntrypointIndex, 0);
-        pSelectionModel->setCurrentIndex(selectedRowIndex, QItemSelectionModel::SelectCurrent);
-        m_lastSelectedEntryName = entrypointNames[selectedEntrypointIndex];
+        QItemSelectionModel* pSelectionModel = ui.entrypointListView->selectionModel();
+        assert(pSelectionModel != nullptr);
+        if (pSelectionModel != nullptr)
+        {
+            QModelIndex selectedRowIndex = m_pEntryListModel->GetEntryItemModel()->index(selectedEntrypointIndex, 0);
+            pSelectionModel->setCurrentIndex(selectedRowIndex, QItemSelectionModel::SelectCurrent);
+            m_lastSelectedEntryName = entrypointNames[selectedEntrypointIndex];
+        }
     }
 }
 

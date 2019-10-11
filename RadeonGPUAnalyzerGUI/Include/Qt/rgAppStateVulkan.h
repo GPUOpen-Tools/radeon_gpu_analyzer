@@ -60,6 +60,9 @@ public:
     // Get the global application settings view stylesheet for this state.
     virtual std::string GetGlobalSettingsViewStylesheet() const override;
 
+    // Get the build application settings view stylesheet for this state.
+    virtual std::string GetBuildSettingsViewStylesheet() const override;
+
 public slots:
     void HandleProjectLoaded(std::shared_ptr<rgProject>);
 

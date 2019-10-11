@@ -818,16 +818,40 @@ void kcCLICommanderLightning::RunCompileCommands(const Config& config, LoggingCa
 
     bool status = Compile(config);
 
-    // Perform Live Registers analysis if required.
-    if ((status || multiDevices) && !config.m_LiveRegisterAnalysisFile.empty())
+    // Block post-processing until quality of analysis engine improves when processing llvm disassembly.
+    bool shouldPostProcess = false;
+    bool isLiveregRequired = !config.m_LiveRegisterAnalysisFile.empty();
+    if (isLiveregRequired)
     {
-        PerformLiveRegAnalysis(config);
+        if (shouldPostProcess)
+        {
+            // Perform Live Registers analysis if required.
+            if (status || multiDevices)
+            {
+                PerformLiveRegAnalysis(config);
+            }
+        }
+        else
+        {
+            std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
+        }
     }
 
-    // Extract Control Flow Graph.
-    if ((status || multiDevices) && (!config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty()))
+    bool isCfgRequired = (!config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty());
+    if (isCfgRequired)
     {
-        ExtractCFG(config);
+        if (shouldPostProcess)
+        {
+            // Extract Control Flow Graph.
+            if (status || multiDevices)
+            {
+                ExtractCFG(config);
+            }
+        }
+        else
+        {
+            std::cout << STR_WARNING_CFG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
+        }
     }
 
     // Extract CodeObj metadata if required.

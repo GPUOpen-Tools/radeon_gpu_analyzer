@@ -84,6 +84,9 @@ public:
     // Add the files to the file menu.
     virtual bool PopulateMenu() = 0;
 
+    // Set the default widget for build settings view.
+    virtual void SetDefaultFocusWidget() const = 0;
+
     // Check if the given source file has been successfully disassembled.
     virtual bool IsGcnDisassemblyGenerated(const std::string& inputFilePath) const = 0;
 
@@ -316,6 +319,9 @@ public slots:
     // Handler to give focus to the previous view.
     void HandleFocusPreviousView();
 
+    // Handler to set the file menu as the current focus view.
+    void HandleFileMenuFocusInEvent();
+
 protected slots:
     // Handler invoked when a file within the file menu has been renamed.
     virtual void HandleFileRenamed(const std::string& oldFilepath, const std::string& newFilepath);
@@ -539,6 +545,9 @@ private:
 
     // Open an include file in the user's app of choice (or, system default).
     bool OpenIncludeFile(const std::string& fullFilePath);
+
+    // Set the build application settings stylesheet.
+    void SetBuildSettingsStylesheet(const std::string& stylesheet);
 
 protected:
     // A map of filename to the editor used to view the file.

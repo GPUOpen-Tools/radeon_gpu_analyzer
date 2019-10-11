@@ -24,6 +24,7 @@
 #include <QtCommon/Scaling/ScalingManager.h>
 
 // Local.
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgAppState.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildView.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildSettingsView.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildSettingsViewVulkan.h>
@@ -266,6 +267,9 @@ void rgBuildView::ConnectBuildViewSignals()
     isConnected = connect(m_pViewManager, &rgViewManager::BuildSettingsWidgetFocusInSignal, this, &rgBuildView::SetAPISpecificBorderColor);
     assert(isConnected);
 
+    isConnected = connect(m_pViewManager, &rgViewManager::BuildSettingsWidgetFocusInSignal, this, &rgBuildView::SetDefaultFocusWidget);
+    assert(isConnected);
+
     isConnected = connect(m_pViewManager, &rgViewManager::BuildSettingsWidgetFocusOutSignal, this, &rgBuildView::HandleSetFrameBorderBlack);
     assert(isConnected);
 }
@@ -367,6 +371,10 @@ bool rgBuildView::ConnectDisassemblyViewSignals()
             // Connect the file menu focus in signal.
             isConnected = connect(pMenu, &rgMenu::FileMenuFocusInEvent, m_pDisassemblyView, &rgIsaDisassemblyView::HandleFocusOutEvent);
             assert(isConnected);
+
+            // Connect the file menu focus in signal to set the current view focus value.
+            isConnected = connect(pMenu, &rgMenu::FileMenuFocusInEvent, this, &rgBuildView::HandleFileMenuFocusInEvent);
+            assert(isConnected);
         }
 
         // Connect the view manager focus in signals.
@@ -442,6 +450,15 @@ void rgBuildView::HandleFocusPreviousView()
     if (m_pViewManager != nullptr)
     {
         m_pViewManager->FocusPrevView();
+    }
+}
+
+void rgBuildView::HandleFileMenuFocusInEvent()
+{
+    assert(m_pViewManager != nullptr);
+    if (m_pViewManager != nullptr)
+    {
+        m_pViewManager->SetCurrentFocusedView(rgViewManager::rgCurrentFocusedIndex::FileMenuCurrent);
     }
 }
 
@@ -892,6 +909,29 @@ void rgBuildView::InitializeView()
 
     // Create and initialize views specific to the current mode only.
     InitializeModeSpecificViews();
+
+    // Apply the stylesheets for the build settings.
+    rgProjectAPI currentApi = rgConfigManager::Instance().GetCurrentAPI();
+    std::shared_ptr<rgFactory> pFactory = rgFactory::CreateFactory(currentApi);
+    assert(pFactory != nullptr);
+    if (pFactory != nullptr)
+    {
+        std::shared_ptr<rgAppState> pAppState = pFactory->CreateAppState();
+        assert(pAppState != nullptr);
+        if (pAppState != nullptr)
+        {
+            SetBuildSettingsStylesheet(pAppState->GetBuildSettingsViewStylesheet());
+        }
+    }
+}
+
+void rgBuildView::SetBuildSettingsStylesheet(const std::string& stylesheet)
+{
+    assert(m_pBuildSettingsView != nullptr);
+    if (m_pBuildSettingsView != nullptr)
+    {
+        m_pBuildSettingsView->setStyleSheet(stylesheet.c_str());
+    }
 }
 
 bool rgBuildView::HasSourceCodeEditors() const

@@ -52,7 +52,7 @@ XCopy "%OUTPUT_PATH%\%ARCH%\bin\%CONFIG%\%ARCH%\amdspv.exe" "%ZIPDIRRGA%\bin\%AR
 XCopy "%OUTPUT_PATH%\%ARCH%\bin\%CONFIG%\%ARCH%\spvgen.dll" "%ZIPDIRRGA%\bin\%ARCH%\spvgen.dll*"
 XCopy "%OUTPUT_PATH%\%ARCH%\bin\%CONFIG%\%ARCH%\shae.exe" "%ZIPDIRRGA%\bin\%ARCH%\shae.exe*"
 XCopy "%OUTPUT_PATH%\%ARCH%\bin\%CONFIG%\%ARCH%\RGADX11.exe" "%ZIPDIRRGA%\bin\%ARCH%\RGADX11.exe*"
-XCopy /e "%OUTPUT_PATH%\%ARCH%\bin\%CONFIG%\%ARCH%\ROCm" "%ZIPDIRRGA%\bin\%ARCH%\ROCm\"
+XCopy /e "%OUTPUT_PATH%\%ARCH%\bin\%CONFIG%\%ARCH%\LC" "%ZIPDIRRGA%\bin\%ARCH%\LC\"
 XCopy /i /e "%OUTPUT_PATH%\%ARCH%\bin\%CONFIG%\Documentation" "%ZIPDIRRGA%\bin\Documentation"
 
 REM Copy the system d3d compiler

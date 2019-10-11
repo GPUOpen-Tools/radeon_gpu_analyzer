@@ -33,6 +33,9 @@ public:
     rgMenuGraphics(QWidget* pParent);
     virtual ~rgMenuGraphics() = default;
 
+    // Reimplement mousePressEvent.
+    virtual void mousePressEvent(QMouseEvent* pEvent) override;
+
     // Initialize the view's default menu items.
     virtual void InitializeDefaultMenuItems(const std::shared_ptr<rgProjectClone> pProjectClone) override;
 

@@ -140,9 +140,10 @@ static bool IsInputValid(rga::rgDx12Config& config)
                     (config.geom.hlsl.empty() || config.vert.hlsl.compare(config.geom.hlsl) == 0) &&
                     (config.pixel.hlsl.empty() || config.vert.hlsl.compare(config.pixel.hlsl) == 0);
 
-                // If there is only a single hlsl input file, use that
+                // If there is only a single hlsl input file, and the user did not explicitly provide
+                // a file to read the root signature macro definition from, use that single hlsl input
                 // file as the source for compiling the root signature.
-                if (isSingleHlslFile)
+                if (isSingleHlslFile && config.rsMacroFile.empty())
                 {
                     config.rsMacroFile = config.vert.hlsl;
                 }
@@ -193,6 +194,30 @@ int main(int argc, char* argv[])
                     cxxopts::value<std::string>(config.vert.dxbcDisassembly))
                 ("vert-target", "Shader model for vertex shader (e.g. \"vs_5_0\" or \"vs_5_1\".", cxxopts::value<std::string>(config.vert.shaderModel))
 
+                // Hull.
+                ("hull", "Full path to the HLSL file where the hull shader is defined.", cxxopts::value<std::string>(config.hull.hlsl))
+                ("hull-dxbc", "Full path to the hull shader's compiled DXBC binary.", cxxopts::value<std::string>(config.hull.dxbc))
+                ("hull-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.hull.isa))
+                ("hull-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.hull.stats))
+                ("hull-entry", "Name of the entry point.", cxxopts::value<std::string>(config.hull.entryPoint))
+                ("hull-dxbc-dump", "Full path to output file for compiled hull shader DXBC binary.",
+                    cxxopts::value<std::string>(config.hull.dxbcOut))
+                ("hull-dxbc-dis", "Full path to output file for compiled hull shader DXBC disassembly.",
+                    cxxopts::value<std::string>(config.hull.dxbcDisassembly))
+                ("hull-target", "Shader model for hull shader (e.g. \"hs_5_0\" or \"hs_5_1\".", cxxopts::value<std::string>(config.hull.shaderModel))
+
+                // Domain.
+                ("domain", "Full path to the HLSL file where the domain shader is defined.", cxxopts::value<std::string>(config.domain.hlsl))
+                ("domain-dxbc", "Full path to the domain shader's compiled DXBC binary.", cxxopts::value<std::string>(config.domain.dxbc))
+                ("domain-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.domain.isa))
+                ("domain-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.domain.stats))
+                ("domain-entry", "Name of the entry point.", cxxopts::value<std::string>(config.domain.entryPoint))
+                ("domain-dxbc-dump", "Full path to output file for compiled domain shader DXBC binary.",
+                    cxxopts::value<std::string>(config.domain.dxbcOut))
+                ("domain-dxbc-dis", "Full path to output file for compiled domain shader DXBC disassembly.",
+                    cxxopts::value<std::string>(config.domain.dxbcDisassembly))
+                ("domain-target", "Shader model for domain shader (e.g. \"ds_5_0\" or \"ds_5_1\".", cxxopts::value<std::string>(config.domain.shaderModel))
+
                 // Geometry.
                 ("geom", "Full path to the HLSL file where the geometry shader is defined.", cxxopts::value<std::string>(config.geom.hlsl))
                 ("geom-dxbc", "Full path to the geometry shader's compiled DXBC binary.", cxxopts::value<std::string>(config.geom.dxbc))
@@ -202,7 +227,7 @@ int main(int argc, char* argv[])
                 ("geom-dxbc-dump", "Full path to output file for compiled geometry shader DXBC binary.",
                     cxxopts::value<std::string>(config.geom.dxbcOut))
                 ("geom-dxbc-dis", "Full path to output file for compiled geometry shader DXBC disassembly.",
-                    cxxopts::value<std::string>(config.pixel.dxbcDisassembly))
+                    cxxopts::value<std::string>(config.geom.dxbcDisassembly))
                 ("geom-target", "Shader model for geometry shader (e.g. \"gs_5_0\" or \"gs_5_1\".", cxxopts::value<std::string>(config.geom.shaderModel))
 
                 // Pixel.
@@ -216,8 +241,6 @@ int main(int argc, char* argv[])
                 ("pixel-dxbc-dis", "Full path to output file for compiled pixel shader DXBC disassembly.",
                         cxxopts::value<std::string>(config.pixel.dxbcDisassembly))
                 ("pixel-target", "Shader model for pixel shader (e.g. \"ps_5_0\" or \"ps_5_1\".", cxxopts::value<std::string>(config.pixel.shaderModel))
-
-
 
                 ("include", "Additional include directories for the front-end compiler.",
                     cxxopts::value<std::vector<std::string>>(config.includeDirs))
@@ -239,6 +262,9 @@ int main(int argc, char* argv[])
 
                 ("rs-bin", "The full path to the serialized root signature to be used in the compilation process.",
                     cxxopts::value<std::string>(config.rsSerialized))
+
+                ("pso", "The full path to the text file that describes the pipeline state.",
+                        cxxopts::value<std::string>(config.rsPso))
                 ;
 
             // Parse command line.

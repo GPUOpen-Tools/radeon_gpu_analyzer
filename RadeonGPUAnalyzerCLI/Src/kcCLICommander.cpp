@@ -213,15 +213,23 @@ bool kcCLICommander::InitRequestedAsicList(const std::vector<std::string>& devic
 
 beKA::beStatus kcCLICommander::WriteISAToFile(const std::string& fileName, const std::string& isaText)
 {
-    beStatus res = beStatus::beStatus_Invalid;
-
-    res = kcUtils::WriteTextFile(fileName, isaText, m_LogCallback) ?
+    beStatus ret = beStatus::beStatus_Invalid;
+    ret = kcUtils::WriteTextFile(fileName, isaText, m_LogCallback) ?
         beKA::beStatus_SUCCESS : beKA::beStatus_WriteToFile_FAILED;
-
-    if (res != beKA::beStatus_SUCCESS)
+    if (ret != beKA::beStatus_SUCCESS)
     {
         rgLog::stdErr << STR_ERR_FAILED_ISA_FILE_WRITE << fileName << std::endl;
     }
+    return ret;
+}
 
-    return res;
+bool kcCLICommander::LogCallBack(const std::string& theString) const
+{
+    bool ret = false;
+    if (m_LogCallback)
+    {
+        m_LogCallback(theString);
+        ret = true;
+    }
+    return ret;
 }

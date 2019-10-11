@@ -71,6 +71,24 @@ void rgBuildViewVulkan::ConnectBuildSettingsSignals()
     assert(isConnected);
 }
 
+void rgBuildViewVulkan::SetDefaultFocusWidget() const
+{
+    assert(m_pBuildSettingsView != nullptr);
+    if (m_pBuildSettingsView != nullptr)
+    {
+        m_pBuildSettingsView->SetInitialWidgetFocus();
+    }
+}
+
+void rgBuildViewVulkan::SetPSOEditorDefaultFocusWidget() const
+{
+    assert(m_pPipelineStateView != nullptr);
+    if (m_pPipelineStateView != nullptr)
+    {
+        m_pPipelineStateView->SetInitialWidgetFocus();
+    }
+}
+
 void rgBuildViewVulkan::SetAPISpecificBorderColor()
 {
     HandleSetFrameBorderRed();
@@ -118,6 +136,10 @@ bool rgBuildViewVulkan::ConnectMenuSignals()
 
         // Connect the file menu item focus previous view signal.
         isConnected = connect(pMenu, &rgMenuGraphics::FocusPrevView, this, &rgBuildView::HandleFocusPrevView);
+        assert(isConnected);
+
+        // Connect the file menu clicked signal.
+        isConnected = connect(pMenu, &rgMenuGraphics::MenuClicked, this, &rgBuildViewVulkan::HandlePipelineStateTreeFocusOut);
         assert(isConnected);
 
         // Connect the "Pipeline state" button in the file menu.
@@ -271,6 +293,9 @@ void rgBuildViewVulkan::HandlePipelineStateMenuItemClicked(rgMenuPipelineStateIt
         {
             m_pPipelineStateView->ResetSearch();
         }
+
+        // Set the PSO editor frame color to Vulkan red.
+        HandlePipelineStateTreeFocusIn();
     }
 }
 
@@ -591,7 +616,6 @@ void rgBuildViewVulkan::SaveCurrentFile()
         bool needDisassembleSpv = false;
 
         rgMenuFileItemGraphics* pCurrentMenuItem = m_pFileMenu->GetCurrentFileMenuItem();
-        assert(pCurrentMenuItem != nullptr);
         if (pCurrentMenuItem != nullptr)
         {
             needDisassembleSpv = (pCurrentMenuItem->GetFileType() == rgVulkanInputType::Spirv);
@@ -1709,6 +1733,9 @@ void rgBuildViewVulkan::HandlePipelineStateTreeFocusIn()
     assert(m_pPsoEditorFrame != nullptr);
     if (m_pPsoEditorFrame != nullptr)
     {
+        // Set the default widget focus.
+        m_pPipelineStateView->SetInitialWidgetFocus();
+
         // Change the color of the PSO editor frame border.
         QString styleSheetString = QString("#") + s_PSO_EDITOR_FRAME_NAME + QString(" { border: 1px solid red; background-color: transparent}");
         m_pPsoEditorFrame->setStyleSheet(styleSheetString);

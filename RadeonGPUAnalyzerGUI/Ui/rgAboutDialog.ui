@@ -70,7 +70,7 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Copyright © AMD Corporation, All rights reserved</string>
+        <string>Copyright © 2019 Advanced Micro Devices, Inc. All rights reserved</string>
        </property>
       </widget>
      </item>

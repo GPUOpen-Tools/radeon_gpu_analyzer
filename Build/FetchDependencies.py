@@ -7,7 +7,7 @@
 # If "latest" is specified, the latest commit will be checked out.
 # Otherwise, the repos will be updated to the commit specified in the "gitMapping" table.
 # If the required commit in the "gitMapping" is None, the repo will be updated to the latest commit.
- 
+
 import os
 import subprocess
 import sys
@@ -28,12 +28,10 @@ scriptRoot = os.path.dirname(os.path.realpath(__file__))
 # Assume workspace root is two folders up from scriptRoot (RGA/Build)
 workspace = os.path.abspath(os.path.normpath(os.path.join(scriptRoot, "../..")))
 
-# When running this script on Windows (and not under cygwin), we need to set the Shell=True argument to Popen and similar calls
+# When running this script on Windows (and not under cygwin), we need to set the shell=True argument to Popen and similar calls
 # Without this option, Jenkins builds fail to find the correct version of git
 SHELLARG = False
-# The environment variable SHELL is only set for Cygwin or Linux
-SHELLTYPE = os.environ.get('SHELL')
-if ( SHELLTYPE == None ):
+if ( sys.platform.startswith("win32")):
     # running on windows under default shell
     SHELLARG = True
 
@@ -91,15 +89,14 @@ gitMapping = {
     "common-src-CElf.git"                     : ["Common/Src/CElf",                  "master"],
     "common-src-DeviceInfo.git"               : ["Common/Src/DeviceInfo",            "master"],
     "common-src-DynamicLibraryModule.git"     : ["Common/Src/DynamicLibraryModule",  "master"],
-    "common-src-ShaderUtils.git"              : ["Common/Src/ShaderUtils",           "master"],
     "common-src-TSingleton.git"               : ["Common/Src/TSingleton",            "master"],
     "common-src-VersionInfo.git"              : ["Common/Src/VersionInfo",           "master"],
     "common-src-Vsprops.git"                  : ["Common/Src/Vsprops",               "master"],
     "common-src-Miniz.git"                    : ["Common/Src/Miniz",                 "master"],
     "common-src-Misc.git"                     : ["Common/Src/Misc",                  "master"],
-    "UpdateCheckAPI.git"                      : ["Common/Src/UpdateCheckAPI",        "1.0"],
+    "UpdateCheckAPI.git"                      : ["Common/Src/UpdateCheckAPI",        "master"],
  # QtCommon.
-    "QtCommon"                                : ["QtCommon",                         "rga-2.1"]
+    "QtCommon"                                : ["QtCommon",                         "rga-2.3"]
 }
 
 # The following section contains OS-specific dependencies that are downloaded and placed in the specified target directory.
@@ -132,14 +129,16 @@ for key in gitMapping:
     os.chdir(workspace)
     if os.path.isdir(path):
         # directory exists - get latest from git using pull
-        print("Directory " + path + " exists. \n\tUsing 'git pull' to get latest from " + source)
+        print("Directory " + path + " exists. \n\tUsing 'git fetch' to get latest from " + source)
         sys.stdout.flush()
         try:
-            subprocess.check_call(["git", "-C", path, "pull", "origin"], shell=SHELLARG)
+            subprocess.check_call(["git", "-C", path, "fetch", "origin"], shell=SHELLARG)
+        except subprocess.CalledProcessError as e:
+            print ("'git fetch' failed with return code: %d\n" % e.returncode)
+        try:
             subprocess.check_call(["git", "-C", path, "checkout", reqdCommit], shell=SHELLARG)
         except subprocess.CalledProcessError as e:
-            print ("'git pull' failed with returncode: %d\n" % e.returncode)
-            sys.exit(1)
+            print ("'git checkout' failed with return code: %d\n" % e.returncode)
         sys.stderr.flush()
         sys.stdout.flush()
     else:
@@ -150,7 +149,7 @@ for key in gitMapping:
             subprocess.check_call(["git", "clone", source, path], shell=SHELLARG)
             subprocess.check_call(["git", "-C", path, "checkout", reqdCommit], shell=SHELLARG)
         except subprocess.CalledProcessError as e:
-            print ("'git clone' failed with returncode: %d\n" % e.returncode)
+            print ("'git clone' failed with return code: %d\n" % e.returncode)
             sys.exit(1)
         sys.stderr.flush()
         sys.stdout.flush()

@@ -302,6 +302,8 @@ std::string rgAppStateOpenCL::GetGlobalSettingsViewStylesheet() const
         "rgGlobalSettingsView #fontFamilyComboBox:hover,"
         "rgGlobalSettingsView #fontSizeComboBox:focus,"
         "rgGlobalSettingsView #fontSizeComboBox:hover,"
+        "rgGlobalSettingsView #logFileLocationLineEdit:focus,"
+        "rgGlobalSettingsView #logFileLocationLineEdit:hover,"
         "rgGlobalSettingsView #includeFilesViewerLineEdit:focus,"
         "rgGlobalSettingsView #includeFilesViewerLineEdit:hover,"
         "rgGlobalSettingsView #includeFilesViewerBrowseButton:focus,"
@@ -319,5 +321,26 @@ std::string rgAppStateOpenCL::GetGlobalSettingsViewStylesheet() const
         "background: rgb(240, 240, 240);"
         "}";
     return STR_OPENCL_APP_SETTINGS_STYLESHEET;
+}
 
+std::string rgAppStateOpenCL::GetBuildSettingsViewStylesheet() const
+{
+    const char* STR_OPENCL_BUILD_SETTINGS_STYLESHEET =
+        "rgBuildSettingsView #predefinedMacrosLineEdit:focus,"
+        "rgBuildSettingsView #predefinedMacrosLineEdit:hover,"
+        "rgBuildSettingsView #includeDirectoriesLineEdit:focus,"
+        "rgBuildSettingsView #includeDirectoriesLineEdit:hover,"
+        "rgBuildSettingsView #compilerBinariesLineEdit:focus,"
+        "rgBuildSettingsView #compilerBinariesLineEdit:hover,"
+        "rgBuildSettingsView #compilerIncludesLineEdit:focus,"
+        "rgBuildSettingsView #compilerIncludesLineEdit:hover,"
+        "rgBuildSettingsView #additionalOptionsTextEdit:focus,"
+        "rgBuildSettingsView #additionalOptionsTextEdit:hover,"
+        "rgBuildSettingsView #compilerLibrariesLineEdit:focus,"
+        "rgBuildSettingsView #compilerLibrariesLineEdit:hover"
+        "{"
+        "border: 1px solid lightGreen;"
+        "background: rgb(240, 240, 240);"
+        "}";
+    return STR_OPENCL_BUILD_SETTINGS_STYLESHEET;
 }

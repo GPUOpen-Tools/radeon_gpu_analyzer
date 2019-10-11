@@ -39,6 +39,7 @@ chmod +x $OUTPUT_DIR/RadeonGPUAnalyzerGUI
 if [ "$AUTOMATION" = "-automation" ]; then
   cp -rf ../../../../RGA-Internal/Tests/data $OUTPUT_DIR/
   cp ../../../../RGA-Internal/Tests-GUI/run.py $OUTPUT_DIR/
+  chmod +x $OUTPUT_DIR/run.py
 fi
 
 # Copy the AMDToolsDownloader.

@@ -39,6 +39,7 @@ public:
         ccListAdapters,
         ccVersion,
         ccGenVersionInfoFile,
+        ccGenTemplateFile,
         ccUpdate
     };
 
@@ -77,6 +78,7 @@ public:
     std::string              m_FXC;                    ///< FXC path and arguments
     std::string              m_DumpMSIntermediate;     /// the location where to save the ms blob as text
     bool                     m_EnableShaderIntrinsics; /// true to enable DX shader intrinsics.
+    bool                     m_DxbcInputDx11;          /// true if input file should be treated as a DXBC binary.
     bool                     m_AMDILInput;             /// true when the input language is AMDIL rather than HLSL.
     int                      m_UAVSlot;                /// User-defined UAV slot for shader intrinsics.
 
@@ -87,6 +89,7 @@ public:
     std::string m_gsHlsl;   ///< Full path to the hlsl file where the geometry shader is defined.
     std::string m_psHlsl;   ///< Full path to the hlsl file where the pixel shader is defined.
     std::string m_csHlsl;   ///< Full path to the hlsl file where the compute shader is defined.
+    std::string m_allHlsl;  ///< Full path to the hlsl file to be used for any present stage for which no hlsl input was provided.
 
     std::string m_vsDxbc;   ///< Full path to the compiled DXBC binary where the vertex shader is defined.
     std::string m_hsDxbc;   ///< Full path to the compiled DXBC binary where the hull shader is defined.
@@ -109,17 +112,23 @@ public:
     std::string m_psEntryPoint; ///< Entry point name of pixel shader.
     std::string m_csEntryPoint; ///< Entry point name of compute shader.
 
-    std::string m_vsModel; ///< Shader model for vertex shader.
-    std::string m_hsModel; ///< Shader model for hull shader.
-    std::string m_dsModel; ///< Shader model for domain shader.
-    std::string m_gsModel; ///< Shader model for geometry shader.
-    std::string m_psModel; ///< Shader model for pixel shader.
-    std::string m_csModel; ///< Shader model for compute shader.
+    std::string m_vsModel;   ///< Shader model for vertex shader.
+    std::string m_hsModel;   ///< Shader model for hull shader.
+    std::string m_dsModel;   ///< Shader model for domain shader.
+    std::string m_gsModel;   ///< Shader model for geometry shader.
+    std::string m_psModel;   ///< Shader model for pixel shader.
+    std::string m_csModel;   ///< Shader model for compute shader.
+    std::string m_allModel;  ///< Shader model for all stages.
 
-    std::string m_rsBin;          ///< Full path to the binary file that contains the compiled root signature.
-    std::string m_rsHlsl;         ///< Full path to the hlsl file that contains the root signature definition.
-    std::string m_rsMacro;        ///< The name of the RootSignature macro in the HLSL code.
-    std::string m_rsMacroVersion; ///< Version of the hlsl-defined root signature.
+    std::string m_psoDx12;          ///< Full path to the pipeline state description file (graphics only).
+    std::string m_psoDx12Template;  ///< Full path to where to save the template pipeline state description file.
+    std::string m_rsBin;            ///< Full path to the binary file that contains the compiled root signature.
+    std::string m_rsHlsl;           ///< Full path to the hlsl file that contains the root signature definition.
+    std::string m_rsMacro;          ///< The name of the RootSignature macro in the HLSL code.
+    std::string m_rsMacroVersion;   ///< Version of the hlsl-defined root signature.
+    std::string m_dxcPath;          ///< Full path to DXC (provided by user through plug&play feature).
+    std::string m_dxcOpt;           ///< Additional options to be passed to DXC when performing front-end compilation.
+
 
     // Vulkan.
     std::string              m_programOutputDir;     ///< Output directory for the compiler.

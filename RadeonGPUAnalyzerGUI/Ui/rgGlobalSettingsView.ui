@@ -166,6 +166,9 @@
          <height>25</height>
         </size>
        </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: white;</string>
+       </property>
        <property name="text">
         <string>Always use auto-generated project names</string>
        </property>
@@ -374,7 +377,7 @@
        </property>
       </spacer>
      </item>
-     <item row="16" column="0" colspan="4">
+     <item row="16" column="0" colspan="3">
       <widget class="QLabel" name="inputFilesLabel">
        <property name="minimumSize">
         <size>

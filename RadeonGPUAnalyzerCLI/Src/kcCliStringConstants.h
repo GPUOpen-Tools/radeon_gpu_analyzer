@@ -43,6 +43,8 @@ const char* const STR_ERR_CANNOT_OPEN_FILE_FOR_WRITE_B = " for write.";
 const char* const STR_ERR_CANNOT_LOCATE_LIVE_REG_ANALYZER = "Error: cannot locate the live register analyzer.";
 const char* const STR_ERR_CANNOT_LAUNCH_LIVE_REG_ANALYZER = "Error: cannot launch the live register analyzer.";
 const char* const STR_ERR_CANNOT_LAUNCH_CFG_ANALYZER = "Error: cannot launch the control graph generator.";
+const char* const STR_ERR_LIVEREG_WITHOUT_ISA = "Error: cannot perform live register analysis without generating ISA disassembly (use --isa option).";
+const char* const STR_ERR_CFG_WITHOUT_ISA = "Error: cannot generate control flow graph without generating ISA disassembly (use --isa option).";
 const char* const STR_ERR_CANNOT_FIND_ISA_FILE = "Error: ISA file not found.";
 const char* const STR_ERR_CANNOT_PERFORM_LIVE_REG_ANALYSIS = "Error: failed to perform live register analysis.";
 const char* const STR_ERR_CANNOT_EXTRACT_CFG = "Error: failed to extract control flow graph.";
@@ -69,6 +71,7 @@ const char* const STR_ERR_COULD_NOT_DETECT_TARGET = "Error: could not detect tar
 const char* const STR_ERR_SINGLE_TARGET_GPU_EXPECTED = "Error: this mode only supports single target GPU.";
 const char* const STR_ERR_AMBIGUOUS_TARGET = "Error: ambiguous target GPU name -> ";
 const char* const STR_ERR_NO_KERNELS_FOR_ANALYSIS = "Error: no kernels provided for analysis.";
+const char* const ERROR_FAILED_TO_EXTRACT_CODE_OBJECT_STATS = "Error: failed to extract statistics from Code Object for ";
 const char* const STR_ERR_OPENCL_CANNOT_FIND_KERNEL = "Error: cannot find OpenCL kernel: ";
 const char* const STR_ERR_LIST_ADAPTERS_FAILED = "Error: failed to get the list of display adapters installed on this system.";
 const char* const STR_ERR_SET_ADAPTER_FAILED = "Error: failed to set display adapter with provided ID.";
@@ -121,6 +124,7 @@ const char* const STR_ERR_VULKAN_CANNOT_DETECT_INPUT_FILE_BY_EXT_2 = "Error: can
                                                                      " Use --hlsl, --spv or --spv-txt option to specify the Vulkan input type.";
 const char* const STR_ERR_VULKAN_NO_PIPELINE_STAGE_FOR_SPV_EXEC_MODEL = "Error: failed to find pipeline stage for SPIR-V Execution Model.";
 const char* const STR_ERR_VULKAN_FILE_IS_NOT_SPV_BINARY = "Error: specified file is not a SPIR-V binary: ";
+const char* const STR_ERR_VULKAN_GPSO_OPTION_NOT_SUPPORTED = "Error: invalid option --gpso - not supported by this mode. Did you mean --pso?";
 const char* const STR_ERR_FAILED_GENERATE_VERSION_INFO_FILE = "Error: failed to generate the Version Info file.";
 const char* const STR_ERR_FAILED_GENERATE_VERSION_INFO_HEADER = "Error: failed to generate version info header.";
 const char* const STR_ERR_FAILED_GENERATE_VERSION_INFO_FILE_ROCM_CL = "Error: failed to generate version info for ROCm.";
@@ -149,8 +153,9 @@ const char* const STR_ERR_FAILED_TO_CONSTRUCT_CFG_OUTPUT_FILE = "Error: failed t
 static const char* STR_WRN_VULKAN_FAILED_SET_ENV_VAR_A = "Warning: failed to set the ";
 static const char* STR_WRN_VULKAN_FAILED_SET_ENV_VAR_B = "environment variable.";
 static const char* STR_WRN_VULKAN_FALLBACK_TO_VK_OFFLIINE_MODE = "Warning: falling back to building using Vulkan offline mode (-s vk-spv-offline). The generated ISA disassembly and HW resource usage information might be inaccurate. To get the most accurate results, adjust the pipeline state to match the shaders and rebuild.";
-static const char* STR_WARNING_LIVEREG_NOT_SUPPORTED_TO_NAVI = "Warning: live register analysis is not supported for Navi in this version, skipping.";
-static const char* STR_WARNING_CFG_NOT_SUPPORTED_TO_NAVI = "Warning: control-flow generations is not supported for Navi in this version, skipping.";
+static const char* STR_WARNING_LIVEREG_NOT_SUPPORTED = "Warning: live register analysis is disabled in this mode ";
+static const char* STR_WARNING_CFG_NOT_SUPPORTED = "Warning: control-flow generation is disabled in this mode ";
+static const char* STR_WARNING_SKIPPING = "- skipping.";
 
 // Info.
 static const char* STR_INFO_USING_CUSTOM_ICD_FILE = "Info: forcing the Vulkan runtime to load a custom ICD: ";
@@ -201,7 +206,7 @@ const char* const STR_INFO_CONSTRUCTING_INSTRUCTION_CFG_B = " shader...";
 #define KA_CLI_STR_PRECOMPILING_A "Pre-compiling "
 #define KA_CLI_STR_PRECOMPILING_B " shader file "
 #define KA_CLI_STR_PRECOMPILING_C " to SPIR-V binary"
-#define KA_CLI_STR_STARTING_LIVEREG "Performing livereg analysis"
+#define KA_CLI_STR_STARTING_LIVEREG "Performing live register analysis"
 #define KA_CLI_STR_STARTING_CFG "Extracting control flow graph"
 #define KA_CLI_STR_EXTRACTING_ISA "Extracting ISA for "
 #define KA_CLI_STR_EXTRACTING_BIN "Extracting Binary for "
@@ -235,11 +240,12 @@ const char* const STR_INFO_CONSTRUCTING_INSTRUCTION_CFG_B = " shader...";
 #define KC_STR_DEFAULT_ISA_EXT "amdisa"
 #define KC_STR_DEFAULT_AMD_IL_EXT "amdil"
 #define KC_STR_DEFAULT_LLVM_IR_EXT "llvmir"
-#define KC_STR_DEFAULT_LIVEREG_SUFFIX "regs"
+#define KC_STR_DEFAULT_LIVEREG_SUFFIX "livereg"
 #define KC_STR_DEFAULT_LIVEREG_EXT "txt"
 #define KC_STR_DEFAULT_CFG_SUFFIX "cfg"
 #define KC_STR_DEFAULT_CFG_EXT "dot"
 #define KC_STR_DEFAULT_BIN_EXT "bin"
+#define KC_STR_DEFAULT_BIN_SUFFIX "binary"
 #define KC_STR_DEFAULT_METADATA_EXT "amdMetadata"
 #define KC_STR_DEFAULT_DEBUG_IL_EXT "amdDebugil"
 #define KC_STR_DEFAULT_DXASM_EXT "dxasm"
@@ -251,6 +257,7 @@ const char* const STR_INFO_CONSTRUCTING_INSTRUCTION_CFG_B = " shader...";
 
 // Default file names.
 #define KC_STR_DEFAULT_LIVEREG_OUTPUT_FILE_NAME "livereg"
+#define KC_STR_DEFAULT_IL_OUTPUT_FILE_NAME "il"
 #define KC_STR_DEFAULT_ISA_OUTPUT_FILE_NAME "isa"
 #define KC_STR_DEFAULT_ISA_PREPROCESSED_OUTPUT_FILE_NAME "preprocessed_isa"
 

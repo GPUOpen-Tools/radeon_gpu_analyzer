@@ -61,6 +61,21 @@ void rgSettingsButtonsView::ConnectSignals()
     // Save settings button.
     isConnected = connect(this->ui.saveSettingsButton, &QPushButton::clicked, this, &rgSettingsButtonsView::HandleSaveSettingsButtonClick);
     assert(isConnected);
+
+    m_pRestoreSettingsAction = new QAction(tr(STR_RESTORE_DEFAULT_SETTINGS), this);
+    assert(m_pRestoreSettingsAction != nullptr);
+    if (m_pRestoreSettingsAction != nullptr)
+    {
+        // Configure the hot key for the Restore default settings action.
+        m_pRestoreSettingsAction->setShortcut(QKeySequence(gs_RESTORE_DEFAULT_SETTINGS));
+
+        // Connect the handler for the "Restore default settings" button hot key action.
+        isConnected = connect(m_pRestoreSettingsAction, &QAction::triggered, this, &rgSettingsButtonsView::HandleRestoreDefaultSettingsButtonClick);
+        assert(isConnected);
+
+        // Add a hot key action to the button.
+        ui.defaultSettingsPushButton->addAction(m_pRestoreSettingsAction);
+    }
 }
 
 

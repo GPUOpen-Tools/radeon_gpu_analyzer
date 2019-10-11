@@ -15,6 +15,9 @@ struct OpenCLOptions : public beKA::CompileOptions
 
     /// Set of devices for compilation.
     std::set<std::string> m_selectedDevices;
+
+    /// Vector of devices for compilation - sorted.
+    std::vector<std::string> m_selectedDevicesSorted;
 };
 
 /// Compiler package paths: bin, include and lib.

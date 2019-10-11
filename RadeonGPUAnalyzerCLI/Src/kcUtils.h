@@ -287,6 +287,24 @@ public:
     // Returns true if the target is of the Vega generation and false otherwise.
     static bool IsVegaTarget(const std::string& targetName);
 
+    // Adjust base file name for binary output file.
+    static std::string AdjustBaseFileNameBinary(const std::string& userInputFileName, const std::string& device);
+
+    // Adjust base file name for ISA output file.
+    static std::string AdjustBaseFileNameIsaDisassembly(const std::string& userInputFileName, const std::string& device);
+
+    // Adjust base file name for IL disassembly output file.
+    static std::string AdjustBaseFileNameIlDisassembly(const std::string& userInputFileName, const std::string& device);
+
+    // Adjust base file name for statistics output file.
+    static std::string AdjustBaseFileNameStats(const std::string& userInputFileName, const std::string& device);
+
+    // Adjust base file name for live register analysis output file.
+    static std::string AdjustBaseFileNameLivereg(const std::string& userInputFileName, const std::string& device);
+
+    // Adjust base file name for cfg output file.
+    static std::string AdjustBaseFileNameCfg(const std::string& userInputFileName, const std::string& device);
+
 private:
     // This is a static class (no instances).
     kcUtils(const kcUtils& other);

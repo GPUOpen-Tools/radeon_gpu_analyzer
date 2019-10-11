@@ -50,4 +50,7 @@ private:
 
     // The generated interface view object.
     Ui::rgSettingsButtonsView ui;
+
+    // The action used to Restore settings.
+    QAction* m_pRestoreSettingsAction = nullptr;
 };

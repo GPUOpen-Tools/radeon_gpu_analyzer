@@ -10,6 +10,7 @@
 #include <sstream>
 #include <locale>
 #include <codecvt>
+#include <vector>
 
 // Local.
 #include <rgDx12Frontend.h>
@@ -32,18 +33,24 @@ namespace rga
     static const char* STR_ERROR_DXBC_READ_FAILURE = "Error: failed to read input DXBC binary: ";
     static const char* STR_ERROR_EXTRACT_COMPUTE_SHADER_STATS_FAILURE = "Error: failed to extract compute shader statistics.";
     static const char* STR_ERROR_EXTRACT_COMPUTE_SHADER_DISASSEMBLY_FAILURE = "Error: failed to extract compute shader disassembly.";
-    static const char* STR_ERROR_EXTRACT_GRAPHICS_SHADER_STATS_FAILURE_A = "Error: failed to extract ";
+    static const char* STR_ERROR_EXTRACT_GRAPHICS_SHADER_OUTPUT_FAILURE_A = "Error: failed to extract ";
     static const char* STR_ERROR_EXTRACT_GRAPHICS_SHADER_STATS_FAILURE_B = " shader statistics.";
+    static const char* STR_ERROR_EXTRACT_GRAPHICS_SHADER_DISASSEMBLY_FAILURE_B = " shader disassembly.";
     static const char* STR_ERROR_FRONT_END_COMPILATION_FAILURE = "Error: front-end compilation of hlsl to DXBC failed.";
     static const char* STR_ERROR_FAILED_TO_FIND_DX12_ADAPTER = "Error: failed to find a DX12 display adapter.";
+    static const char* STR_ERROR_FAILED_TO_CREATE_GRAPHICS_PIPELINE = "Error: failed to create graphics pipeline.";
+    static const char* STR_ERROR_GPSO_FILE_PARSE_FAILED = "Error: failed to parse graphics pipeline description file.";
+    static const char* STR_ERROR_RS_FILE_READ_FAILED = "Error: failed to read binary file for root signature: ";
+    static const char* STR_ERROR_RS_FILE_COMPILE_FAILED = "Error: failed to compile root signature after reading binary data from file: ";
     static const char* STR_INFO_EXTRACT_COMPUTE_SHADER_STATS = "Extracting compute shader statistics...";
     static const char* STR_INFO_EXTRACT_COMPUTE_SHADER_DISASSEMBLY = "Extracting compute shader disassembly...";
-    static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_STATS_A = "Extracting ";
+    static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_DISASSEMBLY = " shader disassembly...";
+    static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_OUTPUT_A = "Extracting ";
     static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_STATS_B = " shader statistics...";
     static const char* STR_INFO_EXTRACT_COMPUTE_SHADER_STATS_SUCCESS = "Compute shader statistics extracted successfully.";
     static const char* STR_INFO_EXTRACT_COMPUTE_SHADER_DISASSEMBLY_SUCCESS = "Compute shader disassembly extracted successfully.";
     static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_STATS_SUCCESS = " shader statistics extracted successfully.";
-
+    static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_DISASSEMBLY_SUCCESS = " shader disassembly extracted successfully.";
 
     // *** CONSTANTS - END ***
 
@@ -274,7 +281,7 @@ namespace rga
     {
         bool ret = false;
 
-        if (!config.rsMacroFile.empty())
+        if (!config.rsMacroFile.empty() && !config.rsMacro.empty())
         {
             // Read the content of the HLSL file.
             std::string hlslText;
@@ -345,7 +352,7 @@ namespace rga
             else
             {
                 errorMsg = STR_ERROR_SHADER_COMPILATION_FAILURE;
-                errorMsg.append("compute");
+                errorMsg.append("compute\n");
             }
         }
         else
@@ -443,7 +450,7 @@ namespace rga
             else
             {
                 errorMsg = STR_ERROR_SHADER_COMPILATION_FAILURE;
-                errorMsg.append("vertex.");
+                errorMsg.append("vertex\n");
             }
         }
         else if(!config.vert.dxbc.empty())
@@ -471,7 +478,7 @@ namespace rga
             else
             {
                 errorMsg = STR_ERROR_SHADER_COMPILATION_FAILURE;
-                errorMsg.append("hull.");
+                errorMsg.append("hull\n");
             }
         }
         else if (!config.hull.dxbc.empty())
@@ -499,7 +506,7 @@ namespace rga
             else
             {
                 errorMsg = STR_ERROR_SHADER_COMPILATION_FAILURE;
-                errorMsg.append("domain.");
+                errorMsg.append("domain\n");
             }
         }
         else if (!config.domain.dxbc.empty())
@@ -527,7 +534,7 @@ namespace rga
             else
             {
                 errorMsg = STR_ERROR_SHADER_COMPILATION_FAILURE;
-                errorMsg.append("geometry.");
+                errorMsg.append("geometry\n");
             }
         }
         else if (!config.geom.dxbc.empty())
@@ -555,7 +562,7 @@ namespace rga
             else
             {
                 errorMsg = STR_ERROR_SHADER_COMPILATION_FAILURE;
-                errorMsg.append("pixel.");
+                errorMsg.append("pixel\n");
             }
         }
         else if (!config.pixel.dxbc.empty())
@@ -689,6 +696,14 @@ namespace rga
                         rootSignatureBuffer.size(), IID_PPV_ARGS(&pPso->pRootSignature));
                     assert(pPso->pRootSignature != nullptr);
                     ret = pPso->pRootSignature != nullptr;
+                    if (pPso->pRootSignature == nullptr)
+                    {
+                        std::cout << STR_ERROR_RS_FILE_COMPILE_FAILED << config.rsSerialized << std::endl;
+                    }
+                }
+                else
+                {
+                    std::cout << STR_ERROR_RS_FILE_READ_FAILED << config.rsSerialized << std::endl;
                 }
             }
         }
@@ -875,8 +890,21 @@ namespace rga
             if (shaderResults.pDisassembly != nullptr)
             {
                 // GCN ISA Disassembly.
+                std::cout << STR_INFO_EXTRACT_GRAPHICS_SHADER_OUTPUT_A << stageName <<
+                    STR_INFO_EXTRACT_GRAPHICS_SHADER_DISASSEMBLY << std::endl;
                 ret = rgDx12Utils::WriteTextFile(shaderConfig.isa, shaderResults.pDisassembly);
                 assert(ret);
+
+                // Report the result to the user.
+                if (ret)
+                {
+                    std::cout << stageName << STR_INFO_EXTRACT_GRAPHICS_SHADER_DISASSEMBLY_SUCCESS << std::endl;
+                }
+                else
+                {
+                    std::cout << STR_ERROR_EXTRACT_GRAPHICS_SHADER_OUTPUT_FAILURE_A << stageName <<
+                        STR_ERROR_EXTRACT_GRAPHICS_SHADER_DISASSEMBLY_FAILURE_B << std::endl;
+                }
             }
             else
             {
@@ -888,7 +916,7 @@ namespace rga
         if (!shaderConfig.stats.empty())
         {
             // Save results to file: statistics.
-            std::cout << STR_INFO_EXTRACT_GRAPHICS_SHADER_STATS_A << stageName <<
+            std::cout << STR_INFO_EXTRACT_GRAPHICS_SHADER_OUTPUT_A << stageName <<
                 STR_INFO_EXTRACT_GRAPHICS_SHADER_STATS_B << std::endl;
             bool isStatsSaved = SerializeDx12StatsGraphics(shaderResults, shaderConfig.stats);
             assert(isStatsSaved);
@@ -901,7 +929,7 @@ namespace rga
             }
             else
             {
-                std::cout << STR_ERROR_EXTRACT_GRAPHICS_SHADER_STATS_FAILURE_A << stageName <<
+                std::cout << STR_ERROR_EXTRACT_GRAPHICS_SHADER_OUTPUT_FAILURE_A << stageName <<
                     STR_ERROR_EXTRACT_GRAPHICS_SHADER_STATS_FAILURE_B << std::endl;
             }
         }
@@ -921,195 +949,106 @@ namespace rga
             // Create the graphics pipeline state.
             ID3D12PipelineState* pGraphicsPso = nullptr;
 
-#ifdef D3D12_HELLO_WORLD_TEST
-            // Root signature.
-            D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
-            rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-            ComPtr<ID3D12RootSignature> rootSignature;
-            ComPtr<ID3DBlob> signature;
-            ComPtr<ID3DBlob> error;
-            HRESULT hrRs = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
-            assert(SUCCEEDED(hrRs));
-            hrRs = m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-            assert(SUCCEEDED(hrRs));
-
-            // Input layout.
-            D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+            // For graphics, we must use a .gpso file.
+            bool isPsoFileParsed = false;
+            if (!config.rsPso.empty())
             {
-                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-            };
-
-            // Edit the state default.
-            pPso->InputLayout = { inputElementDescs, _countof(inputElementDescs) };
-            pPso->pRootSignature = rootSignature.Get();
-            pPso->DepthStencilState.DepthEnable = FALSE;
-            pPso->DepthStencilState.StencilEnable = FALSE;
-
-#elif D3D12_NBODY_TEST
-
-            D3D12_DESCRIPTOR_RANGE1 ranges[1] = {};
-            ranges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-            ranges[0].NumDescriptors = 1;
-            ranges[0].BaseShaderRegister = 0;
-            ranges[0].RegisterSpace = 0;
-            ranges[0].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
-            ranges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-            // CBV.
-            D3D12_ROOT_PARAMETER1 rootParameters[2] = {};
-            rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-            rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-            rootParameters[0].Descriptor.ShaderRegister = 0;
-            rootParameters[0].Descriptor.RegisterSpace = 0;
-            rootParameters[0].Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC;
-
-            // Descriptor table.
-            rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-            rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-            rootParameters[1].DescriptorTable.pDescriptorRanges = &ranges[0];
-
-            D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-            rootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-            rootSignatureDesc.Desc_1_1.NumParameters = 2;
-            rootSignatureDesc.Desc_1_1.pParameters = rootParameters;
-            rootSignatureDesc.Desc_1_1.NumStaticSamplers = 0;
-            rootSignatureDesc.Desc_1_1.pStaticSamplers = nullptr;
-            rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-            ComPtr<ID3DBlob> signature;
-            ComPtr<ID3DBlob> error;
-            ComPtr<ID3D12RootSignature> rootSignature;
-            HRESULT hrRs = D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
-            assert(SUCCEEDED(hrRs));
-            hrRs = m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-            assert(SUCCEEDED(hrRs));
-
-            // Input layout.
-            D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+                // Load the .gpso file that the user provided, and extract the
+                // relevant pipeline state.
+                isPsoFileParsed = rgDx12Utils::ParseGpsoFile(config.rsPso, *pPso);
+                assert(isPsoFileParsed);
+            }
+            else
             {
-                { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-            };
+                // Use a default pso.
+                assert(false);
+                std::cout << "Warning: no pipeline state file received. Use the --gpso switch to provide a graphics pipeline description." << std::endl;
+            }
 
-            // Edit the state default.
-            pPso->InputLayout = { inputElementDescs, _countof(inputElementDescs) };
-            pPso->pRootSignature = rootSignature.Get();
-            //pPso->BlendState.RenderTarget[0].BlendEnable = TRUE;
-            //pPso->BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-            //pPso->BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
-            //pPso->BlendState.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ZERO;
-            //pPso->BlendState.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-
-            //pPso->DepthStencilState.DepthEnable = FALSE;
-            //pPso->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-
-//            pPso->SampleMask = UINT_MAX;
-            pPso->PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-            //pPso->NumRenderTargets = 1;
-            //pPso->RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-            //pPso->DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-            //pPso->SampleDesc.Count = 1;
-
-#elif D3D12_TEST_XGPU
-
-            //// Root signature.
-            //D3D12_DESCRIPTOR_RANGE1 ranges[3] = {};
-            //D3D12_ROOT_PARAMETER1 rootParameters[3] = {};
-
-            //// SRV - depth texture.
-            //ranges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-            //ranges[0].NumDescriptors = 1;
-            //ranges[0].BaseShaderRegister = 0;
-            //ranges[0].RegisterSpace = 0;
-            //ranges[0].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-            //ranges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-            //// CBV.
-            //ranges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-            //ranges[1].NumDescriptors = 1;
-            //ranges[1].BaseShaderRegister = 0;
-            //ranges[1].RegisterSpace = 0;
-            //ranges[1].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-            //ranges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-            //// Sampler.
-            //ranges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-            //ranges[2].NumDescriptors = 1;
-            //ranges[2].BaseShaderRegister = 0;
-            //ranges[2].RegisterSpace = 0;
-            //ranges[2].Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-            //ranges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-            //// Descriptor tables.
-            //rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            //rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-            //rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
-            //rootParameters[0].DescriptorTable.pDescriptorRanges = &ranges[0];
-
-            //rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            //rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-            //rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-            //rootParameters[1].DescriptorTable.pDescriptorRanges = &ranges[1];
-
-            //rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            //rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-            //rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
-            //rootParameters[2].DescriptorTable.pDescriptorRanges = &ranges[2];
-
-            //D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-            //rootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-            //rootSignatureDesc.Desc_1_1.NumParameters = 3;
-            //rootSignatureDesc.Desc_1_1.pParameters = rootParameters;
-            //rootSignatureDesc.Desc_1_1.NumStaticSamplers = 0;
-            //rootSignatureDesc.Desc_1_1.pStaticSamplers = nullptr;
-            //rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-            //ComPtr<ID3DBlob> signature;
-            //ComPtr<ID3DBlob> error;
-            //ComPtr<ID3D12RootSignature> rootSignature;
-            //HRESULT hrRs = D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signature, &error);
-            //assert(SUCCEEDED(hrRs));
-            //hrRs = m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
-            //assert(SUCCEEDED(hrRs));
-
-            // Input layout.
-            D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+            if (isPsoFileParsed)
             {
-                { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-            };
+                // Check if the user provided a serialized root signature file.
+                bool isSerializedRootSignature = !config.rsSerialized.empty();
 
-            pPso->InputLayout = { inputElementDescs, _countof(inputElementDescs) };
-            //pPso->pRootSignature = rootSignature.Get();
-            pPso->PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-            //pPso->DSVFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
-            pPso->RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+                // Read the root signature from the file and recreate it.
+                if (isSerializedRootSignature)
+                {
+                    std::vector<char> rootSignatureBuffer;
+                    ret = rgDx12Utils::ReadBinaryFile(config.rsSerialized, rootSignatureBuffer);
+                    assert(ret);
+                    if (ret)
+                    {
+                        m_device.Get()->CreateRootSignature(0, rootSignatureBuffer.data(),
+                            rootSignatureBuffer.size(), IID_PPV_ARGS(&pPso->pRootSignature));
+                        assert(pPso->pRootSignature != nullptr);
+                        ret = pPso->pRootSignature != nullptr;
+                    }
+                }
+                else
+                {
+                    // If the root signature was already created, use it. Otherwise,
+                    // try to extract it from the DXBC binary after compiling the HLSL code.
+                    bool shouldExtractRootSignature = !config.rsMacro.empty();
 
-#endif
+                    // If the input is HLSL, we need to compile the root signature out of the HLSL file.
+                    // Otherwise, if the input is a DXBC binary and it has a root signature baked into it,
+                    // then the root signature would be automatically fetched from the binary, there is no
+                    // need to set it into the PSO's root signature field.
+                    ComPtr<ID3DBlob> compiledRs;
+                    ret = CompileRootSignature(config, compiledRs);
+                    if (ret)
+                    {
+                        // Create the root signature through the device and assign it to our PSO.
+                        std::vector<uint8_t> rootSignatureBuffer;
+                        rootSignatureBuffer.resize(compiledRs->GetBufferSize());
+                        memcpy(rootSignatureBuffer.data(), compiledRs->GetBufferPointer(),
+                            compiledRs->GetBufferSize());
+                        m_device.Get()->CreateRootSignature(0, rootSignatureBuffer.data(),
+                            rootSignatureBuffer.size(), IID_PPV_ARGS(&pPso->pRootSignature));
+                        assert(pPso->pRootSignature != nullptr);
+                        ret = pPso->pRootSignature != nullptr;
+                    }
+                }
 
-            HRESULT hr = m_device->CreateGraphicsPipelineState(pPso, IID_PPV_ARGS(&pGraphicsPso));
-            assert(SUCCEEDED(hr));
-            ret = SUCCEEDED(hr);
-
-            if (ret)
-            {
-                ret = m_backend.CompileGraphicsPipeline(pPso, results, errorMsg);
-                assert(ret);
+                // Create the graphics pipeline.
+                HRESULT hr = m_device->CreateGraphicsPipelineState(pPso, IID_PPV_ARGS(&pGraphicsPso));
+                assert(SUCCEEDED(hr));
+                ret = SUCCEEDED(hr);
 
                 if (ret)
                 {
-                    // Write the output files (for applicable stages).
-                    ret = WriteGraphicsShaderOutputFiles(config.vert, results.m_vertex, "vertex");
+                    ret = m_backend.CompileGraphicsPipeline(pPso, results, errorMsg);
                     assert(ret);
-                    ret = WriteGraphicsShaderOutputFiles(config.hull, results.m_hull, "hull");
-                    assert(ret);
-                    ret = WriteGraphicsShaderOutputFiles(config.domain, results.m_domain, "domain");
-                    assert(ret);
-                    ret = WriteGraphicsShaderOutputFiles(config.geom, results.m_geometry, "geometry");
-                    assert(ret);
-                    ret = WriteGraphicsShaderOutputFiles(config.pixel, results.m_pixel, "pixel");
-                    assert(ret);
+
+                    if (ret)
+                    {
+                        // Write the output files (for applicable stages).
+                        ret = WriteGraphicsShaderOutputFiles(config.vert, results.m_vertex, "vertex");
+                        assert(ret);
+                        ret = WriteGraphicsShaderOutputFiles(config.hull, results.m_hull, "hull");
+                        assert(ret);
+                        ret = WriteGraphicsShaderOutputFiles(config.domain, results.m_domain, "domain");
+                        assert(ret);
+                        ret = WriteGraphicsShaderOutputFiles(config.geom, results.m_geometry, "geometry");
+                        assert(ret);
+                        ret = WriteGraphicsShaderOutputFiles(config.pixel, results.m_pixel, "pixel");
+                        assert(ret);
+                    }
                 }
+                else
+                {
+                    std::stringstream msg;
+                    if (errorMsg.empty())
+                    {
+                        msg << std::endl;
+                    }
+                    msg << STR_ERROR_FAILED_TO_CREATE_GRAPHICS_PIPELINE << std::endl;
+                    errorMsg.append(msg.str());
+                }
+            }
+            else
+            {
+                std::cout << STR_ERROR_GPSO_FILE_PARSE_FAILED << std::endl;
             }
         }
         return ret;

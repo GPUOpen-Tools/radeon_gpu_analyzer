@@ -63,6 +63,38 @@ static const std::vector<std::string>  RGA_DISABLED_DEVICES = { };
 
 static bool GetRGATempDir(osDirectory & dir);
 
+static std::string AdjustBaseFileName(const std::string& userInputFileName, const std::string& device, const char* baseFileName)
+{
+    std::string ret = userInputFileName;
+    if (ret.empty())
+    {
+        // Generate a default file name if needed.
+        gtString  tempIsaFileName, isaFileExt;
+        tempIsaFileName << (std::string(KC_STR_DEFAULT_ISA_OUTPUT_FILE_NAME) + device).c_str();
+        isaFileExt << KC_STR_DEFAULT_ISA_EXT;
+        gtString isaOutputFileName = kcUtils::ConstructTempFileName(tempIsaFileName, isaFileExt);
+        ret = isaOutputFileName.asASCIICharArray();
+    }
+    else
+    {
+        // If the given path is a directory, generate the file in that directory.
+        gtString isaFileNameGtStr;
+        isaFileNameGtStr << userInputFileName.c_str();
+        osFilePath isaFilePath(isaFileNameGtStr);
+        if (isaFilePath.isDirectory())
+        {
+            gtString defaultIsaFileName;
+            defaultIsaFileName << baseFileName;
+
+            osDirectory dir(isaFilePath);
+            isaFilePath.setFileDirectory(dir);
+            isaFilePath.setFileName(defaultIsaFileName);
+            ret = isaFilePath.asString().asASCIICharArray();
+        }
+    }
+    return ret;
+}
+
 bool kcUtils::ValidateShaderFileName(const char* shaderType, const std::string& shaderFileName, std::stringstream& logMsg)
 {
     bool isShaderNameValid = true;
@@ -98,7 +130,6 @@ bool kcUtils::ValidateShaderOutputDir(const std::string& outputFileName, std::st
 
     return isShaderOutputDirValid;
 }
-
 
 bool kcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& baseOutputFileName, const std::string& defaultSuffix,
                                                      const std::string& defaultExt, const std::string& device,
@@ -1541,4 +1572,34 @@ bool kcUtils::IsVegaTarget(const std::string& targetName)
     // Token to identify Vega targets.
     static const char* VEGA_TARGET_TOKEN = "gfx9";
     return (targetName.find(VEGA_TARGET_TOKEN) != std::string::npos);
+}
+
+std::string kcUtils::AdjustBaseFileNameBinary(const std::string& userInputFileName, const std::string& device)
+{
+    return AdjustBaseFileName(userInputFileName, device, KC_STR_DEFAULT_BIN_SUFFIX);
+}
+
+std::string kcUtils::AdjustBaseFileNameIsaDisassembly(const std::string& userInputFileName, const std::string& device)
+{
+    return AdjustBaseFileName(userInputFileName, device, KC_STR_DEFAULT_ISA_OUTPUT_FILE_NAME);
+}
+
+std::string kcUtils::AdjustBaseFileNameIlDisassembly(const std::string& userInputFileName, const std::string& device)
+{
+    return AdjustBaseFileName(userInputFileName, device, KC_STR_DEFAULT_IL_OUTPUT_FILE_NAME);
+}
+
+std::string kcUtils::AdjustBaseFileNameStats(const std::string& userInputFileName, const std::string& device)
+{
+    return AdjustBaseFileName(userInputFileName, device, KC_STR_DEFAULT_STATS_SUFFIX);
+}
+
+std::string kcUtils::AdjustBaseFileNameLivereg(const std::string& userInputFileName, const std::string& device)
+{
+    return AdjustBaseFileName(userInputFileName, device, KC_STR_DEFAULT_LIVEREG_SUFFIX);
+}
+
+std::string kcUtils::AdjustBaseFileNameCfg(const std::string& userInputFileName, const std::string& device)
+{
+    return AdjustBaseFileName(userInputFileName, device, KC_STR_DEFAULT_CFG_SUFFIX);
 }

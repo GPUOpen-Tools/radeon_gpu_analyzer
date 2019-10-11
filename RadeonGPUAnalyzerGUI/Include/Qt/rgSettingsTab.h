@@ -51,11 +51,17 @@ public:
     // Save the pending changes without prompting the user.
     void SavePendingChanges();
 
+    // Select the next row in the settings list widget.
+    void SelectNextListWidgetItem(const int keyPressed);
+
     // Revert pending changes.
     void RevertPendingChanges();
 
     // Set the global application settings stylesheet.
     void SetGlobalSettingsStylesheet(const std::string& stylesheet);
+
+    // Set the build application settings stylesheet.
+    void SetBuildSettingsStylesheet(const std::string& stylesheet);
 
 signals:
     // Indicate whether the settings tab has pending changes.
@@ -119,6 +125,6 @@ private:
     // The global settings view.
     rgGlobalSettingsView* m_pGlobalSettingsView = nullptr;
 
-    // Flag used to store whether a signal was emited regarding pending changes.
+    // Flag used to store whether a signal was emitted regarding pending changes.
     bool m_hasPendingChanges = false;
 };

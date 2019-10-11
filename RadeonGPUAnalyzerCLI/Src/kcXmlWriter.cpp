@@ -55,7 +55,7 @@ static bool AddSupportedGPUInfo(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement
         {
             bool isLessThan = true;
             const char * STR_IPV6_IPV_7_IPV8_TOKEN = "Graphics";
-            const char * STR_NAVI_TOKEN = "Navi";
+            const char * STR_NAVI_TOKEN = "RDNA";
             const char * STR_VEGA_TOKEN = "Vega";
             auto genDevicePair1 = GetGenAndCodeNames(d1.first);
             auto genDevicePair2 = GetGenAndCodeNames(d2.first);

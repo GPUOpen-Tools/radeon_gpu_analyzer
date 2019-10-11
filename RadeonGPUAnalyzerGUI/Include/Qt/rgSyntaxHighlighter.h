@@ -48,7 +48,7 @@ struct hash<QChar>
 //   .
 //   .
 //
-class rgSyntaxHighlight : public QSyntaxHighlighter
+class rgSyntaxHighlighter : public QSyntaxHighlighter
 {
     Q_OBJECT
 
@@ -90,13 +90,13 @@ public:
     // -- Methods --
 
     // Constructors
-    rgSyntaxHighlight(QTextDocument *pDoc, rgSrcLanguage lang)
-        : rgSyntaxHighlight(pDoc, lang, GetDefaultStyle()) {}
+    rgSyntaxHighlighter(QTextDocument *pDoc, rgSrcLanguage lang)
+        : rgSyntaxHighlighter(pDoc, lang, GetDefaultStyle()) {}
 
-    rgSyntaxHighlight(QTextDocument *pDoc, rgSrcLanguage lang, const Style& style);
+    rgSyntaxHighlighter(QTextDocument *pDoc, rgSrcLanguage lang, const Style& style);
 
     // Destructor
-    ~rgSyntaxHighlight() = default;
+    ~rgSyntaxHighlighter() = default;
 
     // Change highlighting style
     void SetStyle(Style& style);

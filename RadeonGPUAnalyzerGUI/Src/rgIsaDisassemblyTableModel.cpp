@@ -619,9 +619,33 @@ void rgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selecte
                         clipboardText << delimiter;
                     }
 
-                    // Add the data to the clipboard string stream.
+                    // Get the cell data.
                     QModelIndex cellIndex = m_pIsaTableModel->index(rowIndex, columnIndex);
                     QVariant cellText = m_pIsaTableModel->data(cellIndex);
+
+                    // If the data is invalid, get it from somewhere else.
+                    if (!cellText.isValid())
+                    {
+                        // Check if the functional unit is set to "Branch".
+                        // If it is, get the data from Operands column from disassembled ISA Lines instead.
+                        QString cellTextString = m_pIsaTableModel->data(m_pIsaTableModel->index(rowIndex, static_cast<int>(rgIsaDisassemblyTableColumns::FunctionalUnit))).toString();
+                        if (cellTextString.compare("Branch") == 0)
+                        {
+                            std::shared_ptr<rgIsaLine> pIsaLine = m_disassembledIsaLines[rowIndex];
+                            assert(pIsaLine != nullptr);
+                            if (pIsaLine != nullptr)
+                            {
+                                std::shared_ptr<rgIsaLineInstruction> pInstructionLine = std::static_pointer_cast<rgIsaLineInstruction>(pIsaLine);
+                                assert(pInstructionLine != nullptr);
+                                if (pInstructionLine != nullptr)
+                                {
+                                    cellText = QString::fromStdString(pInstructionLine->m_operands);
+                                }
+                            }
+                        }
+                    }
+
+                    // Add the data to the clipboard string stream.
                     clipboardText << (prevColumnText = cellText.toString().toStdString());
                 }
             }

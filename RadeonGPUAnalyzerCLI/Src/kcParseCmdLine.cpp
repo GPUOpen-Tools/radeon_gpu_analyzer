@@ -89,6 +89,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("adapters", adaptersDesc.c_str())
             ("set-adapter", po::value<int>(&config.m_DXAdapter), setAdaptDesc.c_str())
             ("UAVSlot", po::value<int>(&config.m_UAVSlot), "This value should be in the range of [0,63].\nThe driver will use the slot to track which UAV is being used to specify the intrinsic. The UAV slot that is selected cannot be used for any other purposes.\nThis option is only relevant when AMD D3D11 Shader Intrinsics is enabled (specify --intrinsics).")
+            ("dxbc", "Treat input file as a DXBC binary.")
             ;
 
         po::options_description macroAndIncludeOpt("Macro and Include paths Options");
@@ -103,9 +104,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         clOpt.add_options()
             ("list-kernels", "List kernel functions.")
             ("metadata,m", po::value<string>(&config.m_MetadataFile), "Path to output Metadata file(s).\n"
-                                                                      "Requires --" KERNEL_OPTION ".")
-            ("kernel,k", po::value<string>(&config.m_Function), "Kernel to be compiled and analyzed. If not specified, all kernels will be targeted.\n")
-            ("OpenCLoption", po::value< vector<string> >(&config.m_OpenCLOptions), "OpenCL compiler options.  Repeatable.");
+                "Requires --" KERNEL_OPTION ".")
+                ("kernel,k", po::value<string>(&config.m_Function), "Kernel to be compiled and analyzed. If not specified, all kernels will be targeted. Note "
+                    "that this option is only relevant when the compiler can generate per-kernel data. When the runtime uses the updated compiler to generate "
+                    "a Code Object type binary, the ISA would be generated for the entire program, since the binary has no per-kernel code sections.\n")
+                    ("OpenCLoption", po::value< vector<string> >(&config.m_OpenCLOptions), "OpenCL compiler options.  Repeatable.");
 
         // Vulkan shader type.
         po::options_description pipelinedOpt("Input shader type");
@@ -163,55 +166,72 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         po::options_description dx12Opt("DirectX 12 mode options");
         dx12Opt.add_options()
             // HLSL.
-#ifdef _DX12_GRAPHICS_ENABLED
             ("vs", po::value<string>(&config.m_vsHlsl), "Full path to hlsl file where vertex shader is defined.")
             ("hs", po::value<string>(&config.m_hsHlsl), "Full path to hlsl file where hull shader is defined.")
             ("ds", po::value<string>(&config.m_dsHlsl), "Full path to hlsl file where domain shader is defined.")
             ("gs", po::value<string>(&config.m_gsHlsl), "Full path to hlsl file where geometry shader is defined.")
             ("ps", po::value<string>(&config.m_psHlsl), "Full path to hlsl file where pixel shader is defined.")
-#endif
             ("cs", po::value<string>(&config.m_csHlsl), "Full path to hlsl file where compute shader is defined.")
+            ("all-hlsl", po::value<string>(&config.m_allHlsl), "Full path to the hlsl file to be used for all stages. "
+                "You can use this option if all of your shaders are defined in the same hlsl file, to avoid repeating the --<stage> "
+                "argument. If you use this option in addition to --<stage> or --<stage>-blob, then the --<stage> or --<stage>-blob option "
+                "would override this option for stage <stage>.")
             // DXBC.
-#ifdef _DX12_GRAPHICS_ENABLED
-            ("vs-dxbc", po::value<string>(&config.m_vsDxbc), "Full path to compiled DXBC binary where vertex shader is found.")
-            ("hs-dxbc", po::value<string>(&config.m_hsDxbc), "Full path to compiled DXBC binary where hull shader is found.")
-            ("ds-dxbc", po::value<string>(&config.m_dsDxbc), "Full path to compiled DXBC binary where domain shader is found.")
-            ("gs-dxbc", po::value<string>(&config.m_gsDxbc), "Full path to compiled DXBC binary where geometry shader is found.")
-            ("ps-dxbc", po::value<string>(&config.m_psDxbc), "Full path to compiled DXBC binary where pixel shader is found.")
-#endif
+            ("vs-blob", po::value<string>(&config.m_vsDxbc), "Full path to compiled DXBC or DXIL binary where vertex shader is found.")
+            ("hs-blob", po::value<string>(&config.m_hsDxbc), "Full path to compiled DXBC or DXIL binary where hull shader is found.")
+            ("ds-blob", po::value<string>(&config.m_dsDxbc), "Full path to compiled DXBC or DXIL binary domain shader is found.")
+            ("gs-blob", po::value<string>(&config.m_gsDxbc), "Full path to compiled DXBC or DXIL binary geometry shader is found.")
+            ("ps-blob", po::value<string>(&config.m_psDxbc), "Full path to compiled DXBC or DXIL binary pixel shader is found.")
             ("cs-blob", po::value<string>(&config.m_csDxbc), "Full path to compiled DXBC or DXIL binary where compute shader is found.")
+            // IL Disassembly.
+            ("vs-dxil-dis", po::value<string>(&config.m_vsDxilDisassembly), "Full path to the DXIL or DXBC disassembly output file for vertex shader. "
+                "Note that this option is only valid for textual input (HLSL).")
+            ("hs-dxil-dis", po::value<string>(&config.m_hsDxilDisassembly), "Full path to the DXIL or DXBC disassembly output file for hull shader. "
+                "Note that this option is only valid for textual input (HLSL).")
+            ("ds-dxil-dis", po::value<string>(&config.m_dsDxilDisassembly), "Full path to the DXIL or DXBC disassembly output file for domain shader. "
+                "Note that this option is only valid for textual input (HLSL).")
+            ("gs-dxil-dis", po::value<string>(&config.m_gsDxilDisassembly), "Full path to the DXIL or DXBC disassembly output file for geometry shader. "
+                "Note that this option is only valid for textual input (HLSL).")
+            ("ps-dxil-dis", po::value<string>(&config.m_psDxilDisassembly), "Full path to the DXIL or DXBC disassembly output file for pixel shader. "
+                "Note that this option is only valid for textual input (HLSL).")
             ("cs-dxil-dis", po::value<string>(&config.m_csDxilDisassembly), "Full path to the DXIL or DXBC disassembly output file for compute shader. "
                 "Note that this option is only valid for textual input (HLSL).")
             // Target.
-#ifdef _DX12_GRAPHICS_ENABLED
             ("vs-entry", po::value<string>(&config.m_vsEntryPoint), "Entry-point name of vertex shader.")
             ("hs-entry", po::value<string>(&config.m_hsEntryPoint), "Entry-point name of hull shader.")
             ("ds-entry", po::value<string>(&config.m_dsEntryPoint), "Entry-point name of domain shader.")
             ("gs-entry", po::value<string>(&config.m_gsEntryPoint), "Entry-point name of geometry shader.")
             ("ps-entry", po::value<string>(&config.m_psEntryPoint), "Entry-point name of pixel shader.")
-#endif
             ("cs-entry", po::value<string>(&config.m_csEntryPoint), "Entry-point name of compute shader.")
             // Shader model.
-#ifdef _DX12_GRAPHICS_ENABLED
             ("vs-model", po::value<string>(&config.m_vsModel), "Shader model of vertex shader (e.g. vs_5_1 or vs_6_0).")
             ("hs-model", po::value<string>(&config.m_hsModel), "Shader model of hull shader (e.g. hs_5_1 or hs_6_0).")
             ("ds-model", po::value<string>(&config.m_dsModel), "Shader model of domain shader (e.g. ds_5_1 or ds_6_0).")
             ("gs-model", po::value<string>(&config.m_gsModel), "Shader model of geometry shader (e.g. gs_5_1 or gs_6_0).")
             ("ps-model", po::value<string>(&config.m_psModel), "Shader model of pixel shader (e.g. ps_5_1 or ps_6_0).")
-#endif
             ("cs-model", po::value<string>(&config.m_csModel), "Shader model of compute shader (e.g. cs_5_1 or cs_6_0).")
+            ("all-model", po::value<string>(&config.m_allModel), "Shader model to be used for all stages (e.g. 5_1 or 6_0). Instead of "
+                "specifying the model for each stage specifically, you can use this option to pass the shader model version and RGA "
+                "would auto-generate the relevant model for every stage in the pipeline. Note that if you use this option together "
+                "with any of the <stage>-model options, for any stage <stage> the <stage>-model option would override --all-model.")
             // Root signature.
-            ("rs-bin", po::value<string>(&config.m_rsBin), "The full path to the serialized root signature "
+            ("rs-bin", po::value<string>(&config.m_rsBin), "Full path to the serialized root signature "
                 "to be used in the compilation process.")
             ("rs-hlsl", po::value<string>(&config.m_rsHlsl), "Full path to the HLSL file where the "
                 "RootSignature macro is defined in.If there is only a "
                 "single hlsl input file, this option is not required.")
             ("rs-macro", po::value<string>(&config.m_rsMacro), "The name of the RootSignature macro in the HLSL "
-                "code.If specified, the root signature would be compiled from the HLSL source.Use this if your "
+                "code. If specified, the root signature would be compiled from the HLSL source. Use this if your "
                 "shader does not include the[RootSignature()] attribute but has a root signature macro defined"
                 "in the source code.")
             ("rs-macro-version", po::value<string>(&config.m_rsMacroVersion), "The version of the RootSignature macro "
                 "specified through the rs - macro option.By default, 'rootsig_1_1' would be assumed.")
+            // Pipeline state.
+            ("gpso", po::value<string>(&config.m_psoDx12), "Full path to .gpso file that describes the graphics pipeline state (required for graphics pipelines only)."
+                " You can generate a template by using the --gpso-template option.")
+            ("gpso-template", po::value<string>(&config.m_psoDx12Template), "Full path to where to save the template pipeline state description file. You can then edit the file to match your pipeline.")
+            ("dxc", po::value<string>(&config.m_dxcPath), "Full path an alternative DXC package (a folder containing DXC.exe, dxcompiler.dll and dxil.dll). If specified, RGA would use DXC from the given path rather than the package that is ships with.")
+            ("dxc-opt", po::value<string>(&config.m_dxcOpt), "Additional options to be passed to DXC when performing front-end compilation.")
             ;
 
         // Legacy OpenCL options.
@@ -305,10 +325,20 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.m_RequestedCommand = Config::ccListEntries;
         }
+        else if (vm.count("gpso-template"))
+        {
+            config.m_RequestedCommand = Config::ccGenTemplateFile;
+        }
+
 
         if (vm.count("intrinsics"))
         {
             config.m_EnableShaderIntrinsics = true;
+        }
+
+        if (vm.count("dxbc"))
+        {
+            config.m_DxbcInputDx11 = true;
         }
 
         if (vm.count("adapters"))
@@ -604,7 +634,6 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         cout << "*** DirectX 12 mode options (Windows only) ***" << endl;
         cout << "==============================================" << endl << endl;
         cout << "Usage: " << programName << " [options]" << endl << endl;
-        cout << "Note that the DX12 mode currently only supports compute pipelines." << endl << endl;
         cout << genericOpt << endl;
         cout << macroAndIncludeOpt << endl;
         cout << dx12Opt << endl;
@@ -612,11 +641,15 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         cout << "  View supported ASICS for DX12:" << endl;
         cout << "    " << programName << " -s dx12 -l" << endl;
         cout << "  Compile a cs_5_1 compute shader named \"CSMain\" for gfx1010, where the root signature is referenced through a [RootSignature()] attribute. Generate ISA disassembly and resource usage statistics:" << endl;
-        cout << "    " << programName << "-s dx12 -c gfx1010 --cs C:\\shaders\\FillLightGridCS_8.hlsl --cs-model cs_5_1 --cs-entry main --isa C:\\output\\lightcs_dis.txt " << endl;
+        cout << "    " << programName << " -s dx12 -l" << endl;
+        cout << "  Compile a graphics pipeline with vertex (\"VSMain\") and pixel (\"PSMain\") shaders defined in vert.hlsl and pixel.hlsl respectively, while the root signature is in a pre-compiled binary file. Generate ISA disassembly and resource usage statistics:" << endl;
+        cout << "    " << programName << " -s dx12 --vs C:\\shaders\\vert.hlsl --vs-model vs_6_0 --vs-entry VSMain --ps C:\\shaders\\pixel.hlsl --ps-model ps_6_0 --ps-entry PSMain --isa C:\\output\\disassembly.txt -a C:\\output\\stats.txt --gpso C:\\shaders\\state.gpso --rs-bin C:\\rootSignatures\\rs.bin" << endl;
+        cout << "  Compile a graphics pipeline with vertex (\"VSMain\") and pixel (\"PSMain\") shaders defined both in shader.hlsl, while the root signature is in a pre-compiled binary file. Generate ISA disassembly and resource usage statistics:" << endl;
+        cout << "    " << programName << " -s dx12 --all-hlsl C:\\shaders\\shaders.hlsl --all-model 6_0 --vs-entry VSMain --ps-entry PSMain --isa C:\\output\\disassembly.txt -a C:\\output\\stats.txt --gpso C:\\shaders\\state.gpso --rs-bin C:\\rootSignatures\\rs.bin" << endl;
         cout << "  Compile a cs_5_1 compute shader named \"CSMain\" for Radeon VII (gfx906), where the root signature is in a binary file (C:\\RS\\FillLightRS.rs.fxo). Generate ISA disassembly and resource usage statistics:" << endl;
-        cout << "    " << programName << "-s dx12 -c gfx906 --cs C:\\shaders\\FillLightGridCS_8.hlsl --cs-model cs_5_1 --cs-entry main --isa C:\\output\\lightcs_dis.txt --rs-bin C:\\RS\\FillLightRS.rs.fxo" << endl;
+        cout << "    " << programName << " -s dx12 -c gfx906 --cs C:\\shaders\\FillLightGridCS_8.hlsl --cs-model cs_5_1 --cs-entry main --isa C:\\output\\lightcs_dis.txt --rs-bin C:\\RS\\FillLightRS.rs.fxo" << endl;
         cout << "  Compile a DXIL or DXBC blob for Radeon VII (gfx906) and generate ISA disassembly:" << endl;
-        cout << "    " << programName << "rga -s dx12 -c gfx1010 --cs-blob C:\\shaders\\FillLightGridCS_8.obj --isa C:\\output\\lightcs_dis.txt" << endl;
+        cout << "    " << programName << " -s dx12 -c gfx1010 --cs-blob C:\\shaders\\FillLightGridCS_8.obj --isa C:\\output\\lightcs_dis.txt" << endl;
         }
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_mode == Mode_AMDIL))
         {

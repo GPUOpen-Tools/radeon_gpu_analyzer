@@ -82,6 +82,11 @@ public slots:
     // Handler for when a new project has been created.
     void HandleProjectCreated();
 
+    // Handler for when the pending changes need to be saved.
+    // Returns true when the user selected Yes/No from the confirmation
+    // dialog, returns false when the user selected Cancel.
+    bool HandleSavePendingChanges();
+
 protected:
     // The save action type.
     enum SaveActionType

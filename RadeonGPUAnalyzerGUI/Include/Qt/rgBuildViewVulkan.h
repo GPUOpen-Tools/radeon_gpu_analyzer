@@ -110,6 +110,14 @@ protected slots:
     // Set the project build settings border color.
     virtual void SetAPISpecificBorderColor() override;
 
+    // Set the default widget for build settings view.
+    void SetDefaultFocusWidget() const override;
+
+    // Set the default widget for PSO Editor view.
+    // This is the widget in the PSO Editor that will
+    // have the focus when the PSO Editor gets the focus.
+    void SetPSOEditorDefaultFocusWidget() const;
+
 private slots:
     // A handler invoked when the user chooses to add existing file.
     void HandleAddFileButtonClicked(rgPipelineStage stage);

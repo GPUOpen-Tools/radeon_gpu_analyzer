@@ -76,6 +76,9 @@ static const char* gs_DISASSEMBLY_VIEW_HOTKEY_GPU_SELECTION = "Ctrl+T";
 // View container hot key definitions.
 static const char* gs_SWITCH_CONTAINER_SIZE = "Ctrl+R";
 
+// Restore default settings hot key.
+static const char* gs_RESTORE_DEFAULT_SETTINGS = "Ctrl+R";
+
 // Icon resource paths.
 static const char* gs_ICON_RESOURCE_RGA_LOGO                = ":/icons/rgaIcon.svg";
 static const char* gs_ICON_RESOURCE_FIND_MAGNIFYING_GLASS   = ":/icons/magnifyingGlassIcon.svg";

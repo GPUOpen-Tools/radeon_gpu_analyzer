@@ -845,7 +845,11 @@ void ParserISA::ExtractHsailIsaNumericValue(const std::string& hsailIsa, const s
 
             if (!valueStr.empty())
             {
-                valueBuffer = std::stoi(valueStr);
+                try
+                {
+                    valueBuffer = std::stoi(valueStr);
+                }
+                catch (...){}
             }
         }
     }

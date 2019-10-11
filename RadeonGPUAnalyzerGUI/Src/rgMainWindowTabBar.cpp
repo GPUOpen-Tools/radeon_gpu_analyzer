@@ -133,6 +133,12 @@ bool rgMainWindowTabBar::eventFilter(QObject* pObject, QEvent* pEvent)
                                 filtered = true;
                             }
                         }
+                        else if ((keyPressed == Qt::Key_Up || keyPressed == Qt::Key_Down) &&
+                            (pKeyEvent->modifiers() & Qt::ControlModifier))
+                        {
+                            m_pSettingsTab->SelectNextListWidgetItem(keyPressed);
+                            filtered = true;
+                        }
                     }
                 }
             }
