@@ -20,7 +20,7 @@ The supported platforms by the **GUI app** are:
 * OpenCL - AMD's LLVM-based Lightning Compiler for ROCm
 
 The supported platforms by the **command-line tool** are:
-* D3D12 (see https://gpuopen.com/radeon-gpu-analyzer-2-2-direct3d12-compute/)
+* D3D12 (see https://gpuopen.com/radeon-gpu-analyzer-2-2-direct3d12-compute/ and https://gpuopen.com/radeon-gpu-analyzer-2-3-direct3d-12-graphics/ for more details)
 * D3D11
 * OpenCL - AMD's LLVM-based Lightning Compiler for ROCm (-s rocm-cl)
 * OpenCL Legacy - using the installed driver (-s cl)
@@ -128,7 +128,7 @@ Run the rga executable.
 
 * Usage:
   * General: rga -h
-  * DirectX 12 compute: rga -s dx12 -h
+  * DirectX 12: rga -s dx12 -h
   * DirectX 11: rga -s dx11 -h
         
     Note: RGA's DX11 mode requires Microsoft's D3D Compiler DLL in runtime. If you copy the relevant D3D Compiler DLL to the x64 
