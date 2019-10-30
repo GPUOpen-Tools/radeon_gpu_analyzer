@@ -16,9 +16,6 @@ public:
     virtual bool PopulateBuildOutput(const std::shared_ptr<rgProjectClone> pProjectClone, const rgBuildOutputsMap& buildOutputs) override;
 
 protected:
-    // Set the border stylesheet.
-    virtual void SetBorderStylesheet() override;
-
     // Populate the disassembly view with the given CLI build output.
     bool PopulateDisassemblyView(const std::vector<rgSourceFileInfo>& sourceFiles, const rgBuildOutputsMap& buildOutput);
 };

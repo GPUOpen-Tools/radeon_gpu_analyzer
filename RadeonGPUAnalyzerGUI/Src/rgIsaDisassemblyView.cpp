@@ -14,6 +14,7 @@
 // Qt.
 #include <QCheckBox>
 #include <QListWidgetItem>
+#include <QAction>
 
 // Infra.
 #include <QtCommon/CustomWidgets/ArrowIconWidget.h>
@@ -1110,27 +1111,18 @@ void rgIsaDisassemblyView::HandleDisassemblyTabViewClicked()
     // Emit a signal to indicate that disassembly view was clicked.
     emit DisassemblyViewClicked();
 
-    // Highlight the frame in the correct API color (give it focus).
-    SetBorderStylesheet();
-
     // Remove the button focus in the file menu.
     emit RemoveFileMenuButtonFocus();
 }
 
 void rgIsaDisassemblyView::HandleDisassemblyTabViewLostFocus()
 {
-    // Highlight the frame in black.
-    ui.frame->setStyleSheet(STR_DISASSEMBLY_FRAME_BORDER_BLACK_STYLESHEET);
-
     // Remove the button focus in the file menu.
     emit RemoveFileMenuButtonFocus();
 }
 
 void rgIsaDisassemblyView::HandleResourceUsageViewFocusOutEvent()
 {
-    // Highlight the frame in black.
-    ui.frame->setStyleSheet(STR_DISASSEMBLY_FRAME_BORDER_BLACK_STYLESHEET);
-
     // Remove the button focus in the file menu.
     emit RemoveFileMenuButtonFocus();
 }
@@ -1139,9 +1131,6 @@ void rgIsaDisassemblyView::HandleTitlebarClickedEvent(QMouseEvent* pEvent)
 {
     // Emit a signal to indicate that disassembly view was clicked.
     emit DisassemblyViewClicked();
-
-    // Highlight the frame in the correct API color (give it focus).
-    SetBorderStylesheet();
 
     // Remove the button focus in the file menu.
     emit RemoveFileMenuButtonFocus();
@@ -1152,22 +1141,16 @@ void rgIsaDisassemblyView::HandleListWidgetFocusInEvent()
     // Emit a signal to indicate that disassembly view was clicked.
     emit DisassemblyViewClicked();
 
-    // Highlight the frame in the correct API color (give it focus).
-    SetBorderStylesheet();
-
     // Remove the button focus in the file menu.
     emit RemoveFileMenuButtonFocus();
 }
 
 void rgIsaDisassemblyView::HandleListWidgetFocusOutEvent()
 {
-    ui.frame->setStyleSheet(STR_DISASSEMBLY_FRAME_BORDER_BLACK_STYLESHEET);
 }
 
 void rgIsaDisassemblyView::HandleFocusOutEvent()
 {
-    ui.frame->setStyleSheet(STR_DISASSEMBLY_FRAME_BORDER_BLACK_STYLESHEET);
-
     // Remove the button focus in the file menu.
     emit RemoveFileMenuButtonFocus();
 }

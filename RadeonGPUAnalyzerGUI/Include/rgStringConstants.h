@@ -526,11 +526,6 @@ static const char* STR_MAIN_WINDOW_STYLESHEET_FILE        = "rgMainWindowStyle.q
 static const char* STR_MAIN_WINDOW_STYLESHEET_FILE_OPENCL = "OpenCL/rgMainWindowStyleOpenCL.qss";
 static const char* STR_MAIN_WINDOW_STYLESHEET_FILE_VULKAN = "Vulkan/rgMainWindowStyleVulkan.qss";
 
-// Disassembly view frame border color.
-static const char* STR_DISASSEMBLY_FRAME_BORDER_RED_STYLESHEET = "QFrame#frame {border: 1px solid rgb(224,30,55)}";
-static const char* STR_DISASSEMBLY_FRAME_BORDER_GREEN_STYLESHEET = "QFrame#frame {border: 1px solid rgb(18, 152, 0)}";
-static const char* STR_DISASSEMBLY_FRAME_BORDER_BLACK_STYLESHEET = "QFrame#frame {border: 1px solid black}";
-
 // The "current" property of file menu items.
 static const char* STR_FILE_MENU_PROPERTY_CURRENT = "current";
 

@@ -8,6 +8,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QWidget>
+#include <QAction>
 
 // Infra.
 #include <QtCommon/CustomWidgets/ArrowIconWidget.h>
