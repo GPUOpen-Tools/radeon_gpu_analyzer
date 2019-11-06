@@ -35,7 +35,15 @@ The supported platforms by the **command-line tool** are:
 * Linux: Ubuntu 18.04, Red Hat 6.4 or later. Build with gcc 4.7.2 or later.
 * Vulkan SDK 1.1.97.0 or later. To download the Vulkan SDK, visit https://vulkan.lunarg.com/
 
-The AMD Radeon Adrenalin Software must be installed to run this tool (for all modes except for Offline Vulkan and ROCm OpenCL).
+To run the tool, you would need to have the AMD Radeon Adrenalin Software (Windows) or amdgpu-pro driver (Linux) installed for all modes, except for the following "offline" modes which are independent of the driver and hardware:
+* Vulkan offline mode
+* ROCm OpenCL
+
+For the non-offline modes, it is strongly recommended to run with the latest drivers so that the latest compiler is used and the latest architectures can targeted.
+
+A specific note for Vulkan mode users:
+RGA releases are packaged with the AMD Vulkan driver to enable users who run on machines without an AMD GPU or driver. This is not the case if you build the tool yourself. To enable a custom RGA build on a non-AMD machine, copy the "amdvlk" folder from an RGA release archive
+to your build output folder (make sure to place the folder in the same folder hierarchy as in the release archive). Please note that this is a workaround and not the recommended configuration. 
 
 ## Build Instructions ##
 
