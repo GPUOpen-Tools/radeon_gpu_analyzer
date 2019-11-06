@@ -42,6 +42,7 @@ To run the tool, you would need to have the AMD Radeon Adrenalin Software (Windo
 For the non-offline modes, it is strongly recommended to run with the latest drivers so that the latest compiler is used and the latest architectures can targeted.
 
 A specific note for Vulkan mode users:
+
 RGA releases are packaged with the AMD Vulkan driver to enable users who run on machines without an AMD GPU or driver. This is not the case if you build the tool yourself. To enable a custom RGA build on a non-AMD machine, copy the "amdvlk" folder from an RGA release archive
 to your build output folder (make sure to place the folder in the same folder hierarchy as in the release archive). Please note that this is a workaround and not the recommended configuration. 
 
