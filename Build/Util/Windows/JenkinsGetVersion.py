@@ -22,7 +22,12 @@ versionArgs = parser.parse_args()
 
 # initialize file for search
 RGAVersionFile = os.path.normpath(os.path.join(os.environ['WORKSPACE'], 'RGA/Utils/Include/rgaVersionInfo.h'))
-RGAVersionData = file(RGAVersionFile)
+RGAVersionData = None
+if os.path.exists(RGAVersionFile):
+    RGAVersionData = open(RGAVersionFile)
+else:
+    print("ERROR: Unable to open file: %s"%RGAVersionFile)
+    exit(1)
 
 # get major and minor version string
 major = None
