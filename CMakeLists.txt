@@ -57,14 +57,18 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwi
     endif()
 
     # Output directories
+    set(BUILD_CONFIG "Release")
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(BUILD_CONFIG "Debug")
+    endif()
     if (GUI_AUTOMATION)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/bin")
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/lib")
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/arch")
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/${BUILD_CONFIG}/bin")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/${BUILD_CONFIG}/lib")
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/${BUILD_CONFIG}/arch")
     else()
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/bin")
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/lib")
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/arch")
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/${BUILD_CONFIG}/bin")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/${BUILD_CONFIG}/lib")
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/${BUILD_CONFIG}/arch")
     endif()
 
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -72,26 +76,32 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     # Preprocessor directives
     add_definitions(-D_USRDLL -DUNICODE -D_UNICODE)
 
-    # Output directories
+    # Output directories - use Windows path separaters so xcopy commands work
     if (GUI_AUTOMATION)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/bin")
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/lib")
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/arch")
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output_Test\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\bin)
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output_Test\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\lib)
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output_Test\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\arch)
     else()
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/bin")
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/lib")
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/arch")
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\bin)
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\lib)
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\arch)
     endif()
 
     # Use multiple cores to compile all projects.
     add_definitions(/MP)
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CONFIGURATION_TYPES "Debug")
-else()
-    set(CMAKE_CONFIGURATION_TYPES "Release")
+# Windows solution generator is a multi config generator, so define
+# CMAKE_CONFIGURATTION_TYPES, which enables usage of $<$<CONFIG:value1>value2> syntax for Windows settings.
+# Linux make is not a multi config tool.  This CMakeLists.txt assumes
+# cmake is invoked with CMAKE_BUILD_TYPE set to Debug or Release on Linux.
+# NOTE: User can still do a debug build if cmake is run for Release config
+# by setting the CFLAGS and CXXFLAGS environment variables to "-g -D_DEBUG" before running make.
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    # Visual Studio
+    set(CMAKE_CONFIGURATION_TYPES "Release;Debug")
 endif()
+
 
 # Vulkan support
 if (RGA_ENABLE_VULKAN)

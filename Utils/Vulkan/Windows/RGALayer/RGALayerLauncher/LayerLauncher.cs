@@ -30,7 +30,16 @@ namespace RGALayerLauncher
             if (fileDialog.ShowDialog() == DialogResult.OK)
             {
                 selectedFileName = fileDialog.FileName;
-                ret = true;
+                try
+                {
+                    textBoxWorkingDir.Text = System.IO.Path.GetDirectoryName(selectedFileName);
+                    ret = true;
+                }
+                catch
+                {
+                    MessageBox.Show("Failed to extract working directory from Executable path.",
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             return ret;
         }
@@ -64,8 +73,6 @@ namespace RGALayerLauncher
         {
             try
             {
-
-
                 bool shouldAbort = false;
 
                 // Validate executable.
@@ -164,12 +171,15 @@ namespace RGALayerLauncher
                     Environment.SetEnvironmentVariable("RGA_LAYER_SPECIFIC_PIPELINE",
                         textBoxPipelineNames.Text, EnvironmentVariableTarget.Process);
 
-
                     System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
                     startInfo.FileName = textBoxExe.Text;
                     if (textBoxWorkingDir.Text.Length > 0)
                     {
                         startInfo.WorkingDirectory = textBoxWorkingDir.Text;
+                    }
+                    if (textBoxCommandArgs.Text.Length > 0)
+                    {
+                        startInfo.Arguments = textBoxCommandArgs.Text;
                     }
 
                     // Launch the executable.

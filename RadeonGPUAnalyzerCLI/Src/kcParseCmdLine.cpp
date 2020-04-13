@@ -218,12 +218,12 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("rs-bin", po::value<string>(&config.m_rsBin), "Full path to the serialized root signature "
                 "to be used in the compilation process.")
             ("rs-hlsl", po::value<string>(&config.m_rsHlsl), "Full path to the HLSL file where the "
-                "RootSignature macro is defined in.If there is only a "
+                "RootSignature macro is defined. If there is only a "
                 "single hlsl input file, this option is not required.")
             ("rs-macro", po::value<string>(&config.m_rsMacro), "The name of the RootSignature macro in the HLSL "
                 "code. If specified, the root signature would be compiled from the HLSL source. Use this if your "
-                "shader does not include the[RootSignature()] attribute but has a root signature macro defined"
-                "in the source code.")
+                "shader does not include the [RootSignature()] attribute but has a root signature macro defined"
+                "in the source code. Please also check the description for --rs-hlsl, which is related to this option.")
             ("rs-macro-version", po::value<string>(&config.m_rsMacroVersion), "The version of the RootSignature macro "
                 "specified through the rs - macro option.By default, 'rootsig_1_1' would be assumed.")
             // Pipeline state.
@@ -563,20 +563,18 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             oclOptions.add(genericOpt).add(ilDumpOpt).add(macroAndIncludeOpt).add(clOpt).add(legacyClOpt);
             cout << "*** Legacy OpenCL mode options ***" << endl;
             cout << "==================================" << endl;
-            cout << "Warning: this mode does not support the Vega architecture, and is about to be deprecated in RGA." << endl << endl;
-            cout << "Usage: " << programName << " [options] source_file" << endl;
             cout << oclOptions << endl;
             cout << "Examples:" << endl;
             cout << "  " << "Compile foo.cl for all supported devices; extract ISA, IL code and statistics:" << endl;
             cout << "    " << programName << " -s cl --isa output/foo_isa.txt --il output/foo_il.txt -a output/stats.csv foo.cl" << endl;
             cout << "  " << "Compile foo.cl for Fiji; extract ISA and perform live register analysis:" << endl;
             cout << "    " << programName << " -s cl -c Fiji --isa output/foo_isa.txt --livereg output/regs.txt foo.cl" << endl;
-            cout << "  " << "Compile foo.cl for gfx900; extract binary and control flow graphs:" << endl;
-            cout << "    " << programName << " -s cl -c gfx900 --bin output/foo.bin --cfg output/cfg.dot foo.cl" << endl;
+            cout << "  " << "Compile foo.cl for gfx906; extract binary and control flow graphs:" << endl;
+            cout << "    " << programName << " -s cl -c gfx906 --bin output/foo.bin --cfg output/cfg.dot foo.cl" << endl;
             cout << "  " << "List the kernels available in foo.cl:" << endl;
             cout << "    " << programName << " -s cl --list-kernels foo.cl" << endl;
-            cout << "  " << "Compile foo.cl for Bristol Ridge; extract the static analysis data (statistics) for myKernel.  Write the statistics to foo.csv:" << endl;
-            cout << "    " << programName << " -s cl -c \"Bristol Ridge\" --kernel myKernel --analysis foo.csv foo.cl" << endl;
+            cout << "  " << "Compile foo.cl for Bonaire; extract the hardware resource usage statistics for myKernel.  Write the statistics to foo.csv:" << endl;
+            cout << "    " << programName << " -s cl -c \"Bonaire\" --kernel myKernel -a foo.csv foo.cl" << endl;
             cout << "  " << "List the ASICs supported by Legacy OpenCL mode:" << endl;
             cout << "    " << programName << " -s cl --list-asics" << endl;
             cout << endl;
@@ -620,7 +618,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << macroAndIncludeOpt << endl;
             cout << dxOpt << endl;
             cout << "Examples:" << endl;
-            cout << "  View supported ASICS for DirectX:" << endl;
+            cout << "  View supported ASICS for DX11:" << endl;
             cout << "    " << programName << " -s dx11 -l" << endl;
             cout << "  Compile myShader.hlsl for all supported targets and extract the ISA disassembly:" << endl;
             cout << "    " << programName << " -s dx11 -f VsMain -p vs_5_0 --isa output/myShader_isa.txt src/myShader.hlsl" << endl;
@@ -641,14 +639,14 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         cout << "  View supported ASICS for DX12:" << endl;
         cout << "    " << programName << " -s dx12 -l" << endl;
         cout << "  Compile a cs_5_1 compute shader named \"CSMain\" for gfx1010, where the root signature is referenced through a [RootSignature()] attribute. Generate ISA disassembly and resource usage statistics:" << endl;
-        cout << "    " << programName << " -s dx12 -l" << endl;
-        cout << "  Compile a graphics pipeline with vertex (\"VSMain\") and pixel (\"PSMain\") shaders defined in vert.hlsl and pixel.hlsl respectively, while the root signature is in a pre-compiled binary file. Generate ISA disassembly and resource usage statistics:" << endl;
-        cout << "    " << programName << " -s dx12 --vs C:\\shaders\\vert.hlsl --vs-model vs_6_0 --vs-entry VSMain --ps C:\\shaders\\pixel.hlsl --ps-model ps_6_0 --ps-entry PSMain --isa C:\\output\\disassembly.txt -a C:\\output\\stats.txt --gpso C:\\shaders\\state.gpso --rs-bin C:\\rootSignatures\\rs.bin" << endl;
+        cout << "    " << programName << " -s dx12 -c gfx1010 --cs C:\\shaders\\FillLightGridCS_8.hlsl -cs-entry CSMain --cs-model cs_5_1 --isa C:\\output\\isa.txt -a C:\\output\\stats.txt" << endl;
+        cout << "  Compile a graphics pipeline with model 6.0 vertex (\"VSMain\") and pixel (\"PSMain\") shaders defined in vert.hlsl and pixel.hlsl respectively, while the root signature is in a pre-compiled binary file. Generate ISA disassembly and resource usage statistics:" << endl;
+        cout << "    " << programName << " -s dx12 --vs C:\\shaders\\vert.hlsl --vs-model vs_6_0 --vs-entry VSMain --ps C:\\shaders\\pixel.hlsl --ps-model ps_6_0 --ps-entry PSMain --gpso C:\\shaders\\state.gpso --rs-bin C:\\rootSignatures\\rs.bin --isa C:\\output\\disassembly.txt -a C:\\output\\stats.txt " << endl;
         cout << "  Compile a graphics pipeline with vertex (\"VSMain\") and pixel (\"PSMain\") shaders defined both in shader.hlsl, while the root signature is in a pre-compiled binary file. Generate ISA disassembly and resource usage statistics:" << endl;
-        cout << "    " << programName << " -s dx12 --all-hlsl C:\\shaders\\shaders.hlsl --all-model 6_0 --vs-entry VSMain --ps-entry PSMain --isa C:\\output\\disassembly.txt -a C:\\output\\stats.txt --gpso C:\\shaders\\state.gpso --rs-bin C:\\rootSignatures\\rs.bin" << endl;
+        cout << "    " << programName << " -s dx12 --all-hlsl C:\\shaders\\shaders.hlsl --all-model 6_0 --vs-entry VSMain --ps-entry PSMain --gpso C:\\shaders\\state.gpso --rs-bin C:\\rootSignatures\\rs.bin --isa C:\\output\\disassembly.txt -a C:\\output\\stats.txt" << endl;
         cout << "  Compile a cs_5_1 compute shader named \"CSMain\" for Radeon VII (gfx906), where the root signature is in a binary file (C:\\RS\\FillLightRS.rs.fxo). Generate ISA disassembly and resource usage statistics:" << endl;
-        cout << "    " << programName << " -s dx12 -c gfx906 --cs C:\\shaders\\FillLightGridCS_8.hlsl --cs-model cs_5_1 --cs-entry main --isa C:\\output\\lightcs_dis.txt --rs-bin C:\\RS\\FillLightRS.rs.fxo" << endl;
-        cout << "  Compile a DXIL or DXBC blob for Radeon VII (gfx906) and generate ISA disassembly:" << endl;
+        cout << "    " << programName << " -s dx12 -c gfx906 --cs C:\\shaders\\FillLightGridCS_8.hlsl --cs-model cs_5_1 --cs-entry main --rs-bin C:\\RS\\FillLightRS.rs.fxo --isa C:\\output\\lightcs_dis.txt -a C:\\output\\stats.txt" << endl;
+        cout << "  Compile a DXIL or DXBC blob for Navi10 (gfx1010) and generate ISA disassembly:" << endl;
         cout << "    " << programName << " -s dx12 -c gfx1010 --cs-blob C:\\shaders\\FillLightGridCS_8.obj --isa C:\\output\\lightcs_dis.txt" << endl;
         }
         else if ((config.m_RequestedCommand == Config::ccHelp) && (config.m_mode == Mode_AMDIL))

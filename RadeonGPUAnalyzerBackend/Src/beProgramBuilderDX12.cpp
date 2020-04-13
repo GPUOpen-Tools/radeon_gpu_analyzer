@@ -928,6 +928,19 @@ beKA::beStatus beProgramBuilderDX12::Compile(const Config& config, const std::st
                         cmd << "--comp-dxbc-dis \"" << config.m_csDxilDisassembly << "\" ";
                     }
 
+                    // Pipeline binary.
+                    if (!config.m_BinaryOutputFile.empty())
+                    {
+                        std::string binaryOutputNamePerDevice;
+                        bool isFileNameConstructed = kcUtils::ConstructOutFileName(config.m_BinaryOutputFile,
+                            "", targetDeviceLower, "bin", binaryOutputNamePerDevice);
+                        assert(isFileNameConstructed);
+                        if (isFileNameConstructed && !binaryOutputNamePerDevice.empty())
+                        {
+                            cmd << "-b \"" << binaryOutputNamePerDevice << "\" ";
+                        }
+                    }
+
                     // Graphics pipeline state.
                     if (!config.m_psoDx12.empty())
                     {

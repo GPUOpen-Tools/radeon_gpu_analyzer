@@ -102,7 +102,7 @@ protected slots:
     virtual void HandleSourceFileSelectedLineChanged(rgSourceCodeEditor* pEditor, int lineNumber) override;
 
     // A handler invoked when the pipeline state file should be saved.
-    virtual void HandlePipelineStateFileSaved() override;
+    virtual bool HandlePipelineStateFileSaved() override;
 
     // A handler invoked when a pipeline state file should be loaded.
     virtual void HandlePipelineStateFileLoaded() override;

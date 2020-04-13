@@ -55,8 +55,8 @@ add_executable(VulkanBackend ${SOURCE_FILES} ${INCLUDES})
 
 # Set output folder and executable name.
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE}/x64/Vulkan/bin")
-    set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE}/x64/Vulkan/bin")
+    set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/x64/Vulkan/bin")
+    set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/x64/Vulkan/bin")
 else()
     set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Vulkan")
     set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Vulkan")

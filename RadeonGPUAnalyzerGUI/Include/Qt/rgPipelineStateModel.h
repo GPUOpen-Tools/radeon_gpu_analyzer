@@ -69,13 +69,12 @@ protected:
         // Create an array of object with the new dimension.
         T* pResizedArray = new T[newSize]{};
 
-        assert(pResizedArray != nullptr);
-        if (pResizedArray != nullptr)
-        {
-            // If the element count was increased, copy all old contents.
-            // If it was reduced, copy as many as will fit in the new array.
-            uint32_t elementCount = newSize > oldSize ? oldSize : newSize;
+        // If the element count was increased, copy all old contents.
+        // If it was reduced, copy as many as will fit in the new array.
+        uint32_t elementCount = newSize > oldSize ? oldSize : newSize;
 
+        if (pOriginalArray != nullptr)
+        {
             // Copy existing element data into the resized elements.
             for (uint32_t index = 0; index < elementCount; ++index)
             {

@@ -1613,6 +1613,9 @@ void rgPipelineStateModelVulkan::InitializeSampleMask(rgEditorElement* pRootElem
 
 void rgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(rgEditorElement* pRootElement, VkPipelineMultisampleStateCreateInfo* pPipelineMultisampleStateCreateInfo)
 {
+    // Initialize the sample mask dimension.
+    m_sampleMaskDimension = 0;
+
     assert(pPipelineMultisampleStateCreateInfo != nullptr);
     if (pPipelineMultisampleStateCreateInfo != nullptr)
     {
@@ -1978,55 +1981,63 @@ bool rgPipelineStateModelVulkan::LoadPipelineStateFile(QWidget* pParent, const s
 {
     bool isOk = false;
 
-    // Assign the type of pipeline being loaded from file.
-    m_pipelineType = pipelineType;
-
-    if (m_pipelineType == rgPipelineType::Graphics)
+    try
     {
-        rgPsoGraphicsVulkan* pGraphicsPipelineState = nullptr;
+        // Assign the type of pipeline being loaded from file.
+        m_pipelineType = pipelineType;
 
-        // Load the graphics pipeline state file.
-        isOk = rgPsoSerializerVulkan::ReadStructureFromFile(psoFilePath, &pGraphicsPipelineState, errorString);
-
-        assert(isOk);
-        if (isOk)
+        if (m_pipelineType == rgPipelineType::Graphics)
         {
-            // Assign the new graphics pipeline state in the model.
-            m_pGraphicsPipelineState = pGraphicsPipelineState;
+            rgPsoGraphicsVulkan* pGraphicsPipelineState = nullptr;
 
-            // Initialize the create info structure to bind it to the model.
-            m_pRootItem = InitializeGraphicsPipelineCreateInfo(pParent);
+            // Load the graphics pipeline state file.
+            isOk = rgPsoSerializerVulkan::ReadStructureFromFile(psoFilePath, &pGraphicsPipelineState, errorString);
+
+            assert(isOk);
+            if (isOk)
+            {
+                // Assign the new graphics pipeline state in the model.
+                m_pGraphicsPipelineState = pGraphicsPipelineState;
+
+                // Initialize the create info structure to bind it to the model.
+                m_pRootItem = InitializeGraphicsPipelineCreateInfo(pParent);
+            }
+            else
+            {
+                rgUtils::ShowErrorMessageBox(errorString.c_str());
+            }
+        }
+        else if (m_pipelineType == rgPipelineType::Compute)
+        {
+            rgPsoComputeVulkan* pComputePipelineState = nullptr;
+
+            // Load the compute pipeline state file.
+            isOk = rgPsoSerializerVulkan::ReadStructureFromFile(psoFilePath, &pComputePipelineState, errorString);
+
+            assert(isOk);
+            if (isOk)
+            {
+                // Assign the new compute pipeline state in the model.
+                m_pComputePipelineState = pComputePipelineState;
+
+                // Initialize the create info structure to bind it to the model.
+                m_pRootItem = InitializeComputePipelineCreateInfo(pParent);
+            }
+            else
+            {
+                rgUtils::ShowErrorMessageBox(errorString.c_str());
+            }
         }
         else
         {
-            rgUtils::ShowErrorMessageBox(errorString.c_str());
+            assert(false);
+            errorString = STR_ERR_CANNOT_DETERMINE_PIPELINE_TYPE;
         }
     }
-    else if (m_pipelineType == rgPipelineType::Compute)
+    catch (...)
     {
-        rgPsoComputeVulkan* pComputePipelineState = nullptr;
-
-        // Load the compute pipeline state file.
-        isOk = rgPsoSerializerVulkan::ReadStructureFromFile(psoFilePath, &pComputePipelineState, errorString);
-
-        assert(isOk);
-        if (isOk)
-        {
-            // Assign the new compute pipeline state in the model.
-            m_pComputePipelineState = pComputePipelineState;
-
-            // Initialize the create info structure to bind it to the model.
-            m_pRootItem = InitializeComputePipelineCreateInfo(pParent);
-        }
-        else
-        {
-            rgUtils::ShowErrorMessageBox(errorString.c_str());
-        }
-    }
-    else
-    {
-        assert(false);
-        errorString = STR_ERR_CANNOT_DETERMINE_PIPELINE_TYPE;
+        errorString = STR_ERR_FAILED_TO_READ_PIPELINE_STATE_FILE;
+        rgUtils::ShowErrorMessageBox(errorString.c_str());
     }
 
     return isOk;
@@ -2036,34 +2047,41 @@ bool rgPipelineStateModelVulkan::SavePipelineStateFile(const std::string& psoFil
 {
     bool isOk = false;
 
-    std::string validationErrorString;
-    bool isValid = CheckValidPipelineState(validationErrorString);
-
-    assert(isValid);
-    if (isValid)
+    try
     {
-        if (m_pipelineType == rgPipelineType::Graphics)
+        std::string validationErrorString;
+        bool isValid = CheckValidPipelineState(validationErrorString);
+
+        assert(isValid);
+        if (isValid)
         {
-            // Save the graphics pipeline state file.
-            isOk = rgPsoSerializerVulkan::WriteStructureToFile(m_pGraphicsPipelineState, psoFilePath, errorString);
-        }
-        else if (m_pipelineType == rgPipelineType::Compute)
-        {
-            // Save the compute pipeline state file.
-            isOk = rgPsoSerializerVulkan::WriteStructureToFile(m_pComputePipelineState, psoFilePath, errorString);
+            if (m_pipelineType == rgPipelineType::Graphics)
+            {
+                // Save the graphics pipeline state file.
+                isOk = rgPsoSerializerVulkan::WriteStructureToFile(m_pGraphicsPipelineState, psoFilePath, errorString);
+            }
+            else if (m_pipelineType == rgPipelineType::Compute)
+            {
+                // Save the compute pipeline state file.
+                isOk = rgPsoSerializerVulkan::WriteStructureToFile(m_pComputePipelineState, psoFilePath, errorString);
+            }
+            else
+            {
+                assert(false);
+                errorString = STR_ERR_CANNOT_DETERMINE_PIPELINE_TYPE;
+            }
         }
         else
         {
-            assert(false);
-            errorString = STR_ERR_CANNOT_DETERMINE_PIPELINE_TYPE;
+            std::stringstream errorStream;
+            errorStream << STR_ERR_FAILED_TO_VALIDATE << std::endl;
+            errorStream << validationErrorString;
+            errorString = errorStream.str();
         }
     }
-    else
+    catch (...)
     {
-        std::stringstream errorStream;
-        errorStream << STR_ERR_FAILED_TO_VALIDATE << std::endl;
-        errorStream << validationErrorString;
-        errorString = errorStream.str();
+        errorString = STR_ERR_FAILED_TO_SAVE_PIPELINE_STATE_FILE;
     }
 
     return isOk;

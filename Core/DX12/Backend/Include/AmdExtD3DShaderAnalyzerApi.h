@@ -37,9 +37,11 @@
 #pragma once
 
 #include <unknwn.h>
+#include <stdint.h>
 #include <d3d12.h>
 
 typedef void* AmdExtD3DPipelineHandle;
+typedef void* AmdExtD3DPipelineElfHandle;
 // Process environment variable to set virtual GPU Id in call to PAL CreatePlatform during Adapter initialization.
 static const char AmdExtVirtualGpuIdEnvVarStringName[] = "AmdVirtualGpuId";
 
@@ -195,4 +197,43 @@ public:
                                      char*                         pIsaCode,
                                      size_t*                       pIsaCodeSize,
                                      AmdExtD3DPipelineDisassembly* pDisassembly) = 0;
+};
+
+/**
+***********************************************************************************************************************
+* @brief Version 1 Shader Analyzer extension API object
+***********************************************************************************************************************
+*/
+interface __declspec(uuid("A2EA2E25-9709-47E3-B3A0-6DDA8A9372C4"))
+IAmdExtD3DShaderAnalyzer1 : public IAmdExtD3DShaderAnalyzer
+{
+public:
+    // Create Graphics pipeline state with the pipeline object handle
+    virtual HRESULT CreateGraphicsPipelineState1(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc,
+                                                 REFIID                                    riid,
+                                                 void**                                    ppPipelineState,
+                                                 AmdExtD3DPipelineHandle*                  pPipelineHandle) = 0;
+
+    // Create Compute pipeline state with the pipeline object handle
+    virtual HRESULT CreateComputePipelineState1(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc,
+                                                REFIID                                   riid,
+                                                void**                                   ppPipelineState,
+                                                AmdExtD3DPipelineHandle*                 pPipelineHandle) = 0;
+
+    // Get graphic shader stats
+    virtual HRESULT GetGraphicsShaderStats(AmdExtD3DPipelineHandle       pipelineHandle,
+                                           AmdExtD3DGraphicsShaderStats* pGraphicsShaderStats) = 0;
+
+    // Get compute shader stats
+    virtual HRESULT GetComputeShaderStats(AmdExtD3DPipelineHandle      pipelineHandle,
+                                          AmdExtD3DComputeShaderStats* pComputeShaderStats) = 0;
+
+    // Get pipeline ELF binary
+    ///@note The client will need to call this function twice to get the pipeline ELF binary :
+    /// First time, client call it with null pipelineElfHandle to query the size of pipeline ELF binary
+    /// Second time, the client is responsible for allocating enough space for pipeline ELF binary. The handle
+    /// to the elf binary will be returned as pipelineElfHandle.
+    virtual HRESULT GetPipelineElfBinary(AmdExtD3DPipelineHandle     pipelineHandle,
+                                         AmdExtD3DPipelineElfHandle  pipelineElfHandle,
+                                         uint32_t*                   pSize) = 0;
 };

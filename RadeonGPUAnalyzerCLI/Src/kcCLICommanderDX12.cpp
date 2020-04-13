@@ -42,11 +42,11 @@ static const char* STR_ERROR_MIX_COMPUTE_GRAPHICS_INPUT_SHADER = "shader input f
 static const char* STR_ERROR_MIX_COMPUTE_GRAPHICS_INPUT_DXIL_DISASSEMBLY = "DXIL/DXBC disassembly output file.";
 static const char* STR_ERROR_MIX_COMPUTE_GRAPHICS_INPUT_SHADER_MODEL = "shader model.";
 static const char* STR_ERROR_MIX_COMPUTE_GRAPHICS_INPUT_ENTRY_POINT = "entry point.";
-static const char* STR_ERROR_NO_ISA_NO_STATS_OPTION = "Error: one of --isa or -a/--analysis options must be provided.";
+static const char* STR_ERROR_NO_ISA_NO_STATS_OPTION = "Error: one of --isa or -a/--analysis or -b/--binary options must be provided.";
+static const char* STR_ERROR_NO_ROOT_SIGNATURE_HLSL_FILE_DEFINED = "Error: use --rs-hlsl option together with --rs-macro to specify the HLSL file where the macro is defined.";
+static const char* STR_WARNING_AUTO_DEDUCING_RS_HLSL = "Warning: --rs-hlsl option not provided, assuming that root signature macro is defined in ";
 
 // Constants - warnings messages.
-static const char* STR_WARNING_DX12_BINARY_OPTION_NOT_SUPPORTED = "Warning: extracting pipeline binary option (-b) is currently "
-"not supported for DX12 mode.";
 static const char* STR_WARNING_DX12_AMDIL_OPTION_NOT_SUPPORTED = "Warning: extracting AMD IL disassembly is currently not "
 "supported for DX12 mode. You can extract DXIL disassembly (for shader model 5.1 and above) using the <stage>-dxil-dis option. "
 "See -h for more details.";
@@ -113,7 +113,7 @@ static bool IsInputValid(const Config& config)
 {
     bool ret = true;
 
-    if (config.m_ISAFile.empty() && config.m_AnalysisFile.empty())
+    if (config.m_ISAFile.empty() && config.m_AnalysisFile.empty() && config.m_BinaryOutputFile.empty())
     {
         std::cout << STR_ERROR_NO_ISA_NO_STATS_OPTION << std::endl;
         ret = false;
@@ -284,6 +284,17 @@ static bool IsInputValid(const Config& config)
         }
     }
 
+    if (ret)
+    {
+        // For graphics pipelines, if --rs-macro is used, make sure that either --rs-hlsl or --all-hlsl is used
+        // so that we know at which HLSL file to search for the macro definition.
+        if (!config.m_rsMacro.empty() && config.m_csHlsl.empty() && config.m_allHlsl.empty() && config.m_rsHlsl.empty())
+        {
+            std::cout << STR_ERROR_NO_ROOT_SIGNATURE_HLSL_FILE_DEFINED << std::endl;
+            ret = false;
+        }
+    }
+
     return ret;
 }
 
@@ -316,6 +327,41 @@ static void UpdateConfig(const Config& userInput, Config& updatedConfig)
         if (!updatedConfig.m_csEntryPoint.empty() && updatedConfig.m_csHlsl.empty() && updatedConfig.m_csDxbc.empty())
         {
             updatedConfig.m_csHlsl = updatedConfig.m_allHlsl;
+        }
+    }
+
+    if (!userInput.m_rsMacro.empty() && userInput.m_csHlsl.empty() && userInput.m_rsHlsl.empty() && userInput.m_allHlsl.empty())
+    {
+        // If in a graphics pipeline --rs-macro is used without --rs-hlsl, check if all stages point to the same file.
+        // If this is the case, just use that file as if it was the input to --rs-hlsl.
+        std::vector<std::string> presentStages;
+        if (!userInput.m_vsHlsl.empty())
+        {
+            presentStages.push_back(userInput.m_vsHlsl);
+        }
+        if (!userInput.m_hsHlsl.empty())
+        {
+            presentStages.push_back(userInput.m_hsHlsl);
+        }
+        if (!userInput.m_dsHlsl.empty())
+        {
+            presentStages.push_back(userInput.m_dsHlsl);
+        }
+        if (!userInput.m_gsHlsl.empty())
+        {
+            presentStages.push_back(userInput.m_gsHlsl);
+        }
+        if (!userInput.m_psHlsl.empty())
+        {
+            presentStages.push_back(userInput.m_psHlsl);
+        }
+
+        // If we have a single HLSL file for all stages - use that file for --rs-hlsl.
+        if (!presentStages.empty() && (presentStages.size() == 1 || std::adjacent_find(presentStages.begin(),
+            presentStages.end(), std::not_equal_to<>()) == presentStages.end()))
+        {
+            updatedConfig.m_rsHlsl = presentStages[0];
+            std::cout << STR_WARNING_AUTO_DEDUCING_RS_HLSL << updatedConfig.m_rsHlsl << std::endl;
         }
     }
 }
@@ -418,10 +464,6 @@ void kcCLICommanderDX12::RunCompileCommands(const Config& config, LoggingCallBac
                                 }
 
                                 // Warnings.
-                                if (!config.m_BinaryOutputFile.empty())
-                                {
-                                    std::cout << STR_WARNING_DX12_BINARY_OPTION_NOT_SUPPORTED << std::endl;
-                                }
                                 if (!config.m_ILFile.empty())
                                 {
                                     std::cout << STR_WARNING_DX12_AMDIL_OPTION_NOT_SUPPORTED << std::endl;

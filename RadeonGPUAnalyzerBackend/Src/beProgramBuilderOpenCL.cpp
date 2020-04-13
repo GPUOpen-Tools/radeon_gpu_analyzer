@@ -1011,9 +1011,11 @@ beKA::beStatus beProgramBuilderOpenCL::GetKernelILText(const std::string& device
                 if (ret != beKA::beStatus_SUCCESS && m_NameDeviceTypeMap[device] == CL_DEVICE_TYPE_GPU)
                 {
                     // Inform the user about the failure. CPUs are ignored.
-                    stringstream ss;
-                    ss << "Error: No IL for device \'" << device << "\'.\n";
-                    LogCallBack(ss.str());
+                    const char* STR_LEGACY_CL_NO_IL_FOR_DEVICE_A = "Error: No IL for device \'";
+                    const char* STR_LEGACY_CL_NO_IL_FOR_DEVICE_B = "\'.\nNote that AMD IL disassembly cannot be extracted for certain targets (depending on what compiler is invoked at runtime). This is not controlled by the tool.";
+                    stringstream msg;
+                    msg << STR_LEGACY_CL_NO_IL_FOR_DEVICE_A << device << STR_LEGACY_CL_NO_IL_FOR_DEVICE_B << std::endl;
+                    LogCallBack(msg.str());
                 }
             }
         }

@@ -68,9 +68,9 @@ XCopy /y /e "%OUTPUT_PATH%\bin\x64\LC" "%ZIPDIRRGA%\bin\x64\LC\"
 XCopy /y /e "%OUTPUT_PATH%\bin\x64\Vulkan" "%ZIPDIRRGA%\bin\x64\Vulkan\"
 XCopy /y /e "%OUTPUT_PATH%\bin\x64\DX12" "%ZIPDIRRGA%\bin\x64\DX12\"
 XCopy /i /e "%OUTPUT_PATH%\bin\Documentation" "%ZIPDIRRGA%\bin\Documentation"
-XCopy "%OUTPUT_PATH%\bin\License.txt" "%ZIPDIRRGA%\bin\"
-XCopy "%OUTPUT_PATH%\bin\RGAThirdPartyLicenses.txt" "%ZIPDIRRGA%\bin\"
-XCopy "RGA\EULA.txt" "%ZIPDIRRGA%\bin\"
+XCopy "%RGAPATH%\License.txt" "%ZIPDIRRGA%\bin\"
+XCopy "%RGAPATH%\RGAThirdPartyLicenses.txt" "%ZIPDIRRGA%\bin\"
+XCopy "%RGAPATH%\EULA.txt" "%ZIPDIRRGA%\bin\"
 XCopy "C:\Program Files (x86)\Windows Kits\10\bin\x64\d3dcompiler_47.dll" "%ZIPDIRRGA%\bin\x64\d3dcompiler_47.dll*"
 
 REM Copy the Vulkan RGA Layer files

@@ -401,6 +401,11 @@ bool beUtils::DisassembleCodeObject(const std::string& coFileName, bool shouldPr
 
             // Find where the relevant portion of the disassembly ends.
             size_t textOffsetEnd = disassemblyWhole.find("s_code_end");
+            if (textOffsetEnd == std::string::npos)
+            {
+                // If s_code_end could not be found, compromise on finding the beginning of the next section.
+                textOffsetEnd = disassemblyWhole.find(".section", textOffsetStart);
+            }
             assert(textOffsetEnd != std::string::npos);
             if (textOffsetEnd != std::string::npos)
             {

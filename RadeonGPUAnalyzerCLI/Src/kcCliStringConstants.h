@@ -154,7 +154,10 @@ static const char* STR_WRN_VULKAN_FAILED_SET_ENV_VAR_A = "Warning: failed to set
 static const char* STR_WRN_VULKAN_FAILED_SET_ENV_VAR_B = "environment variable.";
 static const char* STR_WRN_VULKAN_FALLBACK_TO_VK_OFFLIINE_MODE = "Warning: falling back to building using Vulkan offline mode (-s vk-spv-offline). The generated ISA disassembly and HW resource usage information might be inaccurate. To get the most accurate results, adjust the pipeline state to match the shaders and rebuild.";
 static const char* STR_WARNING_LIVEREG_NOT_SUPPORTED = "Warning: live register analysis is disabled in this mode ";
-static const char* STR_WARNING_CFG_NOT_SUPPORTED = "Warning: control-flow generation is disabled in this mode ";
+static const char* STR_WARNING_CFG_NOT_SUPPORTED = "Warning: control-flow graph generation is disabled in this mode ";
+static const char* STR_WARNING_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_B = "is currently not supported for the generated disassembly since it contains independent basic blocks ";
+static const char* STR_WARNING_LIVEREG_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_A = "Warning: live register analysis ";
+static const char* STR_WARNING_CFG_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_A = "Warning: control-flow graph generation ";
 static const char* STR_WARNING_SKIPPING = "- skipping.";
 
 // Info.

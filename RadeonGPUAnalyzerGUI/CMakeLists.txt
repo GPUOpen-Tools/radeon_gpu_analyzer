@@ -67,11 +67,8 @@ add_subdirectory(../../QtCommon/CustomWidgets QtCommon/CustomWidgets)
 
 # TinyXML library
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-        find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
-    elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        find_library(TINYXML_LIB "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
-    endif()
+    find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
+    find_library(TINYXML_LIBD "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
 else()
     find_library(TINYXML_LIB "libtinyxml2.a" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/Linux/x64/Release")
 endif()
@@ -160,35 +157,34 @@ if (GUI_AUTOMATION)
     set(AUTO_ARG "-automation")
 endif()
 
-target_link_libraries(RadeonGPUAnalyzerGUI AMDTBaseTools AMDTOSWrappers QtScaling QtUtil QtCustomWidgets ${TINYXML_LIB} Qt5::Gui Qt5::Widgets Qt5::Core ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    target_link_libraries(RadeonGPUAnalyzerGUI AMDTBaseTools AMDTOSWrappers QtScaling QtUtil QtCustomWidgets optimized ${TINYXML_LIB} debug ${TINYXML_LIBD} general Qt5::Gui Qt5::Widgets Qt5::Core ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
+else()
+    target_link_libraries(RadeonGPUAnalyzerGUI AMDTBaseTools AMDTOSWrappers QtScaling QtUtil QtCustomWidgets ${TINYXML_LIB} Qt5::Gui Qt5::Widgets Qt5::Core ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
+endif()
 
-# Only on debug builds, copy the RGA-Updates file to the output directory for ease of testing.
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+# Copy the RGA-Updates file into the output directory for ease of testing.
+add_custom_command(TARGET RadeonGPUAnalyzerGUI POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E echo "copying RGA-Updates.json to output directory"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../Updates/RGA-Updates.json ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+)
+
+# On Windows also copy into the binary directory, which is the default working directory of Visual Studio.
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_custom_command(TARGET RadeonGPUAnalyzerGUI POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "copying RGA-Updates.json to output directory"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../Updates/RGA-Updates.json ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE}
+        COMMAND ${CMAKE_COMMAND} -E echo "copying RGA-Updates.json to binary directory"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../Updates/RGA-Updates.json ${CMAKE_CURRENT_BINARY_DIR}
     )
-
-    # On Windows also copy into the binary directory, which is the default working directory of Visual Studio.
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        add_custom_command(TARGET RadeonGPUAnalyzerGUI POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E echo "copying RGA-Updates.json to binary directory"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../Updates/RGA-Updates.json ${CMAKE_CURRENT_BINARY_DIR}
-        )
-    endif()
-
 endif()
 
 # Setup the post-build script.
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(DEBUG_ARG "-debug")
-    endif()
+    set(DEBUG_ARG "-debug")
     get_target_property(QtCoreLocation Qt5::Core LOCATION)
     get_filename_component(Qt5_DIR ${QtCoreLocation} DIRECTORY)
     add_custom_command(TARGET RadeonGPUAnalyzerGUI
                        POST_BUILD
-                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/Util/Windows/copy_post_build_gui.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${Qt5_LIB_DIR} ${DEBUG_ARG} ${AUTO_ARG}
+                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/Util/Windows/copy_post_build_gui.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} ${Qt5_LIB_DIR} $<$<CONFIG:debug>:-debug> ${AUTO_ARG}
                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/Util/Windows
                       )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")

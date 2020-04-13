@@ -81,36 +81,26 @@ endif()
 # Pick up the source files that are relevant to the platform
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_executable(RadeonGPUAnalyzerCLI ${WINDOWS_INC} ${COMMON_SRC} ${WINDOWS_SRC})
-    if (CMAKE_BUILD_TYPE STREQUAL "Release")
-        # Release build
-        if (CMAKE_64BIT_TARGET)
-            # 64-bit target
-            find_library(BOOST_LIBRARY1 libboost_filesystem-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
-            find_library(BOOST_LIBRARY2 libboost_system-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
-            find_library(BOOST_LIBRARY3 libboost_program_options-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
-            find_library(BOOST_LIBRARY4 libboost_regex-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
-        else()
-            # 32-bit target
-            find_library(BOOST_LIBRARY1 libboost_filesystem-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
-            find_library(BOOST_LIBRARY2 libboost_system-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
-            find_library(BOOST_LIBRARY3 libboost_program_options-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
-            find_library(BOOST_LIBRARY4 libboost_regex-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
-        endif()
+    if (CMAKE_64BIT_TARGET)
+        # 64-bit target
+        find_library(BOOST_LIBRARY1 libboost_filesystem-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
+        find_library(BOOST_LIBRARY2 libboost_system-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
+        find_library(BOOST_LIBRARY3 libboost_program_options-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
+        find_library(BOOST_LIBRARY4 libboost_regex-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
+        find_library(BOOST_LIBRARY1D libboost_filesystem-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
+        find_library(BOOST_LIBRARY2D libboost_system-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
+        find_library(BOOST_LIBRARY3D libboost_program_options-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
+        find_library(BOOST_LIBRARY4D libboost_regex-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
     else()
-        # Debug build
-        if (CMAKE_64BIT_TARGET)
-            # 64-bit target
-            find_library(BOOST_LIBRARY1 libboost_filesystem-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
-            find_library(BOOST_LIBRARY2 libboost_system-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
-            find_library(BOOST_LIBRARY3 libboost_program_options-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
-            find_library(BOOST_LIBRARY4 libboost_regex-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
-        else()
-            # 32-bit target
-            find_library(BOOST_LIBRARY1 libboost_filesystem-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
-            find_library(BOOST_LIBRARY2 libboost_system-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
-            find_library(BOOST_LIBRARY3 libboost_program_options-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
-            find_library(BOOST_LIBRARY4 libboost_regex-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
-        endif()
+        # 32-bit target
+        find_library(BOOST_LIBRARY1 libboost_filesystem-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
+        find_library(BOOST_LIBRARY2 libboost_system-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
+        find_library(BOOST_LIBRARY3 libboost_program_options-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
+        find_library(BOOST_LIBRARY4 libboost_regex-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
+        find_library(BOOST_LIBRARY1D libboost_filesystem-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
+        find_library(BOOST_LIBRARY2D libboost_system-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
+        find_library(BOOST_LIBRARY3D libboost_program_options-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
+        find_library(BOOST_LIBRARY4D libboost_regex-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
     endif()
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     # DeviceInfoLib objects are defined in RadeonGPUAnalyzerBackend/CMakeLists.txt
@@ -141,15 +131,12 @@ endif()
 
 # Other libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-        find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
-        find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Release")
-        find_library(SPIRVCROSS_LIB "spirv-cross-core.lib" HINTS "${PROJECT_SOURCE_DIR}/../Core/Vulkan/tools/Win64/lib/Release")
-    elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-        find_library(TINYXML_LIB "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
-        find_library(YAMLCPP_LIB "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Debug")
-        find_library(SPIRVCROSS_LIB "spirv-cross-core.lib" HINTS "${PROJECT_SOURCE_DIR}/../Core/Vulkan/tools/Win64/lib/Debug")
-    endif()
+    find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
+    find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Release")
+    find_library(SPIRVCROSS_LIB "spirv-cross-core.lib" HINTS "${PROJECT_SOURCE_DIR}/../Core/Vulkan/tools/Win64/lib/Release")
+    find_library(TINYXML_LIBD "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
+    find_library(YAMLCPP_LIBD "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/yaml-cpp/lib/win64/Debug")
+    find_library(SPIRVCROSS_LIBD "spirv-cross-core.lib" HINTS "${PROJECT_SOURCE_DIR}/../Core/Vulkan/tools/Win64/lib/Debug")
 else()
     find_library(TINYXML_LIB "libtinyxml2.a" HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/tinyxml2/Lib/Linux/x64/Release")
     if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0)
@@ -178,12 +165,26 @@ else()
 endif()
 
 # Link settings
-if(NOT IsDebian)
-target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools
-                       ${BOOST_LIBRARY1} ${BOOST_LIBRARY2} ${BOOST_LIBRARY3} ${BOOST_LIBRARY4} ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB} ${UPDATECHECKAPI_LIBS})
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools
+                           optimized ${BOOST_LIBRARY1}
+                           optimized ${BOOST_LIBRARY2}
+                           optimized ${BOOST_LIBRARY3}
+                           optimized ${BOOST_LIBRARY4}
+                           optimized ${TINYXML_LIB}
+                           optimized ${YAMLCPP_LIB}
+                           optimized ${SPIRVCROSS_LIB}
+                           debug ${BOOST_LIBRARY1D}
+                           debug ${BOOST_LIBRARY2D}
+                           debug ${BOOST_LIBRARY3D}
+                           debug ${BOOST_LIBRARY4D}
+                           debug ${TINYXML_LIBD}
+                           debug ${YAMLCPP_LIBD}
+                           debug ${SPIRVCROSS_LIBD}
+                           general ${UPDATECHECKAPI_LIBS})
 else()
-target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools
-                       ${Boost_LIBRARIES} ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB} ${UPDATECHECKAPI_LIBS})
+    target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools
+                           ${Boost_LIBRARIES} ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB} ${UPDATECHECKAPI_LIBS})
 endif()
 
 # Configure the post-build actions.
@@ -193,13 +194,13 @@ if(AMD_INTERNAL)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(DEBUG_ARG "-debug")
-    endif()
+    set(DEBUG_ARG "-debug")
+    set(REL_ARG "")
+    # Use Windows path separater to ensure path string is valid for xcopy commands
     add_custom_command(TARGET RadeonGPUAnalyzerCLI
                        POST_BUILD
-                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/Util/Windows/copy_post_build_cli.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} ${DEBUG_ARG} ${INTERNAL_ARG}
-                       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/Util/Windows
+                       COMMAND ${PROJECT_SOURCE_DIR}/../Build/Util/Windows/copy_post_build_cli.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\ $<$<CONFIG:debug>:-debug> ${INTERNAL_ARG}
+                       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}\\..\\Build\\Util\\Windows
                       )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     add_custom_command(TARGET RadeonGPUAnalyzerCLI

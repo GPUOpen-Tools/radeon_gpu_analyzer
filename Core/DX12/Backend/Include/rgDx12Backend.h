@@ -93,22 +93,24 @@ namespace rga
 
         // Compile a graphics pipeline to generate the disassembly and compiler resource usage info.
         // pGraphicsPso should be fully set up for pipeline creation, and reference all shaders.
-        // The output would be set into results.
+        // The output would be set into results, pipelineBinary.
         // Any error messages would be set into errorMsg.
         // Returns true on success, false otherwise.
         bool CompileGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pGraphicsPso,
             rgDx12PipelineResults& results,
+            std::vector<char>& pipelineBinary,
             std::string& errorMsg) const;
 
         // Compile a compute pipeline to generate the disassembly, compiler resource usage info
         // and thread group dimensions.
         // pComputePso should be fully set up for pipeline creation, and reference the shader.
-        // The output would be set into computeShaderStats, threadGroupSize.
+        // The output would be set into computeShaderStats, threadGroupSize, pipelineBinary.
         // Any error messages would be set into errorMsg.
         // Returns true on success, false otherwise.
         bool CompileComputePipeline(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pComputePso,
             rgDx12ShaderResults& computeShaderStats,
             rgDx12ThreadGroupSize& threadGroupSize,
+            std::vector<char>& pipelineBinary,
             std::string& errorMsg) const;
 
     private:

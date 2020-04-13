@@ -155,7 +155,7 @@ bool rgBuildViewVulkan::ConnectMenuSignals()
     return isConnected;
 }
 
-void rgBuildViewVulkan::HandlePipelineStateFileSaved()
+bool rgBuildViewVulkan::HandlePipelineStateFileSaved()
 {
     bool isOk = false;
     std::string errorString;
@@ -171,6 +171,7 @@ void rgBuildViewVulkan::HandlePipelineStateFileSaved()
 
         // Save the pipeline state file.
         isOk = m_pPipelineStateModel->SavePipelineStateFile(currentPsoState.m_pipelineStateFilePath, errorString);
+        assert(isOk);
     }
 
     assert(isOk);
@@ -190,6 +191,8 @@ void rgBuildViewVulkan::HandlePipelineStateFileSaved()
         errorStream << errorString;
         rgUtils::ShowErrorMessageBox(errorStream.str().c_str(), this);
     }
+
+    return isOk;
 }
 
 void rgBuildViewVulkan::HandlePipelineStateFileLoaded()
@@ -720,28 +723,34 @@ void rgBuildViewVulkan::SaveSourceFile(const std::string& sourceFilePath)
 bool rgBuildViewVulkan::SaveCurrentState()
 {
     // Save the pipeline state.
-    HandlePipelineStateFileSaved();
+    bool status = HandlePipelineStateFileSaved();
 
-    // Save all file items in the Vulkan way (meaning, check if they
-    // are SPIR-V files that need to be reassembled and act accordingly.
-    rgMenuGraphics* pMenu = static_cast<rgMenuGraphics*>(GetMenu());
-    assert(pMenu != nullptr);
-    if (pMenu != nullptr)
+    assert(status);
+    if (status)
     {
-        std::vector<rgMenuFileItem*> fileItems = pMenu->GetAllFileItems();
-        for (rgMenuFileItem* pItem : fileItems)
+        // Save all file items in the Vulkan way (meaning, check if they
+        // are SPIR-V files that need to be reassembled and act accordingly.
+        rgMenuGraphics* pMenu = static_cast<rgMenuGraphics*>(GetMenu());
+        assert(pMenu != nullptr);
+        if (pMenu != nullptr)
         {
-            rgMenuFileItemGraphics* pItemGraphics = static_cast<rgMenuFileItemGraphics*>(pItem);
-            assert(pItemGraphics != nullptr);
-            if (pItemGraphics != nullptr)
+            std::vector<rgMenuFileItem*> fileItems = pMenu->GetAllFileItems();
+            for (rgMenuFileItem* pItem : fileItems)
             {
-                SaveFile(pItemGraphics);
+                rgMenuFileItemGraphics* pItemGraphics = static_cast<rgMenuFileItemGraphics*>(pItem);
+                assert(pItemGraphics != nullptr);
+                if (pItemGraphics != nullptr)
+                {
+                    SaveFile(pItemGraphics);
+                }
             }
         }
+
+        // Call the base implementation to save the remaining files/settings.
+        return rgBuildView::SaveCurrentState();
     }
 
-    // Call the base implementation to save the remaining files/settings.
-    return rgBuildView::SaveCurrentState();
+    return status;
 }
 
 void rgBuildViewVulkan::ConnectPipelineStateViewSignals()

@@ -46,6 +46,10 @@ namespace rga
         // Returns the trimmed string.
         static std::string TrimWhitespace(const std::string& str);
 
+        // Trim leading and trailing '\n' characters.
+        // Returns the trimmed string.
+        static std::string TrimNewline(const std::string& str);
+
         // Trim leading and trailing white space and \" characters around the given string.
         // Returns the trimmed string.
         static std::string TrimWhitespaceAndCommas(const std::string& str);

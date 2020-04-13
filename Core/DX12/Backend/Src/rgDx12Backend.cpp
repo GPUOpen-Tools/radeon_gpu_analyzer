@@ -1,5 +1,3 @@
-#include "rgDx12Backend.h"
-
 // C++.
 #include <sstream>
 #include <fstream>
@@ -13,6 +11,10 @@
 #include <d3dcommon.h>
 #include <AmdExtD3D.h>
 #include <AmdExtD3DShaderAnalyzerApi.h>
+
+// Local.
+#include "rgDx12Backend.h"
+#include "rgDx12Utils.h"
 
 namespace rga
 {
@@ -32,13 +34,15 @@ namespace rga
     // Messages.
     static const char* STR_ERROR_PIPELINE_CREATE_FAILURE = "Error: failed to create D3D12 graphics pipeline with error code: ";
     static const char* STR_ERROR_PIPELINE_STATE_CREATE_FAILURE = "Error: failed to create compute pipeline state.";
+    static const char* STR_ERROR_PIPELINE_BINARY_SIZE_QUERY_FAILURE = "Error: failed to retrieve pipeline binary size.";
+    static const char* STR_ERROR_PIPELINE_BINARY_EXTRACTION_FAILURE = "Error: failed to extract pipeline binary.";
 
     // *** CONSTANTS - END ***
 
     // Extracts the XML file for the given pipeline state, and allocates the contents in the given buffer.
     // In case of any error messages, they will be set into errorMsg.
     // Returns true on success, false otherwise.
-    static bool ExtractXmlContent(IAmdExtD3DShaderAnalyzer* pAmdShaderAnalyzerExt,
+    static bool ExtractXmlContent(IAmdExtD3DShaderAnalyzer1* pAmdShaderAnalyzerExt,
         AmdExtD3DPipelineHandle* pPipelineHandle, char*& pXmlBuffer, std::string& errorMsg)
     {
         bool ret = false;
@@ -64,7 +68,7 @@ namespace rga
     // call to CreateGraphicsPipeline or CreateComputePipeline using the same ID3D12Device which
     // was used in the call to rgDx12Backend::Init().
     // Returns true on success, false otherwise.
-    static bool RetrieveDisassemblyGraphics(IAmdExtD3DShaderAnalyzer* pAmdShaderAnalyzerExt,
+    static bool RetrieveDisassemblyGraphics(IAmdExtD3DShaderAnalyzer1* pAmdShaderAnalyzerExt,
         AmdExtD3DPipelineHandle* pD3d12PipelineState,
         rgDx12PipelineResults& results, std::string& errorMsg)
     {
@@ -106,41 +110,44 @@ namespace rga
                                     assert(pDisassembly != NULL);
                                     if (pDisassembly != NULL)
                                     {
-                                        size_t sz = strlen(pDisassembly);
+                                        // Clean up the string.
+                                        std::string fixedStr = pDisassembly;
+                                        size_t sz = fixedStr.size();
+                                        fixedStr = rgDx12Utils::TrimNewline(fixedStr);
+                                        pDisassembly = fixedStr.data();
                                         assert(sz > 0);
                                         if (sz > 0)
                                         {
                                             // Assign the disassembly to the correct shader.
                                             if (shaderType.compare(STR_XML_ATTRIBUTE_VS) == 0)
                                             {
-                                                results.m_vertex.pDisassembly = new char[sz]();
+                                                results.m_vertex.pDisassembly = new char[sz] {};
                                                 memcpy(results.m_vertex.pDisassembly, pDisassembly, sz);
                                             }
                                             else if (shaderType.compare(STR_XML_ATTRIBUTE_HS) == 0)
                                             {
-                                                results.m_hull.pDisassembly = new char[sz]();
+                                                results.m_hull.pDisassembly = new char[sz] {};
                                                 memcpy(results.m_hull.pDisassembly, pDisassembly, sz);
                                             }
                                             else if (shaderType.compare(STR_XML_ATTRIBUTE_DS) == 0)
                                             {
-                                                results.m_domain.pDisassembly = new char[sz]();
+                                                results.m_domain.pDisassembly = new char[sz] {};
                                                 memcpy(results.m_domain.pDisassembly, pDisassembly, sz);
                                             }
                                             else if (shaderType.compare(STR_XML_ATTRIBUTE_GS) == 0)
                                             {
-                                                results.m_geometry.pDisassembly = new char[sz]();
+                                                results.m_geometry.pDisassembly = new char[sz] {};
                                                 memcpy(results.m_geometry.pDisassembly, pDisassembly, sz);
                                             }
                                             else if (shaderType.compare(STR_XML_ATTRIBUTE_PS) == 0)
                                             {
-                                                results.m_pixel.pDisassembly = new char[sz]();
+                                                results.m_pixel.pDisassembly = new char[sz] {};
                                                 memcpy(results.m_pixel.pDisassembly, pDisassembly, sz);
                                             }
                                             else
                                             {
                                                 assert(false);
                                             }
-
                                         }
                                     }
                                 }
@@ -167,7 +174,7 @@ namespace rga
         return ret;
     }
 
-    static bool RetrieveDisassemblyCompute(IAmdExtD3DShaderAnalyzer* pAmdShaderAnalyzerExt,
+    static bool RetrieveDisassemblyCompute(IAmdExtD3DShaderAnalyzer1* pAmdShaderAnalyzerExt,
         AmdExtD3DPipelineHandle* pD3d12PipelineState,
         rgDx12ShaderResults& results, std::string& errorMsg)
     {
@@ -212,7 +219,7 @@ namespace rga
                                     assert(sz > 0);
                                     if (sz > 0)
                                     {
-                                        results.pDisassembly = new char[sz]();
+                                        results.pDisassembly = new char[sz] {};
                                         memcpy(results.pDisassembly, pDisassembly, sz);
                                         results.pDisassembly[sz - 1] = '\0';
                                     }
@@ -234,6 +241,35 @@ namespace rga
         return ret;
     }
 
+    static bool ExtractPipelineBinary(IAmdExtD3DShaderAnalyzer1* m_pAmdShaderAnalyzerExt,
+        AmdExtD3DPipelineHandle* pPipelineHandle, std::vector<char>& pipelineBinary, std::string& errorMsg)
+    {
+        bool ret = false;
+        AmdExtD3DPipelineElfHandle pPipelineBinary = nullptr;
+        uint32_t pipelineBinaryBytes = 0;
+        HRESULT hr = m_pAmdShaderAnalyzerExt->GetPipelineElfBinary(*pPipelineHandle, pPipelineBinary, &pipelineBinaryBytes);
+        assert(hr == S_OK);
+        assert(pipelineBinaryBytes > 0);
+        if (hr == S_OK && pipelineBinaryBytes > 0)
+        {
+            pipelineBinary.resize(pipelineBinaryBytes);
+            void* pDataBuffer = static_cast<void*>(pipelineBinary.data());
+            hr = m_pAmdShaderAnalyzerExt->GetPipelineElfBinary(*pPipelineHandle, pDataBuffer, &pipelineBinaryBytes);
+            assert(hr == S_OK);
+            ret = (hr == S_OK);
+            if (!ret)
+            {
+                errorMsg.append(STR_ERROR_PIPELINE_BINARY_EXTRACTION_FAILURE);
+            }
+        }
+        else
+        {
+            errorMsg.append(STR_ERROR_PIPELINE_BINARY_SIZE_QUERY_FAILURE);
+            ret = false;
+        }
+        return ret;
+    }
+
     class rgDx12Backend::Impl
     {
     public:
@@ -244,18 +280,20 @@ namespace rga
 
         bool CompileGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pGraphicsPso,
             rgDx12PipelineResults& results,
+            std::vector<char>& pipelineBinary,
             std::string& errorMsg) const;
 
         bool CompileComputePipeline(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pComputePso,
             rgDx12ShaderResults& shaderResults,
             rgDx12ThreadGroupSize& threadGroupSize,
+            std::vector<char>& pBinary,
             std::string& errorMsg) const;
 
     private:
         HMODULE LoadUMDLibrary();
         HMODULE m_hAmdD3dDll = NULL;
         IAmdExtD3DFactory* m_pAmdExtObject = NULL;
-        IAmdExtD3DShaderAnalyzer* m_pAmdShaderAnalyzerExt = NULL;
+        IAmdExtD3DShaderAnalyzer1* m_pAmdShaderAnalyzerExt = NULL;
     };
 
     static void SetShaderResults(const AmdExtD3DShaderStats& shaderStats, rgDx12ShaderResults& results)
@@ -322,7 +360,7 @@ namespace rga
                 if (hr == S_OK)
                 {
                     hr = m_pAmdExtObject->CreateInterface(pD3D12Device,
-                        __uuidof(IAmdExtD3DShaderAnalyzer),
+                        __uuidof(IAmdExtD3DShaderAnalyzer1),
                         reinterpret_cast<void **>(&m_pAmdShaderAnalyzerExt));
                     assert(hr == S_OK);
                     assert(m_pAmdShaderAnalyzerExt != NULL);
@@ -407,6 +445,7 @@ namespace rga
 
     bool rgDx12Backend::Impl::CompileGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pGraphicsPso,
         rgDx12PipelineResults& results,
+        std::vector<char>& pipelineBinary,
         std::string& errorMsg) const
     {
         assert(m_pAmdShaderAnalyzerExt != nullptr);
@@ -416,18 +455,25 @@ namespace rga
             AmdExtD3DPipelineHandle* pPipelineHandle = new AmdExtD3DPipelineHandle{};;
             ID3D12PipelineState* pPipeline = NULL;
             AmdExtD3DGraphicsShaderStats stats;
-            HRESULT hr = m_pAmdShaderAnalyzerExt->CreateGraphicsPipelineState(pGraphicsPso,
-                IID_PPV_ARGS(&pPipeline), &stats, pPipelineHandle);
+            memset(&stats, 0, sizeof(AmdExtD3DGraphicsShaderStats));
+            HRESULT hr = m_pAmdShaderAnalyzerExt->CreateGraphicsPipelineState1(pGraphicsPso,
+                IID_PPV_ARGS(&pPipeline), pPipelineHandle);
             assert(hr == S_OK);
             ret = (hr == S_OK);
 
             if (ret)
             {
+                m_pAmdShaderAnalyzerExt->GetGraphicsShaderStats(*pPipelineHandle, &stats);
+
                 // Set the statistics values to the output structure.
                 SetPipelineResults(stats, results);
 
                 // Retrieve the disassembly.
                 ret = RetrieveDisassemblyGraphics(m_pAmdShaderAnalyzerExt, pPipelineHandle, results, errorMsg);
+                assert(ret);
+
+                // Retrieve the pipeline binary.
+                ret = ExtractPipelineBinary(m_pAmdShaderAnalyzerExt, pPipelineHandle, pipelineBinary, errorMsg);
                 assert(ret);
             }
             else
@@ -444,13 +490,14 @@ namespace rga
 
     bool rgDx12Backend::CompileGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pGraphicsPso,
         rgDx12PipelineResults& results,
+        std::vector<char>& pipelineBinary,
         std::string& errorMsg) const
     {
         bool ret = false;
         assert(m_pImpl != nullptr);
         if (m_pImpl != nullptr)
         {
-            ret = m_pImpl->CompileGraphicsPipeline(pGraphicsPso, results, errorMsg);
+            ret = m_pImpl->CompileGraphicsPipeline(pGraphicsPso, results, pipelineBinary, errorMsg);
         }
         return ret;
     }
@@ -458,6 +505,7 @@ namespace rga
     bool rgDx12Backend::Impl::CompileComputePipeline(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pComputePso,
         rgDx12ShaderResults& shaderResults,
         rgDx12ThreadGroupSize& threadGroupSize,
+        std::vector<char>& pBinary,
         std::string& errorMsg) const
     {
         assert(m_pAmdShaderAnalyzerExt != nullptr);
@@ -471,41 +519,49 @@ namespace rga
                 AmdExtD3DPipelineHandle* pPipelineHandle = new AmdExtD3DPipelineHandle{};
                 ID3D12PipelineState* pPipeline = NULL;
                 AmdExtD3DComputeShaderStats driverShaderStats;
-                HRESULT hr = m_pAmdShaderAnalyzerExt->CreateComputePipelineState(pComputePso,
-                    IID_PPV_ARGS(&pPipeline), &driverShaderStats, pPipelineHandle);
+                memset(&driverShaderStats, 0, sizeof(AmdExtD3DComputeShaderStats));
+                HRESULT hr = m_pAmdShaderAnalyzerExt->CreateComputePipelineState1(pComputePso,
+                    IID_PPV_ARGS(&pPipeline), pPipelineHandle);
                 assert(hr == S_OK);
                 assert(pPipeline != NULL);
                 ret = (hr == S_OK && pPipeline != NULL);
                 if (ret)
                 {
+                    m_pAmdShaderAnalyzerExt->GetComputeShaderStats(*pPipelineHandle, &driverShaderStats);
+
                     // Set results.
                     SetShaderResultsCompute(driverShaderStats, shaderResults, threadGroupSize);
 
                     // Retrieve the disassembly.
                     ret = RetrieveDisassemblyCompute(m_pAmdShaderAnalyzerExt, pPipelineHandle, shaderResults, errorMsg);
                     assert(ret);
+
+                    // Retrieve the pipeline binary.
+                    ret = ExtractPipelineBinary(m_pAmdShaderAnalyzerExt, pPipelineHandle, pBinary, errorMsg);
+                    assert(ret);
                 }
                 else
                 {
-                    // Log error messages.
-                    errorMsg = STR_ERROR_PIPELINE_STATE_CREATE_FAILURE;
+                    errorMsg.append(STR_ERROR_PIPELINE_STATE_CREATE_FAILURE);
+                    ret = false;
                 }
             }
         }
-        return ret;
 
+        return ret;
     }
 
     bool rgDx12Backend::CompileComputePipeline(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pComputePso,
-        rgDx12ShaderResults& shaderResults,
+        rgDx12ShaderResults& computeShaderStats,
         rgDx12ThreadGroupSize& threadGroupSize,
+        std::vector<char>& pipelineBinary,
         std::string& errorMsg) const
     {
         bool ret = false;
         assert(m_pImpl != nullptr);
         if (m_pImpl != nullptr)
         {
-            ret = m_pImpl->CompileComputePipeline(pComputePso, shaderResults, threadGroupSize, errorMsg);
+            ret = m_pImpl->CompileComputePipeline(pComputePso, computeShaderStats, threadGroupSize, pipelineBinary, errorMsg);
         }
         return ret;
     }

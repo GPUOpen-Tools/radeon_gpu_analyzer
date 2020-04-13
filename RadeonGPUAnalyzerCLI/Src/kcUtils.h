@@ -287,6 +287,9 @@ public:
     // Returns true if the target is of the Vega generation and false otherwise.
     static bool IsVegaTarget(const std::string& targetName);
 
+    // Returns true if the given disassembly is supported by the static analysis engine.
+    static bool IsPostPorcessingSupported(const std::string& isaFilePath);
+
     // Adjust base file name for binary output file.
     static std::string AdjustBaseFileNameBinary(const std::string& userInputFileName, const std::string& device);
 

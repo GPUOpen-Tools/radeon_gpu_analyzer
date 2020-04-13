@@ -29,6 +29,7 @@
 #include <AMDTOSWrappers/Include/osModule.h>
 #include <AMDTOSWrappers/Include/osApplication.h>
 #include <AMDTOSWrappers/Include/osProcess.h>
+#include <RadeonGPUAnalyzerCLI/Src/kcUtils.h>
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -1215,12 +1216,19 @@ bool beProgramBuilderDX::GetWavefrontSize(const string& deviceName, size_t& wave
     bool ret = false;
     wavefrontSize = 0;
 
-    // Extract the device info.
-    GDT_DeviceInfo s_deviceInfo;
-
-    if (AMDTDeviceInfoUtils::Instance()->GetDeviceInfo(deviceName.c_str(), s_deviceInfo))
+    // For Navi targets, the wave size is being determined in runtime - keep it at zero.
+    if (!kcUtils::IsNaviTarget(deviceName))
     {
-        wavefrontSize = s_deviceInfo.m_nWaveSize;
+        // Extract the device info.
+        GDT_DeviceInfo s_deviceInfo;
+        if (AMDTDeviceInfoUtils::Instance()->GetDeviceInfo(deviceName.c_str(), s_deviceInfo))
+        {
+            wavefrontSize = s_deviceInfo.m_nWaveSize;
+            ret = true;
+        }
+    }
+    else
+    {
         ret = true;
     }
 

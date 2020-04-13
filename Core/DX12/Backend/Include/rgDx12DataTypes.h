@@ -65,6 +65,9 @@ namespace rga
         // Full path to the file that describes the pipeline state.
         std::string rsPso;
 
+        // Full path to the pipeline binary output file.
+        std::string pipelineBinary;
+
         // The ID of the GPU for which to compile the pipeline. If not specified,
         // the pipeline would be compiled for the physically installed GPU.
         int targetGpu = -1;

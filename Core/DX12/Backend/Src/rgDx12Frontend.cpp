@@ -33,24 +33,37 @@ namespace rga
     static const char* STR_ERROR_DXBC_READ_FAILURE = "Error: failed to read input DXBC binary: ";
     static const char* STR_ERROR_EXTRACT_COMPUTE_SHADER_STATS_FAILURE = "Error: failed to extract compute shader statistics.";
     static const char* STR_ERROR_EXTRACT_COMPUTE_SHADER_DISASSEMBLY_FAILURE = "Error: failed to extract compute shader disassembly.";
+    static const char* STR_ERROR_EXTRACT_COMPUTE_PIPELINE_BINARY_FAILURE = "Error: failed to extract compute pipeline binary.";
+    static const char* STR_ERROR_EXTRACT_GRAPHICS_PIPELINE_BINARY_FAILURE = "Error: failed to extract graphics pipeline binary.";
     static const char* STR_ERROR_EXTRACT_GRAPHICS_SHADER_OUTPUT_FAILURE_A = "Error: failed to extract ";
     static const char* STR_ERROR_EXTRACT_GRAPHICS_SHADER_STATS_FAILURE_B = " shader statistics.";
     static const char* STR_ERROR_EXTRACT_GRAPHICS_SHADER_DISASSEMBLY_FAILURE_B = " shader disassembly.";
     static const char* STR_ERROR_FRONT_END_COMPILATION_FAILURE = "Error: front-end compilation of hlsl to DXBC failed.";
     static const char* STR_ERROR_FAILED_TO_FIND_DX12_ADAPTER = "Error: failed to find a DX12 display adapter.";
-    static const char* STR_ERROR_FAILED_TO_CREATE_GRAPHICS_PIPELINE = "Error: failed to create graphics pipeline.";
+    static const char* STR_ERROR_FAILED_TO_CREATE_GRAPHICS_PIPELINE = "Error: graphics pipeline creation failed.";
     static const char* STR_ERROR_GPSO_FILE_PARSE_FAILED = "Error: failed to parse graphics pipeline description file.";
     static const char* STR_ERROR_RS_FILE_READ_FAILED = "Error: failed to read binary file for root signature: ";
     static const char* STR_ERROR_RS_FILE_COMPILE_FAILED = "Error: failed to compile root signature after reading binary data from file: ";
+    static const char* STR_ERROR_COMPUTE_PIPELINE_CREATION_FAILED = "Error: compute pipeline state creation failed. ";
     static const char* STR_INFO_EXTRACT_COMPUTE_SHADER_STATS = "Extracting compute shader statistics...";
     static const char* STR_INFO_EXTRACT_COMPUTE_SHADER_DISASSEMBLY = "Extracting compute shader disassembly...";
     static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_DISASSEMBLY = " shader disassembly...";
+    static const char* STR_INFO_EXTRACT_COMPUTE_PIPELINE_BINARY = "Extracting compute pipeline binary...";
+    static const char* STR_INFO_EXTRACT_GRAPHICS_PIPELINE_BINARY = "Extracting graphics pipeline binary...";
     static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_OUTPUT_A = "Extracting ";
     static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_STATS_B = " shader statistics...";
     static const char* STR_INFO_EXTRACT_COMPUTE_SHADER_STATS_SUCCESS = "Compute shader statistics extracted successfully.";
     static const char* STR_INFO_EXTRACT_COMPUTE_SHADER_DISASSEMBLY_SUCCESS = "Compute shader disassembly extracted successfully.";
+    static const char* STR_INFO_EXTRACT_COMPUTE_PIPELINE_BINARY_SUCCESS = "Compute pipeline binary extracted successfully.";
+    static const char* STR_INFO_EXTRACT_GRAPHICS_PIPELINE_BINARY_SUCCESS = "Graphics pipeline binary extracted successfully.";
     static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_STATS_SUCCESS = " shader statistics extracted successfully.";
     static const char* STR_INFO_EXTRACT_GRAPHICS_SHADER_DISASSEMBLY_SUCCESS = " shader disassembly extracted successfully.";
+    static const char* STR_INFO_COMPILING_ROOT_SIGNATURE_FROM_HLSL_A = "Compiling root signature defined in HLSL file ";
+    static const char* STR_INFO_COMPILING_ROOT_SIGNATURE_FROM_HLSL_B = " in macro named ";
+    static const char* STR_HINT_ROOT_SIGNATURE_FAILURE = "Hint: this failure could be due to a missing or incompatible root signature.\n"
+        "1. If your root signature is defined in the HLSL code, make sure that the [RootSignature()] attribute is used "
+        "with the macro name, or use the --rs-macro option.\n2. If your root signature is precompiled into a binary, please use the --rs-bin "
+        "option with the full path to the binary file as an input.";
 
     // *** CONSTANTS - END ***
 
@@ -200,9 +213,9 @@ namespace rga
         {
             if (pErrorMessages != nullptr && pErrorMessages->GetBufferSize() > 0)
             {
-                std::cout << (char*)pErrorMessages->GetBufferPointer() << std::endl;;
+                std::cerr << (char*)pErrorMessages->GetBufferPointer() << std::endl;;
             }
-            std::cout << STR_ERROR_FRONT_END_COMPILATION_FAILURE << std::endl;
+            std::cerr << STR_ERROR_FRONT_END_COMPILATION_FAILURE << std::endl;
         }
 
         // Clean up.
@@ -238,7 +251,7 @@ namespace rga
         }
         else
         {
-            std::cout << STR_ERROR_DXBC_READ_FAILURE << dxbcFullPath << std::endl;
+            std::cerr << STR_ERROR_DXBC_READ_FAILURE << dxbcFullPath << std::endl;
         }
 
         return ret;
@@ -271,7 +284,7 @@ namespace rga
         }
         else
         {
-            std::cout << STR_ERROR_DXBC_DISASSEMBLE_FAILURE << std::endl;
+            std::cerr << STR_ERROR_DXBC_DISASSEMBLE_FAILURE << std::endl;
         }
 
         return ret;
@@ -283,6 +296,10 @@ namespace rga
 
         if (!config.rsMacroFile.empty() && !config.rsMacro.empty())
         {
+            std::cout << STR_INFO_COMPILING_ROOT_SIGNATURE_FROM_HLSL_A <<
+                config.rsMacroFile << STR_INFO_COMPILING_ROOT_SIGNATURE_FROM_HLSL_B <<
+                config.rsMacro << "..." << std::endl;
+
             // Read the content of the HLSL file.
             std::string hlslText;
             bool isFileRead = rgDx12Utils::ReadTextFile(config.rsMacroFile, hlslText);
@@ -302,7 +319,7 @@ namespace rga
 
                 if (pErrorMessages != nullptr)
                 {
-                    std::cout << (char*)pErrorMessages->GetBufferPointer() << std::endl;
+                    std::cerr << (char*)pErrorMessages->GetBufferPointer() << std::endl;
                 }
 
                 assert(hr == S_OK);
@@ -310,7 +327,11 @@ namespace rga
                 ret = SUCCEEDED(hr) && compiledRs != nullptr;
                 if (!ret)
                 {
-                    std::cout << STR_ERROR_ROOT_SIGNATURE_COMPILE_FAILURE << std::endl;
+                    std::cerr << STR_ERROR_ROOT_SIGNATURE_COMPILE_FAILURE << std::endl;
+                }
+                else
+                {
+                    std::cout << "Root signature compiled successfully." << std::endl;
                 }
             }
         }
@@ -698,12 +719,12 @@ namespace rga
                     ret = pPso->pRootSignature != nullptr;
                     if (pPso->pRootSignature == nullptr)
                     {
-                        std::cout << STR_ERROR_RS_FILE_COMPILE_FAILED << config.rsSerialized << std::endl;
+                        std::cerr << STR_ERROR_RS_FILE_COMPILE_FAILED << config.rsSerialized << std::endl;
                     }
                 }
                 else
                 {
-                    std::cout << STR_ERROR_RS_FILE_READ_FAILED << config.rsSerialized << std::endl;
+                    std::cerr << STR_ERROR_RS_FILE_READ_FAILED << config.rsSerialized << std::endl;
                 }
             }
         }
@@ -803,7 +824,7 @@ namespace rga
         }
         else
         {
-            std::cout << STR_ERROR_FAILED_TO_FIND_DX12_ADAPTER << std::endl;
+            std::cerr << STR_ERROR_FAILED_TO_FIND_DX12_ADAPTER << std::endl;
         }
         return ret;
     }
@@ -830,7 +851,8 @@ namespace rga
             {
                 rgDx12ShaderResults results;
                 rgDx12ThreadGroupSize threadGroupSize;
-                ret = m_backend.CompileComputePipeline(pPso, results, threadGroupSize, errorMsg);
+                std::vector<char> pipelineBinary;
+                ret = m_backend.CompileComputePipeline(pPso, results, threadGroupSize, pipelineBinary, errorMsg);
                 assert(ret);
                 if (ret)
                 {
@@ -850,7 +872,7 @@ namespace rga
                         }
                         else
                         {
-                            std::cout << STR_ERROR_COMPUTE_SHADER_DISASSEMBLY_EXCTRACTION_FAILURE << std::endl;
+                            std::cerr << STR_ERROR_COMPUTE_SHADER_DISASSEMBLY_EXCTRACTION_FAILURE << std::endl;
                         }
                         assert(ret);
                     }
@@ -866,14 +888,30 @@ namespace rga
                         // Report the result to the user.
                         std::cout << (isStatsSaved ? STR_INFO_EXTRACT_COMPUTE_SHADER_STATS_SUCCESS :
                             STR_ERROR_EXTRACT_COMPUTE_SHADER_STATS_FAILURE) << std::endl;
+                        assert(ret);
                     }
-                    assert(ret);
+
+                    if (!config.pipelineBinary.empty())
+                    {
+                        // Pipeline binary.
+                        std::cout << STR_INFO_EXTRACT_COMPUTE_PIPELINE_BINARY << std::endl;
+                        ret = !pipelineBinary.empty() && rgDx12Utils::WriteBinaryFile(config.pipelineBinary, pipelineBinary);
+
+                        // Report the result to the user.
+                        std::cout << (ret ? STR_INFO_EXTRACT_COMPUTE_PIPELINE_BINARY_SUCCESS :
+                            STR_ERROR_EXTRACT_COMPUTE_PIPELINE_BINARY_FAILURE) << std::endl;
+                    }
                 }
                 else if (!errorMsg.empty())
                 {
                     // Print the error messages to the user.
-                    std::cout << errorMsg << std::endl;
+                    std::cerr << errorMsg << std::endl;
                 }
+            }
+            else
+            {
+                std::cerr << STR_ERROR_COMPUTE_PIPELINE_CREATION_FAILED << std::endl;
+                std::cerr << STR_HINT_ROOT_SIGNATURE_FAILURE << std::endl;
             }
         }
         return ret;
@@ -902,13 +940,13 @@ namespace rga
                 }
                 else
                 {
-                    std::cout << STR_ERROR_EXTRACT_GRAPHICS_SHADER_OUTPUT_FAILURE_A << stageName <<
+                    std::cerr << STR_ERROR_EXTRACT_GRAPHICS_SHADER_OUTPUT_FAILURE_A << stageName <<
                         STR_ERROR_EXTRACT_GRAPHICS_SHADER_DISASSEMBLY_FAILURE_B << std::endl;
                 }
             }
             else
             {
-                std::cout << STR_ERROR_GRAPHICS_SHADER_DISASSEMBLY_EXCTRACTION_FAILURE_A << stageName <<
+                std::cerr << STR_ERROR_GRAPHICS_SHADER_DISASSEMBLY_EXCTRACTION_FAILURE_A << stageName <<
                     STR_ERROR_GRAPHICS_SHADER_DISASSEMBLY_EXCTRACTION_FAILURE_B << std::endl;
             }
         }
@@ -940,7 +978,8 @@ namespace rga
     bool rgDx12Frontend::CompileGraphicsPipeline(const rgDx12Config& config, std::string& errorMsg) const
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC* pPso = nullptr;
-        rgDx12PipelineResults results;
+        rgDx12PipelineResults results = {};
+        std::vector<char> pipelineBinary;
 
         bool ret = CreateGraphicsPipeline(config, pPso, errorMsg);
         assert(ret);
@@ -1017,7 +1056,7 @@ namespace rga
 
                 if (ret)
                 {
-                    ret = m_backend.CompileGraphicsPipeline(pPso, results, errorMsg);
+                    ret = m_backend.CompileGraphicsPipeline(pPso, results, pipelineBinary, errorMsg);
                     assert(ret);
 
                     if (ret)
@@ -1033,22 +1072,34 @@ namespace rga
                         assert(ret);
                         ret = WriteGraphicsShaderOutputFiles(config.pixel, results.m_pixel, "pixel");
                         assert(ret);
+
+                        // Write the pipeline binary file.
+                        if (!config.pipelineBinary.empty())
+                        {
+                            std::cout << STR_INFO_EXTRACT_GRAPHICS_PIPELINE_BINARY << std::endl;
+                            ret = !pipelineBinary.empty() && rgDx12Utils::WriteBinaryFile(config.pipelineBinary, pipelineBinary);
+
+                            // Report the result to the user.
+                            std::cout << (ret ? STR_INFO_EXTRACT_GRAPHICS_PIPELINE_BINARY_SUCCESS :
+                                STR_ERROR_EXTRACT_GRAPHICS_PIPELINE_BINARY_FAILURE) << std::endl;
+                        }
                     }
                 }
                 else
                 {
                     std::stringstream msg;
-                    if (errorMsg.empty())
+                    if (!errorMsg.empty())
                     {
                         msg << std::endl;
                     }
                     msg << STR_ERROR_FAILED_TO_CREATE_GRAPHICS_PIPELINE << std::endl;
+                    msg << STR_HINT_ROOT_SIGNATURE_FAILURE << std::endl;
                     errorMsg.append(msg.str());
                 }
             }
             else
             {
-                std::cout << STR_ERROR_GPSO_FILE_PARSE_FAILED << std::endl;
+                std::cerr << STR_ERROR_GPSO_FILE_PARSE_FAILED << std::endl;
             }
         }
         return ret;

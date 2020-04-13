@@ -201,6 +201,9 @@
          <height>0</height>
         </size>
        </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item row="2" column="2">
@@ -345,6 +348,9 @@
       <widget class="QLineEdit" name="includeFilesViewerLineEdit">
        <property name="text">
         <string>&lt;system default&gt;</string>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
        </property>
       </widget>
      </item>

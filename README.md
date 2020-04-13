@@ -56,7 +56,7 @@ As a preliminary step, make sure that you have the following installed on your s
 
 cd to the Build sub-folder, and run:
 
-Prebuild.bat --qt C:\Qt\Qt5.9.2\msvc2017_64 --vs 2017 --build release (or: debug)
+Prebuild.bat --qt C:\Qt\Qt5.9.2\msvc2017_64 --vs 2017
 
 Running the Prebuild script will fetch all the dependencies, and generate the solution file for Visual Studio. 
 After successfully running the preuild script, open RGA.sln from Build\CMake\VS2017 (or VS2015), and build:
@@ -67,7 +67,6 @@ Some useful options of the Prebuild script:
 * --vs <VS version>: generate the solution files for a specific Visual Studio version. For example, to target VS 2017, add --vs 2017 to the command.
 * --qt <path>: full path to the folder from where you would like the Qt binaries to be retrieved. By default, CMake would try to auto-detect Qt on the system.
 * --vk-include and --vk-lib: full paths to where the Vulkan SDK include and Vulkan lib folders. By default, CMake would try to auto-detect the Vulkan SDK on the system.
-* --build <configuration>: by default, the solution files would be generated for Debug configuration. Add --build Release to generate the solution files for Release configuration
 * --cli-only: only build the command line tool (do not build the GUI app)
 * --no-fetch: do not attempt to update the third party repositories
    
@@ -80,9 +79,9 @@ If for some reason you do not want to use the Prebuild.bat script, you can also 
    
 Start by running the FetchDependencies.py script to fetch the solution's dependencies.
    
-To generate the files for an x64 VS 2017 Release build, use:
+To generate the solution file for VS 2017 in x64 configuration, use:
    
-  cmake.exe -G "Visual Studio 15 2017 Win64" –DCMAKE_BUILD_TYPE=Release (or: Debug) <full path to the RGA repo directory>
+  cmake.exe -G "Visual Studio 15 2017 Win64" <full path to the RGA repo directory>
    
 If you are intending to analyze DirectX shaders using RGA, copy the x64 version of Microsoft's D3D compiler to a subdirectory
 named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dll).

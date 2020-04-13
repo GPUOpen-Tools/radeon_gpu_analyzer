@@ -43,7 +43,7 @@ protected slots:
     void HandleLoadPipelineStateFile(const std::string& filePath);
 
     // A handler invoked when the pipeline state file should be saved.
-    virtual void HandlePipelineStateFileSaved() = 0;
+    virtual bool HandlePipelineStateFileSaved() = 0;
 
     // A handler invoked when a pipeline state file should be loaded.
     virtual void HandlePipelineStateFileLoaded() = 0;

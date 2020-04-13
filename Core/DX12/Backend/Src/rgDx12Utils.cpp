@@ -795,6 +795,12 @@ namespace rga
         return TrimCharacters(str, STR_WHITESPACE_CHAR);
     }
 
+    std::string rgDx12Utils::TrimNewline(const std::string& str)
+    {
+        const std::string& STR_NEWLINE_CHAR = "\n";
+        return TrimCharacters(str, STR_NEWLINE_CHAR);
+    }
+
     std::string rgDx12Utils::TrimWhitespaceAndCommas(const std::string& str)
     {
         const std::string& STR_WHITESPACE_CHAR = " \t\"";

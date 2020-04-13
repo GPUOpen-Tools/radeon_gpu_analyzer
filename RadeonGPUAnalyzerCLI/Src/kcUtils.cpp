@@ -1574,6 +1574,21 @@ bool kcUtils::IsVegaTarget(const std::string& targetName)
     return (targetName.find(VEGA_TARGET_TOKEN) != std::string::npos);
 }
 
+
+bool kcUtils::IsPostPorcessingSupported(const std::string& isaFilePath)
+{
+    std::string contents;
+    bool ret = kcUtils::ReadTextFile(isaFilePath, contents, nullptr);
+    if (ret)
+    {
+        // If we manage to find a "basic block" symbol, it means
+        // that we cannot post-process the disassembly at the moment.
+        size_t bbLocation = contents.find("_L1:");
+        ret = (bbLocation == std::string::npos);
+    }
+    return ret;
+}
+
 std::string kcUtils::AdjustBaseFileNameBinary(const std::string& userInputFileName, const std::string& device)
 {
     return AdjustBaseFileName(userInputFileName, device, KC_STR_DEFAULT_BIN_SUFFIX);

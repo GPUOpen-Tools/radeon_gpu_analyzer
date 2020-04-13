@@ -48,8 +48,26 @@ static const char*  STR_WARNING_CFG_NOT_SUPPORTED_FOR_ISA_A = "Warning: cfg cann
 static const char*  STR_WARNING_CFG_NOT_SUPPORTED_FOR_ISA_B = " -skipping.";
 static const char*  STR_WARNING_IL_NOT_SUPPORTED_FOR_RDNA_A = "Warning: IL disassembly extraction not supported for RDNA target ";
 static const char*  STR_WARNING_IL_NOT_SUPPORTED_FOR_RDNA_B = " - skipping.";
+static const char*  STR_ERROR_ISA_REQUIRED = "Error: --isa is required for post processing (live register analysis and cfg generation).";
+static const char*  STR_STATS_NA = "n/a";
+static const char*  STR_INFO_SUCCESS = "Success.";
 
 static const std::set<std::string>  UnsupportedTargets = { STR_GFX804_TARGET_NAME };
+
+static bool IsInputValid(const Config& config)
+{
+    bool ret = true;
+
+    // ISA is required for post-processing.
+    if (config.m_ISAFile.empty() && (!config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty()
+        || !config.m_LiveRegisterAnalysisFile.empty()))
+    {
+        std::cout << STR_ERROR_ISA_REQUIRED << std::endl;
+        ret = false;
+    }
+
+    return ret;
+}
 
 // ***************************************
 // *** INTERNALLY LINKED SYMBOLS - END ***
@@ -110,7 +128,7 @@ doNAFormat(T ui, T sentinal, T err, char listSeparator)
 
     if (ui == sentinal)
     {
-        s << "n/a" << listSeparator;
+        s << STR_STATS_NA << listSeparator;
     }
     else if (ui == err)
     {
@@ -145,10 +163,7 @@ bool kcCLICommanderCL::Init(const Config& config, LoggingCallBackFunc_t callback
         std::set<std::string> filteredTargets;
         for (const std::string& target : devices)
         {
-            if (target.find("gfx900") == std::string::npos)
-            {
-                filteredTargets.insert(target);
-            }
+            filteredTargets.insert(target);
         }
 
         // Only external (non-placeholder) and based on CXL version devices should be used.
@@ -176,53 +191,55 @@ bool kcCLICommanderCL::Init(const Config& config, LoggingCallBackFunc_t callback
 
 bool kcCLICommanderCL::Compile(const Config& config)
 {
-    bool ret = false;
-
-    // Verify that an input file was specified
-    if (config.m_InputFiles.size() != 1 || config.m_InputFiles[0].empty())
+    bool ret = IsInputValid(config);
+    if (ret)
     {
-        std::stringstream logStream;
-        logStream << STR_ERR_ONE_INPUT_FILE_EXPECTED << std::endl;
-        LogCallBack(logStream.str());
-    }
-    else
-    {
-        string sSource;
-        ret = kcUtils::ReadProgramSource(config.m_InputFiles[0], sSource);
-
-        if (!ret)
+        // Verify that an input file was specified
+        if (config.m_InputFiles.size() != 1 || config.m_InputFiles[0].empty())
         {
             std::stringstream logStream;
-            logStream << STR_ERR_CANNOT_READ_FILE << config.m_InputFiles[0] << endl;
+            logStream << STR_ERR_ONE_INPUT_FILE_EXPECTED << std::endl;
             LogCallBack(logStream.str());
         }
         else
         {
-            OpenCLOptions options;
-            options.m_mode = Mode_OpenCL;
-            options.m_selectedDevicesSorted = m_asicsSorted;
-            options.m_defines = config.m_Defines;
-            options.m_openCLCompileOptions = config.m_OpenCLOptions;
+            string sSource;
+            ret = kcUtils::ReadProgramSource(config.m_InputFiles[0], sSource);
 
-            int numOfSuccessFulBuilds = 0;
-            beKA::beStatus beRet;
-
-            if (config.m_IncludePath.size() > 0)
+            if (!ret)
             {
-                beRet = be->theOpenCLBuilder()->Compile(sSource, options, config.m_InputFiles[0], &config.m_IncludePath, numOfSuccessFulBuilds);
+                std::stringstream logStream;
+                logStream << STR_ERR_CANNOT_READ_FILE << config.m_InputFiles[0] << endl;
+                LogCallBack(logStream.str());
             }
             else
             {
-                beRet = be->theOpenCLBuilder()->Compile(sSource, options, config.m_InputFiles[0], NULL, numOfSuccessFulBuilds);
-            }
+                OpenCLOptions options;
+                options.m_mode = Mode_OpenCL;
+                options.m_selectedDevicesSorted = m_asicsSorted;
+                options.m_defines = config.m_Defines;
+                options.m_openCLCompileOptions = config.m_OpenCLOptions;
 
-            if (beRet == beKA::beStatus_SUCCESS)
-            {
-                ret = true;
-            }
-            else
-            {
-                ret = false;
+                int numOfSuccessFulBuilds = 0;
+                beKA::beStatus beRet;
+
+                if (config.m_IncludePath.size() > 0)
+                {
+                    beRet = be->theOpenCLBuilder()->Compile(sSource, options, config.m_InputFiles[0], &config.m_IncludePath, numOfSuccessFulBuilds);
+                }
+                else
+                {
+                    beRet = be->theOpenCLBuilder()->Compile(sSource, options, config.m_InputFiles[0], NULL, numOfSuccessFulBuilds);
+                }
+
+                if (beRet == beKA::beStatus_SUCCESS)
+                {
+                    ret = true;
+                }
+                else
+                {
+                    ret = false;
+                }
             }
         }
     }
@@ -463,9 +480,7 @@ void kcCLICommanderCL::GetISAText(const Config& config)
 
             // Perform live register analysis - blocked until analysis engine is improved to support
             // OpenCL disassembly with better stability.
-            bool isPostProcessingEnabled = false;
-            bool wasPostProcessingMsgPrintedLivereg = false;
-            bool wasPostProcessingMsgPrintedCfg = false;
+            bool isPostProcessingEnabled = true;
             bool isLiveregRequired = !config.m_LiveRegisterAnalysisFile.empty();
             bool isCfgRequired = !config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty();
 
@@ -480,36 +495,69 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                     auto iter = deviceToCodeObjectDisassemblyMapping.find(deviceName);
                     if (iter != deviceToCodeObjectDisassemblyMapping.end())
                     {
+                        // Write the ISA disassembly text file.
                         gtString isaOutputFileName;
                         kcUtils::ConstructOutputFileName(config.m_ISAFile, "", KC_STR_DEFAULT_ISA_EXT, "", deviceName, isaOutputFileName);
                         kcUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), iter->second, m_LogCallback);
 
+                        // Perform post processing.
+                        isPostProcessingEnabled = kcUtils::IsPostPorcessingSupported(isaOutputFileName.asASCIICharArray());
                         if (isLiveregRequired)
                         {
+                            std::cout << STR_INFO_PERFORMING_LIVEREG_ANALYSIS_A << deviceName << "..." << std::endl;
+
                             if (isPostProcessingEnabled)
                             {
-                                std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED_FOR_ISA_A << deviceName <<
-                                    STR_WARNING_LIVEREG_NOT_SUPPORTED_FOR_ISA_B << std::endl;
+                                gtString liveRegAnalysisOutputFileName;
+                                kcUtils::ConstructOutputFileName(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVEREG_SUFFIX,
+                                    KC_STR_DEFAULT_LIVEREG_EXT, "", deviceName, liveRegAnalysisOutputFileName);
+
+                                // Call the kcUtils routine to analyze <generatedFileName> and write the analysis file.
+                                kcUtils::PerformLiveRegisterAnalysis(isaOutputFileName, liveRegAnalysisOutputFileName,
+                                    m_LogCallback, config.m_printProcessCmdLines);
+
+                                if (kcUtils::FileNotEmpty(liveRegAnalysisOutputFileName.asASCIICharArray()))
+                                {
+                                    std::cout << STR_INFO_SUCCESS << std::endl;
+                                }
                             }
-                            else if (!wasPostProcessingMsgPrintedLivereg)
+                            else
                             {
-                                std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
-                                wasPostProcessingMsgPrintedLivereg = true;
+                                std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_A <<
+                                    STR_WARNING_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_B <<
+                                    STR_WARNING_SKIPPING << std::endl;
                             }
                         }
 
                         if (isCfgRequired)
                         {
+                            bool isPerBlock = !config.m_blockCFGFile.empty();
+                            std::cout << (isPerBlock ? STR_INFO_CONSTRUCTING_BLOCK_CFG_A : STR_INFO_CONSTRUCTING_INSTRUCTION_CFG_A) << deviceName << "..." << std::endl;
                             if (isPostProcessingEnabled)
                             {
-                                // Generate control flow graph.
-                                std::cout << STR_WARNING_CFG_NOT_SUPPORTED_FOR_ISA_A << deviceName <<
-                                    STR_WARNING_CFG_NOT_SUPPORTED_FOR_ISA_B << std::endl;
+                                if (!config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty())
+                                {
+                                    gtString cfgOutputFileName;
+                                    std::string baseName = (!config.m_blockCFGFile.empty() ? config.m_blockCFGFile : config.m_instCFGFile);
+                                    kcUtils::ConstructOutputFileName(baseName, KC_STR_DEFAULT_CFG_SUFFIX, KC_STR_DEFAULT_CFG_EXT,
+                                        "", deviceName, cfgOutputFileName);
+
+                                    // Call the kcUtils routine to analyze <generatedFileName> and write
+                                    // the analysis file.
+                                    kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName, m_LogCallback,
+                                        !config.m_instCFGFile.empty(), config.m_printProcessCmdLines);
+
+                                    if (kcUtils::FileNotEmpty(cfgOutputFileName.asASCIICharArray()))
+                                    {
+                                        std::cout << STR_INFO_SUCCESS << std::endl;
+                                    }
+                                }
                             }
-                            else if (!wasPostProcessingMsgPrintedCfg)
+                            else
                             {
-                                std::cout << STR_WARNING_CFG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
-                                wasPostProcessingMsgPrintedCfg = true;
+                                std::cout << STR_WARNING_CFG_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_A <<
+                                    STR_WARNING_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_B <<
+                                    STR_WARNING_SKIPPING << std::endl;
                             }
                         }
                     }
@@ -537,9 +585,13 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                                 kcUtils::WriteTextFile(isaOutputFileName.asASCIICharArray(), sISAIL, m_LogCallback);
 
                                 // Perform live register analysis.
-                                if (isPostProcessingEnabled)
+                                isPostProcessingEnabled = kcUtils::IsPostPorcessingSupported(isaOutputFileName.asASCIICharArray());
+
+                                if (isLiveregRequired)
                                 {
-                                    if (isLiveregRequired)
+                                    std::cout << STR_INFO_PERFORMING_LIVEREG_ANALYSIS_A <<
+                                        " kernel " << kernelName << " (" << deviceName << ")..." << std::endl;
+                                    if (isPostProcessingEnabled)
                                     {
                                         gtString liveRegAnalysisOutputFileName;
                                         kcUtils::ConstructOutputFileName(config.m_LiveRegisterAnalysisFile, KC_STR_DEFAULT_LIVEREG_SUFFIX,
@@ -548,19 +600,29 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                                         // Call the kcUtils routine to analyze <generatedFileName> and write the analysis file.
                                         kcUtils::PerformLiveRegisterAnalysis(isaOutputFileName, liveRegAnalysisOutputFileName,
                                             m_LogCallback, config.m_printProcessCmdLines);
+
+                                        if (kcUtils::FileNotEmpty(liveRegAnalysisOutputFileName.asASCIICharArray()))
+                                        {
+                                            std::cout << STR_INFO_SUCCESS << std::endl;
+                                        }
                                     }
-                                }
-                                else if(!wasPostProcessingMsgPrintedLivereg && isLiveregRequired)
-                                {
-                                    std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
-                                    wasPostProcessingMsgPrintedLivereg = true;
+                                    else
+                                    {
+                                        std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_A <<
+                                            STR_WARNING_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_B <<
+                                            STR_WARNING_SKIPPING << std::endl;
+                                    }
                                 }
 
                                 // Generate control flow graph.
-                                if (isPostProcessingEnabled)
+                                if (isCfgRequired)
                                 {
-                                    if (!config.m_blockCFGFile.empty() || !config.m_instCFGFile.empty())
+                                    if (isPostProcessingEnabled)
                                     {
+                                        bool isPerBlock = !config.m_blockCFGFile.empty();
+                                        std::cout << (isPerBlock ? STR_INFO_CONSTRUCTING_BLOCK_CFG_A : STR_INFO_CONSTRUCTING_INSTRUCTION_CFG_A) <<
+                                            "kernel " << kernelName << " (" << deviceName << ")..." << std::endl;
+
                                         gtString cfgOutputFileName;
                                         std::string baseName = (!config.m_blockCFGFile.empty() ? config.m_blockCFGFile : config.m_instCFGFile);
                                         kcUtils::ConstructOutputFileName(baseName, KC_STR_DEFAULT_CFG_SUFFIX, KC_STR_DEFAULT_CFG_EXT,
@@ -570,12 +632,18 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                                         // the analysis file.
                                         kcUtils::GenerateControlFlowGraph(isaOutputFileName, cfgOutputFileName, m_LogCallback,
                                             !config.m_instCFGFile.empty(), config.m_printProcessCmdLines);
+
+                                        if (kcUtils::FileNotEmpty(cfgOutputFileName.asASCIICharArray()))
+                                        {
+                                            std::cout << STR_INFO_SUCCESS << std::endl;
+                                        }
                                     }
-                                }
-                                else if (!wasPostProcessingMsgPrintedCfg && isCfgRequired)
-                                {
-                                    std::cout << STR_WARNING_CFG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
-                                    wasPostProcessingMsgPrintedCfg = true;
+                                    else
+                                    {
+                                        std::cout << STR_WARNING_CFG_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_A <<
+                                            STR_WARNING_NOT_SUPPORTED_DUE_TO_LLVM_DISASSEMBLY_B <<
+                                            STR_WARNING_SKIPPING << std::endl;
+                                    }
                                 }
 
                                 // Delete temporary files.
@@ -608,18 +676,6 @@ void kcCLICommanderCL::GetISAText(const Config& config)
                             sISAIL.clear();
                         }
                     }
-                }
-            }
-
-            if (config.m_ISAFile.empty())
-            {
-                if (isLiveregRequired && !wasPostProcessingMsgPrintedLivereg)
-                {
-                    std::cout << STR_WARNING_LIVEREG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
-                }
-                if (isCfgRequired && !wasPostProcessingMsgPrintedCfg)
-                {
-                    std::cout << STR_WARNING_CFG_NOT_SUPPORTED << STR_WARNING_SKIPPING << std::endl;
                 }
             }
         }
@@ -790,7 +846,16 @@ void kcCLICommanderCL::WriteAnalysisFile(const Config& config, const std::string
     fileContent << deviceName << csvSeparator;
     fileContent << analysis.scratchMemoryUsed << csvSeparator;
     fileContent << analysis.numThreadPerGroup << csvSeparator;
-    fileContent << doNAFormat(analysis.wavefrontSize, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);
+
+    // For Navi targets, the wave size is determined in runtime.
+    bool isNaviTarget = kcUtils::IsNaviTarget(deviceName);
+    fileContent << (!isNaviTarget ? doNAFormat(analysis.wavefrontSize,
+        CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator) : STR_STATS_NA);
+    if (isNaviTarget)
+    {
+        fileContent << csvSeparator;
+    }
+
     fileContent << analysis.LDSSizeAvailable << csvSeparator;
     fileContent << analysis.LDSSizeUsed << csvSeparator;
     fileContent << doNAFormat(analysis.numSGPRsAvailable, CAL_NA_Value_64, CAL_ERR_Value_64, csvSeparator);

@@ -170,6 +170,9 @@ int main(int argc, char* argv[])
                 ("c, asic", "The target GPU ID for the pipeline compilation. If not specified, the pipeline would be compiled "
                     "for the physically installed GPU by default.", cxxopts::value<int>(config.targetGpu))
 
+                // Pipeline binary.
+                ("b", "Full path to the output file for the pipeline binary.", cxxopts::value<std::string>(config.pipelineBinary))
+
                 // Compute.
                 ("comp", "Full path to the HLSL file where the compute shader is defined.", cxxopts::value<std::string>(config.comp.hlsl))
                 ("comp-dxbc", "Full path to the compute shader's compiled DXBC binary.", cxxopts::value<std::string>(config.comp.dxbc))
@@ -330,20 +333,20 @@ int main(int argc, char* argv[])
 
                             if (!errorMsg.empty())
                             {
-                                std::cout << errorMsg << std::endl;
+                                std::cerr << errorMsg << std::endl;
                             }
                         }
                     }
                     else
                     {
                         // We failed to extract the list of targets and must abort.
-                        std::cout << STR_ERROR_TARGET_LIST_FETCH_FAILURE << std::endl;
+                        std::cerr << STR_ERROR_TARGET_LIST_FETCH_FAILURE << std::endl;
                     }
                 }
                 else
                 {
                     // Failed to initialize the backend.
-                    std::cout << STR_ERROR_DRIVER_INIT_FAILURE << std::endl;
+                    std::cerr << STR_ERROR_DRIVER_INIT_FAILURE << std::endl;
                 }
             }
         }
