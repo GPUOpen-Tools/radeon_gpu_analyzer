@@ -67,7 +67,7 @@ cp ../../../Core/Vulkan/tools/Lnx64/bin/* "$OUTPUT_DIR/Vulkan/"
 chmod +x $OUTPUT_DIR/Vulkan/*
 
 # Copy the AMDToolsDownloader.
-cp ../../../../Commmon/Src/UpdateCheckAPI/AMDToolsDownloader/Linux/AMDToolsDownloader $OUTPUT_DIR/
+cp ../../../../Common/Src/UpdateCheckAPI/AMDToolsDownloader/Linux/AMDToolsDownloader $OUTPUT_DIR/
 chmod +x $OUTPUT_DIR/AMDToolsDownloader
 
 # Copy the launch script.

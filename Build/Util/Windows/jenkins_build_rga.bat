@@ -62,8 +62,7 @@ set PATH=C:\Python36;C:\Python36\Scripts;C:\Python36\Tools\Scripts;C:\OpenJDK\bi
 if "%VS_VERSION%" == "2015" (
     REM VS 2015 paths
     set PATH=%PATH%;"C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE";"C:\Program Files (x86)\MSBuild\14.0\Bin";"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin";"C:\Program Files\Git\bin";
-)
-else if "%VS_VERSION%" == "2017" (
+) else if "%VS_VERSION%" == "2017" (
     REM VS 2017 paths
     set PATH=%PATH%;"C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE";"C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\Bin";"C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Tools\MSVC\14.16.27023\bin";
 )
