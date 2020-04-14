@@ -22,21 +22,21 @@ endif()
 
 file(GLOB  SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/src/*.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../../RGA/Utils/Vulkan/Src/*.cpp"
+    "${PROJECT_SOURCE_DIR}/../../../Utils/Vulkan/Src/*.cpp"
 # volk.
     "${PROJECT_SOURCE_DIR}/../../../../Common/Lib/Ext/volk/volk.c"
 )
 
 file(GLOB  INCLUDES
     "${PROJECT_SOURCE_DIR}/include/*.h"
-    "${PROJECT_SOURCE_DIR}/../../../../RGA/Utils/Vulkan/Include/*.h"
+    "${PROJECT_SOURCE_DIR}/../../../Utils/Vulkan/Include/*.h"
 # volk.
     "${PROJECT_SOURCE_DIR}/../../../../Common/Lib/Ext/volk/volk.h"
 )
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../../../Common/Lib/Ext/")
-include_directories("${PROJECT_SOURCE_DIR}/../../../../RGA/")
+include_directories("${PROJECT_SOURCE_DIR}/../../../")
 include_directories(${Vulkan_INCLUDE_DIRS})
 
 

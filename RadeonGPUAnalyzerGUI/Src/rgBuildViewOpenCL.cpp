@@ -9,7 +9,7 @@
 
 // Infra.
 #include <QtCommon/Scaling/ScalingManager.h>
-#include <RGA/Utils/Include/rgaSharedUtils.h>
+#include <Utils/Include/rgaSharedUtils.h>
 
 // Local.
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildSettingsViewOpenCL.h>

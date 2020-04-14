@@ -21,7 +21,6 @@ file(GLOB  INCLUDES
 include_directories("${PROJECT_SOURCE_DIR}/Include")
 include_directories("${PROJECT_SOURCE_DIR}/../../../../Common/Lib/Ext/tinyxml2/Include")
 include_directories("${PROJECT_SOURCE_DIR}/../../../../Common/Lib/Ext")
-include_directories("${PROJECT_SOURCE_DIR}/../../../../RGA/")
 include_directories("${PROJECT_SOURCE_DIR}/../../../RadeonGPUAnalyzerBackend/Include")
 
 find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
