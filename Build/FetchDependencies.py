@@ -94,9 +94,9 @@ gitMapping = {
     "common-src-Vsprops.git"                  : ["Common/Src/Vsprops",               "master"],
     "common-src-Miniz.git"                    : ["Common/Src/Miniz",                 "master"],
     "common-src-Misc.git"                     : ["Common/Src/Misc",                  "master"],
-    "UpdateCheckAPI.git"                      : ["Common/Src/UpdateCheckAPI",        "amd-master"],
+    "UpdateCheckAPI.git"                      : ["Common/Src/UpdateCheckAPI",        "master"],
  # QtCommon.
-    "QtCommon"                                : ["QtCommon",                         "17d7d265218da86cecd51c16efbca096cdf11ce2"]
+    "QtCommon"                                : ["QtCommon",                         "rga-2.3"]
 }
 
 # The following section contains OS-specific dependencies that are downloaded and placed in the specified target directory.
