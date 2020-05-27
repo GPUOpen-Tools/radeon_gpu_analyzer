@@ -141,7 +141,7 @@ class Instruction:
                 elif reg.startswith ('-'):
                     reg = reg [1:]
 
-                if reg[0] != 'v' or reg == 'vcc' or reg.startswith ('vmcnt'):
+                if reg[0] != 'v' or reg.startswith('vcc') or reg.startswith ('vmcnt'):
                     return
 
                 if reg[1] == '[':
@@ -267,6 +267,8 @@ class _BaseIsaReader(IsaReader):
             if line.startswith(';'):
                 continue
             comment = line.find ('//')
+            if comment == -1:
+                comment = line.find(';')
             commentStr = ""
             instItems = []
             if comment != -1:
@@ -324,6 +326,11 @@ class _BaseIsaReader(IsaReader):
         foundBinCode = re.search(r' *[0-9a-fA-F]+: *([0-9a-fA-F]{8})( *[0-9a-fA-F]{8})?', comment)
         if foundBinCode:
             result = comment[comment.find(':')+1 :].lstrip(' ')
+        else:
+            # Attempt to match comments containing only the bin code.
+            foundBinCode = re.search(r' *([0-9a-fA-F]{8})( *[0-9a-fA-F]{8})?', comment)
+            if foundBinCode:
+                result = comment.lstrip(' ')
         return result
 
 class ShaderAnalyzerIsaReader(_BaseIsaReader):
