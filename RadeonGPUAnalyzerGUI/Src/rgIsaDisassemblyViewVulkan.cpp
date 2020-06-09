@@ -8,8 +8,3 @@ rgIsaDisassemblyViewVulkan::rgIsaDisassemblyViewVulkan(QWidget* pParent)
     : rgIsaDisassemblyViewGraphics(pParent)
 {
 }
-
-void rgIsaDisassemblyViewVulkan::SetBorderStylesheet()
-{
-    ui.frame->setStyleSheet(STR_DISASSEMBLY_FRAME_BORDER_RED_STYLESHEET);
-}
