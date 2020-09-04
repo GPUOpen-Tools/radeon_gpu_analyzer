@@ -1,5 +1,6 @@
 // Qt.
 #include <QPainter>
+#include <QPainterPath>
 #include <QPoint>
 #include <QStyle>
 #include <QWidget>
