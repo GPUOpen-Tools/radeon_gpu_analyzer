@@ -4,6 +4,7 @@
 
 // Qt.
 #include <QApplication>
+#include <QAction>
 #include <QCheckBox>
 #include <QFileDialog>
 #include <QMessageBox>

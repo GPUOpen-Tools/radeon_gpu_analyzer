@@ -12,6 +12,7 @@
 #include <algorithm>
 
 // Qt.
+#include <QAction>
 #include <QCheckBox>
 #include <QListWidgetItem>
 
