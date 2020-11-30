@@ -104,7 +104,7 @@ named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dl
 
    This will fetch all the dependencies and generate the make files.
 
-   Then, cd to the auto-generated subfolder Build/CMake/linux and run make.
+   Then, cd to the auto-generated subfolder Build/Linux/Make and run make.
 
    -=-
 
