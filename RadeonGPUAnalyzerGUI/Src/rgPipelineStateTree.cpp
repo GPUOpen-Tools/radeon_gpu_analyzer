@@ -7,10 +7,9 @@
 #include <QScrollBar>
 
 // Local.
-#include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementArray.h>
+//#include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementArrayElementAdd.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgPipelineStateEditorWidgetEnum.h>
-#include <RadeonGPUAnalyzerGUI/Include/Qt/rgPipelineStateEditorWidgetArray.h>
-#include <RadeonGPUAnalyzerGUI/Include/Qt/rgPipelineStateEditorWidgetArrayElement.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgPipelineStateEditorWidgetArrayElementRemove.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgPipelineStateTree.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgPipelineStateModel.h>
 

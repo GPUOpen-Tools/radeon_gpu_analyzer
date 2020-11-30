@@ -27,7 +27,7 @@ public:
     virtual bool ReadProjectConfigFile(tinyxml2::XMLDocument& doc, const char* pFileDataModelVersion, std::shared_ptr<rgProject>& pProject) = 0;
 
     // Responsible for reading all API-specific build settings.
-    virtual bool ReadApiBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings) = 0;
+    virtual bool ReadApiBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings, const std::string& version) = 0;
 
     // Read general project build settings not related to a specific API.
     bool ReadGeneralBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings);

@@ -75,6 +75,7 @@ static const char* STR_LOG_CLOSING_RGA_GUI                               = "Clos
 static const char* STR_LOG_BUILDING_PROJECT_CLONE_1                      = "Building Project: ";
 static const char* STR_LOG_BUILDING_PROJECT_CLONE_2                      = ", clone: ";
 static const char* STR_LOG_LAUNCHING_CLI                                 = "Launching RGA CLI with command line: ";
+static const char* STR_LOG_EXTRACT_SETTINGS_ERROR                        = "Error reading settings file.";
 
 // *** LOG FILE MESSAGES  - END ***
 
@@ -115,7 +116,7 @@ static const char* STR_ERR_CANNOT_SAVE_PIPELINE_STATE_FILE = "Failed to save pip
 static const char* STR_ERR_CANNOT_LOAD_PIPELINE_STATE_FILE = "Failed to load pipeline state file:";
 static const char* STR_ERR_CANNOT_INITIALIZE_PIPELINE_STATE_FILE = "Failed to initialize pipeline state file:";
 static const char* STR_ERR_CANNOT_DETERMINE_PIPELINE_TYPE = "The pipeline type was not graphics or compute.";
-static const char* STR_ERR_FAILED_TO_READ_PIPELINE_STATE_FILE = "Failed to read pipeline state from file: file might be corrupted.";
+static const char* STR_ERR_CANNOT_FAILED_TO_LOAD_PIPELINE_STATE_FILE = "Failed to read pipeline state from file: file might be corrupted.";
 static const char* STR_ERR_FAILED_TO_SAVE_PIPELINE_STATE_FILE = "Failed to save pipeline state file.";
 static const char* STR_ERR_COULD_NOT_LOCATE_HEADER_FILE = "Could not locate header file. Check 'Additional include directories' under build settings.";
 static const char* STR_ERR_COULD_NOT_OPEN_HEADER_FILE_VIEWER = "Could not launch include file viewer:";
@@ -356,6 +357,9 @@ static const char* STR_PREPROCESSOR_DIRECTIVES_DIALOG_TITLE                     
 static const char* STR_PREPROCESSOR_DIRECTIVES_DIALOG_DIRECTIVE_IS_DUPLICATE        = "Definition already defined: ";
 static const char* STR_PREPROCESSOR_DIRECTIVES_DIALOG_DIRECTIVE_CONTAINS_WHITESPACE = "Definition contains whitespace: ";
 
+// Default binary output file name.
+static const char* STR_BUILD_SETTINGS_OUTPUT_BINARY_FILE_NAME = "codeobj.bin";
+
 // *** BUILD SETTINGS STRINGS - END ***
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -387,6 +391,9 @@ static const char* STR_GLOBAL_SETTINGS_FILE_EXT_GLSL  = "vert;tesc;tese;frag;geo
 static const char* STR_GLOBAL_SETTINGS_FILE_EXT_HLSL  = "hlsl;fx;hs;ds;ps";
 static const char* STR_GLOBAL_SETTINGS_FILE_EXT_SPVAS = "spvas";
 static const char* STR_GLOBAL_SETTINGS_FILE_EXT_SPV   = "spv";
+
+// Default binary output file name.
+static const char* STR_GLOBAL_SETTINGS_OUTPUT_BINARY_FILE_NAME = "codeobj.bin";
 
 // *** GLOBAL SETTINGS STRINGS - END ***
 

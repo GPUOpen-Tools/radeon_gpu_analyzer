@@ -186,6 +186,9 @@ public:
     static std::pair<rgVulkanInputType, rgSrcLanguage>
     DetectInputFileType(const std::string& filePath);
 
+    // Update CliLauncher option if spvas file is a text file.
+    static bool IsSpvasTextFile(const std::string& stageInputFile, std::string& stageAbbreviation);
+
     // ************
     // Files - END.
     // ************

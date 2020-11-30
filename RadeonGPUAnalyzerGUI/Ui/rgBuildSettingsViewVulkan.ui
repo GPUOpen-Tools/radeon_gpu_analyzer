@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1200</width>
-    <height>500</height>
+    <height>650</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +19,13 @@
   <property name="minimumSize">
    <size>
     <width>0</width>
-    <height>500</height>
+    <height>650</height>
    </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+  <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -38,6 +38,46 @@
    <property name="bottomMargin">
     <number>20</number>
    </property>
+   <item row="8" column="1">
+    <widget class="QLabel" name="generateDebugInfoLabel">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>-g</string>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="0">
+    <widget class="rgCheckBox" name="useHLSLBlockOffsetsCheckBox">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
+     <property name="toolTip">
+      <string>Allow block offsets to follow HLSL rules works independently of source language.</string>
+     </property>
+     <property name="text">
+      <string>HLSL block offsets</string>
+     </property>
+    </widget>
+   </item>
+   <item row="24" column="0">
+    <widget class="QLabel" name="assocBinaryNameLabel">
+      <property name="toolTip">
+        <string>Custom output binary file name.</string>
+      </property>
+     <property name="text">
+      <string>Name of output binary file</string>
+     </property>
+    </widget>
+   </item>
+   <item row="15" column="0">
+    <widget class="QLabel" name="ICDLocationLabel">
+     <property name="text">
+      <string>ICD location:</string>
+     </property>
+    </widget>
+   </item>
    <item row="13" column="0" colspan="3">
     <widget class="QLabel" name="vulkanSettingsHeaderLabel">
      <property name="minimumSize">
@@ -69,26 +109,16 @@
      </property>
     </widget>
    </item>
-   <item row="15" column="0">
-    <widget class="QLabel" name="ICDLocationLabel">
+   <item row="16" column="0">
+    <widget class="rgCheckBox" name="enableValidationLayersCheckBox">
+     <property name="toolTip">
+      <string>Enable Vulkan validation layers.</string>
+     </property>
+      <property name="styleSheet">
+        <string notr="true">background-color: white;</string>
+      </property>
      <property name="text">
-      <string>ICD location:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="15" column="1">
-    <widget class="rgLineEdit" name="ICDLocationLineEdit">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
+      <string>Enable validation layers</string>
      </property>
     </widget>
    </item>
@@ -111,41 +141,56 @@
      </property>
     </widget>
    </item>
-   <item row="16" column="0">
-    <widget class="rgCheckBox" name="enableValidationLayersCheckBox">
-     <property name="toolTip">
-      <string>Enable Vulkan validation layers.</string>
+   <item row="15" column="1">
+    <widget class="rgLineEdit" name="ICDLocationLineEdit">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="text">
-      <string>Enable validation layers</string>
-     </property>
-    </widget>
-   </item>
-   <item row="10" column="0">
-    <widget class="rgCheckBox" name="useHLSLBlockOffsetsCheckBox">
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
-     </property>
-     <property name="toolTip">
-      <string>Allow block offsets to follow HLSL rules works independently of source language.</string>
-     </property>
-     <property name="text">
-      <string>HLSL block offsets</string>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="1">
-    <widget class="QLabel" name="generateDebugInfoLabel">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string>-g</string>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
      </property>
     </widget>
    </item>
    <item row="17" column="0">
     <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="4" column="1">
+    <widget class="rgLineEdit" name="includeDirectoriesLineEdit">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="21" column="0">
+    <spacer name="verticalSpacer_81">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
@@ -167,23 +212,7 @@
      </property>
     </widget>
    </item>
-    <item row="21" column="0">
-      <spacer name="verticalSpacer_81">
-        <property name="orientation">
-          <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-          <size>
-            <width>20</width>
-            <height>20</height>
-          </size>
-        </property>
-      </spacer>
-    </item>
-   <item row="22" column="0" colspan="3">
+   <item row="26" column="0" colspan="3">
     <widget class="QLabel" name="settingsCommandLineHeaderLabel">
      <property name="minimumSize">
       <size>
@@ -227,44 +256,6 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
-    <widget class="rgLineEdit" name="includeDirectoriesLineEdit">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="2">
-    <widget class="rgBrowseButton" name="addTargetGPUsButton">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>25</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>30</width>
-       <height>16777215</height>
-      </size>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="text">
-      <string>...</string>
-     </property>
-    </widget>
-   </item>
    <item row="6" column="0" colspan="3">
     <widget class="QLabel" name="vulkanOptionsHeaderLabel">
      <property name="minimumSize">
@@ -293,6 +284,28 @@
      </property>
      <property name="margin">
       <number>0</number>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="rgBrowseButton" name="addTargetGPUsButton">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>25</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>30</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string>...</string>
      </property>
     </widget>
    </item>
@@ -343,21 +356,21 @@
      </property>
     </widget>
    </item>
-   <item row="19" column="0">
-    <widget class="QLabel" name="glslangOptionsLabel">
-     <property name="enabled">
-      <bool>true</bool>
+   <item row="5" column="0">
+    <spacer name="verticalSpacer_8">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
-     <property name="minimumSize">
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
       <size>
-       <width>0</width>
-       <height>0</height>
+       <width>20</width>
+       <height>20</height>
       </size>
      </property>
-     <property name="text">
-      <string>Additional glslang options:</string>
-     </property>
-    </widget>
+    </spacer>
    </item>
    <item row="20" column="0">
     <widget class="QLabel" name="compilerBinariesLabel">
@@ -375,11 +388,27 @@
      </property>
     </widget>
    </item>
-   <item row="19" column="1">
-    <widget class="rgLineEdit" name="glslangOptionsLineEdit"/>
+   <item row="19" column="0">
+    <widget class="QLabel" name="glslangOptionsLabel">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>Additional glslang options:</string>
+     </property>
+    </widget>
    </item>
    <item row="20" column="1">
     <widget class="rgLineEdit" name="compilerBinariesLineEdit"/>
+   </item>
+   <item row="19" column="1">
+    <widget class="rgLineEdit" name="glslangOptionsLineEdit"/>
    </item>
    <item row="20" column="2">
     <widget class="rgBrowseButton" name="compilerBrowseButton">
@@ -412,29 +441,6 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="0">
-    <spacer name="verticalSpacer_8">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Fixed</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="predefinedMacrosLabel">
-     <property name="text">
-      <string>Predefined macros:</string>
-     </property>
-    </widget>
-   </item>
    <item row="4" column="0">
     <widget class="QLabel" name="includeDirectoriesLabel">
      <property name="text">
@@ -458,6 +464,23 @@
      </property>
     </spacer>
    </item>
+   <item row="9" column="1">
+    <widget class="QLabel" name="noExplicitBindingsLabel">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>--auto-map-bindings</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="predefinedMacrosLabel">
+     <property name="text">
+      <string>Predefined macros:</string>
+     </property>
+    </widget>
+   </item>
    <item row="2" column="1">
     <widget class="rgLineEdit" name="targetGPUsLineEdit">
      <property name="enabled">
@@ -477,16 +500,6 @@
      </property>
      <property name="focusPolicy">
       <enum>Qt::NoFocus</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="1">
-    <widget class="QLabel" name="noExplicitBindingsLabel">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string>--auto-map-bindings</string>
      </property>
     </widget>
    </item>
@@ -516,7 +529,17 @@
      </property>
     </widget>
    </item>
-   <item row="23" column="0" colspan="3">
+   <item row="10" column="1">
+    <widget class="QLabel" name="useHLSLBlockOffsetsLabel">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>--hlsl-offsets</string>
+     </property>
+    </widget>
+   </item>
+   <item row="27" column="0" colspan="3">
     <widget class="QPlainTextEdit" name="allOptionsTextEdit">
      <property name="minimumSize">
       <size>
@@ -535,42 +558,32 @@
      </property>
     </widget>
    </item>
-    <item row="24" column="0">
-      <spacer name="verticalSpacer_50">
-        <property name="orientation">
-          <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-          <size>
-            <width>20</width>
-            <height>20</height>
-          </size>
-        </property>
-      </spacer>
-    </item>
-   <item row="10" column="1">
-    <widget class="QLabel" name="useHLSLBlockOffsetsLabel">
-     <property name="enabled">
-      <bool>false</bool>
+   <item row="28" column="0">
+    <spacer name="verticalSpacer_50">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
-     <property name="text">
-      <string>--hlsl-offsets</string>
+     <property name="sizeType">
+      <enum>QSizePolicy::Expanding</enum>
      </property>
-    </widget>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
    </item>
-   <item row="8" column="0">
-    <widget class="rgCheckBox" name="generateDebugInfoCheckBox">
+   <item row="11" column="0">
+    <widget class="rgCheckBox" name="useHLSLIOMappingCheckBox">
      <property name="focusPolicy">
       <enum>Qt::NoFocus</enum>
      </property>
      <property name="toolTip">
-      <string>Generate debug information.</string>
+      <string>Perform IO mapping in HLSL register space.</string>
      </property>
      <property name="text">
-      <string>Generate debug information</string>
+      <string>HLSL IO mapping</string>
      </property>
     </widget>
    </item>
@@ -596,6 +609,19 @@
      </property>
     </widget>
    </item>
+   <item row="8" column="0">
+    <widget class="rgCheckBox" name="generateDebugInfoCheckBox">
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
+     <property name="toolTip">
+      <string>Generate debug information.</string>
+     </property>
+     <property name="text">
+      <string>Generate debug information</string>
+     </property>
+    </widget>
+   </item>
    <item row="9" column="0">
     <widget class="rgCheckBox" name="noExplicitBindingsCheckBox">
      <property name="focusPolicy">
@@ -606,19 +632,6 @@
      </property>
      <property name="text">
       <string>No explicit bindings</string>
-     </property>
-    </widget>
-   </item>
-   <item row="11" column="0">
-    <widget class="rgCheckBox" name="useHLSLIOMappingCheckBox">
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
-     </property>
-     <property name="toolTip">
-      <string>Perform IO mapping in HLSL register space.</string>
-     </property>
-     <property name="text">
-      <string>HLSL IO mapping</string>
      </property>
     </widget>
    </item>
@@ -691,6 +704,79 @@
      </property>
     </spacer>
    </item>
+   <item row="24" column="1">
+    <widget class="QLineEdit" name="outputFileBinaryNameLineEdit">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="25" column="0">
+    <spacer name="verticalSpacer_7">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="23" column="0">
+    <spacer name="verticalSpacer_10">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>5</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="22" column="0" colspan="3">
+    <widget class="QLabel" name="outputFilesLabel">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>25</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+      <property name="toolTip">
+        <string>Settings for any custom output file names.</string>
+      </property>
+     <property name="text">
+      <string>Output files</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <customwidgets>
@@ -722,6 +808,7 @@
   <tabstop>glslangOptionsLineEdit</tabstop>
   <tabstop>compilerBinariesLineEdit</tabstop>
   <tabstop>compilerBrowseButton</tabstop>
+   <tabstop>outputFileBinaryNameLineEdit</tabstop>
   <tabstop>allOptionsTextEdit</tabstop>
  </tabstops>
  <resources/>

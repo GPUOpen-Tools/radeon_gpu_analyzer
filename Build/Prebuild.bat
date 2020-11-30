@@ -123,15 +123,21 @@ goto :begin
 echo Error: Unexpected argument: %1%. Aborting...
 exit /b 1
 
-:start_cmake 
+:start_cmake
+set CMAKE_VSARCH=
 if "%VS_VER%"=="2015" (
     set CMAKE_VS="Visual Studio 14 2015 Win64"
 ) else (
     if "%VS_VER%"=="2017" (
         set CMAKE_VS="Visual Studio 15 2017 Win64"
     ) else (
-        echo Error: Unknows VisualStudio version provided. Aborting...
-        exit /b 1
+        if "%VS_VER%"=="2019" (
+            set CMAKE_VS="Visual Studio 16 2019"
+            set CMAKE_VSARCH=-A x64
+        ) else (
+            echo Error: Unknows VisualStudio version provided. Aborting...
+            exit /b 1
+        )
     )
 )
 
@@ -179,7 +185,7 @@ rem Invoke cmake with required arguments.
 echo:
 echo Running cmake to generate a VisualStudio solution...
 cd %OUTPUT_FOLDER%
-%CMAKE_PATH% -G %CMAKE_VS% %CMAKE_QT% %CMAKE_VK_INCLUDE% %CMAKE_VK_LIB% %CLI_ONLY% %GUI_ONLY% %NO_VULKAN% %AUTOMATION% %AMD_INTERNAL% ..\..\..
+%CMAKE_PATH% -G %CMAKE_VS% %CMAKE_VSARCH% %CMAKE_QT% %CMAKE_VK_INCLUDE% %CMAKE_VK_LIB% %CLI_ONLY% %GUI_ONLY% %NO_VULKAN% %AUTOMATION% %AMD_INTERNAL% ..\..\..
 if not %ERRORLEVEL%==0 (
     echo "ERROR: cmake failed. Aborting..."
     exit /b 1

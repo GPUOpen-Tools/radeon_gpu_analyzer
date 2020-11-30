@@ -22,7 +22,7 @@ endif()
 
 file(GLOB  SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/src/*.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Utils/Vulkan/Src/*.cpp"
+    "${PROJECT_SOURCE_DIR}/../../..//Utils/Vulkan/Src/*.cpp"
 # volk.
     "${PROJECT_SOURCE_DIR}/../../../../Common/Lib/Ext/volk/volk.c"
 )
@@ -54,13 +54,8 @@ endif()
 add_executable(VulkanBackend ${SOURCE_FILES} ${INCLUDES})
 
 # Set output folder and executable name.
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/x64/Vulkan/bin")
-    set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/x64/Vulkan/bin")
-else()
-    set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Vulkan")
-    set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Vulkan")
-endif()
+set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/utils/Vulkan")
+set_target_properties(VulkanBackend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/utils/Vulkan")
 
 # Set link properties
 set_target_properties(VulkanBackend PROPERTIES OUTPUT_NAME VulkanBackend)

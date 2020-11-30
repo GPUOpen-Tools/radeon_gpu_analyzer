@@ -183,10 +183,10 @@ static const char* STR_MEMBER_NAME_VK_PIPELINE_LAYOUT_CREATE_INFO       = "VkPip
 static const char* STR_MEMBER_NAME_VK_DESCRIPTOR_SET_LAYOUT_CREATE_INFO = "VkDescriptorSetLayoutCreateInfo";
 static const char* STR_MEMBER_NAME_VK_COMPUTE_PIPELINE_CREATE_INFO      = "VkComputePipelineCreateInfo";
 
-// Helper function that reads the JSON file from fileStream into structure.
+// Helper function that reads the JSON file from file_stream into structure.
 // The function sets returns false if any failure happened (otherwise true is returned).
-// The function stores the relevant error message in errorString.
-static bool ReadJsonFile(std::ifstream& fileStream, const std::string& filePath, nlohmann::json& structure, std::string &errorString)
+// The function stores the relevant error message in error_string.
+static bool ReadJsonFile(std::ifstream& file_stream, const std::string& file_path, nlohmann::json& structure, std::string &error_string)
 {
     bool ret = true;
 
@@ -194,7 +194,7 @@ static bool ReadJsonFile(std::ifstream& fileStream, const std::string& filePath,
     try
     {
         // Try to read the file.
-        fileStream >> structure;
+        file_stream >> structure;
     }
     catch (...)
     {
@@ -202,10 +202,10 @@ static bool ReadJsonFile(std::ifstream& fileStream, const std::string& filePath,
         ret = false;
 
         // Inform the caller.
-        std::stringstream errorStream;
-        errorStream << STR_ERR_FAILED_TO_READ_FILE;
-        errorStream << filePath;
-        errorString = errorStream.str();
+        std::stringstream error_stream;
+        error_stream << STR_ERR_FAILED_TO_READ_FILE;
+        error_stream << file_path;
+        error_string = error_stream.str();
     }
 
     return ret;
@@ -255,12 +255,12 @@ public:
     rgPsoSerializerVulkanImpl_Version_1_0() = default;
     virtual ~rgPsoSerializerVulkanImpl_Version_1_0() = default;
 
-    void ReadGraphicsPipelineCreateInfoStructure(rgPsoGraphicsVulkan* pCreateInfo, const nlohmann::json& file)
+    void ReadGraphicsPipelineCreateInfoStructure(rgPsoGraphicsVulkan* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            VkGraphicsPipelineCreateInfo* pGraphicsPipelineCreateInfo = pCreateInfo->GetGraphicsPipelineCreateInfo();
+            VkGraphicsPipelineCreateInfo* pGraphicsPipelineCreateInfo = create_info->GetGraphicsPipelineCreateInfo();
             assert(pGraphicsPipelineCreateInfo != nullptr);
             if (pGraphicsPipelineCreateInfo != nullptr)
             {
@@ -273,9 +273,9 @@ public:
                 if (pGraphicsPipelineCreateInfo->stageCount > 0)
                 {
                     pShaderStages = new VkPipelineShaderStageCreateInfo[pGraphicsPipelineCreateInfo->stageCount]{};
-                    for (uint32_t stageIndex = 0; stageIndex < pGraphicsPipelineCreateInfo->stageCount; ++stageIndex)
+                    for (uint32_t stage_index = 0; stage_index < pGraphicsPipelineCreateInfo->stageCount; ++stage_index)
                     {
-                        ReadStructure(pShaderStages + stageIndex, file[STR_MEMBER_NAME_PSTAGES][stageIndex]);
+                        ReadStructure(pShaderStages + stage_index, file[STR_MEMBER_NAME_PSTAGES][stage_index]);
                     }
                 }
                 pGraphicsPipelineCreateInfo->pStages = pShaderStages;
@@ -283,56 +283,56 @@ public:
                 VkPipelineVertexInputStateCreateInfo* pVertexInputState = nullptr;
                 if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_VERTEX_INPUT_STATE))
                 {
-                    pVertexInputState = pCreateInfo->GetPipelineVertexInputStateCreateInfo();
+                    pVertexInputState = create_info->GetPipelineVertexInputStateCreateInfo();
                     ReadStructure(pVertexInputState, file[STR_MEMBER_NAME_P_VERTEX_INPUT_STATE]);
                 }
 
                 VkPipelineInputAssemblyStateCreateInfo* pVertexInputAssemblyState = nullptr;
                 if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_INPUT_ASSEMBLY_STATE))
                 {
-                    pVertexInputAssemblyState = pCreateInfo->GetPipelineInputAssemblyStateCreateInfo();
+                    pVertexInputAssemblyState = create_info->GetPipelineInputAssemblyStateCreateInfo();
                     ReadStructure(pVertexInputAssemblyState, file[STR_MEMBER_NAME_P_INPUT_ASSEMBLY_STATE]);
                 }
 
                 VkPipelineTessellationStateCreateInfo* pTessellationState = nullptr;
                 if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_TESSELLATION_STATE))
                 {
-                    pTessellationState = pCreateInfo->GetipelineTessellationStateCreateInfo();
+                    pTessellationState = create_info->GetPipelineTessellationStateCreateInfo();
                     ReadStructure(pTessellationState, file[STR_MEMBER_NAME_P_TESSELLATION_STATE]);
                 }
 
                 VkPipelineViewportStateCreateInfo* pViewportState = nullptr;
                 if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_VIEWPORT_STATE))
                 {
-                    pViewportState = pCreateInfo->GetPipelineViewportStateCreateInfo();
+                    pViewportState = create_info->GetPipelineViewportStateCreateInfo();
                     ReadStructure(pViewportState, file[STR_MEMBER_NAME_P_VIEWPORT_STATE]);
                 }
 
                 VkPipelineRasterizationStateCreateInfo* pRasterizationState = nullptr;
                 if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_RASTERIZATION_STATE))
                 {
-                    pRasterizationState = pCreateInfo->GetPipelineRasterizationStateCreateInfo();
+                    pRasterizationState = create_info->GetPipelineRasterizationStateCreateInfo();
                     ReadStructure(pRasterizationState, file[STR_MEMBER_NAME_P_RASTERIZATION_STATE]);
                 }
 
                 VkPipelineMultisampleStateCreateInfo* pMultisampleState = nullptr;
                 if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_MULTISAMPLE_STATE))
                 {
-                    pMultisampleState = pCreateInfo->GetPipelineMultisampleStateCreateInfo();
+                    pMultisampleState = create_info->GetPipelineMultisampleStateCreateInfo();
                     ReadStructure(pMultisampleState, file[STR_MEMBER_NAME_P_MULTISAMPLE_STATE]);
                 }
 
                 VkPipelineDepthStencilStateCreateInfo* pDepthStencilState = nullptr;
                 if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_DEPTH_STENCIL_STATE))
                 {
-                    pDepthStencilState = pCreateInfo->GetPipelineDepthStencilStateCreateInfo();
+                    pDepthStencilState = create_info->GetPipelineDepthStencilStateCreateInfo();
                     ReadStructure(pDepthStencilState, file[STR_MEMBER_NAME_P_DEPTH_STENCIL_STATE]);
                 }
 
                 VkPipelineColorBlendStateCreateInfo* pColorBlendState = nullptr;
                 if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_COLOR_BLEND_STATE))
                 {
-                    pColorBlendState = pCreateInfo->GetPipelineColorBlendStateCreateInfo();
+                    pColorBlendState = create_info->GetPipelineColorBlendStateCreateInfo();
                     ReadStructure(pColorBlendState, file[STR_MEMBER_NAME_P_COLOR_BLEND_STATE]);
                 }
 
@@ -358,131 +358,131 @@ public:
         }
     }
 
-    void WriteStructure(const VkGraphicsPipelineCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkGraphicsPipelineCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_STAGE_COUNT] = pCreateInfo->stageCount;
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_STAGE_COUNT] = create_info->stageCount;
 
-            for (uint32_t index = 0; index < pCreateInfo->stageCount; ++index)
+            for (uint32_t index = 0; index < create_info->stageCount; ++index)
             {
-                WriteStructure((pCreateInfo->pStages + index), file[STR_MEMBER_NAME_PSTAGES][index]);
-            }
-
-            if (pCreateInfo->pVertexInputState != nullptr)
-            {
-                WriteStructure(pCreateInfo->pVertexInputState, file[STR_MEMBER_NAME_P_VERTEX_INPUT_STATE]);
+                WriteStructure((create_info->pStages + index), file[STR_MEMBER_NAME_PSTAGES][index]);
             }
 
-            if (pCreateInfo->pInputAssemblyState != nullptr)
+            if (create_info->pVertexInputState != nullptr)
             {
-                WriteStructure(pCreateInfo->pInputAssemblyState, file[STR_MEMBER_NAME_P_INPUT_ASSEMBLY_STATE]);
+                WriteStructure(create_info->pVertexInputState, file[STR_MEMBER_NAME_P_VERTEX_INPUT_STATE]);
             }
 
-            if (pCreateInfo->pTessellationState != nullptr)
+            if (create_info->pInputAssemblyState != nullptr)
             {
-                WriteStructure(pCreateInfo->pTessellationState, file[STR_MEMBER_NAME_P_TESSELLATION_STATE]);
+                WriteStructure(create_info->pInputAssemblyState, file[STR_MEMBER_NAME_P_INPUT_ASSEMBLY_STATE]);
             }
 
-            if (pCreateInfo->pViewportState != nullptr)
+            if (create_info->pTessellationState != nullptr)
             {
-                WriteStructure(pCreateInfo->pViewportState, file[STR_MEMBER_NAME_P_VIEWPORT_STATE]);
+                WriteStructure(create_info->pTessellationState, file[STR_MEMBER_NAME_P_TESSELLATION_STATE]);
             }
 
-            if (pCreateInfo->pRasterizationState != nullptr)
+            if (create_info->pViewportState != nullptr)
             {
-                WriteStructure(pCreateInfo->pRasterizationState, file[STR_MEMBER_NAME_P_RASTERIZATION_STATE]);
+                WriteStructure(create_info->pViewportState, file[STR_MEMBER_NAME_P_VIEWPORT_STATE]);
             }
 
-            if (pCreateInfo->pMultisampleState != nullptr)
+            if (create_info->pRasterizationState != nullptr)
             {
-                WriteStructure(pCreateInfo->pMultisampleState, file[STR_MEMBER_NAME_P_MULTISAMPLE_STATE]);
+                WriteStructure(create_info->pRasterizationState, file[STR_MEMBER_NAME_P_RASTERIZATION_STATE]);
             }
 
-            if (pCreateInfo->pDepthStencilState != nullptr)
+            if (create_info->pMultisampleState != nullptr)
             {
-                WriteStructure(pCreateInfo->pDepthStencilState, file[STR_MEMBER_NAME_P_DEPTH_STENCIL_STATE]);
+                WriteStructure(create_info->pMultisampleState, file[STR_MEMBER_NAME_P_MULTISAMPLE_STATE]);
             }
 
-            if (pCreateInfo->pColorBlendState != nullptr)
+            if (create_info->pDepthStencilState != nullptr)
             {
-                WriteStructure(pCreateInfo->pColorBlendState, file[STR_MEMBER_NAME_P_COLOR_BLEND_STATE]);
+                WriteStructure(create_info->pDepthStencilState, file[STR_MEMBER_NAME_P_DEPTH_STENCIL_STATE]);
             }
 
-            if (pCreateInfo->pDynamicState != nullptr)
+            if (create_info->pColorBlendState != nullptr)
             {
-                WriteStructure(pCreateInfo->pDynamicState, file[STR_MEMBER_NAME_P_DYNAMIC_STATE]);
+                WriteStructure(create_info->pColorBlendState, file[STR_MEMBER_NAME_P_COLOR_BLEND_STATE]);
             }
 
-            if (pCreateInfo->layout != VK_NULL_HANDLE)
+            if (create_info->pDynamicState != nullptr)
             {
-                file[STR_MEMBER_NAME_LAYOUT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->layout));
+                WriteStructure(create_info->pDynamicState, file[STR_MEMBER_NAME_P_DYNAMIC_STATE]);
             }
 
-            if (pCreateInfo->renderPass != VK_NULL_HANDLE)
+            if (create_info->layout != VK_NULL_HANDLE)
             {
-                file[STR_MEMBER_NAME_RENDER_PASS] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->renderPass));
+                file[STR_MEMBER_NAME_LAYOUT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->layout));
             }
-            file[STR_MEMBER_NAME_SUBPASS] = pCreateInfo->subpass;
-            if (pCreateInfo->basePipelineHandle != VK_NULL_HANDLE)
+
+            if (create_info->renderPass != VK_NULL_HANDLE)
             {
-                file[STR_MEMBER_NAME_BASE_PIPELINE_HANDLE] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->basePipelineHandle));
+                file[STR_MEMBER_NAME_RENDER_PASS] = WriteHandle(reinterpret_cast<uint64_t>(create_info->renderPass));
             }
-            file[STR_MEMBER_NAME_BASE_PIPELINE_INDEX] = pCreateInfo->basePipelineIndex;
+            file[STR_MEMBER_NAME_SUBPASS] = create_info->subpass;
+            if (create_info->basePipelineHandle != VK_NULL_HANDLE)
+            {
+                file[STR_MEMBER_NAME_BASE_PIPELINE_HANDLE] = WriteHandle(reinterpret_cast<uint64_t>(create_info->basePipelineHandle));
+            }
+            file[STR_MEMBER_NAME_BASE_PIPELINE_INDEX] = create_info->basePipelineIndex;
         }
     }
 
-    void WriteStructure(const VkPipelineShaderStageCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineShaderStageCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_STAGE] = pCreateInfo->stage;
-            file[STR_MEMBER_NAME_MODULE] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->module));
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_STAGE] = create_info->stage;
+            file[STR_MEMBER_NAME_MODULE] = WriteHandle(reinterpret_cast<uint64_t>(create_info->module));
 
-            if (pCreateInfo->pName != nullptr)
+            if (create_info->pName != nullptr)
             {
-                file[STR_MEMBER_NAME_NAME] = std::string(pCreateInfo->pName);
+                file[STR_MEMBER_NAME_NAME] = std::string(create_info->pName);
             }
 
-            if (pCreateInfo->pSpecializationInfo != nullptr)
+            if (create_info->pSpecializationInfo != nullptr)
             {
-                WriteStructure(pCreateInfo->pSpecializationInfo, file[STR_MEMBER_NAME_P_SPECIALIZATION_INFO]);
+                WriteStructure(create_info->pSpecializationInfo, file[STR_MEMBER_NAME_P_SPECIALIZATION_INFO]);
             }
         }
     }
 
-    void ReadStructure(VkPipelineShaderStageCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineShaderStageCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->stage = file[STR_MEMBER_NAME_STAGE];
-            pCreateInfo->module = (VkShaderModule)ReadHandle(file[STR_MEMBER_NAME_MODULE]);
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->stage = file[STR_MEMBER_NAME_STAGE];
+            create_info->module = (VkShaderModule)ReadHandle(file[STR_MEMBER_NAME_MODULE]);
             if (IsCreateInfoExists(file, STR_MEMBER_NAME_NAME))
             {
                 std::string entrypointName = file[STR_MEMBER_NAME_NAME];
                 size_t bufferSize = entrypointName.length() + 1;
                 char* pEntrypointName = new char[bufferSize] {};
                 STRCPY(pEntrypointName, bufferSize, entrypointName.c_str());
-                pCreateInfo->pName = pEntrypointName;
+                create_info->pName = pEntrypointName;
             }
 
             if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_SPECIALIZATION_INFO))
             {
                 VkSpecializationInfo* pInfo = new VkSpecializationInfo{};
                 ReadStructure(pInfo, file[STR_MEMBER_NAME_P_SPECIALIZATION_INFO]);
-                pCreateInfo->pSpecializationInfo = pInfo;
+                create_info->pSpecializationInfo = pInfo;
             }
         }
     }
@@ -495,159 +495,159 @@ public:
         return std::string(buffer);
     }
 
-    void WriteStructure(const VkPipelineVertexInputStateCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineVertexInputStateCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_VERTEX_BINDING_DESCRIPTION_COUNT] = pCreateInfo->vertexBindingDescriptionCount;
-            file[STR_MEMBER_NAME_VERTEX_ATTRIBUTE_DESCRIPTION_COUNT] = pCreateInfo->vertexAttributeDescriptionCount;
-            for (uint32_t index = 0; index < pCreateInfo->vertexBindingDescriptionCount; ++index)
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_VERTEX_BINDING_DESCRIPTION_COUNT] = create_info->vertexBindingDescriptionCount;
+            file[STR_MEMBER_NAME_VERTEX_ATTRIBUTE_DESCRIPTION_COUNT] = create_info->vertexAttributeDescriptionCount;
+            for (uint32_t index = 0; index < create_info->vertexBindingDescriptionCount; ++index)
             {
-                WriteStructure(pCreateInfo->pVertexBindingDescriptions + index, file[STR_MEMBER_NAME_P_VERTEX_BINDING_DESCRIPTIONS][index]);
+                WriteStructure(create_info->pVertexBindingDescriptions + index, file[STR_MEMBER_NAME_P_VERTEX_BINDING_DESCRIPTIONS][index]);
             }
-            for (uint32_t index = 0; index < pCreateInfo->vertexAttributeDescriptionCount; ++index)
+            for (uint32_t index = 0; index < create_info->vertexAttributeDescriptionCount; ++index)
             {
-                WriteStructure(pCreateInfo->pVertexAttributeDescriptions + index, file[STR_MEMBER_NAME_P_VERTEX_ATTRIBUTE_DESCRIPTIONS][index]);
+                WriteStructure(create_info->pVertexAttributeDescriptions + index, file[STR_MEMBER_NAME_P_VERTEX_ATTRIBUTE_DESCRIPTIONS][index]);
             }
         }
     }
 
-    void ReadStructure(VkPipelineVertexInputStateCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineVertexInputStateCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->vertexBindingDescriptionCount = file[STR_MEMBER_NAME_VERTEX_BINDING_DESCRIPTION_COUNT];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->vertexBindingDescriptionCount = file[STR_MEMBER_NAME_VERTEX_BINDING_DESCRIPTION_COUNT];
 
             VkVertexInputBindingDescription* pVertexBindingDescriptions = nullptr;
-            if (pCreateInfo->vertexBindingDescriptionCount > 0)
+            if (create_info->vertexBindingDescriptionCount > 0)
             {
-                pVertexBindingDescriptions = new VkVertexInputBindingDescription[pCreateInfo->vertexBindingDescriptionCount]{};
-                for (uint32_t bindingIndex = 0; bindingIndex < pCreateInfo->vertexBindingDescriptionCount; ++bindingIndex)
+                pVertexBindingDescriptions = new VkVertexInputBindingDescription[create_info->vertexBindingDescriptionCount]{};
+                for (uint32_t bindingIndex = 0; bindingIndex < create_info->vertexBindingDescriptionCount; ++bindingIndex)
                 {
                     ReadStructure(pVertexBindingDescriptions + bindingIndex, file[STR_MEMBER_NAME_P_VERTEX_BINDING_DESCRIPTIONS][bindingIndex]);
                 }
             }
-            pCreateInfo->pVertexBindingDescriptions = pVertexBindingDescriptions;
+            create_info->pVertexBindingDescriptions = pVertexBindingDescriptions;
 
-            pCreateInfo->vertexAttributeDescriptionCount = file[STR_MEMBER_NAME_VERTEX_ATTRIBUTE_DESCRIPTION_COUNT];
+            create_info->vertexAttributeDescriptionCount = file[STR_MEMBER_NAME_VERTEX_ATTRIBUTE_DESCRIPTION_COUNT];
 
             VkVertexInputAttributeDescription* pVertexAttributeDescriptions = nullptr;
-            if (pCreateInfo->vertexAttributeDescriptionCount > 0)
+            if (create_info->vertexAttributeDescriptionCount > 0)
             {
-                pVertexAttributeDescriptions = new VkVertexInputAttributeDescription[pCreateInfo->vertexAttributeDescriptionCount]{};
-                for (uint32_t attributeIndex = 0; attributeIndex < pCreateInfo->vertexAttributeDescriptionCount; ++attributeIndex)
+                pVertexAttributeDescriptions = new VkVertexInputAttributeDescription[create_info->vertexAttributeDescriptionCount]{};
+                for (uint32_t attributeIndex = 0; attributeIndex < create_info->vertexAttributeDescriptionCount; ++attributeIndex)
                 {
                     ReadStructure(pVertexAttributeDescriptions + attributeIndex, file[STR_MEMBER_NAME_P_VERTEX_ATTRIBUTE_DESCRIPTIONS][attributeIndex]);
                 }
             }
-            pCreateInfo->pVertexAttributeDescriptions = pVertexAttributeDescriptions;
+            create_info->pVertexAttributeDescriptions = pVertexAttributeDescriptions;
         }
     }
 
-    void WriteStructure(const VkPipelineInputAssemblyStateCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineInputAssemblyStateCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_TOPOLOGY] = pCreateInfo->topology;
-            file[STR_MEMBER_NAME_PRIMITIVE_RESTART_ENABLED] = WriteBool(pCreateInfo->primitiveRestartEnable);
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_TOPOLOGY] = create_info->topology;
+            file[STR_MEMBER_NAME_PRIMITIVE_RESTART_ENABLED] = WriteBool(create_info->primitiveRestartEnable);
         }
     }
 
-    void ReadStructure(VkPipelineInputAssemblyStateCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineInputAssemblyStateCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->topology = file[STR_MEMBER_NAME_TOPOLOGY];
-            pCreateInfo->primitiveRestartEnable = ReadBool(file[STR_MEMBER_NAME_PRIMITIVE_RESTART_ENABLED]);
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->topology = file[STR_MEMBER_NAME_TOPOLOGY];
+            create_info->primitiveRestartEnable = ReadBool(file[STR_MEMBER_NAME_PRIMITIVE_RESTART_ENABLED]);
         }
     }
 
-    void WriteStructure(const VkPipelineTessellationStateCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineTessellationStateCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_PATCH_CONTROL_POINTS] = pCreateInfo->patchControlPoints;
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_PATCH_CONTROL_POINTS] = create_info->patchControlPoints;
         }
     }
 
-    void ReadStructure(VkPipelineTessellationStateCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineTessellationStateCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->patchControlPoints = file[STR_MEMBER_NAME_PATCH_CONTROL_POINTS];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->patchControlPoints = file[STR_MEMBER_NAME_PATCH_CONTROL_POINTS];
         }
     }
 
-    void WriteStructure(const VkPipelineViewportStateCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineViewportStateCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_VIEWPORT_COUNT] = pCreateInfo->viewportCount;
-            file[STR_MEMBER_NAME_SCISSOR_COUNT] = pCreateInfo->scissorCount;
-            if (pCreateInfo->pViewports != nullptr)
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_VIEWPORT_COUNT] = create_info->viewportCount;
+            file[STR_MEMBER_NAME_SCISSOR_COUNT] = create_info->scissorCount;
+            if (create_info->pViewports != nullptr)
             {
-                for (uint32_t index = 0; index < pCreateInfo->viewportCount; ++index)
+                for (uint32_t index = 0; index < create_info->viewportCount; ++index)
                 {
-                    WriteStructure(pCreateInfo->pViewports + index, file[STR_MEMBER_NAME_P_VIEWPORTS][index]);
+                    WriteStructure(create_info->pViewports + index, file[STR_MEMBER_NAME_P_VIEWPORTS][index]);
                 }
             }
 
-            if (pCreateInfo->pScissors != nullptr)
+            if (create_info->pScissors != nullptr)
             {
-                for (uint32_t index = 0; index < pCreateInfo->scissorCount; ++index)
+                for (uint32_t index = 0; index < create_info->scissorCount; ++index)
                 {
-                    WriteStructure(pCreateInfo->pScissors + index, file[STR_MEMBER_NAME_P_SCISSORS][index]);
+                    WriteStructure(create_info->pScissors + index, file[STR_MEMBER_NAME_P_SCISSORS][index]);
                 }
             }
         }
     }
 
-    void ReadStructure(VkPipelineViewportStateCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineViewportStateCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
 
             // Parse the array of viewport rectangles.
-            pCreateInfo->viewportCount = file[STR_MEMBER_NAME_VIEWPORT_COUNT];
+            create_info->viewportCount = file[STR_MEMBER_NAME_VIEWPORT_COUNT];
             VkViewport* pViewports = nullptr;
             if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_VIEWPORTS))
             {
-                if (pCreateInfo->viewportCount > 0)
+                if (create_info->viewportCount > 0)
                 {
-                    pViewports = new VkViewport[pCreateInfo->viewportCount]{};
-                    for (uint32_t index = 0; index < pCreateInfo->viewportCount; ++index)
+                    pViewports = new VkViewport[create_info->viewportCount]{};
+                    for (uint32_t index = 0; index < create_info->viewportCount; ++index)
                     {
                         ReadStructure(pViewports + index, file[STR_MEMBER_NAME_P_VIEWPORTS][index]);
                     }
@@ -656,7 +656,7 @@ public:
             else
             {
                 // In case that there is no viewport given, we would allocate a default one.
-                pCreateInfo->viewportCount = 1;
+                create_info->viewportCount = 1;
                 pViewports = new VkViewport{};
                 pViewports->height = 1080;
                 pViewports->width = 1920;
@@ -664,17 +664,17 @@ public:
             }
 
             // Set the viewport in the create info structure.
-            pCreateInfo->pViewports = pViewports;
+            create_info->pViewports = pViewports;
 
             // Parse the array of scissor rectangles.
-            pCreateInfo->scissorCount = file[STR_MEMBER_NAME_SCISSOR_COUNT];
+            create_info->scissorCount = file[STR_MEMBER_NAME_SCISSOR_COUNT];
             VkRect2D* pScissors = nullptr;
             if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_SCISSORS))
             {
-                if (pCreateInfo->scissorCount > 0)
+                if (create_info->scissorCount > 0)
                 {
-                    pScissors = new VkRect2D[pCreateInfo->scissorCount]{};
-                    for (uint32_t index = 0; index < pCreateInfo->scissorCount; ++index)
+                    pScissors = new VkRect2D[create_info->scissorCount]{};
+                    for (uint32_t index = 0; index < create_info->scissorCount; ++index)
                     {
                         ReadStructure(pScissors + index, file[STR_MEMBER_NAME_P_SCISSORS][index]);
                     }
@@ -684,882 +684,882 @@ public:
             {
                 // In case that there is no scissor given, we would allocate a default one.
                 pScissors = new VkRect2D[1]{};
-                pCreateInfo->scissorCount = 1;
+                create_info->scissorCount = 1;
                 pScissors->extent.height = 1080;
                 pScissors->extent.width = 1920;
             }
 
             // Set the scissors in the create info structure.
-            pCreateInfo->pScissors = pScissors;
+            create_info->pScissors = pScissors;
         }
     }
 
-    void WriteStructure(const VkPipelineRasterizationStateCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineRasterizationStateCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_DEPTH_CLAMP_ENABLE] = WriteBool(pCreateInfo->depthClampEnable);
-            file[STR_MEMBER_NAME_RASTERIZER_DISCARD_ENABLE] = WriteBool(pCreateInfo->rasterizerDiscardEnable);
-            file[STR_MEMBER_NAME_POLYGON_MODE] = pCreateInfo->polygonMode;
-            file[STR_MEMBER_NAME_CULL_MODE] = pCreateInfo->cullMode;
-            file[STR_MEMBER_NAME_FRONT_FACE] = pCreateInfo->frontFace;
-            file[STR_MEMBER_NAME_DEPTH_BIAS_ENABLE] = WriteBool(pCreateInfo->depthBiasEnable);
-            file[STR_MEMBER_NAME_DEPTH_BIAS_CONSTANT_FACTOR] = pCreateInfo->depthBiasConstantFactor;
-            file[STR_MEMBER_NAME_DEPTH_BIAS_CLAMP] = pCreateInfo->depthBiasClamp;
-            file[STR_MEMBER_NAME_DEPTH_BIAS_SLOPE_FACTOR] = pCreateInfo->depthBiasSlopeFactor;
-            file[STR_MEMBER_NAME_LINE_WIDTH] = pCreateInfo->lineWidth;
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_DEPTH_CLAMP_ENABLE] = WriteBool(create_info->depthClampEnable);
+            file[STR_MEMBER_NAME_RASTERIZER_DISCARD_ENABLE] = WriteBool(create_info->rasterizerDiscardEnable);
+            file[STR_MEMBER_NAME_POLYGON_MODE] = create_info->polygonMode;
+            file[STR_MEMBER_NAME_CULL_MODE] = create_info->cullMode;
+            file[STR_MEMBER_NAME_FRONT_FACE] = create_info->frontFace;
+            file[STR_MEMBER_NAME_DEPTH_BIAS_ENABLE] = WriteBool(create_info->depthBiasEnable);
+            file[STR_MEMBER_NAME_DEPTH_BIAS_CONSTANT_FACTOR] = create_info->depthBiasConstantFactor;
+            file[STR_MEMBER_NAME_DEPTH_BIAS_CLAMP] = create_info->depthBiasClamp;
+            file[STR_MEMBER_NAME_DEPTH_BIAS_SLOPE_FACTOR] = create_info->depthBiasSlopeFactor;
+            file[STR_MEMBER_NAME_LINE_WIDTH] = create_info->lineWidth;
         }
     }
 
-    void ReadStructure(VkPipelineRasterizationStateCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineRasterizationStateCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->depthClampEnable = ReadBool(file[STR_MEMBER_NAME_DEPTH_CLAMP_ENABLE]);
-            pCreateInfo->rasterizerDiscardEnable = ReadBool(file[STR_MEMBER_NAME_RASTERIZER_DISCARD_ENABLE]);
-            pCreateInfo->polygonMode = file[STR_MEMBER_NAME_POLYGON_MODE];
-            pCreateInfo->cullMode = file[STR_MEMBER_NAME_CULL_MODE];
-            pCreateInfo->frontFace = file[STR_MEMBER_NAME_FRONT_FACE];
-            pCreateInfo->depthBiasEnable = ReadBool(file[STR_MEMBER_NAME_DEPTH_BIAS_ENABLE]);
-            pCreateInfo->depthBiasConstantFactor = file[STR_MEMBER_NAME_DEPTH_BIAS_CONSTANT_FACTOR];
-            pCreateInfo->depthBiasClamp = file[STR_MEMBER_NAME_DEPTH_BIAS_CLAMP];
-            pCreateInfo->depthBiasSlopeFactor = file[STR_MEMBER_NAME_DEPTH_BIAS_SLOPE_FACTOR];
-            pCreateInfo->lineWidth = file[STR_MEMBER_NAME_LINE_WIDTH];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->depthClampEnable = ReadBool(file[STR_MEMBER_NAME_DEPTH_CLAMP_ENABLE]);
+            create_info->rasterizerDiscardEnable = ReadBool(file[STR_MEMBER_NAME_RASTERIZER_DISCARD_ENABLE]);
+            create_info->polygonMode = file[STR_MEMBER_NAME_POLYGON_MODE];
+            create_info->cullMode = file[STR_MEMBER_NAME_CULL_MODE];
+            create_info->frontFace = file[STR_MEMBER_NAME_FRONT_FACE];
+            create_info->depthBiasEnable = ReadBool(file[STR_MEMBER_NAME_DEPTH_BIAS_ENABLE]);
+            create_info->depthBiasConstantFactor = file[STR_MEMBER_NAME_DEPTH_BIAS_CONSTANT_FACTOR];
+            create_info->depthBiasClamp = file[STR_MEMBER_NAME_DEPTH_BIAS_CLAMP];
+            create_info->depthBiasSlopeFactor = file[STR_MEMBER_NAME_DEPTH_BIAS_SLOPE_FACTOR];
+            create_info->lineWidth = file[STR_MEMBER_NAME_LINE_WIDTH];
         }
     }
 
-    void WriteStructure(const VkPipelineMultisampleStateCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineMultisampleStateCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_RASTERIZATION_SAMPLE] = pCreateInfo->rasterizationSamples;
-            file[STR_MEMBER_NAME_SAMPLE_SHADING_ENABLE] = WriteBool(pCreateInfo->sampleShadingEnable);
-            file[STR_MEMBER_NAME_MIN_SAMPLE_SHADING] = pCreateInfo->minSampleShading;
-            WriteSampleMask(pCreateInfo, file);
-            file[STR_MEMBER_NAME_ALPHA_TO_COVERAGE_ENABLE] = WriteBool(pCreateInfo->alphaToCoverageEnable);
-            file[STR_MEMBER_NAME_ALPHA_TO_ONE_ENABLE] = WriteBool(pCreateInfo->alphaToOneEnable);
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_RASTERIZATION_SAMPLE] = create_info->rasterizationSamples;
+            file[STR_MEMBER_NAME_SAMPLE_SHADING_ENABLE] = WriteBool(create_info->sampleShadingEnable);
+            file[STR_MEMBER_NAME_MIN_SAMPLE_SHADING] = create_info->minSampleShading;
+            WriteSampleMask(create_info, file);
+            file[STR_MEMBER_NAME_ALPHA_TO_COVERAGE_ENABLE] = WriteBool(create_info->alphaToCoverageEnable);
+            file[STR_MEMBER_NAME_ALPHA_TO_ONE_ENABLE] = WriteBool(create_info->alphaToOneEnable);
         }
     }
 
-    void ReadStructure(VkPipelineMultisampleStateCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineMultisampleStateCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->rasterizationSamples = file[STR_MEMBER_NAME_RASTERIZATION_SAMPLE];
-            pCreateInfo->sampleShadingEnable = ReadBool(file[STR_MEMBER_NAME_SAMPLE_SHADING_ENABLE]);
-            pCreateInfo->minSampleShading = file[STR_MEMBER_NAME_MIN_SAMPLE_SHADING];
-            pCreateInfo->pSampleMask = ReadSampleMask(pCreateInfo, file);
-            pCreateInfo->alphaToCoverageEnable = ReadBool(file[STR_MEMBER_NAME_ALPHA_TO_COVERAGE_ENABLE]);
-            pCreateInfo->alphaToOneEnable = ReadBool(file[STR_MEMBER_NAME_ALPHA_TO_ONE_ENABLE]);
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->rasterizationSamples = file[STR_MEMBER_NAME_RASTERIZATION_SAMPLE];
+            create_info->sampleShadingEnable = ReadBool(file[STR_MEMBER_NAME_SAMPLE_SHADING_ENABLE]);
+            create_info->minSampleShading = file[STR_MEMBER_NAME_MIN_SAMPLE_SHADING];
+            create_info->pSampleMask = ReadSampleMask(create_info, file);
+            create_info->alphaToCoverageEnable = ReadBool(file[STR_MEMBER_NAME_ALPHA_TO_COVERAGE_ENABLE]);
+            create_info->alphaToOneEnable = ReadBool(file[STR_MEMBER_NAME_ALPHA_TO_ONE_ENABLE]);
         }
     }
 
-    virtual void WriteStructure(const VkStencilOpState* pCreateInfo, nlohmann::json& file)
+    virtual void WriteStructure(const VkStencilOpState* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_PASS_OP] = pCreateInfo->passOp;
-            file[STR_MEMBER_NAME_DEPTH_FAIL_OP] = pCreateInfo->depthFailOp;
-            file[STR_MEMBER_NAME_COMPARE_OP] = pCreateInfo->compareOp;
-            file[STR_MEMBER_NAME_COMPARE_MASK] = pCreateInfo->compareMask;
-            file[STR_MEMBER_NAME_WRITE_MASK] = pCreateInfo->writeMask;
-            file[STR_MEMBER_NAME_REFERENCE] = pCreateInfo->reference;
+            file[STR_MEMBER_NAME_PASS_OP] = create_info->passOp;
+            file[STR_MEMBER_NAME_DEPTH_FAIL_OP] = create_info->depthFailOp;
+            file[STR_MEMBER_NAME_COMPARE_OP] = create_info->compareOp;
+            file[STR_MEMBER_NAME_COMPARE_MASK] = create_info->compareMask;
+            file[STR_MEMBER_NAME_WRITE_MASK] = create_info->writeMask;
+            file[STR_MEMBER_NAME_REFERENCE] = create_info->reference;
         }
     }
 
-    virtual void ReadStructure(VkStencilOpState* pCreateInfo, const nlohmann::json& file)
+    virtual void ReadStructure(VkStencilOpState* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->passOp = file[STR_MEMBER_NAME_PASS_OP];
-            pCreateInfo->depthFailOp = file[STR_MEMBER_NAME_DEPTH_FAIL_OP];
-            pCreateInfo->compareOp = file[STR_MEMBER_NAME_COMPARE_OP];
-            pCreateInfo->compareMask = file[STR_MEMBER_NAME_COMPARE_MASK];
-            pCreateInfo->writeMask = file[STR_MEMBER_NAME_WRITE_MASK];
-            pCreateInfo->reference = file[STR_MEMBER_NAME_REFERENCE];
+            create_info->passOp = file[STR_MEMBER_NAME_PASS_OP];
+            create_info->depthFailOp = file[STR_MEMBER_NAME_DEPTH_FAIL_OP];
+            create_info->compareOp = file[STR_MEMBER_NAME_COMPARE_OP];
+            create_info->compareMask = file[STR_MEMBER_NAME_COMPARE_MASK];
+            create_info->writeMask = file[STR_MEMBER_NAME_WRITE_MASK];
+            create_info->reference = file[STR_MEMBER_NAME_REFERENCE];
         }
     }
 
-    void WriteStructure(const VkPipelineDepthStencilStateCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineDepthStencilStateCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_DEPTH_TEST_ENABLE] = WriteBool(pCreateInfo->depthTestEnable);
-            file[STR_MEMBER_NAME_DEPTH_WRITE_ENABLE] = WriteBool(pCreateInfo->depthWriteEnable);
-            file[STR_MEMBER_NAME_DEPTH_COMPARE_OP] = pCreateInfo->depthCompareOp;
-            file[STR_MEMBER_NAME_DEPTH_BOUNDS_TEST_ENABLE] = WriteBool(pCreateInfo->depthBoundsTestEnable);
-            file[STR_MEMBER_NAME_STENCIL_TEST_ENABLE] = WriteBool(pCreateInfo->stencilTestEnable);
-            WriteStructure(&pCreateInfo->front, file[STR_MEMBER_NAME_FRONT]);
-            WriteStructure(&pCreateInfo->back, file[STR_MEMBER_NAME_BACK]);
-            file[STR_MEMBER_NAME_MIN_DEPTH_BOUNDS] = pCreateInfo->minDepthBounds;
-            file[STR_MEMBER_NAME_MAX_DEPTH_BOUNDS] = pCreateInfo->maxDepthBounds;
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_DEPTH_TEST_ENABLE] = WriteBool(create_info->depthTestEnable);
+            file[STR_MEMBER_NAME_DEPTH_WRITE_ENABLE] = WriteBool(create_info->depthWriteEnable);
+            file[STR_MEMBER_NAME_DEPTH_COMPARE_OP] = create_info->depthCompareOp;
+            file[STR_MEMBER_NAME_DEPTH_BOUNDS_TEST_ENABLE] = WriteBool(create_info->depthBoundsTestEnable);
+            file[STR_MEMBER_NAME_STENCIL_TEST_ENABLE] = WriteBool(create_info->stencilTestEnable);
+            WriteStructure(&create_info->front, file[STR_MEMBER_NAME_FRONT]);
+            WriteStructure(&create_info->back, file[STR_MEMBER_NAME_BACK]);
+            file[STR_MEMBER_NAME_MIN_DEPTH_BOUNDS] = create_info->minDepthBounds;
+            file[STR_MEMBER_NAME_MAX_DEPTH_BOUNDS] = create_info->maxDepthBounds;
         }
     }
 
-    void ReadStructure(VkPipelineDepthStencilStateCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineDepthStencilStateCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->depthTestEnable = ReadBool(file[STR_MEMBER_NAME_DEPTH_TEST_ENABLE]);
-            pCreateInfo->depthWriteEnable = ReadBool(file[STR_MEMBER_NAME_DEPTH_WRITE_ENABLE]);
-            pCreateInfo->depthCompareOp = file[STR_MEMBER_NAME_DEPTH_COMPARE_OP];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->depthTestEnable = ReadBool(file[STR_MEMBER_NAME_DEPTH_TEST_ENABLE]);
+            create_info->depthWriteEnable = ReadBool(file[STR_MEMBER_NAME_DEPTH_WRITE_ENABLE]);
+            create_info->depthCompareOp = file[STR_MEMBER_NAME_DEPTH_COMPARE_OP];
 
-            pCreateInfo->depthBoundsTestEnable = ReadBool(file[STR_MEMBER_NAME_DEPTH_BOUNDS_TEST_ENABLE]);
-            pCreateInfo->stencilTestEnable = ReadBool(file[STR_MEMBER_NAME_STENCIL_TEST_ENABLE]);
-            ReadStructure(&pCreateInfo->front, file[STR_MEMBER_NAME_FRONT]);
-            ReadStructure(&pCreateInfo->back, file[STR_MEMBER_NAME_BACK]);
-            pCreateInfo->minDepthBounds = file[STR_MEMBER_NAME_MIN_DEPTH_BOUNDS];
-            pCreateInfo->maxDepthBounds = file[STR_MEMBER_NAME_MAX_DEPTH_BOUNDS];
+            create_info->depthBoundsTestEnable = ReadBool(file[STR_MEMBER_NAME_DEPTH_BOUNDS_TEST_ENABLE]);
+            create_info->stencilTestEnable = ReadBool(file[STR_MEMBER_NAME_STENCIL_TEST_ENABLE]);
+            ReadStructure(&create_info->front, file[STR_MEMBER_NAME_FRONT]);
+            ReadStructure(&create_info->back, file[STR_MEMBER_NAME_BACK]);
+            create_info->minDepthBounds = file[STR_MEMBER_NAME_MIN_DEPTH_BOUNDS];
+            create_info->maxDepthBounds = file[STR_MEMBER_NAME_MAX_DEPTH_BOUNDS];
         }
     }
 
-    void WriteStructure(const VkPipelineColorBlendAttachmentState* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineColorBlendAttachmentState* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_BLEND_ENABLE] = WriteBool(pCreateInfo->blendEnable);
-            file[STR_MEMBER_NAME_SRC_COLOR_BLEND_FACTOR] = pCreateInfo->srcColorBlendFactor;
-            file[STR_MEMBER_NAME_DST_COLOR_BLEND_FACTOR] = pCreateInfo->dstColorBlendFactor;
-            file[STR_MEMBER_NAME_COLOR_BLEND_OP] = pCreateInfo->colorBlendOp;
-            file[STR_MEMBER_NAME_SRC_ALPHA_BLEND_FACTOR] = pCreateInfo->srcAlphaBlendFactor;
-            file[STR_MEMBER_NAME_DST_ALPHA_BLEND_FACTOR] = pCreateInfo->dstAlphaBlendFactor;
-            file[STR_MEMBER_NAME_ALPHA_BLEND_OP] = pCreateInfo->alphaBlendOp;
-            file[STR_MEMBER_NAME_COLOR_WRITE_MASK] = pCreateInfo->colorWriteMask;
+            file[STR_MEMBER_NAME_BLEND_ENABLE] = WriteBool(create_info->blendEnable);
+            file[STR_MEMBER_NAME_SRC_COLOR_BLEND_FACTOR] = create_info->srcColorBlendFactor;
+            file[STR_MEMBER_NAME_DST_COLOR_BLEND_FACTOR] = create_info->dstColorBlendFactor;
+            file[STR_MEMBER_NAME_COLOR_BLEND_OP] = create_info->colorBlendOp;
+            file[STR_MEMBER_NAME_SRC_ALPHA_BLEND_FACTOR] = create_info->srcAlphaBlendFactor;
+            file[STR_MEMBER_NAME_DST_ALPHA_BLEND_FACTOR] = create_info->dstAlphaBlendFactor;
+            file[STR_MEMBER_NAME_ALPHA_BLEND_OP] = create_info->alphaBlendOp;
+            file[STR_MEMBER_NAME_COLOR_WRITE_MASK] = create_info->colorWriteMask;
         }
     }
 
-    void ReadStructure(VkPipelineColorBlendAttachmentState* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineColorBlendAttachmentState* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->blendEnable = ReadBool(file[STR_MEMBER_NAME_BLEND_ENABLE]);
-            pCreateInfo->srcColorBlendFactor = file[STR_MEMBER_NAME_SRC_COLOR_BLEND_FACTOR];
-            pCreateInfo->dstColorBlendFactor = file[STR_MEMBER_NAME_DST_COLOR_BLEND_FACTOR];
-            pCreateInfo->colorBlendOp = file[STR_MEMBER_NAME_COLOR_BLEND_OP];
-            pCreateInfo->srcAlphaBlendFactor = file[STR_MEMBER_NAME_SRC_ALPHA_BLEND_FACTOR];
-            pCreateInfo->dstAlphaBlendFactor = file[STR_MEMBER_NAME_DST_ALPHA_BLEND_FACTOR];
-            pCreateInfo->alphaBlendOp = file[STR_MEMBER_NAME_ALPHA_BLEND_OP];
-            pCreateInfo->colorWriteMask = file[STR_MEMBER_NAME_COLOR_WRITE_MASK];
+            create_info->blendEnable = ReadBool(file[STR_MEMBER_NAME_BLEND_ENABLE]);
+            create_info->srcColorBlendFactor = file[STR_MEMBER_NAME_SRC_COLOR_BLEND_FACTOR];
+            create_info->dstColorBlendFactor = file[STR_MEMBER_NAME_DST_COLOR_BLEND_FACTOR];
+            create_info->colorBlendOp = file[STR_MEMBER_NAME_COLOR_BLEND_OP];
+            create_info->srcAlphaBlendFactor = file[STR_MEMBER_NAME_SRC_ALPHA_BLEND_FACTOR];
+            create_info->dstAlphaBlendFactor = file[STR_MEMBER_NAME_DST_ALPHA_BLEND_FACTOR];
+            create_info->alphaBlendOp = file[STR_MEMBER_NAME_ALPHA_BLEND_OP];
+            create_info->colorWriteMask = file[STR_MEMBER_NAME_COLOR_WRITE_MASK];
         }
     }
 
-    void WriteStructure(const VkPipelineColorBlendStateCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineColorBlendStateCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_LOGIC_OP_ENABLE] = WriteBool(pCreateInfo->logicOpEnable);
-            file[STR_MEMBER_NAME_LOGIC_OP] = pCreateInfo->logicOp;
-            file[STR_MEMBER_NAME_ATTACHMENT_COUNT] = pCreateInfo->attachmentCount;
-            for (uint32_t attachmentIndex = 0; attachmentIndex < pCreateInfo->attachmentCount; attachmentIndex++)
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_LOGIC_OP_ENABLE] = WriteBool(create_info->logicOpEnable);
+            file[STR_MEMBER_NAME_LOGIC_OP] = create_info->logicOp;
+            file[STR_MEMBER_NAME_ATTACHMENT_COUNT] = create_info->attachmentCount;
+            for (uint32_t attachmentIndex = 0; attachmentIndex < create_info->attachmentCount; attachmentIndex++)
             {
-                WriteStructure(pCreateInfo->pAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_ATTACHMENTS][attachmentIndex]);
+                WriteStructure(create_info->pAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_ATTACHMENTS][attachmentIndex]);
             }
             for (uint32_t constantIndex = 0; constantIndex < 4; constantIndex++)
             {
-                file[STR_MEMBER_NAME_BLEND_CONSTANTS][constantIndex] = pCreateInfo->blendConstants[constantIndex];
+                file[STR_MEMBER_NAME_BLEND_CONSTANTS][constantIndex] = create_info->blendConstants[constantIndex];
             }
         }
     }
 
-    void ReadStructure(VkPipelineColorBlendStateCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineColorBlendStateCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->logicOpEnable = ReadBool(file[STR_MEMBER_NAME_LOGIC_OP_ENABLE]);
-            pCreateInfo->logicOp = file[STR_MEMBER_NAME_LOGIC_OP];
-            pCreateInfo->attachmentCount = file[STR_MEMBER_NAME_ATTACHMENT_COUNT];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->logicOpEnable = ReadBool(file[STR_MEMBER_NAME_LOGIC_OP_ENABLE]);
+            create_info->logicOp = file[STR_MEMBER_NAME_LOGIC_OP];
+            create_info->attachmentCount = file[STR_MEMBER_NAME_ATTACHMENT_COUNT];
 
             VkPipelineColorBlendAttachmentState* pAttachments = nullptr;
-            if (pCreateInfo->attachmentCount > 0)
+            if (create_info->attachmentCount > 0)
             {
-                pAttachments = new VkPipelineColorBlendAttachmentState[pCreateInfo->attachmentCount]{};
-                for (uint32_t attachmentIndex = 0; attachmentIndex < pCreateInfo->attachmentCount; attachmentIndex++)
+                pAttachments = new VkPipelineColorBlendAttachmentState[create_info->attachmentCount]{};
+                for (uint32_t attachmentIndex = 0; attachmentIndex < create_info->attachmentCount; attachmentIndex++)
                 {
                     ReadStructure(pAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_ATTACHMENTS][attachmentIndex]);
                 }
             }
-            pCreateInfo->pAttachments = pAttachments;
+            create_info->pAttachments = pAttachments;
 
             for (uint32_t constantIndex = 0; constantIndex < 4; constantIndex++)
             {
-                pCreateInfo->blendConstants[constantIndex] = file[STR_MEMBER_NAME_BLEND_CONSTANTS][constantIndex];
+                create_info->blendConstants[constantIndex] = file[STR_MEMBER_NAME_BLEND_CONSTANTS][constantIndex];
             }
         }
     }
 
-    void WriteStructure(const VkPipelineDynamicStateCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineDynamicStateCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_DYNAMIC_STATE_COUNT] = pCreateInfo->dynamicStateCount;
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_DYNAMIC_STATE_COUNT] = create_info->dynamicStateCount;
 
-            for (uint32_t stateIndex = 0; stateIndex < pCreateInfo->dynamicStateCount; ++stateIndex)
+            for (uint32_t stateIndex = 0; stateIndex < create_info->dynamicStateCount; ++stateIndex)
             {
-                file[STR_MEMBER_NAME_P_DYNAMIC_STATES][stateIndex] = *(pCreateInfo->pDynamicStates + stateIndex);
+                file[STR_MEMBER_NAME_P_DYNAMIC_STATES][stateIndex] = *(create_info->pDynamicStates + stateIndex);
             }
         }
     }
 
-    void ReadStructure(VkPipelineDynamicStateCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineDynamicStateCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->dynamicStateCount = file[STR_MEMBER_NAME_DYNAMIC_STATE_COUNT];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->dynamicStateCount = file[STR_MEMBER_NAME_DYNAMIC_STATE_COUNT];
 
             VkDynamicState* pDynamicStates = nullptr;
-            if (pCreateInfo->dynamicStateCount > 0)
+            if (create_info->dynamicStateCount > 0)
             {
-                pDynamicStates = new VkDynamicState[pCreateInfo->dynamicStateCount]{};
-                for (uint32_t stateIndex = 0; stateIndex < pCreateInfo->dynamicStateCount; ++stateIndex)
+                pDynamicStates = new VkDynamicState[create_info->dynamicStateCount]{};
+                for (uint32_t stateIndex = 0; stateIndex < create_info->dynamicStateCount; ++stateIndex)
                 {
                     pDynamicStates[stateIndex] = file[STR_MEMBER_NAME_P_DYNAMIC_STATES][stateIndex];
                 }
             }
-            pCreateInfo->pDynamicStates = pDynamicStates;
+            create_info->pDynamicStates = pDynamicStates;
         }
     }
 
-    void WriteStructure(const VkSpecializationInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkSpecializationInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_MAP_ENTRY_COUNT] = pCreateInfo->mapEntryCount;
-            for (uint32_t index = 0; index < pCreateInfo->mapEntryCount; ++index)
+            file[STR_MEMBER_NAME_MAP_ENTRY_COUNT] = create_info->mapEntryCount;
+            for (uint32_t index = 0; index < create_info->mapEntryCount; ++index)
             {
-                WriteStructure((pCreateInfo->pMapEntries + index), file[STR_MEMBER_NAME_P_MAP_ENTRIES][index]);
+                WriteStructure((create_info->pMapEntries + index), file[STR_MEMBER_NAME_P_MAP_ENTRIES][index]);
             }
-            file[STR_MEMBER_NAME_DATA_SIZE] = pCreateInfo->dataSize;
+            file[STR_MEMBER_NAME_DATA_SIZE] = create_info->dataSize;
 
-            // pCreateInfo->dataSize is the number of bytes being serialized. In order to serialize
+            // create_info->dataSize is the number of bytes being serialized. In order to serialize
             // binary data, read/write each byte separately as an array.
-            for (size_t byteIndex = 0; byteIndex < pCreateInfo->dataSize; ++byteIndex)
+            for (size_t byteIndex = 0; byteIndex < create_info->dataSize; ++byteIndex)
             {
-                file[STR_MEMBER_NAME_P_DATA][byteIndex] = *((const uint8_t*)pCreateInfo->pData + byteIndex);
+                file[STR_MEMBER_NAME_P_DATA][byteIndex] = *((const uint8_t*)create_info->pData + byteIndex);
             }
         }
     }
 
-    void ReadStructure(VkSpecializationInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkSpecializationInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->mapEntryCount = file[STR_MEMBER_NAME_MAP_ENTRY_COUNT];
+            create_info->mapEntryCount = file[STR_MEMBER_NAME_MAP_ENTRY_COUNT];
             VkSpecializationMapEntry* pMapEntries = nullptr;
-            if (pCreateInfo->mapEntryCount > 0)
+            if (create_info->mapEntryCount > 0)
             {
-                pMapEntries = new VkSpecializationMapEntry[pCreateInfo->mapEntryCount];
-                for (uint32_t entryIndex = 0; entryIndex < pCreateInfo->mapEntryCount; ++entryIndex)
+                pMapEntries = new VkSpecializationMapEntry[create_info->mapEntryCount];
+                for (uint32_t entryIndex = 0; entryIndex < create_info->mapEntryCount; ++entryIndex)
                 {
                     ReadStructure(pMapEntries + entryIndex, file[STR_MEMBER_NAME_P_MAP_ENTRIES][entryIndex]);
                 }
             }
-            pCreateInfo->pMapEntries = pMapEntries;
-            pCreateInfo->dataSize = file[STR_MEMBER_NAME_DATA_SIZE];
+            create_info->pMapEntries = pMapEntries;
+            create_info->dataSize = file[STR_MEMBER_NAME_DATA_SIZE];
 
             // Allocate a byte array where the deserialized data will be copied.
-            uint8_t* pDataBytes = new uint8_t[pCreateInfo->dataSize]{};
+            uint8_t* pDataBytes = new uint8_t[create_info->dataSize]{};
 
-            // pCreateInfo->dataSize is the number of bytes being serialized.
-            for (size_t byteIndex = 0; byteIndex < pCreateInfo->dataSize; ++byteIndex)
+            // create_info->dataSize is the number of bytes being serialized.
+            for (size_t byteIndex = 0; byteIndex < create_info->dataSize; ++byteIndex)
             {
                 *(pDataBytes + byteIndex) = file[STR_MEMBER_NAME_P_DATA][byteIndex];
             }
-            pCreateInfo->pData = pDataBytes;
+            create_info->pData = pDataBytes;
         }
     }
 
-    void WriteStructure(const VkVertexInputBindingDescription* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkVertexInputBindingDescription* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_BINDING] = pCreateInfo->binding;
-            file[STR_MEMBER_NAME_STRIDE] = pCreateInfo->stride;
-            file[STR_MEMBER_NAME_INPUT_RATE] = pCreateInfo->inputRate;
+            file[STR_MEMBER_NAME_BINDING] = create_info->binding;
+            file[STR_MEMBER_NAME_STRIDE] = create_info->stride;
+            file[STR_MEMBER_NAME_INPUT_RATE] = create_info->inputRate;
         }
     }
 
-    void ReadStructure(VkVertexInputBindingDescription* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkVertexInputBindingDescription* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->binding = file[STR_MEMBER_NAME_BINDING];
-            pCreateInfo->stride = file[STR_MEMBER_NAME_STRIDE];
-            pCreateInfo->inputRate = file[STR_MEMBER_NAME_INPUT_RATE];
+            create_info->binding = file[STR_MEMBER_NAME_BINDING];
+            create_info->stride = file[STR_MEMBER_NAME_STRIDE];
+            create_info->inputRate = file[STR_MEMBER_NAME_INPUT_RATE];
         }
     }
 
-    void WriteStructure(const VkSpecializationMapEntry* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkSpecializationMapEntry* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_CONSTANT_ID] = pCreateInfo->constantID;
-            file[STR_MEMBER_NAME_OFFSET] = pCreateInfo->offset;
-            file[STR_MEMBER_NAME_SIZE] = pCreateInfo->size;
+            file[STR_MEMBER_NAME_CONSTANT_ID] = create_info->constantID;
+            file[STR_MEMBER_NAME_OFFSET] = create_info->offset;
+            file[STR_MEMBER_NAME_SIZE] = create_info->size;
         }
     }
 
-    void ReadStructure(VkSpecializationMapEntry* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkSpecializationMapEntry* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->constantID = file[STR_MEMBER_NAME_CONSTANT_ID];
-            pCreateInfo->offset = file[STR_MEMBER_NAME_OFFSET];
-            pCreateInfo->size = file[STR_MEMBER_NAME_SIZE];
+            create_info->constantID = file[STR_MEMBER_NAME_CONSTANT_ID];
+            create_info->offset = file[STR_MEMBER_NAME_OFFSET];
+            create_info->size = file[STR_MEMBER_NAME_SIZE];
         }
     }
 
-    void WriteStructure(const VkVertexInputAttributeDescription* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkVertexInputAttributeDescription* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_LOCATION] = pCreateInfo->location;
-            file[STR_MEMBER_NAME_BINDING] = pCreateInfo->binding;
-            file[STR_MEMBER_NAME_FORMAT] = pCreateInfo->format;
-            file[STR_MEMBER_NAME_OFFSET] = pCreateInfo->offset;
+            file[STR_MEMBER_NAME_LOCATION] = create_info->location;
+            file[STR_MEMBER_NAME_BINDING] = create_info->binding;
+            file[STR_MEMBER_NAME_FORMAT] = create_info->format;
+            file[STR_MEMBER_NAME_OFFSET] = create_info->offset;
         }
     }
 
-    void ReadStructure(VkVertexInputAttributeDescription* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkVertexInputAttributeDescription* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->location = file[STR_MEMBER_NAME_LOCATION];
-            pCreateInfo->binding = file[STR_MEMBER_NAME_BINDING];
-            pCreateInfo->format = file[STR_MEMBER_NAME_FORMAT];
-            pCreateInfo->offset = file[STR_MEMBER_NAME_OFFSET];
+            create_info->location = file[STR_MEMBER_NAME_LOCATION];
+            create_info->binding = file[STR_MEMBER_NAME_BINDING];
+            create_info->format = file[STR_MEMBER_NAME_FORMAT];
+            create_info->offset = file[STR_MEMBER_NAME_OFFSET];
         }
     }
 
-    void WriteStructure(const VkViewport* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkViewport* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_X] = pCreateInfo->x;
-            file[STR_MEMBER_NAME_Y] = pCreateInfo->y;
-            file[STR_MEMBER_NAME_WIDTH] = pCreateInfo->width;
-            file[STR_MEMBER_NAME_HEIGHT] = pCreateInfo->height;
-            file[STR_MEMBER_NAME_MIN_DEPTH] = pCreateInfo->minDepth;
-            file[STR_MEMBER_NAME_MAX_DEPTH] = pCreateInfo->maxDepth;
+            file[STR_MEMBER_NAME_X] = create_info->x;
+            file[STR_MEMBER_NAME_Y] = create_info->y;
+            file[STR_MEMBER_NAME_WIDTH] = create_info->width;
+            file[STR_MEMBER_NAME_HEIGHT] = create_info->height;
+            file[STR_MEMBER_NAME_MIN_DEPTH] = create_info->minDepth;
+            file[STR_MEMBER_NAME_MAX_DEPTH] = create_info->maxDepth;
         }
     }
 
-    void ReadStructure(VkViewport* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkViewport* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->x = file[STR_MEMBER_NAME_X];
-            pCreateInfo->y = file[STR_MEMBER_NAME_Y];
-            pCreateInfo->width = file[STR_MEMBER_NAME_WIDTH];
-            pCreateInfo->height = file[STR_MEMBER_NAME_HEIGHT];
-            pCreateInfo->minDepth = file[STR_MEMBER_NAME_MIN_DEPTH];
-            pCreateInfo->maxDepth = file[STR_MEMBER_NAME_MAX_DEPTH];
+            create_info->x = file[STR_MEMBER_NAME_X];
+            create_info->y = file[STR_MEMBER_NAME_Y];
+            create_info->width = file[STR_MEMBER_NAME_WIDTH];
+            create_info->height = file[STR_MEMBER_NAME_HEIGHT];
+            create_info->minDepth = file[STR_MEMBER_NAME_MIN_DEPTH];
+            create_info->maxDepth = file[STR_MEMBER_NAME_MAX_DEPTH];
         }
     }
 
-    void WriteStructure(const VkRect2D* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkRect2D* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            WriteStructure(&pCreateInfo->offset, file[STR_MEMBER_NAME_OFFSET]);
-            WriteStructure(&pCreateInfo->extent, file[STR_MEMBER_NAME_EXTENT]);
+            WriteStructure(&create_info->offset, file[STR_MEMBER_NAME_OFFSET]);
+            WriteStructure(&create_info->extent, file[STR_MEMBER_NAME_EXTENT]);
         }
     }
 
-    void ReadStructure(VkRect2D* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkRect2D* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            ReadStructure(&pCreateInfo->offset, file[STR_MEMBER_NAME_OFFSET]);
-            ReadStructure(&pCreateInfo->extent, file[STR_MEMBER_NAME_EXTENT]);
+            ReadStructure(&create_info->offset, file[STR_MEMBER_NAME_OFFSET]);
+            ReadStructure(&create_info->extent, file[STR_MEMBER_NAME_EXTENT]);
         }
     }
 
-    void WriteStructure(const VkOffset2D* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkOffset2D* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_X] = pCreateInfo->x;
-            file[STR_MEMBER_NAME_Y] = pCreateInfo->y;
+            file[STR_MEMBER_NAME_X] = create_info->x;
+            file[STR_MEMBER_NAME_Y] = create_info->y;
         }
     }
 
-    void ReadStructure(VkOffset2D* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkOffset2D* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->x = file[STR_MEMBER_NAME_X];
-            pCreateInfo->y = file[STR_MEMBER_NAME_Y];
+            create_info->x = file[STR_MEMBER_NAME_X];
+            create_info->y = file[STR_MEMBER_NAME_Y];
         }
     }
 
-    void WriteStructure(const VkExtent2D* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkExtent2D* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_WIDTH] = pCreateInfo->width;
-            file[STR_MEMBER_NAME_HEIGHT] = pCreateInfo->height;
+            file[STR_MEMBER_NAME_WIDTH] = create_info->width;
+            file[STR_MEMBER_NAME_HEIGHT] = create_info->height;
         }
     }
 
-    void ReadStructure(VkExtent2D* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkExtent2D* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->width = file[STR_MEMBER_NAME_WIDTH];
-            pCreateInfo->height = file[STR_MEMBER_NAME_HEIGHT];
+            create_info->width = file[STR_MEMBER_NAME_WIDTH];
+            create_info->height = file[STR_MEMBER_NAME_HEIGHT];
         }
     }
 
-    void WriteStructure(const VkComputePipelineCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkComputePipelineCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            WriteStructure(&pCreateInfo->stage, file[STR_MEMBER_NAME_STAGE]);
-            if (pCreateInfo->layout != VK_NULL_HANDLE)
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            WriteStructure(&create_info->stage, file[STR_MEMBER_NAME_STAGE]);
+            if (create_info->layout != VK_NULL_HANDLE)
             {
-                file[STR_MEMBER_NAME_LAYOUT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->layout));
+                file[STR_MEMBER_NAME_LAYOUT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->layout));
             }
 
-            if (pCreateInfo->basePipelineHandle != VK_NULL_HANDLE)
+            if (create_info->basePipelineHandle != VK_NULL_HANDLE)
             {
-                file[STR_MEMBER_NAME_BASE_PIPELINE_HANDLE] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->basePipelineHandle));
+                file[STR_MEMBER_NAME_BASE_PIPELINE_HANDLE] = WriteHandle(reinterpret_cast<uint64_t>(create_info->basePipelineHandle));
             }
 
-            file[STR_MEMBER_NAME_BASE_PIPELINE_INDEX] = pCreateInfo->basePipelineIndex;
+            file[STR_MEMBER_NAME_BASE_PIPELINE_INDEX] = create_info->basePipelineIndex;
         }
     }
 
-    void ReadStructure(VkComputePipelineCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkComputePipelineCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            ReadStructure(&pCreateInfo->stage, file[STR_MEMBER_NAME_STAGE]);
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            ReadStructure(&create_info->stage, file[STR_MEMBER_NAME_STAGE]);
             if (IsCreateInfoExists(file, STR_MEMBER_NAME_LAYOUT))
             {
-                pCreateInfo->layout = (VkPipelineLayout)ReadHandle(file[STR_MEMBER_NAME_LAYOUT]);
+                create_info->layout = (VkPipelineLayout)ReadHandle(file[STR_MEMBER_NAME_LAYOUT]);
             }
 
             if (IsCreateInfoExists(file, STR_MEMBER_NAME_BASE_PIPELINE_HANDLE))
             {
-                pCreateInfo->basePipelineHandle = (VkPipeline)ReadHandle(file[STR_MEMBER_NAME_BASE_PIPELINE_HANDLE]);
+                create_info->basePipelineHandle = (VkPipeline)ReadHandle(file[STR_MEMBER_NAME_BASE_PIPELINE_HANDLE]);
             }
 
-            pCreateInfo->basePipelineIndex = file[STR_MEMBER_NAME_BASE_PIPELINE_INDEX];
+            create_info->basePipelineIndex = file[STR_MEMBER_NAME_BASE_PIPELINE_INDEX];
         }
     }
 
-    void WriteStructure(const VkPipelineLayoutCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPipelineLayoutCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_SET_LAYOUT_COUNT] = pCreateInfo->setLayoutCount;
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_SET_LAYOUT_COUNT] = create_info->setLayoutCount;
 
-            if (pCreateInfo->setLayoutCount > 0)
+            if (create_info->setLayoutCount > 0)
             {
                 // Set the indices of descriptor set layouts which are referenced by this pipeline layout.
-                for (uint32_t i = 0; i < pCreateInfo->setLayoutCount; i++)
+                for (uint32_t i = 0; i < create_info->setLayoutCount; i++)
                 {
                     file[STR_MEMBER_NAME_P_SET_LAYOUTS][i] = WriteHandle((uint64_t)i);
                 }
             }
-            file[STR_MEMBER_NAME_PUSH_CONSTANT_RANGE_COUNT] = pCreateInfo->pushConstantRangeCount;
-            for (uint32_t pushConstantRangeIndex = 0; pushConstantRangeIndex < pCreateInfo->pushConstantRangeCount; ++pushConstantRangeIndex)
+            file[STR_MEMBER_NAME_PUSH_CONSTANT_RANGE_COUNT] = create_info->pushConstantRangeCount;
+            for (uint32_t pushConstantRangeIndex = 0; pushConstantRangeIndex < create_info->pushConstantRangeCount; ++pushConstantRangeIndex)
             {
-                WriteStructure((pCreateInfo->pPushConstantRanges + pushConstantRangeIndex), file[STR_MEMBER_NAME_P_PUSH_CONSTANT_RANGES][pushConstantRangeIndex]);
+                WriteStructure((create_info->pPushConstantRanges + pushConstantRangeIndex), file[STR_MEMBER_NAME_P_PUSH_CONSTANT_RANGES][pushConstantRangeIndex]);
             }
         }
     }
 
-    void ReadStructure(VkPipelineLayoutCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPipelineLayoutCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
 
-            pCreateInfo->setLayoutCount = file[STR_MEMBER_NAME_SET_LAYOUT_COUNT];
+            create_info->setLayoutCount = file[STR_MEMBER_NAME_SET_LAYOUT_COUNT];
             VkDescriptorSetLayout* pSetLayouts = nullptr;
-            if (pCreateInfo->setLayoutCount > 0)
+            if (create_info->setLayoutCount > 0)
             {
-                pSetLayouts = new VkDescriptorSetLayout[pCreateInfo->setLayoutCount]{};
-                for (uint32_t setLayoutIndex = 0; setLayoutIndex < pCreateInfo->setLayoutCount; ++setLayoutIndex)
+                pSetLayouts = new VkDescriptorSetLayout[create_info->setLayoutCount]{};
+                for (uint32_t setLayoutIndex = 0; setLayoutIndex < create_info->setLayoutCount; ++setLayoutIndex)
                 {
                     pSetLayouts[setLayoutIndex] = (VkDescriptorSetLayout)ReadHandle(file[STR_MEMBER_NAME_P_SET_LAYOUTS][setLayoutIndex]);
                 }
             }
-            pCreateInfo->pSetLayouts = pSetLayouts;
+            create_info->pSetLayouts = pSetLayouts;
 
-            pCreateInfo->pushConstantRangeCount = file[STR_MEMBER_NAME_PUSH_CONSTANT_RANGE_COUNT];
+            create_info->pushConstantRangeCount = file[STR_MEMBER_NAME_PUSH_CONSTANT_RANGE_COUNT];
             VkPushConstantRange* pPushConstantRanges = nullptr;
-            if (pCreateInfo->pushConstantRangeCount > 0)
+            if (create_info->pushConstantRangeCount > 0)
             {
-                pPushConstantRanges = new VkPushConstantRange[pCreateInfo->pushConstantRangeCount];
-                for (uint32_t pushConstantRangeIndex = 0; pushConstantRangeIndex < pCreateInfo->pushConstantRangeCount; ++pushConstantRangeIndex)
+                pPushConstantRanges = new VkPushConstantRange[create_info->pushConstantRangeCount];
+                for (uint32_t pushConstantRangeIndex = 0; pushConstantRangeIndex < create_info->pushConstantRangeCount; ++pushConstantRangeIndex)
                 {
                     ReadStructure(pPushConstantRanges + pushConstantRangeIndex, file[STR_MEMBER_NAME_P_PUSH_CONSTANT_RANGES][pushConstantRangeIndex]);
                 }
             }
-            pCreateInfo->pPushConstantRanges = pPushConstantRanges;
+            create_info->pPushConstantRanges = pPushConstantRanges;
         }
     }
 
-    void WriteStructure(const VkShaderModuleCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkShaderModuleCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_CODE_SIZE] = pCreateInfo->codeSize;
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_CODE_SIZE] = create_info->codeSize;
         }
     }
 
-    void ReadStructure(VkShaderModuleCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkShaderModuleCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->codeSize = file[STR_MEMBER_NAME_CODE_SIZE];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->codeSize = file[STR_MEMBER_NAME_CODE_SIZE];
         }
     }
 
-    void WriteStructure(const VkDescriptorSetLayoutCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkDescriptorSetLayoutCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_BINDING_COUNT] = pCreateInfo->bindingCount;
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_BINDING_COUNT] = create_info->bindingCount;
 
-            for (uint32_t bindingIndex = 0; bindingIndex < pCreateInfo->bindingCount; ++bindingIndex)
+            for (uint32_t bindingIndex = 0; bindingIndex < create_info->bindingCount; ++bindingIndex)
             {
-                WriteStructure((pCreateInfo->pBindings + bindingIndex), file[STR_MEMBER_NAME_P_BINDINGS][bindingIndex]);
+                WriteStructure((create_info->pBindings + bindingIndex), file[STR_MEMBER_NAME_P_BINDINGS][bindingIndex]);
             }
         }
     }
 
-    void ReadStructure(VkDescriptorSetLayoutCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkDescriptorSetLayoutCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->bindingCount = file[STR_MEMBER_NAME_BINDING_COUNT];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->bindingCount = file[STR_MEMBER_NAME_BINDING_COUNT];
 
             VkDescriptorSetLayoutBinding* pBindings = nullptr;
-            if (pCreateInfo->bindingCount > 0)
+            if (create_info->bindingCount > 0)
             {
-                pBindings = new VkDescriptorSetLayoutBinding[pCreateInfo->bindingCount]{};
-                for (uint32_t bindingIndex = 0; bindingIndex < pCreateInfo->bindingCount; ++bindingIndex)
+                pBindings = new VkDescriptorSetLayoutBinding[create_info->bindingCount]{};
+                for (uint32_t bindingIndex = 0; bindingIndex < create_info->bindingCount; ++bindingIndex)
                 {
                     ReadStructure(pBindings + bindingIndex, file[STR_MEMBER_NAME_P_BINDINGS][bindingIndex]);
                 }
             }
-            pCreateInfo->pBindings = pBindings;
+            create_info->pBindings = pBindings;
         }
     }
 
-    void WriteStructure(const VkDescriptorSetLayoutBinding* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkDescriptorSetLayoutBinding* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
             // Note: for now we are ignoring the immutable samplers.
-            file[STR_MEMBER_NAME_BINDING] = pCreateInfo->binding;
-            file[STR_MEMBER_NAME_DESCRIPTOR_TYPE] = pCreateInfo->descriptorType;
-            file[STR_MEMBER_NAME_DESCRIPTOR_COUNT] = pCreateInfo->descriptorCount;
-            file[STR_MEMBER_NAME_STAGE_FLAGS] = pCreateInfo->stageFlags;
+            file[STR_MEMBER_NAME_BINDING] = create_info->binding;
+            file[STR_MEMBER_NAME_DESCRIPTOR_TYPE] = create_info->descriptorType;
+            file[STR_MEMBER_NAME_DESCRIPTOR_COUNT] = create_info->descriptorCount;
+            file[STR_MEMBER_NAME_STAGE_FLAGS] = create_info->stageFlags;
         }
     }
 
-    void ReadStructure(VkDescriptorSetLayoutBinding* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkDescriptorSetLayoutBinding* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->binding = file[STR_MEMBER_NAME_BINDING];
-            pCreateInfo->descriptorType = file[STR_MEMBER_NAME_DESCRIPTOR_TYPE];
-            pCreateInfo->descriptorCount = file[STR_MEMBER_NAME_DESCRIPTOR_COUNT];
-            pCreateInfo->stageFlags = file[STR_MEMBER_NAME_STAGE_FLAGS];
+            create_info->binding = file[STR_MEMBER_NAME_BINDING];
+            create_info->descriptorType = file[STR_MEMBER_NAME_DESCRIPTOR_TYPE];
+            create_info->descriptorCount = file[STR_MEMBER_NAME_DESCRIPTOR_COUNT];
+            create_info->stageFlags = file[STR_MEMBER_NAME_STAGE_FLAGS];
         }
     }
 
-    void WriteStructure(const VkPushConstantRange* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkPushConstantRange* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_STAGE_FLAGS] = pCreateInfo->stageFlags;
-            file[STR_MEMBER_NAME_OFFSET] = pCreateInfo->offset;
-            file[STR_MEMBER_NAME_SIZE] = pCreateInfo->size;
+            file[STR_MEMBER_NAME_STAGE_FLAGS] = create_info->stageFlags;
+            file[STR_MEMBER_NAME_OFFSET] = create_info->offset;
+            file[STR_MEMBER_NAME_SIZE] = create_info->size;
         }
     }
 
-    void ReadStructure(VkPushConstantRange* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkPushConstantRange* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->stageFlags = file[STR_MEMBER_NAME_STAGE_FLAGS];
-            pCreateInfo->offset = file[STR_MEMBER_NAME_OFFSET];
-            pCreateInfo->size = file[STR_MEMBER_NAME_SIZE];
+            create_info->stageFlags = file[STR_MEMBER_NAME_STAGE_FLAGS];
+            create_info->offset = file[STR_MEMBER_NAME_OFFSET];
+            create_info->size = file[STR_MEMBER_NAME_SIZE];
         }
     }
 
-    void WriteStructure(const VkRenderPassCreateInfo* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkRenderPassCreateInfo* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_TYPE] = pCreateInfo->sType;
-            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(pCreateInfo->pNext));
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_ATTACHMENT_COUNT] = pCreateInfo->attachmentCount;
+            file[STR_MEMBER_NAME_TYPE] = create_info->sType;
+            file[STR_MEMBER_NAME_PNEXT] = WriteHandle(reinterpret_cast<uint64_t>(create_info->pNext));
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_ATTACHMENT_COUNT] = create_info->attachmentCount;
 
-            for (uint32_t attachmentIndex = 0; attachmentIndex < pCreateInfo->attachmentCount; ++attachmentIndex)
+            for (uint32_t attachmentIndex = 0; attachmentIndex < create_info->attachmentCount; ++attachmentIndex)
             {
-                WriteStructure(pCreateInfo->pAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_ATTACHMENTS][attachmentIndex]);
+                WriteStructure(create_info->pAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_ATTACHMENTS][attachmentIndex]);
             }
 
-            file[STR_MEMBER_NAME_SUBPASS_COUNT] = pCreateInfo->subpassCount;
-            for (uint32_t subpassIndex = 0; subpassIndex < pCreateInfo->subpassCount; ++subpassIndex)
+            file[STR_MEMBER_NAME_SUBPASS_COUNT] = create_info->subpassCount;
+            for (uint32_t subpassIndex = 0; subpassIndex < create_info->subpassCount; ++subpassIndex)
             {
-                WriteStructure(pCreateInfo->pSubpasses + subpassIndex, file[STR_MEMBER_NAME_P_SUBPASSES][subpassIndex]);
+                WriteStructure(create_info->pSubpasses + subpassIndex, file[STR_MEMBER_NAME_P_SUBPASSES][subpassIndex]);
             }
 
-            file[STR_MEMBER_NAME_DEPENDENCY_COUNT] = pCreateInfo->dependencyCount;
-            for (uint32_t dependencyIndex = 0; dependencyIndex < pCreateInfo->dependencyCount; ++dependencyIndex)
+            file[STR_MEMBER_NAME_DEPENDENCY_COUNT] = create_info->dependencyCount;
+            for (uint32_t dependencyIndex = 0; dependencyIndex < create_info->dependencyCount; ++dependencyIndex)
             {
-                WriteStructure(pCreateInfo->pDependencies + dependencyIndex, file[STR_MEMBER_NAME_P_DEPENDENCIES][dependencyIndex]);
+                WriteStructure(create_info->pDependencies + dependencyIndex, file[STR_MEMBER_NAME_P_DEPENDENCIES][dependencyIndex]);
             }
         }
     }
 
-    void ReadStructure(VkRenderPassCreateInfo* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkRenderPassCreateInfo* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->sType = file[STR_MEMBER_NAME_TYPE];
-            pCreateInfo->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->attachmentCount = file[STR_MEMBER_NAME_ATTACHMENT_COUNT];
+            create_info->sType = file[STR_MEMBER_NAME_TYPE];
+            create_info->pNext = ReadHandle(file[STR_MEMBER_NAME_PNEXT]);
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->attachmentCount = file[STR_MEMBER_NAME_ATTACHMENT_COUNT];
 
             VkAttachmentDescription* pAttachments = nullptr;
-            if (pCreateInfo->attachmentCount > 0)
+            if (create_info->attachmentCount > 0)
             {
-                pAttachments = new VkAttachmentDescription[pCreateInfo->attachmentCount]{};
-                for (uint32_t attachmentIndex = 0; attachmentIndex < pCreateInfo->attachmentCount; ++attachmentIndex)
+                pAttachments = new VkAttachmentDescription[create_info->attachmentCount]{};
+                for (uint32_t attachmentIndex = 0; attachmentIndex < create_info->attachmentCount; ++attachmentIndex)
                 {
                     ReadStructure(pAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_ATTACHMENTS][attachmentIndex]);
                 }
             }
-            pCreateInfo->pAttachments = pAttachments;
+            create_info->pAttachments = pAttachments;
 
-            pCreateInfo->subpassCount = file[STR_MEMBER_NAME_SUBPASS_COUNT];
+            create_info->subpassCount = file[STR_MEMBER_NAME_SUBPASS_COUNT];
             VkSubpassDescription* pSubpasses = nullptr;
-            if (pCreateInfo->subpassCount > 0)
+            if (create_info->subpassCount > 0)
             {
-                pSubpasses = new VkSubpassDescription[pCreateInfo->subpassCount]{};
-                for (uint32_t subpassIndex = 0; subpassIndex < pCreateInfo->subpassCount; ++subpassIndex)
+                pSubpasses = new VkSubpassDescription[create_info->subpassCount]{};
+                for (uint32_t subpassIndex = 0; subpassIndex < create_info->subpassCount; ++subpassIndex)
                 {
                     ReadStructure(pSubpasses + subpassIndex, file[STR_MEMBER_NAME_P_SUBPASSES][subpassIndex]);
                 }
             }
-            pCreateInfo->pSubpasses = pSubpasses;
+            create_info->pSubpasses = pSubpasses;
 
-            pCreateInfo->dependencyCount = file[STR_MEMBER_NAME_DEPENDENCY_COUNT];
+            create_info->dependencyCount = file[STR_MEMBER_NAME_DEPENDENCY_COUNT];
             VkSubpassDependency* pDependencies = nullptr;
-            if (pCreateInfo->dependencyCount > 0)
+            if (create_info->dependencyCount > 0)
             {
-                pDependencies = new VkSubpassDependency[pCreateInfo->dependencyCount]{};
-                for (uint32_t dependencyIndex = 0; dependencyIndex < pCreateInfo->dependencyCount; ++dependencyIndex)
+                pDependencies = new VkSubpassDependency[create_info->dependencyCount]{};
+                for (uint32_t dependencyIndex = 0; dependencyIndex < create_info->dependencyCount; ++dependencyIndex)
                 {
                     ReadStructure(pDependencies + dependencyIndex, file[STR_MEMBER_NAME_P_DEPENDENCIES][dependencyIndex]);
                 }
             }
-            pCreateInfo->pDependencies = pDependencies;
+            create_info->pDependencies = pDependencies;
         }
     }
 
-    void WriteStructure(const VkAttachmentDescription* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkAttachmentDescription* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_FORMAT] = pCreateInfo->format;
-            file[STR_MEMBER_NAME_SAMPLES] = pCreateInfo->samples;
-            file[STR_MEMBER_NAME_LOAD_OP] = pCreateInfo->loadOp;
-            file[STR_MEMBER_NAME_STORE_OP] = pCreateInfo->storeOp;
-            file[STR_MEMBER_NAME_STENCIL_LOAD_OP] = pCreateInfo->stencilLoadOp;
-            file[STR_MEMBER_NAME_STENCIL_STORE_OP] = pCreateInfo->stencilStoreOp;
-            file[STR_MEMBER_NAME_INITIAL_LAYOUT] = pCreateInfo->initialLayout;
-            file[STR_MEMBER_NAME_FINAL_LAYOUT] = pCreateInfo->finalLayout;
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_FORMAT] = create_info->format;
+            file[STR_MEMBER_NAME_SAMPLES] = create_info->samples;
+            file[STR_MEMBER_NAME_LOAD_OP] = create_info->loadOp;
+            file[STR_MEMBER_NAME_STORE_OP] = create_info->storeOp;
+            file[STR_MEMBER_NAME_STENCIL_LOAD_OP] = create_info->stencilLoadOp;
+            file[STR_MEMBER_NAME_STENCIL_STORE_OP] = create_info->stencilStoreOp;
+            file[STR_MEMBER_NAME_INITIAL_LAYOUT] = create_info->initialLayout;
+            file[STR_MEMBER_NAME_FINAL_LAYOUT] = create_info->finalLayout;
         }
     }
 
-    void ReadStructure(VkAttachmentDescription* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkAttachmentDescription* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->format = file[STR_MEMBER_NAME_FORMAT];
-            pCreateInfo->samples = file[STR_MEMBER_NAME_SAMPLES];
-            pCreateInfo->loadOp = file[STR_MEMBER_NAME_LOAD_OP];
-            pCreateInfo->storeOp = file[STR_MEMBER_NAME_STORE_OP];
-            pCreateInfo->stencilLoadOp = file[STR_MEMBER_NAME_STENCIL_LOAD_OP];
-            pCreateInfo->stencilStoreOp = file[STR_MEMBER_NAME_STENCIL_STORE_OP];
-            pCreateInfo->initialLayout = file[STR_MEMBER_NAME_INITIAL_LAYOUT];
-            pCreateInfo->finalLayout = file[STR_MEMBER_NAME_FINAL_LAYOUT];
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->format = file[STR_MEMBER_NAME_FORMAT];
+            create_info->samples = file[STR_MEMBER_NAME_SAMPLES];
+            create_info->loadOp = file[STR_MEMBER_NAME_LOAD_OP];
+            create_info->storeOp = file[STR_MEMBER_NAME_STORE_OP];
+            create_info->stencilLoadOp = file[STR_MEMBER_NAME_STENCIL_LOAD_OP];
+            create_info->stencilStoreOp = file[STR_MEMBER_NAME_STENCIL_STORE_OP];
+            create_info->initialLayout = file[STR_MEMBER_NAME_INITIAL_LAYOUT];
+            create_info->finalLayout = file[STR_MEMBER_NAME_FINAL_LAYOUT];
         }
     }
 
-    void WriteStructure(const VkSubpassDescription* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkSubpassDescription* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_FLAGS] = pCreateInfo->flags;
-            file[STR_MEMBER_NAME_PIPELINE_BIND_POINT] = pCreateInfo->pipelineBindPoint;
-            file[STR_MEMBER_NAME_INPUT_ATTACHMENT_COUNT] = pCreateInfo->inputAttachmentCount;
-            for (uint32_t inputAttachmentIndex = 0; inputAttachmentIndex < pCreateInfo->inputAttachmentCount; ++inputAttachmentIndex)
+            file[STR_MEMBER_NAME_FLAGS] = create_info->flags;
+            file[STR_MEMBER_NAME_PIPELINE_BIND_POINT] = create_info->pipelineBindPoint;
+            file[STR_MEMBER_NAME_INPUT_ATTACHMENT_COUNT] = create_info->inputAttachmentCount;
+            for (uint32_t inputAttachmentIndex = 0; inputAttachmentIndex < create_info->inputAttachmentCount; ++inputAttachmentIndex)
             {
-                WriteStructure(pCreateInfo->pInputAttachments + inputAttachmentIndex, file[STR_MEMBER_NAME_P_INPUT_ATTACHMENTS][inputAttachmentIndex]);
+                WriteStructure(create_info->pInputAttachments + inputAttachmentIndex, file[STR_MEMBER_NAME_P_INPUT_ATTACHMENTS][inputAttachmentIndex]);
             }
-            file[STR_MEMBER_NAME_COLOR_ATTACHMENT_COUNT] = pCreateInfo->colorAttachmentCount;
-            for (uint32_t attachmentIndex = 0; attachmentIndex < pCreateInfo->colorAttachmentCount; ++attachmentIndex)
+            file[STR_MEMBER_NAME_COLOR_ATTACHMENT_COUNT] = create_info->colorAttachmentCount;
+            for (uint32_t attachmentIndex = 0; attachmentIndex < create_info->colorAttachmentCount; ++attachmentIndex)
             {
-                WriteStructure(pCreateInfo->pColorAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_COLOR_ATTACHMENTS][attachmentIndex]);
-                if (pCreateInfo->pResolveAttachments != nullptr)
+                WriteStructure(create_info->pColorAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_COLOR_ATTACHMENTS][attachmentIndex]);
+                if (create_info->pResolveAttachments != nullptr)
                 {
-                    WriteStructure(pCreateInfo->pResolveAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_RESOLVE_ATTACHMENTS][attachmentIndex]);
+                    WriteStructure(create_info->pResolveAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_RESOLVE_ATTACHMENTS][attachmentIndex]);
                 }
             }
 
-            if (pCreateInfo->pDepthStencilAttachment != nullptr)
+            if (create_info->pDepthStencilAttachment != nullptr)
             {
-                WriteStructure(pCreateInfo->pDepthStencilAttachment, file[STR_MEMBER_NAME_P_DEPTH_STENCIL_ATTACHMENT]);
+                WriteStructure(create_info->pDepthStencilAttachment, file[STR_MEMBER_NAME_P_DEPTH_STENCIL_ATTACHMENT]);
             }
 
-            file[STR_MEMBER_NAME_PRESERVE_ATTACHMENT_COUNT] = pCreateInfo->preserveAttachmentCount;
-            for (uint32_t preserveAttachmentIndex = 0; preserveAttachmentIndex < pCreateInfo->preserveAttachmentCount; ++preserveAttachmentIndex)
+            file[STR_MEMBER_NAME_PRESERVE_ATTACHMENT_COUNT] = create_info->preserveAttachmentCount;
+            for (uint32_t preserveAttachmentIndex = 0; preserveAttachmentIndex < create_info->preserveAttachmentCount; ++preserveAttachmentIndex)
             {
-                file[STR_MEMBER_NAME_P_PRESERVE_ATTACHMENTS][preserveAttachmentIndex] = *(pCreateInfo->pPreserveAttachments + preserveAttachmentIndex);
+                file[STR_MEMBER_NAME_P_PRESERVE_ATTACHMENTS][preserveAttachmentIndex] = *(create_info->pPreserveAttachments + preserveAttachmentIndex);
             }
         }
     }
 
-    void ReadStructure(VkSubpassDescription* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkSubpassDescription* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->flags = file[STR_MEMBER_NAME_FLAGS];
-            pCreateInfo->pipelineBindPoint = file[STR_MEMBER_NAME_PIPELINE_BIND_POINT];
-            pCreateInfo->inputAttachmentCount = file[STR_MEMBER_NAME_INPUT_ATTACHMENT_COUNT];
+            create_info->flags = file[STR_MEMBER_NAME_FLAGS];
+            create_info->pipelineBindPoint = file[STR_MEMBER_NAME_PIPELINE_BIND_POINT];
+            create_info->inputAttachmentCount = file[STR_MEMBER_NAME_INPUT_ATTACHMENT_COUNT];
 
             VkAttachmentReference* pInputAttachments = nullptr;
-            if (pCreateInfo->inputAttachmentCount > 0)
+            if (create_info->inputAttachmentCount > 0)
             {
-                pInputAttachments = new VkAttachmentReference[pCreateInfo->inputAttachmentCount]{};
-                for (uint32_t inputAttachmentIndex = 0; inputAttachmentIndex < pCreateInfo->inputAttachmentCount; ++inputAttachmentIndex)
+                pInputAttachments = new VkAttachmentReference[create_info->inputAttachmentCount]{};
+                for (uint32_t inputAttachmentIndex = 0; inputAttachmentIndex < create_info->inputAttachmentCount; ++inputAttachmentIndex)
                 {
                     ReadStructure(pInputAttachments + inputAttachmentIndex, file[STR_MEMBER_NAME_P_INPUT_ATTACHMENTS][inputAttachmentIndex]);
                 }
             }
-            pCreateInfo->pInputAttachments = pInputAttachments;
+            create_info->pInputAttachments = pInputAttachments;
 
-            pCreateInfo->colorAttachmentCount = file[STR_MEMBER_NAME_COLOR_ATTACHMENT_COUNT];
+            create_info->colorAttachmentCount = file[STR_MEMBER_NAME_COLOR_ATTACHMENT_COUNT];
             VkAttachmentReference* pColorAttachments = nullptr;
             VkAttachmentReference* pResolveAttachments = nullptr;
-            if (pCreateInfo->colorAttachmentCount > 0)
+            if (create_info->colorAttachmentCount > 0)
             {
-                pColorAttachments = new VkAttachmentReference[pCreateInfo->colorAttachmentCount]{};
-                for (uint32_t attachmentIndex = 0; attachmentIndex < pCreateInfo->colorAttachmentCount; ++attachmentIndex)
+                pColorAttachments = new VkAttachmentReference[create_info->colorAttachmentCount]{};
+                for (uint32_t attachmentIndex = 0; attachmentIndex < create_info->colorAttachmentCount; ++attachmentIndex)
                 {
                     ReadStructure(pColorAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_COLOR_ATTACHMENTS][attachmentIndex]);
                 }
@@ -1567,15 +1567,15 @@ public:
                 // Verify that an array of Resolve Attachments exists. If it does, it's the same dimension as the color attachments.
                 if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_RESOLVE_ATTACHMENTS))
                 {
-                    pResolveAttachments = new VkAttachmentReference[pCreateInfo->colorAttachmentCount]{};
-                    for (uint32_t attachmentIndex = 0; attachmentIndex < pCreateInfo->colorAttachmentCount; ++attachmentIndex)
+                    pResolveAttachments = new VkAttachmentReference[create_info->colorAttachmentCount]{};
+                    for (uint32_t attachmentIndex = 0; attachmentIndex < create_info->colorAttachmentCount; ++attachmentIndex)
                     {
                         ReadStructure(pResolveAttachments + attachmentIndex, file[STR_MEMBER_NAME_P_RESOLVE_ATTACHMENTS][attachmentIndex]);
                     }
                 }
             }
-            pCreateInfo->pColorAttachments = pColorAttachments;
-            pCreateInfo->pResolveAttachments = pResolveAttachments;
+            create_info->pColorAttachments = pColorAttachments;
+            create_info->pResolveAttachments = pResolveAttachments;
 
             VkAttachmentReference* pDepthStencilAttachment = nullptr;
             if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_DEPTH_STENCIL_ATTACHMENT))
@@ -1583,76 +1583,76 @@ public:
                 pDepthStencilAttachment = new VkAttachmentReference{};
                 ReadStructure(pDepthStencilAttachment, file[STR_MEMBER_NAME_P_DEPTH_STENCIL_ATTACHMENT]);
             }
-            pCreateInfo->pDepthStencilAttachment = pDepthStencilAttachment;
+            create_info->pDepthStencilAttachment = pDepthStencilAttachment;
 
-            pCreateInfo->preserveAttachmentCount = file[STR_MEMBER_NAME_PRESERVE_ATTACHMENT_COUNT];
+            create_info->preserveAttachmentCount = file[STR_MEMBER_NAME_PRESERVE_ATTACHMENT_COUNT];
             uint32_t* pPreserveAttachments = nullptr;
-            if (pCreateInfo->preserveAttachmentCount > 0)
+            if (create_info->preserveAttachmentCount > 0)
             {
-                pPreserveAttachments = new uint32_t[pCreateInfo->preserveAttachmentCount]{};
-                for (uint32_t preserveAttachmentIndex = 0; preserveAttachmentIndex < pCreateInfo->preserveAttachmentCount; ++preserveAttachmentIndex)
+                pPreserveAttachments = new uint32_t[create_info->preserveAttachmentCount]{};
+                for (uint32_t preserveAttachmentIndex = 0; preserveAttachmentIndex < create_info->preserveAttachmentCount; ++preserveAttachmentIndex)
                 {
                     *(pPreserveAttachments + preserveAttachmentIndex) = file[STR_MEMBER_NAME_P_PRESERVE_ATTACHMENTS][preserveAttachmentIndex];
                 }
             }
-            pCreateInfo->pPreserveAttachments = pPreserveAttachments;
+            create_info->pPreserveAttachments = pPreserveAttachments;
         }
     }
 
-    void WriteStructure(const VkSubpassDependency* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkSubpassDependency* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_SRC_SUBPASS] = pCreateInfo->srcSubpass;
-            file[STR_MEMBER_NAME_DST_SUBPASS] = pCreateInfo->dstSubpass;
-            file[STR_MEMBER_NAME_SRC_STAGE_MASK] = pCreateInfo->srcStageMask;
-            file[STR_MEMBER_NAME_DST_STAGE_MASK] = pCreateInfo->dstStageMask;
-            file[STR_MEMBER_NAME_SRC_ACCESS_MASK] = pCreateInfo->srcAccessMask;
-            file[STR_MEMBER_NAME_DST_ACCESS_MASK] = pCreateInfo->dstAccessMask;
-            file[STR_MEMBER_NAME_DEPENDENCY_FLAGS] = pCreateInfo->dependencyFlags;
+            file[STR_MEMBER_NAME_SRC_SUBPASS] = create_info->srcSubpass;
+            file[STR_MEMBER_NAME_DST_SUBPASS] = create_info->dstSubpass;
+            file[STR_MEMBER_NAME_SRC_STAGE_MASK] = create_info->srcStageMask;
+            file[STR_MEMBER_NAME_DST_STAGE_MASK] = create_info->dstStageMask;
+            file[STR_MEMBER_NAME_SRC_ACCESS_MASK] = create_info->srcAccessMask;
+            file[STR_MEMBER_NAME_DST_ACCESS_MASK] = create_info->dstAccessMask;
+            file[STR_MEMBER_NAME_DEPENDENCY_FLAGS] = create_info->dependencyFlags;
         }
     }
 
-    void ReadStructure(VkSubpassDependency* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkSubpassDependency* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->srcSubpass = file[STR_MEMBER_NAME_SRC_SUBPASS];
-            pCreateInfo->dstSubpass = file[STR_MEMBER_NAME_DST_SUBPASS];
-            pCreateInfo->srcStageMask = file[STR_MEMBER_NAME_SRC_STAGE_MASK];
-            pCreateInfo->dstStageMask = file[STR_MEMBER_NAME_DST_STAGE_MASK];
-            pCreateInfo->srcAccessMask = file[STR_MEMBER_NAME_SRC_ACCESS_MASK];
-            pCreateInfo->dstAccessMask = file[STR_MEMBER_NAME_DST_ACCESS_MASK];
-            pCreateInfo->dependencyFlags = file[STR_MEMBER_NAME_DEPENDENCY_FLAGS];
+            create_info->srcSubpass = file[STR_MEMBER_NAME_SRC_SUBPASS];
+            create_info->dstSubpass = file[STR_MEMBER_NAME_DST_SUBPASS];
+            create_info->srcStageMask = file[STR_MEMBER_NAME_SRC_STAGE_MASK];
+            create_info->dstStageMask = file[STR_MEMBER_NAME_DST_STAGE_MASK];
+            create_info->srcAccessMask = file[STR_MEMBER_NAME_SRC_ACCESS_MASK];
+            create_info->dstAccessMask = file[STR_MEMBER_NAME_DST_ACCESS_MASK];
+            create_info->dependencyFlags = file[STR_MEMBER_NAME_DEPENDENCY_FLAGS];
         }
     }
 
-    void WriteStructure(const VkAttachmentReference* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(const VkAttachmentReference* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_ATTACHMENT] = pCreateInfo->attachment;
-            file[STR_MEMBER_NAME_LAYOUT] = pCreateInfo->layout;
+            file[STR_MEMBER_NAME_ATTACHMENT] = create_info->attachment;
+            file[STR_MEMBER_NAME_LAYOUT] = create_info->layout;
         }
     }
 
-    void ReadStructure(VkAttachmentReference* pCreateInfo, const nlohmann::json& file)
+    void ReadStructure(VkAttachmentReference* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->attachment = file[STR_MEMBER_NAME_ATTACHMENT];
-            pCreateInfo->layout = file[STR_MEMBER_NAME_LAYOUT];
+            create_info->attachment = file[STR_MEMBER_NAME_ATTACHMENT];
+            create_info->layout = file[STR_MEMBER_NAME_LAYOUT];
         }
     }
 
-    void ReadDescriptorSetLayoutCreateInfoArray(rgPsoCreateInfoVulkan* pCreateInfo, const nlohmann::json& file)
+    void ReadDescriptorSetLayoutCreateInfoArray(rgPsoCreateInfoVulkan* create_info, const nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
             // Look for a Descriptor Set Layout create info node. If this node exists, process it as an
             // array of items, because a PSO file can have multiple create info structures saved.
@@ -1666,8 +1666,8 @@ public:
 
                 // Clear the existing default Descriptor Set Layout create info structures and load
                 // from scratch using data loaded from the PSO file.
-                std::vector<VkDescriptorSetLayoutCreateInfo*> descriptorSetLayoutCollection = pCreateInfo->GetDescriptorSetLayoutCreateInfo();
-                descriptorSetLayoutCollection.clear();
+                std::vector<VkDescriptorSetLayoutCreateInfo*> descriptor_set_layout_collection = create_info->GetDescriptorSetLayoutCreateInfo();
+                descriptor_set_layout_collection.clear();
 
                 // Read each individual element in the array of create info.
                 for (auto itemIter = firstItem; itemIter != lastItem; ++itemIter)
@@ -1677,171 +1677,171 @@ public:
                     if (pNewDescriptorSetLayout != nullptr)
                     {
                         ReadStructure(pNewDescriptorSetLayout, *itemIter);
-                        pCreateInfo->AddDescriptorSetLayoutCreateInfo(pNewDescriptorSetLayout);
+                        create_info->AddDescriptorSetLayoutCreateInfo(pNewDescriptorSetLayout);
                     }
                 }
             }
         }
     }
 
-    void WriteDescriptorSetLayoutCreateInfoArray(rgPsoCreateInfoVulkan* pCreateInfo, nlohmann::json& file)
+    void WriteDescriptorSetLayoutCreateInfoArray(rgPsoCreateInfoVulkan* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
             int index = 0;
-            std::vector<VkDescriptorSetLayoutCreateInfo*> descriptorSetLayoutCollection = pCreateInfo->GetDescriptorSetLayoutCreateInfo();
-            for (VkDescriptorSetLayoutCreateInfo* pDescriptorSetLayoutCreateInfo : descriptorSetLayoutCollection)
+            std::vector<VkDescriptorSetLayoutCreateInfo*> descriptor_set_layout_collection = create_info->GetDescriptorSetLayoutCreateInfo();
+            for (VkDescriptorSetLayoutCreateInfo* descriptor_set_layout_create_info : descriptor_set_layout_collection)
             {
-                assert(pDescriptorSetLayoutCreateInfo != nullptr);
-                if (pDescriptorSetLayoutCreateInfo != nullptr)
+                assert(descriptor_set_layout_create_info != nullptr);
+                if (descriptor_set_layout_create_info != nullptr)
                 {
-                    WriteStructure(pDescriptorSetLayoutCreateInfo, file[STR_MEMBER_NAME_VK_DESCRIPTOR_SET_LAYOUT_CREATE_INFO][index]);
+                    WriteStructure(descriptor_set_layout_create_info, file[STR_MEMBER_NAME_VK_DESCRIPTOR_SET_LAYOUT_CREATE_INFO][index]);
                     index++;
                 }
             }
         }
     }
 
-    bool ReadStructure(rgPsoGraphicsVulkan* pCreateInfo, const nlohmann::json& file)
+    bool ReadStructure(rgPsoGraphicsVulkan* create_info, const nlohmann::json& file)
     {
-        bool isLoaded = false;
+        bool is_loaded = false;
 
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
             // Does the given file's root element match what we expect to see for the project's pipeline type?
             bool isMatchingRootElement = IsCreateInfoExists(file, STR_MEMBER_NAME_VK_GRAPHICS_PIPELINE_CREATE_INFO);
             if (isMatchingRootElement)
             {
                 // Deserialize the Graphics Pipeline create info.
-                ReadGraphicsPipelineCreateInfoStructure(pCreateInfo, file[STR_MEMBER_NAME_VK_GRAPHICS_PIPELINE_CREATE_INFO]);
+                ReadGraphicsPipelineCreateInfoStructure(create_info, file[STR_MEMBER_NAME_VK_GRAPHICS_PIPELINE_CREATE_INFO]);
 
                 // Deserialize the Render Pass create info.
-                VkRenderPassCreateInfo* pRenderPassCreateInfo = pCreateInfo->GetRenderPassCreateInfo();
-                assert(pRenderPassCreateInfo != nullptr);
-                if (pRenderPassCreateInfo != nullptr)
+                VkRenderPassCreateInfo* render_pass_create_info = create_info->GetRenderPassCreateInfo();
+                assert(render_pass_create_info != nullptr);
+                if (render_pass_create_info != nullptr)
                 {
-                    ReadStructure(pRenderPassCreateInfo, file[STR_MEMBER_NAME_VK_RENDER_PASS_CREATE_INFO]);
+                    ReadStructure(render_pass_create_info, file[STR_MEMBER_NAME_VK_RENDER_PASS_CREATE_INFO]);
                 }
 
                 // Deserialize the Pipeline Layout create info.
-                VkPipelineLayoutCreateInfo* pPipelineLayoutCreateInfo = pCreateInfo->GetPipelineLayoutCreateInfo();
-                assert(pPipelineLayoutCreateInfo != nullptr);
-                if (pPipelineLayoutCreateInfo != nullptr)
+                VkPipelineLayoutCreateInfo* pipeline_layout_create_info = create_info->GetPipelineLayoutCreateInfo();
+                assert(pipeline_layout_create_info != nullptr);
+                if (pipeline_layout_create_info != nullptr)
                 {
-                    ReadStructure(pPipelineLayoutCreateInfo, file[STR_MEMBER_NAME_VK_PIPELINE_LAYOUT_CREATE_INFO]);
+                    ReadStructure(pipeline_layout_create_info, file[STR_MEMBER_NAME_VK_PIPELINE_LAYOUT_CREATE_INFO]);
                 }
 
                 // Read all Descriptor Set Layout create info structures.
-                ReadDescriptorSetLayoutCreateInfoArray(pCreateInfo, file);
+                ReadDescriptorSetLayoutCreateInfoArray(create_info, file);
 
                 // If all data was deserialized successfully, the PSO file is loaded.
-                isLoaded = true;
+                is_loaded = true;
             }
         }
 
-        return isLoaded;
+        return is_loaded;
     }
 
-    bool ReadStructure(rgPsoComputeVulkan* pCreateInfo, const nlohmann::json& file)
+    bool ReadStructure(rgPsoComputeVulkan* create_info, const nlohmann::json& file)
     {
-        bool isLoaded = false;
+        bool is_loaded = false;
 
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
             // Does the given file's root element match what we expect to see for the project's pipeline type?
             bool isMatchingRootElement = IsCreateInfoExists(file, STR_MEMBER_NAME_VK_COMPUTE_PIPELINE_CREATE_INFO);
             if (isMatchingRootElement)
             {
-                VkComputePipelineCreateInfo* pComputePipelineCreateInfo = pCreateInfo->GetComputePipelineCreateInfo();
-                assert(pComputePipelineCreateInfo != nullptr);
-                if (pComputePipelineCreateInfo != nullptr)
+                VkComputePipelineCreateInfo* compute_pipeline_create_info = create_info->GetComputePipelineCreateInfo();
+                assert(compute_pipeline_create_info != nullptr);
+                if (compute_pipeline_create_info != nullptr)
                 {
-                    ReadStructure(pComputePipelineCreateInfo, file[STR_MEMBER_NAME_VK_COMPUTE_PIPELINE_CREATE_INFO]);
+                    ReadStructure(compute_pipeline_create_info, file[STR_MEMBER_NAME_VK_COMPUTE_PIPELINE_CREATE_INFO]);
                 }
 
-                VkPipelineLayoutCreateInfo* pPipelineLayoutCreateInfo = pCreateInfo->GetPipelineLayoutCreateInfo();
-                assert(pPipelineLayoutCreateInfo != nullptr);
-                if (pPipelineLayoutCreateInfo != nullptr)
+                VkPipelineLayoutCreateInfo* pipeline_layout_create_info = create_info->GetPipelineLayoutCreateInfo();
+                assert(pipeline_layout_create_info != nullptr);
+                if (pipeline_layout_create_info != nullptr)
                 {
-                    ReadStructure(pPipelineLayoutCreateInfo, file[STR_MEMBER_NAME_VK_PIPELINE_LAYOUT_CREATE_INFO]);
+                    ReadStructure(pipeline_layout_create_info, file[STR_MEMBER_NAME_VK_PIPELINE_LAYOUT_CREATE_INFO]);
                 }
 
                 // Read all Descriptor Set Layout create info structures.
-                ReadDescriptorSetLayoutCreateInfoArray(pCreateInfo, file);
+                ReadDescriptorSetLayoutCreateInfoArray(create_info, file);
 
                 // If all data was deserialized successfully, the PSO file is loaded.
-                isLoaded = true;
+                is_loaded = true;
             }
         }
 
-        return isLoaded;
+        return is_loaded;
     }
 
-    void WriteStructure(rgPsoGraphicsVulkan* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(rgPsoGraphicsVulkan* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            VkGraphicsPipelineCreateInfo* pGraphicsPsoCreateInfo = pCreateInfo->GetGraphicsPipelineCreateInfo();
+            VkGraphicsPipelineCreateInfo* pGraphicsPsoCreateInfo = create_info->GetGraphicsPipelineCreateInfo();
             assert(pGraphicsPsoCreateInfo != nullptr);
             if (pGraphicsPsoCreateInfo != nullptr)
             {
                 WriteStructure(pGraphicsPsoCreateInfo, file[STR_MEMBER_NAME_VK_GRAPHICS_PIPELINE_CREATE_INFO]);
             }
 
-            VkRenderPassCreateInfo* pRenderPassCreateInfo = pCreateInfo->GetRenderPassCreateInfo();
-            assert(pRenderPassCreateInfo != nullptr);
-            if (pRenderPassCreateInfo != nullptr)
+            VkRenderPassCreateInfo* render_pass_create_info = create_info->GetRenderPassCreateInfo();
+            assert(render_pass_create_info != nullptr);
+            if (render_pass_create_info != nullptr)
             {
-                WriteStructure(pRenderPassCreateInfo, file[STR_MEMBER_NAME_VK_RENDER_PASS_CREATE_INFO]);
+                WriteStructure(render_pass_create_info, file[STR_MEMBER_NAME_VK_RENDER_PASS_CREATE_INFO]);
             }
 
-            VkPipelineLayoutCreateInfo* pPipelineLayoutCreateInfo = pCreateInfo->GetPipelineLayoutCreateInfo();
-            assert(pPipelineLayoutCreateInfo != nullptr);
-            if (pPipelineLayoutCreateInfo != nullptr)
+            VkPipelineLayoutCreateInfo* pipeline_layout_create_info = create_info->GetPipelineLayoutCreateInfo();
+            assert(pipeline_layout_create_info != nullptr);
+            if (pipeline_layout_create_info != nullptr)
             {
-                WriteStructure(pPipelineLayoutCreateInfo, file[STR_MEMBER_NAME_VK_PIPELINE_LAYOUT_CREATE_INFO]);
+                WriteStructure(pipeline_layout_create_info, file[STR_MEMBER_NAME_VK_PIPELINE_LAYOUT_CREATE_INFO]);
             }
 
             // Write the array of Descriptor Set Layout create info structures.
-            WriteDescriptorSetLayoutCreateInfoArray(pCreateInfo, file);
+            WriteDescriptorSetLayoutCreateInfoArray(create_info, file);
         }
     }
 
-    void WriteStructure(rgPsoComputeVulkan* pCreateInfo, nlohmann::json& file)
+    void WriteStructure(rgPsoComputeVulkan* create_info, nlohmann::json& file)
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            VkComputePipelineCreateInfo* pComputePsoCreateInfo = pCreateInfo->GetComputePipelineCreateInfo();
+            VkComputePipelineCreateInfo* pComputePsoCreateInfo = create_info->GetComputePipelineCreateInfo();
             assert(pComputePsoCreateInfo != nullptr);
             if (pComputePsoCreateInfo != nullptr)
             {
                 WriteStructure(pComputePsoCreateInfo, file[STR_MEMBER_NAME_VK_COMPUTE_PIPELINE_CREATE_INFO]);
             }
 
-            VkPipelineLayoutCreateInfo* pPipelineLayoutCreateInfo = pCreateInfo->GetPipelineLayoutCreateInfo();
-            assert(pPipelineLayoutCreateInfo != nullptr);
-            if (pPipelineLayoutCreateInfo != nullptr)
+            VkPipelineLayoutCreateInfo* pipeline_layout_create_info = create_info->GetPipelineLayoutCreateInfo();
+            assert(pipeline_layout_create_info != nullptr);
+            if (pipeline_layout_create_info != nullptr)
             {
-                WriteStructure(pPipelineLayoutCreateInfo, file[STR_MEMBER_NAME_VK_PIPELINE_LAYOUT_CREATE_INFO]);
+                WriteStructure(pipeline_layout_create_info, file[STR_MEMBER_NAME_VK_PIPELINE_LAYOUT_CREATE_INFO]);
             }
 
             // Write the array of Descriptor Set Layout create info structures.
-            WriteDescriptorSetLayoutCreateInfoArray(pCreateInfo, file);
+            WriteDescriptorSetLayoutCreateInfoArray(create_info, file);
         }
     }
 
-    virtual VkSampleMask* ReadSampleMask(const VkPipelineMultisampleStateCreateInfo* pCreateInfo, const nlohmann::json& file)
+    virtual VkSampleMask* ReadSampleMask(const VkPipelineMultisampleStateCreateInfo* create_info, const nlohmann::json& file)
     {
         VkSampleMask* pSampleMask = nullptr;
         if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_SAMPLE_MASK))
         {
-            pSampleMask = new VkSampleMask[(uint32_t)pCreateInfo->rasterizationSamples];
-            for (uint32_t index = 0; index < (uint32_t)pCreateInfo->rasterizationSamples; ++index)
+            pSampleMask = new VkSampleMask[(uint32_t)create_info->rasterizationSamples];
+            for (uint32_t index = 0; index < (uint32_t)create_info->rasterizationSamples; ++index)
             {
                 pSampleMask[index] = file[STR_MEMBER_NAME_P_SAMPLE_MASK][index];
             }
@@ -1849,13 +1849,13 @@ public:
         return pSampleMask;
     }
 
-    virtual void WriteSampleMask(const VkPipelineMultisampleStateCreateInfo* pCreateInfo, nlohmann::json& file)
+    virtual void WriteSampleMask(const VkPipelineMultisampleStateCreateInfo* create_info, nlohmann::json& file)
     {
-        if (pCreateInfo->pSampleMask != nullptr)
+        if (create_info->pSampleMask != nullptr)
         {
-            for (uint32_t index = 0; index < (uint32_t)pCreateInfo->rasterizationSamples; ++index)
+            for (uint32_t index = 0; index < (uint32_t)create_info->rasterizationSamples; ++index)
             {
-                file[STR_MEMBER_NAME_P_SAMPLE_MASK][index] = *(pCreateInfo->pSampleMask + index);
+                file[STR_MEMBER_NAME_P_SAMPLE_MASK][index] = *(create_info->pSampleMask + index);
             }
         }
     }
@@ -1869,33 +1869,33 @@ public:
     rgPsoSerializerVulkanImpl_Version_1_1() = default;
     virtual ~rgPsoSerializerVulkanImpl_Version_1_1() = default;
 
-    virtual void WriteStructure(const VkStencilOpState* pCreateInfo, nlohmann::json& file) override
+    virtual void WriteStructure(const VkStencilOpState* create_info, nlohmann::json& file) override
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            file[STR_MEMBER_NAME_FAIL_OP] = pCreateInfo->failOp;
-            file[STR_MEMBER_NAME_PASS_OP] = pCreateInfo->passOp;
-            file[STR_MEMBER_NAME_DEPTH_FAIL_OP] = pCreateInfo->depthFailOp;
-            file[STR_MEMBER_NAME_COMPARE_OP] = pCreateInfo->compareOp;
-            file[STR_MEMBER_NAME_COMPARE_MASK] = pCreateInfo->compareMask;
-            file[STR_MEMBER_NAME_WRITE_MASK] = pCreateInfo->writeMask;
-            file[STR_MEMBER_NAME_REFERENCE] = pCreateInfo->reference;
+            file[STR_MEMBER_NAME_FAIL_OP] = create_info->failOp;
+            file[STR_MEMBER_NAME_PASS_OP] = create_info->passOp;
+            file[STR_MEMBER_NAME_DEPTH_FAIL_OP] = create_info->depthFailOp;
+            file[STR_MEMBER_NAME_COMPARE_OP] = create_info->compareOp;
+            file[STR_MEMBER_NAME_COMPARE_MASK] = create_info->compareMask;
+            file[STR_MEMBER_NAME_WRITE_MASK] = create_info->writeMask;
+            file[STR_MEMBER_NAME_REFERENCE] = create_info->reference;
         }
     }
 
-    virtual void ReadStructure(VkStencilOpState* pCreateInfo, const nlohmann::json& file) override
+    virtual void ReadStructure(VkStencilOpState* create_info, const nlohmann::json& file) override
     {
-        assert(pCreateInfo != nullptr);
-        if (pCreateInfo != nullptr)
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            pCreateInfo->failOp = file[STR_MEMBER_NAME_FAIL_OP];
-            pCreateInfo->passOp = file[STR_MEMBER_NAME_PASS_OP];
-            pCreateInfo->depthFailOp = file[STR_MEMBER_NAME_DEPTH_FAIL_OP];
-            pCreateInfo->compareOp = file[STR_MEMBER_NAME_COMPARE_OP];
-            pCreateInfo->compareMask = file[STR_MEMBER_NAME_COMPARE_MASK];
-            pCreateInfo->writeMask = file[STR_MEMBER_NAME_WRITE_MASK];
-            pCreateInfo->reference = file[STR_MEMBER_NAME_REFERENCE];
+            create_info->failOp = file[STR_MEMBER_NAME_FAIL_OP];
+            create_info->passOp = file[STR_MEMBER_NAME_PASS_OP];
+            create_info->depthFailOp = file[STR_MEMBER_NAME_DEPTH_FAIL_OP];
+            create_info->compareOp = file[STR_MEMBER_NAME_COMPARE_OP];
+            create_info->compareMask = file[STR_MEMBER_NAME_COMPARE_MASK];
+            create_info->writeMask = file[STR_MEMBER_NAME_WRITE_MASK];
+            create_info->reference = file[STR_MEMBER_NAME_REFERENCE];
         }
     }
 };
@@ -1908,14 +1908,14 @@ public:
     rgPsoSerializerVulkanImpl_Version_1_2() = default;
     virtual ~rgPsoSerializerVulkanImpl_Version_1_2() = default;
 
-    virtual VkSampleMask* ReadSampleMask(const VkPipelineMultisampleStateCreateInfo* pCreateInfo, const nlohmann::json& file) override
+    virtual VkSampleMask* ReadSampleMask(const VkPipelineMultisampleStateCreateInfo* create_info, const nlohmann::json& file) override
     {
         VkSampleMask* pSampleMask = nullptr;
         if (IsCreateInfoExists(file, STR_MEMBER_NAME_P_SAMPLE_MASK))
         {
             // What's the required dimension of the pSampleMask bitfield array?
             int sampleMaskArrayDimension = 0;
-            switch (pCreateInfo->rasterizationSamples)
+            switch (create_info->rasterizationSamples)
             {
             case VK_SAMPLE_COUNT_1_BIT:
             case VK_SAMPLE_COUNT_2_BIT:
@@ -1945,14 +1945,14 @@ public:
         return pSampleMask;
     }
 
-    virtual void WriteSampleMask(const VkPipelineMultisampleStateCreateInfo* pCreateInfo, nlohmann::json& file) override
+    virtual void WriteSampleMask(const VkPipelineMultisampleStateCreateInfo* create_info, nlohmann::json& file) override
     {
         // It's fine if pSampleMask is null- just don't write the field.
-        if (pCreateInfo->pSampleMask != nullptr)
+        if (create_info->pSampleMask != nullptr)
         {
             // What's the required dimension of the pSampleMask bitfield array?
             uint32_t sampleMaskArrayDimension = 0;
-            switch (pCreateInfo->rasterizationSamples)
+            switch (create_info->rasterizationSamples)
             {
             case VK_SAMPLE_COUNT_1_BIT:
             case VK_SAMPLE_COUNT_2_BIT:
@@ -1976,7 +1976,7 @@ public:
             // Serialize the array of bitfields. It'll either be 1 or 2 32-bit values.
             for (uint32_t index = 0; index < sampleMaskArrayDimension; ++index)
             {
-                file[STR_MEMBER_NAME_P_SAMPLE_MASK][index] = *(pCreateInfo->pSampleMask + index);
+                file[STR_MEMBER_NAME_P_SAMPLE_MASK][index] = *(create_info->pSampleMask + index);
             }
         }
     }
@@ -2005,35 +2005,35 @@ std::shared_ptr<rgPsoSerializerVulkanImpl_Version_1_0> CreateSerializer(rgPipeli
     return pSerializer;
 }
 
-bool rgPsoSerializerVulkan::ReadStructureFromFile(const std::string& filePath, rgPsoGraphicsVulkan** ppCreateInfo, std::string& errorString)
+bool RgPsoSerializerVulkan::ReadStructureFromFile(const std::string& file_path, rgPsoGraphicsVulkan** create_info_array, std::string& error_string)
 {
     bool ret = false;
-    bool shouldAbort = false;
+    bool should_abort = false;
 
-    assert(ppCreateInfo != nullptr);
-    if (ppCreateInfo != nullptr)
+    assert(create_info_array != nullptr);
+    if (create_info_array != nullptr)
     {
         // Create a new PSO State structure.
-        rgPsoGraphicsVulkan* pCreateInfo = new rgPsoGraphicsVulkan{};
+        rgPsoGraphicsVulkan* create_info = new rgPsoGraphicsVulkan{};
 
         // Initialize the create info to assign structure pointers to internal create info members.
-        pCreateInfo->Initialize();
+        create_info->Initialize();
 
         // Open a file to write the structure data to.
-        std::ifstream fileStream;
-        fileStream.open(filePath.c_str(), std::ofstream::in);
+        std::ifstream file_stream;
+        file_stream.open(file_path.c_str(), std::ofstream::in);
 
-        assert(fileStream.is_open());
-        if (fileStream.is_open())
+        assert(file_stream.is_open());
+        if (file_stream.is_open())
         {
             // Read the JSON file.
             nlohmann::json structure;
-            shouldAbort = !ReadJsonFile(fileStream, filePath, structure, errorString);
+            should_abort = !ReadJsonFile(file_stream, file_path, structure, error_string);
 
             // Close the file stream.
-            fileStream.close();
+            file_stream.close();
 
-            if (!shouldAbort)
+            if (!should_abort)
             {
                 // Is there a pipeline model version tag? Extract the version number if possible.
                 rgPipelineModelVersion modelVersion = rgPipelineModelVersion::Unknown;
@@ -2057,67 +2057,67 @@ bool rgPsoSerializerVulkan::ReadStructureFromFile(const std::string& filePath, r
                     if (pSerializer != nullptr)
                     {
                         // Read the structure data from the JSON file.
-                        if (pSerializer->ReadStructure(pCreateInfo, structure))
+                        if (pSerializer->ReadStructure(create_info, structure))
                         {
                             // Assign the deserialized pipeline state file to the output pointer.
-                            *ppCreateInfo = pCreateInfo;
+                            *create_info_array = create_info;
 
                             ret = true;
                         }
                         else
                         {
-                            errorString = STR_ERR_FAILED_TO_LOAD_PIPELINE_TYPE_MISMATCH;
+                            error_string = STR_ERR_FAILED_TO_LOAD_PIPELINE_TYPE_MISMATCH;
                         }
                     }
                     else
                     {
-                        errorString = STR_ERR_FAILED_UNSUPPORTED_VERSION;
+                        error_string = STR_ERR_FAILED_UNSUPPORTED_VERSION;
                     }
                 }
                 else
                 {
-                    errorString = STR_ERR_FAILED_TO_READ_PIPELINE_VERSION;
+                    error_string = STR_ERR_FAILED_TO_READ_PIPELINE_VERSION;
                 }
             }
         }
         else
         {
-            std::stringstream errorStream;
-            errorStream << STR_ERR_FAILED_TO_READ_FILE;
-            errorStream << filePath;
-            errorString = errorStream.str();
+            std::stringstream error_stream;
+            error_stream << STR_ERR_FAILED_TO_READ_FILE;
+            error_stream << file_path;
+            error_string = error_stream.str();
         }
     }
 
     return ret;
 }
 
-bool rgPsoSerializerVulkan::ReadStructureFromFile(const std::string& filePath, rgPsoComputeVulkan** ppCreateInfo, std::string& errorString)
+bool RgPsoSerializerVulkan::ReadStructureFromFile(const std::string& file_path, rgPsoComputeVulkan** create_info_array, std::string& error_string)
 {
     bool ret = false;
-    bool shouldAbort = false;
+    bool should_abort = false;
 
-    assert(ppCreateInfo != nullptr);
-    if (ppCreateInfo != nullptr)
+    assert(create_info_array != nullptr);
+    if (create_info_array != nullptr)
     {
         // Create a new PSO State structure.
-        rgPsoComputeVulkan* pCreateInfo = new rgPsoComputeVulkan{};
+        rgPsoComputeVulkan* create_info = new rgPsoComputeVulkan{};
 
         // Initialize the create info to assign structure pointers to internal create info members.
-        pCreateInfo->Initialize();
+        create_info->Initialize();
 
         // Open a file to write the structure data to.
-        std::ifstream fileStream;
-        fileStream.open(filePath.c_str(), std::ofstream::in);
+        std::ifstream file_stream;
+        file_stream.open(file_path.c_str(), std::ofstream::in);
 
-        assert(fileStream.is_open());
-        if (fileStream.is_open())
+        assert(file_stream.is_open());
+        if (file_stream.is_open())
         {
             // Read the JSON file.
             nlohmann::json structure;
-            shouldAbort = !ReadJsonFile(fileStream, filePath, structure, errorString);
+            should_abort = !ReadJsonFile(file_stream, file_path, structure, error_string);
 
-            if (!shouldAbort)
+            if (!should_abort)
             {
                 // Is there a pipeline model version tag? Extract the version number if possible.
                 rgPipelineModelVersion modelVersion = rgPipelineModelVersion::Unknown;
@@ -2140,49 +2140,49 @@ bool rgPsoSerializerVulkan::ReadStructureFromFile(const std::string& filePath, r
                     assert(pSerializer != nullptr);
                     if (pSerializer != nullptr)
                     {
-                        if (pSerializer->ReadStructure(pCreateInfo, structure))
+                        if (pSerializer->ReadStructure(create_info, structure))
                         {
                             // Assign the deserialized pipeline state file to the output pointer.
-                            *ppCreateInfo = pCreateInfo;
+                            *create_info_array = create_info;
                             ret = true;
                         }
                         else
                         {
-                            errorString = STR_ERR_FAILED_TO_LOAD_PIPELINE_TYPE_MISMATCH;
+                            error_string = STR_ERR_FAILED_TO_LOAD_PIPELINE_TYPE_MISMATCH;
                         }
                     }
                     else
                     {
-                        errorString = STR_ERR_FAILED_UNSUPPORTED_VERSION;
+                        error_string = STR_ERR_FAILED_UNSUPPORTED_VERSION;
                     }
                 }
                 else
                 {
-                    errorString = STR_ERR_FAILED_TO_READ_PIPELINE_VERSION;
+                    error_string = STR_ERR_FAILED_TO_READ_PIPELINE_VERSION;
                 }
             }
         }
         else
         {
-            std::stringstream errorStream;
-            errorStream << STR_ERR_FAILED_TO_READ_FILE;
-            errorStream << filePath;
-            errorString = errorStream.str();
+            std::stringstream error_stream;
+            error_stream << STR_ERR_FAILED_TO_READ_FILE;
+            error_stream << file_path;
+            error_string = error_stream.str();
         }
     }
 
     return ret;
 }
 
-bool rgPsoSerializerVulkan::WriteStructureToFile(rgPsoGraphicsVulkan* pCreateInfo, const std::string& filePath, std::string& errorString)
+bool RgPsoSerializerVulkan::WriteStructureToFile(rgPsoGraphicsVulkan* create_info, const std::string& file_path, std::string& error_string)
 {
     bool ret = false;
 
     // Open a file to write the structure data to.
-    std::ofstream fileStream;
-    fileStream.open(filePath.c_str(), std::ofstream::out);
+    std::ofstream file_stream;
+    file_stream.open(file_path.c_str(), std::ofstream::out);
 
-    if (fileStream.is_open())
+    if (file_stream.is_open())
     {
         nlohmann::json jsonFile;
 
@@ -2194,39 +2194,39 @@ bool rgPsoSerializerVulkan::WriteStructureToFile(rgPsoGraphicsVulkan* pCreateInf
         assert(pSerializer != nullptr);
         if (pSerializer != nullptr)
         {
-            pSerializer->WriteStructure(pCreateInfo, jsonFile);
+            pSerializer->WriteStructure(create_info, jsonFile);
 
             // Write the JSON to disk and close the file with the given indentation.
-            fileStream << jsonFile.dump(4);
-            fileStream.close();
+            file_stream << jsonFile.dump(4);
+            file_stream.close();
 
             ret = true;
         }
         else
         {
-            errorString = STR_ERR_FAILED_UNSUPPORTED_VERSION;
+            error_string = STR_ERR_FAILED_UNSUPPORTED_VERSION;
         }
     }
     else
     {
-        std::stringstream errorStream;
-        errorStream << STR_ERR_FAILED_TO_WRITE_FILE;
-        errorStream << filePath.c_str();
-        errorString = errorStream.str();
+        std::stringstream error_stream;
+        error_stream << STR_ERR_FAILED_TO_WRITE_FILE;
+        error_stream << file_path.c_str();
+        error_string = error_stream.str();
     }
 
     return ret;
 }
 
-bool rgPsoSerializerVulkan::WriteStructureToFile(rgPsoComputeVulkan* pCreateInfo, const std::string& filePath, std::string& errorString)
+bool RgPsoSerializerVulkan::WriteStructureToFile(rgPsoComputeVulkan* create_info, const std::string& file_path, std::string& error_string)
 {
     bool ret = false;
 
     // Open a file to write the structure data to.
-    std::ofstream fileStream;
-    fileStream.open(filePath.c_str(), std::ofstream::out);
+    std::ofstream file_stream;
+    file_stream.open(file_path.c_str(), std::ofstream::out);
 
-    if (fileStream.is_open())
+    if (file_stream.is_open())
     {
         nlohmann::json jsonFile;
 
@@ -2238,25 +2238,25 @@ bool rgPsoSerializerVulkan::WriteStructureToFile(rgPsoComputeVulkan* pCreateInfo
         assert(pSerializer != nullptr);
         if (pSerializer != nullptr)
         {
-            pSerializer->WriteStructure(pCreateInfo, jsonFile);
+            pSerializer->WriteStructure(create_info, jsonFile);
 
             // Write the JSON to disk and close the file with the given indentation.
-            fileStream << jsonFile.dump(4);
-            fileStream.close();
+            file_stream << jsonFile.dump(4);
+            file_stream.close();
 
             ret = true;
         }
         else
         {
-            errorString = STR_ERR_FAILED_UNSUPPORTED_VERSION;
+            error_string = STR_ERR_FAILED_UNSUPPORTED_VERSION;
         }
     }
     else
     {
-        std::stringstream errorStream;
-        errorStream << STR_ERR_FAILED_TO_WRITE_FILE;
-        errorStream << filePath.c_str();
-        errorString = errorStream.str();
+        std::stringstream error_stream;
+        error_stream << STR_ERR_FAILED_TO_WRITE_FILE;
+        error_stream << file_path.c_str();
+        error_string = error_stream.str();
     }
 
     return ret;

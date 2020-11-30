@@ -68,6 +68,9 @@ signals:
     // A signal to switch current container's size.
     void SwitchContainerSize();
 
+    // A signal to indicate change of view.
+    void HotKeyPressedSignal();
+
     // *** TEST SIGNALS - BEGIN ***
 
     // A signal emitted when a project is loaded.
@@ -166,6 +169,9 @@ protected:
 
     // Toggle the enabledness of the Edit menu items.
     void EnableEditMenu(bool isEnabled);
+
+    // Check to see if any input file names in  global settings are blank.
+    bool IsInputFileNameBlank() const;
 
     // Open the program file at the given file path.
     bool OpenProjectFileAtPath(const std::string& programFilePath);

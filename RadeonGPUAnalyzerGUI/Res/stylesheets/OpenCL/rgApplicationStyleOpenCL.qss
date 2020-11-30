@@ -14,7 +14,14 @@ rgBuildSettingsViewOpenCL #predefinedMacrosBrowseButton:focus,
 rgBuildSettingsViewOpenCL #compilerBinariesBrowseButton:focus,
 rgBuildSettingsViewOpenCL #compilerIncludesBrowseButton:focus,
 rgBuildSettingsViewOpenCL #compilerLibrariesBrowseButton:focus,
-rgBuildSettingsViewOpenCL #optimizationLevelComboBox:focus
+rgBuildSettingsViewOpenCL #optimizationLevelComboBox:focus,
+rgBuildSettingsViewOpenCL #addTargetGPUsButton:hover,
+rgBuildSettingsViewOpenCL #includeDirsBrowseButton:hover,
+rgBuildSettingsViewOpenCL #predefinedMacrosBrowseButton:hover,
+rgBuildSettingsViewOpenCL #compilerBinariesBrowseButton:hover,
+rgBuildSettingsViewOpenCL #compilerIncludesBrowseButton:hover,
+rgBuildSettingsViewOpenCL #compilerLibrariesBrowseButton:hover,
+rgBuildSettingsViewOpenCL #optimizationLevelComboBox:hover
 {
     border: 1px solid lightGreen;
     background: rgb(240, 240, 240);
@@ -36,4 +43,20 @@ rgViewContainer[viewFocused="true"] rgSourceEditorTitlebar,
 rgViewContainer[viewFocused="true"] #viewTitlebar
 {
     border-bottom: 3px solid rgb(18, 152, 0);
+}
+
+/********************************************************************/
+/* Target GPUs line edit background
+/********************************************************************/
+rgBuildSettingsViewOpenCL #targetGPUsLineEdit
+{
+    background-color: rgb(240, 240, 240);
+}
+
+/********************************************************************/
+/* Line edit border color
+/********************************************************************/
+QLineEdit
+{
+    border: 1px solid black;
 }

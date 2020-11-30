@@ -37,6 +37,9 @@ public:
     virtual std::string GetTitleString() override;
     virtual void SetInitialWidgetFocus() override;
 
+    // Update the generated command line text.
+    void UpdateCommandLineText() override;
+
 public slots:
     void HandleAddTargetGpusButtonClick();
     void HandleTextEditChanged();
@@ -84,9 +87,6 @@ private:
 
     // Get the string to use for this view's tooltip text.
     const std::string GetTitleTooltipString() const;
-
-    // Update the generated command line text.
-    void UpdateCommandLineText();
 
     // Check the validity of the Target GPU field.
     bool IsTargetGpusStringValid(std::vector<std::string>& errors) const;

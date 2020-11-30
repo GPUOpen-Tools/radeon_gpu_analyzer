@@ -58,7 +58,7 @@ include_directories("${PROJECT_SOURCE_DIR}/../../")
 include_directories("${PROJECT_SOURCE_DIR}/../Utils/Include")
 include_directories(${UPDATECHECKAPI_INC_DIRS})
 if (GUI_AUTOMATION)
-    include_directories("${PROJECT_SOURCE_DIR}/../../RGA-Internal/Tests-GUI/Include")
+    include_directories("${PROJECT_SOURCE_DIR}/../../RGA-Internal/tests_gui/include")
 endif()
 
 add_subdirectory(../../QtCommon/Scaling QtCommon/Scaling)
@@ -109,15 +109,15 @@ file(GLOB  WINDOWS_INC
 # Add source files for GUI automated tests.
 if (GUI_AUTOMATION)
     file(GLOB  TESTS_GUI_CPP_INC
-         "../../RGA-Internal/Tests-GUI/Include/*.h"
+         "../../RGA-Internal/tests_gui/include/*.h"
     )
     set(CPP_INC ${CPP_INC} ${TESTS_GUI_CPP_INC})
     file(GLOB  TESTS_GUI_CPP_SRC
-         "../../RGA-Internal/Tests-GUI/Src/*.cpp"
+         "../../RGA-Internal/tests_gui/src/*.cpp"
     )
     set(CPP_SRC ${CPP_SRC} ${TESTS_GUI_CPP_SRC})
     file(GLOB  TESTS_GUI_MOC_INC
-         "../../RGA-Internal/Tests-GUI/Include/Qt/*.h"
+         "../../RGA-Internal/tests_gui/include/qt/*.h"
     )
     set(MOC_INC ${MOC_INC} ${TESTS_GUI_MOC_INC})
 
@@ -141,14 +141,14 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwi
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    add_executable(RadeonGPUAnalyzerGUI WIN32 ${WINDOWS_INC} ${CPP_SRC} ${CPP_INC} ${MOC_INC} ${GENERATED_MOC} ${GENERATED_UI} ${GENERATED_RES})
+    add_executable(RadeonGPUAnalyzer WIN32 ${WINDOWS_INC} ${CPP_SRC} ${CPP_INC} ${MOC_INC} ${GENERATED_MOC} ${GENERATED_UI} ${GENERATED_RES})
 else()
-    add_executable(RadeonGPUAnalyzerGUI ${CPP_SRC} ${CPP_INC} ${MOC_INC} ${GENERATED_MOC} ${GENERATED_UI} ${GENERATED_RES})
+    add_executable(RadeonGPUAnalyzer ${CPP_SRC} ${CPP_INC} ${MOC_INC} ${GENERATED_MOC} ${GENERATED_UI} ${GENERATED_RES})
 
-    set_target_properties(RadeonGPUAnalyzerGUI PROPERTIES OUTPUT_NAME "RadeonGPUAnalyzerGUI-bin")
+    set_target_properties(RadeonGPUAnalyzer PROPERTIES OUTPUT_NAME "RadeonGPUAnalyzer-bin")
     # Disable RPATH
     set(CMAKE_SKIP_RPATH TRUE)
-    set_property(TARGET RadeonGPUAnalyzerGUI APPEND_STRING PROPERTY
+    set_property(TARGET RadeonGPUAnalyzer APPEND_STRING PROPERTY
                  LINK_FLAGS "-Wl,-rpath-link,${Qt5_LIB_DIR}")
 endif()
 
@@ -158,20 +158,20 @@ if (GUI_AUTOMATION)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    target_link_libraries(RadeonGPUAnalyzerGUI AMDTBaseTools AMDTOSWrappers QtScaling QtUtil QtCustomWidgets optimized ${TINYXML_LIB} debug ${TINYXML_LIBD} general Qt5::Gui Qt5::Widgets Qt5::Core ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
+    target_link_libraries(RadeonGPUAnalyzer AMDTBaseTools AMDTOSWrappers QtScaling QtUtil QtCustomWidgets optimized ${TINYXML_LIB} debug ${TINYXML_LIBD} general Qt5::Gui Qt5::Widgets Qt5::Core ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
 else()
-    target_link_libraries(RadeonGPUAnalyzerGUI AMDTBaseTools AMDTOSWrappers QtScaling QtUtil QtCustomWidgets ${TINYXML_LIB} Qt5::Gui Qt5::Widgets Qt5::Core ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
+    target_link_libraries(RadeonGPUAnalyzer AMDTBaseTools AMDTOSWrappers QtScaling QtUtil QtCustomWidgets ${TINYXML_LIB} Qt5::Gui Qt5::Widgets Qt5::Core ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
 endif()
 
 # Copy the RGA-Updates file into the output directory for ease of testing.
-add_custom_command(TARGET RadeonGPUAnalyzerGUI POST_BUILD
+add_custom_command(TARGET RadeonGPUAnalyzer POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "copying RGA-Updates.json to output directory"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../Updates/RGA-Updates.json ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
 )
 
 # On Windows also copy into the binary directory, which is the default working directory of Visual Studio.
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    add_custom_command(TARGET RadeonGPUAnalyzerGUI POST_BUILD
+    add_custom_command(TARGET RadeonGPUAnalyzer POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E echo "copying RGA-Updates.json to binary directory"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../Updates/RGA-Updates.json ${CMAKE_CURRENT_BINARY_DIR}
     )
@@ -182,7 +182,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(DEBUG_ARG "-debug")
     get_target_property(QtCoreLocation Qt5::Core LOCATION)
     get_filename_component(Qt5_DIR ${QtCoreLocation} DIRECTORY)
-    add_custom_command(TARGET RadeonGPUAnalyzerGUI
+    add_custom_command(TARGET RadeonGPUAnalyzer
                        POST_BUILD
                        COMMAND ${PROJECT_SOURCE_DIR}/../Build/Util/Windows/copy_post_build_gui.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} ${Qt5_LIB_DIR} $<$<CONFIG:debug>:-debug> ${AUTO_ARG}
                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/Util/Windows
@@ -198,7 +198,7 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "D
     get_filename_component(QT_PLUGINS_DIR  "${QT_LIBQSVG}" DIRECTORY)
     set (QT_PLUGINS_DIR "${QT_PLUGINS_DIR}/..")
 
-    add_custom_command(TARGET RadeonGPUAnalyzerGUI
+    add_custom_command(TARGET RadeonGPUAnalyzer
                        POST_BUILD
                        COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/Util/Linux/copy_post_build_gui.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} ${Qt5_LIB_DIR} ${QT_PLUGINS_DIR} ${AUTO_ARG}
                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/Util/Linux

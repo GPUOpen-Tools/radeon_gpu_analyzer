@@ -19,6 +19,9 @@
 #include <RadeonGPUAnalyzerGUI/Include/rgXMLUtils.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
 
+// Infra.
+#include <RadeonGPUAnalyzerGUI/../Utils/Include/rgLog.h>
+
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - BEGIN ***
 
 // Read v2.0 of the DefaultBuildSettings XML node from the config file.
@@ -32,6 +35,9 @@ static bool ExtractGlobalSettings_2_0(tinyxml2::XMLNode* pGlobalSettingsNode, st
 
 // Read v2.1 of the GlobalSettings XML node from the config file.
 static bool ExtractGlobalSettings_2_1(tinyxml2::XMLNode* pGlobalSettingsNode, std::shared_ptr<rgGlobalSettings>& pGlobalSettings);
+
+// Read v2.2 of the GlobalSettings XML node from the config file.
+static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* pGlobalSettingsNode, std::shared_ptr<rgGlobalSettings>& pGlobalSettings);
 
 // Takes the comma-separated target devices list from the GUI, and returns the list of GPUs in it.
 static void ExtractTargetGpus(const std::string& targetDevices, std::vector<std::string>& gpuList)
@@ -248,6 +254,82 @@ static bool ExtractSplitterConfigs(tinyxml2::XMLNode* pNode, std::vector<rgSplit
     return ret;
 }
 
+static bool ExtractWindowGeometry(tinyxml2::XMLNode* pNode, rgWindowConfig& windowConfig)
+{
+    bool ret = false;
+
+    assert(pNode != nullptr);
+    if (pNode != nullptr)
+    {
+        // Get "WindowSize" node.
+        pNode = pNode->FirstChildElement(XML_NODE_GLOBAL_GUI_WINDOW_GEOMETRY);
+
+        if (pNode != nullptr)
+        {
+            std::string windowValueStr;
+
+            // Get "WindowWidth" value.
+            tinyxml2::XMLNode* pWindowSizeNode = pNode->FirstChildElement(XML_NODE_GLOBAL_GUI_WINDOW_WIDTH);
+            if (pWindowSizeNode != nullptr)
+            {
+                ret = rgXMLUtils::ReadNodeTextString(pWindowSizeNode, windowValueStr);
+                int windowWidth = stoi(windowValueStr);
+
+                // Get "WindowHeight" value.
+                pWindowSizeNode = pNode->FirstChildElement(XML_NODE_GLOBAL_GUI_WINDOW_HEIGHT);
+                if (pWindowSizeNode != nullptr)
+                {
+                    ret = rgXMLUtils::ReadNodeTextString(pWindowSizeNode, windowValueStr);
+                    int windowHeight = stoi(windowValueStr);
+
+                    // Get "WindowXPos" value.
+                    pWindowSizeNode = pNode->FirstChildElement(XML_NODE_GLOBAL_GUI_WINDOW_X_POS);
+                    if (pWindowSizeNode != nullptr)
+                    {
+                        ret = rgXMLUtils::ReadNodeTextString(pWindowSizeNode, windowValueStr);
+                        int windowXPos = stoi(windowValueStr);
+
+                        // Get "WindowYPos" value.
+                        pWindowSizeNode = pNode->FirstChildElement(XML_NODE_GLOBAL_GUI_WINDOW_Y_POS);
+                        if (pWindowSizeNode != nullptr)
+                        {
+                            ret = rgXMLUtils::ReadNodeTextString(pWindowSizeNode, windowValueStr);
+                            int windowYPos = stoi(windowValueStr);
+
+                            // Update window config object.
+                            windowConfig.m_windowHeight = windowHeight;
+                            windowConfig.m_windowWidth = windowWidth;
+
+                            // If the position values are negative, fix them here.
+                            if (windowXPos < 0)
+                            {
+                                windowXPos = 0;
+                            }
+                            windowConfig.m_windowXPos = windowXPos;
+                            if (windowYPos < 0)
+                            {
+                                windowYPos = 0;
+                            }
+                            windowConfig.m_windowYPos = windowYPos;
+
+                            // Get "WindowState" value.
+                            pWindowSizeNode = pNode->FirstChildElement(XML_NODE_GLOBAL_GUI_WINDOW_STATE);
+                            if (pWindowSizeNode != nullptr)
+                            {
+                                ret = rgXMLUtils::ReadNodeTextString(pWindowSizeNode, windowValueStr);
+                                int windowState = stoi(windowValueStr);
+                                windowConfig.m_windowState = windowState;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
 // Extracts the general build settings in RGA:
 // - Target Devices
 // - Predefined macros
@@ -408,7 +490,8 @@ bool rgXmlConfigFile::ReadProjectConfigFile(const std::string& configFilePath, s
                     // All v2.0 and v2.1 project files have the same format
                     // for the initial <Program> and <ProgramAPI> tags.
                     if (RGA_DATA_MODEL_2_0.compare(pDataModelVersion) == 0 ||
-                        RGA_DATA_MODEL_2_1.compare(pDataModelVersion) == 0)
+                        RGA_DATA_MODEL_2_1.compare(pDataModelVersion) == 0 ||
+                        RGA_DATA_MODEL_2_2.compare(pDataModelVersion) == 0)
                     {
                         // Skip to the <Program> node.
                         pNode = pNode->NextSibling();
@@ -751,21 +834,35 @@ bool rgXmlConfigFile::ReadGlobalSettings(const std::string& globalConfigFilePath
                 {
                     // Determine which data model version to load.
                     const char* pDataModelVersion = pNode->ToElement()->GetText();
-                    if (RGA_DATA_MODEL_2_0.compare(pDataModelVersion) == 0)
+                    rgConfigManager::Instance().SetConfigFileDataModelVersion(pDataModelVersion);
+                    try
                     {
-                        // Get next sibling, which should be the GlobalSettings element
-                        tinyxml2::XMLNode* pGlobalSettingsNode = pNode->NextSibling();
-                        ret = ExtractGlobalSettings_2_0(pGlobalSettingsNode, pGlobalSettings);
+                        if (RGA_DATA_MODEL_2_0.compare(pDataModelVersion) == 0)
+                        {
+                            // Get next sibling, which should be the GlobalSettings element.
+                            tinyxml2::XMLNode* pGlobalSettingsNode = pNode->NextSibling();
+                            ret = ExtractGlobalSettings_2_0(pGlobalSettingsNode, pGlobalSettings);
+                        }
+                        else if (RGA_DATA_MODEL_2_1.compare(pDataModelVersion) == 0)
+                        {
+                            // Get Next sibling, which should be the GlobalSettings element.
+                            tinyxml2::XMLNode* pGlobalSettingsNode = pNode->NextSibling();
+                            ret = ExtractGlobalSettings_2_1(pGlobalSettingsNode, pGlobalSettings);
+                        }
+                        else if (RGA_DATA_MODEL_2_2.compare(pDataModelVersion) == 0)
+                        {
+                            // Get Next sibling, which should be the GlobalSettings element.
+                            tinyxml2::XMLNode* pGlobalSettingsNode = pNode->NextSibling();
+                            ret = ExtractGlobalSettings_2_2(pGlobalSettingsNode, pGlobalSettings);
+                        }
+                        else
+                        {
+                            // Data model version is not supported.
+                            ret = false;
+                        }
                     }
-                    else if (RGA_DATA_MODEL_2_1.compare(pDataModelVersion) == 0)
+                    catch (...)
                     {
-                        // Get Next sibling, which should be the GlobalSettings element
-                        tinyxml2::XMLNode* pGlobalSettingsNode = pNode->NextSibling();
-                        ret = ExtractGlobalSettings_2_1(pGlobalSettingsNode, pGlobalSettings);
-                    }
-                    else
-                    {
-                        // Data model version is not supported.
                         ret = false;
                     }
                 }
@@ -917,6 +1014,29 @@ bool rgXmlConfigFile::WriteGlobalSettings(std::shared_ptr<rgGlobalSettings> pGlo
                     pGuiElement->InsertEndChild(pLayoutElement);
                 }
 
+                // Create WindowSize element.
+                tinyxml2::XMLElement* pWindowSizeElement = doc.NewElement(XML_NODE_GLOBAL_GUI_WINDOW_GEOMETRY);
+                assert(pWindowSizeElement != nullptr);
+                if (pWindowSizeElement != nullptr)
+                {
+                    // Add window X position element.
+                    rgXMLUtils::AppendXMLElement(doc, pWindowSizeElement, XML_NODE_GLOBAL_GUI_WINDOW_X_POS, pGlobalSettings->m_guiWindowConfig.m_windowXPos);
+
+                    // Add window Y position element.
+                    rgXMLUtils::AppendXMLElement(doc, pWindowSizeElement, XML_NODE_GLOBAL_GUI_WINDOW_Y_POS, pGlobalSettings->m_guiWindowConfig.m_windowYPos);
+
+                    // Add window width element.
+                    rgXMLUtils::AppendXMLElement(doc, pWindowSizeElement, XML_NODE_GLOBAL_GUI_WINDOW_WIDTH, pGlobalSettings->m_guiWindowConfig.m_windowWidth);
+
+                    // Add window height element.
+                    rgXMLUtils::AppendXMLElement(doc, pWindowSizeElement, XML_NODE_GLOBAL_GUI_WINDOW_HEIGHT, pGlobalSettings->m_guiWindowConfig.m_windowHeight);
+
+                    // Add window state.
+                    rgXMLUtils::AppendXMLElement(doc, pWindowSizeElement, XML_NODE_GLOBAL_GUI_WINDOW_STATE, pGlobalSettings->m_guiWindowConfig.m_windowState);
+
+                    pGuiElement->InsertEndChild(pWindowSizeElement);
+                }
+
                 // End of "GUI" element.
                 pGlobalSettingsElem->InsertEndChild(pGuiElement);
             }
@@ -989,7 +1109,7 @@ static bool ExtractDefaultBuildSettings_2_0(tinyxml2::XMLNode* pDefaultBuildSett
     assert(pDefaultBuildSettingsNode != nullptr);
     assert(pGlobalSettings != nullptr);
 
-    // Make sure this is actually the DefaultBuildSettings node
+    // Make sure this is actually the DefaultBuildSettings node.
     bool ret = ((pGlobalSettings != nullptr) &&
                 (pDefaultBuildSettingsNode != nullptr) &&
                 (std::strcmp(pDefaultBuildSettingsNode->Value(), XML_NODE_GLOBAL_DEFAULT_BUILD_SETTINGS) == 0));
@@ -1031,8 +1151,9 @@ static bool ExtractDefaultBuildSettings_2_0(tinyxml2::XMLNode* pDefaultBuildSett
                                 ret = pReader->ReadGeneralBuildSettings(pBuildSettingsNode, pApiBuildSettings);
                                 assert(ret);
 
-                                // Extract the OpenCL default build settings.
-                                ret = pReader->ReadApiBuildSettings(pBuildSettingsNode, pApiBuildSettings);
+                                // Extract the default build settings.
+                                const std::string version = rgConfigManager::Instance().GetConfigFileDataModelVersion();
+                                ret = pReader->ReadApiBuildSettings(pBuildSettingsNode, pApiBuildSettings, version);
                                 assert(ret);
 
                                 // Store the default OpenCL build settings in our data object.
@@ -1107,7 +1228,8 @@ static bool ExtractDefaultBuildSettings_2_1(tinyxml2::XMLNode* pDefaultBuildSett
                                     assert(ret);
 
                                     // Extract the API-specific default build settings.
-                                    bool hasApiBuildSettings = pReader->ReadApiBuildSettings(pBuildSettingsNode, pApiBuildSettings);
+                                    const std::string version = rgConfigManager::Instance().GetConfigFileDataModelVersion();
+                                    bool hasApiBuildSettings = pReader->ReadApiBuildSettings(pBuildSettingsNode, pApiBuildSettings, version);
 
                                     // TEMP: we don't have any valid Vulkan settings, so this can't be a required read.
                                     if (apiIndex == static_cast<int>(rgProjectAPI::Vulkan))
@@ -1345,6 +1467,159 @@ static bool ExtractGlobalSettings_2_1(tinyxml2::XMLNode* pGlobalSettingsNode, st
         pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_GUI);
         ret &= (pElem != nullptr);
         ret = ret && ExtractSplitterConfigs(pElem, pGlobalSettings->m_guiLayoutSplitters);
+    }
+
+    // If the Global Settings could be read, then attempt to read the Default Build Settings.
+    if (ret)
+    {
+        tinyxml2::XMLNode* pDefaultBuildSettingsNode = pGlobalSettingsNode->NextSibling();
+        ret = ExtractDefaultBuildSettings_2_1(pDefaultBuildSettingsNode, pGlobalSettings);
+    }
+
+    return ret;
+}
+
+static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* pGlobalSettingsNode, std::shared_ptr<rgGlobalSettings>& pGlobalSettings)
+{
+    // Make sure this is actually the GlobalSettings nodes.
+    tinyxml2::XMLElement* pElem = nullptr;
+    bool ret = (std::strcmp(pGlobalSettingsNode->Value(), XML_NODE_GLOBAL_LOG_FILE_GLOBAL_SETTINGS) == 0);
+
+    if (ret)
+    {
+        // Read the log file location.
+        pElem = pGlobalSettingsNode->FirstChildElement(XML_NODE_GLOBAL_LOG_FILE_LOCATION);
+        ret = pElem != nullptr;
+        ret = ret && rgXMLUtils::ReadNodeTextString(pElem, pGlobalSettings->m_logFileLocation);
+
+        // If the saved log directory does not exist, fall back to using the default one.
+        if (!rgUtils::IsDirExists(pGlobalSettings->m_logFileLocation))
+        {
+            std::string appDataDir;
+            rgConfigManager::GetDefaultDataFolder(appDataDir);
+            pGlobalSettings->m_logFileLocation = appDataDir;
+        }
+    }
+    if (ret)
+    {
+        // Attempt to read the last selected directory. It might be empty, in which case the call returns false, and that's ok.
+        pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_LAST_SELECTED_DIRECTORY);
+        ret &= (pElem != nullptr);
+        if (ret)
+        {
+            rgXMLUtils::ReadNodeTextString(pElem, pGlobalSettings->m_lastSelectedDirectory);
+        }
+    }
+    if (ret)
+    {
+        // Read the list of recently-accessed projects.
+        pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_RECENT_PROJECTS_ROOT);
+        ret &= (pElem != nullptr);
+        ret = ret && ExtractRecentProjects(pElem, pGlobalSettings->m_recentProjects);
+    }
+    if (ret)
+    {
+        // Extract font family and size information.
+        pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_FONT_FAMILY_ROOT);
+        ret &= (pElem != nullptr);
+        ret = ret && ExtractFontInformation(pElem, pGlobalSettings);
+    }
+    if (ret)
+    {
+        // Extract default include files viewer.
+        // Before we move on keep the current node in case that we fail reading this node.
+        auto pElemBeforeRead = pElem;
+        pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_INCLUDE_FILES_VIEWER);
+        ret &= (pElem != nullptr);
+        ret = ret && rgXMLUtils::ReadNodeTextString(pElem, pGlobalSettings->m_includeFilesViewer);
+        if (!ret)
+        {
+            // If we couldn't read it from the file, just use the default.
+            pGlobalSettings->m_includeFilesViewer = STR_GLOBAL_SETTINGS_SRC_VIEW_INCLUDE_VIEWER_DEFAULT;
+
+            // Roll back so that the next element read would be performed from the correct location.
+            pElem = pElemBeforeRead;
+            ret = true;
+        }
+    }
+    if (ret)
+    {
+        // Get the disassembly columns as a single string.
+        pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_DISASSEMBLY_COLUMNS);
+        ret &= (pElem != nullptr);
+        std::string tmpDisassemblyColumns;
+        ret = ret && rgXMLUtils::ReadNodeTextString(pElem, tmpDisassemblyColumns);
+
+        // Parse the disassembly columns string, and save the items in the data object.
+        if (ret)
+        {
+            ExtractDisassemblyColumns(tmpDisassemblyColumns, pGlobalSettings->m_visibleDisassemblyViewColumns);
+        }
+    }
+    if (ret)
+    {
+        // Read the option that determines if the project names are generated or provided by the user.
+        pElem = pElem->NextSiblingElement(XML_NODE_USE_GENERATED_PROJECT_NAMES);
+        ret &= (pElem != nullptr);
+        ret = ret && rgXMLUtils::ReadNodeTextBool(pElem, pGlobalSettings->m_useDefaultProjectName);
+    }
+    if (ret)
+    {
+        // Read the default API.
+        pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_DEFAULT_API);
+        ret &= (pElem != nullptr);
+        ret = ret && rgXMLUtils::ReadNodeTextUnsigned(pElem, (unsigned int&)pGlobalSettings->m_defaultAPI);
+    }
+    if (ret)
+    {
+        // Read the "Should prompt for API" setting.
+        pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_PROMPT_FOR_API);
+        ret &= (pElem != nullptr);
+        ret = ret && rgXMLUtils::ReadNodeTextBool(pElem, pGlobalSettings->m_shouldPromptForAPI);
+    }
+    if (ret)
+    {
+        // Read the input file associations.
+        pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_INPUT_FILE_EXT_GLSL);
+        ret &= (pElem != nullptr);
+        ret = ret && rgXMLUtils::ReadNodeTextString(pElem, pGlobalSettings->m_inputFileExtGlsl);
+        if (ret)
+        {
+            pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_INPUT_FILE_EXT_HLSL);
+            ret &= (pElem != nullptr);
+            ret = ret && rgXMLUtils::ReadNodeTextString(pElem, pGlobalSettings->m_inputFileExtHlsl);
+        }
+        if (ret)
+        {
+            pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_INPUT_FILE_EXT_SPV_TXT);
+            ret &= (pElem != nullptr);
+            ret = ret && rgXMLUtils::ReadNodeTextString(pElem, pGlobalSettings->m_inputFileExtSpvTxt);
+        }
+        if (ret)
+        {
+            pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_INPUT_FILE_EXT_SPV_BIN);
+            ret &= (pElem != nullptr);
+            ret = ret && rgXMLUtils::ReadNodeTextString(pElem, pGlobalSettings->m_inputFileExtSpvBin);
+        }
+    }
+    if (ret)
+    {
+        // Read the default source language.
+        pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_DEFAULT_SRC_LANG);
+        ret &= (pElem != nullptr);
+        ret = ret && rgXMLUtils::ReadNodeTextUnsigned(pElem, (uint32_t&)pGlobalSettings->m_defaultLang);
+    }
+    if (ret)
+    {
+        // Extract splitter config objects from the "GUI" node.
+        pElem = pElem->NextSiblingElement(XML_NODE_GLOBAL_GUI);
+        ret &= (pElem != nullptr);
+        ret = ret && ExtractSplitterConfigs(pElem, pGlobalSettings->m_guiLayoutSplitters);
+    }
+    if (ret)
+    {
+        // Extract window size config objects from the "GUI" node.
+        ret = ret && ExtractWindowGeometry(pElem, pGlobalSettings->m_guiWindowConfig);
     }
 
     // If the Global Settings could be read, then attempt to read the Default Build Settings.

@@ -212,6 +212,9 @@ public:
     // Retrieve the current project's API.
     std::string GetCurrentProjectAPIName() const;
 
+    // Save the current project settings file.
+    bool SaveProjectConfigFile() const;
+
 signals:
     // A signal emitted when a new source file is added to a project.
     void AddedSourceFileToProject();
@@ -239,6 +242,9 @@ signals:
 
     // A signal emitted when an existing source file has been renamed.
     void FileRenamed(const std::string& oldFilepath, const std::string& newFilepath);
+
+    // A signal to indicate change of view.
+    void HotKeyPressedSignal();
 
     // A signal emitted when an individual clone's build settings should be saved.
     void ProjectBuildSettingsSaved(std::shared_ptr<rgBuildSettings> pBuildSettings);

@@ -1,7 +1,7 @@
 Third-party licenses, acknowledgements
 ======================================
 
-Radeon GPU Analyzer (RGA) uses the following third-party software:
+Radeon™ GPU Analyzer (RGA) uses the following third-party software:
 
 **Boost**
 
@@ -408,3 +408,17 @@ Copyright (c) 2015-2016 The Khronos Group Inc.
 
 **volk**
 Copyright (c) 2018 Arseny Kapoulkine
+
+**libtinfo.so.5.9**
+Ncurses is a part of the GNU Project. It is one of the few GNU files not distributed
+under the GNU GPL or LGPL; it is distributed under a permissive free software licence,
+similar to the MIT License.[15] This is due to the agreement made with the Free Software
+Foundation at the time the developers assigned their copyright.
+
+When the agreement was made to pass on the rights to the FSF, there was a clause that stated:[15]
+
+The Foundation promises that all distribution of the Package, or of any work "based on the
+Package", that takes place under the control of the Foundation or its agents or assignees,
+shall be on terms that explicitly and perpetually permit anyone possessing a copy of the
+work to which the terms apply, and possessing accurate notice of these terms, to redistribute
+copies of the work to anyone on the same terms.

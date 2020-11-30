@@ -12,13 +12,14 @@
 // Local.
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgPipelineStateModelVulkan.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElement.h>
-#include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementArray.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementArrayElementAdd.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementBool.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementEnum.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementNumeric.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgDataTypes.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgDataTypesVulkan.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgObjectNames.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
@@ -906,6 +907,9 @@ void rgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfoArray(rg
     // Create the root element for the Descriptor Set Layout array configuration.
     rgEditorElement* pDescriptorSetLayoutsRoot = new rgEditorElement(pRootElement, STR_VULKAN_DESCRIPTOR_SET_LAYOUTS_HEADER);
 
+    // Set the object name.
+    pDescriptorSetLayoutsRoot->setObjectName(STR_DESCRIPTOR_SET_LAYOUTS_ROOT);
+
     // Display the type name with brackets to indicate that it's an array.
     std::stringstream descriptorSetLayoutsArrayStream;
     descriptorSetLayoutsArrayStream << STR_VULKAN_DESCRIPTOR_SET_LAYOUT_CREATE_INFO << "[]";
@@ -913,7 +917,7 @@ void rgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfoArray(rg
     std::vector<VkDescriptorSetLayoutCreateInfo*>& descriptorSetLayouts = pCreateInfo->GetDescriptorSetLayoutCreateInfo();
 
     // Create the Descriptor Set Layout array root item.
-    rgEditorElementArray* pDescriptorSetLayoutsItem = new rgEditorElementArray(pDescriptorSetLayoutsRoot, descriptorSetLayoutsArrayStream.str().c_str(),
+    rgEditorElementArrayElementAdd* pDescriptorSetLayoutsItem = new rgEditorElementArrayElementAdd(pDescriptorSetLayoutsRoot, descriptorSetLayoutsArrayStream.str().c_str(),
         [=](int elementIndex)
     {
         std::vector<VkDescriptorSetLayoutCreateInfo*>& currentDescriptorSetLayouts = pCreateInfo->GetDescriptorSetLayoutCreateInfo();
@@ -930,12 +934,18 @@ void rgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfoArray(rg
         }
     });
 
+    // Set the object name.
+    pDescriptorSetLayoutsItem->setObjectName(STR_DESCRIPTOR_SET_LAYOUTS_ITEM);
+
     // Initialize the Descriptor Set Layout count.
     m_descriptorSetLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
 
     // Create the Descriptor Set Layout count item.
     rgEditorElement* pDescriptorSetLayoutCountItem = MakeNumericElement(nullptr, STR_VULKAN_DESCRIPTOR_SET_LAYOUT_COUNT,
         &m_descriptorSetLayoutCount, [=] { HandleDescriptorSetLayoutCountChanged(pDescriptorSetLayoutsItem, pCreateInfo); });
+
+    // Set the object name.
+    pDescriptorSetLayoutCountItem->setObjectName(STR_DESCRIPTOR_SET_LAYOUT_COUNT_ITEM);
 
     // Provide the element used to track the dimension of the Descriptor Set Layouts array.
     pDescriptorSetLayoutsItem->SetArraySizeElement(static_cast<rgEditorElementNumeric<uint32_t>*>(pDescriptorSetLayoutCountItem));
@@ -959,6 +969,9 @@ rgEditorElement* rgPipelineStateModelVulkan::InitializeGraphicsPipelineCreateInf
     {
         // Create the root node that all create info elements are attached to.
         pCreateInfoRootNode = new rgEditorElement(pParent, STR_VULKAN_GRAPHICS_PIPELINE_STATE);
+
+        // Set object name.
+        pCreateInfoRootNode->setObjectName(STR_CREATE_INFO_ROOT_NODE);
 
         // Add the Graphics Pipeline create info root node.
         InitializeVkGraphicsPipelineCreateInfo(pCreateInfoRootNode, m_pGraphicsPipelineState);
@@ -1000,7 +1013,7 @@ void rgPipelineStateModelVulkan::HandleDescriptorSetLayoutCountChanged(rgEditorE
 
         std::vector<VkDescriptorSetLayoutCreateInfo*>& descriptorSetLayouts = pCreateInfo->GetDescriptorSetLayoutCreateInfo();
 
-        rgEditorElementArray* pArrayRoot = static_cast<rgEditorElementArray*>(pRootElement);
+        rgEditorElementArrayElementAdd* pArrayRoot = static_cast<rgEditorElementArrayElementAdd*>(pRootElement);
         if (pArrayRoot != nullptr)
         {
             if (newElementCount == 0)
@@ -1061,7 +1074,11 @@ void rgPipelineStateModelVulkan::HandleDescriptorSetLayoutCountChanged(rgEditorE
                     elementNameStream << STR_VULKAN_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
                     // Create an element node for each item in the array.
-                    rgEditorElementArrayElement* pArrayElement = new rgEditorElementArrayElement(pRootElement, elementNameStream.str());
+                    rgEditorElementArrayElementRemove* pArrayElement = new rgEditorElementArrayElementRemove(pRootElement, elementNameStream.str());
+
+                    // Set object name.
+                    QString name = STR_ARRAY_ELEMENT + QString::number(newChildIndex);
+                    pArrayElement->setObjectName(name);
 
                     // Each element in the array needs to know its index and the array root element.
                     pArrayElement->SetElementIndex(pArrayRoot, newChildIndex);
@@ -1098,6 +1115,9 @@ void rgPipelineStateModelVulkan::InitializeVkGraphicsPipelineCreateInfo(rgEditor
         rgEditorElement* pGraphicsPipelineCreateInfoRoot = new rgEditorElement(pRootElement, STR_VULKAN_GRAPHICS_PIPELINE_CREATE_INFO);
         pRootElement->AppendChildItem(pGraphicsPipelineCreateInfoRoot);
 
+        // Set object name.
+        pGraphicsPipelineCreateInfoRoot->setObjectName(STR_GRAPHICS_PIPELINE_CREATE_INFO_ROOT);
+
         VkGraphicsPipelineCreateInfo* pVkGraphicsPipelineCreateInfo = pGraphicsPipelineCreateInfo->GetGraphicsPipelineCreateInfo();
 
         // Add the "flags" member.
@@ -1105,8 +1125,15 @@ void rgPipelineStateModelVulkan::InitializeVkGraphicsPipelineCreateInfo(rgEditor
         rgEditorElement* pFlagsItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_FLAGS, pipelineFlagsEnumerators, reinterpret_cast<uint32_t*>(&pVkGraphicsPipelineCreateInfo->flags), true);
         pGraphicsPipelineCreateInfoRoot->AppendChildItem(pFlagsItem);
 
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
+
         // Connect to the flags enum list widget status signal.
         bool isConnected = connect(pFlagsItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pFlagsItem), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "pVertexInputState" node.
@@ -1126,7 +1153,7 @@ void rgPipelineStateModelVulkan::InitializeVkGraphicsPipelineCreateInfo(rgEditor
         }
 
         // Add the "pTessellationState" node.
-        VkPipelineTessellationStateCreateInfo* pTessellationStateCreateInfo = pGraphicsPipelineCreateInfo->GetipelineTessellationStateCreateInfo();
+        VkPipelineTessellationStateCreateInfo* pTessellationStateCreateInfo = pGraphicsPipelineCreateInfo->GetPipelineTessellationStateCreateInfo();
         assert(pTessellationStateCreateInfo != nullptr);
         if (pTessellationStateCreateInfo != nullptr)
         {
@@ -1191,17 +1218,29 @@ void rgPipelineStateModelVulkan::InitializeVertexInputStateCreateInfo(rgEditorEl
         rgEditorElement* pVertexInputStateRoot = new rgEditorElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_PVERTEX_INPUT_STATE);
         pRootElement->AppendChildItem(pVertexInputStateRoot);
 
+        // Set object name.
+        pVertexInputStateRoot->setObjectName(STR_VERTEX_INPUT_STATE_ROOT);
+
         // Add the "flags" member.
         rgEditorElement* pFlagsItem = MakeNumericElement(pVertexInputStateRoot, STR_VULKAN_PIPELINE_MEMBER_FLAGS, &pVertexInputStateCreateInfo->flags);
         pVertexInputStateRoot->AppendChildItem(pFlagsItem);
 
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
+
         // Create the vertex binding descriptions array root item.
-        rgEditorElementArray* pVertexBindingDescriptionsItem = new rgEditorElementArray(pVertexInputStateRoot, STR_VULKAN_PIPELINE_MEMBER_PVERTEX_BINDING_DESCRIPTIONS,
+        rgEditorElementArrayElementAdd* pVertexBindingDescriptionsItem = new rgEditorElementArrayElementAdd(pVertexInputStateRoot, STR_VULKAN_PIPELINE_MEMBER_PVERTEX_BINDING_DESCRIPTIONS,
             [=](int elementIndex) { RemoveElement(pVertexInputStateCreateInfo->pVertexBindingDescriptions, pVertexInputStateCreateInfo->vertexBindingDescriptionCount, elementIndex); });
+
+        // Set object name.
+        pVertexBindingDescriptionsItem->setObjectName(STR_VERTEX_BINDING_DESCRIPTIONS_ITEM);
 
         // Add the "vertexBindingDescriptionCount" member.
         rgEditorElement* pVertexBindingDescriptionCountItem = MakeNumericElement(nullptr, STR_VULKAN_PIPELINE_MEMBER_VERTEX_BINDING_DESCRIPTION_COUNT,
             &pVertexInputStateCreateInfo->vertexBindingDescriptionCount, [=] { HandleVertexBindingDescriptionCountChanged(pVertexBindingDescriptionsItem, pVertexInputStateCreateInfo); });
+
+        // Set object name.
+        pVertexBindingDescriptionCountItem->setObjectName(STR_VERTEX_BINDING_DESCRIPTION_COUNT_ITEM);
 
         // Provide the element used to track the dimension of the pVertexBindingDescriptions array.
         pVertexBindingDescriptionsItem->SetArraySizeElement(static_cast<rgEditorElementNumeric<uint32_t>*>(pVertexBindingDescriptionCountItem));
@@ -1213,12 +1252,18 @@ void rgPipelineStateModelVulkan::InitializeVertexInputStateCreateInfo(rgEditorEl
         pVertexInputStateRoot->AppendChildItem(pVertexBindingDescriptionsItem);
 
         // Create the vertex attribute descriptions array root item.
-        rgEditorElementArray* pVertexAttributeDescriptionsItem = new rgEditorElementArray(pVertexInputStateRoot, STR_VULKAN_PIPELINE_MEMBER_PVERTEX_ATTRIBUTE_DESCRIPTIONS,
+        rgEditorElementArrayElementAdd* pVertexAttributeDescriptionsItem = new rgEditorElementArrayElementAdd(pVertexInputStateRoot, STR_VULKAN_PIPELINE_MEMBER_PVERTEX_ATTRIBUTE_DESCRIPTIONS,
             [=](int elementIndex) { RemoveElement(pVertexInputStateCreateInfo->pVertexAttributeDescriptions, pVertexInputStateCreateInfo->vertexAttributeDescriptionCount, elementIndex); });
+
+        // Set object name.
+        pVertexAttributeDescriptionsItem->setObjectName(STR_VERTEX_ATTRIBUTE_DESCRIPTIONS_ITEM);
 
         // Add the "vertexAttributeDescriptionCount" member.
         rgEditorElement* pVertexAttributeDescriptionCountItem = MakeNumericElement(nullptr, STR_VULKAN_PIPELINE_MEMBER_VERTEX_ATTRIBUTE_DESCRIPTION_COUNT,
             &pVertexInputStateCreateInfo->vertexAttributeDescriptionCount, [=] { HandleVertexAttributeDescriptionCountChanged(pVertexAttributeDescriptionsItem, pVertexInputStateCreateInfo); });
+
+        // Set object name.
+        pVertexAttributeDescriptionCountItem->setObjectName(STR_VERTEX_ATTRIBUTE_DESCRIPTION_COUNT_ITEM);
 
         // Provide the element used to track the dimension of the pVertexAttributeDescriptions array.
         pVertexAttributeDescriptionsItem->SetArraySizeElement(static_cast<rgEditorElementNumeric<uint32_t>*>(pVertexAttributeDescriptionCountItem));
@@ -1265,9 +1310,15 @@ void rgPipelineStateModelVulkan::InitializeVertexInputBindingDescriptionCreateIn
             rgEditorElement* pBindingElement = MakeNumericElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_VERTEX_BINDING, &pOffsetInputBindingDescriptionItem->binding);
             pRootElement->AppendChildItem(pBindingElement);
 
+            // Set object name.
+            pBindingElement->setObjectName(STR_BINDING_ELEMENT);
+
             // Add the "stride" member.
             rgEditorElement* pStrideElement = MakeNumericElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_VERTEX_STRIDE, &pOffsetInputBindingDescriptionItem->stride);
             pRootElement->AppendChildItem(pStrideElement);
+
+            // Set object name.
+            pStrideElement->setObjectName(STR_STRIDE_ELEMENT);
 
             // Add the "inputRate" member values.
             const rgEnumValuesVector inputRateValues = {
@@ -1277,8 +1328,15 @@ void rgPipelineStateModelVulkan::InitializeVertexInputBindingDescriptionCreateIn
             rgEditorElement* pInputRateElement = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_VERTEX_INPUT_RATE, inputRateValues, reinterpret_cast<uint32_t*>(&pOffsetInputBindingDescriptionItem->inputRate));
             pRootElement->AppendChildItem(pInputRateElement);
 
+            // Set object name.
+            pInputRateElement->setObjectName(STR_INPUT_RATE_ELEMENT);
+
             // Connect to the enum list widget status signal.
             bool isConnected = connect(pInputRateElement, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pInputRateElement), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
         }
     }
@@ -1298,22 +1356,38 @@ void rgPipelineStateModelVulkan::InitializeVertexInputAttributeDescriptionCreate
             rgEditorElement* pLocationElement = MakeNumericElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_VERTEX_LOCATION, &pOffsetInputAttributeDescription->location);
             pRootElement->AppendChildItem(pLocationElement);
 
+            // Set object name.
+            pLocationElement->setObjectName(STR_LOCATION_ELEMENT);
+
             // Add the "binding" member.
             rgEditorElement* pBindingElement = MakeNumericElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_VERTEX_BINDING, &pOffsetInputAttributeDescription->binding);
             pRootElement->AppendChildItem(pBindingElement);
+
+            // Set object name.
+            pBindingElement->setObjectName(STR_BINDING_ELEMENT);
 
             // Add the "format" member values.
             const rgEnumValuesVector& formatEnumerators = GetFormatEnumerators();
             rgEditorElement* pFormatElement = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_VERTEX_FORMAT, formatEnumerators, reinterpret_cast<uint32_t*>(&pOffsetInputAttributeDescription->format));
             pRootElement->AppendChildItem(pFormatElement);
 
+            // Set object name.
+            pFormatElement->setObjectName(STR_FORMAT_ELEMENT);
+
             // Connect to the enum list widget status signal.
             bool isConnected = connect(pFormatElement, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pFormatElement), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "offset" member.
             rgEditorElement* pOffsetElement = MakeNumericElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_OFFSET, &pOffsetInputAttributeDescription->offset);
             pRootElement->AppendChildItem(pOffsetElement);
+
+            // Set object name.
+            pOffsetElement->setObjectName(STR_OFFSET_ELEMENT);
         }
     }
 }
@@ -1326,22 +1400,38 @@ void rgPipelineStateModelVulkan::InitializeInputAssemblyStateCreateInfo(rgEditor
         rgEditorElement* pInputAssemblyStateRoot = new rgEditorElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_PINPUT_ASSEMBLY_STATE);
         pRootElement->AppendChildItem(pInputAssemblyStateRoot);
 
+        // Set object name.
+        pInputAssemblyStateRoot->setObjectName(STR_INPUT_ASSEMBLY_STATE_ROOT);
+
         // Add the "flags" member.
         rgEditorElement* pFlagsItem = MakeNumericElement(pInputAssemblyStateRoot, STR_VULKAN_PIPELINE_MEMBER_FLAGS, &pInputAssemblyStateCreateInfo->flags);
         pInputAssemblyStateRoot->AppendChildItem(pFlagsItem);
+
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
 
         // Add the primitive "topology" node.
         const rgEnumValuesVector& primitiveTopologyEnumerators = GetPrimitiveTopologyEnumerators();
         rgEditorElement* pTopologyItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_TOPOLOGY, primitiveTopologyEnumerators, reinterpret_cast<uint32_t*>(&pInputAssemblyStateCreateInfo->topology));
         pInputAssemblyStateRoot->AppendChildItem(pTopologyItem);
 
+        // Set object name.
+        pTopologyItem->setObjectName(STR_TOPOLOGY_ITEM);
+
         // Connect to the enum list widget status signal.
         bool isConnected = connect(pTopologyItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pTopologyItem), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "primitiveRestartEnable" member.
         rgEditorElementBool* pPrimitiveRestartEnableItem = new rgEditorElementBool(pInputAssemblyStateRoot, STR_VULKAN_PIPELINE_MEMBER_PRIMITIVE_RESTART_ENABLE, &pInputAssemblyStateCreateInfo->primitiveRestartEnable);
         pInputAssemblyStateRoot->AppendChildItem(pPrimitiveRestartEnableItem);
+
+        // Set object name.
+        pPrimitiveRestartEnableItem->setObjectName(STR_PRIMITIVE_RESTART_ENABLE_ITEM);
     }
 }
 
@@ -1353,13 +1443,22 @@ void rgPipelineStateModelVulkan::InitializeTessellationStateCreateInfo(rgEditorE
         rgEditorElement* pTessellationStateRoot = new rgEditorElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_PTESSELLATION_STATE);
         pRootElement->AppendChildItem(pTessellationStateRoot);
 
+        // Set object name.
+        pTessellationStateRoot->setObjectName(STR_TESSELLATION_STATE_ROOT);
+
         // Add the "flags" member.
         rgEditorElement* pFlagsItem = MakeNumericElement(pTessellationStateRoot, STR_VULKAN_PIPELINE_MEMBER_FLAGS, &pTessellationStateCreateInfo->flags);
         pTessellationStateRoot->AppendChildItem(pFlagsItem);
 
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
+
         // Add the "patchControlPoints" member.
         rgEditorElement* pPatchControlPointsItem = MakeNumericElement(pTessellationStateRoot, STR_VULKAN_PIPELINE_MEMBER_PATCH_CONTROL_POINTS, &pTessellationStateCreateInfo->patchControlPoints);
         pTessellationStateRoot->AppendChildItem(pPatchControlPointsItem);
+
+        // Set object name.
+        pPatchControlPointsItem->setObjectName(STR_PATCH_CONTROL_POINTS_ITEM);
     }
 }
 
@@ -1371,13 +1470,22 @@ void rgPipelineStateModelVulkan::InitializeViewportStateCreateInfo(rgEditorEleme
         rgEditorElement* pViewportStateRoot = new rgEditorElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_PVIEWPORT_STATE);
         pRootElement->AppendChildItem(pViewportStateRoot);
 
+        // Set object name.
+        pViewportStateRoot->setObjectName(STR_VIEWPORT_STATE_ROOT_ITEM);
+
         // Add the "flags" member.
         rgEditorElement* pFlagsItem = MakeNumericElement(pViewportStateRoot, STR_VULKAN_PIPELINE_MEMBER_FLAGS, &pPipelineViewportStateCreateInfo->flags);
         pViewportStateRoot->AppendChildItem(pFlagsItem);
 
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
+
         // Create the "pViewports" root node.
-        rgEditorElementArray* pViewportsRootItem = new rgEditorElementArray(pViewportStateRoot, STR_VULKAN_PIPELINE_MEMBER_PVIEWPORTS,
+        rgEditorElementArrayElementAdd* pViewportsRootItem = new rgEditorElementArrayElementAdd(pViewportStateRoot, STR_VULKAN_PIPELINE_MEMBER_PVIEWPORTS,
             [=](int elementIndex) { RemoveElement(pPipelineViewportStateCreateInfo->pViewports, pPipelineViewportStateCreateInfo->viewportCount, elementIndex); });
+
+        // Set object name.
+        pViewportsRootItem->setObjectName(STR_VIEWPORTS_ROOT_ITEM);
 
         assert(pViewportsRootItem != nullptr);
         if (pViewportsRootItem != nullptr)
@@ -1385,6 +1493,9 @@ void rgPipelineStateModelVulkan::InitializeViewportStateCreateInfo(rgEditorEleme
             // Create the "viewportCountItem" node.
             rgEditorElement* pViewportCountItem = MakeNumericElement(nullptr, STR_VULKAN_PIPELINE_MEMBER_VIEWPORT_COUNT,
                 &pPipelineViewportStateCreateInfo->viewportCount, [=] { HandlePipelineViewportCountChanged(pViewportsRootItem, pPipelineViewportStateCreateInfo); });
+
+            // Set object name.
+            pViewportCountItem->setObjectName(STR_VIEWPORT_COUNT_ITEM);
 
             // Add the viewport array node.
             pViewportStateRoot->AppendChildItem(pViewportsRootItem);
@@ -1397,12 +1508,18 @@ void rgPipelineStateModelVulkan::InitializeViewportStateCreateInfo(rgEditorEleme
         }
 
         // Create the "pScissors" root node.
-        rgEditorElementArray* pScissorsRootItem = new rgEditorElementArray(pViewportStateRoot, STR_VULKAN_PIPELINE_MEMBER_PSCISSORS,
+        rgEditorElementArrayElementAdd* pScissorsRootItem = new rgEditorElementArrayElementAdd(pViewportStateRoot, STR_VULKAN_PIPELINE_MEMBER_PSCISSORS,
             [=](int elementIndex) { RemoveElement(pPipelineViewportStateCreateInfo->pScissors, pPipelineViewportStateCreateInfo->scissorCount, elementIndex); });
+
+        // Set object name.
+        pScissorsRootItem->setObjectName(STR_SCISSORS_ROOT_ITEM);
 
         // Create the "scissorCountItem" member.
         rgEditorElement* pScissorCountItem = MakeNumericElement(nullptr, STR_VULKAN_PIPELINE_MEMBER_SCISSOR_COUNT,
             &pPipelineViewportStateCreateInfo->scissorCount, [=] { HandlePipelineScissorCountChanged(pScissorsRootItem, pPipelineViewportStateCreateInfo); });
+
+        // Set object name.
+        pScissorCountItem->setObjectName(STR_SCISSOR_COUNT_ITEM);
 
         // Add the "pScissors" member.
         pViewportStateRoot->AppendChildItem(pScissorsRootItem);
@@ -1449,25 +1566,43 @@ void rgPipelineStateModelVulkan::InitializePipelineViewportDescriptionCreateInfo
             rgEditorElement* pXItem = MakeNumericElement(pRootElement, STR_VULKAN_MEMBER_X, &pOffsetViewportDescription->x);
             pRootElement->AppendChildItem(pXItem);
 
+            // Set object name.
+            pXItem->setObjectName(STR_X_ITEM);
+
             // Add the "y" node.
             rgEditorElement* pYItem = MakeNumericElement(pRootElement, STR_VULKAN_MEMBER_Y, &pOffsetViewportDescription->y);
             pRootElement->AppendChildItem(pYItem);
+
+            // Set object name.
+            pYItem->setObjectName(STR_Y_ITEM);
 
             // Add the "width" node.
             rgEditorElement* pWidthItem = MakeNumericElement(pRootElement, STR_VULKAN_MEMBER_WIDTH, &pOffsetViewportDescription->width);
             pRootElement->AppendChildItem(pWidthItem);
 
+            // Set object name.
+            pWidthItem->setObjectName(STR_WIDTH_ITEM);
+
             // Add the "height" node.
             rgEditorElement* pHeightItem = MakeNumericElement(pRootElement, STR_VULKAN_MEMBER_HEIGHT, &pOffsetViewportDescription->height);
             pRootElement->AppendChildItem(pHeightItem);
+
+            // Set object name.
+            pHeightItem->setObjectName(STR_HEIGHT_ITEM);
 
             // Add the "minDepth" node.
             rgEditorElement* pMinDepthItem = MakeNumericElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_VIEWPORT_MIN_DEPTH, &pOffsetViewportDescription->minDepth);
             pRootElement->AppendChildItem(pMinDepthItem);
 
+            // Set object name.
+            pMinDepthItem->setObjectName(STR_MIN_DEPTH_ITEM);
+
             // Add the "maxDepth" node.
             rgEditorElement* pMaxDepthItem = MakeNumericElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_VIEWPORT_MAX_DEPTH, &pOffsetViewportDescription->maxDepth);
             pRootElement->AppendChildItem(pMaxDepthItem);
+
+            // Set object name.
+            pMaxDepthItem->setObjectName(STR_MAX_DEPTH_ITEM);
         }
     }
 }
@@ -1489,22 +1624,37 @@ void rgPipelineStateModelVulkan::InitializePipelineScissorDescriptionCreateInfo(
             rgEditorElement* pXItem = MakeNumericElement(pOffsetRoot, STR_VULKAN_MEMBER_X, &pOffsetScissorDescription->offset.x);
             pOffsetRoot->AppendChildItem(pXItem);
 
+            // Set object name.
+            pXItem->setObjectName(STR_X_ITEM);
+
             // Add the "y" node.
             rgEditorElement* pYItem = MakeNumericElement(pOffsetRoot, STR_VULKAN_MEMBER_Y, &pOffsetScissorDescription->offset.y);
             pOffsetRoot->AppendChildItem(pYItem);
+
+            // Set object name.
+            pYItem->setObjectName(STR_Y_ITEM);
 
             // Add the offset root element.
             pRootElement->AppendChildItem(pOffsetRoot);
 
             rgEditorElement* pExtentRoot = new rgEditorElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_EXTENT);
 
+            // Set object name.
+            pExtentRoot->setObjectName(STR_EXTENT_ROOT);
+
             // Add the "width" node.
             rgEditorElement* pWidthItem = MakeNumericElement(pExtentRoot, STR_VULKAN_MEMBER_WIDTH, &pOffsetScissorDescription->extent.width);
             pExtentRoot->AppendChildItem(pWidthItem);
 
+            // Set object name.
+            pWidthItem->setObjectName(STR_WIDTH_ITEM);
+
             // Add the "height" node.
             rgEditorElement* pHeightItem = MakeNumericElement(pExtentRoot, STR_VULKAN_MEMBER_HEIGHT, &pOffsetScissorDescription->extent.height);
             pExtentRoot->AppendChildItem(pHeightItem);
+
+            // Set object name.
+            pHeightItem->setObjectName(STR_HEIGHT_ITEM);
 
             // Add the extent root element.
             pRootElement->AppendChildItem(pExtentRoot);
@@ -1520,25 +1670,44 @@ void rgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(rgEditor
         rgEditorElement* pRasterizationStateRoot = new rgEditorElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_PRASTERIZATION_STATE);
         pRootElement->AppendChildItem(pRasterizationStateRoot);
 
+        // Set object name.
+        pRasterizationStateRoot->setObjectName(STR_RASTERIZATION_STATE_ROOT);
+
         // Add the "flags" member.
         rgEditorElement* pFlagsItem = MakeNumericElement(pRasterizationStateRoot, STR_VULKAN_PIPELINE_MEMBER_FLAGS, &pRasterizationStateCreateInfo->flags);
         pRasterizationStateRoot->AppendChildItem(pFlagsItem);
+
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
 
         // Add the "depthClampEnable" node.
         rgEditorElementBool* pDepthClampEnableItem = new rgEditorElementBool(pRasterizationStateRoot, STR_VULKAN_PIPELINE_MEMBER_DEPTH_CLAMP_ENABLE, &pRasterizationStateCreateInfo->depthClampEnable);
         pRasterizationStateRoot->AppendChildItem(pDepthClampEnableItem);
 
+        // Set object name.
+        pDepthClampEnableItem->setObjectName(STR_DEPTH_CLAMP_ENABLE_ITEM);
+
         // Add the "rasterizerDiscardEnable" node.
         rgEditorElementBool* pRasterizerDiscardEnable = new rgEditorElementBool(pRasterizationStateRoot, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_DISCARD_ENABLE, &pRasterizationStateCreateInfo->rasterizerDiscardEnable);
         pRasterizationStateRoot->AppendChildItem(pRasterizerDiscardEnable);
+
+        // Set object name.
+        pRasterizerDiscardEnable->setObjectName(STR_RASTERIZER_DISCARD_ENABLE);
 
         // Add the "polygonMode" member values.
         const rgEnumValuesVector& polygonModeEnumerators = GetPolygonModeEnumerators();
         rgEditorElement* pPolygonModeNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_POLYGON_MODE, polygonModeEnumerators, reinterpret_cast<uint32_t*>(&pRasterizationStateCreateInfo->polygonMode));
         pRasterizationStateRoot->AppendChildItem(pPolygonModeNode);
 
+        // Set object name.
+        pPolygonModeNode->setObjectName(STR_POLYGON_MODE_NODE);
+
         // Connect to the enum list widget status signal.
         bool isConnected = connect(pPolygonModeNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pPolygonModeNode), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "cullMode" member values.
@@ -1546,8 +1715,15 @@ void rgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(rgEditor
         rgEditorElement* pCullModeNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_CULL_MODE, cullModeEnumerators, reinterpret_cast<uint32_t*>(&pRasterizationStateCreateInfo->cullMode), true);
         pRasterizationStateRoot->AppendChildItem(pCullModeNode);
 
+        // Set object name.
+        pCullModeNode->setObjectName(STR_CULL_MODE_NODE);
+
         // Connect to the enum list widget status signal.
         isConnected = connect(pCullModeNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pCullModeNode), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "frontFace" member values.
@@ -1555,29 +1731,51 @@ void rgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(rgEditor
         rgEditorElement* pFrontFaceNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_FRONT_FACE, frontFaceEnumerators, reinterpret_cast<uint32_t*>(&pRasterizationStateCreateInfo->frontFace));
         pRasterizationStateRoot->AppendChildItem(pFrontFaceNode);
 
+        // Set object name.
+        pFrontFaceNode->setObjectName(STR_FRONT_FACE_NODE);
+
         // Connect to the enum list widget status signal.
         isConnected = connect(pFrontFaceNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pFrontFaceNode), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "depthBiasEnable" node.
         rgEditorElementBool* pDepthBiasEnableNode = new rgEditorElementBool(pRasterizationStateRoot, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_DEPTH_BIAS_ENABLE, &pRasterizationStateCreateInfo->depthBiasEnable);
         pRasterizationStateRoot->AppendChildItem(pDepthBiasEnableNode);
 
+        // Set object name.
+        pDepthBiasEnableNode->setObjectName(STR_DEPTH_BIAS_ENABLE_NODE);
+
         // Add the "depthBiasConstantFactor" node.
         rgEditorElement* pDepthBiasConstantFactorNode = MakeNumericElement(pRasterizationStateRoot, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_DEPTH_BIAS_CONSTANT_FACTOR, &pRasterizationStateCreateInfo->depthBiasConstantFactor);
         pRasterizationStateRoot->AppendChildItem(pDepthBiasConstantFactorNode);
+
+        // Set object name.
+        pDepthBiasConstantFactorNode->setObjectName(STR_DEPTH_BIAS_CONSTANT_FACTOR_NODE);
 
         // Add the "depthBiasClamp" node.
         rgEditorElement* pDepthBiasClampNode = MakeNumericElement(pRasterizationStateRoot, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_DEPTH_BIAS_CLAMP, &pRasterizationStateCreateInfo->depthBiasClamp);
         pRasterizationStateRoot->AppendChildItem(pDepthBiasClampNode);
 
+        // Set object name.
+        pDepthBiasClampNode->setObjectName(STR_DEPTH_BIAS_CLAMP_NODE);
+
         // Add the "depthBiasSlopeFactor" node.
         rgEditorElement* pDepthBiasSlopeFactorNode = MakeNumericElement(pRasterizationStateRoot, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_DEPTH_BIAS_SLOPE_FACTOR, &pRasterizationStateCreateInfo->depthBiasSlopeFactor);
         pRasterizationStateRoot->AppendChildItem(pDepthBiasSlopeFactorNode);
 
+        // Set object name.
+        pDepthBiasSlopeFactorNode->setObjectName(STR_DEPTH_BIAS_SLOPE_FACTOR_NODE);
+
         // Add the "lineWidth" node.
         rgEditorElement* pLineWidthNode = MakeNumericElement(pRasterizationStateRoot, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_LINE_WIDTH, &pRasterizationStateCreateInfo->lineWidth);
         pRasterizationStateRoot->AppendChildItem(pLineWidthNode);
+
+        // Set object name.
+        pLineWidthNode->setObjectName(STR_LINE_WIDTH_NODE);
     }
 }
 
@@ -1604,6 +1802,9 @@ void rgPipelineStateModelVulkan::InitializeSampleMask(rgEditorElement* pRootElem
             // Add the array element.
             rgEditorElement* pSampleMaskElementNode = MakeNumericElement(pRootElement, STR_VULKAN_MULTISAMPLE_RASTERIZATION_SAMPLE_FLAGS_ELEMENT_TYPE, reinterpret_cast<uint32_t*>(pSampleMaskItem));
             pRootElement->AppendChildItem(pSampleMaskElementNode);
+
+            // Set object name.
+            pSampleMaskElementNode->setObjectName(STR_SAMPLE_MASK_ELEMENT_NODE);
         }
     }
 }
@@ -1619,11 +1820,17 @@ void rgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(rgEditorEl
         rgEditorElement* pMultisampleStateRoot = new rgEditorElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_PMULTISAMPLE_STATE);
         pRootElement->AppendChildItem(pMultisampleStateRoot);
 
+        // Set object name.
+        pMultisampleStateRoot->setObjectName(STR_MULTISAMPLE_STATE_ROOT);
+
         // Add the "flags" node.
         rgEditorElement* pFlagsItem = MakeNumericElement(pMultisampleStateRoot, STR_VULKAN_PIPELINE_MEMBER_FLAGS, &pPipelineMultisampleStateCreateInfo->flags);
         pMultisampleStateRoot->AppendChildItem(pFlagsItem);
 
-    // pSampleMask array:
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
+
+        // pSampleMask array:
         if (pPipelineMultisampleStateCreateInfo->pSampleMask != nullptr)
         {
             // Initialize the mask dimension if the pSampleMask is used.
@@ -1632,8 +1839,11 @@ void rgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(rgEditorEl
         }
 
         // Create the pSampleMask array root item.
-        rgEditorElementArray* pSampleMaskRootItem = new rgEditorElementArray(pMultisampleStateRoot, STR_VULKAN_MULTISAMPLE_P_SAMPLE_MASK,
+        rgEditorElementArrayElementAdd* pSampleMaskRootItem = new rgEditorElementArrayElementAdd(pMultisampleStateRoot, STR_VULKAN_MULTISAMPLE_P_SAMPLE_MASK,
             [=](int elementIndex) { RemoveElement(pPipelineMultisampleStateCreateInfo->pSampleMask, m_sampleMaskDimension, elementIndex); });
+
+        // Set object name.
+        pSampleMaskRootItem->setObjectName(STR_SAMPLE_MASK_ROOT_ITEM);
 
         // The user can only have up to 2 elements within the pSampleMask array.
         pSampleMaskRootItem->SetMaximumArraySize(2);
@@ -1642,6 +1852,9 @@ void rgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(rgEditorEl
         rgEditorElement* pSampleMaskCountNode = MakeNumericElement(nullptr, STR_VULKAN_RENDER_PASS_SUBPASS_INPUT_ATTACHMENT_COUNT,
             &m_sampleMaskDimension,
             [=] { HandleMultisamplingSampleMaskDimensionChanged(pSampleMaskRootItem, pPipelineMultisampleStateCreateInfo); });
+
+        // Set object name.
+        pSampleMaskCountNode->setObjectName(STR_SAMPLE_MASK_COUNT_NODE);
 
         // Set the array size element for the pSampleMask root item.
         // When the array size count value changes, the array of child elements will get resized.
@@ -1655,17 +1868,30 @@ void rgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(rgEditorEl
         rgEditorElement* pRasterizationSamples = new rgEditorElementEnum(m_pParent, STR_VULKAN_MULTISAMPLE_RASTERIZATION_SAMPLES, rasterizationSamplesEnumerators, reinterpret_cast<uint32_t*>(&pPipelineMultisampleStateCreateInfo->rasterizationSamples));
         pMultisampleStateRoot->AppendChildItem(pRasterizationSamples);
 
+        // Set object name.
+        pRasterizationSamples->setObjectName(STR_RASTERIZATION_SAMPLES);
+
         // Connect to the enum list widget status signal.
         bool isConnected = connect(pRasterizationSamples, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pRasterizationSamples), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "sampleShadingEnable" node.
         rgEditorElementBool* pSampleShadingEnable = new rgEditorElementBool(pMultisampleStateRoot, STR_VULKAN_MULTISAMPLE_SAMPLE_SHADING_ENABLE, &pPipelineMultisampleStateCreateInfo->sampleShadingEnable);
         pMultisampleStateRoot->AppendChildItem(pSampleShadingEnable);
 
+        // Set object name.
+        pSampleShadingEnable->setObjectName(STR_SAMPLE_SHADING_ENABLE);
+
         // Add the "minSampleShading" node.
         rgEditorElement* pMinSampleShadingNode = MakeNumericElement(pMultisampleStateRoot, STR_VULKAN_MULTISAMPLE_MIN_SAMPLE_SHADING, &pPipelineMultisampleStateCreateInfo->minSampleShading);
         pMultisampleStateRoot->AppendChildItem(pMinSampleShadingNode);
+
+        // Set object name.
+        pMinSampleShadingNode->setObjectName(STR_MIN_SAMPLE_SHADING_NODE);
 
         // Add the sample mask array node.
         pMultisampleStateRoot->AppendChildItem(pSampleMaskRootItem);
@@ -1674,9 +1900,15 @@ void rgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(rgEditorEl
         rgEditorElementBool* pAlphaToCoverageNode = new rgEditorElementBool(pMultisampleStateRoot, STR_VULKAN_MULTISAMPLE_ALPHA_TO_COVERAGE_ENABLE, &pPipelineMultisampleStateCreateInfo->alphaToCoverageEnable);
         pMultisampleStateRoot->AppendChildItem(pAlphaToCoverageNode);
 
+        // Set object name.
+        pAlphaToCoverageNode->setObjectName(STR_ALPHA_BLEND_TO_COVERAGE_NODE);
+
         // Add the "alphaToOneEnable" node.
         rgEditorElementBool* pAlphaToOneNode = new rgEditorElementBool(pMultisampleStateRoot, STR_VULKAN_MULTISAMPLE_ALPHA_TO_ONE_ENABLE, &pPipelineMultisampleStateCreateInfo->alphaToOneEnable);
         pMultisampleStateRoot->AppendChildItem(pAlphaToOneNode);
+
+        // Set object name.
+        pAlphaToOneNode->setObjectName(STR_ALPHA_TO_ONE_NODE);
     }
 }
 
@@ -1693,24 +1925,45 @@ void rgPipelineStateModelVulkan::InitializeStencilOpState(rgEditorElement* pDept
         rgEditorElement* pFailOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_DEPTH_STENCIL_STATE_FAIL_OP, stencilOpEnumerators, reinterpret_cast<uint32_t*>(&pStencilOpState->failOp));
         pDepthStencilStateRoot->AppendChildItem(pFailOpNode);
 
+        // Set object name.
+        pFailOpNode->setObjectName(STR_FAIL_OP_NODE);
+
         // Connect to the enum list widget status signal.
         bool isConnected = connect(pFailOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pFailOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "passOp" node.
         rgEditorElement* pPassOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_DEPTH_STENCIL_STATE_PASS_OP, stencilOpEnumerators, reinterpret_cast<uint32_t*>(&pStencilOpState->passOp));
         pDepthStencilStateRoot->AppendChildItem(pPassOpNode);
 
+        // Set object name.
+        pPassOpNode->setObjectName(STR_PASS_OP_NODE);
+
         // Connect to the enum list widget status signal.
         isConnected = connect(pPassOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pPassOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "depthFailOp" node.
         rgEditorElement* pDepthFailOp = new rgEditorElementEnum(m_pParent, STR_VULKAN_DEPTH_STENCIL_STATE_DEPTH_FAIL_OP, stencilOpEnumerators, reinterpret_cast<uint32_t*>(&pStencilOpState->depthFailOp));
         pDepthStencilStateRoot->AppendChildItem(pDepthFailOp);
 
+        // Set object name.
+        pDepthFailOp->setObjectName(STR_DEPTH_FAIL_OP);
+
         // Connect to the enum list widget status signal.
         isConnected = connect(pDepthFailOp, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pDepthFailOp), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "compareOp" node.
@@ -1718,21 +1971,37 @@ void rgPipelineStateModelVulkan::InitializeStencilOpState(rgEditorElement* pDept
         rgEditorElement* pCompareOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_DEPTH_STENCIL_STATE_COMPARE_OP, compareOpEnumerators, reinterpret_cast<uint32_t*>(&pStencilOpState->compareOp));
         pDepthStencilStateRoot->AppendChildItem(pCompareOpNode);
 
+        // Set object name.
+        pCompareOpNode->setObjectName(STR_COMPARE_OP_NODE);
+
         // Connect to the enum list widget status signal.
         isConnected = connect(pCompareOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pCompareOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "compareMask" node.
         rgEditorElement* pCompareMaskNode = MakeNumericElement(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_STATE_COMPARE_MASK, &pStencilOpState->compareMask);
         pDepthStencilStateRoot->AppendChildItem(pCompareMaskNode);
 
+        // Set object name.
+        pCompareMaskNode->setObjectName(STR_COMPARE_MASK_NODE);
+
         // Add the "writeMask" node.
         rgEditorElement* pWriteMaskNode = MakeNumericElement(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_STATE_WRITE_MASK, &pStencilOpState->writeMask);
         pDepthStencilStateRoot->AppendChildItem(pWriteMaskNode);
 
+        // Set object name.
+        pWriteMaskNode->setObjectName(STR_WRITE_MASK_NODE);
+
         // Add the "reference" node.
         rgEditorElement* pReferenceNode = MakeNumericElement(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_STATE_REFERENCE, &pStencilOpState->reference);
         pDepthStencilStateRoot->AppendChildItem(pReferenceNode);
+
+        // Set object name.
+        pReferenceNode->setObjectName(STR_REFERENCE_NODE);
     }
 }
 
@@ -1744,52 +2013,89 @@ void rgPipelineStateModelVulkan::InitializeDepthStencilStateCreateInfo(rgEditorE
         rgEditorElement* pDepthStencilStateRoot = new rgEditorElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_PDEPTH_STENCIL_STATE);
         pRootElement->AppendChildItem(pDepthStencilStateRoot);
 
+        // Set object name.
+        pDepthStencilStateRoot->setObjectName(STR_DEPTH_STENCIL_STATE_ROOT);
+
         // Add the "flags" node.
         rgEditorElement* pFlagsItem = MakeNumericElement(pDepthStencilStateRoot, STR_VULKAN_PIPELINE_MEMBER_FLAGS, &pPipelineDepthStencilStateCreateInfo->flags);
         pDepthStencilStateRoot->AppendChildItem(pFlagsItem);
+
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
 
         // Add the "depthTestEnable" node.
         rgEditorElementBool* pDepthTestEnableNode = new rgEditorElementBool(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_DEPTH_TEST_ENABLE, &pPipelineDepthStencilStateCreateInfo->depthTestEnable);
         pDepthStencilStateRoot->AppendChildItem(pDepthTestEnableNode);
 
+        // Set object name.
+        pDepthTestEnableNode->setObjectName(STR_DEPTH_TEST_ENABLE_NODE);
+
         // Add the "depthWriteEnable" node.
         rgEditorElementBool* pDepthWriteEnableNode = new rgEditorElementBool(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_DEPTH_WRITE_ENABLE, &pPipelineDepthStencilStateCreateInfo->depthWriteEnable);
         pDepthStencilStateRoot->AppendChildItem(pDepthWriteEnableNode);
+
+        // Set object name.
+        pDepthWriteEnableNode->setObjectName(STR_DEPTH_WRITE_ENABLE_NODE);
 
         // Add the "depthCompareOp" node.
         const rgEnumValuesVector& compareOpEnumerators = GetCompareOpEnumerators();
         rgEditorElement* pDepthCompareOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_DEPTH_STENCIL_DEPTH_COMPARE_OP, compareOpEnumerators, reinterpret_cast<uint32_t*>(&pPipelineDepthStencilStateCreateInfo->depthCompareOp), m_pParent);
         pDepthStencilStateRoot->AppendChildItem(pDepthCompareOpNode);
 
+        // Set object name.
+        pDepthCompareOpNode->setObjectName(STR_DEPTH_COMPARE_OP_NODE);
+
         // Connect to the enum list widget status signal.
         bool isConnected = connect(pDepthCompareOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pDepthCompareOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
         assert(isConnected);
 
         // Add the "depthBoundsTestEnable" node.
         rgEditorElementBool* pDepthBoundsTestEnableNode = new rgEditorElementBool(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_DEPTH_BOUNDS_TEST_ENABLE, &pPipelineDepthStencilStateCreateInfo->depthBoundsTestEnable);
         pDepthStencilStateRoot->AppendChildItem(pDepthBoundsTestEnableNode);
 
+        // Set object name.
+        pDepthBoundsTestEnableNode->setObjectName(STR_DEPTH_BOUNDS_TEST_ENABLE_NODE);
+
         // Add the "stencilTestEnable" node.
         rgEditorElementBool* pStencilTestEnableNode = new rgEditorElementBool(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_STENCIL_TEST_ENABLE, &pPipelineDepthStencilStateCreateInfo->stencilTestEnable);
         pDepthStencilStateRoot->AppendChildItem(pStencilTestEnableNode);
+
+        // Set object name.
+        pStencilTestEnableNode->setObjectName(STR_STENCIL_TEST_ENABLE_NODE);
 
         // Create the root node for the front stencil op state.
         rgEditorElement* pFrontStencilOpStateNode = new rgEditorElement(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_FRONT);
         InitializeStencilOpState(pFrontStencilOpStateNode, &pPipelineDepthStencilStateCreateInfo->front);
         pDepthStencilStateRoot->AppendChildItem(pFrontStencilOpStateNode);
 
+        // Set object name.
+        pFrontStencilOpStateNode->setObjectName(STR_FRONT_STENCIL_OP_STATE_NODE);
+
         // Create the root node for the back stencil op state.
         rgEditorElement* pBackStencilOpStateNode = new rgEditorElement(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_BACK);
         InitializeStencilOpState(pBackStencilOpStateNode, &pPipelineDepthStencilStateCreateInfo->back);
         pDepthStencilStateRoot->AppendChildItem(pBackStencilOpStateNode);
 
+        // Set object name.
+        pBackStencilOpStateNode->setObjectName(STR_BACK_STENCIL_OP_STATE_NODE);
+
         // Add the "minDepthBounds" node.
         rgEditorElement* pMinDepthBoundsNode = MakeNumericElement(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_MIN_DEPTH_BOUNDS, &pPipelineDepthStencilStateCreateInfo->minDepthBounds);
         pDepthStencilStateRoot->AppendChildItem(pMinDepthBoundsNode);
 
+        // Set object name.
+        pMinDepthBoundsNode->setObjectName(STR_MIN_DEPTH_BOUNDS_NODE);
+
         // Add the "maxDepthBounds" node.
         rgEditorElement* pMaxDepthBoundsNode = MakeNumericElement(pDepthStencilStateRoot, STR_VULKAN_DEPTH_STENCIL_MAX_DEPTH_BOUNDS, &pPipelineDepthStencilStateCreateInfo->maxDepthBounds);
         pDepthStencilStateRoot->AppendChildItem(pMaxDepthBoundsNode);
+
+        // Set object name.
+        pMaxDepthBoundsNode->setObjectName(STR_MAX_DEPTH_BOUNDS_NODE);
     }
 }
 
@@ -1801,31 +2107,53 @@ void rgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(rgEditorEle
         rgEditorElement* pColorBlendStateRoot = new rgEditorElement(pRootElement, STR_VULKAN_PIPELINE_MEMBER_PCOLOR_BLEND_STATE);
         pRootElement->AppendChildItem(pColorBlendStateRoot);
 
+        // Set object name.
+        pColorBlendStateRoot->setObjectName(STR_COLOR_BLEND_STATE_ROOT);
+
         // Add the "flags" node.
         rgEditorElement* pFlagsItem = MakeNumericElement(pColorBlendStateRoot, STR_VULKAN_PIPELINE_MEMBER_FLAGS, &pPipelineColorBlendStateCreateInfo->flags);
         pColorBlendStateRoot->AppendChildItem(pFlagsItem);
 
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
+
         // Add the "logicOpEnable" node.
         rgEditorElementBool* pLogicOpEnableNode = new rgEditorElementBool(pColorBlendStateRoot, STR_VULKAN_COLOR_BLEND_STATE_LOGIC_OP_ENABLE, &pPipelineColorBlendStateCreateInfo->logicOpEnable);
         pColorBlendStateRoot->AppendChildItem(pLogicOpEnableNode);
+
+        // Set object name.
+        pLogicOpEnableNode->setObjectName(STR_LOGIC_OP_ENABLE_NODE);
 
         // Add the "logicOp" node.
         const rgEnumValuesVector& logicOpEnumerators = GetLogicOpEnumerators();
         rgEditorElement* pLogicOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_STATE_LOGIC_OP, logicOpEnumerators, reinterpret_cast<uint32_t*>(&pPipelineColorBlendStateCreateInfo->logicOp));
         pColorBlendStateRoot->AppendChildItem(pLogicOpNode);
 
+        // Set object name.
+        pLogicOpNode->setObjectName(STR_LOGIC_OP_NODE);
+
         // Connect to the enum list widget status signal.
         bool isConnected = connect(pLogicOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(isConnected);
 
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pLogicOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
+        assert(isConnected);
+
         // Attachment array:
-            // Create the attachments array root item.
-        rgEditorElementArray* pAttachmentsRootItem = new rgEditorElementArray(pColorBlendStateRoot, STR_VULKAN_COLOR_BLEND_STATE_P_ATTACHMENTS,
+        // Create the attachments array root item.
+        rgEditorElementArrayElementAdd* pAttachmentsRootItem = new rgEditorElementArrayElementAdd(pColorBlendStateRoot, STR_VULKAN_COLOR_BLEND_STATE_P_ATTACHMENTS,
             [=](int elementIndex) { RemoveElement(pPipelineColorBlendStateCreateInfo->pAttachments, pPipelineColorBlendStateCreateInfo->attachmentCount, elementIndex); });
+
+        // Set object name.
+        pAttachmentsRootItem->setObjectName(STR_ATTACHMENTS_ROOT_ITEM);
 
         // Create the attachmentCount member.
         rgEditorElement* pColorBlendAttachmentStateCountItem = MakeNumericElement(nullptr, STR_VULKAN_COLOR_BLEND_STATE_ATTACHMENT_COUNT,
             &pPipelineColorBlendStateCreateInfo->attachmentCount, [=] { HandlePipelineColorBlendAttachmentCountChanged(pAttachmentsRootItem, pPipelineColorBlendStateCreateInfo); });
+
+        // Set object name.
+        pColorBlendAttachmentStateCountItem->setObjectName(STR_COLOR_BLEND_ATTACHEMENT_STATE_COUNT_ITEM);
 
         // Add the attachment array node.
         pColorBlendStateRoot->AppendChildItem(pAttachmentsRootItem);
@@ -1839,6 +2167,9 @@ void rgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(rgEditorEle
         // Add the blend constants array root node.
         rgEditorElement* pBlendConstantsRootNode = new rgEditorElement(pColorBlendStateRoot, STR_VULKAN_COLOR_BLEND_STATE_BLEND_CONSTANTS);
 
+        // Set object name.
+        pBlendConstantsRootNode->setObjectName(STR_BLEND_CONSTANTS_ROOT_NODE);
+
         // Add the blendConstants array item nodes.
         for (uint32_t blendConstantIndex = 0; blendConstantIndex < 4; ++blendConstantIndex)
         {
@@ -1850,6 +2181,10 @@ void rgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(rgEditorEle
 
             rgEditorElement* pBlendConstantNode = MakeNumericElement(pBlendConstantsRootNode, elementNameStream.str().c_str(), &pPipelineColorBlendStateCreateInfo->blendConstants[blendConstantIndex]);
             pBlendConstantsRootNode->AppendChildItem(pBlendConstantNode);
+
+            // Set object name.
+            QString name = STR_BLEND_CONSTANT_NODE + QString::number(blendConstantIndex);
+            pBlendConstantNode->setObjectName(name);
         }
 
         pColorBlendStateRoot->AppendChildItem(pBlendConstantsRootNode);
@@ -1880,6 +2215,9 @@ void rgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             rgEditorElementBool* pBlendEnableNode = new rgEditorElementBool(pRootElement, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_BLEND_ENABLE, &pOffsetColorBlendAttachmentState->blendEnable);
             pRootElement->AppendChildItem(pBlendEnableNode);
 
+            // Set object name.
+            pBlendEnableNode->setObjectName(STR_BLEND_ENABLE_NODE);
+
             // Get the blend factor enumerators.
             const rgEnumValuesVector& blendFactorEnumerators = GetBlendFactorEnumerators();
 
@@ -1890,48 +2228,90 @@ void rgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             rgEditorElement* pSrcColorBlendFactorNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_SRC_COLOR_BLEND_FACTOR, blendFactorEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->srcColorBlendFactor));
             pRootElement->AppendChildItem(pSrcColorBlendFactorNode);
 
+            // Set object name.
+            pSrcColorBlendFactorNode->setObjectName(STR_SRC_COLOR_BLEND_FACTOR_NODE);
+
             // Connect to the enum list widget status signal.
             bool isConnected = connect(pSrcColorBlendFactorNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pSrcColorBlendFactorNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "dstColorBlendFactor" node.
             rgEditorElement* pDstColorBlendFactorNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_DST_COLOR_BLEND_FACTOR, blendFactorEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->dstColorBlendFactor));
             pRootElement->AppendChildItem(pDstColorBlendFactorNode);
 
+            // Set object name.
+            pDstColorBlendFactorNode->setObjectName(STR_DST_COLOR_BLEND_FACTOR_NODE);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pDstColorBlendFactorNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pDstColorBlendFactorNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "colorBlendOp" node.
             rgEditorElement* pColorBlendOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_COLOR_BLEND_OP, blendOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->colorBlendOp));
             pRootElement->AppendChildItem(pColorBlendOpNode);
 
+            // Set object name.
+            pColorBlendOpNode->setObjectName(STR_COLOR_BLEND_OP_NODE);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pColorBlendOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pColorBlendOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "srcAlphaBlendFactor" node.
             rgEditorElement* pSrcAlphaBlendFactorNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_SRC_ALPHA_BLEND_FACTOR, blendFactorEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->srcAlphaBlendFactor));
             pRootElement->AppendChildItem(pSrcAlphaBlendFactorNode);
 
+            // Set object name.
+            pSrcAlphaBlendFactorNode->setObjectName(STR_SRC_ALPHA_BLEND_FACTOR_NODE);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pSrcAlphaBlendFactorNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pSrcAlphaBlendFactorNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "dstAlphaBlendFactor" node.
             rgEditorElement* pDstAlphaBlendFactorNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_DST_ALPHA_BLEND_FACTOR, blendFactorEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->dstAlphaBlendFactor));
             pRootElement->AppendChildItem(pDstAlphaBlendFactorNode);
 
+            // Set object name.
+            pDstAlphaBlendFactorNode->setObjectName(STR_DST_ALPHA_BLEND_FACTOR_NODE);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pDstAlphaBlendFactorNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pDstAlphaBlendFactorNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "alphaBlendOp" node.
             rgEditorElement* pAlphaBlendOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_ALPHA_BLEND_OP, blendOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->alphaBlendOp));
             pRootElement->AppendChildItem(pAlphaBlendOpNode);
 
+            // Set object name.
+            pAlphaBlendOpNode->setObjectName(STR_ALPHA_BLEND_OP_NODE);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pAlphaBlendOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pAlphaBlendOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "colorWriteMask" member values.
@@ -1939,8 +2319,15 @@ void rgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             rgEditorElement* pColorComponentWriteMask = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_COLOR_WRITE_MASK, colorComponentFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->colorWriteMask), true);
             pRootElement->AppendChildItem(pColorComponentWriteMask);
 
+            // Set object name.
+            pColorComponentWriteMask->setObjectName(STR_COLOR_COMPONENT_WRITE_MASK);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pColorComponentWriteMask, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pColorComponentWriteMask), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
         }
     }
@@ -1955,6 +2342,9 @@ rgEditorElement* rgPipelineStateModelVulkan::InitializeComputePipelineCreateInfo
     {
         // The create info root node that all other create info elements are attached to.
         pCreateInfoRootNode = new rgEditorElement(pParent, STR_VULKAN_COMPUTE_PIPELINE_STATE);
+
+        // Set object name.
+        pCreateInfoRootNode->setObjectName(STR_CREATE_INFO_ROOT_NODE);
 
         // Add the Compute Pipeline create info root node.
         InitializeVkComputePipelineCreateInfo(pCreateInfoRootNode, m_pComputePipelineState);
@@ -1988,7 +2378,7 @@ bool rgPipelineStateModelVulkan::LoadPipelineStateFile(QWidget* pParent, const s
             rgPsoGraphicsVulkan* pGraphicsPipelineState = nullptr;
 
             // Load the graphics pipeline state file.
-            isOk = rgPsoSerializerVulkan::ReadStructureFromFile(psoFilePath, &pGraphicsPipelineState, errorString);
+            isOk = RgPsoSerializerVulkan::ReadStructureFromFile(psoFilePath, &pGraphicsPipelineState, errorString);
 
             assert(isOk);
             if (isOk)
@@ -2009,7 +2399,7 @@ bool rgPipelineStateModelVulkan::LoadPipelineStateFile(QWidget* pParent, const s
             rgPsoComputeVulkan* pComputePipelineState = nullptr;
 
             // Load the compute pipeline state file.
-            isOk = rgPsoSerializerVulkan::ReadStructureFromFile(psoFilePath, &pComputePipelineState, errorString);
+            isOk = RgPsoSerializerVulkan::ReadStructureFromFile(psoFilePath, &pComputePipelineState, errorString);
 
             assert(isOk);
             if (isOk)
@@ -2033,8 +2423,7 @@ bool rgPipelineStateModelVulkan::LoadPipelineStateFile(QWidget* pParent, const s
     }
     catch (...)
     {
-        errorString = STR_ERR_FAILED_TO_READ_PIPELINE_STATE_FILE;
-        rgUtils::ShowErrorMessageBox(errorString.c_str());
+        errorString = STR_ERR_CANNOT_FAILED_TO_LOAD_PIPELINE_STATE_FILE;
     }
 
     return isOk;
@@ -2055,12 +2444,12 @@ bool rgPipelineStateModelVulkan::SavePipelineStateFile(const std::string& psoFil
             if (m_pipelineType == rgPipelineType::Graphics)
             {
                 // Save the graphics pipeline state file.
-                isOk = rgPsoSerializerVulkan::WriteStructureToFile(m_pGraphicsPipelineState, psoFilePath, errorString);
+                isOk = RgPsoSerializerVulkan::WriteStructureToFile(m_pGraphicsPipelineState, psoFilePath, errorString);
             }
             else if (m_pipelineType == rgPipelineType::Compute)
             {
                 // Save the compute pipeline state file.
-                isOk = rgPsoSerializerVulkan::WriteStructureToFile(m_pComputePipelineState, psoFilePath, errorString);
+                isOk = RgPsoSerializerVulkan::WriteStructureToFile(m_pComputePipelineState, psoFilePath, errorString);
             }
             else
             {
@@ -2096,18 +2485,31 @@ void rgPipelineStateModelVulkan::InitializeVkComputePipelineCreateInfo(rgEditorE
             rgEditorElement* pVkComputePipelineCreateInfoRoot = new rgEditorElement(pRootElement, STR_VULKAN_COMPUTE_PIPELINE_CREATE_INFO);
             pRootElement->AppendChildItem(pVkComputePipelineCreateInfoRoot);
 
+            // Set object name.
+            pVkComputePipelineCreateInfoRoot->setObjectName(STR_VK_COMPUTE_PIPELINE_CREATE_INFO_ROOT);
+
             // Add the "flags" member.
             const rgEnumValuesVector& pipelineFlagsEnumerators = GetPipelineCreateFlagEnumerators();
             rgEditorElement* pFlagsItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_FLAGS, pipelineFlagsEnumerators, reinterpret_cast<uint32_t*>(&pVkComputePipelineCreateInfo->flags), true);
             pVkComputePipelineCreateInfoRoot->AppendChildItem(pFlagsItem);
 
+            // Set object name.
+            pFlagsItem->setObjectName(STR_FLAGS_ITEM);
+
             // Connect to the flags enum list widget status signal.
             bool isConnected = connect(pFlagsItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pFlagsItem), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "basePipelineIndex" member.
             rgEditorElement* pBasePipelineIndexCreateInfo = MakeNumericElement(pVkComputePipelineCreateInfoRoot, STR_VULKAN_PIPELINE_MEMBER_BASE_INDEX, &pVkComputePipelineCreateInfo->basePipelineIndex);
             pVkComputePipelineCreateInfoRoot->AppendChildItem(pBasePipelineIndexCreateInfo);
+
+            // Set object name.
+            pBasePipelineIndexCreateInfo->setObjectName(STR_BASE_PIPELINE_INDEX_CREATE_INFO);
         }
     }
 }
@@ -2120,18 +2522,30 @@ void rgPipelineStateModelVulkan::InitializePipelineLayoutCreateInfo(rgEditorElem
         rgEditorElement* pPipelineLayoutCreateInfoRoot = new rgEditorElement(pRootElement, STR_VULKAN_PIPELINE_LAYOUT_CREATE_INFO);
         pRootElement->AppendChildItem(pPipelineLayoutCreateInfoRoot);
 
+        // Set object name.
+        pPipelineLayoutCreateInfoRoot->setObjectName(STR_PIPELINE_LAYOUT_CREATE_INFO_ROOT);
+
         // Add the "flags" member.
         rgEditorElement* pFlagsItem = MakeNumericElement(pPipelineLayoutCreateInfoRoot, STR_VULKAN_PIPELINE_MEMBER_FLAGS, &pPipelineLayoutCreateInfo->flags);
         pPipelineLayoutCreateInfoRoot->AppendChildItem(pFlagsItem);
 
-    // Descriptor Set Layout array:
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
+
+        // Descriptor Set Layout array:
         // Create the layout array root item.
-        rgEditorElementArray* pDescriptorSetLayoutsRootItem = new rgEditorElementArray(pPipelineLayoutCreateInfoRoot, STR_VULKAN_PIPELINE_LAYOUT_P_SET_LAYOUTS,
+        rgEditorElementArrayElementAdd* pDescriptorSetLayoutsRootItem = new rgEditorElementArrayElementAdd(pPipelineLayoutCreateInfoRoot, STR_VULKAN_PIPELINE_LAYOUT_P_SET_LAYOUTS,
             [=](int elementIndex) { RemoveElement(pPipelineLayoutCreateInfo->pSetLayouts, pPipelineLayoutCreateInfo->setLayoutCount, elementIndex); });
+
+        // Set object name.
+        pDescriptorSetLayoutsRootItem->setObjectName(STR_DESCRIPTOR_SET_LAYOUTS_ROOT_ITEM);
 
         // Create the setLayoutCount member.
         rgEditorElement* pDescriptorSetLayoutCountItem = MakeNumericElement(nullptr, STR_VULKAN_PIPELINE_LAYOUT_DESCRIPTOR_SET_LAYOUT_COUNT,
             &pPipelineLayoutCreateInfo->setLayoutCount, [=] { HandlePipelineLayoutDescriptorSetLayoutCountChanged(pDescriptorSetLayoutsRootItem, pPipelineLayoutCreateInfo); });
+
+        // Set object name.
+        pDescriptorSetLayoutCountItem->setObjectName(STR_DESCRIPTOR_SET_LAYOUT_COUNT_ITEM);
 
         // Provide the element used to track the dimension of the Descriptor Set Layouts array.
         pDescriptorSetLayoutsRootItem->SetArraySizeElement(static_cast<rgEditorElementNumeric<uint32_t>*>(pDescriptorSetLayoutCountItem));
@@ -2142,14 +2556,20 @@ void rgPipelineStateModelVulkan::InitializePipelineLayoutCreateInfo(rgEditorElem
         // Add the descriptor set layouts array node.
         pPipelineLayoutCreateInfoRoot->AppendChildItem(pDescriptorSetLayoutsRootItem);
 
-    // Push Constants array:
+        // Push Constants array:
         // Create the push constants array root item.
-        rgEditorElementArray* pPushConstantsArrayRootItem = new rgEditorElementArray(pPipelineLayoutCreateInfoRoot, STR_VULKAN_PIPELINE_LAYOUT_P_PUSH_CONSTANT_RANGES,
+        rgEditorElementArrayElementAdd* pPushConstantsArrayRootItem = new rgEditorElementArrayElementAdd(pPipelineLayoutCreateInfoRoot, STR_VULKAN_PIPELINE_LAYOUT_P_PUSH_CONSTANT_RANGES,
             [=](int elementIndex) { RemoveElement(pPipelineLayoutCreateInfo->pPushConstantRanges, pPipelineLayoutCreateInfo->pushConstantRangeCount, elementIndex); });
+
+        // Set object name.
+        pPushConstantsArrayRootItem->setObjectName(STR_PUSH_CONSTANT_ARRAY_ROOT_ITEM);
 
         // Create the pushConstantRangeCount member.
         rgEditorElement* pPushConstantsCountItem = MakeNumericElement(nullptr, STR_VULKAN_PIPELINE_LAYOUT_PUSH_CONSTANT_RANGE_COUNT,
             &pPipelineLayoutCreateInfo->pushConstantRangeCount, [=] { HandlePushConstantsCountChanged(pPushConstantsArrayRootItem, pPipelineLayoutCreateInfo); });
+
+        // Set object name.
+        pPushConstantsCountItem->setObjectName(STR_PUSH_CONSTANTS_COUNT_ITEM);
 
         // Provide the element used to track the dimension of the Push Constants array.
         pPushConstantsArrayRootItem->SetArraySizeElement(static_cast<rgEditorElementNumeric<uint32_t>*>(pPushConstantsCountItem));
@@ -2173,18 +2593,31 @@ void rgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfo(rgEdito
         rgEditorElement* pDescriptorSetLayoutFlagsNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_FLAGS, descriptorSetLayoutCreateFlags, reinterpret_cast<uint32_t*>(&pDescriptorSetLayoutCreateInfo->flags), true);
         pRootElement->AppendChildItem(pDescriptorSetLayoutFlagsNode);
 
+        // Set object name.
+        pDescriptorSetLayoutFlagsNode->setObjectName(STR_DESCRIPTOR_SET_LAYOUT_FLAGS_NODE);
+
         // Connect to the enum list widget status signal.
         bool isConnected = connect(pDescriptorSetLayoutFlagsNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(isConnected);
 
+        // Connect the shortcut hot key signal.
+        isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pDescriptorSetLayoutFlagsNode), &rgEditorElementEnum::HotKeyPressedSignal);
+        assert(isConnected);
+
         // Binding array:
-            // Create the binding array root item.
-        rgEditorElementArray* pDescriptorSetLayoutBindingsRootItem = new rgEditorElementArray(pRootElement, STR_VULKAN_PIPELINE_LAYOUT_DESCRIPTOR_SET_LAYOUT_P_BINDINGS,
+        // Create the binding array root item.
+        rgEditorElementArrayElementAdd* pDescriptorSetLayoutBindingsRootItem = new rgEditorElementArrayElementAdd(pRootElement, STR_VULKAN_PIPELINE_LAYOUT_DESCRIPTOR_SET_LAYOUT_P_BINDINGS,
             [=](int elementIndex) { RemoveElement(pDescriptorSetLayoutCreateInfo->pBindings, pDescriptorSetLayoutCreateInfo->bindingCount, elementIndex); });
+
+        // Set object name.
+        pDescriptorSetLayoutBindingsRootItem->setObjectName(STR_DESCRIPTOR_SET_LAYOUT_BINDINGS_ROOT_ITEM);
 
         // Create the bindingCount member.
         rgEditorElement* pDescriptorSetBindingCountItem = MakeNumericElement(nullptr, STR_VULKAN_PIPELINE_LAYOUT_DESCRIPTOR_SET_LAYOUT_BINDING_COUNT,
             &pDescriptorSetLayoutCreateInfo->bindingCount, [=] { HandleDescriptorSetLayoutBindingCountChanged(pDescriptorSetLayoutBindingsRootItem, pDescriptorSetLayoutCreateInfo); });
+
+        // Set object name.
+        pDescriptorSetBindingCountItem->setObjectName(STR_DESCRIPTOR_SET_BINDING_COUNT_ITEM);
 
         // Provide the element used to track the dimension of the pDescriptorSetBindings array.
         pDescriptorSetLayoutBindingsRootItem->SetArraySizeElement(static_cast<rgEditorElementNumeric<uint32_t>*>(pDescriptorSetBindingCountItem));
@@ -2241,26 +2674,46 @@ void rgPipelineStateModelVulkan::InitializeDescriptorSetLayoutBinding(rgEditorEl
             rgEditorElement* pDescriptorSetLayoutBindingIndexNode = MakeNumericElement(pRootElement, STR_VULKAN_DESCRIPTOR_SET_LAYOUT_BINDING, &pOffsetDescriptorSetLayout->binding);
             pRootElement->AppendChildItem(pDescriptorSetLayoutBindingIndexNode);
 
+            // Set object name.
+            pDescriptorSetLayoutBindingIndexNode->setObjectName(STR_DESCRIPTOR_SET_LAYOUT_BINDING_INDEX_NODE);
+
             // Add the "descriptorType" node.
             const rgEnumValuesVector& descriptorTypeEnumerators = GetDescriptorTypeEnumerators();
             rgEditorElement* pDescriptorTypeNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_DESCRIPTOR_SET_LAYOUT_BINDING_DESCRIPTOR_TYPE, descriptorTypeEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDescriptorSetLayout->descriptorType));
             pRootElement->AppendChildItem(pDescriptorTypeNode);
 
+            // Set object name.
+            pDescriptorTypeNode->setObjectName(STR_DESCRIPTOR_TYPE_NODE);
+
             // Connect to the enum list widget status signal.
             bool isConnected = connect(pDescriptorTypeNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pDescriptorTypeNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "descriptorCount" node.
             rgEditorElement* pDescriptorSetLayoutBindingCountNode = MakeNumericElement(pRootElement, STR_VULKAN_DESCRIPTOR_SET_LAYOUT_BINDING_DESCRIPTOR_COUNT, &pOffsetDescriptorSetLayout->descriptorCount);
             pRootElement->AppendChildItem(pDescriptorSetLayoutBindingCountNode);
 
+            // Set object name.
+            pDescriptorSetLayoutBindingCountNode->setObjectName(STR_DESCRIPTION_SET_LAYOUT_BINDING_COUNT_NODE);
+
             // Add the "stageFlags" member node.
             const rgEnumValuesVector& stageFlagEnumerators = GetShaderStageFlagEnumerators();
             rgEditorElement* pStageFlagsNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_LAYOUT_STAGE_FLAGS, stageFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDescriptorSetLayout->stageFlags), true);
             pRootElement->AppendChildItem(pStageFlagsNode);
 
+            // Set object name.
+            pStageFlagsNode->setObjectName(STR_STAGE_FLAGS_NODE);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pStageFlagsNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pStageFlagsNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
         }
     }
@@ -2279,6 +2732,9 @@ void rgPipelineStateModelVulkan::InitializeDescriptorSetLayout(rgEditorElement* 
             // Add the "pDescriptorSetLayout" handle member.
             rgEditorElement* pDescriptorSetLayoutHandleNode = MakeNumericElement(pRootElement, STR_VULKAN_DESCRIPTOR_SET_LAYOUT_HANDLE, reinterpret_cast<uint32_t*>(pOffsetDescriptorSetLayout));
             pRootElement->AppendChildItem(pDescriptorSetLayoutHandleNode);
+
+            // Set object name.
+            pDescriptorSetLayoutHandleNode->setObjectName(STR_DESCRIPTOR_SET_LAYOUT_HANDLE_NODE);
         }
     }
 }
@@ -2298,17 +2754,30 @@ void rgPipelineStateModelVulkan::InitializePushConstantRange(rgEditorElement* pR
             rgEditorElement* pStageFlagsNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_LAYOUT_STAGE_FLAGS, stageFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetPushConstant->stageFlags), true);
             pRootElement->AppendChildItem(pStageFlagsNode);
 
+            // Set object name.
+            pStageFlagsNode->setObjectName(STR_STAGE_FLAGS_NODE);
+
             // Connect to the enum list widget status signal.
             bool isConnected = connect(pStageFlagsNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pStageFlagsNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "offset" member.
             rgEditorElement* pOffsetNode = MakeNumericElement(pRootElement, STR_VULKAN_PIPELINE_LAYOUT_PUSH_CONSTANT_OFFSET, &pOffsetPushConstant->offset);
             pRootElement->AppendChildItem(pOffsetNode);
 
+            // Set object name.
+            pOffsetNode->setObjectName(STR_OFFSET_NODE);
+
             // Add the "size" member.
             rgEditorElement* pSizeNode = MakeNumericElement(pRootElement, STR_VULKAN_PIPELINE_LAYOUT_PUSH_CONSTANT_SIZE, &pOffsetPushConstant->size);
             pRootElement->AppendChildItem(pSizeNode);
+
+            // Set object name.
+            pSizeNode->setObjectName(STR_SIZE_NODE);
         }
     }
 }
@@ -2321,18 +2790,30 @@ void rgPipelineStateModelVulkan::InitializeRenderPassCreateInfo(rgEditorElement*
         rgEditorElement* pRenderPassCreateInfoRoot = new rgEditorElement(pRootElement, STR_VULKAN_RENDER_PASS_CREATE_INFO);
         pRootElement->AppendChildItem(pRenderPassCreateInfoRoot);
 
+        // Set object name.
+        pRenderPassCreateInfoRoot->setObjectName(STR_RENDER_PASS_CREATE_INFO_ROOT);
+
         // Add the "flags" member.
         rgEditorElement* pFlagsItem = MakeNumericElement(pRenderPassCreateInfoRoot, STR_VULKAN_PIPELINE_MEMBER_FLAGS, &pRenderPassCreateInfo->flags);
         pRenderPassCreateInfoRoot->AppendChildItem(pFlagsItem);
 
-    // Attachment array:
+        // Set object name.
+        pFlagsItem->setObjectName(STR_FLAGS_ITEM);
+
+        // Attachment array:
         // Create the attachments array root item.
-        rgEditorElementArray* pAttachmentsRootItem = new rgEditorElementArray(pRenderPassCreateInfoRoot, STR_VULKAN_RENDER_PASS_P_ATTACHMENTS,
+        rgEditorElementArrayElementAdd* pAttachmentsRootItem = new rgEditorElementArrayElementAdd(pRenderPassCreateInfoRoot, STR_VULKAN_RENDER_PASS_P_ATTACHMENTS,
             [=](int elementIndex) { RemoveElement(pRenderPassCreateInfo->pAttachments, pRenderPassCreateInfo->attachmentCount, elementIndex); });
+
+        // Set object name.
+        pAttachmentsRootItem->setObjectName(STR_COLOR_ATTACHMENTS_ROOT_ITEM);
 
         // Create the attachmentCount member.
         rgEditorElement* pAttachmentCountItem = MakeNumericElement(nullptr, STR_VULKAN_RENDER_PASS_ATTACHMENT_COUNT,
             &pRenderPassCreateInfo->attachmentCount, [=] { HandleRenderPassAttachmentCountChanged(pAttachmentsRootItem, pRenderPassCreateInfo); });
+
+        // Set object name.
+        pAttachmentCountItem->setObjectName(STR_ATTACHMENT_COUNT_ITEM);
 
         // Add the attachment array node.
         pRenderPassCreateInfoRoot->AppendChildItem(pAttachmentsRootItem);
@@ -2343,9 +2824,9 @@ void rgPipelineStateModelVulkan::InitializeRenderPassCreateInfo(rgEditorElement*
         // Initialize the pAttachments rows.
         HandleRenderPassAttachmentCountChanged(pAttachmentsRootItem, pRenderPassCreateInfo, true);
 
-    // Subpass array:
+        // Subpass array:
         // Create the subpasses array root item.
-        rgEditorElementArray* pSubpassRootItem = new rgEditorElementArray(pRenderPassCreateInfoRoot, STR_VULKAN_RENDER_PASS_P_SUBPASSES,
+        rgEditorElementArrayElementAdd* pSubpassRootItem = new rgEditorElementArrayElementAdd(pRenderPassCreateInfoRoot, STR_VULKAN_RENDER_PASS_P_SUBPASSES,
             [=](int elementIndex)
         {
             // Remove the artificial "resolveAttachmentCount" that was configured per-subpass.
@@ -2369,9 +2850,15 @@ void rgPipelineStateModelVulkan::InitializeRenderPassCreateInfo(rgEditorElement*
             RemoveElement(pRenderPassCreateInfo->pSubpasses, pRenderPassCreateInfo->subpassCount, elementIndex);
         });
 
+        // Set object name.
+        pSubpassRootItem->setObjectName(STR_SUBPASS_ROOT_ITEM);
+
         // Create the subpassCount member.
         rgEditorElement* pSubpassDescriptionCountItem = MakeNumericElement(nullptr, STR_VULKAN_RENDER_PASS_SUBPASS_COUNT,
             &pRenderPassCreateInfo->subpassCount, [=] { HandleRenderPassSubpassCountChanged(pSubpassRootItem, pRenderPassCreateInfo); });
+
+        // Set object name.
+        pSubpassDescriptionCountItem->setObjectName(STR_SUBPASS_DESCRIPTION_COUNT_ITEM);
 
         // Add the pSubpasses array node.
         pRenderPassCreateInfoRoot->AppendChildItem(pSubpassRootItem);
@@ -2382,14 +2869,20 @@ void rgPipelineStateModelVulkan::InitializeRenderPassCreateInfo(rgEditorElement*
         // Initialize the pSubpassDescription rows.
         HandleRenderPassSubpassCountChanged(pSubpassRootItem, pRenderPassCreateInfo, true);
 
-    // Dependency array:
+        // Dependency array:
         // Create the dependency array root item.
-        rgEditorElementArray* pDependenciesRootItem = new rgEditorElementArray(pRenderPassCreateInfoRoot, STR_VULKAN_RENDER_PASS_P_DEPENDENCIES,
+        rgEditorElementArrayElementAdd* pDependenciesRootItem = new rgEditorElementArrayElementAdd(pRenderPassCreateInfoRoot, STR_VULKAN_RENDER_PASS_P_DEPENDENCIES,
             [=](int elementIndex) { RemoveElement(pRenderPassCreateInfo->pDependencies, pRenderPassCreateInfo->dependencyCount, elementIndex); });
+
+        // Set object name.
+        pDependenciesRootItem->setObjectName(STR_DEPENDENCIES_ROOT_ITEM);
 
         // Create the dependencyCount member.
         rgEditorElement* pDependencyDescriptionCountItem = MakeNumericElement(nullptr, STR_VULKAN_RENDER_PASS_DEPENDENCY_COUNT,
             &pRenderPassCreateInfo->dependencyCount, [=] { HandleRenderPassDependencyCountChanged(pDependenciesRootItem, pRenderPassCreateInfo); });
+
+        // Set object name.
+        pDependencyDescriptionCountItem->setObjectName(STR_DEPENDENCY_DESCRIPTION_COUNT_ITEM);
 
         // Add the pDependencies array node.
         pRenderPassCreateInfoRoot->AppendChildItem(pDependenciesRootItem);
@@ -2447,8 +2940,15 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             rgEditorElement* pFlagsElement = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_FLAGS, attachmentDescriptionFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->flags), true);
             pRootElement->AppendChildItem(pFlagsElement);
 
+            // Set object name.
+            pFlagsElement->setObjectName(STR_FLAGS_ELEMENT);
+
             // Connect to the enum list widget status signal.
             bool isConnected = connect(pFlagsElement, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pFlagsElement), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "format" member values.
@@ -2456,21 +2956,38 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             rgEditorElement* pFormatElement = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_VERTEX_FORMAT, formatEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->format));
             pRootElement->AppendChildItem(pFormatElement);
 
+            // Set object name.
+            pFormatElement->setObjectName(STR_FORMAT_ELEMENT);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pFormatElement, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pFormatElement), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "samples" member.
             rgEditorElement* pSamplesItem = MakeNumericElement(pRootElement, STR_VULKAN_RENDER_PASS_ATTACHMENT_SAMPLES, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->samples));
             pRootElement->AppendChildItem(pSamplesItem);
 
+            // Set object name.
+            pSamplesItem->setObjectName(STR_SAMPLES_ITEM);
+
             // Add the "loadOp" member values.
             const rgEnumValuesVector& loadOpEnumerators = GetAttachmentLoadOpEnumerators();
             rgEditorElement* pLoadOpItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_LOAD_OP, loadOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->loadOp));
             pRootElement->AppendChildItem(pLoadOpItem);
 
+            // Set object name.
+            pLoadOpItem->setObjectName(STR_LOAD_OP_ITEM);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pLoadOpItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pLoadOpItem), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "storeOp" member values.
@@ -2478,24 +2995,45 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             rgEditorElement* pStoreOpItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_STORE_OP, storeOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->storeOp));
             pRootElement->AppendChildItem(pStoreOpItem);
 
+            // Set object name.
+            pStoreOpItem->setObjectName(STR_STORE_OP_ITEM);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pStoreOpItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pStoreOpItem), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "stencilLoadOp" member values.
             rgEditorElement* pStencilLoadOpItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_STENCIL_LOAD_OP, loadOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->stencilLoadOp));
             pRootElement->AppendChildItem(pStencilLoadOpItem);
 
+            // Set object name.
+            pStencilLoadOpItem->setObjectName(STR_STENCIL_LOAD_OP_ITEM);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pStencilLoadOpItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pStencilLoadOpItem), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "stencilStoreOp" member values.
             rgEditorElement* pStencilStoreOpItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_STENCIL_STORE_OP, storeOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->stencilStoreOp));
             pRootElement->AppendChildItem(pStencilStoreOpItem);
 
+            // Set object name.
+            pStencilStoreOpItem->setObjectName(STR_STENCIL_STORE_OP_ITEM);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pStencilStoreOpItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pStencilStoreOpItem), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "initialLayout" member values.
@@ -2503,16 +3041,30 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             rgEditorElement* pIinitialLayoutItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_INITIAL_LAYOUT, imageLayoutEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->initialLayout));
             pRootElement->AppendChildItem(pIinitialLayoutItem);
 
+            // Set object name.
+            pIinitialLayoutItem->setObjectName(STR_INITIAL_LAYOUT_ITEM);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pIinitialLayoutItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pIinitialLayoutItem), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "finalLayout" member values.
             rgEditorElement* pFinalLayoutItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_FINAL_LAYOUT, imageLayoutEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->finalLayout));
             pRootElement->AppendChildItem(pFinalLayoutItem);
 
+            // Set object name.
+            pFinalLayoutItem->setObjectName(STR_FINAL_LAYOUT_ITEM);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pFinalLayoutItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pFinalLayoutItem), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
         }
     }
@@ -2533,8 +3085,15 @@ void rgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
             rgEditorElement* pFlags = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_FLAGS, subpassDescriptionFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetSubpassDescription->flags), true);
             pRootElement->AppendChildItem(pFlags);
 
+            // Set object name.
+            pFlags->setObjectName(STR_FLAGS);
+
             // Connect to the enum list widget status signal.
             bool isConnected = connect(pFlags, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pFlags), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "pipelineBindPoint" member.
@@ -2542,19 +3101,32 @@ void rgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
             rgEditorElement* pPipelineBindPointNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_PIPELINE_BIND_POINT, pipelineBindPointEnumerators, reinterpret_cast<uint32_t*>(&pOffsetSubpassDescription->pipelineBindPoint));
             pRootElement->AppendChildItem(pPipelineBindPointNode);
 
+            // Set object name.
+            pPipelineBindPointNode->setObjectName(STR_PIPELINE_BIND_POINT_NODE);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pPipelineBindPointNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pPipelineBindPointNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
 
         // Input attachment array:
             // Create the input attachment array root item.
-            rgEditorElementArray* pInputAttachmentsRootItem = new rgEditorElementArray(pRootElement, STR_VULKAN_RENDER_PASS_SUBPASS_P_INPUT_ATTACHMENTS,
+            rgEditorElementArrayElementAdd* pInputAttachmentsRootItem = new rgEditorElementArrayElementAdd(pRootElement, STR_VULKAN_RENDER_PASS_SUBPASS_P_INPUT_ATTACHMENTS,
                 [=](int elementIndex) { RemoveElement(pOffsetSubpassDescription->pInputAttachments, pOffsetSubpassDescription->inputAttachmentCount, elementIndex); });
+
+            // Set object name.
+            pInputAttachmentsRootItem->setObjectName(STR_INPUT_ATTACHMENTS_ROOT_ITEM);
 
             // Create the input attachment count member.
             rgEditorElement* pInputAttachmentCountNode = MakeNumericElement(nullptr, STR_VULKAN_RENDER_PASS_SUBPASS_INPUT_ATTACHMENT_COUNT,
                 &pOffsetSubpassDescription->inputAttachmentCount, [=] { HandleRenderPassSubpassInputAttachmentCountChanged(pInputAttachmentsRootItem, pOffsetSubpassDescription); });
+
+            // Set object name.
+            pInputAttachmentCountNode->setObjectName(STR_INPUT_ATTACHMENT_COUNT_NODE);
 
             // Add the pInputAttachments array node.
             pRootElement->AppendChildItem(pInputAttachmentsRootItem);
@@ -2567,12 +3139,18 @@ void rgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
 
         // Color attachment and resolve attachment array:
             // Create the color attachment array root item.
-            rgEditorElementArray* pColorAttachmentsRootItem = new rgEditorElementArray(pRootElement, STR_VULKAN_RENDER_PASS_SUBPASS_P_COLOR_ATTACHMENTS,
+            rgEditorElementArrayElementAdd* pColorAttachmentsRootItem = new rgEditorElementArrayElementAdd(pRootElement, STR_VULKAN_RENDER_PASS_SUBPASS_P_COLOR_ATTACHMENTS,
                 [=](int elementIndex) { RemoveElement(pOffsetSubpassDescription->pColorAttachments, pOffsetSubpassDescription->colorAttachmentCount, elementIndex); });
+
+            // Set object name.
+            pColorAttachmentsRootItem->setObjectName(STR_COLOR_ATTACHMENTS_ROOT_ITEM);
 
             // Create the color attachment count member.
             rgEditorElement* pColorAttachmentCountNode = MakeNumericElement(nullptr, STR_VULKAN_RENDER_PASS_SUBPASS_COLOR_ATTACHMENT_COUNT,
                 &pOffsetSubpassDescription->colorAttachmentCount, [=] { HandleRenderPassSubpassColorAttachmentCountChanged(pColorAttachmentsRootItem, pOffsetSubpassDescription); });
+
+            // Set object name.
+            pColorAttachmentCountNode->setObjectName(STR_COLOR_ATTACHMENT_COUNT_NODE);
 
             // Add the pColorAttachments array node.
             pRootElement->AppendChildItem(pColorAttachmentsRootItem);
@@ -2598,7 +3176,7 @@ void rgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
 
         // Resolve attachment array:
             // Create the resolve attachment array root item.
-            rgEditorElementArray* pResolveAttachmentsRootItem = new rgEditorElementArray(pRootElement, STR_VULKAN_RENDER_PASS_SUBPASS_P_RESOLVE_ATTACHMENTS,
+            rgEditorElementArrayElementAdd* pResolveAttachmentsRootItem = new rgEditorElementArrayElementAdd(pRootElement, STR_VULKAN_RENDER_PASS_SUBPASS_P_RESOLVE_ATTACHMENTS,
                 [=](int elementIndex)
             {
                 // Ensure that the element index
@@ -2610,13 +3188,19 @@ void rgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
                 }
             });
 
+            // Set object name.
+            pResolveAttachmentsRootItem->setObjectName(STR_RESOLVE_ATTACHMENTS_ROOT_ITEM);
+
             // Create an artificial resolve attachment count member.
             // This member is not part of the VkSubpassDescription structure, but is required since pResolveAttachments array can be NULL, or equal to colorAttachmentCount.
             rgEditorElement* pResolveAttachmentCountNode = MakeNumericElement(nullptr, STR_VULKAN_RENDER_PASS_SUBPASS_RESOLVE_ATTACHMENT_COUNT,
                 pResolveAttachmentCount, [=]
-            {
-                HandleRenderPassSubpassResolveAttachmentCountChanged(subpassIndex, pResolveAttachmentsRootItem, pOffsetSubpassDescription);
-            });
+                {
+                    HandleRenderPassSubpassResolveAttachmentCountChanged(subpassIndex, pResolveAttachmentsRootItem, pOffsetSubpassDescription);
+                });
+
+            // Set object name.
+            pResolveAttachmentCountNode->setObjectName(STR_RESOLVE_ATTACHMENT_COUNT_NODE);
 
             // Add the pResolveAttachments array node.
             pRootElement->AppendChildItem(pResolveAttachmentsRootItem);
@@ -2641,14 +3225,23 @@ void rgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
             }
             pRootElement->AppendChildItem(pDepthStencilAttachmentsRootItem);
 
-        // Input attachment array:
+            // Set object name.
+            pDepthStencilAttachmentsRootItem->setObjectName(STR_DEPTH_STENCIL_ATTACHMENTS_ROOT_ITEM);
+
+            // Input attachment array:
             // Create the preserveAttachments array root item.
-            rgEditorElementArray* pPreserveInputAttachmentsRootItem = new rgEditorElementArray(pRootElement, STR_VULKAN_RENDER_PASS_SUBPASS_P_PRESERVE_ATTACHMENTS,
+            rgEditorElementArrayElementAdd* pPreserveInputAttachmentsRootItem = new rgEditorElementArrayElementAdd(pRootElement, STR_VULKAN_RENDER_PASS_SUBPASS_P_PRESERVE_ATTACHMENTS,
                 [=](int elementIndex) { RemoveElement(pOffsetSubpassDescription->pPreserveAttachments, pOffsetSubpassDescription->preserveAttachmentCount, elementIndex); });
+
+            // Set object name.
+            pPreserveInputAttachmentsRootItem->setObjectName(STR_PRESERVE_INPUT_ATTACHMENT_ROOT_ITEM);
 
             // Create the preserveAttachment count member.
             rgEditorElement* pPreserveAttachmentCountNode = MakeNumericElement(nullptr, STR_VULKAN_RENDER_PASS_SUBPASS_PRESERVE_ATTACHMENT_COUNT,
                 &pOffsetSubpassDescription->preserveAttachmentCount, [=] { HandleRenderPassSubpassPreserveAttachmentCountChanged(pPreserveInputAttachmentsRootItem, pOffsetSubpassDescription); });
+
+            // Set object name.
+            pPreserveAttachmentCountNode->setObjectName(STR_PRESERVE_ATTACHMENT_COUNT_NODE);
 
             // Add the pPreserveAttachments array node.
             pRootElement->AppendChildItem(pPreserveInputAttachmentsRootItem);
@@ -2725,13 +3318,23 @@ void rgPipelineStateModelVulkan::InitializeAttachmentReference(rgEditorElement* 
             rgEditorElement* pAttachmentNode = MakeNumericElement(pRootElement, STR_VULKAN_RENDER_PASS_SUBPASS_ATTACHMENT_INDEX, &pOffsetAttachmentReference->attachment);
             pRootElement->AppendChildItem(pAttachmentNode);
 
+            // Set object name.
+            pAttachmentNode->setObjectName(STR_ATTACHMENT_NODE);
+
             // Add the "layout" member node.
             const rgEnumValuesVector& imageLayoutEnumerators = GetImageLayoutEnumerators();
             rgEditorElement* pImageLayoutNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_SUBPASS_ATTACHMENT_LAYOUT, imageLayoutEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentReference->layout));
             pRootElement->AppendChildItem(pImageLayoutNode);
 
+            // Set object name.
+            pImageLayoutNode->setObjectName(STR_IMAGE_LAYOUT_NODE);
+
             // Connect to the enum list widget status signal.
             bool isConnected = connect(pImageLayoutNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pImageLayoutNode), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
         }
     }
@@ -2750,6 +3353,9 @@ void rgPipelineStateModelVulkan::InitializePreserveAttachment(rgEditorElement* p
             // Add the "pReserveAttachment" member.
             rgEditorElement* pPreserveAttachmentNode = MakeNumericElement(pRootElement, STR_VULKAN_RENDER_PASS_PRESERVE_ATTACHMENT, reinterpret_cast<uint32_t*>(pOffsetReserveAttachment));
             pRootElement->AppendChildItem(pPreserveAttachmentNode);
+
+            // Set object name.
+            pPreserveAttachmentNode->setObjectName(STR_PRESERVE_ATTACHMENT_NODE);
         }
     }
 }
@@ -2768,9 +3374,15 @@ void rgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             rgEditorElement* pSrcSubpass = MakeNumericElement(pRootElement, STR_VULKAN_RENDER_PASS_DEPENDENCY_SRC_SUBPASS, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->srcSubpass));
             pRootElement->AppendChildItem(pSrcSubpass);
 
+            // Set object name.
+            pSrcSubpass->setObjectName(STR_SRC_SUBPASS);
+
             // Add the "dstSubpass" member.
             rgEditorElement* pDstSubpass = MakeNumericElement(pRootElement, STR_VULKAN_RENDER_PASS_DEPENDENCY_DST_SUBPASS, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->dstSubpass));
             pRootElement->AppendChildItem(pDstSubpass);
+
+            // Set object name.
+            pDstSubpass->setObjectName(STR_DST_SUBPASS);
 
             // Get the stage flag enumerators.
             const rgEnumValuesVector& stageFlagEnumerators = GetPipelineStageFlagEnumerators();
@@ -2779,16 +3391,30 @@ void rgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             rgEditorElement* pSrcStageMask = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_SRC_STAGE_MASK, stageFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->srcStageMask), true);
             pRootElement->AppendChildItem(pSrcStageMask);
 
+            // Set object name.
+            pSrcStageMask->setObjectName(STR_SRC_STAGE_MASK);
+
             // Connect to the enum list widget status signal.
             bool isConnected = connect(pSrcStageMask, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pSrcStageMask), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "dstStageMask" member.
             rgEditorElement* pDstStageMask = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_DST_STAGE_MASK, stageFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->dstStageMask), true);
             pRootElement->AppendChildItem(pDstStageMask);
 
+            // Set object name.
+            pDstStageMask->setObjectName(STR_DST_STAGE_MASK);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pDstStageMask, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pDstStageMask), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Get the access flag enumerators.
@@ -2798,16 +3424,30 @@ void rgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             rgEditorElement* pSrcAccessMask = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_SRC_ACCESS_MASK, accessFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->srcAccessMask), true);
             pRootElement->AppendChildItem(pSrcAccessMask);
 
+            // Set object name.
+            pSrcAccessMask->setObjectName(STR_SRC_ACCESS_MASK);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pSrcAccessMask, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pSrcAccessMask), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "dstAccessMask" member.
             rgEditorElement* pDstAccessMask = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_DST_ACCESS_MASK, accessFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->dstAccessMask), true);
             pRootElement->AppendChildItem(pDstAccessMask);
 
+            // Set object name.
+            pDstAccessMask->setObjectName(STR_DST_ACCESS_MASK);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pDstAccessMask, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pDstAccessMask), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
 
             // Add the "dependencyFlags" member.
@@ -2815,8 +3455,15 @@ void rgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             rgEditorElement* pDependencyFlags = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_DEPENDENCY_FLAGS, dependencyFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->dependencyFlags), true);
             pRootElement->AppendChildItem(pDependencyFlags);
 
+            // Set object name.
+            pDependencyFlags->setObjectName(STR_DEPENDENCY_FLAGS);
+
             // Connect to the enum list widget status signal.
             isConnected = connect(pDependencyFlags, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            assert(isConnected);
+
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<rgEditorElementEnum*>(pDependencyFlags), &rgEditorElementEnum::HotKeyPressedSignal);
             assert(isConnected);
         }
     }

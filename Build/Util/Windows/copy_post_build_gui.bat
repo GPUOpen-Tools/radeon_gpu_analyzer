@@ -25,6 +25,7 @@ IF NOT exist %OUTPUT_DIR% mkdir %OUTPUT_DIR%
 IF NOT exist %OUTPUT_DIR%\platforms mkdir %OUTPUT_DIR%\platforms
 IF NOT exist %OUTPUT_DIR%\iconengines mkdir %OUTPUT_DIR%\iconengines
 IF NOT exist %OUTPUT_DIR%\imageformats mkdir %OUTPUT_DIR%\imageformats
+IF NOT exist %OUTPUT_DIR%\styles mkdir %OUTPUT_DIR%\styles
 
 rem Copy Qt5 dlls
 IF NOT [%QT_LIB_DIR%]==[] (
@@ -36,6 +37,7 @@ IF NOT [%QT_LIB_DIR%]==[] (
         XCopy /r /d /y "%QT_LIB_DIR%\..\plugins\platforms\qwindowsd.dll" "%OUTPUT_DIR%\platforms\"
         XCopy /r /d /y "%QT_LIB_DIR%\..\plugins\iconengines\qsvgicond.dll" "%OUTPUT_DIR%\iconengines\"
         XCopy /r /d /y "%QT_LIB_DIR%\..\plugins\imageformats\qsvgd.dll" "%OUTPUT_DIR%\imageformats\"
+        XCopy /r /d /y "%QT_LIB_DIR%\..\plugins\styles\qwindowsvistastyled.dll" "%OUTPUT_DIR%\styles\"
         IF DEFINED AUTOMATION (
             XCopy /r /d /y "%QT_LIB_DIR%\Qt5Testd.dll" "%OUTPUT_DIR%\"
         )
@@ -47,6 +49,7 @@ IF NOT [%QT_LIB_DIR%]==[] (
         XCopy /r /d /y "%QT_LIB_DIR%\..\plugins\platforms\qwindows.dll" "%OUTPUT_DIR%\platforms\"
         XCopy /r /d /y "%QT_LIB_DIR%\..\plugins\iconengines\qsvgicon.dll" "%OUTPUT_DIR%\iconengines\"
         XCopy /r /d /y "%QT_LIB_DIR%\..\plugins\imageformats\qsvg.dll" "%OUTPUT_DIR%\imageformats\"
+        XCopy /r /d /y "%QT_LIB_DIR%\..\plugins\styles\qwindowsvistastyle.dll" "%OUTPUT_DIR%\styles\"
         IF DEFINED AUTOMATION (
             XCopy /r /d /y "%QT_LIB_DIR%\Qt5Test.dll" "%OUTPUT_DIR%\"
         )
@@ -55,9 +58,9 @@ IF NOT [%QT_LIB_DIR%]==[] (
 
 rem Copy automation files/folders.
 IF DEFINED AUTOMATION (
-    XCopy /r /e /d /y "..\..\..\..\RGA-Internal\Tests\data" "%OUTPUT_DIR%\data\"
-    XCopy /r /d /y "..\..\..\..\RGA-Internal\Tests-GUI\run.py" "%OUTPUT_DIR%\"
+    XCopy /r /e /d /y "..\..\..\..\RGA-Internal\tests\data" "%OUTPUT_DIR%\data\"
+    XCopy /r /d /y "..\..\..\..\RGA-Internal\tests_gui\run.py" "%OUTPUT_DIR%\"
 )
 
-rem Copy AMDToolsDownloader.
-XCopy /r /d /y "..\..\..\..\Common\Src\UpdateCheckAPI\AMDToolsDownloader\Windows\AMDToolsDownloader.exe" "%OUTPUT_DIR%\"
+rem Copy the Radeon Tools Download Assistant.
+XCopy /r /d /y "..\..\..\..\Common\Src\UpdateCheckAPI\rtda\windows\rtda.exe" "%OUTPUT_DIR%\"

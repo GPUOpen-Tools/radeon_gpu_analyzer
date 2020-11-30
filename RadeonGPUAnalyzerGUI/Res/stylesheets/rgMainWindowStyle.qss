@@ -8,6 +8,26 @@
     background: rgb(51,51,51);
 }
 
+rgMainWindow QMenuBar
+{
+    background: white;
+}
+
+rgMainWindow QMenuBar::item:selected
+{
+    background: rgb(229, 243, 255);
+}
+
+rgMainWindow QMenu::item::selected:disabled
+{
+   background: lightGrey;
+}
+
+rgStatusBar
+{
+    border: none;
+}
+
 /********************************************************************/
 /* Start page link buttons
 /********************************************************************/
@@ -121,6 +141,11 @@ rgSettingsTab #rightFrame > QFrame:focus
 rgSettingsTab #globalSettingsLabel
 {
     background:  rgb(240, 240, 240);
+}
+
+QComboBox::drop-down
+{
+    width: 17px;
 }
 
 /********************************************************************/

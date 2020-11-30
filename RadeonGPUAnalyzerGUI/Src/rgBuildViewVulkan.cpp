@@ -1221,6 +1221,10 @@ void rgBuildViewVulkan::CreatePipelineStateModel()
             bool isConnected = connect(m_pPipelineStateModel, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal, this, &rgBuildViewVulkan::HandleEnumListWidgetStatus);
             assert(isConnected);
 
+            // Connect the shortcut hot key signal.
+            isConnected = connect(this, &rgBuildViewVulkan::HotKeyPressedSignal, m_pPipelineStateModel, &rgPipelineStateModelVulkan::HotKeyPressedSignal);
+            assert(isConnected);
+
             assert(m_pProject != nullptr);
             if (m_pProject != nullptr)
             {

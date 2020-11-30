@@ -36,6 +36,17 @@ rgUnsavedItemsDialog::rgUnsavedItemsDialog(QWidget *pParent)
 
     // Disable selection of items.
     ui.fileListWidget->setSelectionMode(QAbstractItemView::NoSelection);
+
+    // Do not allow the file list widget to have focus.
+    ui.fileListWidget->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+
+    // Set default focus to "Yes" button.
+    ui.yesPushButton->setFocus();
+
+    // Set the tab order.
+    setTabOrder(ui.yesPushButton, ui.noPushButton);
+    setTabOrder(ui.noPushButton, ui.cancelPushButton);
+    setTabOrder(ui.cancelPushButton, ui.yesPushButton);
 }
 
 rgUnsavedItemsDialog::~rgUnsavedItemsDialog()

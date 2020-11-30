@@ -31,6 +31,12 @@ public:
     // Set the visibility of the status bar.
     void SetStatusBarVisibility(bool isVisible);
 
+    // Get the mode push button.
+    rgModePushButton* GetModePushButton();
+
+    // Get the api list tree widget.
+    QTreeWidget* GetApiListTreeWidget();
+
 signals:
     // Signal to indicate API change.
     void ChangeAPIModeSignal(rgProjectAPI api);
@@ -38,12 +44,13 @@ signals:
     // A signal to prompt saving any pending changes.
     void SavePendingChanges();
 
+public slots:
+    // Handler for when the user selects an API mode from the tree widget.
+    void HandleTreeWidgetItemClicked(QTreeWidgetItem* pItem, const int column);
+
 protected slots:
     // Handler for when the mode button is clicked.
     void HandleModePushButtonClicked(bool /*checked */);
-
-    // Handler for when the user selects an API mode from the tree widget.
-    void HandleTreeWidgetItemClicked(QTreeWidgetItem* pItem, const int column);
 
     // Handler for when the user hovers over an item in the tree widget.
     void HandleTreeWidgetItemEntered(QTreeWidgetItem* pItem, const int column);

@@ -31,3 +31,16 @@
     color: white;
 }
 
+/********************************************************************/
+/* Rename Project Dialog
+/********************************************************************/
+
+rgRenameProjectDialog #lineEditProjectName:focus
+{
+    border: 1px solid rgb(18, 152, 0);
+}
+
+rgRenameProjectDialog #lineEditProjectName:hover
+{
+    border: 1px solid rgb(18, 152, 0);
+}

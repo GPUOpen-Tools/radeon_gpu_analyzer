@@ -14,6 +14,7 @@ struct rgProjectVulkan;
 struct rgCliVersionInfo;
 struct rgSourceFileInfo;
 struct rgRecentProject;
+struct rgWindowConfig;
 enum class rgProjectAPI : char;
 enum rgPipelineStage : char;
 
@@ -162,6 +163,12 @@ public:
     // Get the splitter values for the given splitter name.
     bool GetSplitterValues(const std::string& splitterName, std::vector<int>& splitterValues) const;
 
+    // Set the GUI window geometry values.
+    void SetWindowGeometry(int xPos, int yPos, int width, int height, int windowState);
+
+    // Get the GUI window geometry values.
+    void GetWindowGeometry(rgWindowConfig& windowValues) const;
+
     // Set the column visibility based on the supplied vector.
     void SetDisassemblyColumnVisibility(const std::vector<bool>& columnVisibility);
 
@@ -176,6 +183,12 @@ public:
 
     // Get the default app for opening include files.
     std::string GetIncludeFileViewer() const;
+
+    // Set the config file data model version.
+    void SetConfigFileDataModelVersion(const std::string& dataModelVersion);
+
+    // Get the config file data model version.
+    std::string GetConfigFileDataModelVersion() const;
 
     // The delimiter character which is used across the system to build and disassemble argument list.
     static const char RGA_LIST_DELIMITER = ';';
@@ -201,6 +214,12 @@ private:
 
     // Path to the CLI log file.
     std::string m_cliLogFilePath;
+
+    // Current RGA config file data model version.
+    std::string m_configFileDataModelVersion;
+
+    // Current RGA project file data model version.
+    std::string m_projectFileDataModelVersion;
 
     // A flag that indicates if this object has been initialized.
     bool m_isInitialized = false;

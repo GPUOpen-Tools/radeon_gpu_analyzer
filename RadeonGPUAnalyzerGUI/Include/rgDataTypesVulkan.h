@@ -701,7 +701,8 @@ struct rgBuildSettingsVulkan : public rgBuildSettings
         m_isUseHlslIoMappingChecked(other.m_isUseHlslIoMappingChecked),
         m_isEnableValidationLayersChecked(other.m_isEnableValidationLayersChecked),
         m_ICDLocation(other.m_ICDLocation),
-        m_glslangOptions(other.m_glslangOptions)
+        m_glslangOptions(other.m_glslangOptions),
+        m_binaryFileName(other.m_binaryFileName)
     {}
 
     virtual bool HasSameSettings(const rgBuildSettingsVulkan& other) const
@@ -713,7 +714,8 @@ struct rgBuildSettingsVulkan : public rgBuildSettings
             (m_isUseHlslIoMappingChecked == other.m_isUseHlslIoMappingChecked) &&
             (m_isEnableValidationLayersChecked == other.m_isEnableValidationLayersChecked) &&
             (m_ICDLocation == other.m_ICDLocation) &&
-            (m_glslangOptions == other.m_glslangOptions);
+            (m_glslangOptions == other.m_glslangOptions) &&
+            (m_binaryFileName == other.m_binaryFileName);
 
         return isSame;
     }
@@ -725,6 +727,7 @@ struct rgBuildSettingsVulkan : public rgBuildSettings
     bool m_isEnableValidationLayersChecked = false;
     std::string m_ICDLocation;
     std::string m_glslangOptions;
+    std::string m_binaryFileName;
 };
 
 // A clone of an Vulkan project.

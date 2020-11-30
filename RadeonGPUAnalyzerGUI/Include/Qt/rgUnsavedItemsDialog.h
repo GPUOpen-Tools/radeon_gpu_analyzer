@@ -52,5 +52,6 @@ private:
     // Delegate for drawing list items in the file list widget.
     rgUnsavedFileItemDelegate* m_pItemDelegate = nullptr;
 
+protected:
     Ui::rgUnsavedItemsDialog ui;
 };

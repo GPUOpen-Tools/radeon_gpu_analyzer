@@ -99,17 +99,41 @@ private:
         assert(pVersionInfo != nullptr);
         if (pVersionInfo != nullptr)
         {
+            const char* TOKEN_RDNA = "RDNA";
+            const char* TOKEN_VEGA = "Vega";
+
             // Find the set of GPU architectures supported in the current mode.
             auto modeArchitecturesIter = pVersionInfo->m_gpuArchitectures.find(apiMode);
             if (modeArchitecturesIter != pVersionInfo->m_gpuArchitectures.end())
             {
-                // Find the last supported architecture in the list.
-                // The last entries are always the most recently released hardware.
+                // Search for the latest target. Start with RDNA, if not look for Vega. As a fall back
+                // just take the first element.
                 const std::vector<rgGpuArchitecture>& modeArchitectures = modeArchitecturesIter->second;
-                auto lastArchitectureIter = modeArchitectures.rbegin();
+                auto lastArchitectureIter = std::find_if(modeArchitectures.begin(), modeArchitectures.end(),
+                    [&](const rgGpuArchitecture& arch) { return arch.m_architectureName.compare(TOKEN_RDNA) == 0; });
 
-                // Find the last family within the last architecture. This is the latest supported GPU family.
-                const auto& architectureFamilies = lastArchitectureIter->m_gpuFamilies;
+                if (lastArchitectureIter == modeArchitectures.end())
+                {
+                    lastArchitectureIter = std::find_if(modeArchitectures.begin(), modeArchitectures.end(),
+                        [&](const rgGpuArchitecture& arch) { return arch.m_architectureName.compare(TOKEN_VEGA) == 0; });
+                    if (lastArchitectureIter == modeArchitectures.end())
+                    {
+                        // Take the first element.
+                        lastArchitectureIter = modeArchitectures.begin();
+
+                        // We shouldn't be getting here normally.
+                        assert(false);
+                    }
+                }
+
+                // Find the last family within the most recent architecture.
+                std::vector<rgGpuFamily> architectureFamilies = lastArchitectureIter->m_gpuFamilies;
+                std::sort(architectureFamilies.begin(), architectureFamilies.end(),
+                    [&](const rgGpuFamily& family1, const rgGpuFamily& family2)
+                {
+                    return family1.m_familyName < family2.m_familyName;
+                });
+
                 const auto& latestFamily = architectureFamilies.rbegin();
                 const std::string& latestFamilyName = latestFamily->m_familyName;
 
@@ -142,6 +166,9 @@ private:
         if (pRet != nullptr)
         {
             AddDefaultTargetGpus(pRet, STR_MODE_STRING_VULKAN);
+
+            // Set the default output binary file name.
+            pRet->m_binaryFileName = STR_BUILD_SETTINGS_OUTPUT_BINARY_FILE_NAME;
         }
 
         return pRet;
@@ -1098,6 +1125,52 @@ std::string rgConfigManager::GenerateProjectFilepath(const std::string& projectN
     return fullProjectPath;
 }
 
+void rgConfigManager::SetWindowGeometry(int xPos, int yPos, int width, int height, int windowState)
+{
+    assert(m_pGlobalSettings != nullptr);
+    if (m_pGlobalSettings != nullptr)
+    {
+        rgWindowConfig windowConfig = m_pGlobalSettings->m_guiWindowConfig;
+        if (xPos >= 0)
+        {
+            windowConfig.m_windowXPos = xPos;
+        }
+        else
+        {
+            windowConfig.m_windowXPos = 0;
+        }
+        if (yPos >= 0)
+        {
+            windowConfig.m_windowYPos = yPos;
+        }
+        else
+        {
+            windowConfig.m_windowYPos = 0;
+        }
+        windowConfig.m_windowWidth = width;
+        windowConfig.m_windowHeight = height;
+
+        // If the window is maximized, save the state.
+        windowConfig.m_windowState = windowState;
+
+        // Update the window configuration.
+        m_pGlobalSettings->m_guiWindowConfig = windowConfig;
+    }
+}
+
+void rgConfigManager::GetWindowGeometry(rgWindowConfig& windowValues) const
+{
+    assert(m_pGlobalSettings != nullptr);
+    if (m_pGlobalSettings != nullptr)
+    {
+        windowValues.m_windowXPos = m_pGlobalSettings->m_guiWindowConfig.m_windowXPos;
+        windowValues.m_windowYPos = m_pGlobalSettings->m_guiWindowConfig.m_windowYPos;
+        windowValues.m_windowHeight = m_pGlobalSettings->m_guiWindowConfig.m_windowHeight;
+        windowValues.m_windowWidth = m_pGlobalSettings->m_guiWindowConfig.m_windowWidth;
+        windowValues.m_windowState = m_pGlobalSettings->m_guiWindowConfig.m_windowState;
+    }
+}
+
 void rgConfigManager::SetSplitterValues(const std::string& splitterName, const std::vector<int>& splitterValues)
 {
     assert(m_pGlobalSettings != nullptr);
@@ -1192,4 +1265,14 @@ std::string rgConfigManager::GetIncludeFileViewer() const
         ret = m_pGlobalSettings->m_includeFilesViewer;
     }
     return ret;
+}
+
+void rgConfigManager::SetConfigFileDataModelVersion(const std::string& dataModelVersion)
+{
+    m_configFileDataModelVersion = dataModelVersion;
+}
+
+std::string rgConfigManager::GetConfigFileDataModelVersion() const
+{
+    return m_configFileDataModelVersion;
 }

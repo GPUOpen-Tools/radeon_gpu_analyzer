@@ -33,7 +33,7 @@ rgOrderedListDialog::rgOrderedListDialog(const char* pDelimiter, QWidget* pParen
     this->setPalette(pal);
 
     // Set the window icon.
-    setWindowIcon(QIcon(":/icons/rgaIcon.svg"));
+    setWindowIcon(QIcon(":/icons/rgaIcon.png"));
 
     // Set the size of the window.
     QSize size;

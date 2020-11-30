@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
-project (RadeonGPUAnalyzerCLI)
+project (radeon_gpu_analyzer_cli)
 
 # The version number
 set (RadeonGPUAnalyzerCLI_VERSION_MAJOR 2)
@@ -34,7 +34,7 @@ configure_file (
 include_directories("${PROJECT_BINARY_DIR}")
 
 # Include directories
-include_directories("${PROJECT_SOURCE_DIR}/../RadeonGPUAnalyzerBackend/Include/Common")
+include_directories("${PROJECT_SOURCE_DIR}/../RadeonGPUAnalyzerBackend/Src/Common")
 include_directories("${PROJECT_SOURCE_DIR}/../Utils/Include")
 include_directories("${PROJECT_SOURCE_DIR}/../../Common/Src")
 include_directories("${PROJECT_SOURCE_DIR}/../")
@@ -62,7 +62,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 endif()
 
 
-# Source files that are common to Windows and Linux
+# Source files that are common for Windows and Linux
 file(GLOB COMMON_SRC
     "../Utils/Src/*.cpp"
     "Src/*.cpp"
@@ -80,7 +80,7 @@ endif()
 
 # Pick up the source files that are relevant to the platform
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    add_executable(RadeonGPUAnalyzerCLI ${WINDOWS_INC} ${COMMON_SRC} ${WINDOWS_SRC})
+    add_executable(radeon_gpu_analyzer_cli ${WINDOWS_INC} ${COMMON_SRC} ${WINDOWS_SRC})
     if (CMAKE_64BIT_TARGET)
         # 64-bit target
         find_library(BOOST_LIBRARY1 libboost_filesystem-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86_64")
@@ -103,9 +103,9 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         find_library(BOOST_LIBRARY4D libboost_regex-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../Common/Lib/Ext/Boost/boost_1_59_0/lib/VC14/x86")
     endif()
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    # DeviceInfoLib objects are defined in RadeonGPUAnalyzerBackend/CMakeLists.txt
-    add_executable(RadeonGPUAnalyzerCLI ${COMMON_SRC} ${LINUX_SRC} $<TARGET_OBJECTS:DeviceInfoLib>)
-    set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES ENABLE_EXPORTS ON)
+    # DeviceInfoLib objects are defined in radeon_gpu_analyzer_backend/CMakeLists.txt
+    add_executable(radeon_gpu_analyzer_cli ${COMMON_SRC} ${LINUX_SRC} $<TARGET_OBJECTS:DeviceInfoLib>)
+    set_target_properties(radeon_gpu_analyzer_cli PROPERTIES ENABLE_EXPORTS ON)
 
     if(IsDebian)
         # Debian-specific
@@ -150,23 +150,23 @@ endif()
 # Set the name of the executable
 if(AMD_INTERNAL)
     if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga-internal)
+        set_target_properties(radeon_gpu_analyzer_cli PROPERTIES OUTPUT_NAME rga-internal)
     elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         # On Linux we have a launch script that configures the environment prior to launching the executable.
-        set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga-bin-internal)
+        set_target_properties(radeon_gpu_analyzer_cli PROPERTIES OUTPUT_NAME rga-bin-internal)
     endif()
 else()
     if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga)
+        set_target_properties(radeon_gpu_analyzer_cli PROPERTIES OUTPUT_NAME rga)
     elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         # On Linux we have a launch script that configures the environment prior to launching the executable.
-        set_target_properties(RadeonGPUAnalyzerCLI PROPERTIES OUTPUT_NAME rga-bin)
+        set_target_properties(radeon_gpu_analyzer_cli PROPERTIES OUTPUT_NAME rga-bin)
     endif()
 endif()
 
 # Link settings
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools
+    target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools
                            optimized ${BOOST_LIBRARY1}
                            optimized ${BOOST_LIBRARY2}
                            optimized ${BOOST_LIBRARY3}
@@ -183,7 +183,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
                            debug ${SPIRVCROSS_LIBD}
                            general ${UPDATECHECKAPI_LIBS})
 else()
-    target_link_libraries (RadeonGPUAnalyzerCLI RadeonGPUAnalyzerBackend AMDTOSWrappers AMDTBaseTools
+    target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools
                            ${Boost_LIBRARIES} ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB} ${UPDATECHECKAPI_LIBS})
 endif()
 
@@ -197,13 +197,13 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(DEBUG_ARG "-debug")
     set(REL_ARG "")
     # Use Windows path separater to ensure path string is valid for xcopy commands
-    add_custom_command(TARGET RadeonGPUAnalyzerCLI
+    add_custom_command(TARGET radeon_gpu_analyzer_cli
                        POST_BUILD
                        COMMAND ${PROJECT_SOURCE_DIR}/../Build/Util/Windows/copy_post_build_cli.bat ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\ $<$<CONFIG:debug>:-debug> ${INTERNAL_ARG}
                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}\\..\\Build\\Util\\Windows
                       )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    add_custom_command(TARGET RadeonGPUAnalyzerCLI
+    add_custom_command(TARGET radeon_gpu_analyzer_cli
                        POST_BUILD
                        COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/../Build/Util/Linux/copy_post_build_cli.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} ${INTERNAL_ARG}
                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../Build/Util/Linux

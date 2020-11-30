@@ -1,10 +1,10 @@
-# RGA (Radeon GPU Analyzer) #
+# RGA (Radeon™ GPU Analyzer) #
 
-Radeon GPU Analyzer is a compiler and code analysis tool for Vulkan, DirectX, OpenGL and OpenCL. Using this product, you can compile high-level source code for a variety of AMD GPU and APU architectures,
+Radeon GPU Analyzer is a compiler and code analysis tool for Vulkan®, DirectX®, OpenGL® and OpenCL™. Using this product, you can compile high-level source code for a variety of AMD GPU and APU architectures,
 independent of the type of GPU/APU that is physically installed on your system.
 
 You can use RGA to produce the following output:
-* RDNA and GCN ISA disassembly
+* RDNA™ and GCN ISA disassembly
 * Intermediate language disassembly: AMDIL, DXIL and DXBC for DirectX, SPIR-V for Vulkan, LLVM IR for ROCm OpenCL
 * Hardware resource usage statistics, such as register consumption, static memory allocation and more
 * Compiled binaries
@@ -30,7 +30,7 @@ The supported modes by the **command-line tool** are:
 
 ## System Requirements ##
 
-* Windows: 7 or 10, 64-bit. Visual Studio 2015 or later.
+* Windows: 10, 64-bit. Visual Studio 2015 or later.
 * Linux: Ubuntu 18.04, Red Hat 6.4 or later. Build with gcc 4.7.2 or later.
 * Vulkan SDK 1.1.97.0 or later. To download the Vulkan SDK, visit https://vulkan.lunarg.com/
 
@@ -63,13 +63,13 @@ After successfully running the preuild script, open RGA.sln from Build\CMake\VS2
 * RadeonGPUAnalyzerGUI project for the GUI app
 
 Some useful options of the Prebuild script:
-* --vs <VS version>: generate the solution files for a specific Visual Studio version. For example, to target VS 2017, add --vs 2017 to the command.
+* --vs <VS version>: generate the solution files for a specific Visual Studio version. For example, to target VS 2019, add --vs 2019 to the command.
 * --qt <path>: full path to the folder from where you would like the Qt binaries to be retrieved. By default, CMake would try to auto-detect Qt on the system.
 * --vk-include and --vk-lib: full paths to where the Vulkan SDK include and Vulkan lib folders. By default, CMake would try to auto-detect the Vulkan SDK on the system.
 * --cli-only: only build the command line tool (do not build the GUI app)
 * --no-fetch: do not attempt to update the third-party repositories
 
-If you are intending to analyze DirectX shaders using RGA, copy the x64 version of Microsoft's D3D compiler to a subdirectory
+If you are intending to analyze DirectX 11 shaders using RGA, copy the x64 version of Microsoft's D3D compiler to a subdirectory
 named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dll).
 
 -=-
@@ -149,6 +149,13 @@ Run the rga executable.
 
 ## Support ##
 For support, please visit the RGA repository github page: https://github.com/GPUOpen-Tools/RGA
+
+## Style and Format Change ##
+The source code of this product is being reformatted to follow the Google C++ Style Guide https://google.github.io/styleguide/cppguide.html
+
+In the interim you may encounter a mix of both an older C++ coding style, as well as the newer Google C++ Style.
+
+Please refer to the _clang-format file in the root directory of the product for additional style information.
 
 ## License ##
 Radeon GPU Analyzer is licensed under the MIT license. See the License.txt file for complete license information.

@@ -4,3 +4,9 @@ Build/Linux
 Output
 .vscode
 Output_Test
+*.vs
+BuildOutput
+Documentation/build
+*.csproj.user
+obj
+bin

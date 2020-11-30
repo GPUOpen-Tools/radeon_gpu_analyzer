@@ -33,6 +33,22 @@ public:
     virtual std::string GetTitleString() override;
     virtual void SetInitialWidgetFocus() override;
 
+    // Update the generated command line text.
+    // This method is not needed for global settings,
+    // but is a pure virtual method declared in the base
+    // class so we'll just define it here with no code.
+    void UpdateCommandLineText() override {};
+
+    // Check to see if any of the input file line edits is blank.
+    bool IsInputFileBlank() const;
+
+    // Process the blank input file.
+    void ProcessInputFileBlank() const;
+
+signals:
+    // A signal to indicate that one or more of the input file names is empty.
+    void InputFileNameBlankSignal(bool isEmpty);
+
 public slots:
     // Handler for when the pending changes state has changed.
     void HandlePendingChangesStateChanged(bool hasPendingChanges);
@@ -73,8 +89,15 @@ public slots:
     // Handler for when include files viewer text box editing is finished.
     void HandleIncludeFilesViewerEditingFinished();
 
+private slots:
+    // Handler for when the line edits lose focus.
+    void HandleFocusOutEvent();
+
 protected:
     virtual void showEvent(QShowEvent* pEvent) override;
+
+    // The widget used to display all columns available for display in the disassembly table.
+    ListWidget* m_pDisassemblyColumnsListWidget = nullptr;
 
 private:
     // Make the UI reflect the values in the supplied global settings struct.
@@ -111,9 +134,6 @@ private:
     // Update the "All" checkbox text color to grey if it is already checked,
     // to black otherwise.
     void UpdateAllCheckBoxText();
-
-    // The widget used to display all columns available for display in the disassembly table.
-    ListWidget* m_pDisassemblyColumnsListWidget = nullptr;
 
     // A custom event filter for the disassembly columns list widget.
     QObject* m_pDisassemblyColumnsListEventFilter = nullptr;

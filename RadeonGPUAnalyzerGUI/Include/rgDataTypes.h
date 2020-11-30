@@ -109,7 +109,8 @@ struct rgBuildSettings
         m_predefinedMacros(other.m_predefinedMacros),
         m_additionalIncludeDirectories(other.m_additionalIncludeDirectories),
         m_additionalOptions(other.m_additionalOptions),
-        m_compilerPaths(other.m_compilerPaths) {}
+        m_compilerPaths(other.m_compilerPaths),
+        m_binaryFileName(other.m_binaryFileName) {}
 
     virtual bool HasSameSettings(const rgBuildSettings& other) const
     {
@@ -118,6 +119,7 @@ struct rgBuildSettings
             (m_predefinedMacros == other.m_predefinedMacros) &&
             (m_additionalIncludeDirectories == other.m_additionalIncludeDirectories) &&
             (m_additionalOptions == other.m_additionalOptions) &&
+            (m_binaryFileName == other.m_binaryFileName) &&
             (m_compilerPaths == other.m_compilerPaths);
 
         return isSame;
@@ -128,6 +130,7 @@ struct rgBuildSettings
     std::vector<std::string> m_predefinedMacros;
     std::vector<std::string> m_additionalIncludeDirectories;
     std::string              m_additionalOptions;
+    std::string              m_binaryFileName;
 
     // Alternative compiler paths: {bin, include, lib}.
     std::tuple<std::string, std::string, std::string>  m_compilerPaths;
@@ -253,6 +256,9 @@ struct rgProject
 
     // Project clones.
     std::vector<std::shared_ptr<rgProjectClone>> m_clones;
+
+    // Project data model version.
+    std::string m_projectDataModelVersion;
 };
 
 // Splitter config structure for saving/restoring GUI layout.
@@ -263,6 +269,23 @@ struct rgSplitterConfig
 
     // Splitter view sizes.
     std::vector<int> m_splitterValues;
+};
+
+// Window size config structure for saving/restoring GUI window size.
+struct rgWindowConfig
+{
+    // Window position.
+    int m_windowXPos = 0;
+    int m_windowYPos = 0;
+
+    // Window width.
+    int m_windowWidth = 0;
+
+    // Window height.
+    int m_windowHeight = 0;
+
+    // Window state.
+    int m_windowState = 0;
 };
 
 // A structure used to hold all data parsed from a line of a resource usage CSV file.
@@ -349,6 +372,9 @@ struct rgGlobalSettings
 
     // Splitter configurations.
     std::vector<rgSplitterConfig> m_guiLayoutSplitters;
+
+    // Window geometry values.
+    rgWindowConfig m_guiWindowConfig;
 
     // The default build settings, which can be customized by the user.
     // We keep a mapping, each API will have its entry pointing to its default settings.

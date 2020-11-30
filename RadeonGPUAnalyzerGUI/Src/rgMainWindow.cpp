@@ -23,6 +23,7 @@
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgAboutDialog.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgAppState.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildView.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgGlobalSettingsView.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgMenu.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgMenuBuildSettingsItem.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgGoToLineDialog.h>
@@ -966,54 +967,74 @@ void rgMainWindow::HandleOpenProjectFileEvent()
     // Ask user to save pending settings.
     bool didUserConfirm = true;
 
-    assert(m_pSettingsTab != nullptr);
-    if (m_pSettingsTab != nullptr)
+    if (!IsInputFileNameBlank())
     {
-        didUserConfirm = m_pSettingsTab->PromptToSavePendingChanges();
-    }
 
-    if (didUserConfirm)
-    {
-        if (m_pAppState != nullptr)
+        assert(m_pSettingsTab != nullptr);
+        if (m_pSettingsTab != nullptr)
         {
-            didUserConfirm = m_pAppState->ShowProjectSaveDialog();
+            didUserConfirm = m_pSettingsTab->PromptToSavePendingChanges();
         }
 
         if (didUserConfirm)
         {
-            std::string selectedFile;
-            bool isOk = rgUtils::OpenProjectDialog(this, selectedFile);
-            if (isOk && !selectedFile.empty())
+            if (m_pAppState != nullptr)
             {
-                // Destroy current BuildView if it has some project open.
-                assert(m_pAppState != nullptr);
-                if (m_pAppState != nullptr)
+                didUserConfirm = m_pAppState->ShowProjectSaveDialog();
+            }
+
+            if (didUserConfirm)
+            {
+                std::string selectedFile;
+                bool isOk = rgUtils::OpenProjectDialog(this, selectedFile);
+                if (isOk && !selectedFile.empty())
                 {
-                    rgBuildView* pBuildView = m_pAppState->GetBuildView();
-                    if (pBuildView != nullptr && pBuildView->HasProject())
+                    // Destroy current BuildView if it has some project open.
+                    assert(m_pAppState != nullptr);
+                    if (m_pAppState != nullptr)
                     {
-                        // Ask the user if they want to save all unsaved files.
-                        bool isAccepted = pBuildView->RequestRemoveAllFiles();
+                        rgBuildView* pBuildView = m_pAppState->GetBuildView();
+                        if (pBuildView != nullptr && pBuildView->HasProject())
+                        {
+                            // Ask the user if they want to save all unsaved files.
+                            bool isAccepted = pBuildView->RequestRemoveAllFiles();
 
-                        // Destroy the rgBuildView instance since the project is being closed.
-                        DestroyBuildView();
+                            // Destroy the rgBuildView instance since the project is being closed.
+                            DestroyBuildView();
+                        }
                     }
-                }
 
-                HandleStatusBarTextChanged(STR_MAIN_WINDOW_LOADING_PROJECT, gs_STATUS_BAR_NOTIFICATION_TIMEOUT_MS);
-                bool isProjectLoaded = OpenProjectFileAtPath(selectedFile);
-                assert(isProjectLoaded);
-                if (isProjectLoaded)
-                {
-                    HandleStatusBarTextChanged(STR_MAIN_WINDOW_PROJECT_LOAD_SUCCESS, gs_STATUS_BAR_NOTIFICATION_TIMEOUT_MS);
-                }
-                else
-                {
-                    HandleStatusBarTextChanged(STR_ERR_CANNOT_LOAD_PROJECT_FILE, gs_STATUS_BAR_NOTIFICATION_TIMEOUT_MS);
+                    HandleStatusBarTextChanged(STR_MAIN_WINDOW_LOADING_PROJECT, gs_STATUS_BAR_NOTIFICATION_TIMEOUT_MS);
+                    bool isProjectLoaded = OpenProjectFileAtPath(selectedFile);
+                    assert(isProjectLoaded);
+                    if (isProjectLoaded)
+                    {
+                        HandleStatusBarTextChanged(STR_MAIN_WINDOW_PROJECT_LOAD_SUCCESS, gs_STATUS_BAR_NOTIFICATION_TIMEOUT_MS);
+                    }
+                    else
+                    {
+                        HandleStatusBarTextChanged(STR_ERR_CANNOT_LOAD_PROJECT_FILE, gs_STATUS_BAR_NOTIFICATION_TIMEOUT_MS);
+                    }
                 }
             }
         }
     }
+}
+
+bool rgMainWindow::IsInputFileNameBlank() const
+{
+    bool result = false;
+
+    assert(m_pAppState != nullptr);
+    if (m_pAppState != nullptr)
+    {
+        if (m_pAppState->IsInputFileNameBlank())
+        {
+            result = true;
+        }
+    }
+
+    return result;
 }
 
 void rgMainWindow::HandleOpenProjectFileAtPath(const std::string& programFilePath)
@@ -1061,7 +1082,10 @@ void rgMainWindow::HandleSaveFileEvent()
         {
             if (m_pSettingsTab != nullptr)
             {
-                m_pSettingsTab->SavePendingChanges();
+                if (!IsInputFileNameBlank())
+                {
+                    m_pSettingsTab->SavePendingChanges();
+                }
             }
         }
     }
@@ -1075,6 +1099,8 @@ void rgMainWindow::HandleBackToHomeEvent()
         rgBuildView* pBuildView = m_pAppState->GetBuildView();
         if (pBuildView != nullptr)
         {
+            pBuildView->SaveProjectConfigFile();
+
             // Refresh the recent projects list upon returning to the start tab.
             rgStartTab* pStartTab = m_pAppState->GetStartTab();
 
@@ -1108,36 +1134,48 @@ void rgMainWindow::HandleBackToHomeEvent()
 
 void rgMainWindow::HandleExitEvent()
 {
+    static const int s_TOP_MARGIN = 8;
     bool isSaveSettingsAccepted = true;
 
     // Prompt the user to save any pending changes on SETTINGS tab.
-    assert(m_pSettingsTab != nullptr);
-    if (m_pSettingsTab != nullptr)
-    {
-        isSaveSettingsAccepted = m_pSettingsTab->PromptToSavePendingChanges();
-    }
 
-    assert(m_pAppState != nullptr);
-    if (m_pAppState != nullptr)
+    if (!IsInputFileNameBlank())
     {
-        rgBuildView* pBuildView = m_pAppState->GetBuildView();
-        if (pBuildView != nullptr)
+        assert(m_pSettingsTab != nullptr);
+        if (m_pSettingsTab != nullptr)
         {
-            // Ask the user if they want to save all unsaved files.
-            bool isAccepted = pBuildView->ShowSaveDialog(rgBuildView::rgFilesToSave::All, true);
-
-            // Only exit if the dialog was accepted (ie. the user didn't press cancel).
-            if (isAccepted && isSaveSettingsAccepted)
-            {
-                QApplication::exit(0);
-            }
+            isSaveSettingsAccepted = m_pSettingsTab->PromptToSavePendingChanges();
         }
-        else
+
+        assert(m_pAppState != nullptr);
+        if (m_pAppState != nullptr)
         {
-            // Exit out of the application only if the user did NOT press cancel.
-            if (isSaveSettingsAccepted)
+            rgBuildView* pBuildView = m_pAppState->GetBuildView();
+            if (pBuildView != nullptr)
             {
-                QApplication::exit(0);
+                // Ask the user if they want to save all unsaved files.
+                bool isAccepted = pBuildView->ShowSaveDialog(rgBuildView::rgFilesToSave::All, true);
+
+                // Only exit if the dialog was accepted (ie. the user didn't press cancel).
+                if (isAccepted && isSaveSettingsAccepted)
+                {
+                    // Save the window geometry.
+                    rgConfigManager::Instance().SetWindowGeometry(pos().x(), pos().y() + statusBar()->height() + s_TOP_MARGIN, size().width(), size().height(), windowState());
+
+                    QApplication::exit(0);
+                }
+            }
+            else
+            {
+                // Exit out of the application only if the user did NOT press cancel.
+                if (isSaveSettingsAccepted)
+                {
+
+                    // Save the window geometry.
+                    rgConfigManager::Instance().SetWindowGeometry(pos().x(), pos().y() + statusBar()->height() + s_TOP_MARGIN, size().width(), size().height(), windowState());
+
+                    QApplication::exit(0);
+                }
             }
         }
     }
@@ -1263,7 +1301,7 @@ void rgMainWindow::HandleAboutEvent()
 void rgMainWindow::HandleGettingStartedGuideEvent()
 {
     // Build the path to the quickstart guide document.
-    static const char* QUICKSTART_GUIDE_RELATIVE_PATH = "/Documentation/html/quickstart.html";
+    static const char* QUICKSTART_GUIDE_RELATIVE_PATH = "/docs/help/rga/html/quickstart.html";
     QString quickstartFilePath = "file:///";
     QString appDirPath = qApp->applicationDirPath();
     quickstartFilePath.append(appDirPath);
@@ -1274,7 +1312,7 @@ void rgMainWindow::HandleGettingStartedGuideEvent()
 void rgMainWindow::HandleHelpManual()
 {
     // Build the path to the help manual document.
-    static const char* HELP_MANUAL_RELATIVE_PATH = "/Documentation/html/help_manual.html";
+    static const char* HELP_MANUAL_RELATIVE_PATH = "/docs/help/rga/html/help_manual.html";
     QString helpManualFilePath = "file:///";
     QString appDirPath = qApp->applicationDirPath();
     helpManualFilePath.append(appDirPath);
@@ -1287,6 +1325,9 @@ void rgMainWindow::HandleBuildProjectEvent()
     assert(m_pAppState != nullptr);
     if (m_pAppState != nullptr)
     {
+        // Emit a signal to indicate view change.
+        emit HotKeyPressedSignal();
+
         rgBuildView* pBuildView = m_pAppState->GetBuildView();
         if (pBuildView != nullptr)
         {
@@ -1302,6 +1343,9 @@ void rgMainWindow::HandleBuildProjectEvent()
 
 void rgMainWindow::HandleBuildSettingsEvent()
 {
+    // Emit a signal to indicate view change.
+    emit HotKeyPressedSignal();
+
     assert(m_pAppState != nullptr);
     if (m_pAppState != nullptr)
     {

@@ -310,10 +310,6 @@ void rgPipelineStateEditorWidgetEnum::ConnectSignals()
     isConnected = connect(ui.enumComboPushButton, &ArrowIconWidget::FocusInEvent, this, &rgPipelineStateEditorWidget::FocusInSignal);
     assert(isConnected);
 
-    // Connect the arrow widget button focus out handler.
-    isConnected = connect(ui.enumComboPushButton, &ArrowIconWidget::FocusOutEvent, this, &rgPipelineStateEditorWidgetEnum::HandleArrowButtonFocusOutEvent);
-    assert(isConnected);
-
     // Connect the signal used to handle a change in the selected enum.
     isConnected = connect(m_pEnumListWidget, &QListWidget::currentRowChanged, this, &rgPipelineStateEditorWidgetEnum::HandleEnumChanged);
     assert(isConnected);
@@ -323,7 +319,7 @@ void rgPipelineStateEditorWidgetEnum::ConnectSignals()
     assert(isConnected);
 }
 
-void rgPipelineStateEditorWidgetEnum::HandleArrowButtonFocusOutEvent()
+void rgPipelineStateEditorWidgetEnum::HandleHotKeyPressedSignal()
 {
     HideListWidget();
 }

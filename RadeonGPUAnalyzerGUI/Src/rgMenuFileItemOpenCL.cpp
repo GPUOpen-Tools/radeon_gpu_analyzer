@@ -2,6 +2,9 @@
 #include <cassert>
 #include <sstream>
 
+// Infra.
+#include <QtCommon/Scaling/ScalingManager.h>
+
 // Qt.
 #include <QMenu>
 #include <QStandardItemModel>
@@ -16,6 +19,7 @@
 #include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
 
 static const char* s_FILE_MENU_ITEM_COLOR = "#itemBackground[current = true] {background-color: rgb(253, 255, 215); border-style: solid; border-width: 1px; border-color: rgb(18, 152, 0);}";
+static const int s_FILE_MENU_KERNEL_ITEM_HEIGHT = 20;
 
 // A delegate used to style a file item's entry point list.
 class rgEntrypointItemStyleDelegate : public QStyledItemDelegate
@@ -86,6 +90,11 @@ void rgMenuItemEntryListModel::AddEntry(const std::string& entrypointName)
     tooltipText << STR_MENU_ITEM_ENTRYPOINT_TOOLTIP_TEXT;
     tooltipText << entrypointName;
     m_pEntrypointItemModel->setData(modelIndex, tooltipText.str().c_str(), Qt::ToolTipRole);
+
+    // Set the scaled height for size hint.
+    QSize size = m_pEntrypointItemModel->data(modelIndex, Qt::SizeHintRole).toSize();
+    size.setHeight(ScalingManager::Get().Scaled(s_FILE_MENU_KERNEL_ITEM_HEIGHT));
+    m_pEntrypointItemModel->setData(modelIndex, size, Qt::SizeHintRole);
 }
 
 void rgMenuItemEntryListModel::ClearEntries()
@@ -93,6 +102,10 @@ void rgMenuItemEntryListModel::ClearEntries()
     // Clear the model data by removing all existing rows.
     int numRows = m_pEntrypointItemModel->rowCount();
     m_pEntrypointItemModel->removeRows(0, numRows);
+
+    // Clear the entry point names as well.
+    m_entryPointNames.clear();
+    m_displayNames.clear();
 }
 
 void rgMenuItemEntryListModel::SetEntryPointWidgetWidth(const int width)

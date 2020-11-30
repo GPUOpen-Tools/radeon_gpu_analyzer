@@ -36,6 +36,10 @@ public:
     // Get the title string.
     virtual std::string GetTitleString() = 0;
 
+public slots:
+    // Update the generated command line text.
+    virtual void UpdateCommandLineText() = 0;
+
 signals:
     // A signal emitted when the "has pending changes" state changes for the view.
     void PendingChangesStateChanged(bool hasPendingChanges);

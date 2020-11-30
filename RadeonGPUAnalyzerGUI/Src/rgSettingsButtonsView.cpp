@@ -3,8 +3,8 @@
 #include <sstream>
 
 // Qt.
-#include <QApplication>
 #include <QAction>
+#include <QApplication>
 #include <QCheckBox>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -89,7 +89,7 @@ void rgSettingsButtonsView::SetCursor()
 
 void rgSettingsButtonsView::HandleRestoreDefaultSettingsButtonClick()
 {
-    // Emit the signal to indicate clicking of "Save" button.
+    // Emit the signal to indicate clicking of "Restore default settings" button.
     emit RestoreDefaultSettingsButtonClickedSignal();
 }
 

@@ -33,7 +33,7 @@ void BuildRgaExecutableCommandString(std::stringstream& commandStream)
 }
 
 // A helper function responsible for building a base command string for CLI invocation.
-void BuildCompileProjectCommandString(std::stringstream& commandStream, const std::string& outputPath)
+void BuildCompileProjectCommandString(std::stringstream& commandStream, const std::string& outputPath, const std::string& binaryName)
 {
     BuildRgaExecutableCommandString(commandStream);
 
@@ -50,8 +50,18 @@ void BuildCompileProjectCommandString(std::stringstream& commandStream, const st
     // Add the output path for the resource usage analysis file.
     commandStream << CLI_OPT_STATISTICS << " \"" << outputPath << STR_RESOURCE_USAGE_CSV_FILENAME << "\" ";
 
-    // Binary.
-    commandStream << CLI_OPT_BINARY << " \"" << outputPath << "codeobj.bin\" ";
+    // Output binary file.
+    const rgProjectAPI currentAPI = rgConfigManager::Instance().GetCurrentAPI();
+    commandStream << CLI_OPT_BINARY << " \"" << outputPath << binaryName << "\" ";
+    if (currentAPI == rgProjectAPI::Vulkan)
+    {
+        if (binaryName.compare(STR_BUILD_SETTINGS_OUTPUT_BINARY_FILE_NAME) != 0)
+        {
+            // If the user gave a custom name, instruct the CLI not to add a suffix,
+            // so that we use the user's custom file name as is.
+            commandStream << CLI_NO_BINARY_FILE_EXTENSION_SWITCH << " ";
+        }
+    }
 
     // CLI log file path.
     const std::string& cliLogFilePath = rgConfigManager::Instance().GetCLILogFilePath();
@@ -97,7 +107,7 @@ void BuildOutputViewCommandHeader(std::shared_ptr<rgProject> pProject, const std
     invocationText = cmdLineOutputStream.str();
 }
 
-bool rgCliLauncher::BuildProjectCloneOpenCL(std::shared_ptr<rgProject> pProject, int cloneIndex, const std::string& outputPath,
+bool rgCliLauncher::BuildProjectCloneOpenCL(std::shared_ptr<rgProject> pProject, int cloneIndex, const std::string& outputPath, const std::string& binaryName,
     std::function<void(const std::string&)> cliOutputHandlingCallback, std::vector<std::string>& gpusBuilt, bool& cancelSignal)
 {
     bool ret = false;
@@ -120,7 +130,7 @@ bool rgCliLauncher::BuildProjectCloneOpenCL(std::shared_ptr<rgProject> pProject,
             std::stringstream cmd;
 
             // Build the compile project command string.
-            BuildCompileProjectCommandString(cmd, outputPath);
+            BuildCompileProjectCommandString(cmd, outputPath, binaryName);
 
             // Build settings.
             std::string buildSettings;
@@ -219,7 +229,7 @@ bool rgCliLauncher::BuildProjectCloneOpenCL(std::shared_ptr<rgProject> pProject,
     return ret;
 }
 
-bool rgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<rgProject> pProject, int cloneIndex, const std::string& outputPath,
+bool rgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<rgProject> pProject, int cloneIndex, const std::string& outputPath, const std::string& binaryName,
     std::function<void(const std::string&)> cliOutputHandlingCallback, std::vector<std::string>& gpusBuilt, bool& cancelSignal)
 {
     bool ret = false;
@@ -247,14 +257,15 @@ bool rgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<rgProject> pProject,
                     // Generate the command line invocation command.
                     std::stringstream cmd;
 
-                    // Build the compile project command string.
-                    BuildCompileProjectCommandString(cmd, outputPath);
-
                     // Build settings.
                     std::string buildSettings;
                     std::shared_ptr<rgBuildSettingsVulkan> pBuildSettingsVulkan =
                         std::static_pointer_cast<rgBuildSettingsVulkan>(pTargetClone->m_pBuildSettings);
                     assert(pBuildSettingsVulkan != nullptr);
+
+                    // Build the compile project command string.
+                    BuildCompileProjectCommandString(cmd, outputPath, pBuildSettingsVulkan->m_binaryFileName);
+
                     ret = rgCliUtils::GenerateVulkanBuildSettingsString(*pBuildSettingsVulkan, buildSettings);
                     assert(ret);
                     if (!buildSettings.empty())
@@ -320,6 +331,13 @@ bool rgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<rgProject> pProject,
                                             // A source file exists in this stage. Append it to the command line.
                                             std::string stageAbbreviation = pVulkanUtil->PipelineStageToAbbreviation(currentStage);
 
+                                            // Check to see if the file has txt extension.
+                                            if (rgUtils::IsSpvasTextFile(stageInputFile, stageAbbreviation))
+                                            {
+                                                // Append "-spvas" to stage abbreviation.
+                                                stageAbbreviation += CLI_OPT_SPVAS_TEXT_FILE;
+                                            }
+
                                             // Append the stage type and shader file path to the command line.
                                             fullCmdWithGpu << "--" << stageAbbreviation << " \"" << stageInputFile << "\" ";
                                         }
@@ -335,6 +353,13 @@ bool rgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<rgProject> pProject,
                                     {
                                         // A source file exists in this stage. Append it to the command line.
                                         std::string stageAbbreviation = pVulkanUtil->PipelineStageToAbbreviation(currentStage);
+
+                                        // Check to see if the file has txt extension.
+                                        if (rgUtils::IsSpvasTextFile(computeShaderInputSourceFilePath, stageAbbreviation))
+                                        {
+                                            // Append "-spvas" to stage abbreviation.
+                                            stageAbbreviation += CLI_OPT_SPVAS_TEXT_FILE;
+                                        }
 
                                         // Append the stage type and shader file path to the command line.
                                         fullCmdWithGpu << "--" << stageAbbreviation << " \"" << computeShaderInputSourceFilePath << "\" ";

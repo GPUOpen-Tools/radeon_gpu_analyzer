@@ -20,12 +20,6 @@ signals:
     void ViewTitleBarDoubleClickedSignal();
 
 protected:
-    // Re-implement mousePressEvent.
-    virtual void mousePressEvent(QMouseEvent* pEvent) override;
-
     // Re-implement paintEvent.
     virtual void paintEvent(QPaintEvent* pEvent) override;
-
-    // Re-implement mouseDoubleClickEvent.
-    virtual void mouseDoubleClickEvent(QMouseEvent* pEvent) override;
 };

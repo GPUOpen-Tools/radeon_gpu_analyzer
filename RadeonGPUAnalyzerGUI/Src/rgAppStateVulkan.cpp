@@ -76,40 +76,44 @@ void rgAppStateVulkan::HandleCreateNewGraphicsPipeline()
     {
         // Ask user to save pending settings.
         bool userCanceledAction = false;
-        if (m_pSettingsTab != nullptr)
-        {
-            userCanceledAction = !m_pSettingsTab->PromptToSavePendingChanges();
-        }
 
-        if (!userCanceledAction)
+        if (!IsInputFileNameBlank())
         {
-            // Track if a project was actually created.
-            bool wasProjectCreated = false;
-
-            assert(m_pBuildView != nullptr);
-            if (m_pBuildView != nullptr)
+            if (m_pSettingsTab != nullptr)
             {
-                m_pMainWindow->setAcceptDrops(false);
-                wasProjectCreated = m_pBuildView->CreateDefaultGraphicsPipeline();
-                m_pMainWindow->setAcceptDrops(true);
-
-                if (wasProjectCreated)
-                {
-                    // Show the build view as the central widget.
-                    m_pMainWindow->SwitchToView(rgMainWindow::MainWindowView::BuildView);
-                }
-                else
-                {
-                    // The project was not created successfully, so clean up the build view.
-                    m_pMainWindow->DestroyBuildView();
-                }
+                userCanceledAction = !m_pSettingsTab->PromptToSavePendingChanges();
             }
 
-            // Restore the layout if no project was created.
-            if (!wasProjectCreated)
+            if (!userCanceledAction)
             {
-                // Reset the actions to the default state.
-                m_pMainWindow->ResetActionsState();
+                // Track if a project was actually created.
+                bool wasProjectCreated = false;
+
+                assert(m_pBuildView != nullptr);
+                if (m_pBuildView != nullptr)
+                {
+                    m_pMainWindow->setAcceptDrops(false);
+                    wasProjectCreated = m_pBuildView->CreateDefaultGraphicsPipeline();
+                    m_pMainWindow->setAcceptDrops(true);
+
+                    if (wasProjectCreated)
+                    {
+                        // Show the build view as the central widget.
+                        m_pMainWindow->SwitchToView(rgMainWindow::MainWindowView::BuildView);
+                    }
+                    else
+                    {
+                        // The project was not created successfully, so clean up the build view.
+                        m_pMainWindow->DestroyBuildView();
+                    }
+                }
+
+                // Restore the layout if no project was created.
+                if (!wasProjectCreated)
+                {
+                    // Reset the actions to the default state.
+                    m_pMainWindow->ResetActionsState();
+                }
             }
         }
     }
@@ -122,40 +126,43 @@ void rgAppStateVulkan::HandleCreateNewComputePipeline()
     {
         // Ask user to save pending settings.
         bool userCanceledAction = false;
-        if (m_pSettingsTab != nullptr)
+        if (!IsInputFileNameBlank())
         {
-            userCanceledAction = !m_pSettingsTab->PromptToSavePendingChanges();
-        }
-
-        if (!userCanceledAction)
-        {
-            // Track if a project was actually created.
-            bool wasProjectCreated = false;
-
-            assert(m_pBuildView != nullptr);
-            if (m_pBuildView != nullptr)
+            if (m_pSettingsTab != nullptr)
             {
-                m_pMainWindow->setAcceptDrops(false);
-                wasProjectCreated = m_pBuildView->CreateDefaultComputePipeline();
-                m_pMainWindow->setAcceptDrops(true);
-
-                if (wasProjectCreated)
-                {
-                    // Show the build view as the central widget.
-                    m_pMainWindow->SwitchToView(rgMainWindow::MainWindowView::BuildView);
-                }
-                else
-                {
-                    // The project was not created successfully, so clean up the build view.
-                    m_pMainWindow->DestroyBuildView();
-                }
+                userCanceledAction = !m_pSettingsTab->PromptToSavePendingChanges();
             }
 
-            // Restore the layout if no project was created.
-            if (!wasProjectCreated)
+            if (!userCanceledAction)
             {
-                // Reset the actions to the default state.
-                m_pMainWindow->ResetActionsState();
+                // Track if a project was actually created.
+                bool wasProjectCreated = false;
+
+                assert(m_pBuildView != nullptr);
+                if (m_pBuildView != nullptr)
+                {
+                    m_pMainWindow->setAcceptDrops(false);
+                    wasProjectCreated = m_pBuildView->CreateDefaultComputePipeline();
+                    m_pMainWindow->setAcceptDrops(true);
+
+                    if (wasProjectCreated)
+                    {
+                        // Show the build view as the central widget.
+                        m_pMainWindow->SwitchToView(rgMainWindow::MainWindowView::BuildView);
+                    }
+                    else
+                    {
+                        // The project was not created successfully, so clean up the build view.
+                        m_pMainWindow->DestroyBuildView();
+                    }
+                }
+
+                // Restore the layout if no project was created.
+                if (!wasProjectCreated)
+                {
+                    // Reset the actions to the default state.
+                    m_pMainWindow->ResetActionsState();
+                }
             }
         }
     }
@@ -212,6 +219,10 @@ void rgAppStateVulkan::CreateBuildView()
         // Connect the project created handler so the rgMainWindow can
         // add the new rgBuildView instance to the widget hierarchy.
         bool isConnected = connect(m_pBuildView, &rgBuildView::ProjectCreated, m_pMainWindow, &rgMainWindow::HandleProjectCreated);
+        assert(isConnected);
+
+        // Connect the shortcut hot key signal.
+        isConnected = connect(m_pMainWindow, &rgMainWindow::HotKeyPressedSignal, m_pBuildView, &rgBuildView::HotKeyPressedSignal);
         assert(isConnected);
     }
 }
@@ -280,6 +291,8 @@ std::string rgAppStateVulkan::GetGlobalSettingsViewStylesheet() const
         "rgGlobalSettingsView #assocExtGlslLineEdit:hover,"
         "rgGlobalSettingsView #assocExtSpvBinaryLineEdit:focus,"
         "rgGlobalSettingsView #assocExtSpvBinaryLineEdit:hover,"
+        "rgGlobalSettingsView #assocExtSpvasLineEdit:focus,"
+        "rgGlobalSettingsView #assocExtSpvasLineEdit:hover,"
         "rgGlobalSettingsView #assocExtSpvasLabel:focus,"
         "rgGlobalSettingsView #assocExtSpvasLabel:hover,"
         "rgGlobalSettingsView #defaultLangComboBox:focus,"
@@ -307,7 +320,11 @@ std::string rgAppStateVulkan::GetBuildSettingsViewStylesheet() const
         "rgBuildSettingsView #compilerIncludesLineEdit:focus,"
         "rgBuildSettingsView #compilerIncludesLineEdit:hover,"
         "rgBuildSettingsView #compilerLibrariesLineEdit:focus,"
-        "rgBuildSettingsView #compilerLibrariesLineEdit:hover"
+        "rgBuildSettingsView #compilerLibrariesLineEdit:hover,"
+        "rgBuildSettingsView #enableValidationLayersCheckBox:focus,"
+        "rgBuildSettingsView #enableValidationLayersCheckBox:hover,"
+        "rgBuildSettingsView #outputFileBinaryNameLineEdit:focus,"
+        "rgBuildSettingsView #outputFileBinaryNameLineEdit:hover"
         "{"
         "border: 1px solid rgb(224, 30, 55);"
         "background: rgb(240, 240, 240);"

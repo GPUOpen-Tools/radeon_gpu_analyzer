@@ -23,7 +23,7 @@ public:
     // cliOutputHandlingCallback is a callback used to send CLI output text to the GUI.
     // cancelSignal can be used to terminate the operation.
     // Returns true for success, false otherwise.
-    static bool BuildProjectCloneOpenCL(std::shared_ptr<rgProject> pProject, int cloneIndex, const std::string& outputPath,
+    static bool BuildProjectCloneOpenCL(std::shared_ptr<rgProject> pProject, int cloneIndex, const std::string& outputPath, const std::string& binaryName,
         std::function<void(const std::string&)> cliOutputHandlingCallback, std::vector<std::string>& gpusBuilt, bool& cancelSignal);
 
     // Runs RGA CLI to compile the given Vulkan pipeline project clone.
@@ -33,7 +33,7 @@ public:
     // cliOutputHandlingCallback is a callback used to send CLI output text to the GUI.
     // cancelSignal can be used to terminate the operation.
     // Returns true for success, false otherwise.
-    static bool BuildProjectCloneVulkan(std::shared_ptr<rgProject> pProject, int cloneIndex, const std::string& outputPath,
+    static bool BuildProjectCloneVulkan(std::shared_ptr<rgProject> pProject, int cloneIndex, const std::string& outputPath, const std::string& binaryName,
         std::function<void(const std::string&)> cliOutputHandlingCallback, std::vector<std::string>& gpusBuilt, bool& cancelSignal);
 
     // Runs RGA CLI to disassemble the given SPIR-V binary into text.

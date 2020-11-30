@@ -166,6 +166,26 @@ rgGlobalSettingsView #inputFilesLabel
     background: rgb(240, 240, 240);
 }
 
+rgGlobalSettingsView #outputFilesLabel
+{
+    background: rgb(240, 240, 240);
+}
+
+rgGlobalSettingsView rgComboBox, QFontComboBox
+{
+    combobox-popup: 0; color: black; padding: 0px 0px 0px 0px;
+}
+
+QComboBox
+{
+    selection-color: black;
+}
+
+rgGlobalSettingsView#columnVisibilityArrowPushButton
+{
+    font-size: 8pt;
+}
+
 /********************************************************************/
 /* OpenCL build settings view.
 /********************************************************************/
@@ -199,6 +219,16 @@ rgBuildSettingsViewOpenCL #alternativeCompilerLabel
     background: rgb(240, 240, 240);
 }
 
+rgBuildSettingsViewOpenCL #outputFilesLabel
+{
+    background: rgb(240, 240, 240);
+}
+
+rgBuildSettingsViewOpenCL rgComboBox
+{
+    combobox-popup: 0; color: black; padding: 0px 0px 0px 0px;
+}
+
 /********************************************************************/
 /* Vulkan build settings view.
 /********************************************************************/
@@ -228,6 +258,11 @@ rgBuildSettingsViewVulkan #vulkanSettingsHeaderLabel
 }
 
 rgBuildSettingsViewVulkan #alternativeCompilerHeaderLabel
+{
+    background: rgb(240, 240, 240);
+}
+
+rgBuildSettingsViewVulkan #outputFilesLabel
 {
     background: rgb(240, 240, 240);
 }

@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.10)
 project (RGA)
 
 # Boolean option for enabling AMD Internal build mode
@@ -124,18 +124,18 @@ if(NOT BUILD_GUI_ONLY)
     add_subdirectory (RadeonGPUAnalyzerCLI)
     if (RGA_ENABLE_VULKAN)
         add_subdirectory (Core/Vulkan/Backend)
-        add_dependencies (RadeonGPUAnalyzerCLI VulkanBackend)
+        add_dependencies (radeon_gpu_analyzer_cli VulkanBackend)
     endif()
     if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         add_subdirectory (Core/DX12/Backend)
-        add_dependencies (RadeonGPUAnalyzerCLI DX12Backend)
+        add_dependencies (radeon_gpu_analyzer_cli dx12_backend)
     endif()
 endif()
 
 # Add RGA GUI
 if(NOT BUILD_CLI_ONLY)
     add_subdirectory (RadeonGPUAnalyzerGUI)
-    add_dependencies (RadeonGPUAnalyzerGUI RadeonGPUAnalyzerCLI)
+    add_dependencies (RadeonGPUAnalyzer radeon_gpu_analyzer_cli)
 endif()
 
 # Add Tests

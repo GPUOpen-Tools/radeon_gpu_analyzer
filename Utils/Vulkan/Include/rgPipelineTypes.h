@@ -47,7 +47,7 @@ public:
     const std::vector<VkSamplerCreateInfo*> GetSamplerCreateInfo() const;
 
     // Add the given descriptor set to the pipeline state create info.
-    void AddDescriptorSetLayoutCreateInfo(VkDescriptorSetLayoutCreateInfo* pDescriptorSetLayoutCreateInfo);
+    void AddDescriptorSetLayoutCreateInfo(VkDescriptorSetLayoutCreateInfo* descriptor_set_layout_create_info);
 
 protected:
     // Initialize the default pipeline layout create info.
@@ -78,7 +78,7 @@ public:
 
     // *** Setters - BEGIN. ***
 
-    void SetRenderPassCreateInfo(VkRenderPassCreateInfo* pRenderPassCreateInfo) { m_pRenderPassCreateInfo = pRenderPassCreateInfo; }
+    void SetRenderPassCreateInfo(VkRenderPassCreateInfo* render_pass_create_info) { m_pRenderPassCreateInfo = render_pass_create_info; }
     void SetMultisampleStateCreateInfo(VkPipelineMultisampleStateCreateInfo* pMultiSampleStateCreateInfo) { /*m_pMultisampleStateCreateInfo*/ m_pipelineCreateInfo.pMultisampleState = pMultiSampleStateCreateInfo; }
     void SetVertexInputStateCreateInfo(VkPipelineVertexInputStateCreateInfo* pVertexInputStateCreateInfo) { /*m_pVertexInputStateCreateInfo*/ m_pipelineCreateInfo.pVertexInputState = pVertexInputStateCreateInfo; }
     void SetRasterizationStateCreateInfo(VkPipelineRasterizationStateCreateInfo* pRasterizationStateCreateInfo) { /*m_pRasterizationStateCreateInfo*/ m_pipelineCreateInfo.pRasterizationState = pRasterizationStateCreateInfo; }
@@ -86,7 +86,7 @@ public:
     void SetColorBlendStateCreateInfo(VkPipelineColorBlendStateCreateInfo* pColorBlendStateCreateInfo) { /*m_pColorBlendStateCreateInfo*/ m_pipelineCreateInfo.pColorBlendState = pColorBlendStateCreateInfo; }
     void SetViweportStateCreateInfo(VkPipelineViewportStateCreateInfo* pViewportStateCreateInfo) { /*m_pViewportStateCreateInfo*/ m_pipelineCreateInfo.pViewportState = pViewportStateCreateInfo; }
     void SetDepthStencilStateCreateInfo(VkPipelineDepthStencilStateCreateInfo* pDepthStencilStateCreateInfo) { /*m_pDepthStencilStateCreateInfo*/ m_pipelineCreateInfo.pDepthStencilState = pDepthStencilStateCreateInfo; }
-    void SetPipelineLayoutCreateInfo(VkPipelineLayoutCreateInfo* pPipelineLayoutCreateInfo) { m_pPipelineLayoutCreateInfo = pPipelineLayoutCreateInfo; }
+    void SetPipelineLayoutCreateInfo(VkPipelineLayoutCreateInfo* pipeline_layout_create_info) { m_pPipelineLayoutCreateInfo = pipeline_layout_create_info; }
 
     // *** Setters - END. ***
 
@@ -103,7 +103,7 @@ public:
     VkPipelineInputAssemblyStateCreateInfo* GetPipelineInputAssemblyStateCreateInfo();
 
     // Retrieve a pointer to the graphics pipeline Tessellation State create info structure.
-    VkPipelineTessellationStateCreateInfo* GetipelineTessellationStateCreateInfo();
+    VkPipelineTessellationStateCreateInfo* GetPipelineTessellationStateCreateInfo();
 
     // Retrieve a pointer to the graphics pipeline Viewport State create info structure.
     VkPipelineViewportStateCreateInfo* GetPipelineViewportStateCreateInfo();

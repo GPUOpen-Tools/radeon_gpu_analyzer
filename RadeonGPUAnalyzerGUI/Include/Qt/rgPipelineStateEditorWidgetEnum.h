@@ -39,6 +39,17 @@ signals:
     // A signal to indicate list widget status change.
     void EnumListWidgetStatusSignal(bool isOpened);
 
+public slots:
+    // Handler for the hotkey pressed signal.
+    void HandleHotKeyPressedSignal();
+
+protected:
+    // The widget used to display all enum values.
+    ListWidget* m_pEnumListWidget = nullptr;
+
+    // The generated UI object.
+    Ui::rgPipelineStateEditorWidgetEnum ui;
+
 private slots:
     // Handler for the enum list push button click.
     void HandleEnumPushButtonClick(bool checked);
@@ -54,9 +65,6 @@ private slots:
 
     // Handle application lost focus event.
     void HandleApplicationFocusOutEvent(Qt::ApplicationState state);
-
-    // Handle list widget push button focus out event.
-    void HandleArrowButtonFocusOutEvent();
 
 private:
     // Connect internal signals.
@@ -85,12 +93,6 @@ private:
 
     // A vector of the enumeration values that are possible to set in this element.
     rgEnumValuesVector m_enumerators;
-
-    // The generated UI object.
-    Ui::rgPipelineStateEditorWidgetEnum ui;
-
-    // The widget used to display all enum values.
-    ListWidget* m_pEnumListWidget = nullptr;
 
     // A custom event filter for the enum list widget.
     QObject* m_pEnumListEventFilter = nullptr;

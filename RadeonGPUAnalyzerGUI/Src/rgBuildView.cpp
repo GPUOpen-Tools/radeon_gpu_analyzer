@@ -50,6 +50,7 @@
 #include <RadeonGPUAnalyzerGUI/Include/rgConfigManager.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgCliLauncher.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgDataTypesVulkan.h>
+#include <RadeonGPUAnalyzerGUI/Include/rgDataTypesOpenCL.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgFactory.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgSourceEditorSearcher.h>
@@ -396,7 +397,7 @@ bool rgBuildView::ConnectDisassemblyViewSignals()
         isConnected = connect(m_pDisassemblyView, &rgIsaDisassemblyView::FocusSourceWindow, this, &rgBuildView::HandleFocusPreviousView);
         assert(isConnected);
 
-        // Connect the switch container size signal from the disassembly view..
+        // Connect the switch container size signal from the disassembly view.
         isConnected = connect(m_pDisassemblyView, &rgIsaDisassemblyView::SwitchDisassemblyContainerSize, this, &rgBuildView::HandleSwitchContainerSize);
         assert(isConnected);
 
@@ -628,13 +629,25 @@ void rgBuildView::BuildCurrentProject()
                 bool isProjectBuilt = false;
                 std::vector<std::string> gpusWithBuildOutputs;
                 rgProjectAPI currentApi = rgConfigManager::Instance().GetCurrentAPI();
+
+                // Get the binary output file name and create a project.
+                assert(m_pProject->m_clones[m_cloneIndex]->m_pBuildSettings != nullptr);
                 if (currentApi == rgProjectAPI::OpenCL)
                 {
-                    isProjectBuilt = rgCliLauncher::BuildProjectCloneOpenCL(m_pProject, m_cloneIndex, outputPath, appendBuildOutput, gpusWithBuildOutputs, m_cancelBuildSignal);
+                    std::shared_ptr<rgBuildSettings> pProjectSettings = m_pProject->m_clones[m_cloneIndex]->m_pBuildSettings;
+                    std::string binaryName = STR_BUILD_SETTINGS_OUTPUT_BINARY_FILE_NAME;
+                    isProjectBuilt = rgCliLauncher::BuildProjectCloneOpenCL(m_pProject, m_cloneIndex, outputPath, binaryName, appendBuildOutput, gpusWithBuildOutputs, m_cancelBuildSignal);
                 }
                 else if (currentApi == rgProjectAPI::Vulkan)
                 {
-                    isProjectBuilt = rgCliLauncher::BuildProjectCloneVulkan(m_pProject, m_cloneIndex, outputPath, appendBuildOutput, gpusWithBuildOutputs, m_cancelBuildSignal);
+                    std::shared_ptr<rgBuildSettings> pProjectSettings = m_pProject->m_clones[m_cloneIndex]->m_pBuildSettings;
+                    std::string binaryName = STR_BUILD_SETTINGS_OUTPUT_BINARY_FILE_NAME;
+                    assert(pProjectSettings != nullptr);
+                    if (pProjectSettings != nullptr)
+                    {
+                        binaryName = pProjectSettings->m_binaryFileName;
+                    }
+                    isProjectBuilt = rgCliLauncher::BuildProjectCloneVulkan(m_pProject, m_cloneIndex, outputPath, binaryName, appendBuildOutput, gpusWithBuildOutputs, m_cancelBuildSignal);
                 }
 
                 // Verify that the build was not canceled.
@@ -2647,6 +2660,11 @@ void rgBuildView::CreateIsaDisassemblyView()
             m_pDisassemblyViewContainer = new rgViewContainer();
             m_pDisassemblyViewContainer->SetMainWidget(m_pDisassemblyView);
 
+            // Connect the container single click signal to disassembly view focus in handler.
+            bool isConnected = connect(m_pDisassemblyViewContainer, &rgViewContainer::ViewContainerMouseClickEventSignal, m_pDisassemblyView,
+                &rgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+            assert(isConnected);
+
             // Set the object name for the disassembly view container.
             m_pDisassemblyViewContainer->setObjectName(STR_RG_ISA_DISASSEMBLY_VIEW_CONTAINER);
 
@@ -3172,4 +3190,9 @@ void rgBuildView::HandleDisassemblyViewClicked()
 {
     qApp->focusObjectChanged(m_pDisassemblyView);
     m_pDisassemblyView->setFocus();
+}
+
+bool rgBuildView::SaveProjectConfigFile() const
+{
+    return rgConfigManager::Instance().SaveProjectFile(m_pProject);
 }

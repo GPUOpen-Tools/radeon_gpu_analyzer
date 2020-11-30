@@ -13,10 +13,12 @@
 
 bool rgConfigFileReaderOpenCL::ReadProjectConfigFile(tinyxml2::XMLDocument& doc, const char* pFileDataModelVersion, std::shared_ptr<rgProject>& pRgaProject)
 {
-    // The config files are the same format for v2.0 and v2.1
+    // Version 2.2 requires processing of binary output file, which
+   // is handled later.
     bool isVersionCompatible =
         (RGA_DATA_MODEL_2_0.compare(pFileDataModelVersion) == 0) ||
-        (RGA_DATA_MODEL_2_1.compare(pFileDataModelVersion) == 0);
+        (RGA_DATA_MODEL_2_1.compare(pFileDataModelVersion) == 0) ||
+        (RGA_DATA_MODEL_2_2.compare(pFileDataModelVersion) == 0);
 
     assert(isVersionCompatible);
 
@@ -47,6 +49,7 @@ bool rgConfigFileReaderOpenCL::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
                     // Create the RGA project object.
                     std::shared_ptr<rgProjectOpenCL> pOpenCLProject = std::make_shared<rgProjectOpenCL>();
                     pOpenCLProject->m_projectName = projectName;
+                    pOpenCLProject->m_projectDataModelVersion = pFileDataModelVersion;
                     pRgaProject = pOpenCLProject;
 
                     // Iterate through the project's clones: get the first clone.
@@ -100,8 +103,8 @@ bool rgConfigFileReaderOpenCL::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
                                     assert(ret);
                                     if (ret)
                                     {
-                                        // Read the build settings that apply only to OpenCL.
-                                        ret = ret && ReadApiBuildSettings(pNode, pBuildSettings);
+                                        // Read the build settings that apply only to API.
+                                        ret = ret && ReadApiBuildSettings(pNode, pBuildSettings, pOpenCLProject->m_projectDataModelVersion);
                                         assert(ret);
                                         if (ret)
                                         {
@@ -127,7 +130,7 @@ bool rgConfigFileReaderOpenCL::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
     return ret;
 }
 
-bool rgConfigFileReaderOpenCL::ReadApiBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings)
+bool rgConfigFileReaderOpenCL::ReadApiBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings, const std::string& version)
 {
     bool ret = false;
 

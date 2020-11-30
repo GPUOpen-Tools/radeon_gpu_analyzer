@@ -24,7 +24,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../Res/RadeonGPUAnalyzerGUI.qrc">
-    <normaloff>:/icons/rgaIcon.svg</normaloff>:/icons/rgaIcon.svg</iconset>
+    <normaloff>:/icons/rgaIcon.png</normaloff>:/icons/rgaIcon.png</iconset>
   </property>
   <property name="modal">
    <bool>true</bool>

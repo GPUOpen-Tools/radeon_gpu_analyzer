@@ -33,6 +33,10 @@ public:
     // Update the matched substrings.
     void UpdateStringMatchingLocation(int startLocation, int length, const std::string& searchString);
 
+protected:
+    // The generated UI object.
+    Ui::rgPipelineStateEditorWidgetNumeric ui;
+
 private:
     // Connect internal signals.
     void ConnectSignals();
@@ -45,7 +49,4 @@ private:
 
     // The validator used to restrict editing to specific numeric types.
     QValidator* m_pValidator = nullptr;
-
-    // The generated UI object.
-    Ui::rgPipelineStateEditorWidgetNumeric ui;
 };

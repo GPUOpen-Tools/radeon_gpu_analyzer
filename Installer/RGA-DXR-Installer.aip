@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<DOCUMENT Type="Advanced Installer" CreateVersion="13.5" version="13.5" Modules="professional" RootPath="." Language="en" Id="{EA8D161A-3BD9-4EBF-B67A-755D899E72CA}">
+  <COMPONENT cid="caphyon.advinst.msicomp.ProjectOptionsComponent">
+    <ROW Name="HiddenItems" Value="AppXAppDetailsComponent;AppXCapabilitiesComponent;AppXDependenciesComponent;AppXProductDetailsComponent;AppXVisualAssetsComponent;AppXAppDeclarationsComponent;AppXUriRulesComponent"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiPropsComponent">
+    <ROW Property="AI_BITMAP_DISPLAY_MODE" Value="0"/>
+    <ROW Property="AI_CLEAN_RESOURCES_DISABLE_UPGRADE" Value="0"/>
+    <ROW Property="AI_CLEAN_RESOURCES_UNINSTALL" Value="1"/>
+    <ROW Property="AI_CLEAN_RESOURCES_USER_PROMPT_BASIC_UI" Value="0"/>
+    <ROW Property="AI_CLEAN_RESOURCES_USER_PROMPT_FULL_UI" Value="0"/>
+    <ROW Property="AI_DESKTOP_SH" Type="4" MsiKey="AI_DESKTOP_SH"/>
+    <ROW Property="AI_QUICKLAUNCH_SH" Type="4" MsiKey="AI_QUICKLAUNCH_SH"/>
+    <ROW Property="AI_SHORTCUTSREG" Value="0|0|0|0|"/>
+    <ROW Property="AI_STARTMENU_SH" Type="4" MsiKey="AI_STARTMENU_SH"/>
+    <ROW Property="ALLUSERS" Value="1"/>
+    <ROW Property="ARPCOMMENTS" Value="RGA-2.4.0.0-Installer.msi" ValueLocId="*"/>
+    <ROW Property="ARPCONTACT" Value="https://github.com/GPUOpen-Tools/"/>
+    <ROW Property="ARPNOMODIFY" MultiBuildValue="x64_Release_Static:1"/>
+    <ROW Property="ARPNOREPAIR" Value="1"/>
+    <ROW Property="ARPPRODUCTICON" Value="RadeonGPUAnalyzerGUI.exe" Type="8"/>
+    <ROW Property="ARPURLINFOABOUT" Value="https://github.com/GPUOpen-Tools/RGA"/>
+    <ROW Property="CTRLS" Value="2"/>
+    <ROW Property="Manufacturer" Value="GPUOpen"/>
+    <ROW Property="PackageFileName" Value="RGA-2.4.0.0-Installer.msi"/>
+    <ROW Property="ProductCode" Value="1033:{3D660798-4518-4F82-B6C9-05E9B83FEED5} " Type="16"/>
+    <ROW Property="ProductLanguage" Value="1033"/>
+    <ROW Property="ProductName" Value="Radeon GPU Analyzer (RGA)"/>
+    <ROW Property="ProductVersion" Value="2.4.0.0" Type="32"/>
+    <ROW Property="SETUP_FILE_NAME" Value="RGA-2.4.0.0-Installer.msi"/>
+    <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND"/>
+    <ROW Property="UpgradeCode" Value="{72FDBDB3-E5E3-4772-9396-EB5196A89D80}"/>
+    <ROW Property="WindowsType9X" MultiBuildValue="x64_Release_Static:Windows 9x/ME" ValueLocId="-"/>
+    <ROW Property="WindowsType9XDisplay" MultiBuildValue="x64_Release_Static:Windows 9x/ME" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT40" MultiBuildValue="x64_Release_Static:Windows NT 4.0" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT40Display" MultiBuildValue="x64_Release_Static:Windows NT 4.0" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT50" MultiBuildValue="x64_Release_Static:Windows 2000" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT50Display" MultiBuildValue="x64_Release_Static:Windows 2000" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT5X" MultiBuildValue="x64_Release_Static:Windows XP/2003 RTM, Windows XP/2003 SP1, Windows XP SP2 x86" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT5XDisplay" MultiBuildValue="x64_Release_Static:Windows XP/2003 RTM, Windows XP/2003 SP1, Windows XP SP2 x86" ValueLocId="-"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiDirsComponent">
+    <ROW Directory="APPDIR" Directory_Parent="TARGETDIR" DefaultDir="APPDIR:." IsPseudoRoot="1"/>
+    <ROW Directory="AppDataFolder" Directory_Parent="TARGETDIR" DefaultDir="APPDAT~1|AppDataFolder" IsPseudoRoot="1"/>
+    <ROW Directory="Assets" Directory_Parent="TARGETDIR" DefaultDir="Assets" IsPseudoRoot="1"/>
+    <ROW Directory="DX12_Dir" Directory_Parent="utils_Dir" DefaultDir="DX12"/>
+    <ROW Directory="DXC_Dir" Directory_Parent="DX12_Dir" DefaultDir="DXC" DirectoryOptions="3"/>
+    <ROW Directory="DXR_Dir" Directory_Parent="APPDIR" DefaultDir="DXR"/>
+    <ROW Directory="DesktopFolder" Directory_Parent="TARGETDIR" DefaultDir="DESKTO~1|DesktopFolder" IsPseudoRoot="1"/>
+    <ROW Directory="Disassembler_Dir" Directory_Parent="LC_Dir" DefaultDir="DISASS~1|Disassembler"/>
+    <ROW Directory="Documentation_Dir" Directory_Parent="APPDIR" DefaultDir="docs"/>
+    <ROW Directory="LC_Dir" Directory_Parent="utils_Dir" DefaultDir="LC"/>
+    <ROW Directory="OpenCL_Dir" Directory_Parent="LC_Dir" DefaultDir="OpenCL"/>
+    <ROW Directory="RadeonGPUAnalyzer_Dir" Directory_Parent="AppDataFolder" DefaultDir="RADEON~1|RadeonGPUAnalyzer"/>
+    <ROW Directory="SHORTCUTDIR" Directory_Parent="TARGETDIR" DefaultDir="SHORTC~1|SHORTCUTDIR" IsPseudoRoot="1"/>
+    <ROW Directory="TARGETDIR" DefaultDir="SourceDir"/>
+    <ROW Directory="TempFolder" Directory_Parent="TARGETDIR" DefaultDir="TEMPFO~1|TempFolder" IsPseudoRoot="1"/>
+    <ROW Directory="Vulkan_Dir" Directory_Parent="utils_Dir" DefaultDir="Vulkan"/>
+    <ROW Directory="_images_1_Dir" Directory_Parent="html_Dir" DefaultDir="_images"/>
+    <ROW Directory="_sources_1_Dir" Directory_Parent="html_Dir" DefaultDir="_sources"/>
+    <ROW Directory="_static_1_Dir" Directory_Parent="html_Dir" DefaultDir="_static"/>
+    <ROW Directory="amdvlk_Dir" Directory_Parent="Vulkan_Dir" DefaultDir="amdvlk"/>
+    <ROW Directory="bin_Dir" Directory_Parent="OpenCL_Dir" DefaultDir="bin"/>
+    <ROW Directory="bitcode_Dir" Directory_Parent="lib_Dir" DefaultDir="bitcode"/>
+    <ROW Directory="css_1_Dir" Directory_Parent="_static_1_Dir" DefaultDir="css"/>
+    <ROW Directory="fonts_1_Dir" Directory_Parent="_static_1_Dir" DefaultDir="fonts"/>
+    <ROW Directory="help_Dir" Directory_Parent="Documentation_Dir" DefaultDir="help"/>
+    <ROW Directory="html_Dir" Directory_Parent="rga_Dir" DefaultDir="html"/>
+    <ROW Directory="iconengines_Dir" Directory_Parent="APPDIR" DefaultDir="ICONEN~1|iconengines"/>
+    <ROW Directory="imageformats_Dir" Directory_Parent="APPDIR" DefaultDir="IMAGEF~1|imageformats"/>
+    <ROW Directory="include_Dir" Directory_Parent="OpenCL_Dir" DefaultDir="include"/>
+    <ROW Directory="js_1_Dir" Directory_Parent="_static_1_Dir" DefaultDir="js"/>
+    <ROW Directory="layer_Dir" Directory_Parent="APPDIR" DefaultDir="layer"/>
+    <ROW Directory="lib_Dir" Directory_Parent="OpenCL_Dir" DefaultDir="lib"/>
+    <ROW Directory="platforms_Dir" Directory_Parent="APPDIR" DefaultDir="PLATFO~1|platforms"/>
+    <ROW Directory="rga_Dir" Directory_Parent="help_Dir" DefaultDir="rga"/>
+    <ROW Directory="styles_Dir" Directory_Parent="APPDIR" DefaultDir="styles"/>
+    <ROW Directory="utils_Dir" Directory_Parent="APPDIR" DefaultDir="utils"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiCompsComponent">
+    <ROW Component="AIShRegAnswer" ComponentId="{EDCF4464-D197-4C77-8DAB-DE3819EA0CC2}" Directory_="APPDIR" Attributes="260" KeyPath="AIShRegAnswer"/>
+    <ROW Component="APPDIRlayerVK_LAYER_RGA_pipeline_extract" ComponentId="{A167A100-A9DE-410D-9E2D-49E291213EC7}" Directory_="APPDIR" Attributes="260" KeyPath="APPDIRlayerVK_LAYER_RGA_pipeline_extraction_win32.json"/>
+    <ROW Component="License.txt" ComponentId="{6A0742EE-18F6-4FF3-B55B-9DFF4BFDE2A4}" Directory_="APPDIR" Attributes="0" KeyPath="License.txt" Type="0"/>
+    <ROW Component="Microsoft.Bcl.AsyncInterfaces.dll" ComponentId="{3505FEF4-69EA-4726-BCC4-FDBB359FB551}" Directory_="DXR_Dir" Attributes="0" KeyPath="Microsoft.Bcl.AsyncInterfaces.dll"/>
+    <ROW Component="ProductInformation" ComponentId="{5A879851-1BA2-49ED-8103-9FBEBBA01CDB}" Directory_="APPDIR" Attributes="4" KeyPath="Version"/>
+    <ROW Component="Qt5Core.dll" ComponentId="{C50BC7B7-D291-4DEA-8C64-F47302EE450B}" Directory_="APPDIR" Attributes="256" KeyPath="Qt5Core.dll"/>
+    <ROW Component="Qt5Gui.dll" ComponentId="{5BDEEB7A-232C-4DB9-B89A-A5C74DC2A01F}" Directory_="APPDIR" Attributes="256" KeyPath="Qt5Gui.dll"/>
+    <ROW Component="Qt5Svg.dll" ComponentId="{49B81DCC-D836-4CAA-9378-FA2C40DC8220}" Directory_="APPDIR" Attributes="256" KeyPath="Qt5Svg.dll"/>
+    <ROW Component="Qt5Widgets.dll" ComponentId="{22C854E8-ACAC-4900-A697-0AD278DCCE9C}" Directory_="APPDIR" Attributes="256" KeyPath="Qt5Widgets.dll"/>
+    <ROW Component="RGADX11.exe" ComponentId="{72A43BEE-FED4-42A9-8D74-645DBF440FDA}" Directory_="utils_Dir" Attributes="256" KeyPath="RGADX11.exe"/>
+    <ROW Component="RGADXRStateEditor.exe" ComponentId="{6725B066-0482-4AE8-895F-5EA0641C104D}" Directory_="DXR_Dir" Attributes="0" KeyPath="RGADXRStateEditor.exe"/>
+    <ROW Component="RGADXRStateEditor.exe.config" ComponentId="{4DBC0999-B5BA-417C-B5A3-DA490BA36CEA}" Directory_="DXR_Dir" Attributes="0" KeyPath="RGADXRStateEditor.exe.config" Type="0"/>
+    <ROW Component="RGALayerLauncher.exe" ComponentId="{2C3D1F1A-ECFF-4270-8A23-D14870FEC88E}" Directory_="APPDIR" Attributes="0" KeyPath="RGALayerLauncher.exe"/>
+    <ROW Component="RadeonGPUAnalyzer.exe" ComponentId="{9470FE03-FB93-4DDE-A1FA-FDA2EF853C20}" Directory_="APPDIR" Attributes="256" KeyPath="RadeonGPUAnalyzer.exe"/>
+    <ROW Component="SHORTCUTDIR" ComponentId="{8BF13AE8-AEF2-4669-B8FB-E4E917AB1380}" Directory_="SHORTCUTDIR" Attributes="0"/>
+    <ROW Component="System.Buffers.dll" ComponentId="{EB6F7267-ECF2-422D-AB7C-EC2AB71EAF7B}" Directory_="DXR_Dir" Attributes="0" KeyPath="System.Buffers.dll"/>
+    <ROW Component="System.Memory.dll" ComponentId="{66060023-EBAE-406B-A8E0-F7626FA1D8F3}" Directory_="DXR_Dir" Attributes="0" KeyPath="System.Memory.dll"/>
+    <ROW Component="System.Numerics.Vectors.dll" ComponentId="{D2BD3923-FDAE-4B19-A5D8-036DD6C8482F}" Directory_="DXR_Dir" Attributes="0" KeyPath="System.Numerics.Vectors.dll"/>
+    <ROW Component="System.Runtime.CompilerServices.Unsafe.d" ComponentId="{2120724F-09A7-4B0E-B6FE-26DC4088C109}" Directory_="DXR_Dir" Attributes="0" KeyPath="System.Runtime.CompilerServices.Unsafe.dll"/>
+    <ROW Component="System.Text.Encodings.Web.dll" ComponentId="{8C4B3821-8D9C-4861-BE36-29E6EF70AAAA}" Directory_="DXR_Dir" Attributes="0" KeyPath="System.Text.Encodings.Web.dll"/>
+    <ROW Component="System.Text.Json.dll" ComponentId="{E2090F60-581A-4D20-AFC3-9AC736D77C33}" Directory_="DXR_Dir" Attributes="0" KeyPath="System.Text.Json.dll"/>
+    <ROW Component="System.Threading.Tasks.Extensions.dll" ComponentId="{CD437CB3-5240-402C-B1A7-A95AAC86937A}" Directory_="DXR_Dir" Attributes="0" KeyPath="System.Threading.Tasks.Extensions.dll"/>
+    <ROW Component="System.ValueTuple.dll" ComponentId="{C211D024-8471-416E-A117-089AB7E42C5D}" Directory_="DXR_Dir" Attributes="0" KeyPath="System.ValueTuple.dll"/>
+    <ROW Component="Tiny44x44Logo.scale100.png" ComponentId="{FAD42D9F-547D-478F-95CA-A379E128B00C}" Directory_="Assets" Attributes="0" KeyPath="Tiny44x44Logo.scale100.png" Type="0"/>
+    <ROW Component="VK_LAYER_RGA_pipeline_extraction.dll" ComponentId="{25BB089B-F869-4A9A-9256-2A59012BADB9}" Directory_="layer_Dir" Attributes="256" KeyPath="VK_LAYER_RGA_pipeline_extraction.dll"/>
+    <ROW Component="VK_LAYER_RGA_pipeline_extraction_win32.j" ComponentId="{44E8ABA6-27DC-48D3-AA7E-69A96AE9F129}" Directory_="layer_Dir" Attributes="0" KeyPath="VK_LAYER_RGA_pipeline_extraction_win32.json" Type="0"/>
+    <ROW Component="VirtualContext.exe" ComponentId="{EE71BCEE-5946-450E-BC00-52A90C759A85}" Directory_="utils_Dir" Attributes="256" KeyPath="VirtualContext.exe"/>
+    <ROW Component="VulkanBackend.exe" ComponentId="{7852CB1A-FBD5-4E4D-ADF1-CA8E06AEBB74}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="VulkanBackend.exe"/>
+    <ROW Component="_open_file_link_button.png_1" ComponentId="{10B70ADA-1B65-4446-8D3B-A4396F157878}" Directory_="_images_1_Dir" Attributes="0" KeyPath="_open_file_link_button.png_1" Type="0"/>
+    <ROW Component="additionaltargets" ComponentId="{A3A24851-A74F-46DD-A5F5-F24D53E45E0C}" Directory_="OpenCL_Dir" Attributes="0" KeyPath="additionaltargets" Type="0"/>
+    <ROW Component="ajaxloader.gif_1" ComponentId="{DD166F8E-6244-433E-B2E5-D9DF6B2D0EA1}" Directory_="_static_1_Dir" Attributes="0" KeyPath="ajaxloader.gif_1" Type="0"/>
+    <ROW Component="amdgpudis.exe" ComponentId="{E2CAEDC6-5737-441B-B202-462A3B853A1B}" Directory_="Disassembler_Dir" Attributes="256" KeyPath="amdgpudis.exe"/>
+    <ROW Component="amdspv.exe" ComponentId="{F46D8114-0843-4E68-BF05-A451B1D53C5D}" Directory_="utils_Dir" Attributes="256" KeyPath="amdspv.exe"/>
+    <ROW Component="amdvlk64.dll" ComponentId="{2AB5A4AB-B182-4917-8A35-7917E5C19679}" Directory_="amdvlk_Dir" Attributes="256" KeyPath="amdvlk64.dll"/>
+    <ROW Component="badge_only.css_1" ComponentId="{917ACEFF-8ED2-4BDB-96B3-1E0D7CA6C05E}" Directory_="css_1_Dir" Attributes="0" KeyPath="badge_only.css_1" Type="0"/>
+    <ROW Component="buildinfo" ComponentId="{39072229-B557-4ABD-808C-954402E8ADA0}" Directory_="html_Dir" Attributes="0" KeyPath="buildinfo" Type="0"/>
+    <ROW Component="clang.exe" ComponentId="{C6C65EDF-24DF-4C56-B3DB-0FFF696A5453}" Directory_="bin_Dir" Attributes="256" KeyPath="clang.exe"/>
+    <ROW Component="concrt140.dll" ComponentId="{F6366CA5-6B9C-4E77-AD65-3E3C0E2460D2}" Directory_="APPDIR" Attributes="256" KeyPath="concrt140.dll"/>
+    <ROW Component="d3dcompiler_47.dll" ComponentId="{C8B98C05-3A5F-4CEE-AD65-3B4DEFEB0DDF}" Directory_="utils_Dir" Attributes="256" KeyPath="d3dcompiler_47.dll"/>
+    <ROW Component="dx12_backend.exe" ComponentId="{3EF09279-E1CD-4D5C-AA66-C37E7F22618F}" Directory_="DX12_Dir" Attributes="256" KeyPath="dx12_backend.exe"/>
+    <ROW Component="dxc.exe" ComponentId="{2B988C11-9BC2-48BF-B227-FFF80BCBAA36}" Directory_="DXC_Dir" Attributes="256" KeyPath="dxc.exe"/>
+    <ROW Component="dxcompiler.dll" ComponentId="{7BD703C5-6B31-4206-8D0B-3E3A4BAB62B5}" Directory_="DXC_Dir" Attributes="256" KeyPath="dxcompiler.dll"/>
+    <ROW Component="dxil.dll" ComponentId="{9ABE0166-ADDE-4556-9370-01F1830343A1}" Directory_="DXC_Dir" Attributes="256" KeyPath="dxil.dll"/>
+    <ROW Component="fontawesomewebfont.eot_1" ComponentId="{E5F18EDD-5171-4CA7-86EE-A2F1098D9E08}" Directory_="fonts_1_Dir" Attributes="0" KeyPath="fontawesomewebfont.eot_1" Type="0"/>
+    <ROW Component="gen_devices.py" ComponentId="{14D005FF-04E0-4A15-8D11-FFB2B4DD56DC}" Directory_="bin_Dir" Attributes="0" KeyPath="gen_devices.py" Type="0"/>
+    <ROW Component="glslangValidator.exe" ComponentId="{A6592E85-AA9C-485E-B791-58986ECD5EA7}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="glslangValidator.exe"/>
+    <ROW Component="help" ComponentId="{4ACC3EA8-8EBF-456E-A214-08C17E64345E}" Directory_="help_Dir" Attributes="0"/>
+    <ROW Component="help_manual.rst.txt_1" ComponentId="{BFAD2A00-00E6-4DB9-863A-4B3152367F07}" Directory_="_sources_1_Dir" Attributes="0" KeyPath="help_manual.rst.txt_1" Type="0"/>
+    <ROW Component="irif.amdgcn.bc" ComponentId="{AD9036FE-5037-45F2-8D59-7475BAC0D979}" Directory_="bitcode_Dir" Attributes="0" KeyPath="irif.amdgcn.bc" Type="0"/>
+    <ROW Component="ld.lld.exe" ComponentId="{A5EE3774-C754-4339-BB80-17CD6D315BA4}" Directory_="bin_Dir" Attributes="256" KeyPath="ld.lld.exe"/>
+    <ROW Component="llvmobjdump.exe" ComponentId="{C755268D-E85E-42A1-9C86-A324DA6731CA}" Directory_="bin_Dir" Attributes="256" KeyPath="llvmobjdump.exe"/>
+    <ROW Component="llvmreadobj.exe" ComponentId="{22654DBF-605C-4F97-9AAB-17E08BD74DF7}" Directory_="bin_Dir" Attributes="256" KeyPath="llvmreadobj.exe"/>
+    <ROW Component="modernizr.min.js_1" ComponentId="{FB2FFAA9-1170-40B5-B931-C09517CAB4EB}" Directory_="js_1_Dir" Attributes="0" KeyPath="modernizr.min.js_1" Type="0"/>
+    <ROW Component="msvcp120.dll" ComponentId="{7FBBBE47-672B-4F01-A924-F5E923A67143}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="msvcp120.dll"/>
+    <ROW Component="msvcp140.dll" ComponentId="{6F0921B7-A92A-407E-8FA0-BEBD31BB9050}" Directory_="APPDIR" Attributes="256" KeyPath="msvcp140.dll"/>
+    <ROW Component="msvcr120.dll" ComponentId="{48BB2F5F-4F8C-4D90-89DA-BDD4E1AA42C3}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="msvcr120.dll"/>
+    <ROW Component="openclc.h" ComponentId="{4ACF21E3-5B99-45B2-92DE-0BF7DC5AADDD}" Directory_="include_Dir" Attributes="0" KeyPath="openclc.h" Type="0"/>
+    <ROW Component="qsvg.dll" ComponentId="{E3CA603A-9CA1-46D2-957E-F8FD0C3C8332}" Directory_="imageformats_Dir" Attributes="256" KeyPath="qsvg.dll"/>
+    <ROW Component="qsvgicon.dll" ComponentId="{D41D5B9F-56C9-4014-94BC-A81AB983E4BD}" Directory_="iconengines_Dir" Attributes="256" KeyPath="qsvgicon.dll"/>
+    <ROW Component="qwindows.dll" ComponentId="{A47422D6-1883-49F7-8099-F71D4EA9C066}" Directory_="platforms_Dir" Attributes="256" KeyPath="qwindows.dll"/>
+    <ROW Component="qwindowsvistastyle.dll" ComponentId="{B2C5E663-D349-43C5-816B-0D2489703E74}" Directory_="styles_Dir" Attributes="256" KeyPath="qwindowsvistastyle.dll"/>
+    <ROW Component="rga.exe" ComponentId="{B20133D0-67FA-48FA-8717-321A9A0C74B0}" Directory_="APPDIR" Attributes="256" KeyPath="rga.exe"/>
+    <ROW Component="rtda.exe" ComponentId="{1F070085-25E3-4551-8762-FDBA2E0856EB}" Directory_="APPDIR" Attributes="256" KeyPath="rtda.exe"/>
+    <ROW Component="shae.exe" ComponentId="{C1BDF62D-B5CD-4522-BCC4-E6D716DF5034}" Directory_="utils_Dir" Attributes="256" KeyPath="shae.exe"/>
+    <ROW Component="spirvas.exe" ComponentId="{12EDF714-1A67-4FD3-95D9-08CEC2BE84D4}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="spirvas.exe"/>
+    <ROW Component="spirvdis.exe" ComponentId="{37063224-A895-4D75-8CEF-974F2B783827}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="spirvdis.exe"/>
+    <ROW Component="spvgen.dll" ComponentId="{B0623453-F06C-4A67-B4F1-BA42DE2B8F0E}" Directory_="utils_Dir" Attributes="256" KeyPath="spvgen.dll"/>
+    <ROW Component="vccorlib120.dll" ComponentId="{F0E19952-F9BA-4CA6-ACA6-5126AC017C78}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="vccorlib120.dll"/>
+    <ROW Component="vccorlib140.dll" ComponentId="{055E8A78-D6DE-4352-8183-447912066744}" Directory_="APPDIR" Attributes="256" KeyPath="vccorlib140.dll"/>
+    <ROW Component="vcruntime140.dll" ComponentId="{9E3CF74F-7581-4ADE-94A1-91A8AAAFDCC2}" Directory_="APPDIR" Attributes="256" KeyPath="vcruntime140.dll"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiFeatsComponent">
+    <ROW Feature="AiAppXAssets" Title="AiAppXAssets" Description="Description" Display="3" Level="0" Directory_="APPDIR" Attributes="0" Components="Tiny44x44Logo.scale100.png"/>
+    <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0" Components="AIShRegAnswer APPDIRlayerVK_LAYER_RGA_pipeline_extract License.txt Microsoft.Bcl.AsyncInterfaces.dll ProductInformation Qt5Core.dll Qt5Gui.dll Qt5Svg.dll Qt5Widgets.dll RGADX11.exe RGADXRStateEditor.exe RGADXRStateEditor.exe.config RGALayerLauncher.exe RadeonGPUAnalyzer.exe SHORTCUTDIR System.Buffers.dll System.Memory.dll System.Numerics.Vectors.dll System.Runtime.CompilerServices.Unsafe.d System.Text.Encodings.Web.dll System.Text.Json.dll System.Threading.Tasks.Extensions.dll System.ValueTuple.dll VK_LAYER_RGA_pipeline_extraction.dll VK_LAYER_RGA_pipeline_extraction_win32.j VirtualContext.exe VulkanBackend.exe _open_file_link_button.png_1 additionaltargets ajaxloader.gif_1 amdgpudis.exe amdspv.exe amdvlk64.dll badge_only.css_1 buildinfo clang.exe concrt140.dll d3dcompiler_47.dll dx12_backend.exe dxc.exe dxcompiler.dll dxil.dll fontawesomewebfont.eot_1 gen_devices.py glslangValidator.exe help help_manual.rst.txt_1 irif.amdgcn.bc ld.lld.exe llvmobjdump.exe llvmreadobj.exe modernizr.min.js_1 msvcp120.dll msvcp140.dll msvcr120.dll openclc.h qsvg.dll qsvgicon.dll qwindows.dll qwindowsvistastyle.dll rga.exe rtda.exe shae.exe spirvas.exe spirvdis.exe spvgen.dll vccorlib120.dll vccorlib140.dll vcruntime140.dll"/>
+    <ATTRIBUTE name="CurrentFeature" value="MainFeature"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiFilesComponent">
+    <ROW File="EULA.txt" Component_="License.txt" FileName="EULA.txt" Attributes="0" SourcePath="..\EULA.txt" SelfReg="false" NextFile="Microsoft.Bcl.AsyncInterfaces.dll"/>
+    <ROW File="InconsolataBold.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="INCONS~1.TTF|Inconsolata-Bold.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\Inconsolata-Bold.ttf" SelfReg="false" NextFile="InconsolataRegular.ttf_1"/>
+    <ROW File="InconsolataRegular.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="INCONS~2.TTF|Inconsolata-Regular.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\Inconsolata-Regular.ttf" SelfReg="false" NextFile="LatoBold.ttf_1"/>
+    <ROW File="LatoBold.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="LATO-B~1.TTF|Lato-Bold.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\Lato-Bold.ttf" SelfReg="false" NextFile="LatoRegular.ttf_1"/>
+    <ROW File="LatoRegular.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="LATO-R~1.TTF|Lato-Regular.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\Lato-Regular.ttf" SelfReg="false" NextFile="RobotoSlabBold.ttf_1"/>
+    <ROW File="License.txt" Component_="License.txt" FileName="License.txt" Attributes="0" SourcePath="..\License.txt" SelfReg="false" NextFile="RGAThirdPartyLicenses.txt"/>
+    <ROW File="Medium150x150Logo.scale100.png" Component_="Tiny44x44Logo.scale100.png" FileName="MEDIUM~1.PNG|Medium150x150Logo.scale-100.png" Attributes="0" SourcePath="&lt;AI_RES&gt;appx\Logo.png" SelfReg="false" NextFile="Store50x50Logo.scale100.png"/>
+    <ROW File="Microsoft.Bcl.AsyncInterfaces.dll" Component_="Microsoft.Bcl.AsyncInterfaces.dll" FileName="MICROS~1.DLL|Microsoft.Bcl.AsyncInterfaces.dll" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\Microsoft.Bcl.AsyncInterfaces.dll" SelfReg="false" NextFile="System.Buffers.dll"/>
+    <ROW File="Qt5Core.dll" Component_="Qt5Core.dll" FileName="Qt5Core.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Core.dll" SelfReg="false" NextFile="Qt5Gui.dll"/>
+    <ROW File="Qt5Gui.dll" Component_="Qt5Gui.dll" FileName="Qt5Gui.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Gui.dll" SelfReg="false" NextFile="Qt5Svg.dll"/>
+    <ROW File="Qt5Svg.dll" Component_="Qt5Svg.dll" FileName="Qt5Svg.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Svg.dll" SelfReg="false" NextFile="Qt5Widgets.dll"/>
+    <ROW File="Qt5Widgets.dll" Component_="Qt5Widgets.dll" FileName="QT5WID~1.DLL|Qt5Widgets.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Widgets.dll" SelfReg="false" NextFile="rga.exe"/>
+    <ROW File="README.md" Component_="License.txt" FileName="README.md" Attributes="0" SourcePath="..\README.md" SelfReg="false" NextFile="RGA_RELEASE_NOTES_v2.4.txt"/>
+    <ROW File="RGADX11.exe" Component_="RGADX11.exe" FileName="RGADX11.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\RGADX11.exe" SelfReg="false" NextFile="spvgen.dll" DigSign="true"/>
+    <ROW File="RGADXRStateEditor.exe" Component_="RGADXRStateEditor.exe" FileName="RGADXR~1.EXE|RGA DXR State Editor.exe" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\RGA DXR State Editor.exe" SelfReg="false" NextFile="RGADXRStateEditor.exe.config" DigSign="true"/>
+    <ROW File="RGADXRStateEditor.exe.config" Component_="RGADXRStateEditor.exe.config" FileName="RGADXR~1.CON|RGA DXR State Editor.exe.config" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\RGA DXR State Editor.exe.config" SelfReg="false" NextFile="buildinfo"/>
+    <ROW File="RGALayerLauncher.exe" Component_="RGALayerLauncher.exe" FileName="RGALAY~1.EXE|RGALayerLauncher.exe" Attributes="0" SourcePath="..\Utils\Vulkan\Windows\RGALayer\RGALayerLauncher\bin\Release\RGALayerLauncher.exe" SelfReg="false" NextFile="EULA.txt" DigSign="true"/>
+    <ROW File="RGAThirdPartyLicenses.txt" Component_="License.txt" FileName="RGATHI~1.TXT|RGAThirdPartyLicenses.txt" Attributes="0" SourcePath="..\RGAThirdPartyLicenses.txt" SelfReg="false" NextFile="VK_LAYER_RGA_pipeline_extraction.dll"/>
+    <ROW File="RGA_RELEASE_NOTES_v2.4.txt" Component_="License.txt" FileName="RGA_RE~1.TXT|RGA_RELEASE_NOTES_v2.4.txt" Attributes="0" SourcePath="..\BuildOutput\bin\RGA_RELEASE_NOTES_v2.4.txt" SelfReg="false"/>
+    <ROW File="RadeonGPUAnalyzer.exe" Component_="RadeonGPUAnalyzer.exe" FileName="RADEON~1.EXE|RadeonGPUAnalyzer.exe" Attributes="0" SourcePath="..\BuildOutput\bin\RadeonGPUAnalyzer.exe" SelfReg="false" NextFile="shae.exe" DigSign="true"/>
+    <ROW File="RobotoSlabBold.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="ROBOTO~1.TTF|RobotoSlab-Bold.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\RobotoSlab-Bold.ttf" SelfReg="false" NextFile="RobotoSlabRegular.ttf_1"/>
+    <ROW File="RobotoSlabRegular.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="ROBOTO~2.TTF|RobotoSlab-Regular.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\RobotoSlab-Regular.ttf" SelfReg="false" NextFile="jquery3.1.0.js_1"/>
+    <ROW File="Store50x50Logo.scale100.png" Component_="Tiny44x44Logo.scale100.png" FileName="STORE5~1.PNG|Store50x50Logo.scale-100.png" Attributes="0" SourcePath="&lt;AI_RES&gt;appx\StoreLogo.png" SelfReg="false" NextFile="qsvgicon.dll"/>
+    <ROW File="System.Buffers.dll" Component_="System.Buffers.dll" FileName="SYSTEM~2.DLL|System.Buffers.dll" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\System.Buffers.dll" SelfReg="false" NextFile="System.Memory.dll"/>
+    <ROW File="System.Memory.dll" Component_="System.Memory.dll" FileName="SYSTE~42.DLL|System.Memory.dll" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\System.Memory.dll" SelfReg="false" NextFile="System.Numerics.Vectors.dll"/>
+    <ROW File="System.Numerics.Vectors.dll" Component_="System.Numerics.Vectors.dll" FileName="SYSTE~54.DLL|System.Numerics.Vectors.dll" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\System.Numerics.Vectors.dll" SelfReg="false" NextFile="System.Runtime.CompilerServices.Unsafe.dll"/>
+    <ROW File="System.Runtime.CompilerServices.Unsafe.dll" Component_="System.Runtime.CompilerServices.Unsafe.d" FileName="SYSTE~62.DLL|System.Runtime.CompilerServices.Unsafe.dll" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\System.Runtime.CompilerServices.Unsafe.dll" SelfReg="false" NextFile="System.Text.Encodings.Web.dll"/>
+    <ROW File="System.Text.Encodings.Web.dll" Component_="System.Text.Encodings.Web.dll" FileName="SYSTE~84.DLL|System.Text.Encodings.Web.dll" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\System.Text.Encodings.Web.dll" SelfReg="false" NextFile="System.Text.Json.dll"/>
+    <ROW File="System.Text.Json.dll" Component_="System.Text.Json.dll" FileName="SYSTE~85.DLL|System.Text.Json.dll" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\System.Text.Json.dll" SelfReg="false" NextFile="System.Threading.Tasks.Extensions.dll"/>
+    <ROW File="System.Threading.Tasks.Extensions.dll" Component_="System.Threading.Tasks.Extensions.dll" FileName="SYSTE~90.DLL|System.Threading.Tasks.Extensions.dll" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\System.Threading.Tasks.Extensions.dll" SelfReg="false" NextFile="System.ValueTuple.dll"/>
+    <ROW File="System.ValueTuple.dll" Component_="System.ValueTuple.dll" FileName="SYSTE~95.DLL|System.ValueTuple.dll" Attributes="0" SourcePath="..\Utils\DXR State Editor\DXR State Editor\bin\Release\System.ValueTuple.dll" SelfReg="false" NextFile="RGADXRStateEditor.exe"/>
+    <ROW File="Tiny44x44Logo.scale100.png" Component_="Tiny44x44Logo.scale100.png" FileName="TINY44~1.PNG|Tiny44x44Logo.scale-100.png" Attributes="0" SourcePath="&lt;AI_RES&gt;appx\SmallLogo10.png" SelfReg="false" NextFile="Medium150x150Logo.scale100.png"/>
+    <ROW File="VK_LAYER_RGA_pipeline_extraction.dll" Component_="VK_LAYER_RGA_pipeline_extraction.dll" FileName="VK_LAY~1.DLL|VK_LAYER_RGA_pipeline_extraction.dll" Attributes="0" SourcePath="..\BuildOutput\bin\layer\VK_LAYER_RGA_pipeline_extraction.dll" SelfReg="false" NextFile="VK_LAYER_RGA_pipeline_extraction_win32.json"/>
+    <ROW File="VK_LAYER_RGA_pipeline_extraction_win32.json" Component_="VK_LAYER_RGA_pipeline_extraction_win32.j" FileName="VK_LAY~1.JSO|VK_LAYER_RGA_pipeline_extraction_win32.json" Attributes="0" SourcePath="..\BuildOutput\bin\layer\VK_LAYER_RGA_pipeline_extraction_win32.json" SelfReg="false" NextFile="RGALayerLauncher.exe"/>
+    <ROW File="VirtualContext.exe" Component_="VirtualContext.exe" FileName="VIRTUA~1.EXE|VirtualContext.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\VirtualContext.exe" SelfReg="false" NextFile="amdvlk64.dll" DigSign="true"/>
+    <ROW File="VulkanBackend.exe" Component_="VulkanBackend.exe" FileName="VULKAN~1.EXE|VulkanBackend.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\VulkanBackend.exe" SelfReg="false" NextFile="rtda.exe" DigSign="true"/>
+    <ROW File="_about_dialog.png_1" Component_="_open_file_link_button.png_1" FileName="016_AB~1.PNG|016_about_dialog.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\016_about_dialog.png" SelfReg="false" NextFile="_disassembly_view_context_menu.png_1"/>
+    <ROW File="_build_project.png_1" Component_="_open_file_link_button.png_1" FileName="003_BU~1.PNG|003_build_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\003_build_project.png" SelfReg="false" NextFile="_project_file_menu.png_1"/>
+    <ROW File="_build_view_build_output.png_1" Component_="_open_file_link_button.png_1" FileName="014_BU~1.PNG|014_build_view_build_output.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\014_build_view_build_output.png" SelfReg="false" NextFile="_build_view_disassembly_resource_usage_hazard.png_1"/>
+    <ROW File="_build_view_disassembly_resource_usage_hazard.png_1" Component_="_open_file_link_button.png_1" FileName="015_BU~1.PNG|015_build_view_disassembly_resource_usage_hazard.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\015_build_view_disassembly_resource_usage_hazard.png" SelfReg="false" NextFile="_about_dialog.png_1"/>
+    <ROW File="_build_view_file_menu.png_1" Component_="_open_file_link_button.png_1" FileName="012_BU~1.PNG|012_build_view_file_menu.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\012_build_view_file_menu.png" SelfReg="false" NextFile="_build_view_file_menu_build_settings.png_1"/>
+    <ROW File="_build_view_file_menu_build_settings.png_1" Component_="_open_file_link_button.png_1" FileName="012_BU~2.PNG|012_build_view_file_menu_build_settings.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\012_build_view_file_menu_build_settings.png" SelfReg="false" NextFile="_build_view_file_menu_rename_project.png_1"/>
+    <ROW File="_build_view_file_menu_rename_project.png_1" Component_="_open_file_link_button.png_1" FileName="012_BU~3.PNG|012_build_view_file_menu_rename_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\012_build_view_file_menu_rename_project.png" SelfReg="false" NextFile="_build_view_source_view.png_1"/>
+    <ROW File="_build_view_source_view.png_1" Component_="_open_file_link_button.png_1" FileName="013_BU~1.PNG|013_build_view_source_view.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\013_build_view_source_view.png" SelfReg="false" NextFile="_build_view_title_bar.png_1"/>
+    <ROW File="_build_view_title_bar.png_1" Component_="_open_file_link_button.png_1" FileName="013_BU~2.PNG|013_build_view_title_bar.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\013_build_view_title_bar.png" SelfReg="false" NextFile="_build_view_build_output.png_1"/>
+    <ROW File="_disassembly_view.png_1" Component_="_open_file_link_button.png_1" FileName="006_DI~1.PNG|006_disassembly_view.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\006_disassembly_view.png" SelfReg="false" NextFile="_home_page_b_recent.png_1"/>
+    <ROW File="_disassembly_view_context_menu.png_1" Component_="_open_file_link_button.png_1" FileName="017_DI~1.PNG|017_disassembly_view_context_menu.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\017_disassembly_view_context_menu.png" SelfReg="false" NextFile="_start_tab_open_project.png_1"/>
+    <ROW File="_drag_n_drop_project.png_1" Component_="_open_file_link_button.png_1" FileName="021_DR~1.PNG|021_drag_n_drop_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\021_drag_n_drop_project.png" SelfReg="false" NextFile="_remove_source_file.png_1"/>
+    <ROW File="_file_menu_open_project.png_1" Component_="_open_file_link_button.png_1" FileName="020_FI~1.PNG|020_file_menu_open_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\020_file_menu_open_project.png" SelfReg="false" NextFile="_drag_n_drop_project.png_1"/>
+    <ROW File="_home_page_b_open_project.png_1" Component_="_open_file_link_button.png_1" FileName="008_HO~1.PNG|008_home_page_b_open_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\008_home_page_b_open_project.png" SelfReg="false" NextFile="_home_page_b_settings_app.png_1"/>
+    <ROW File="_home_page_b_recent.png_1" Component_="_open_file_link_button.png_1" FileName="007_HO~1.PNG|007_home_page_b_recent.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\007_home_page_b_recent.png" SelfReg="false" NextFile="_home_page_b_tabs.png_1"/>
+    <ROW File="_home_page_b_settings_app.png_1" Component_="_open_file_link_button.png_1" FileName="010_HO~1.PNG|010_home_page_b_settings_app.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\010_home_page_b_settings_app.png" SelfReg="false" NextFile="_home_page_b_settings_build_cl.png_1"/>
+    <ROW File="_home_page_b_settings_build_cl.png_1" Component_="_open_file_link_button.png_1" FileName="011_HO~1.PNG|011_home_page_b_settings_build_cl.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\011_home_page_b_settings_build_cl.png" SelfReg="false" NextFile="_build_view_file_menu.png_1"/>
+    <ROW File="_home_page_b_tabs.png_1" Component_="_open_file_link_button.png_1" FileName="007_HO~2.PNG|007_home_page_b_tabs.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\007_home_page_b_tabs.png" SelfReg="false" NextFile="_home_page_b_open_project.png_1"/>
+    <ROW File="_open_file_link_button.png_1" Component_="_open_file_link_button.png_1" FileName="001_OP~1.PNG|001_open_file_link_button.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\001_open_file_link_button.png" SelfReg="false" NextFile="_open_file_menu_bar.png_1"/>
+    <ROW File="_open_file_menu_bar.png_1" Component_="_open_file_link_button.png_1" FileName="001_OP~2.PNG|001_open_file_menu_bar.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\001_open_file_menu_bar.png" SelfReg="false" NextFile="_rename_project.png_1"/>
+    <ROW File="_project_file_menu.png_1" Component_="_open_file_link_button.png_1" FileName="005_PR~1.PNG|005_project_file_menu.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\005_project_file_menu.png" SelfReg="false" NextFile="_disassembly_view.png_1"/>
+    <ROW File="_remove_source_file.png_1" Component_="_open_file_link_button.png_1" FileName="022_RE~1.PNG|022_remove_source_file.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\022_remove_source_file.png" SelfReg="false" NextFile="app_settings_vulkan.png_1"/>
+    <ROW File="_rename_project.png_1" Component_="_open_file_link_button.png_1" FileName="002_RE~1.PNG|002_rename_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\002_rename_project.png" SelfReg="false" NextFile="_build_project.png_1"/>
+    <ROW File="_start_tab_open_project.png_1" Component_="_open_file_link_button.png_1" FileName="018_ST~1.PNG|018_start_tab_open_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\018_start_tab_open_project.png" SelfReg="false" NextFile="_start_tab_recent_list.png_1"/>
+    <ROW File="_start_tab_recent_list.png_1" Component_="_open_file_link_button.png_1" FileName="019_ST~1.PNG|019_start_tab_recent_list.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\019_start_tab_recent_list.png" SelfReg="false" NextFile="_file_menu_open_project.png_1"/>
+    <ROW File="additionaltargets" Component_="additionaltargets" FileName="ADDITI~1|additional-targets" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\additional-targets" SelfReg="false" NextFile="clang.exe"/>
+    <ROW File="ajaxloader.gif_1" Component_="ajaxloader.gif_1" FileName="AJAX-L~1.GIF|ajax-loader.gif" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\ajax-loader.gif" SelfReg="false" NextFile="basic.css_1"/>
+    <ROW File="amdgpudis.exe" Component_="amdgpudis.exe" FileName="AMDGPU~1.EXE|amdgpu-dis.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\Disassembler\amdgpu-dis.exe" SelfReg="false" NextFile="additionaltargets" DigSign="true"/>
+    <ROW File="amdspv.exe" Component_="amdspv.exe" FileName="amdspv.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\amdspv.exe" SelfReg="false" NextFile="d3dcompiler_47.dll" DigSign="true"/>
+    <ROW File="amdvlk64.dll" Component_="amdvlk64.dll" FileName="amdvlk64.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\amdvlk\amdvlk64.dll" SelfReg="false" NextFile="glslangValidator.exe"/>
+    <ROW File="app_settings_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="APP_SE~1.PNG|app_settings_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\app_settings_vulkan.png" SelfReg="false" NextFile="build_project_output_vulkan.png_1"/>
+    <ROW File="badge_only.css_1" Component_="badge_only.css_1" FileName="BADGE_~1.CSS|badge_only.css" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\css\badge_only.css" SelfReg="false" NextFile="theme.css_1"/>
+    <ROW File="basic.css_1" Component_="ajaxloader.gif_1" FileName="basic.css" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\basic.css" SelfReg="false" NextFile="commentbright.png_1"/>
+    <ROW File="build_project_output_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="BUILD_~1.PNG|build_project_output_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\build_project_output_vulkan.png" SelfReg="false" NextFile="build_project_vulkan.png_1"/>
+    <ROW File="build_project_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="BUILD_~2.PNG|build_project_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\build_project_vulkan.png" SelfReg="false" NextFile="build_settings_vulkan.png_1"/>
+    <ROW File="build_settings_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="BUILD_~3.PNG|build_settings_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\build_settings_vulkan.png" SelfReg="false" NextFile="create_file_vulkan.png_1"/>
+    <ROW File="buildinfo" Component_="buildinfo" FileName="BUILDI~1|.buildinfo" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\.buildinfo" SelfReg="false" NextFile="nojekyll"/>
+    <ROW File="clang.exe" Component_="clang.exe" FileName="clang.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\bin\clang.exe" SelfReg="false" NextFile="gen_devices.py" DigSign="true"/>
+    <ROW File="comment.png_1" Component_="ajaxloader.gif_1" FileName="comment.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\comment.png" SelfReg="false" NextFile="badge_only.css_1"/>
+    <ROW File="commentbright.png_1" Component_="ajaxloader.gif_1" FileName="COMMEN~1.PNG|comment-bright.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\comment-bright.png" SelfReg="false" NextFile="commentclose.png_1"/>
+    <ROW File="commentclose.png_1" Component_="ajaxloader.gif_1" FileName="COMMEN~2.PNG|comment-close.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\comment-close.png" SelfReg="false" NextFile="comment.png_1"/>
+    <ROW File="concrt140.dll" Component_="concrt140.dll" FileName="CONCRT~1.DLL|concrt140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\concrt140.dll" SelfReg="false" NextFile="msvcp140.dll"/>
+    <ROW File="create_file_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="CREATE~1.PNG|create_file_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\create_file_vulkan.png" SelfReg="false" NextFile="create_project_vulkan.png_1"/>
+    <ROW File="create_project_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="CREATE~2.PNG|create_project_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\create_project_vulkan.png" SelfReg="false" NextFile="disassembly_view_vulkan.png_1"/>
+    <ROW File="d3dcompiler_47.dll" Component_="d3dcompiler_47.dll" FileName="D3DCOM~1.DLL|d3dcompiler_47.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\d3dcompiler_47.dll" SelfReg="false" NextFile="dx12_backend.exe"/>
+    <ROW File="disassembly_view_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="DISASS~1.PNG|disassembly_view_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\disassembly_view_vulkan.png" SelfReg="false" NextFile="display_current_mode.png_1"/>
+    <ROW File="display_current_mode.png_1" Component_="_open_file_link_button.png_1" FileName="DISPLA~1.PNG|display_current_mode.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\display_current_mode.png" SelfReg="false" NextFile="enable_validation_layers_vulkan.png_1"/>
+    <ROW File="doctools.js_1" Component_="ajaxloader.gif_1" FileName="doctools.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\doctools.js" SelfReg="false" NextFile="downpressed.png_1"/>
+    <ROW File="down.png_1" Component_="ajaxloader.gif_1" FileName="down.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\down.png" SelfReg="false" NextFile="file.png_1"/>
+    <ROW File="downpressed.png_1" Component_="ajaxloader.gif_1" FileName="DOWN-P~1.PNG|down-pressed.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\down-pressed.png" SelfReg="false" NextFile="down.png_1"/>
+    <ROW File="dx12_backend.exe" Component_="dx12_backend.exe" FileName="DX12_B~1.EXE|dx12_backend.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\dx12_backend.exe" SelfReg="false" NextFile="dxc.exe" DigSign="true"/>
+    <ROW File="dxc.exe" Component_="dxc.exe" FileName="dxc.exe" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\DXC\dxc.exe" SelfReg="false" NextFile="dxcompiler.dll" DigSign="true"/>
+    <ROW File="dxcompiler.dll" Component_="dxcompiler.dll" FileName="DXCOMP~1.DLL|dxcompiler.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\DXC\dxcompiler.dll" SelfReg="false" NextFile="dxil.dll"/>
+    <ROW File="dxil.dll" Component_="dxil.dll" FileName="dxil.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\DXC\dxil.dll" SelfReg="false" NextFile="amdgpudis.exe"/>
+    <ROW File="enable_validation_layers_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="ENABLE~1.PNG|enable_validation_layers_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\enable_validation_layers_vulkan.png" SelfReg="false" NextFile="file_menu_create_pipeline_vulkan.png_1"/>
+    <ROW File="file.png_1" Component_="ajaxloader.gif_1" FileName="file.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\file.png" SelfReg="false" NextFile="fontawesomewebfont.eot_1"/>
+    <ROW File="file_menu_create_pipeline_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="FILE_M~1.PNG|file_menu_create_pipeline_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\file_menu_create_pipeline_vulkan.png" SelfReg="false" NextFile="file_menu_vulkan.png_1"/>
+    <ROW File="file_menu_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="FILE_M~2.PNG|file_menu_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\file_menu_vulkan.png" SelfReg="false" NextFile="home_page_tabs_vulkan.png_1"/>
+    <ROW File="fontawesomewebfont.eot_1" Component_="fontawesomewebfont.eot_1" FileName="FONTAW~1.EOT|fontawesome-webfont.eot" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\fontawesome-webfont.eot" SelfReg="false" NextFile="fontawesomewebfont.svg_1"/>
+    <ROW File="fontawesomewebfont.svg_1" Component_="fontawesomewebfont.eot_1" FileName="FONTAW~1.SVG|fontawesome-webfont.svg" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\fontawesome-webfont.svg" SelfReg="false" NextFile="fontawesomewebfont.ttf_1"/>
+    <ROW File="fontawesomewebfont.ttf_1" Component_="fontawesomewebfont.eot_1" FileName="FONTAW~1.TTF|fontawesome-webfont.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\fontawesome-webfont.ttf" SelfReg="false" NextFile="fontawesomewebfont.woff_1"/>
+    <ROW File="fontawesomewebfont.woff_1" Component_="fontawesomewebfont.eot_1" FileName="FONTAW~1.WOF|fontawesome-webfont.woff" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\fontawesome-webfont.woff" SelfReg="false" NextFile="InconsolataBold.ttf_1"/>
+    <ROW File="gen_devices.py" Component_="gen_devices.py" FileName="GEN_DE~1.PY|gen_devices.py" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\bin\gen_devices.py" SelfReg="false" NextFile="ld.lld.exe"/>
+    <ROW File="genindex.html" Component_="buildinfo" FileName="GENIND~1.HTM|genindex.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\genindex.html" SelfReg="false" NextFile="help_manual.html"/>
+    <ROW File="glslangValidator.exe" Component_="glslangValidator.exe" FileName="GLSLAN~1.EXE|glslangValidator.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\glslangValidator.exe" SelfReg="false" NextFile="msvcp120.dll" DigSign="true"/>
+    <ROW File="help_manual.html" Component_="buildinfo" FileName="HELP_M~1.HTM|help_manual.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\help_manual.html" SelfReg="false" NextFile="index.html"/>
+    <ROW File="help_manual.rst.txt_1" Component_="help_manual.rst.txt_1" FileName="HELP_M~1.TXT|help_manual.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_sources\help_manual.rst.txt" SelfReg="false" NextFile="index.rst.txt_1"/>
+    <ROW File="home_page_tabs_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="HOME_P~1.PNG|home_page_tabs_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\home_page_tabs_vulkan.png" SelfReg="false" NextFile="home_page_vulkan.png_1"/>
+    <ROW File="home_page_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="HOME_P~2.PNG|home_page_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\home_page_vulkan.png" SelfReg="false" NextFile="layer_launcher_vulkan.png_1"/>
+    <ROW File="index.html" Component_="buildinfo" FileName="INDEX~1.HTM|index.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\index.html" SelfReg="false" NextFile="objects.inv"/>
+    <ROW File="index.rst.txt_1" Component_="help_manual.rst.txt_1" FileName="INDEXR~1.TXT|index.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_sources\index.rst.txt" SelfReg="false" NextFile="quickstart.rst.txt_1"/>
+    <ROW File="irif.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="IRIFAM~1.BC|irif.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\irif.amdgcn.bc" SelfReg="false" NextFile="ockl.amdgcn.bc"/>
+    <ROW File="jquery.js_1" Component_="ajaxloader.gif_1" FileName="jquery.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\jquery.js" SelfReg="false" NextFile="modernizr.min.js_1"/>
+    <ROW File="jquery3.1.0.js_1" Component_="ajaxloader.gif_1" FileName="JQUERY~1.JS|jquery-3.1.0.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\jquery-3.1.0.js" SelfReg="false" NextFile="jquery.js_1"/>
+    <ROW File="layer_launcher_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="LAYER_~1.PNG|layer_launcher_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\layer_launcher_vulkan.png" SelfReg="false" NextFile="layer_output_vulkan.png_1"/>
+    <ROW File="layer_output_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="LAYER_~2.PNG|layer_output_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\layer_output_vulkan.png" SelfReg="false" NextFile="load_existing_project_vulkan.png_1"/>
+    <ROW File="ld.lld.exe" Component_="ld.lld.exe" FileName="LDLLD~1.EXE|ld.lld.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\bin\ld.lld.exe" SelfReg="false" NextFile="llvmobjdump.exe" DigSign="true"/>
+    <ROW File="llvmobjdump.exe" Component_="llvmobjdump.exe" FileName="LLVM-O~1.EXE|llvm-objdump.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\bin\llvm-objdump.exe" SelfReg="false" NextFile="llvmreadobj.exe" DigSign="true"/>
+    <ROW File="llvmreadobj.exe" Component_="llvmreadobj.exe" FileName="LLVM-R~1.EXE|llvm-readobj.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\bin\llvm-readobj.exe" SelfReg="false" NextFile="openclc.h" DigSign="true"/>
+    <ROW File="load_existing_project_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="LOAD_E~1.PNG|load_existing_project_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\load_existing_project_vulkan.png" SelfReg="false" NextFile="new_file_vulkan.png_1"/>
+    <ROW File="minus.png_1" Component_="ajaxloader.gif_1" FileName="minus.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\minus.png" SelfReg="false" NextFile="plus.png_1"/>
+    <ROW File="modernizr.min.js_1" Component_="modernizr.min.js_1" FileName="MODERN~1.JS|modernizr.min.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\js\modernizr.min.js" SelfReg="false" NextFile="theme.js_1"/>
+    <ROW File="msvcp120.dll" Component_="msvcp120.dll" FileName="msvcp120.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\msvcp120.dll" SelfReg="false" NextFile="msvcr120.dll"/>
+    <ROW File="msvcp140.dll" Component_="msvcp140.dll" FileName="msvcp140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\msvcp140.dll" SelfReg="false" NextFile="Qt5Core.dll"/>
+    <ROW File="msvcr120.dll" Component_="msvcr120.dll" FileName="msvcr120.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\msvcr120.dll" SelfReg="false" NextFile="spirvas.exe"/>
+    <ROW File="new_file_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="NEW_FI~1.PNG|new_file_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\new_file_vulkan.png" SelfReg="false" NextFile="open_existing_project_vulkan.png_1"/>
+    <ROW File="nojekyll" Component_="buildinfo" FileName="NOJEKY~1|.nojekyll" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\.nojekyll" SelfReg="false" NextFile="genindex.html"/>
+    <ROW File="objects.inv" Component_="buildinfo" FileName="objects.inv" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\objects.inv" SelfReg="false" NextFile="quickstart.html"/>
+    <ROW File="ockl.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCKLAM~1.BC|ockl.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\ockl.amdgcn.bc" SelfReg="false" NextFile="oclc_correctly_rounded_sqrt_off.amdgcn.bc"/>
+    <ROW File="oclc_correctly_rounded_sqrt_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_C~1.BC|oclc_correctly_rounded_sqrt_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_correctly_rounded_sqrt_off.amdgcn.bc" SelfReg="false" NextFile="oclc_correctly_rounded_sqrt_on.amdgcn.bc"/>
+    <ROW File="oclc_correctly_rounded_sqrt_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_C~2.BC|oclc_correctly_rounded_sqrt_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_correctly_rounded_sqrt_on.amdgcn.bc" SelfReg="false" NextFile="oclc_daz_opt_off.amdgcn.bc"/>
+    <ROW File="oclc_daz_opt_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_D~1.BC|oclc_daz_opt_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_daz_opt_off.amdgcn.bc" SelfReg="false" NextFile="oclc_daz_opt_on.amdgcn.bc"/>
+    <ROW File="oclc_daz_opt_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_D~2.BC|oclc_daz_opt_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_daz_opt_on.amdgcn.bc" SelfReg="false" NextFile="oclc_finite_only_off.amdgcn.bc"/>
+    <ROW File="oclc_finite_only_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_F~1.BC|oclc_finite_only_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_finite_only_off.amdgcn.bc" SelfReg="false" NextFile="oclc_finite_only_on.amdgcn.bc"/>
+    <ROW File="oclc_finite_only_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_F~2.BC|oclc_finite_only_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_finite_only_on.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_900.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_900.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~1.BC|oclc_isa_version_900.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_900.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_901.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_901.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~2.BC|oclc_isa_version_901.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_901.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_902.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_902.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~3.BC|oclc_isa_version_902.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_902.amdgcn.bc" SelfReg="false" NextFile="oclc_unsafe_math_off.amdgcn.bc"/>
+    <ROW File="oclc_unsafe_math_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_U~1.BC|oclc_unsafe_math_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_unsafe_math_off.amdgcn.bc" SelfReg="false" NextFile="oclc_unsafe_math_on.amdgcn.bc"/>
+    <ROW File="oclc_unsafe_math_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_U~2.BC|oclc_unsafe_math_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_unsafe_math_on.amdgcn.bc" SelfReg="false" NextFile="ocml.amdgcn.bc"/>
+    <ROW File="ocml.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCMLAM~1.BC|ocml.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\ocml.amdgcn.bc" SelfReg="false" NextFile="opencl.amdgcn.bc"/>
+    <ROW File="open_existing_project_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="OPEN_E~1.PNG|open_existing_project_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\open_existing_project_vulkan.png" SelfReg="false" NextFile="pipeline_state_button_vulkan.png_1"/>
+    <ROW File="opencl.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OPENCL~1.BC|opencl.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\opencl.amdgcn.bc" SelfReg="false" NextFile="RGADX11.exe"/>
+    <ROW File="openclc.h" Component_="openclc.h" FileName="opencl-c.h" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\include\opencl-c.h" SelfReg="false" NextFile="irif.amdgcn.bc"/>
+    <ROW File="pipeline_state_button_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="PIPELI~1.PNG|pipeline_state_button_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\pipeline_state_button_vulkan.png" SelfReg="false" NextFile="pipeline_state_search_results_filter_vulkan.png_1"/>
+    <ROW File="pipeline_state_search_results_filter_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="PIPELI~2.PNG|pipeline_state_search_results_filter_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\pipeline_state_search_results_filter_vulkan.png" SelfReg="false" NextFile="pipeline_state_search_results_vulkan.png_1"/>
+    <ROW File="pipeline_state_search_results_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="PIPELI~3.PNG|pipeline_state_search_results_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\pipeline_state_search_results_vulkan.png" SelfReg="false" NextFile="pipeline_state_search_viewport_vulkan.png_1"/>
+    <ROW File="pipeline_state_search_viewport_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="PIPELI~4.PNG|pipeline_state_search_viewport_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\pipeline_state_search_viewport_vulkan.png" SelfReg="false" NextFile="pipeline_state_search_vulkan.png_1"/>
+    <ROW File="pipeline_state_search_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="PIPELI~5.PNG|pipeline_state_search_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\pipeline_state_search_vulkan.png" SelfReg="false" NextFile="pipeline_state_search_vulkan_previous_next.png_1"/>
+    <ROW File="pipeline_state_search_vulkan_previous_next.png_1" Component_="_open_file_link_button.png_1" FileName="PIPELI~6.PNG|pipeline_state_search_vulkan_previous_next.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\pipeline_state_search_vulkan_previous_next.png" SelfReg="false" NextFile="pipeline_state_vulkan.png_1"/>
+    <ROW File="pipeline_state_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="PIPELI~7.PNG|pipeline_state_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\pipeline_state_vulkan.png" SelfReg="false" NextFile="remove_shader_stage_vulkan.png_1"/>
+    <ROW File="plus.png_1" Component_="ajaxloader.gif_1" FileName="plus.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\plus.png" SelfReg="false" NextFile="pygments.css_1"/>
+    <ROW File="pygments.css_1" Component_="ajaxloader.gif_1" FileName="pygments.css" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\pygments.css" SelfReg="false" NextFile="searchtools.js_1"/>
+    <ROW File="qsvg.dll" Component_="qsvg.dll" FileName="qsvg.dll" Attributes="0" SourcePath="..\BuildOutput\bin\imageformats\qsvg.dll" SelfReg="false" NextFile="License.txt"/>
+    <ROW File="qsvgicon.dll" Component_="qsvgicon.dll" FileName="qsvgicon.dll" Attributes="0" SourcePath="..\BuildOutput\bin\iconengines\qsvgicon.dll" SelfReg="false" NextFile="qwindows.dll"/>
+    <ROW File="quickstart.html" Component_="buildinfo" FileName="QUICKS~1.HTM|quickstart.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\quickstart.html" SelfReg="false" NextFile="search.html"/>
+    <ROW File="quickstart.rst.txt_1" Component_="help_manual.rst.txt_1" FileName="QUICKS~1.TXT|quickstart.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_sources\quickstart.rst.txt" SelfReg="false" NextFile="ajaxloader.gif_1"/>
+    <ROW File="qwindows.dll" Component_="qwindows.dll" FileName="qwindows.dll" Attributes="0" SourcePath="..\BuildOutput\bin\platforms\qwindows.dll" SelfReg="false" NextFile="concrt140.dll"/>
+    <ROW File="qwindowsvistastyle.dll" Component_="qwindowsvistastyle.dll" FileName="QWINDO~1.DLL|qwindowsvistastyle.dll" Attributes="0" SourcePath="..\BuildOutput\bin\styles\qwindowsvistastyle.dll" SelfReg="false" NextFile="README.md"/>
+    <ROW File="remove_shader_stage_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="REMOVE~1.PNG|remove_shader_stage_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\remove_shader_stage_vulkan.png" SelfReg="false" NextFile="resource_usage_view_opencl.png_1"/>
+    <ROW File="resource_usage_view_opencl.png_1" Component_="_open_file_link_button.png_1" FileName="RESOUR~1.PNG|resource_usage_view_opencl.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\resource_usage_view_opencl.png" SelfReg="false" NextFile="resource_usage_view_vulkan.png_1"/>
+    <ROW File="resource_usage_view_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="RESOUR~2.PNG|resource_usage_view_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\resource_usage_view_vulkan.png" SelfReg="false" NextFile="startup_page_vulkan.png_1"/>
+    <ROW File="rga.exe" Component_="rga.exe" FileName="rga.exe" Version="[|ProductVersion]" Attributes="0" SourcePath="..\BuildOutput\bin\rga.exe" SelfReg="false" NextFile="vccorlib140.dll" DigSign="true"/>
+    <ROW File="rtda.exe" Component_="rtda.exe" FileName="rtda.exe" Attributes="0" SourcePath="..\BuildOutput\bin\rtda.exe" SelfReg="false" NextFile="RadeonGPUAnalyzer.exe" DigSign="true"/>
+    <ROW File="search.html" Component_="buildinfo" FileName="SEARCH~1.HTM|search.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\search.html" SelfReg="false" NextFile="searchindex.js"/>
+    <ROW File="searchindex.js" Component_="buildinfo" FileName="SEARCH~1.JS|searchindex.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\searchindex.js" SelfReg="false" NextFile="_open_file_link_button.png_1"/>
+    <ROW File="searchtools.js_1" Component_="ajaxloader.gif_1" FileName="SEARCH~1.JS|searchtools.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\searchtools.js" SelfReg="false" NextFile="underscore1.3.1.js_1"/>
+    <ROW File="shae.exe" Component_="shae.exe" FileName="shae.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\shae.exe" SelfReg="false" NextFile="qwindowsvistastyle.dll" DigSign="true"/>
+    <ROW File="spirvas.exe" Component_="spirvas.exe" FileName="spirv-as.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\spirv-as.exe" SelfReg="false" NextFile="spirvdis.exe" DigSign="true"/>
+    <ROW File="spirvdis.exe" Component_="spirvdis.exe" FileName="SPIRV-~1.EXE|spirv-dis.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\spirv-dis.exe" SelfReg="false" NextFile="vccorlib120.dll" DigSign="true"/>
+    <ROW File="spvgen.dll" Component_="spvgen.dll" FileName="spvgen.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\spvgen.dll" SelfReg="false" NextFile="VirtualContext.exe"/>
+    <ROW File="startup_page_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="STARTU~1.PNG|startup_page_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\startup_page_vulkan.png" SelfReg="false" NextFile="switch_mode_from_settings.png_1"/>
+    <ROW File="switch_mode_from_settings.png_1" Component_="_open_file_link_button.png_1" FileName="SWITCH~1.PNG|switch_mode_from_settings.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\switch_mode_from_settings.png" SelfReg="false" NextFile="switch_mode_from_start_page.png_1"/>
+    <ROW File="switch_mode_from_start_page.png_1" Component_="_open_file_link_button.png_1" FileName="SWITCH~2.PNG|switch_mode_from_start_page.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\switch_mode_from_start_page.png" SelfReg="false" NextFile="use_alternative_compiler_vulkan.png_1"/>
+    <ROW File="theme.css_1" Component_="badge_only.css_1" FileName="theme.css" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\css\theme.css" SelfReg="false" NextFile="doctools.js_1"/>
+    <ROW File="theme.js_1" Component_="modernizr.min.js_1" FileName="theme.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\js\theme.js" SelfReg="false" NextFile="minus.png_1"/>
+    <ROW File="underscore.js_1" Component_="ajaxloader.gif_1" FileName="UNDERS~2.JS|underscore.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\underscore.js" SelfReg="false" NextFile="uppressed.png_1"/>
+    <ROW File="underscore1.3.1.js_1" Component_="ajaxloader.gif_1" FileName="UNDERS~1.JS|underscore-1.3.1.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\underscore-1.3.1.js" SelfReg="false" NextFile="underscore.js_1"/>
+    <ROW File="up.png_1" Component_="ajaxloader.gif_1" FileName="up.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\up.png" SelfReg="false" NextFile="websupport.js_1"/>
+    <ROW File="uppressed.png_1" Component_="ajaxloader.gif_1" FileName="UP-PRE~1.PNG|up-pressed.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\up-pressed.png" SelfReg="false" NextFile="up.png_1"/>
+    <ROW File="use_alternative_compiler_vulkan.png_1" Component_="_open_file_link_button.png_1" FileName="USE_AL~1.PNG|use_alternative_compiler_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\use_alternative_compiler_vulkan.png" SelfReg="false" NextFile="vk_spv_offline_indicator.png_1"/>
+    <ROW File="vccorlib120.dll" Component_="vccorlib120.dll" FileName="VCCORL~1.DLL|vccorlib120.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\vccorlib120.dll" SelfReg="false" NextFile="VulkanBackend.exe"/>
+    <ROW File="vccorlib140.dll" Component_="vccorlib140.dll" FileName="VCCORL~1.DLL|vccorlib140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\vccorlib140.dll" SelfReg="false" NextFile="vcruntime140.dll"/>
+    <ROW File="vcruntime140.dll" Component_="vcruntime140.dll" FileName="VCRUNT~1.DLL|vcruntime140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\vcruntime140.dll" SelfReg="false" NextFile="qsvg.dll"/>
+    <ROW File="vk_spv_offline_indicator.png_1" Component_="_open_file_link_button.png_1" FileName="VK_SPV~1.PNG|vk_spv_offline_indicator.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\vk_spv_offline_indicator.png" SelfReg="false" NextFile="help_manual.rst.txt_1"/>
+    <ROW File="websupport.js_1" Component_="ajaxloader.gif_1" FileName="WEBSUP~1.JS|websupport.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\websupport.js" SelfReg="false" NextFile="amdspv.exe"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.AiRemoveFileComponent">
+    <ROW RemoveFile="_2_4.xml" Condition="(AI_CLEAN_RESOURCES_UNINSTALL = &quot;1&quot;)" Options="1"/>
+    <ROW RemoveFile="VersionInfo.xml" Condition="(AI_CLEAN_RESOURCES_UNINSTALL = &quot;1&quot;)" Options="1"/>
+    <ROW RemoveFile="rgagui.log" Condition="(AI_CLEAN_RESOURCES_UNINSTALL = &quot;1&quot;)" Options="1"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.BuildComponent">
+    <ROW BuildKey="x64_Release_Static" BuildName="x64_Release_Static" BuildOrder="1" BuildType="0" PackageFolder="." PackageFileName="RGA-[|ProductVersion]-Installer" Languages="en" InstallationType="4" UseLargeSchema="true" MsiPackageType="x64"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.DictionaryComponent">
+    <ROW Path="&lt;AI_DICTS&gt;ui.ail"/>
+    <ROW Path="&lt;AI_DICTS&gt;ui_en.ail"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.FragmentComponent">
+    <ROW Fragment="CommonUI.aip" Path="&lt;AI_FRAGS&gt;CommonUI.aip"/>
+    <ROW Fragment="FolderDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\FolderDlg.aip"/>
+    <ROW Fragment="LicenseAgreementDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\LicenseAgreementDlg.aip"/>
+    <ROW Fragment="MaintenanceTypeDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\MaintenanceTypeDlg.aip"/>
+    <ROW Fragment="MaintenanceWelcomeDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\MaintenanceWelcomeDlg.aip"/>
+    <ROW Fragment="SequenceDialogs.aip" Path="&lt;AI_THEMES&gt;classic\fragments\SequenceDialogs.aip"/>
+    <ROW Fragment="Sequences.aip" Path="&lt;AI_FRAGS&gt;Sequences.aip"/>
+    <ROW Fragment="ShortcutsDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\ShortcutsDlg.aip"/>
+    <ROW Fragment="StaticUIStrings.aip" Path="&lt;AI_FRAGS&gt;StaticUIStrings.aip"/>
+    <ROW Fragment="UI.aip" Path="&lt;AI_THEMES&gt;classic\fragments\UI.aip"/>
+    <ROW Fragment="Validation.aip" Path="&lt;AI_FRAGS&gt;Validation.aip"/>
+    <ROW Fragment="VerifyRemoveDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\VerifyRemoveDlg.aip"/>
+    <ROW Fragment="VerifyRepairDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\VerifyRepairDlg.aip"/>
+    <ROW Fragment="WelcomeDlg.aip" Path="&lt;AI_THEMES&gt;classic\fragments\WelcomeDlg.aip"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiActionTextComponent">
+    <ROW Action="AI_AiRemoveFilesCommit" Description="Executing file removal operations" Template="Executing file removal: [1]" DescriptionLocId="ActionText.Description.AI_AiRemoveFilesCommit" TemplateLocId="ActionText.Template.AI_AiRemoveFilesCommit"/>
+    <ROW Action="AI_AiRemoveFilesDeferred_Permanent" Description="Preparing files for removal" Template="Preparing file: [1]" DescriptionLocId="ActionText.Description.AI_AiRemoveFilesDeferred_Permanent" TemplateLocId="ActionText.Template.AI_AiRemoveFilesDeferred_Permanent"/>
+    <ROW Action="AI_AiRemoveFilesDeferred_Undoable" Description="Preparing files for removal" Template="Preparing file: [1]" DescriptionLocId="ActionText.Description.AI_AiRemoveFilesDeferred_Undoable" TemplateLocId="ActionText.Template.AI_AiRemoveFilesDeferred_Undoable"/>
+    <ROW Action="AI_AiRemoveFilesImmediate" Description="Preparing files for removal" Template="Preparing file: [1]" DescriptionLocId="ActionText.Description.AI_AiRemoveFilesImmediate" TemplateLocId="ActionText.Template.AI_AiRemoveFilesImmediate"/>
+    <ROW Action="AI_AiRemoveFilesRollback" Description="Restoring removed files" Template="Restoring file: [1]" DescriptionLocId="ActionText.Description.AI_AiRemoveFilesRollback" TemplateLocId="ActionText.Template.AI_AiRemoveFilesRollback"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiAppSearchComponent">
+    <ROW Property="AI_SHORTCUTSREG" Signature_="AI_ShRegOptionMachine"/>
+    <ROW Property="AI_SHORTCUTSREG" Signature_="AI_ShRegOptionUser"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiBinaryComponent">
+    <ROW Name="ResourceCleaner.dll" SourcePath="&lt;AI_CUSTACTS&gt;ResourceCleaner.dll"/>
+    <ROW Name="aicustact.dll" SourcePath="&lt;AI_CUSTACTS&gt;aicustact.dll"/>
+    <ROW Name="tempFiles.dll" SourcePath="&lt;AI_CUSTACTS&gt;tempFiles.dll"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiControlComponent">
+    <ROW Dialog_="LicenseAgreementDlg" Control="AgreementText" Type="ScrollableText" X="20" Y="60" Width="330" Height="120" Attributes="7" Text="License\RGAEndUserLicenseAgreement-Win.rtf" Order="400" TextLocId="Control.Text.LicenseAgreementDlg#AgreementText" MsiKey="LicenseAgreementDlg#AgreementText"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiControlConditionComponent">
+    <ROW Dialog_="ShortcutsDlg" Control_="StartupShorcutsCheckBox" Action="Hide" Condition="(Not Installed)"/>
+    <ROW Dialog_="ShortcutsDlg" Control_="StartmenuShortcutsCheckBox" Action="Show" Condition="(Not Installed)"/>
+    <ROW Dialog_="ShortcutsDlg" Control_="QuickLaunchShorcutsCheckBox" Action="Hide" Condition="(Not Installed) AND (VersionNT&lt;&quot;601&quot;)"/>
+    <ATTRIBUTE name="DeletedRows" value="ShortcutsDlg#QuickLaunchShorcutsCheckBox#Show#(Not Installed) AND (VersionNT&lt;&quot;601&quot;)@ShortcutsDlg#StartmenuShortcutsCheckBox#Show#(Not Installed)@ShortcutsDlg#StartupShorcutsCheckBox#Show#(Not Installed)"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiControlEventComponent">
+    <ROW Dialog_="WelcomeDlg" Control_="Next" Event="NewDialog" Argument="LicenseAgreementDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="FolderDlg" Control_="Next" Event="NewDialog" Argument="ShortcutsDlg" Condition="AI_INSTALL" Ordering="201"/>
+    <ROW Dialog_="FolderDlg" Control_="Back" Event="NewDialog" Argument="LicenseAgreementDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="MaintenanceWelcomeDlg" Control_="Next" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT" Ordering="99"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_MAINT" Ordering="198"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Back" Event="NewDialog" Argument="CustomizeDlg" Condition="AI_MAINT" Ordering="202"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_INSTALL" Ordering="197"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Back" Event="NewDialog" Argument="ShortcutsDlg" Condition="AI_INSTALL" Ordering="201"/>
+    <ROW Dialog_="CustomizeDlg" Control_="Next" Event="NewDialog" Argument="VerifyReadyDlg" Condition="AI_MAINT" Ordering="101"/>
+    <ROW Dialog_="CustomizeDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT" Ordering="1"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="ChangeButton" Event="NewDialog" Argument="CustomizeDlg" Condition="AI_MAINT" Ordering="501"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceWelcomeDlg" Condition="AI_MAINT" Ordering="1"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="RemoveButton" Event="NewDialog" Argument="VerifyRemoveDlg" Condition="AI_MAINT AND InstallMode=&quot;Remove&quot;" Ordering="601"/>
+    <ROW Dialog_="VerifyRemoveDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT AND InstallMode=&quot;Remove&quot;" Ordering="1"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="RepairButton" Event="NewDialog" Argument="VerifyRepairDlg" Condition="AI_MAINT AND InstallMode=&quot;Repair&quot;" Ordering="601"/>
+    <ROW Dialog_="VerifyRepairDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT AND InstallMode=&quot;Repair&quot;" Ordering="1"/>
+    <ROW Dialog_="VerifyRepairDlg" Control_="Repair" Event="EndDialog" Argument="Return" Condition="AI_MAINT AND InstallMode=&quot;Repair&quot;" Ordering="399" Options="1"/>
+    <ROW Dialog_="VerifyRemoveDlg" Control_="Remove" Event="EndDialog" Argument="Return" Condition="AI_MAINT AND InstallMode=&quot;Remove&quot;" Ordering="299" Options="1"/>
+    <ROW Dialog_="PatchWelcomeDlg" Control_="Next" Event="NewDialog" Argument="VerifyReadyDlg" Condition="AI_PATCH" Ordering="201"/>
+    <ROW Dialog_="ResumeDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_RESUME" Ordering="299"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_PATCH" Ordering="199"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Back" Event="NewDialog" Argument="PatchWelcomeDlg" Condition="AI_PATCH" Ordering="203"/>
+    <ROW Dialog_="LicenseAgreementDlg" Control_="Next" Event="NewDialog" Argument="FolderDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="LicenseAgreementDlg" Control_="Back" Event="NewDialog" Argument="WelcomeDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="ShortcutsDlg" Control_="Next" Event="NewDialog" Argument="VerifyReadyDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="ShortcutsDlg" Control_="Back" Event="NewDialog" Argument="FolderDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="FatalError" Control_="Finish" Event="DoAction" Argument="AI_RemoveTempFiles" Condition="1" Ordering="102"/>
+    <ROW Dialog_="UserExit" Control_="Finish" Event="DoAction" Argument="AI_RemoveTempFiles" Condition="1" Ordering="101"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiCreateFolderComponent">
+    <ROW Directory_="help_Dir" Component_="help" ManualDelete="false"/>
+    <ROW Directory_="SHORTCUTDIR" Component_="SHORTCUTDIR" ManualDelete="false"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiCustActComponent">
+    <ROW Action="AI_AiRemoveFilesCommit" Type="11777" Source="ResourceCleaner.dll" Target="OnAiRemoveFilesCommit" WithoutSeq="true"/>
+    <ROW Action="AI_AiRemoveFilesDeferred_Permanent" Type="11265" Source="ResourceCleaner.dll" Target="OnAiRemoveFilesPermanent" WithoutSeq="true"/>
+    <ROW Action="AI_AiRemoveFilesDeferred_Undoable" Type="11265" Source="ResourceCleaner.dll" Target="OnAiRemoveFilesUndoable" WithoutSeq="true"/>
+    <ROW Action="AI_AiRemoveFilesImmediate" Type="1" Source="ResourceCleaner.dll" Target="OnAiRemoveFilesImmediate"/>
+    <ROW Action="AI_AiRemoveFilesRollback" Type="11521" Source="ResourceCleaner.dll" Target="OnAiUndoRemoveFiles"/>
+    <ROW Action="AI_DATA_SETTER" Type="51" Source="AI_DEL_EMPTY_SHORTCUTDIR" Target="[SHORTCUTDIR]"/>
+    <ROW Action="AI_DATA_SETTER_1" Type="51" Source="AI_RemoveAllTempFiles" Target="[AI_TEMP_FILE_ROLLBACK_INFO]"/>
+    <ROW Action="AI_DELETE_SHORTCUTS" Type="1" Source="aicustact.dll" Target="DeleteShortcuts"/>
+    <ROW Action="AI_DEL_EMPTY_SHORTCUTDIR" Type="3073" Source="aicustact.dll" Target="DeleteEmptyDirectory" AdditionalSeq="AI_DATA_SETTER"/>
+    <ROW Action="AI_DOWNGRADE" Type="19" Target="4010"/>
+    <ROW Action="AI_DpiContentScale" Type="1" Source="aicustact.dll" Target="DpiContentScale"/>
+    <ROW Action="AI_EnableDebugLog" Type="321" Source="aicustact.dll" Target="EnableDebugLog"/>
+    <ROW Action="AI_ExtractTempFiles" Type="1" Source="tempFiles.dll" Target="ExtractTempFiles"/>
+    <ROW Action="AI_InstallModeCheck" Type="1" Source="aicustact.dll" Target="UpdateInstallMode" WithoutSeq="true"/>
+    <ROW Action="AI_LaunchApp" Type="1" Source="aicustact.dll" Target="[#RadeonGPUAnalyzer.exe]"/>
+    <ROW Action="AI_PREPARE_UPGRADE" Type="65" Source="aicustact.dll" Target="PrepareUpgrade"/>
+    <ROW Action="AI_RemoveAllTempFiles" Type="1281" Source="tempFiles.dll" Target="RemoveAllTempFiles" AdditionalSeq="AI_DATA_SETTER_1"/>
+    <ROW Action="AI_RemoveTempFiles" Type="1" Source="tempFiles.dll" Target="RemoveTempFiles" WithoutSeq="true"/>
+    <ROW Action="AI_ResolveKnownFolders" Type="1" Source="aicustact.dll" Target="AI_ResolveKnownFolders"/>
+    <ROW Action="AI_SHOW_LOG" Type="65" Source="aicustact.dll" Target="LaunchLogFile" WithoutSeq="true"/>
+    <ROW Action="AI_STORE_LOCATION" Type="51" Source="ARPINSTALLLOCATION" Target="[APPDIR]"/>
+    <ROW Action="SET_APPDIR" Type="307" Source="APPDIR" Target="[ProgramFilesFolder][Manufacturer]\[ProductName]" MultiBuildTarget="x64_Release_Static:[ProgramFiles64Folder][Manufacturer]\Radeon GPU Analyzer"/>
+    <ROW Action="SET_SHORTCUTDIR" Type="307" Source="SHORTCUTDIR" Target="[ProgramMenuFolder][ProductName]" MultiBuildTarget="x64_Release_Static:[ProgramMenuFolder]Radeon GPU Analyzer"/>
+    <ROW Action="SET_TARGETDIR_TO_APPDIR" Type="51" Source="TARGETDIR" Target="[APPDIR]"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiIconsComponent">
+    <ROW Name="RadeonGPUAnalyzerGUI.exe" SourcePath="..\RadeonGPUAnalyzerGUI\res\icons\rgaIcon.ico" Index="0"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiInstExSeqComponent">
+    <ROW Action="AI_STORE_LOCATION" Condition="(Not Installed) OR REINSTALL" Sequence="1503"/>
+    <ROW Action="AI_PREPARE_UPGRADE" Condition="AI_UPGRADE=&quot;No&quot; AND (Not Installed)" Sequence="1399"/>
+    <ROW Action="AI_ResolveKnownFolders" Sequence="53"/>
+    <ROW Action="AI_EnableDebugLog" Sequence="51"/>
+    <ROW Action="AI_DELETE_SHORTCUTS" Condition="NOT (REMOVE=&quot;ALL&quot;)" Sequence="1402"/>
+    <ROW Action="AI_DEL_EMPTY_SHORTCUTDIR" Condition="NOT (REMOVE=&quot;ALL&quot;)" Sequence="6402"/>
+    <ROW Action="AI_DATA_SETTER" Condition="NOT (REMOVE=&quot;ALL&quot;)" Sequence="6401"/>
+    <ROW Action="AI_ExtractTempFiles" Sequence="1001"/>
+    <ROW Action="AI_RemoveTempFiles" Sequence="6601"/>
+    <ROW Action="AI_RemoveAllTempFiles" Sequence="1502"/>
+    <ROW Action="AI_DATA_SETTER_1" Sequence="1501"/>
+    <ROW Action="RemoveExistingProducts" Condition="AI_UPGRADE&lt;&gt;&quot;No&quot;" Sequence="1401" SeqType="0" MsiKey="RemoveExistingProducts"/>
+    <ROW Action="AI_DOWNGRADE" Condition="AI_NEWERPRODUCTFOUND AND (UILevel &lt;&gt; 5)" Sequence="201"/>
+    <ROW Action="AI_AiRemoveFilesRollback" Sequence="3099"/>
+    <ROW Action="AI_AiRemoveFilesImmediate" Sequence="3499"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiInstallUISequenceComponent">
+    <ROW Action="WelcomeDlg" Condition="AI_INSTALL" Sequence="1230" SeqType="3" MsiKey="WelcomeDlg"/>
+    <ROW Action="AI_ResolveKnownFolders" Sequence="53"/>
+    <ROW Action="AI_DpiContentScale" Sequence="52"/>
+    <ROW Action="AI_EnableDebugLog" Sequence="51"/>
+    <ROW Action="AI_ExtractTempFiles" Sequence="1001"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiLaunchConditionsComponent">
+    <ROW Condition="(VersionNT &lt;&gt; 400)" Description="[ProductName] cannot be installed on [WindowsTypeNT40Display]." DescriptionLocId="AI.LaunchCondition.NoNT40" IsPredefined="true" Builds="x64_Release_Static"/>
+    <ROW Condition="(VersionNT &lt;&gt; 500)" Description="[ProductName] cannot be installed on [WindowsTypeNT50Display]." DescriptionLocId="AI.LaunchCondition.NoNT50" IsPredefined="true" Builds="x64_Release_Static"/>
+    <ROW Condition="(VersionNT64 OR ((VersionNT &lt;&gt; 501) OR (ServicePackLevel = 3))) AND ((VersionNT &lt;&gt; 502) OR (ServicePackLevel = 2))" Description="[ProductName] cannot be installed on [WindowsTypeNT5XDisplay]." DescriptionLocId="AI.LaunchCondition.NoNT5X" IsPredefined="true" Builds="x64_Release_Static"/>
+    <ROW Condition="VersionNT" Description="[ProductName] cannot be installed on [WindowsType9XDisplay]." DescriptionLocId="AI.LaunchCondition.No9X" IsPredefined="true" Builds="x64_Release_Static"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiRegLocatorComponent">
+    <ROW Signature_="AI_ShRegOptionMachine" Root="2" Key="Software\Caphyon\Advanced Installer\Installs\[ProductCode]" Name="AIShRegAnswer" Type="2"/>
+    <ROW Signature_="AI_ShRegOptionUser" Root="1" Key="Software\Caphyon\Advanced Installer\Installs\[ProductCode]" Name="AIShRegAnswer" Type="2"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiRegsComponent">
+    <ROW Registry="AIShRegAnswer" Root="-1" Key="Software\Caphyon\Advanced Installer\Installs\[ProductCode]" Name="AIShRegAnswer" Value="[AI_SHORTCUTSREG]" Component_="AIShRegAnswer"/>
+    <ROW Registry="APPDIRlayerVK_LAYER_RGA_pipeline_extraction_win32.json" Root="2" Key="Software\Khronos\Vulkan\ImplicitLayers" Name="[APPDIR]layer\VK_LAYER_RGA_pipeline_extraction_win32.json" Value="#0" Component_="APPDIRlayerVK_LAYER_RGA_pipeline_extract"/>
+    <ROW Registry="Path" Root="-1" Key="Software\[Manufacturer]\[ProductName]" Name="Path" Value="[APPDIR]" Component_="ProductInformation"/>
+    <ROW Registry="Version" Root="-1" Key="Software\[Manufacturer]\[ProductName]" Name="Version" Value="[ProductVersion]" Component_="ProductInformation"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiRemoveFileComponent">
+    <ROW FileKey="VersionInfo.xml" Component_="Microsoft.Bcl.AsyncInterfaces.dll" FileName="VersionInfo.xml" DirProperty="RadeonGPUAnalyzer_Dir" InstallMode="2"/>
+    <ROW FileKey="_" Component_="ProductInformation" DirProperty="RadeonGPUAnalyzer_Dir" InstallMode="2"/>
+    <ROW FileKey="_2_4.xml" Component_="Microsoft.Bcl.AsyncInterfaces.dll" FileName="*_2_4.xml" DirProperty="RadeonGPUAnalyzer_Dir" InstallMode="2"/>
+    <ROW FileKey="rgagui.log" Component_="Microsoft.Bcl.AsyncInterfaces.dll" FileName="rga-gui-*.log" DirProperty="RadeonGPUAnalyzer_Dir" InstallMode="2"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiShortsComponent">
+    <ROW Shortcut="RadeonGPUAnalyzer" Directory_="SHORTCUTDIR" Name="RADEON~1|RadeonGPUAnalyzer" Component_="RadeonGPUAnalyzer.exe" Target="[#RadeonGPUAnalyzer.exe]" Hotkey="0" IconIndex="0" ShowCmd="1" WkDir="APPDIR"/>
+    <ROW Shortcut="RadeonGPUAnalyzer_1" Directory_="DesktopFolder" Name="RADEON~1|RadeonGPUAnalyzer" Component_="RadeonGPUAnalyzer.exe" Target="[#RadeonGPUAnalyzer.exe]" Hotkey="0" IconIndex="0" ShowCmd="1" WkDir="APPDIR"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiThemeComponent">
+    <ATTRIBUTE name="UsedTheme" value="classic"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiUpgradeComponent">
+    <ROW UpgradeCode="[|UpgradeCode]" VersionMin="0.0.1" VersionMax="[|ProductVersion]" Attributes="257" ActionProperty="OLDPRODUCTS"/>
+    <ROW UpgradeCode="[|UpgradeCode]" VersionMin="[|ProductVersion]" Attributes="2" ActionProperty="AI_NEWERPRODUCTFOUND"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.TempFileComponent">
+    <ROW FileId="cleanappdatarga.bat" Name="CLEANA~1.BAT|CleanAppDataRGA.bat" Directory_="TempFolder" Property="AI_CLEANAPPDATARGA.BAT" Options="0" Data="..\Utils\CleanAppData\CleanAppDataRGA.bat"/>
+  </COMPONENT>
+</DOCUMENT>

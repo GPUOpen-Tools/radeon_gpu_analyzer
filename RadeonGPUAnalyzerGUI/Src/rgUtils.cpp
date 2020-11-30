@@ -495,17 +495,17 @@ std::string rgUtils::GetEntrypointsNameString(rgProjectAPI api)
     switch (api)
     {
     case rgProjectAPI::OpenCL:
-        {
-            resultString = STR_MENU_BAR_FILE_ITEM_ENTRYPOINT_HEADER_OPENCL;
-        }
-        break;
+    {
+        resultString = STR_MENU_BAR_FILE_ITEM_ENTRYPOINT_HEADER_OPENCL;
+    }
+    break;
     case rgProjectAPI::Unknown:
     default:
-        {
-            // All other cases use API-agnostic label text.
-            resultString = STR_MENU_BAR_FILE_ITEM_ENTRYPOINT_HEADER_DEFAULT;
-        }
-        break;
+    {
+        // All other cases use API-agnostic label text.
+        resultString = STR_MENU_BAR_FILE_ITEM_ENTRYPOINT_HEADER_DEFAULT;
+    }
+    break;
     }
 
     return resultString;
@@ -1497,4 +1497,29 @@ bool rgUtils::IsInList(const std::string & list, const std::string & token, char
     }
 
     return ret;
+}
+
+bool rgUtils::IsSpvasTextFile(const std::string& stageInputFile, std::string& stageAbbreviation)
+{
+    static const std::string DEFAULT_TEXT_FILE_EXTENSION = "txt";
+    bool result = false;
+
+    // Extract file extension.
+    std::string fileExtension;
+    rgUtils::ExtractFileExtension(stageInputFile, fileExtension);
+
+    // Get global settings.
+    rgConfigManager& configManager = rgConfigManager::Instance();
+    std::shared_ptr<rgGlobalSettings> pGlobalSettings = configManager.GetGlobalConfig();
+
+    // Extract allowed extensions.
+    QStringList extentions = QString::fromStdString(pGlobalSettings->m_inputFileExtSpvTxt).split((s_OPTIONS_LIST_DELIMITER));
+
+    // Check if the extension is txt and is in the list.
+    if ((fileExtension.compare(DEFAULT_TEXT_FILE_EXTENSION) == 0) && (extentions.contains(QString::fromStdString(fileExtension))))
+    {
+        result = true;
+    }
+
+    return result;
 }

@@ -57,7 +57,7 @@ BEGIN
             VALUE "FileVersion", RADEON_GPU_ANALYZER_VERSION_STRING
             VALUE "InternalName", "RadeonGPUAnalyzerCLI"
             VALUE "OriginalFilename", "rga" ".exe"
-            VALUE "LegalCopyright", "Copyright (C) 2020 Advanced Micro Devices, Inc."
+            VALUE "LegalCopyright", "Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved"
             VALUE "ProductName", "Radeon GPU Analyzer CLI"
             VALUE "ProductVersion", RADEON_GPU_ANALYZER_VERSION_STRING
         END

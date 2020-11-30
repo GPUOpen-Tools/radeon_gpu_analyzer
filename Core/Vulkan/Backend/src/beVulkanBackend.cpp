@@ -29,137 +29,118 @@
 #include <Utils/Include/rgaCliDefs.h>
 
 // Vulkan driver major version.
-static const char* STR_VUKAN_DRIVER_VERSION_MAJOR = "2.0";
+static const char* kStrVulkanDriverVersionMajor = "2.0";
 
 // Bit mask for Vulkan minor driver version (22 bits).
-static const uint32_t  VULKAN_DRIVER_VERSION_MINOR_BITS = 0x3FFFFF;
+static const uint32_t  kStrVulkanDriverVersionMinorBits = 0x3FFFFF;
 
 // Offsets/widths of supported Vulkan version bit fields.
-static const uint32_t  VULKAN_VERSION_PATCH_WIDTH = 12;
-static const uint32_t  VULKAN_VERSION_MINOR_WIDTH = 10;
-static const uint32_t  VULKAN_VERSION_MAJOR_WIDTH = 10;
+static const uint32_t  kStrVulkanVersionPatchWidth = 12;
+static const uint32_t  kStrVulkanVersionMinorWidth = 10;
+static const uint32_t  kStrVulkanVersionMajorWidth = 10;
 
-static const uint32_t  VULKAN_VERSION_PATCH_OFFSET = 0;
-static const uint32_t  VULKAN_VERSION_MINOR_OFFSET = VULKAN_VERSION_PATCH_OFFSET + VULKAN_VERSION_PATCH_WIDTH;
-static const uint32_t  VULKAN_VERSION_MAJOR_OFFSET = VULKAN_VERSION_MINOR_OFFSET + VULKAN_VERSION_MINOR_WIDTH;
+static const uint32_t  kStrVulkanVersionPatchOffset = 0;
+static const uint32_t  kStrVulkanVersionMinorOffset = kStrVulkanVersionPatchOffset + kStrVulkanVersionPatchWidth;
+static const uint32_t  kStrVulkanVersionMajorOffset = kStrVulkanVersionMinorOffset + kStrVulkanVersionMinorWidth;
 
 // Vulkan API function that gets shader info.
-static const char*  STR_FUNC_GET_SHADER_INFO = "vkGetShaderInfoAMD";
+static const char* kStrFunctionNameGetShaderInfo = "vkGetShaderInfoAMD";
 
 // Name of default pipeline.
-static const char* STR_CREATED_PIPELINE_NAME = "pipeline";
+static const char* kStrVulkanCreatedPipelineName = "pipeline";
 
 // Name of RGA Vulkan Backend for vulkan application info.
-static const char* STR_VULKAN_APP_INFO_APP_NAME = "RGAVulkanBackend";
+static const char* kStrVulkanAppInfoAppName = "RGAVulkanBackend";
 
-// GPU ID string.
-static const char* STR_GPU_ID = "GPU ID ";
 
 // Tokens used to check for Radeon adapters.
-static const char* STR_RADEON_ADAPTER_TOKEN_A = "radeon";
-static const char* STR_RADEON_ADAPTER_TOKEN_B = "amd";
-
-// Output file suffixes corresponding to the pipeline stages.
-static const char* STR_OUTPUT_SUFFIX_COMP = "comp";
-static const char* STR_OUTPUT_SUFFIX_VERT = "vert";
-static const char* STR_OUTPUT_SUFFIX_FRAG = "frag";
-static const char* STR_OUTPUT_SUFFIX_TESE = "tese";
-static const char* STR_OUTPUT_SUFFIX_TESC = "tesc";
-static const char* STR_OUTPUT_SUFFIX_GEOM = "geom";
+static const char* kStrVulkanRadeonAdapterTokenA = "radeon";
+static const char* kStrVulkanRadeonAdapterTokenB = "amd";
 
 // Default Vulkan entry point name.
-static const char* STR_DEFAULT_VULKAN_ENTRY_NAME = "main";
-
-// Paths to default pipeline object files.
-static const char* STR_FIRST_SERIALIZE_COMPUTE_PSO_FILE_NAME  = "computePso1.pso";
-static const char* STR_SECOND_SERIALIZE_COMPUTE_PSO_FILE_NAME = "computePso2.pso";
-static const char* STR_FIRST_SERIALIZE_GRAPHIC_PSO_FILE_NAME  = "graphicsPso1.pso";
-static const char* STR_SECOND_SERIALIZE_GRAPHIC_PSO_FILE_NAME = "graphicsPso2.pso";
+static const char* kStrVulkanDefaultEntryName = "main";
 
 // Environment variable to dump all supported GPUs.
-static const std::string STR_ENV_VAR_ALL_GPUS_NAME  = "AMDVLK_NULL_GPU";
-static const std::string STR_ENV_VAR_ALL_GPUS_VALUE = "ALL";
+static const std::string kStrVulkanEnvVarAllGpuName = "AMDVLK_NULL_GPU";
+static const std::string kStrVulkanEnvVarAllGpuValue = "ALL";
 
 // Environment variable to enable the RGA driver stack on machines with APUs.
-static const std::string STR_ENV_VAR_DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_NAME = "DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1";
-static const std::string STR_ENV_VAR_DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_VALUE = "1";
+static const std::string kStrVulkanEnvVarDisableLayerAmdSwitchableGraphicsName = "DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1";
+static const std::string kStrVulkanEnvVarDisableLayerAmdSwitchableGraphicsValue = "1";
 
 // Error messages.
-static const char* STR_ERR_FAILED_GET_TEMP_DIR                  = "Error: failed to get temporary directory.";
-static const char* STR_ERR_FAILED_GET_VK_GET_SHADER_INFO_ADDR   = "Error: failed to get address of vkGetShaderInfoAMD.";
-static const char* STR_ERR_FAILED_ENUMERATE_DEVICES             = "Error: failed to enumerate Vulkan devices.";
-static const char* STR_ERR_NO_DEVICES_AVAILABLE                 = "Error: no supported target GPUs available.";
-static const char* STR_ERR_FAILED_GET_DEVICE_PROPS              = "Error: failed to get the device properties.";
-static const char* STR_ERR_FAILED_CREATE_VULKAN_INSTANCE        = "Error: failed to create Vulkan instance.";
-static const char* STR_ERR_FAILED_CREATE_LOGICAL_DEVICE         = "Error: failed to create logical Vulkan device";
-static const char* STR_ERR_FAILED_CREATE_LOGICAL_DEVICE_FOR_GPU = "Error: failed to create logical Vulkan device for selected GPU.";
-static const char* STR_ERR_FAILED_CREATE_PIPELINE_LAYOUT        = "Error: failed to create Vulkan pipeline layout.";
-static const char* STR_ERR_FAILED_CREATE_DESCRIPTOR_SET_LAYOUT  = "Error: failed to create Vulkan descriptor set layout.";
-static const char* STR_ERR_FAILED_CREATE_RENDER_PASS            = "Error: failed to create Vulkan render pass.";
-static const char* STR_ERR_FAILED_CREATE_SHADER_MODULE          = "Error: failed to create Vulkan shader module from SPIR-V file ";
-static const char* STR_ERR_FAILED_CREATE_CALLBACK               = "Error: failed to create Vulkan callback object.";
-static const char* STR_ERR_FAILED_FIND_COMPATIBLE_DEVICES       = "Error: failed to find any compatible Vulkan physical devices that "
-                                                                  "support the VK_AMD_shader_info device extension.";
-static const char* STR_ERR_FAILED_GET_DEVICE_EXT_PROPS          = "Error: failed to get Device extension properties.";
-static const char* STR_ERR_FAILED_GET_EXT_PROPS                 = "Error: failed to get Vulkan extension properties.";
-static const char* STR_ERR_FAILED_GET_DEVICE_QUEUE_FAMILY_PROPS = "Error: failed to get device queue family properties.";
-static const char* STR_ERR_DEVICE_DOES_NOT_SUPPORT_EXTENSION    = "Error: device does not support required extension.";
-static const char* STR_ERR_FAILED_GET_SHADER_STATS              = "Error: failed to get shader statistics.";
-static const char* STR_ERR_PIPELINE_STATS_NOT_AVAILABLE         = "Error: pipeline statistics information not available.";
-static const char* STR_ERR_FAILED_GET_BINARY_SIZE               = "Error: failed to get binary size.";
-static const char* STR_ERR_PIPELINE_BINARY_NOT_AVAILABLE        = "Error: pipeline binary not available.";
-static const char* STR_ERR_DISASM_NOT_AVAILABLE                 = "Error: disassembly not available.";
-static const char* STR_ERR_INVALID_GPU                          = "Error: invalid GPU target: ";
-static const char* STR_ERR_UNABLE_OPEN_FILE_WRITE_1             = "Error: unable to open ";
-static const char* STR_ERR_UNABLE_OPEN_FILE_WRITE_2             = " for write.";
-static const char* STR_ERR_GRAPH_OR_COMP_SHADERS_EXPECTED       = "Error: a compute or graphics shader file is expected.";
-static const char* STR_ERR_FAILED_LOAD_PIPELINE_FILE            = "Error: failed to load the pipeline file.";
-static const char* STR_ERR_FAILED_SET_ENV_VAR                   = "Error: failed to set environment variable.";
-static const char* STR_ERR_FAILED_REMOVE_ENV_VAR                = "Error: failed to remove environment variable.";
-static const char* STR_ERR_FAILED_DESERIALIZE_COMP_PIPELINE     = "Error: failed to deserialize compute pipeline.";
-static const char* STR_ERR_FAILED_DESERIALIZE_GRAPH_PIPELINE    = "Error: failed to deserialize graphics pipeline.";
-static const char* STR_ERR_FAILED_CREATE_COMP_PIPELINE          = "Error: failed to create compute pipeline.";
-static const char* STR_ERR_FAILED_CREATE_GRAPH_PIPELINE         = "Error: failed to create graphics pipeline.";
-static const char* STR_ERR_FAILED_CREATE_PIPELINE_HINT          = "Make sure that the provided pipeline state matches the given shaders.";
-static const char* STR_ERR_FAILED_CREATE_DEFAULT_COMP_PIPELINE  = "Error: failed to create default compute pipeline.";
-static const char* STR_ERR_FAILED_CREATE_DEFAULT_GRAPH_PIPELINE = "Error: failed to create default graphics pipeline.";
-static const char* STR_ERR_FAILED_VERIFY_COMP_PIPELINE          = "Error: failed to verify the compute pipeline serialization.";
-static const char* STR_ERR_FAILED_VERIFY_GRAPH_PIPELINE         = "Error: failed to verify the graphics pipeline serialization.";
-static const char* STR_ERR_NULL_VULKAN_INSTANCE                 = "Error: trying to setup validation callback for empty Vulkan instance.";
-static const char* STR_ERR_FAILED_TO_READ_SHADER_FILE           = "Error: failed to read shader file at ";
-static const char* STR_ERR_COULD_NOT_LOCATE_VULKAN_LOADER       = "Error: could not locate the Vulkan loader";
-static const char* STR_ERR_NULL_VK_HANDLE                       = "Error: unexpected NULL Vulkan instance handle.";
-static const char* STR_ERR_NULL_PPLN_CREATE_INFO                = "Error: unexpected NULL pipeline create info.";
-static const char* STR_ERR_NULL_DESC_SET_LAYOUT                 = "Error: unexpected NULL descriptor set layout.";
-static const char* STR_ERR_NULL_DESC_SET_LAYOUT_CREATE_INFO     = "Error: unexpected NULL descriptor set layout create info.";
-static const char* STR_ERR_GRAPHICS_PIPELINE_WITHOUT_VERTEX     = "Error: graphics pipeline must contain a vertex shader.";
+static const char* kStrVulkanErrorFailedToGetVkGetShaderInfoAddress = "Error: failed to get address of vkGetShaderInfoAMD.";
+static const char* kStrVulkanErrorFailedEnumerateDevices = "Error: failed to enumerate Vulkan devices.";
+static const char* kStrVulkanErrorNoDevicesAvailable = "Error: no supported target GPUs available.";
+static const char* kStrVulkanErrorFailedToGetDeviceProps = "Error: failed to get the device properties.";
+static const char* kStrVulkanErrorFailedToCreateVulkanInsatnce = "Error: failed to create Vulkan instance.";
+static const char* kStrVulkanErrorFailedToCreateLogicalDevice = "Error: failed to create logical Vulkan device";
+static const char* kStrVulkanErrorFailedToCreateLogicalDeviceForGpu = "Error: failed to create logical Vulkan device for selected GPU.";
+static const char* kStrVulkanErrorFailedToCreatePipelineLayout = "Error: failed to create Vulkan pipeline layout.";
+static const char* kStrVulkanErrorFailedToCreateDescriptorSetLayout = "Error: failed to create Vulkan descriptor set layout.";
+static const char* kStrVulkanErrorFailedToCreateRenderPass = "Error: failed to create Vulkan render pass.";
+static const char* kStrVulkanErrorFailedToCreateShaderModule = "Error: failed to create Vulkan shader module from SPIR-V file ";
+static const char* kStrVulkanErrorFailedToCreateCallback = "Error: failed to create Vulkan callback object.";
+static const char* kStrVulkanErrorFailedToFindCompatibleDevices = "Error: failed to find any compatible Vulkan physical devices that "
+"support the VK_AMD_shader_info device extension.";
+static const char* kStrVulkanErrorFailedToGetDeviceExtProperties = "Error: failed to get Device extension properties.";
+static const char* kStrVulkanErrorFailedToGetExtensionProperties = "Error: failed to get Vulkan extension properties.";
+static const char* kStrVulkanErrorFailedToGetDeviceQueueFamilyProperties = "Error: failed to get device queue family properties.";
+static const char* kStrVulkanErrorDeviceDoesNotSupportExtension = "Error: device does not support required extension.";
+static const char* kStrVulkanErrorFailedToGetShaderStats = "Error: failed to get shader statistics.";
+static const char* kStrVulkanErrorPipelineStatsNotAvailable = "Error: pipeline statistics information not available.";
+static const char* kStrVulkanErrorFailedToGetBinarySize = "Error: failed to get binary size.";
+static const char* kStrVulkanErrorBinaryNotAvailable = "Error: pipeline binary not available.";
+static const char* kStrVulkanErrorDisassemblyNotAvailable = "Error: disassembly not available.";
+static const char* kStrVulkanErrorInvalidGpu = "Error: invalid GPU target: ";
+static const char* kStrVulkanErrorUnableToOpenFileForWrite1 = "Error: unable to open ";
+static const char* kStrVulkanErrorUnableToOpenFileForWrite2 = " for write.";
+static const char* kStrVulkanErrorGraphicsOrComputeShaderExpected = "Error: a compute or graphics shader file is expected.";
+static const char* kStrVulkanErrorFailedToLoadPipelineFile = "Error: failed to load the pipeline file.";
+static const char* kStrVulkanErrorFailedToSetEnvVar = "Error: failed to set environment variable.";
+static const char* kStrVulkanErrorFailedToRemoveEnvVar = "Error: failed to remove environment variable.";
+static const char* kStrVulkanErrorFailedToDeserializeComputePipeline = "Error: failed to deserialize compute pipeline.";
+static const char* kStrVulkanErrorFailedToDeserializeGraphicsPipeline = "Error: failed to deserialize graphics pipeline.";
+static const char* kStrVulkanErrorFailedToCreateComputePipeline = "Error: failed to create compute pipeline.";
+static const char* kStrVulkanErrorFailedToCreateGraphicsPipeline = "Error: failed to create graphics pipeline.";
+static const char* STR_ERR_FAILED_CREATE_PIPELINE_HINT = "Make sure that the provided pipeline state matches the given shaders.";
+static const char* kStrVulkanErrorFailedToCreateDefaultComputePipeline = "Error: failed to create default compute pipeline.";
+static const char* kStrVulkanErrorFailedToCreateDefaultGraphicsPipeline = "Error: failed to create default graphics pipeline.";
+static const char* kStrVulkanErrorEmptyVulkanInstance = "Error: trying to setup validation callback for empty Vulkan instance.";
+static const char* kStrVulkanErrorFailedToReadShaderFile = "Error: failed to read shader file at ";
+static const char* kStrVulkanErrorCouldNotLocateVulkanLoader = "Error: could not locate the Vulkan loader";
+static const char* kStrVulkanErrorNullVkHandle = "Error: unexpected NULL Vulkan instance handle.";
+static const char* kStrVulkanErrorNullPipelineCreateInfo = "Error: unexpected NULL pipeline create info.";
+static const char* kStrVulkanErrorNullDescriptorSetLayour = "Error: unexpected NULL descriptor set layout.";
+static const char* kStrVulkanErrorNullDescriptorSetLayourCreateInfo = "Error: unexpected NULL descriptor set layout create info.";
+static const char* kStrVulkanErrorCouldNotGetDeviceExtensionsCount = "Error: could not get the number of device extensions.";
+static const char* kStrVulkanErrorCouldNotGetDeviceExtensions = "Error: could not enumerate device extensions.";
 
 // Warnings
-static const char* STR_WRN_FAILED_CHECK_VALIDATION_LAYERS       = "Warning: Some required Vulkan validation layers are not available.";
-static const char* STR_WRN_FAILED_CHECK_EXTENSIONS              = "Warning: Some required Vulkan extensions are not available.";
-static const char* STR_WRN_FAILED_GET_VULKAN_EXT_FUNC_PTR       = "Warning: failed to obtain pointer to required Vulkan extension function.";
-static const char* STR_WRN_VALIDATION_LAYER_NOT_SUPPORTED       = "Warning: validation layer not supported by runtime: ";
-
 // Extensions and validation layers.
-static const char* STR_EXTENSION_NOT_SUPPORTED                  = "Vulkan extension is not supported: ";
-static const char* STR_VALIDATION_INFO_UNAVAILABLE              = "Vulkan validation information may not be available or complete.";
-static const char* STR_VALIDATION_ENABLING                      = "Enabling Vulkan validation layers... ";
-static const char* STR_LAYER_OUTPUT_A                           = "*** Output from ";
-static const char* STR_LAYER_OUTPUT_BEGIN                       = " layer - begin *** ";
-static const char* STR_LAYER_OUTPUT_END                         = " layer - end *** ";
-static const char* STR_LAYER_HINT                               = "To get more detailed information about this failure, try enabling Vulkan validation layers.";
+static const char* kStrVulkanWarningFailedToCheckExtensions = "Warning: Some required Vulkan extensions are not available.";
+static const char* kStrVulkanWarningFailedToGetVulkanExtensionFunctionPointer = "Warning: failed to obtain pointer to required Vulkan extension function.";
+static const char* kStrVulkanWarningValidationLayerNotSupported = "Warning: validation layer not supported by runtime: ";
+static const char* kStrVulkanWarningExtensionNotSupported = "Vulkan extension is not supported: ";
+static const char* kStrVulkanWarningValidationInfoUnavailable = "Vulkan validation information may not be available or complete.";
+static const char* kStrVulkanWarningGraphicsPipelineWithoutVertexShader = "Warning: no vertex shader detected in graphics pipeline.";
 
-// Notifications.
-static const char* STR_USING_CUSTOM_ICD_LOCATION                = "Using Vulkan ICD from custom location: ";
-static const char* STR_FUNCTION_RETURNED_ERR_CODE               = " function returned error code: ";
-static const char* STR_FUNCTION_RETURNED_EMPTY_LIST             = " function returned empty list.";
+// General warnings.
+static const char* kStrVulkanAmdvlkLocation1 = "Warning: failed to locate AMD's Vulkan driver on the system: ";
+static const char* kStrVulkanAmdvlkLocation2 = ". Falling back to using the amdvlk binary that is packaged with RGA.";
 
-// Warnings.
-static const char* STR_USING_OFFLINE_AMDVLK_LOCATION_A          = "Warning: failed to locate AMD's Vulkan driver on the system: ";
-static const char* STR_USING_OFFLINE_AMDVLK_LOCATION_B          = ". Falling back to using the amdvlk binary that is packaged with RGA.";
+// Info.
+static const char* kStrVulkanInfoValidationEnabling = "Enabling Vulkan validation layers... ";
+static const char* kStrVulkanInfoLayerOutput1 = "*** Output from ";
+static const char* kStrVulkanInfoLayerOutputBegin = " layer - begin *** ";
+static const char* kStrVulkanInfoLayerOutputEnd = " layer - end *** ";
+static const char* kStrVulkanInfoLayerHint = "To get more detailed information about this failure, try enabling Vulkan validation layers.";
+static const char* kStrVulkanInfoUsingCustomIcd = "Using Vulkan ICD from custom location: ";
+static const char* kStrVulkanInfoFunctionReturnedErrorCode = " function returned error code: ";
+static const char* kStrVulkanInfoFunctionReturnedEmptyList = " function returned empty list.";
 
 // Required Vulkan validation layers.
-static const std::vector<const char*> VULKAN_VALIDATION_LAYERS =
+static const std::vector<const char*> kVulkanValidationLayers =
 {
     "VK_LAYER_LUNARG_standard_validation",
     "VK_LAYER_LUNARG_core_validation",
@@ -167,9 +148,15 @@ static const std::vector<const char*> VULKAN_VALIDATION_LAYERS =
 };
 
 // Required Vulkan extensions.
-static const std::vector<const char*> VULKAN_EXTENSIONS =
+static const std::vector<const char*> kVulkanExtensions =
 {
     "VK_EXT_debug_report"
+};
+
+// Required device extensions.
+static const std::vector<const char*> kVulkanExtensionsDevice =
+{
+    "VK_KHR_driver_properties"
 };
 
 // Validation messages to be filtered.
@@ -177,9 +164,9 @@ static const std::vector<const char*> VULKAN_EXTENSIONS =
 // In the normal use case, the API is pretty much useless without queues because they cannot submit any
 // work to the device. However, queues are not necessary solely for compilation and they are not even exposed
 // by RGA's driver stack.
-static const char* STR_VALIDATION_LAYER_MSG_FILTER_0 = "pCreateInfo->queueCreateInfoCount";
-static const char* STR_VALIDATION_LAYER_MSG_FILTER_1 = "[ VUID_Undefined ] Object: VK_NULL_HANDLE (Type = 0) | vkCreateDevice: parameter pCreateInfo->queueCreateInfoCount must be greater than 0.";
-static const char* STR_VALIDATION_LAYER_MSG_FILTER_2 = "Object: 0x0 | vkCreateDevice : parameter pCreateInfo->queueCreateInfoCount must be greater than 0. (null)";
+static const char* kVulkanValidationLayerMessageFilter0 = "create_info->queueCreateInfoCount";
+static const char* kVulkanValidationLayerMessageFilter1 = "[ VUID_Undefined ] Object: VK_NULL_HANDLE (Type = 0) | vkCreateDevice: parameter create_info->queueCreateInfoCount must be greater than 0.";
+static const char* kVulkanValidationLayerMessageFilter2 = "Object: 0x0 | vkCreateDevice : parameter create_info->queueCreateInfoCount must be greater than 0. (null)";
 
 // *** AUXILIARY FUNCTIONS - BEGIN ***
 
@@ -206,9 +193,9 @@ static bool IsSubstringIgnoreCase(const std::string& src, const std::string& sub
 
 // Returns true if the given file name represents a file that exists
 // and can be opened by the current process. Returns false otherwise.
-static bool IsFileExists(const std::string& fileName)
+static bool IsFileExists(const std::string& filename)
 {
-    std::ifstream infile(fileName);
+    std::ifstream infile(filename);
     return infile.good();
 }
 
@@ -217,29 +204,29 @@ static std::string GetCurrentExecutablePath()
 {
     std::string ret;
 #ifdef _WIN32
-    char fileName[MAX_PATH];
-    DWORD rc = GetModuleFileNameA(NULL, fileName, MAX_PATH);
+    char filename[MAX_PATH];
+    DWORD rc = GetModuleFileNameA(NULL, filename, MAX_PATH);
     if (rc > 0)
     {
         // Extract the directory from the full path.
-        ret = std::string(fileName, fileName + rc);
-        size_t exeNameStart = ret.find(GetVulkanBackendExeName());
-        if (exeNameStart != std::string::npos)
+        ret = std::string(filename, filename + rc);
+        size_t exe_name_start = ret.find(GetVulkanBackendExeName());
+        if (exe_name_start != std::string::npos)
         {
-            ret = ret.substr(0, exeNameStart);
+            ret = ret.substr(0, exe_name_start);
         }
     }
 #elif __linux
     // Get the directory name with the executable name.
-    char pathWithExeName[PATH_MAX];
-    ssize_t rc = readlink("/proc/self/exe", pathWithExeName, PATH_MAX);
+    char path_with_exe_name[PATH_MAX];
+    ssize_t rc = readlink("/proc/self/exe", path_with_exe_name, PATH_MAX);
     if (rc != -1)
     {
         // Extract the directory name (without the executable name).
-        const char *pPath = dirname(pathWithExeName);
-        if (pPath != nullptr)
+        const char* dir_path = dirname(path_with_exe_name);
+        if (dir_path != nullptr)
         {
-            ret = pPath;
+            ret = dir_path;
 
             // Append the directory separator.
             ret.append("/");
@@ -252,28 +239,28 @@ static std::string GetCurrentExecutablePath()
 // Returns the name of the amdvlk file (AMD's Vulkan ICD).
 static std::string GetAmdvlkFileName()
 {
-    std::string amdvlkFileName;
+    std::string amdvlk_filename;
 #ifdef _WIN32
-    amdvlkFileName = "amdvlk64.dll";
+    amdvlk_filename = "amdvlk64.dll";
 #else
-    amdvlkFileName = "amdvlk64.so";
+    amdvlk_filename = "amdvlk64.so";
 #endif // _WIN32
-    return amdvlkFileName;
+    return amdvlk_filename;
 }
 
 // Returns the path for the amdvlk .dll or .so file that is packaged with RGA.
 static std::string GetOfflineAmdvlkPath()
 {
     // Get the path for the current executable (VulkanBackend).
-    std::stringstream amdvlkOfflineFile;
-    amdvlkOfflineFile << GetCurrentExecutablePath();
+    std::stringstream amdvlk_offline_file;
+    amdvlk_offline_file << GetCurrentExecutablePath();
 
     // Append the sub-directory where the offline amdvlk binary resides.
-    const char* AMDVLK_OFFLINE_FOLDER = "amdvlk";
+    const char* kAmdvlkOfflineFolder = "amdvlk";
 
     // Append the offline amdvlk library name.
-    amdvlkOfflineFile << AMDVLK_OFFLINE_FOLDER << "/" << GetAmdvlkFileName();
-    return amdvlkOfflineFile.str();
+    amdvlk_offline_file << kAmdvlkOfflineFolder << "/" << GetAmdvlkFileName();
+    return amdvlk_offline_file.str();
 }
 
 // *** AUXILIARY FUNCTIONS - END ***
@@ -282,7 +269,7 @@ static bool SetEnvironmentVariable(const std::string& name, const std::string& v
 {
     bool result = false;
 #ifdef WIN32
-     result = (::SetEnvironmentVariable(std::wstring(name.cbegin(), name.cend()).c_str(),
+    result = (::SetEnvironmentVariable(std::wstring(name.cbegin(), name.cend()).c_str(),
         std::wstring(value.cbegin(), value.cend()).c_str()) == TRUE);
 #else
     result = (::setenv(name.c_str(), value.c_str(), 1) == 0);
@@ -303,153 +290,89 @@ public:
             assert(result);
             if (result)
             {
-                m_name = name;
+                name_ = name;
             }
             else
             {
-                std::cerr << STR_ERR_FAILED_SET_ENV_VAR << std::endl;
+                std::cerr << kStrVulkanErrorFailedToSetEnvVar << std::endl;
             }
         }
     }
 
     ~EnvVar()
     {
-        if (!m_name.empty())
+        if (!name_.empty())
         {
 #ifdef WIN32
-            bool result = (::SetEnvironmentVariable(std::wstring(m_name.cbegin(), m_name.cend()).c_str(), nullptr) == TRUE);
+            bool result = (::SetEnvironmentVariable(std::wstring(name_.cbegin(), name_.cend()).c_str(), nullptr) == TRUE);
 #else
-            bool result = (::unsetenv(m_name.c_str()) == 0);
+            bool result = (::unsetenv(name_.c_str()) == 0);
 #endif
             assert(result);
             if (!result)
             {
-                std::cerr << STR_ERR_FAILED_REMOVE_ENV_VAR << std::endl;
+                std::cerr << kStrVulkanErrorFailedToRemoveEnvVar << std::endl;
             }
         }
     }
 
 private:
-    std::string  m_name;
+    std::string  name_;
 };
 
-// Returns path to OS temp dir (adds trailing slash).
-static std::string GetTempDir()
-{
-    std::string ret;
-
-#ifdef WIN32
-    const int tmpDirLen = MAX_PATH;
-    wchar_t   tmpDirW[tmpDirLen];
-    if (GetTempPath(tmpDirLen, tmpDirW) != 0)
-    {
-        std::wstring  tmpDirWStr(tmpDirW);
-        std::string   tmpDirStr(tmpDirWStr.begin(), tmpDirWStr.end());
-        ret = tmpDirStr;
-        if (!ret.empty())
-        {
-            ret += "\\";
-        }
-    }
-#else
-    std::vector<std::string>  tmpDirEnvVars = { "TMPDIR", "TMP", "TEMP", "TEMPDIR" };
-    for (const std::string tmpDirEnvVar : tmpDirEnvVars)
-    {
-        const char* tmpDir = std::getenv(tmpDirEnvVar.c_str());
-        if (tmpDir != nullptr)
-        {
-            ret = tmpDir;
-            break;
-        }
-    }
-    if (!ret.empty())
-    {
-        ret += "/";
-    }
-#endif
-    return ret;
-}
-
-// Builds a file name by appending a suffix to the base file name specified by "fileName".
-// The suffix is chosen based on the Vulkan stage specified by "stage".
-// If the base file name has an extension, the suffix is added before the extension.
-// Examples:
-//     "out_isa.txt" + VK_SHADER_STAGE_VERTEX_BIT  -->  "out_isa_vertex.txt"
-//     "stats" + VK_SHADER_STAGE_FRAGMENT_BIT  -->  "stats_fragment"
-//
-static void BuildFileName(std::string& fileName, VkShaderStageFlagBits stage)
-{
-    size_t extOffset = fileName.rfind('.');
-    std::string  suffix;
-    switch (stage)
-    {
-        case VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT:                 suffix = STR_OUTPUT_SUFFIX_COMP; break;
-        case VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT:                suffix = STR_OUTPUT_SUFFIX_FRAG; break;
-        case VkShaderStageFlagBits::VK_SHADER_STAGE_GEOMETRY_BIT:                suffix = STR_OUTPUT_SUFFIX_GEOM; break;
-        case VkShaderStageFlagBits::VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:    suffix = STR_OUTPUT_SUFFIX_TESC; break;
-        case VkShaderStageFlagBits::VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: suffix = STR_OUTPUT_SUFFIX_TESE; break;
-        case VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT:                  suffix = STR_OUTPUT_SUFFIX_VERT; break;
-    }
-
-    assert(!suffix.empty());
-
-    fileName.insert((extOffset == std::string::npos ? fileName.size() : extOffset), "_" + suffix);
-}
-
 // Decode the 32-bit Vulkan version integer. Returns triple {major, minor, patch}.
-static std::tuple<uint32_t, uint32_t, uint32_t>
-DecodeVulkanVersion(uint32_t version)
+static std::tuple<uint32_t, uint32_t, uint32_t> DecodeVulkanVersion(uint32_t version)
 {
-    const uint32_t majorMask = (1 << VULKAN_VERSION_MAJOR_WIDTH) - 1;
-    const uint32_t minorMask = (1 << VULKAN_VERSION_MINOR_WIDTH) - 1;
-    const uint32_t patchMask = (1 << VULKAN_VERSION_PATCH_WIDTH) - 1;
+    const uint32_t major_mask = (1 << kStrVulkanVersionMajorWidth) - 1;
+    const uint32_t minor_mask = (1 << kStrVulkanVersionMinorWidth) - 1;
+    const uint32_t patch_mask = (1 << kStrVulkanVersionPatchWidth) - 1;
 
-    const uint32_t major = (version >> VULKAN_VERSION_MAJOR_OFFSET) & majorMask;
-    const uint32_t minor = (version >> VULKAN_VERSION_MINOR_OFFSET) & minorMask;
-    const uint32_t patch = (version >> VULKAN_VERSION_PATCH_OFFSET) & patchMask;
+    const uint32_t major = (version >> kStrVulkanVersionMajorOffset) & major_mask;
+    const uint32_t minor = (version >> kStrVulkanVersionMinorOffset) & minor_mask;
+    const uint32_t patch = (version >> kStrVulkanVersionPatchOffset) & patch_mask;
 
     return std::tuple<uint32_t, uint32_t, uint32_t>(major, minor, patch);
 }
 
 static std::vector<const char*> GetAvailableValidationLayers()
 {
-    uint32_t layersNum = 0;
-    std::vector<const char*> supportedLayers;
+    uint32_t layers_num = 0;
+    std::vector<const char*> supported_layers;
 
     // Get the validation layers supported by Vulkan driver installed on the machine.
-    if (vkEnumerateInstanceLayerProperties(&layersNum, nullptr) == VK_SUCCESS)
+    if (vkEnumerateInstanceLayerProperties(&layers_num, nullptr) == VK_SUCCESS)
     {
-        std::vector<VkLayerProperties> layerProps(layersNum);
-        if (vkEnumerateInstanceLayerProperties(&layersNum, layerProps.data()) == VK_SUCCESS)
+        std::vector<VkLayerProperties> layer_props(layers_num);
+        if (vkEnumerateInstanceLayerProperties(&layers_num, layer_props.data()) == VK_SUCCESS)
         {
             // Check if required layers are present in the list of supported layers.
-            std::set<std::string> layerNames;
-            std::for_each(layerProps.cbegin(), layerProps.cend(),
-                [&](const VkLayerProperties& p) { layerNames.insert(p.layerName); });
+            std::set<std::string> layer_names;
+            std::for_each(layer_props.cbegin(), layer_props.cend(),
+                [&](const VkLayerProperties& p) { layer_names.insert(p.layerName); });
 
-            for (const char* pValidationLayer : VULKAN_VALIDATION_LAYERS)
+            for (const char* validation_layer : kVulkanValidationLayers)
             {
                 // If the required layer is supported, add it to the "supportedLayers" list.
                 // Otherwise, print a warning.
-                if (layerNames.find(pValidationLayer) != layerNames.cend())
+                if (layer_names.find(validation_layer) != layer_names.cend())
                 {
-                    supportedLayers.push_back(pValidationLayer);
+                    supported_layers.push_back(validation_layer);
                 }
                 else
                 {
                     // Inform the user that the validation layer is not available by the runtime.
-                    std::cerr << STR_WRN_VALIDATION_LAYER_NOT_SUPPORTED << pValidationLayer << std::endl;
+                    std::cerr << kStrVulkanWarningValidationLayerNotSupported << validation_layer << std::endl;
                 }
             }
         }
     }
 
-    return supportedLayers;
+    return supported_layers;
 }
 
-rgConfig::Action rgVulkanBackend::ParseCmdLine(int argc, char* argv[])
+RgConfig::Action RgVulkanBackend::ParseCmdLine(int argc, char* argv[])
 {
-    bool listTargets = false, listAdapters = false;
+    bool list_targets = false, list_adapters = false;
 
     assert(argv != nullptr);
     if (argv != nullptr)
@@ -458,81 +381,81 @@ rgConfig::Action rgVulkanBackend::ParseCmdLine(int argc, char* argv[])
         {
             cxxopts::Options opts(argv[0]);
             opts.add_options()
-            ("h,help", "Print help.")
-            ("list-targets",   "List all supported target GPUs.", cxxopts::value<bool>(listTargets))
-            ("list-adapters",  "List physical display adapters installed on the system.", cxxopts::value<bool>(listAdapters))
-            ("target",         "The name of the target GPU.", cxxopts::value<std::string>(m_config.m_targetGPU))
-            ("enable-layers",  "Enable Vulkan validation layers.", cxxopts::value<bool>(m_config.m_enableLayers))
-            ("layers-file",    "Path to the validation layers output file.", cxxopts::value<std::string>(m_config.m_validationFile))
+                ("h,help", "Print help.")
+                ("list-targets", "List all supported target GPUs.", cxxopts::value<bool>(list_targets))
+                ("list-adapters", "List physical display adapters installed on the system.", cxxopts::value<bool>(list_adapters))
+                ("target", "The name of the target GPU.", cxxopts::value<std::string>(config_.target_gpu))
+                ("enable-layers", "Enable Vulkan validation layers.", cxxopts::value<bool>(config_.enable_layers))
+                ("layers-file", "Path to the validation layers output file.", cxxopts::value<std::string>(config_.validation_file))
 
-            // Pipeline Object file.
-            ("pso", "Pipeline state file which would be used to set the pipeline state for the compilation process."
+                // Pipeline Object file.
+                ("pso", "Pipeline state file which would be used to set the pipeline state for the compilation process."
                     "If not specified, RGA would create and set a \"default\" pipeline state.",
-                    cxxopts::value<std::string>(m_config.m_pipelineStateFile))
+                    cxxopts::value<std::string>(config_.pipeline_state_file))
 
-            // ICD file path.
-            ("icd", CLI_OPT_ICD_DESCRIPTION, cxxopts::value<std::string>(m_config.m_icdPath))
+                // ICD file path.
+                ("icd", CLI_OPT_ICD_DESCRIPTION, cxxopts::value<std::string>(config_.icd_path))
 
-            // VK_LOADER_DEBUG environment variable.
-            ("loader-debug", "Value for VK_LOADER_DEBUG", cxxopts::value<std::string>(m_config.m_loaderDebug))
+                // VK_LOADER_DEBUG environment variable.
+                ("loader-debug", "Value for VK_LOADER_DEBUG", cxxopts::value<std::string>(config_.loader_debug))
 
-            // Per-stage shader input source file options.
-            ("vert", "Path to the source file which contains the vertex shader to be attached to the pipeline.",
-                        cxxopts::value<std::string>(m_config.m_spvFiles[rgPipelineStage::Vertex]))
-            ("tesc", "Path to the source file which contains the tessellation control shader to be attached to the pipeline.",
-                        cxxopts::value<std::string>(m_config.m_spvFiles[rgPipelineStage::TessellationControl]))
-            ("tese", "Path to the source file which contains the tessellation evaluation shader to be attached to the pipeline.",
-                        cxxopts::value<std::string>(m_config.m_spvFiles[rgPipelineStage::TessellationEvaluation]))
-            ("geom", "Path to the source file which contains the geometry shader to be attached to the pipeline.",
-                        cxxopts::value<std::string>(m_config.m_spvFiles[rgPipelineStage::Geometry]))
-            ("frag", "Path to the source file which contains the fragment shader to be attached to the pipeline.",
-                        cxxopts::value<std::string>(m_config.m_spvFiles[rgPipelineStage::Fragment]))
-            ("comp", "Path to the source file which contains the compute shader to be attached to the pipeline.",
-                        cxxopts::value<std::string>(m_config.m_spvFiles[rgPipelineStage::Compute]))
+                // Per-stage shader input source file options.
+                ("vert", "Path to the source file which contains the vertex shader to be attached to the pipeline.",
+                    cxxopts::value<std::string>(config_.spv_files[rgPipelineStage::Vertex]))
+                ("tesc", "Path to the source file which contains the tessellation control shader to be attached to the pipeline.",
+                    cxxopts::value<std::string>(config_.spv_files[rgPipelineStage::TessellationControl]))
+                ("tese", "Path to the source file which contains the tessellation evaluation shader to be attached to the pipeline.",
+                    cxxopts::value<std::string>(config_.spv_files[rgPipelineStage::TessellationEvaluation]))
+                ("geom", "Path to the source file which contains the geometry shader to be attached to the pipeline.",
+                    cxxopts::value<std::string>(config_.spv_files[rgPipelineStage::Geometry]))
+                ("frag", "Path to the source file which contains the fragment shader to be attached to the pipeline.",
+                    cxxopts::value<std::string>(config_.spv_files[rgPipelineStage::Fragment]))
+                ("comp", "Path to the source file which contains the compute shader to be attached to the pipeline.",
+                    cxxopts::value<std::string>(config_.spv_files[rgPipelineStage::Compute]))
 
-            // Entry points.
-            ("vert-entry", "Vertex shader entry point",
-                           cxxopts::value<std::string>(m_config.m_entries[rgPipelineStage::Vertex])->default_value(STR_DEFAULT_VULKAN_ENTRY_NAME))
-            ("tesc-entry", "Tesselation control shader entry point",
-                           cxxopts::value<std::string>(m_config.m_entries[rgPipelineStage::TessellationControl])->default_value(STR_DEFAULT_VULKAN_ENTRY_NAME))
-            ("tese-entry", "Tesselation evaluation shader entry point",
-                           cxxopts::value<std::string>(m_config.m_entries[rgPipelineStage::TessellationEvaluation])->default_value(STR_DEFAULT_VULKAN_ENTRY_NAME))
-            ("geom-entry", "Geometry shader entry point",
-                           cxxopts::value<std::string>(m_config.m_entries[rgPipelineStage::Geometry])->default_value(STR_DEFAULT_VULKAN_ENTRY_NAME))
-            ("frag-entry", "Fragment shader entry point",
-                           cxxopts::value<std::string>(m_config.m_entries[rgPipelineStage::Fragment])->default_value(STR_DEFAULT_VULKAN_ENTRY_NAME))
-            ("comp-entry", "Compute shader entry point",
-                           cxxopts::value<std::string>(m_config.m_entries[rgPipelineStage::Compute])->default_value(STR_DEFAULT_VULKAN_ENTRY_NAME))
+                // Entry points.
+                ("vert-entry", "Vertex shader entry point",
+                    cxxopts::value<std::string>(config_.entries[rgPipelineStage::Vertex])->default_value(kStrVulkanDefaultEntryName))
+                ("tesc-entry", "Tesselation control shader entry point",
+                    cxxopts::value<std::string>(config_.entries[rgPipelineStage::TessellationControl])->default_value(kStrVulkanDefaultEntryName))
+                ("tese-entry", "Tesselation evaluation shader entry point",
+                    cxxopts::value<std::string>(config_.entries[rgPipelineStage::TessellationEvaluation])->default_value(kStrVulkanDefaultEntryName))
+                ("geom-entry", "Geometry shader entry point",
+                    cxxopts::value<std::string>(config_.entries[rgPipelineStage::Geometry])->default_value(kStrVulkanDefaultEntryName))
+                ("frag-entry", "Fragment shader entry point",
+                    cxxopts::value<std::string>(config_.entries[rgPipelineStage::Fragment])->default_value(kStrVulkanDefaultEntryName))
+                ("comp-entry", "Compute shader entry point",
+                    cxxopts::value<std::string>(config_.entries[rgPipelineStage::Compute])->default_value(kStrVulkanDefaultEntryName))
 
-            // Output binary file.
-            ("bin",   "Path to the output pipeline binary file.", cxxopts::value<std::string>(m_config.m_binaryFile))
+                // Output binary file.
+                ("bin", "Path to the output pipeline binary file.", cxxopts::value<std::string>(config_.binary_file))
 
-            ("vert-isa", "Path to the output file which contains the disassembly for the vertex shader.",
-                         cxxopts::value<std::string>(m_config.m_isaFiles[rgPipelineStage::Vertex]))
-            ("tesc-isa", "Path to the output file which contains the disassembly for the tessellation control shader.",
-                         cxxopts::value<std::string>(m_config.m_isaFiles[rgPipelineStage::TessellationControl]))
-            ("tese-isa", "Path to the output file which contains the disassembly for the tessellation evaluation shader.",
-                         cxxopts::value<std::string>(m_config.m_isaFiles[rgPipelineStage::TessellationEvaluation]))
-            ("geom-isa", "Path to the output file which contains the disassembly for the geometry shader.",
-                         cxxopts::value<std::string>(m_config.m_isaFiles[rgPipelineStage::Geometry]))
-            ("frag-isa", "Path to the output file which contains the disassembly for the fragment shader.",
-                         cxxopts::value<std::string>(m_config.m_isaFiles[rgPipelineStage::Fragment]))
-            ("comp-isa", "Path to the output file which contains the disassembly for the compute shader.",
-                         cxxopts::value<std::string>(m_config.m_isaFiles[rgPipelineStage::Compute]))
+                ("vert-isa", "Path to the output file which contains the disassembly for the vertex shader.",
+                    cxxopts::value<std::string>(config_.isa_files[rgPipelineStage::Vertex]))
+                ("tesc-isa", "Path to the output file which contains the disassembly for the tessellation control shader.",
+                    cxxopts::value<std::string>(config_.isa_files[rgPipelineStage::TessellationControl]))
+                ("tese-isa", "Path to the output file which contains the disassembly for the tessellation evaluation shader.",
+                    cxxopts::value<std::string>(config_.isa_files[rgPipelineStage::TessellationEvaluation]))
+                ("geom-isa", "Path to the output file which contains the disassembly for the geometry shader.",
+                    cxxopts::value<std::string>(config_.isa_files[rgPipelineStage::Geometry]))
+                ("frag-isa", "Path to the output file which contains the disassembly for the fragment shader.",
+                    cxxopts::value<std::string>(config_.isa_files[rgPipelineStage::Fragment]))
+                ("comp-isa", "Path to the output file which contains the disassembly for the compute shader.",
+                    cxxopts::value<std::string>(config_.isa_files[rgPipelineStage::Compute]))
 
-            ("vert-stats", "Path to the output file which contains the statistics for the vertex shader.",
-                           cxxopts::value<std::string>(m_config.m_statsFiles[rgPipelineStage::Vertex]))
-            ("tesc-stats", "Path to the output file which contains the statistics for the tessellation control shader.",
-                           cxxopts::value<std::string>(m_config.m_statsFiles[rgPipelineStage::TessellationControl]))
-            ("tese-stats", "Path to the output file which contains the statistics for the tessellation evaluation shader.",
-                           cxxopts::value<std::string>(m_config.m_statsFiles[rgPipelineStage::TessellationEvaluation]))
-            ("geom-stats", "Path to the output file which contains the statistics for the geometry shader.",
-                           cxxopts::value<std::string>(m_config.m_statsFiles[rgPipelineStage::Geometry]))
-            ("frag-stats", "Path to the output file which contains the statistics for the fragment shader.",
-                           cxxopts::value<std::string>(m_config.m_statsFiles[rgPipelineStage::Fragment]))
-            ("comp-stats", "Path to the output file which contains the statistics for the compute shader.",
-                           cxxopts::value<std::string>(m_config.m_statsFiles[rgPipelineStage::Compute]))
-            ;
+                ("vert-stats", "Path to the output file which contains the statistics for the vertex shader.",
+                    cxxopts::value<std::string>(config_.stats_files[rgPipelineStage::Vertex]))
+                ("tesc-stats", "Path to the output file which contains the statistics for the tessellation control shader.",
+                    cxxopts::value<std::string>(config_.stats_files[rgPipelineStage::TessellationControl]))
+                ("tese-stats", "Path to the output file which contains the statistics for the tessellation evaluation shader.",
+                    cxxopts::value<std::string>(config_.stats_files[rgPipelineStage::TessellationEvaluation]))
+                ("geom-stats", "Path to the output file which contains the statistics for the geometry shader.",
+                    cxxopts::value<std::string>(config_.stats_files[rgPipelineStage::Geometry]))
+                ("frag-stats", "Path to the output file which contains the statistics for the fragment shader.",
+                    cxxopts::value<std::string>(config_.stats_files[rgPipelineStage::Fragment]))
+                ("comp-stats", "Path to the output file which contains the statistics for the compute shader.",
+                    cxxopts::value<std::string>(config_.stats_files[rgPipelineStage::Compute]))
+                ;
 
             // Parse command line.
             auto result = opts.parse(argc, argv);
@@ -543,8 +466,8 @@ rgConfig::Action rgVulkanBackend::ParseCmdLine(int argc, char* argv[])
             }
             else
             {
-                m_config.m_action = (listTargets ? rgConfig::Action::ListTargets :
-                                    (listAdapters ? rgConfig::Action::ListAdapters : rgConfig::Action::Build));
+                config_.action = (list_targets ? RgConfig::Action::kListTargets :
+                    (list_adapters ? RgConfig::Action::kListAdapters : RgConfig::Action::kBuild));
             }
         }
         catch (const cxxopts::OptionException& e)
@@ -553,14 +476,14 @@ rgConfig::Action rgVulkanBackend::ParseCmdLine(int argc, char* argv[])
         }
     }
 
-    return m_config.m_action;
+    return config_.action;
 }
 
-static bool WriteBinaryFile(const std::string& fileName, const std::vector<char>& content)
+static bool WriteBinaryFile(const std::string& filename, const std::vector<char>& content)
 {
     bool ret = false;
     std::ofstream output;
-    output.open(fileName.c_str(), std::ios::binary);
+    output.open(filename.c_str(), std::ios::binary);
 
     if (output.is_open() && !content.empty())
     {
@@ -570,17 +493,17 @@ static bool WriteBinaryFile(const std::string& fileName, const std::vector<char>
     }
     else
     {
-        std::cerr << STR_ERR_UNABLE_OPEN_FILE_WRITE_1 << fileName << STR_ERR_UNABLE_OPEN_FILE_WRITE_2 << std::endl;
+        std::cerr << kStrVulkanErrorUnableToOpenFileForWrite1 << filename << kStrVulkanErrorUnableToOpenFileForWrite2 << std::endl;
     }
 
     return ret;
 }
 
-static bool WriteTextFile(const std::string& fileName, const std::string& content)
+static bool WriteTextFile(const std::string& filename, const std::string& content)
 {
     bool ret = false;
     std::ofstream output;
-    output.open(fileName.c_str());
+    output.open(filename.c_str());
 
     if (output.is_open())
     {
@@ -590,7 +513,7 @@ static bool WriteTextFile(const std::string& fileName, const std::string& conten
     }
     else
     {
-        std::cerr << STR_ERR_UNABLE_OPEN_FILE_WRITE_1 << fileName << STR_ERR_UNABLE_OPEN_FILE_WRITE_2 << std::endl;
+        std::cerr << kStrVulkanErrorUnableToOpenFileForWrite1 << filename << kStrVulkanErrorUnableToOpenFileForWrite2 << std::endl;
     }
 
     return ret;
@@ -599,75 +522,75 @@ static bool WriteTextFile(const std::string& fileName, const std::string& conten
 int main(int argc, char* argv[])
 {
     bool status = false;
-    bool isAmdGpu = false;
+    bool is_amd_gpu = false;
 
-    rgVulkanBackend  vulkanBackend;
-    rgConfig::Action requiredAction = vulkanBackend.ParseCmdLine(argc, argv);
-    switch (requiredAction)
+    RgVulkanBackend vulkan_backend;
+    RgConfig::Action required_action = vulkan_backend.ParseCmdLine(argc, argv);
+    switch (required_action)
     {
-        case rgConfig::Action::ListTargets:
-            status = vulkanBackend.ListTargets();
-            break;
+    case RgConfig::Action::kListTargets:
+        status = vulkan_backend.ListTargets();
+        break;
 
-        case rgConfig::Action::ListAdapters:
-            status = vulkanBackend.ListAdapters(isAmdGpu, true);
-            break;
+    case RgConfig::Action::kListAdapters:
+        status = vulkan_backend.ListAdapters(is_amd_gpu, true);
+        break;
 
-        case rgConfig::Action::Build:
-            status = vulkanBackend.Build();
-            break;
+    case RgConfig::Action::kBuild:
+        status = vulkan_backend.Build();
+        break;
     }
 
-    vulkanBackend.PrintValidationHint();
+    vulkan_backend.PrintValidationHint();
 
     return (status ? 0 : 1);
 }
 
-void rgVulkanBackend::DestroyValidationCallback()
+void RgVulkanBackend::DestroyValidationCallback()
 {
     // If the validation callback was installed, destroy it.
-    if (m_debugCallback != nullptr)
+    if (debug_callback_ != nullptr)
     {
-        auto vkDestroyCallback = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(m_instance, "vkDestroyDebugReportCallbackEXT");
+        auto vkDestroyCallback = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(instance_, "vkDestroyDebugReportCallbackEXT");
         if (vkDestroyCallback != nullptr)
         {
-            vkDestroyCallback(m_instance, m_debugCallback, nullptr);
+            vkDestroyCallback(instance_, debug_callback_, nullptr);
         }
     }
 }
 
-bool rgVulkanBackend::InitVulkan(bool shouldEnableValidation)
+bool RgVulkanBackend::InitVulkan(bool should_enable_validation)
 {
     bool result = false;
 
     // Locate the Vulkan loader (or explicitly locate the ICD if requested by the user).
-    const char* pIcdPath = nullptr;
-    if (!m_config.m_icdPath.empty())
+    const char* icd_path = nullptr;
+    if (!config_.icd_path.empty())
     {
-        pIcdPath = m_config.m_icdPath.c_str();
+        icd_path = config_.icd_path.c_str();
 
         // In case that this is a build session, notify the user that we are using a Vulkan ICD from a custom location.
-        if (shouldEnableValidation)
+        if (should_enable_validation)
         {
-            std::cout << STR_USING_CUSTOM_ICD_LOCATION << pIcdPath << std::endl;
+            std::cout << kStrVulkanInfoUsingCustomIcd << icd_path << std::endl;
         }
     }
 
     // If required, set the "VK_LOADER_DEBUG" environment variable.
-    if (!m_config.m_loaderDebug.empty())
+    if (!config_.loader_debug.empty())
     {
-        SetEnvironmentVariable("VK_LOADER_DEBUG", m_config.m_loaderDebug);
+        SetEnvironmentVariable("VK_LOADER_DEBUG", config_.loader_debug);
     }
 
     // Try to initialize using the system's ICD or the one that was given explicitly.
-    VkResult volkRc = volkInitialize(pIcdPath);
-    assert(volkRc == VK_SUCCESS);
-    if (volkRc != VK_SUCCESS)
+    VkResult volk_rc = volkInitialize(icd_path);
+    assert(volk_rc == VK_SUCCESS);
+    if (volk_rc != VK_SUCCESS)
     {
         // We failed to locate the Vulkan loader/ICD.
-        if (pIcdPath != nullptr)
+        if (icd_path != nullptr)
         {
-            std::cerr << STR_ERR_COULD_NOT_LOCATE_VULKAN_LOADER << "." << std::endl;
+            std::cerr << kStrVulkanErrorCouldNotLocateVulkanLoader << "." << std::endl;
         }
         else
         {
@@ -677,67 +600,66 @@ bool rgVulkanBackend::InitVulkan(bool shouldEnableValidation)
             if (IsFileExists(amdvlkOfflineFilePath))
             {
                 // Notify the user.
-                std::cerr << STR_USING_OFFLINE_AMDVLK_LOCATION_A << GetAmdvlkFileName() <<
-                    STR_USING_OFFLINE_AMDVLK_LOCATION_B << std::endl;
+                std::cerr << kStrVulkanAmdvlkLocation1 << GetAmdvlkFileName() <<
+                    kStrVulkanAmdvlkLocation2 << std::endl;
 
                 // Try loading the offline amdvlk binary.
-                volkRc = volkInitialize(amdvlkOfflineFilePath.c_str());
+                volk_rc = volkInitialize(amdvlkOfflineFilePath.c_str());
             }
         }
     }
 
-    if (volkRc == VK_SUCCESS)
+    if (volk_rc == VK_SUCCESS)
     {
         // We managed to locate the Vulkan loader/ICD. Now, let's create a Vulkan instance.
-        std::vector<const char*> supportedExts;
-        VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO, 0 };
+        std::vector<const char*> supported_extensions;
+        VkApplicationInfo app_info = { VK_STRUCTURE_TYPE_APPLICATION_INFO, 0 };
 
-        appInfo.pApplicationName = STR_VULKAN_APP_INFO_APP_NAME;
-        appInfo.applicationVersion = 1;
-        appInfo.pEngineName = "";
-        appInfo.apiVersion = VK_API_VERSION_1_1;
+        app_info.pApplicationName = kStrVulkanAppInfoAppName;
+        app_info.applicationVersion = 1;
+        app_info.pEngineName = "";
+        app_info.apiVersion = VK_API_VERSION_1_1;
 
-        VkInstanceCreateInfo instanceInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0 };
-
-        instanceInfo.pApplicationInfo = &appInfo;
+        VkInstanceCreateInfo instance_info = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0 };
+        instance_info.pApplicationInfo = &app_info;
 
         // Add Vulkan validation layers to the instance info, if needed.
-        if (shouldEnableValidation && m_config.m_enableLayers)
+        if (should_enable_validation && config_.enable_layers)
         {
-            m_availableValidationLayers = GetAvailableValidationLayers();
-            if (!m_availableValidationLayers.empty())
+            available_validation_layers_ = GetAvailableValidationLayers();
+            if (!available_validation_layers_.empty())
             {
-                instanceInfo.ppEnabledLayerNames = m_availableValidationLayers.data();
-                instanceInfo.enabledLayerCount = static_cast<uint32_t>(m_availableValidationLayers.size());
+                instance_info.ppEnabledLayerNames = available_validation_layers_.data();
+                instance_info.enabledLayerCount = static_cast<uint32_t>(available_validation_layers_.size());
             }
         }
 
         // Add Vulkan extensions to the instance info.
-        supportedExts = InitExtensions();
-        instanceInfo.ppEnabledExtensionNames = supportedExts.data();
-        instanceInfo.enabledExtensionCount = static_cast<uint32_t>(supportedExts.size());
+        supported_extensions = InitExtensions();
+        instance_info.ppEnabledExtensionNames = supported_extensions.data();
+        instance_info.enabledExtensionCount = static_cast<uint32_t>(supported_extensions.size());
 
-        if (supportedExts.size() != VULKAN_EXTENSIONS.size())
+        if (supported_extensions.size() != kVulkanExtensions.size())
         {
-            std::cerr << STR_WRN_FAILED_CHECK_EXTENSIONS << std::endl;
-            std::cerr << STR_VALIDATION_INFO_UNAVAILABLE << std::endl;
+            std::cerr << kStrVulkanWarningFailedToCheckExtensions << std::endl;
+            std::cerr << kStrVulkanWarningValidationInfoUnavailable << std::endl;
         }
 
         // Create a Vulkan instance.
-        result = (vkCreateInstance(&instanceInfo, nullptr, &m_instance) == VkResult::VK_SUCCESS);
-        assert(result && STR_ERR_FAILED_CREATE_VULKAN_INSTANCE);
+        result = (vkCreateInstance(&instance_info, nullptr, &instance_) == VkResult::VK_SUCCESS);
+        assert(result && kStrVulkanErrorFailedToCreateVulkanInsatnce);
         if (!result)
         {
-            std::cerr << STR_ERR_FAILED_CREATE_VULKAN_INSTANCE << std::endl;
-            std::cerr << "vkCreateInstance" << STR_FUNCTION_RETURNED_ERR_CODE << result << std::endl;
-            m_printValidationHint = true;
+            std::cerr << kStrVulkanErrorFailedToCreateVulkanInsatnce << std::endl;
+            std::cerr << "vkCreateInstance" << kStrVulkanInfoFunctionReturnedErrorCode << result << std::endl;
+            should_print_validation_hint_ = true;
         }
 
         // Load all required Vulkan entry points through volk.
-        volkLoadInstance(m_instance);
+        volkLoadInstance(instance_);
 
         // Setup the Vulkan validation debug callback function.
-        if (shouldEnableValidation && m_config.m_enableLayers && result)
+        if (should_enable_validation && config_.enable_layers && result)
         {
             result = SetupValidationCallback();
         }
@@ -745,10 +667,10 @@ bool rgVulkanBackend::InitVulkan(bool shouldEnableValidation)
     else
     {
         // Notify the user about the failure.
-        std::cerr << STR_ERR_COULD_NOT_LOCATE_VULKAN_LOADER;
-        if (strlen(pIcdPath) > 0)
+        std::cerr << kStrVulkanErrorCouldNotLocateVulkanLoader;
+        if (strlen(icd_path) > 0)
         {
-            std::cerr << ": " << pIcdPath;
+            std::cerr << ": " << icd_path;
         }
         std::cerr << std::endl;
     }
@@ -756,65 +678,65 @@ bool rgVulkanBackend::InitVulkan(bool shouldEnableValidation)
     return result;
 }
 
-void rgVulkanBackend::DestroyVulkanInstance()
+void RgVulkanBackend::DestroyVulkanInstance()
 {
-    assert(m_instance != VK_NULL_HANDLE);
-    if (m_instance != VK_NULL_HANDLE)
+    assert(instance_ != VK_NULL_HANDLE);
+    if (instance_ != VK_NULL_HANDLE)
     {
-        if (m_config.m_enableLayers)
+        if (config_.enable_layers)
         {
             DestroyValidationCallback();
         }
 
-        if (m_validationOutFile.is_open())
+        if (validation_output_file_.is_open())
         {
-            m_validationOutFile.close();
+            validation_output_file_.close();
         }
 
         // Destroy the Vulkan device and instance if they were created successfully.
-        if (m_device != VK_NULL_HANDLE)
+        if (device_ != VK_NULL_HANDLE)
         {
-            vkDestroyDevice(m_device, nullptr);
+            vkDestroyDevice(device_, nullptr);
         }
 
-        vkDestroyInstance(m_instance, nullptr);
-        m_gpus.clear();
+        vkDestroyInstance(instance_, nullptr);
+        gpus_.clear();
     }
     else
     {
-        std::cerr << STR_ERR_NULL_VK_HANDLE << std::endl;
+        std::cerr << kStrVulkanErrorNullVkHandle << std::endl;
     }
 }
 
-bool rgVulkanBackend::GetTargetGPUNames(std::vector<std::string>& targetNames)
+bool RgVulkanBackend::GetTargetGPUNames(std::vector<std::string>& target_names)
 {
     // First check if the primary adapter is a Radeon device.
-    bool isAmdGpu = false;
-    ListAdapters(isAmdGpu);
+    bool is_amd_gpu = false;
+    ListAdapters(is_amd_gpu);
 
     // Set the DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1
     // environment variable to enable the RGA driver stack on APUs.
-    EnvVar varApuWorkaround(STR_ENV_VAR_DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_NAME,
-        STR_ENV_VAR_DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_VALUE);
+    EnvVar varApuWorkaround(kStrVulkanEnvVarDisableLayerAmdSwitchableGraphicsName,
+        kStrVulkanEnvVarDisableLayerAmdSwitchableGraphicsValue);
 
     // Set "AMDVLK_NULL_GPU=ALL" environment variable.
-    EnvVar var(STR_ENV_VAR_ALL_GPUS_NAME, STR_ENV_VAR_ALL_GPUS_VALUE);
+    EnvVar var(kStrVulkanEnvVarAllGpuName, kStrVulkanEnvVarAllGpuValue);
 
     // Force using the bundled amdvlk if we are on a machine
     // without AMD primary GPU and the user did not already ask
     // to use a custom ICD location.
-    if (!isAmdGpu && m_config.m_icdPath.empty())
+    if (!is_amd_gpu && config_.icd_path.empty())
     {
         // Try loading the amdvlk binary which is packaged with RGA.
-        std::string offlineIcdPath = GetOfflineAmdvlkPath();
-        if (IsFileExists(offlineIcdPath))
+        std::string offline_icd_path = GetOfflineAmdvlkPath();
+        if (IsFileExists(offline_icd_path))
         {
             // Notify the user.
-            std::cerr << STR_USING_OFFLINE_AMDVLK_LOCATION_A << GetAmdvlkFileName() <<
-                STR_USING_OFFLINE_AMDVLK_LOCATION_B << std::endl;
+            std::cerr << kStrVulkanAmdvlkLocation1 << GetAmdvlkFileName() <<
+                kStrVulkanAmdvlkLocation2 << std::endl;
 
             // Try loading the offline amdvlk library.
-            m_config.m_icdPath = offlineIcdPath;
+            config_.icd_path = offline_icd_path;
         }
     }
 
@@ -824,9 +746,9 @@ bool rgVulkanBackend::GetTargetGPUNames(std::vector<std::string>& targetNames)
     {
         if ((status = EnumerateDevices()) == true)
         {
-            for (const auto& gpu : m_gpus)
+            for (const auto& gpu : gpus_)
             {
-                targetNames.push_back(gpu.first);
+                target_names.push_back(gpu.first);
             }
         }
 
@@ -836,14 +758,14 @@ bool rgVulkanBackend::GetTargetGPUNames(std::vector<std::string>& targetNames)
     return status;
 }
 
-bool rgVulkanBackend::ListTargets()
+bool RgVulkanBackend::ListTargets()
 {
-    std::vector<std::string> targetNames;
+    std::vector<std::string> target_names;
 
-    bool status = GetTargetGPUNames(targetNames);
+    bool status = GetTargetGPUNames(target_names);
     if (status)
     {
-        for (const std::string& target : targetNames)
+        for (const std::string& target : target_names)
         {
             std::cout << target << std::endl;
         }
@@ -853,7 +775,7 @@ bool rgVulkanBackend::ListTargets()
     return status;
 }
 
-bool rgVulkanBackend::ListAdapters(bool& isAmdGpu, bool shouldPrint)
+bool RgVulkanBackend::ListAdapters(bool& is_amd_gpu, bool should_print)
 {
     int i = 0;
     bool status = InitVulkan(false);
@@ -862,30 +784,75 @@ bool rgVulkanBackend::ListAdapters(bool& isAmdGpu, bool shouldPrint)
     {
         if ((status = EnumerateDevices()) == true)
         {
-            for (const auto& gpu : m_gpus)
+            for (const auto& gpu : gpus_)
             {
-                VkPhysicalDeviceProperties props = {};
-                vkGetPhysicalDeviceProperties(gpu.second, &props);
-
                 if (i == 0)
                 {
-                    // Check if the primary adapter is a Radeon device.
-                    std::string deviceName = props.deviceName;
-                    std::transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
-                    isAmdGpu = deviceName.find(STR_RADEON_ADAPTER_TOKEN_A) != std::string::npos ||
-                        deviceName.find(STR_RADEON_ADAPTER_TOKEN_B) != std::string::npos;
+                    // For the primary adapter, make sure that it is an AMD device.
+                    // First, enumerate the extensions that are supported by the primary device.
+                    uint32_t extensions_count = 0;
+                    VkResult result = VK_SUCCESS;
+                    bool should_abort = false;
+                    result = vkEnumerateDeviceExtensionProperties(gpu.second, nullptr, &extensions_count, nullptr);
+                    if ((result == VK_SUCCESS) && (extensions_count > 0))
+                    {
+                        std::vector<VkExtensionProperties> available_extensions;
+                        available_extensions.resize(extensions_count);
+                        result = vkEnumerateDeviceExtensionProperties(gpu.second, nullptr, &extensions_count, available_extensions.data());
+                        if ((result == VK_SUCCESS) && (extensions_count > 0))
+                        {
+                            std::set<std::string> extension_names;
+                            std::for_each(available_extensions.cbegin(), available_extensions.cend(),
+                                [&](const VkExtensionProperties& p) { extension_names.insert(p.extensionName); });
+
+                            // Check if required extensions is supported by the primary adapter.
+                            bool is_extension_supported = true;
+                            for (const char* required_extension : kVulkanExtensionsDevice)
+                            {
+                                if (extension_names.find(required_extension) == extension_names.cend())
+                                {
+                                    is_extension_supported = false;
+                                    break;
+                                }
+                            }
+
+                            assert(is_extension_supported);
+                            if (is_extension_supported)
+                            {
+                                // Check if this is an AMD device.
+                                VkPhysicalDeviceDriverPropertiesKHR driver_props = {};
+                                driver_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES_KHR;
+                                VkPhysicalDeviceProperties2 props2 = {};
+                                props2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+                                props2.pNext = &driver_props;
+                                vkGetPhysicalDeviceProperties2(gpu.second, &props2);
+                                is_amd_gpu = (driver_props.driverID == VK_DRIVER_ID_AMD_PROPRIETARY_KHR);
+                            }
+                        }
+                        else
+                        {
+                            std::cerr << kStrVulkanErrorCouldNotGetDeviceExtensions << std::endl;
+                        }
+                    }
+                    else
+                    {
+                        std::cerr << kStrVulkanErrorCouldNotGetDeviceExtensionsCount << std::endl;
+                    }
                 }
 
-                if (shouldPrint)
+                if (should_print)
                 {
+                    // Get the device name and print it.
+                    VkPhysicalDeviceProperties props = {};
+                    vkGetPhysicalDeviceProperties(gpu.second, &props);
                     std::cout << CLI_VK_BACKEND_STR_ADAPTER << i++ << ":" << std::endl;
                     std::cout << CLI_VK_BACKEND_STR_ADAPTER_OFFSET << CLI_VK_BACKEND_STR_ADAPTER_NAME << props.deviceName << std::endl;
                     std::cout << CLI_VK_BACKEND_STR_ADAPTER_OFFSET << CLI_VK_BACKEND_STR_ADAPTER_DRIVER;
-                    uint32_t driverVerMinor = props.driverVersion & VULKAN_DRIVER_VERSION_MINOR_BITS;
-                    std::cout << STR_VUKAN_DRIVER_VERSION_MAJOR << '.' << driverVerMinor << std::endl;
-                    auto vulkanVer = DecodeVulkanVersion(props.apiVersion);
+                    uint32_t driver_ver_minor = props.driverVersion & kStrVulkanDriverVersionMinorBits;
+                    std::cout << kStrVulkanDriverVersionMajor << '.' << driver_ver_minor << std::endl;
+                    auto vulkan_version = DecodeVulkanVersion(props.apiVersion);
                     std::cout << CLI_VK_BACKEND_STR_ADAPTER_OFFSET << CLI_VK_BACKEND_STR_ADAPTER_VULKAN;
-                    std::cout << std::get<0>(vulkanVer) << '.' << std::get<1>(vulkanVer) << '.' << std::get<2>(vulkanVer) << std::endl;
+                    std::cout << std::get<0>(vulkan_version) << '.' << std::get<1>(vulkan_version) << '.' << std::get<2>(vulkan_version) << std::endl;
                 }
             }
         }
@@ -896,38 +863,38 @@ bool rgVulkanBackend::ListAdapters(bool& isAmdGpu, bool shouldPrint)
     return status;
 }
 
-bool rgVulkanBackend::Build()
+bool RgVulkanBackend::Build()
 {
-    std::vector<std::string>  targetNames;
-    bool status = GetTargetGPUNames(targetNames);
+    std::vector<std::string>  target_names;
+    bool status = GetTargetGPUNames(target_names);
     if (status)
     {
         // If target GPU is not specified, build for the 1st physical adapter installed on the system.
         // Otherwise, build for the GPU specified by user.
-        if (m_config.m_targetGPU.empty())
+        if (config_.target_gpu.empty())
         {
             status = BuildForDevice("");
         }
         else
         {
-            auto targetGPU = std::find_if(targetNames.cbegin(), targetNames.cend(),
-                                          [&](const std::string& s) {return IsSubstringIgnoreCase(s, m_config.m_targetGPU);});
+            auto target_gpu = std::find_if(target_names.cbegin(), target_names.cend(),
+                [&](const std::string& s) {return IsSubstringIgnoreCase(s, config_.target_gpu); });
 
-            if (targetGPU != targetNames.cend())
+            if (target_gpu != target_names.cend())
             {
                 // Set the DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1
                 // environment variable to enable the RGA driver stack on APUs.
-                EnvVar varApuWorkaround(STR_ENV_VAR_DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_NAME,
-                    STR_ENV_VAR_DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_VALUE);
+                EnvVar var_apu_workaround(kStrVulkanEnvVarDisableLayerAmdSwitchableGraphicsName,
+                    kStrVulkanEnvVarDisableLayerAmdSwitchableGraphicsValue);
 
                 // Set "AMDVLK_NULL_GPU = target_gpu_name" environment variable.
-                EnvVar var(STR_ENV_VAR_ALL_GPUS_NAME, *targetGPU);
+                EnvVar var(kStrVulkanEnvVarAllGpuName, *target_gpu);
 
-                status = BuildForDevice(*targetGPU);
+                status = BuildForDevice(*target_gpu);
             }
             else
             {
-                std::cerr << STR_ERR_INVALID_GPU << m_config.m_targetGPU << std::endl;
+                std::cerr << kStrVulkanErrorInvalidGpu << config_.target_gpu << std::endl;
             }
         }
     }
@@ -935,41 +902,44 @@ bool rgVulkanBackend::Build()
     return status;
 }
 
-void rgVulkanBackend::PrintValidationHint()
+void RgVulkanBackend::PrintValidationHint()
 {
-    if (m_printValidationHint && !m_config.m_enableLayers)
+    if (should_print_validation_hint_ && !config_.enable_layers)
     {
-        std::cerr << STR_LAYER_HINT << std::endl;
+        std::cerr << kStrVulkanInfoLayerHint << std::endl;
     }
 }
 
-std::vector<const char*> rgVulkanBackend::InitExtensions()
+std::vector<const char*> RgVulkanBackend::InitExtensions()
 {
     VkResult result = VK_SUCCESS;
-    uint32_t extsNum;
-    std::vector<const char*> supportedExts;
+    uint32_t extension_count = 0;
+    std::vector<const char*> supported_extensions;
 
     // Get the extensions supported by Vulkan driver installed on the machine.
-    if ((result = vkEnumerateInstanceExtensionProperties(nullptr, &extsNum, nullptr)) == VK_SUCCESS)
+    result = vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr);
+    if (result == VK_SUCCESS)
     {
-        std::vector<VkExtensionProperties> extProps(extsNum);
-        if ((result = vkEnumerateInstanceExtensionProperties(nullptr, &extsNum, extProps.data())) == VK_SUCCESS)
+        std::vector<VkExtensionProperties> extnesion_properties(extension_count);
+        result = vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extnesion_properties.data());
+        if (result == VK_SUCCESS)
         {
             // Check if required layers are present in the list of supported layers.
-            std::set<std::string> extNames;
-            std::for_each(extProps.cbegin(), extProps.cend(), [&](const VkExtensionProperties& p) { extNames.insert(p.extensionName); });
+            std::set<std::string> extension_names;
+            std::for_each(extnesion_properties.cbegin(), extnesion_properties.cend(),
+                [&](const VkExtensionProperties& p) { extension_names.insert(p.extensionName); });
 
-            for (const char* reqdExt : VULKAN_EXTENSIONS)
+            for (const char* required_extension : kVulkanExtensions)
             {
-                // If the required extension is supported, add it to the "supportedExts" list.
+                // If the required extension is supported, add it to the supported extensions list.
                 // Otherwise, print a warning.
-                if (extNames.find(reqdExt) != extNames.cend())
+                if (extension_names.find(required_extension) != extension_names.cend())
                 {
-                    supportedExts.push_back(reqdExt);
+                    supported_extensions.push_back(required_extension);
                 }
                 else
                 {
-                    std::cerr << STR_EXTENSION_NOT_SUPPORTED << reqdExt << std::endl;
+                    std::cerr << kStrVulkanWarningExtensionNotSupported << required_extension << std::endl;
                 }
             }
         }
@@ -977,94 +947,94 @@ std::vector<const char*> rgVulkanBackend::InitExtensions()
 
     if (result != VK_SUCCESS)
     {
-        std::cerr << STR_ERR_FAILED_GET_EXT_PROPS << std::endl;
-        std::cerr << "vkEnumerateInstanceExtensionProperties" << STR_FUNCTION_RETURNED_ERR_CODE << result << std::endl;
-        m_printValidationHint = true;
+        std::cerr << kStrVulkanErrorFailedToGetExtensionProperties << std::endl;
+        std::cerr << "vkEnumerateInstanceExtensionProperties" << kStrVulkanInfoFunctionReturnedErrorCode << result << std::endl;
+        should_print_validation_hint_ = true;
     }
 
-    return supportedExts;
+    return supported_extensions;
 }
 
 // Call-back function for Vulkan validation layers.
-static VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(VkDebugReportFlagsEXT      flags,
-                                                         VkDebugReportObjectTypeEXT objectType,
-                                                         uint64_t                   object,
-                                                         size_t                     location,
-                                                         int32_t                    messageCode,
-                                                         const char*                pLayerPrefix,
-                                                         const char*                pMessage,
-                                                         void*                      pUserData)
+static VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(VkDebugReportFlagsEXT flags,
+    VkDebugReportObjectTypeEXT object_type,
+    uint64_t                   object,
+    size_t                     location,
+    int32_t                    message_code,
+    const char* layer_prefix,
+    const char* message,
+    void* user_data)
 {
-    if (pMessage != nullptr && pLayerPrefix != nullptr)
+    if (message != nullptr && layer_prefix != nullptr)
     {
         // Filter redundant messages if necessary.
-        std::string msg(pMessage);
-        bool shouldFilter = (msg.find(STR_VALIDATION_LAYER_MSG_FILTER_0) != std::string::npos) ||
-            (msg.find(STR_VALIDATION_LAYER_MSG_FILTER_1) != std::string::npos) ||
-            (msg.find(STR_VALIDATION_LAYER_MSG_FILTER_2) != std::string::npos);
+        std::string msg(message);
+        bool should_filter = (msg.find(kVulkanValidationLayerMessageFilter0) != std::string::npos) ||
+            (msg.find(kVulkanValidationLayerMessageFilter1) != std::string::npos) ||
+            (msg.find(kVulkanValidationLayerMessageFilter2) != std::string::npos);
 
-        if (!shouldFilter)
+        if (!should_filter)
         {
-            std::ostream& outStream = *reinterpret_cast<std::ostream*>(pUserData);
-            outStream << STR_LAYER_OUTPUT_A << pLayerPrefix << STR_LAYER_OUTPUT_BEGIN << std::endl << pMessage << std::endl;
-            outStream << STR_LAYER_OUTPUT_A << pLayerPrefix << STR_LAYER_OUTPUT_END << std::endl;
+            std::ostream& out_stream = *reinterpret_cast<std::ostream*>(user_data);
+            out_stream << kStrVulkanInfoLayerOutput1 << layer_prefix << kStrVulkanInfoLayerOutputBegin << std::endl << message << std::endl;
+            out_stream << kStrVulkanInfoLayerOutput1 << layer_prefix << kStrVulkanInfoLayerOutputEnd << std::endl;
         }
     }
     return VK_FALSE;
 }
 
-bool rgVulkanBackend::SetupValidationCallback()
+bool RgVulkanBackend::SetupValidationCallback()
 {
     bool result = false;
-    void* validationOutStream = &std::cout;
+    void* validation_out_stream = &std::cout;
 
     // Status message.
     std::stringstream msg;
-    msg << STR_VALIDATION_ENABLING;
+    msg << kStrVulkanInfoValidationEnabling;
 
-    if (!m_config.m_validationFile.empty())
+    if (!config_.validation_file.empty())
     {
-        m_validationOutFile.open(m_config.m_validationFile);
-        if (m_validationOutFile.good())
+        validation_output_file_.open(config_.validation_file);
+        if (validation_output_file_.good())
         {
-            validationOutStream = &m_validationOutFile;
+            validation_out_stream = &validation_output_file_;
         }
     }
 
-    VkDebugReportCallbackCreateInfoEXT callbackInfo = {
+    VkDebugReportCallbackCreateInfoEXT callback_info = {
         VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
         nullptr,
         VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT,
         ValidationCallback,
-        validationOutStream
+        validation_out_stream
     };
 
-    assert(m_instance != VK_NULL_HANDLE);
-    if (m_instance != VK_NULL_HANDLE)
+    assert(instance_ != VK_NULL_HANDLE);
+    if (instance_ != VK_NULL_HANDLE)
     {
-        auto vkCreateCallback = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(m_instance, "vkCreateDebugReportCallbackEXT");
-        assert(vkCreateCallback != nullptr);
-        if (vkCreateCallback != nullptr)
+        auto vk_create_callback = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(instance_, "vkCreateDebugReportCallbackEXT");
+        assert(vk_create_callback != nullptr);
+        if (vk_create_callback != nullptr)
         {
-            result = (vkCreateCallback(m_instance, &callbackInfo, nullptr, &m_debugCallback) == VK_SUCCESS);
+            result = (vk_create_callback(instance_, &callback_info, nullptr, &debug_callback_) == VK_SUCCESS);
             assert(result);
             if (!result)
             {
-                std::cerr << STR_ERR_FAILED_CREATE_CALLBACK << std::endl;
-                std::cerr << STR_FUNCTION_RETURNED_ERR_CODE << result << std::endl;
-                m_printValidationHint = true;
+                std::cerr << kStrVulkanErrorFailedToCreateCallback << std::endl;
+                std::cerr << kStrVulkanInfoFunctionReturnedErrorCode << result << std::endl;
+                should_print_validation_hint_ = true;
             }
         }
         else
         {
-            std::cerr << STR_WRN_FAILED_GET_VULKAN_EXT_FUNC_PTR << std::endl;
-            std::cerr << STR_FUNCTION_RETURNED_ERR_CODE << "NULL" << std::endl;
-            std::cerr << STR_VALIDATION_INFO_UNAVAILABLE << std::endl;
+            std::cerr << kStrVulkanWarningFailedToGetVulkanExtensionFunctionPointer << std::endl;
+            std::cerr << kStrVulkanInfoFunctionReturnedErrorCode << "NULL" << std::endl;
+            std::cerr << kStrVulkanWarningValidationInfoUnavailable << std::endl;
         }
     }
     else
     {
-        std::cerr << STR_ERR_NULL_VULKAN_INSTANCE << std::endl;
+        std::cerr << kStrVulkanErrorEmptyVulkanInstance << std::endl;
     }
 
     // Finalize the message and print it.
@@ -1074,30 +1044,30 @@ bool rgVulkanBackend::SetupValidationCallback()
     return result;
 }
 
-bool rgVulkanBackend::EnumerateDevices()
+bool RgVulkanBackend::EnumerateDevices()
 {
-    uint32_t gpuCount = 0;
-    VkResult vkResult = VK_SUCCESS;
+    uint32_t gpu_count = 0;
+    VkResult vk_result = VK_SUCCESS;
     std::vector<VkPhysicalDevice> gpus;
 
-    vkResult = vkEnumeratePhysicalDevices(m_instance, &gpuCount, nullptr);
-    bool result = (vkResult == VK_SUCCESS);
+    vk_result = vkEnumeratePhysicalDevices(instance_, &gpu_count, nullptr);
+    bool result = (vk_result == VK_SUCCESS);
     assert(result);
 
     // Get the device handles.
-    if (result && gpuCount > 0)
+    if (result && gpu_count > 0)
     {
-        gpus.resize(gpuCount);
-        vkResult = vkEnumeratePhysicalDevices(m_instance, &gpuCount, &gpus[0]);
-        result = (vkResult == VK_SUCCESS);
+        gpus.resize(gpu_count);
+        vk_result = vkEnumeratePhysicalDevices(instance_, &gpu_count, &gpus[0]);
+        result = (vk_result == VK_SUCCESS);
         assert(result);
     }
 
     if (!result)
     {
-        std::cerr << STR_ERR_FAILED_ENUMERATE_DEVICES << std::endl;
-        std::cerr << "vkEnumeratePhysicalDevices" << STR_FUNCTION_RETURNED_ERR_CODE << vkResult << std::endl;
-        m_printValidationHint = true;
+        std::cerr << kStrVulkanErrorFailedEnumerateDevices << std::endl;
+        std::cerr << "vkEnumeratePhysicalDevices" << kStrVulkanInfoFunctionReturnedErrorCode << vk_result << std::endl;
+        should_print_validation_hint_ = true;
     }
 
     // Get the device names.
@@ -1109,22 +1079,22 @@ bool rgVulkanBackend::EnumerateDevices()
             vkGetPhysicalDeviceProperties(gpu, &props);
             if (strnlen(props.deviceName, VK_MAX_PHYSICAL_DEVICE_NAME_SIZE) > 0)
             {
-                m_gpus[props.deviceName] = gpu;
+                gpus_[props.deviceName] = gpu;
             }
             else
             {
-                std::cerr << STR_ERR_FAILED_GET_DEVICE_PROPS << std::endl;
-                std::cerr << STR_FUNCTION_RETURNED_EMPTY_LIST << std::endl;
+                std::cerr << kStrVulkanErrorFailedToGetDeviceProps << std::endl;
+                std::cerr << kStrVulkanInfoFunctionReturnedEmptyList << std::endl;
                 result = false;
                 break;
             }
         }
-    }
 
-    if (!result)
-    {
-        std::cerr << STR_ERR_FAILED_ENUMERATE_DEVICES << std::endl;
-        m_printValidationHint = true;
+        if (!result)
+        {
+            std::cerr << kStrVulkanErrorFailedEnumerateDevices << std::endl;
+            should_print_validation_hint_ = true;
+        }
     }
 
     return result;
@@ -1133,12 +1103,12 @@ bool rgVulkanBackend::EnumerateDevices()
 // A structure used to track the family index of the graphics and compute queue.
 struct QueueFamilyIndices
 {
-    int m_graphicsFamily = -1;
-    int m_computeFamily  = -1;
+    int graphics_family = -1;
+    int compute_family = -1;
 
     bool IsComplete() const
     {
-        return m_graphicsFamily >= 0 && m_computeFamily >= 0;
+        return graphics_family >= 0 && compute_family >= 0;
     }
 };
 
@@ -1147,23 +1117,23 @@ QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device)
 {
     QueueFamilyIndices indices;
 
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+    uint32_t queue_family_count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, nullptr);
 
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+    std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_families.data());
 
     int index = 0;
-    for (const auto& queueFamily : queueFamilies)
+    for (const auto& queue_family : queue_families)
     {
-        if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        if (queue_family.queueCount > 0 && queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
-            indices.m_graphicsFamily = index;
+            indices.graphics_family = index;
         }
 
-        if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
+        if (queue_family.queueCount > 0 && queue_family.queueFlags & VK_QUEUE_COMPUTE_BIT)
         {
-            indices.m_computeFamily = index;
+            indices.compute_family = index;
         }
 
         if (indices.IsComplete())
@@ -1177,26 +1147,26 @@ QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device)
     return indices;
 }
 
-bool rgVulkanBackend::VerifyDevice(VkPhysicalDevice gpu)
+bool RgVulkanBackend::VerifyDevice(VkPhysicalDevice gpu)
 {
-    uint32_t extensionCount = 0;
+    uint32_t extension_count = 0;
     bool result = false;
-    VkResult vkResult = VK_SUCCESS;
+    VkResult vk_result = VK_SUCCESS;
 
-    vkResult = vkEnumerateDeviceExtensionProperties(gpu, nullptr, &extensionCount, nullptr);
-    bool fatalError = (vkResult != VK_SUCCESS);
-    if (!fatalError && extensionCount > 0)
+    vk_result = vkEnumerateDeviceExtensionProperties(gpu, nullptr, &extension_count, nullptr);
+    bool fatal_error = (vk_result != VK_SUCCESS);
+    if (!fatal_error && extension_count > 0)
     {
-        std::vector<VkExtensionProperties> extProps;
-        extProps.resize(extensionCount);
+        std::vector<VkExtensionProperties> extension_properties;
+        extension_properties.resize(extension_count);
 
-        vkResult = vkEnumerateDeviceExtensionProperties(gpu, nullptr, &extensionCount, &extProps[0]);
-        fatalError = (vkResult != VK_SUCCESS);
-        if (!fatalError)
+        vk_result = vkEnumerateDeviceExtensionProperties(gpu, nullptr, &extension_count, &extension_properties[0]);
+        fatal_error = (vk_result != VK_SUCCESS);
+        if (!fatal_error)
         {
-            for (uint32_t extIdx = 0; extIdx < extensionCount; ++extIdx)
+            for (uint32_t extIdx = 0; extIdx < extension_count; ++extIdx)
             {
-                if (std::string(extProps[extIdx].extensionName) == VK_AMD_SHADER_INFO_EXTENSION_NAME)
+                if (std::string(extension_properties[extIdx].extensionName) == VK_AMD_SHADER_INFO_EXTENSION_NAME)
                 {
                     result = true;
                     break;
@@ -1205,174 +1175,174 @@ bool rgVulkanBackend::VerifyDevice(VkPhysicalDevice gpu)
         }
     }
 
-    if (fatalError)
+    if (fatal_error)
     {
-        std::cerr << STR_ERR_FAILED_GET_DEVICE_EXT_PROPS << std::endl;
-        std::cerr << STR_FUNCTION_RETURNED_ERR_CODE << vkResult << std::endl;
-        m_printValidationHint = true;
+        std::cerr << kStrVulkanErrorFailedToGetDeviceExtProperties << std::endl;
+        std::cerr << kStrVulkanInfoFunctionReturnedErrorCode << vk_result << std::endl;
+        should_print_validation_hint_ = true;
     }
 
     if (!result)
     {
-        std::cerr << STR_ERR_DEVICE_DOES_NOT_SUPPORT_EXTENSION << std::endl;
+        std::cerr << kStrVulkanErrorDeviceDoesNotSupportExtension << std::endl;
     }
 
     return result;
 }
 
-bool rgVulkanBackend::CreateDevice(VkPhysicalDevice gpu)
+bool RgVulkanBackend::CreateDevice(VkPhysicalDevice gpu)
 {
     bool result = false;
-    VkResult vkResult = VK_SUCCESS;
+    VkResult vk_result = VK_SUCCESS;
 
-    VkDeviceCreateInfo deviceInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, 0 };
+    VkDeviceCreateInfo device_info = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, 0 };
     const char* enabledDeviceExtensions[] = { VK_AMD_SHADER_INFO_EXTENSION_NAME };
 
     // Specify the extensions to enable for the device.
-    deviceInfo.enabledExtensionCount = sizeof(enabledDeviceExtensions) / sizeof(const char*);
-    deviceInfo.ppEnabledExtensionNames = enabledDeviceExtensions;
+    device_info.enabledExtensionCount = sizeof(enabledDeviceExtensions) / sizeof(const char*);
+    device_info.ppEnabledExtensionNames = enabledDeviceExtensions;
 
     QueueFamilyIndices indices = FindQueueFamilies(gpu);
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
     // Only add the queue family if the indices are complete.
-    std::set<int> uniqueQueueFamilies;
+    std::set<int> unique_queue_families;
     if (indices.IsComplete())
     {
-        uniqueQueueFamilies.emplace(indices.m_graphicsFamily);
-        uniqueQueueFamilies.emplace(indices.m_computeFamily);
+        unique_queue_families.emplace(indices.graphics_family);
+        unique_queue_families.emplace(indices.compute_family);
     }
 
-    float queuePriority = 1.0f;
-    for (int queueFamily : uniqueQueueFamilies)
+    float queue_priority = 1.0f;
+    for (int queue_family : unique_queue_families)
     {
         // Add the create info for the type of family needed.
-        VkDeviceQueueCreateInfo queueCreateInfo = {};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = queueFamily;
-        queueCreateInfo.queueCount = 1;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
+        VkDeviceQueueCreateInfo queue_create_info = {};
+        queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queue_create_info.queueFamilyIndex = queue_family;
+        queue_create_info.queueCount = 1;
+        queue_create_info.pQueuePriorities = &queue_priority;
 
-        queueCreateInfos.push_back(queueCreateInfo);
+        queueCreateInfos.push_back(queue_create_info);
     }
 
     // Add the queue create info to the device create info.
-    deviceInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-    deviceInfo.pQueueCreateInfos = queueCreateInfos.data();
+    device_info.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    device_info.pQueueCreateInfos = queueCreateInfos.data();
 
     // Explicitly enable usage of geometry and tessellation stages.
     VkPhysicalDeviceFeatures features = {};
     features.geometryShader = VK_TRUE;
     features.tessellationShader = VK_TRUE;
     features.multiViewport = VK_TRUE;
-    deviceInfo.pEnabledFeatures = &features;
+    device_info.pEnabledFeatures = &features;
 
-    vkResult = vkCreateDevice(gpu, &deviceInfo, nullptr, &m_device);
-    result = (vkResult == VK_SUCCESS);
-    assert(result && STR_ERR_FAILED_CREATE_LOGICAL_DEVICE);
+    vk_result = vkCreateDevice(gpu, &device_info, nullptr, &device_);
+    result = (vk_result == VK_SUCCESS);
+    assert(result && kStrVulkanErrorFailedToCreateLogicalDevice);
 
     if (!result)
     {
-        std::cerr << STR_ERR_FAILED_CREATE_LOGICAL_DEVICE_FOR_GPU << std::endl;
-        std::cerr << "vkCreateDevice" << STR_FUNCTION_RETURNED_ERR_CODE << vkResult << std::endl;
-        m_printValidationHint = true;
+        std::cerr << kStrVulkanErrorFailedToCreateLogicalDeviceForGpu << std::endl;
+        std::cerr << "vkCreateDevice" << kStrVulkanInfoFunctionReturnedErrorCode << vk_result << std::endl;
+        should_print_validation_hint_ = true;
     }
 
     // Obtain the address of vkGetShaderInfoAMD function.
-    m_pFuncGetShaderInfo = (PFN_vkGetShaderInfoAMD)vkGetDeviceProcAddr(m_device, STR_FUNC_GET_SHADER_INFO);
-    assert(m_pFuncGetShaderInfo != nullptr);
-    result = (m_pFuncGetShaderInfo != nullptr);
+    function_get_shader_info_ = (PFN_vkGetShaderInfoAMD)vkGetDeviceProcAddr(device_, kStrFunctionNameGetShaderInfo);
+    assert(function_get_shader_info_ != nullptr);
+    result = (function_get_shader_info_ != nullptr);
     if (!result)
     {
-        std::cerr << STR_ERR_FAILED_GET_VK_GET_SHADER_INFO_ADDR << std::endl;
-        std::cerr << "vkGetDeviceProcAddr" << STR_FUNCTION_RETURNED_ERR_CODE << "NULL" << std::endl;
-        m_printValidationHint = true;
+        std::cerr << kStrVulkanErrorFailedToGetVkGetShaderInfoAddress << std::endl;
+        std::cerr << "vkGetDeviceProcAddr" << kStrVulkanInfoFunctionReturnedErrorCode << "NULL" << std::endl;
+        should_print_validation_hint_ = true;
     }
 
     return result;
 }
 
-bool rgVulkanBackend::LoadComputePipelineStateFile(const std::string& psoFilePath)
+bool RgVulkanBackend::LoadComputePipelineStateFile(const std::string& pso_file_path)
 {
-    std::string errorString;
-    bool isLoaded = rgPsoSerializerVulkan::ReadStructureFromFile(psoFilePath, &m_pComputePipelineCreateInfo, errorString);
-    if (!isLoaded)
+    std::string error_string;
+    bool is_loaded = RgPsoSerializerVulkan::ReadStructureFromFile(pso_file_path, &compute_pipeline_create_info_, error_string);
+    if (!is_loaded)
     {
-        std::cerr << STR_ERR_FAILED_DESERIALIZE_COMP_PIPELINE << std::endl;
-        std::cerr << errorString << std::endl;
+        std::cerr << kStrVulkanErrorFailedToDeserializeComputePipeline << std::endl;
+        std::cerr << error_string << std::endl;
     }
 
-    return isLoaded;
+    return is_loaded;
 }
 
-bool rgVulkanBackend::CreateComputePipeline()
+bool RgVulkanBackend::CreateComputePipeline()
 {
     bool ret = false;
-    std::stringstream errText;
+    std::stringstream error_text;
 
-    assert(m_pComputePipelineCreateInfo != nullptr);
-    if ((ret = (m_pComputePipelineCreateInfo != nullptr)) == true)
+    assert(compute_pipeline_create_info_ != nullptr);
+    if ((ret = (compute_pipeline_create_info_ != nullptr)) == true)
     {
-        VkComputePipelineCreateInfo* pComputePipelineCreateInfo = m_pComputePipelineCreateInfo->GetComputePipelineCreateInfo();
-        assert(pComputePipelineCreateInfo != nullptr);
-        if ((ret = (pComputePipelineCreateInfo != nullptr)) == true)
+        VkComputePipelineCreateInfo* compute_pipeline_create_info = compute_pipeline_create_info_->GetComputePipelineCreateInfo();
+        assert(compute_pipeline_create_info != nullptr);
+        if ((ret = (compute_pipeline_create_info != nullptr)) == true)
         {
             // These handles need to be created from the deserialized CreateInfo structures,
             // and then assigned into the compute pipeline create info before attempting to
             // create the compute pipeline.
-            VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+            VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
 
             // Attempt to create the descriptor set layout.
-            std::vector<VkDescriptorSetLayoutCreateInfo*> descriptorSetLayoutCollection = m_pComputePipelineCreateInfo->GetDescriptorSetLayoutCreateInfo();
-            std::vector<VkDescriptorSetLayout> descriptorSetLayoutHandles;
-            for (VkDescriptorSetLayoutCreateInfo* pDescriptorSetLayoutCreateInfo : descriptorSetLayoutCollection)
+            std::vector<VkDescriptorSetLayoutCreateInfo*> descriptor_set_layout_collection = compute_pipeline_create_info_->GetDescriptorSetLayoutCreateInfo();
+            std::vector<VkDescriptorSetLayout> descriptor_set_layout_handles;
+            for (VkDescriptorSetLayoutCreateInfo* descriptor_set_layout_create_info : descriptor_set_layout_collection)
             {
-                VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
-                assert(pDescriptorSetLayoutCreateInfo != nullptr);
-                if ((ret = (pDescriptorSetLayoutCreateInfo != nullptr)) == true)
+                VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
+                assert(descriptor_set_layout_create_info != nullptr);
+                if ((ret = (descriptor_set_layout_create_info != nullptr)) == true)
                 {
                     // Set the structure type for the Descriptor Set Layout create info.
-                    pDescriptorSetLayoutCreateInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                    descriptor_set_layout_create_info->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
                     // Attempt to create the Descriptor Set Layout.
-                    VkResult createResult = vkCreateDescriptorSetLayout(m_device, pDescriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
-                    assert(createResult == VK_SUCCESS);
-                    if ((ret = (createResult == VK_SUCCESS)) == true)
+                    VkResult create_result = vkCreateDescriptorSetLayout(device_, descriptor_set_layout_create_info, nullptr, &descriptor_set_layout);
+                    assert(create_result == VK_SUCCESS);
+                    if ((ret = (create_result == VK_SUCCESS)) == true)
                     {
-                        descriptorSetLayoutHandles.push_back(descriptorSetLayout);
+                        descriptor_set_layout_handles.push_back(descriptor_set_layout);
                     }
                     else
                     {
-                        errText << STR_ERR_FAILED_CREATE_DESCRIPTOR_SET_LAYOUT << std::endl;
-                        errText << "vkCreateDescriptorSetLayout" << STR_FUNCTION_RETURNED_ERR_CODE << createResult << std::endl;
-                        m_printValidationHint = true;
+                        error_text << kStrVulkanErrorFailedToCreateDescriptorSetLayout << std::endl;
+                        error_text << "vkCreateDescriptorSetLayout" << kStrVulkanInfoFunctionReturnedErrorCode << create_result << std::endl;
+                        should_print_validation_hint_ = true;
                     }
                 }
                 else
                 {
-                    errText << STR_ERR_NULL_DESC_SET_LAYOUT_CREATE_INFO << std::endl;
+                    error_text << kStrVulkanErrorNullDescriptorSetLayourCreateInfo << std::endl;
                 }
             }
 
             // Proceed with creating the pipeline layout from the compute pipeline create info.
             if (ret)
             {
-                VkPipelineLayoutCreateInfo* pPipelineLayoutCreateInfo = m_pComputePipelineCreateInfo->GetPipelineLayoutCreateInfo();
-                assert(pPipelineLayoutCreateInfo != nullptr);
-                if ((ret = (pPipelineLayoutCreateInfo != nullptr)) == true)
+                VkPipelineLayoutCreateInfo* pipeline_layout_create_info = compute_pipeline_create_info_->GetPipelineLayoutCreateInfo();
+                assert(pipeline_layout_create_info != nullptr);
+                if ((ret = (pipeline_layout_create_info != nullptr)) == true)
                 {
                     // Assign the descriptor set layout into the pipeline layout create info.
-                    pPipelineLayoutCreateInfo->pSetLayouts = descriptorSetLayoutHandles.data();
-                    pPipelineLayoutCreateInfo->setLayoutCount = static_cast<uint32_t>(descriptorSetLayoutHandles.size());
+                    pipeline_layout_create_info->pSetLayouts = descriptor_set_layout_handles.data();
+                    pipeline_layout_create_info->setLayoutCount = static_cast<uint32_t>(descriptor_set_layout_handles.size());
 
                     // Attempt to create the pipeline layout from the given create info structure.
-                    VkResult createResult = vkCreatePipelineLayout(m_device, pPipelineLayoutCreateInfo, nullptr, &pipelineLayout);
-                    assert(createResult == VK_SUCCESS);
-                    if ((ret = (createResult == VK_SUCCESS)) == false)
+                    VkResult create_result = vkCreatePipelineLayout(device_, pipeline_layout_create_info, nullptr, &pipeline_layout);
+                    assert(create_result == VK_SUCCESS);
+                    if ((ret = (create_result == VK_SUCCESS)) == false)
                     {
-                        errText << STR_ERR_FAILED_CREATE_PIPELINE_LAYOUT << std::endl;
-                        errText << "vkCreatePipelineLayout" << STR_FUNCTION_RETURNED_ERR_CODE << createResult << std::endl;
-                        m_printValidationHint = true;
+                        error_text << kStrVulkanErrorFailedToCreatePipelineLayout << std::endl;
+                        error_text << "vkCreatePipelineLayout" << kStrVulkanInfoFunctionReturnedErrorCode << create_result << std::endl;
+                        should_print_validation_hint_ = true;
                     }
                 }
             }
@@ -1382,51 +1352,51 @@ bool rgVulkanBackend::CreateComputePipeline()
             if (ret)
             {
                 // Initialize the compute stage with the user's shader stage arguments.
-                pComputePipelineCreateInfo->stage.pName = m_config.m_entries[rgPipelineStage::Compute].c_str();
+                compute_pipeline_create_info->stage.pName = config_.entries[rgPipelineStage::Compute].c_str();
 
                 // Load the target SPIR-V shader into a shader module.
-                VkShaderModule computeStageShaderModule = VK_NULL_HANDLE;
-                std::string errMsg;
-                bool isModuleCreated = CreateShaderModule(m_config.m_spvFiles[rgPipelineStage::Compute], computeStageShaderModule, errMsg);
-                assert(isModuleCreated);
-                if ((ret = isModuleCreated) == true)
+                VkShaderModule compute_stage_shader_module = VK_NULL_HANDLE;
+                std::string error_msg;
+                bool is_module_created = CreateShaderModule(config_.spv_files[rgPipelineStage::Compute], compute_stage_shader_module, error_msg);
+                assert(is_module_created);
+                if ((ret = is_module_created) == true)
                 {
                     // Insert the shader module handle into the pipeline create info.
-                    pComputePipelineCreateInfo->stage.module = computeStageShaderModule;
+                    compute_pipeline_create_info->stage.module = compute_stage_shader_module;
                 }
                 else
                 {
                     ret = false;
-                    errText << errMsg;
+                    error_text << error_msg;
                 }
 
                 // Insert the pipeline layout handle into the compute pipeline create info.
-                VkComputePipelineCreateInfo* pPipelineCreateInfo = m_pComputePipelineCreateInfo->GetComputePipelineCreateInfo();
-                assert(pPipelineCreateInfo != nullptr);
-                if ((ret = (pPipelineCreateInfo != nullptr)) == true)
+                VkComputePipelineCreateInfo* pipeline_create_info = compute_pipeline_create_info_->GetComputePipelineCreateInfo();
+                assert(pipeline_create_info != nullptr);
+                if ((ret = (pipeline_create_info != nullptr)) == true)
                 {
-                    pPipelineCreateInfo->layout = pipelineLayout;
+                    pipeline_create_info->layout = pipeline_layout;
                 }
                 else
                 {
-                    errText << STR_ERR_NULL_PPLN_CREATE_INFO << std::endl;
+                    error_text << kStrVulkanErrorNullPipelineCreateInfo << std::endl;
                 }
             }
 
             // Attempt to create the compute pipeline.
-            VkPipeline computePipeline = VK_NULL_HANDLE;
-            VkComputePipelineCreateInfo* pComputePipelineCreateInfo = m_pComputePipelineCreateInfo->GetComputePipelineCreateInfo();
-            assert(pComputePipelineCreateInfo != nullptr);
-            if ((ret = (pComputePipelineCreateInfo != nullptr)) == true)
+            VkPipeline compute_pipeline = VK_NULL_HANDLE;
+            VkComputePipelineCreateInfo* compute_pipeline_create_info = compute_pipeline_create_info_->GetComputePipelineCreateInfo();
+            assert(compute_pipeline_create_info != nullptr);
+            if ((ret = (compute_pipeline_create_info != nullptr)) == true)
             {
-                VkResult createResult = vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, pComputePipelineCreateInfo, nullptr, &computePipeline);
-                assert(createResult == VK_SUCCESS);
-                if ((ret = (createResult == VK_SUCCESS)) == false)
+                VkResult create_result = vkCreateComputePipelines(device_, VK_NULL_HANDLE, 1, compute_pipeline_create_info, nullptr, &compute_pipeline);
+                assert(create_result == VK_SUCCESS);
+                if ((ret = (create_result == VK_SUCCESS)) == false)
                 {
-                    errText << STR_ERR_FAILED_CREATE_COMP_PIPELINE << std::endl;
-                    errText << "vkCreateComputePipelines" << STR_FUNCTION_RETURNED_ERR_CODE << createResult << std::endl;
-                    errText << STR_ERR_FAILED_CREATE_PIPELINE_HINT << std::endl;
-                    m_printValidationHint = true;
+                    error_text << kStrVulkanErrorFailedToCreateComputePipeline << std::endl;
+                    error_text << "vkCreateComputePipelines" << kStrVulkanInfoFunctionReturnedErrorCode << create_result << std::endl;
+                    error_text << STR_ERR_FAILED_CREATE_PIPELINE_HINT << std::endl;
+                    should_print_validation_hint_ = true;
                     ret = false;
                 }
             }
@@ -1434,32 +1404,32 @@ bool rgVulkanBackend::CreateComputePipeline()
             assert(ret);
             if (ret)
             {
-                m_pipeline = { STR_CREATED_PIPELINE_NAME, computePipeline };
+                pipeline_ = { kStrVulkanCreatedPipelineName, compute_pipeline };
 
                 // Destroy the handles that were required to create the pipeline.
-                for (VkDescriptorSetLayout descriptorSetLayout : descriptorSetLayoutHandles)
+                for (VkDescriptorSetLayout descriptor_set_layout : descriptor_set_layout_handles)
                 {
-                    assert(descriptorSetLayout != VK_NULL_HANDLE);
-                    if ((ret = (descriptorSetLayout != VK_NULL_HANDLE)) == true)
+                    assert(descriptor_set_layout != VK_NULL_HANDLE);
+                    if ((ret = (descriptor_set_layout != VK_NULL_HANDLE)) == true)
                     {
-                        vkDestroyDescriptorSetLayout(m_device, descriptorSetLayout, nullptr);
+                        vkDestroyDescriptorSetLayout(device_, descriptor_set_layout, nullptr);
                     }
                     else
                     {
-                        errText << STR_ERR_NULL_DESC_SET_LAYOUT << std::endl;
+                        error_text << kStrVulkanErrorNullDescriptorSetLayour << std::endl;
                         break;
                     }
                 }
 
-                assert(pipelineLayout != VK_NULL_HANDLE);
-                if (pipelineLayout != VK_NULL_HANDLE)
+                assert(pipeline_layout != VK_NULL_HANDLE);
+                if (pipeline_layout != VK_NULL_HANDLE)
                 {
-                    vkDestroyPipelineLayout(m_device, pipelineLayout, nullptr);
+                    vkDestroyPipelineLayout(device_, pipeline_layout, nullptr);
                 }
             }
             else
             {
-                std::cerr << errText.str();
+                std::cerr << error_text.str();
             }
         }
     }
@@ -1467,93 +1437,93 @@ bool rgVulkanBackend::CreateComputePipeline()
     return ret;
 }
 
-bool rgVulkanBackend::CreateShaderModule(const std::string& spvFilePath, VkShaderModule& shaderModuleHandle, std::string& errorString)
+bool RgVulkanBackend::CreateShaderModule(const std::string& spv_file_path, VkShaderModule& shader_module_handle, std::string& error_string)
 {
     bool ret = false;
 
     // Try to read the SPIR-V shader code into an array of bytes.
-    std::vector<char> shaderBytes;
-    ret = ReadShaderBytes(spvFilePath, shaderBytes, errorString);
+    std::vector<char> shader_bytes;
+    ret = ReadShaderBytes(spv_file_path, shader_bytes, error_string);
 
     assert(ret);
     if (ret)
     {
         // Create and initialize a shader module create info structure and add the SPIR-V code to it.
-        VkShaderModuleCreateInfo moduleCreateInfo = {};
-        moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        moduleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shaderBytes.data());
-        moduleCreateInfo.codeSize = shaderBytes.size();
+        VkShaderModuleCreateInfo module_create_info = {};
+        module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        module_create_info.pCode = reinterpret_cast<const uint32_t*>(shader_bytes.data());
+        module_create_info.codeSize = shader_bytes.size();
 
         // Attempt to create the shader module.
-        VkResult createResult = vkCreateShaderModule(m_device, &moduleCreateInfo, nullptr, &shaderModuleHandle);
+        VkResult create_result = vkCreateShaderModule(device_, &module_create_info, nullptr, &shader_module_handle);
 
         // Was the shader module created successfully?
-        ret = (createResult == VK_SUCCESS);
+        ret = (create_result == VK_SUCCESS);
         assert(ret);
         if (!ret)
         {
-            std::stringstream errorStream;
-            errorStream << STR_ERR_FAILED_CREATE_SHADER_MODULE << spvFilePath << std::endl;
-            errorStream << "vkCreateShaderModule" << STR_FUNCTION_RETURNED_ERR_CODE << createResult << std::endl;
-            errorString = errorStream.str();
-            m_printValidationHint = true;
+            std::stringstream error_stream;
+            error_stream << kStrVulkanErrorFailedToCreateShaderModule << spv_file_path << std::endl;
+            error_stream << "vkCreateShaderModule" << kStrVulkanInfoFunctionReturnedErrorCode << create_result << std::endl;
+            error_string = error_stream.str();
+            should_print_validation_hint_ = true;
         }
     }
 
     return ret;
 }
 
-bool rgVulkanBackend::LoadGraphicsPipelineStateFile(const std::string& psoFilePath)
+bool RgVulkanBackend::LoadGraphicsPipelineStateFile(const std::string& pso_file_path)
 {
-    std::string errorString;
-    bool isLoaded = rgPsoSerializerVulkan::ReadStructureFromFile(psoFilePath, &m_pGraphicsPipelineCreateInfo, errorString);
-    if (!isLoaded)
+    std::string error_string;
+    bool is_loaded = RgPsoSerializerVulkan::ReadStructureFromFile(pso_file_path, &graphics_pipeline_create_info_, error_string);
+    if (!is_loaded)
     {
-        std::cerr << STR_ERR_FAILED_DESERIALIZE_GRAPH_PIPELINE << std::endl;
-        std::cerr << errorString << std::endl;
+        std::cerr << kStrVulkanErrorFailedToDeserializeGraphicsPipeline << std::endl;
+        std::cerr << error_string << std::endl;
     }
 
-    return isLoaded;
+    return is_loaded;
 }
 
-bool rgVulkanBackend::CreateGraphicsPipeline()
+bool RgVulkanBackend::CreateGraphicsPipeline()
 {
     bool ret = false;
-    std::stringstream errText;
+    std::stringstream error_text;
 
-    assert(m_pGraphicsPipelineCreateInfo != nullptr);
-    if ((ret = (m_pGraphicsPipelineCreateInfo != nullptr)) == true)
+    assert(graphics_pipeline_create_info_ != nullptr);
+    if ((ret = (graphics_pipeline_create_info_ != nullptr)) == true)
     {
         // These handles need to be created from the deserialized CreateInfo structures,
         // and then assigned into the graphics pipeline create info before attempting to
         // create the compute pipeline.
-        std::vector< VkDescriptorSetLayout> descriptorSetLayoutHandles;
+        std::vector< VkDescriptorSetLayout> descriptor_set_layout_handles;
 
-        VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+        VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
         VkRenderPass renderPass = VK_NULL_HANDLE;
 
         // Attempt to create the descriptor set layout.
-        std::vector<VkDescriptorSetLayoutCreateInfo*> descriptorSetLayoutCollection = m_pGraphicsPipelineCreateInfo->GetDescriptorSetLayoutCreateInfo();
+        std::vector<VkDescriptorSetLayoutCreateInfo*> descriptor_set_layout_collection = graphics_pipeline_create_info_->GetDescriptorSetLayoutCreateInfo();
 
-        for (VkDescriptorSetLayoutCreateInfo* pDescriptorSetLayoutCreateInfo : descriptorSetLayoutCollection)
+        for (VkDescriptorSetLayoutCreateInfo* descriptor_set_layout_create_info : descriptor_set_layout_collection)
         {
-            VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
-            assert(pDescriptorSetLayoutCreateInfo != nullptr);
-            if (pDescriptorSetLayoutCreateInfo != nullptr)
+            VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
+            assert(descriptor_set_layout_create_info != nullptr);
+            if (descriptor_set_layout_create_info != nullptr)
             {
                 // Set the structure type for the Descriptor Set Layout create info.
-                pDescriptorSetLayoutCreateInfo->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                descriptor_set_layout_create_info->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
-                VkResult createResult = vkCreateDescriptorSetLayout(m_device, pDescriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
-                if ((ret = (createResult == VK_SUCCESS)) == true)
+                VkResult create_result = vkCreateDescriptorSetLayout(device_, descriptor_set_layout_create_info, nullptr, &descriptor_set_layout);
+                if ((ret = (create_result == VK_SUCCESS)) == true)
                 {
-                    descriptorSetLayoutHandles.push_back(descriptorSetLayout);
+                    descriptor_set_layout_handles.push_back(descriptor_set_layout);
                 }
                 else
                 {
-                    errText << STR_ERR_FAILED_CREATE_DESCRIPTOR_SET_LAYOUT << std::endl;
-                    errText << "vkCreateDescriptorSetLayout" << STR_FUNCTION_RETURNED_ERR_CODE << createResult << std::endl;
-                    m_printValidationHint = true;
+                    error_text << kStrVulkanErrorFailedToCreateDescriptorSetLayout << std::endl;
+                    error_text << "vkCreateDescriptorSetLayout" << kStrVulkanInfoFunctionReturnedErrorCode << create_result << std::endl;
+                    should_print_validation_hint_ = true;
                     break;
                 }
             }
@@ -1562,22 +1532,22 @@ bool rgVulkanBackend::CreateGraphicsPipeline()
         // Proceed with creating the pipeline layout from the compute pipeline create info.
         if (ret)
         {
-            VkPipelineLayoutCreateInfo* pPipelineLayoutCreateInfo = m_pGraphicsPipelineCreateInfo->GetPipelineLayoutCreateInfo();
-            assert(pPipelineLayoutCreateInfo != nullptr);
-            if ((ret = (pPipelineLayoutCreateInfo != nullptr)) == true)
+            VkPipelineLayoutCreateInfo* pipeline_layout_create_info = graphics_pipeline_create_info_->GetPipelineLayoutCreateInfo();
+            assert(pipeline_layout_create_info != nullptr);
+            if ((ret = (pipeline_layout_create_info != nullptr)) == true)
             {
                 // Assign the descriptor set layout into the pipeline layout create info.
-                pPipelineLayoutCreateInfo->pSetLayouts = descriptorSetLayoutHandles.data();
-                pPipelineLayoutCreateInfo->setLayoutCount = static_cast<uint32_t>(descriptorSetLayoutHandles.size());
+                pipeline_layout_create_info->pSetLayouts = descriptor_set_layout_handles.data();
+                pipeline_layout_create_info->setLayoutCount = static_cast<uint32_t>(descriptor_set_layout_handles.size());
 
                 // Attempt to create the pipeline layout from the given create info structure.
-                VkResult createResult = vkCreatePipelineLayout(m_device, pPipelineLayoutCreateInfo, nullptr, &pipelineLayout);
+                VkResult create_result = vkCreatePipelineLayout(device_, pipeline_layout_create_info, nullptr, &pipeline_layout);
                 assert(ret);
-                if ((ret = (createResult == VK_SUCCESS)) == false)
+                if ((ret = (create_result == VK_SUCCESS)) == false)
                 {
-                    errText << STR_ERR_FAILED_CREATE_PIPELINE_LAYOUT << std::endl;
-                    errText << "vkCreatePipelineLayout" << STR_FUNCTION_RETURNED_ERR_CODE << createResult << std::endl;
-                    m_printValidationHint = true;
+                    error_text << kStrVulkanErrorFailedToCreatePipelineLayout << std::endl;
+                    error_text << "vkCreatePipelineLayout" << kStrVulkanInfoFunctionReturnedErrorCode << create_result << std::endl;
+                    should_print_validation_hint_ = true;
                 }
             }
         }
@@ -1585,18 +1555,18 @@ bool rgVulkanBackend::CreateGraphicsPipeline()
         // Proceed with creating the render pass.
         if (ret)
         {
-            VkRenderPassCreateInfo* pRenderPassCreateInfo = m_pGraphicsPipelineCreateInfo->GetRenderPassCreateInfo();
-            assert(pRenderPassCreateInfo != nullptr);
-            if ((ret = (pRenderPassCreateInfo != nullptr)) == true)
+            VkRenderPassCreateInfo* render_pass_create_info = graphics_pipeline_create_info_->GetRenderPassCreateInfo();
+            assert(render_pass_create_info != nullptr);
+            if ((ret = (render_pass_create_info != nullptr)) == true)
             {
                 // Attempt to create the render pass from the given create info structure.
-                VkResult createResult = vkCreateRenderPass(m_device, pRenderPassCreateInfo, nullptr, &renderPass);
+                VkResult create_result = vkCreateRenderPass(device_, render_pass_create_info, nullptr, &renderPass);
                 assert(ret);
-                if ((ret = (createResult == VK_SUCCESS)) == false)
+                if ((ret = (create_result == VK_SUCCESS)) == false)
                 {
-                    errText << STR_ERR_FAILED_CREATE_RENDER_PASS << std::endl;
-                    errText << "vkCreateRenderPass" << STR_FUNCTION_RETURNED_ERR_CODE << createResult << std::endl;
-                    m_printValidationHint = true;
+                    error_text << kStrVulkanErrorFailedToCreateRenderPass << std::endl;
+                    error_text << "vkCreateRenderPass" << kStrVulkanInfoFunctionReturnedErrorCode << create_result << std::endl;
+                    should_print_validation_hint_ = true;
                 }
             }
         }
@@ -1604,98 +1574,98 @@ bool rgVulkanBackend::CreateGraphicsPipeline()
         // Creating each stage shader module and insert them into the pipeline create info.
         if (ret)
         {
-            VkGraphicsPipelineCreateInfo* pPipelineCreateInfo = m_pGraphicsPipelineCreateInfo->GetGraphicsPipelineCreateInfo();
-            assert(pPipelineCreateInfo != nullptr);
-            if ((ret = (pPipelineCreateInfo != nullptr)) == true)
+            VkGraphicsPipelineCreateInfo* pipeline_create_info = graphics_pipeline_create_info_->GetGraphicsPipelineCreateInfo();
+            assert(pipeline_create_info != nullptr);
+            if ((ret = (pipeline_create_info != nullptr)) == true)
             {
-                std::vector<VkPipelineShaderStageCreateInfo> stageCreateInfos;
-                char firstStage = static_cast<char>(rgPipelineStage::Vertex);
-                char lastStage = static_cast<char>(rgPipelineStage::Fragment);
-                for (int stageIndex = firstStage; stageIndex <= lastStage; ++stageIndex)
+                std::vector<VkPipelineShaderStageCreateInfo> stage_create_infos;
+                char first_stage = static_cast<char>(rgPipelineStage::Vertex);
+                char last_stage = static_cast<char>(rgPipelineStage::Fragment);
+                for (int stage_index = first_stage; stage_index <= last_stage; ++stage_index)
                 {
                     // If the stage has a SPIR-V file, add it to the vector of stage create info.
-                    const std::string& stageShaderFile = m_config.m_spvFiles[stageIndex];
-                    if (!stageShaderFile.empty())
+                    const std::string& stage_shader_file = config_.spv_files[stage_index];
+                    if (!stage_shader_file.empty())
                     {
                         // Load the target SPIR-V shader into a shader module.
-                        VkShaderModule stageModule = VK_NULL_HANDLE;
-                        std::string errMsg;
-                        bool isModuleCreated = CreateShaderModule(m_config.m_spvFiles[stageIndex], stageModule, errMsg);
+                        VkShaderModule stage_module = VK_NULL_HANDLE;
+                        std::string error_msg;
+                        bool is_module_created = CreateShaderModule(config_.spv_files[stage_index], stage_module, error_msg);
 
-                        assert(isModuleCreated);
-                        if ((ret = isModuleCreated) == true)
+                        assert(is_module_created);
+                        if ((ret = is_module_created) == true)
                         {
                             // Initialize a shader stage structure using the newly created module.
                             VkPipelineShaderStageCreateInfo stageInfo = {};
                             stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 
                             // Shift using the stage index to convert to a Vulkan stage flag.
-                            stageInfo.stage = static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT << stageIndex);
+                            stageInfo.stage = static_cast<VkShaderStageFlagBits>(VK_SHADER_STAGE_VERTEX_BIT << stage_index);
 
                             // Insert the shader module handle and entrypoint name into the stage info.
-                            stageInfo.module = stageModule;
-                            stageInfo.pName = m_config.m_entries[stageIndex].c_str();
+                            stageInfo.module = stage_module;
+                            stageInfo.pName = config_.entries[stage_index].c_str();
 
                             // Add the stage info to the vector of stages in the PSO create info.
-                            stageCreateInfos.push_back(stageInfo);
+                            stage_create_infos.push_back(stageInfo);
                         }
                         else
                         {
-                            errText << errMsg;
+                            error_text << error_msg;
                         }
                     }
                 }
 
                 // Insert the stage array into the pipeline create info. This array of
                 // stage create info contains the SPIR-V module handles created above.
-                pPipelineCreateInfo->pStages = stageCreateInfos.data();
-                pPipelineCreateInfo->stageCount = static_cast<uint32_t>(stageCreateInfos.size());
+                pipeline_create_info->pStages = stage_create_infos.data();
+                pipeline_create_info->stageCount = static_cast<uint32_t>(stage_create_infos.size());
 
                 // Insert the pipeline layout and render pass handles into the pipeline create info.
-                pPipelineCreateInfo->layout = pipelineLayout;
-                pPipelineCreateInfo->renderPass = renderPass;
+                pipeline_create_info->layout = pipeline_layout;
+                pipeline_create_info->renderPass = renderPass;
 
                 // Attempt to create the graphics pipeline.
-                VkPipeline graphicsPipeline = VK_NULL_HANDLE;
-                VkResult createResult = vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, pPipelineCreateInfo, nullptr, &graphicsPipeline);
-                assert(createResult == VK_SUCCESS);
-                if ((ret = (createResult == VK_SUCCESS)) == false)
+                VkPipeline graphics_pipeline = VK_NULL_HANDLE;
+                VkResult create_result = vkCreateGraphicsPipelines(device_, VK_NULL_HANDLE, 1, pipeline_create_info, nullptr, &graphics_pipeline);
+                assert(create_result == VK_SUCCESS);
+                if ((ret = (create_result == VK_SUCCESS)) == false)
                 {
-                    errText << STR_ERR_FAILED_CREATE_GRAPH_PIPELINE << std::endl;
-                    errText << "vkCreateGraphicsPipelines" << STR_FUNCTION_RETURNED_ERR_CODE << createResult << std::endl;
-                    errText << STR_ERR_FAILED_CREATE_PIPELINE_HINT << std::endl;
-                    m_printValidationHint = true;
+                    error_text << kStrVulkanErrorFailedToCreateGraphicsPipeline << std::endl;
+                    error_text << "vkCreateGraphicsPipelines" << kStrVulkanInfoFunctionReturnedErrorCode << create_result << std::endl;
+                    error_text << STR_ERR_FAILED_CREATE_PIPELINE_HINT << std::endl;
+                    should_print_validation_hint_ = true;
                 }
 
                 assert(ret);
                 if (ret)
                 {
-                    m_pipeline = { STR_CREATED_PIPELINE_NAME, graphicsPipeline };
+                    pipeline_ = { kStrVulkanCreatedPipelineName, graphics_pipeline };
 
                     // Destroy the handles that were required to create the pipeline.
                     assert(renderPass != VK_NULL_HANDLE);
                     if (renderPass != VK_NULL_HANDLE)
                     {
-                        vkDestroyRenderPass(m_device, renderPass, nullptr);
+                        vkDestroyRenderPass(device_, renderPass, nullptr);
                     }
 
-                    for (VkDescriptorSetLayout descriptorSetLayout : descriptorSetLayoutHandles)
+                    for (VkDescriptorSetLayout descriptor_set_layout : descriptor_set_layout_handles)
                     {
-                        if (descriptorSetLayout != VK_NULL_HANDLE)
+                        if (descriptor_set_layout != VK_NULL_HANDLE)
                         {
-                            vkDestroyDescriptorSetLayout(m_device, descriptorSetLayout, nullptr);
+                            vkDestroyDescriptorSetLayout(device_, descriptor_set_layout, nullptr);
                         }
                     }
 
-                    assert(pipelineLayout != VK_NULL_HANDLE);
-                    if (pipelineLayout != VK_NULL_HANDLE)
+                    assert(pipeline_layout != VK_NULL_HANDLE);
+                    if (pipeline_layout != VK_NULL_HANDLE)
                     {
-                        vkDestroyPipelineLayout(m_device, pipelineLayout, nullptr);
+                        vkDestroyPipelineLayout(device_, pipeline_layout, nullptr);
                     }
                 }
                 else
                 {
-                    std::cerr << errText.str() << std::endl;
+                    std::cerr << error_text.str() << std::endl;
                 }
             }
         }
@@ -1704,74 +1674,74 @@ bool rgVulkanBackend::CreateGraphicsPipeline()
     return ret;
 }
 
-bool rgVulkanBackend::ReadShaderBytes(const std::string& filePath, std::vector<char>& fileBytes, std::string& errorMessage)
+bool RgVulkanBackend::ReadShaderBytes(const std::string& file_path, std::vector<char>& file_bytes, std::string& error_message)
 {
-    bool isOk = false;
+    bool is_ok = false;
 
-    std::ifstream fileStream(filePath, std::ios::ate | std::ios::binary);
+    std::ifstream file_stream(file_path, std::ios::ate | std::ios::binary);
 
-    bool isFileOpened = fileStream.is_open();
+    bool isFileOpened = file_stream.is_open();
 
     assert(isFileOpened);
     if (isFileOpened)
     {
-        size_t fileSize = (size_t)fileStream.tellg();
-        fileBytes.resize(fileSize);
+        size_t fileSize = (size_t)file_stream.tellg();
+        file_bytes.resize(fileSize);
 
-        fileStream.seekg(0);
-        fileStream.read(fileBytes.data(), fileSize);
-        fileStream.close();
+        file_stream.seekg(0);
+        file_stream.read(file_bytes.data(), fileSize);
+        file_stream.close();
 
-        isOk = true;
+        is_ok = true;
     }
     else
     {
-        errorMessage = STR_ERR_FAILED_TO_READ_SHADER_FILE + filePath;
+        error_message = kStrVulkanErrorFailedToReadShaderFile + file_path;
         assert(false);
     }
 
-    return isOk;
+    return is_ok;
 }
 
-VkPhysicalDevice rgVulkanBackend::GetDeviceHandle(const std::string& deviceName)
+VkPhysicalDevice RgVulkanBackend::GetDeviceHandle(const std::string& device_name)
 {
-    VkPhysicalDevice deviceHandle = VK_NULL_HANDLE;
+    VkPhysicalDevice device_handle = VK_NULL_HANDLE;
 
-    assert(!m_gpus.empty());
-    if (!m_gpus.empty())
+    assert(!gpus_.empty());
+    if (!gpus_.empty())
     {
         // If device name is empty, return handle of the 1st supported device.
         // Otherwise, look for the device with matching name.
-        if (deviceName.empty())
+        if (device_name.empty())
         {
-            deviceHandle = m_gpus.cbegin()->second;
+            device_handle = gpus_.cbegin()->second;
         }
         else
         {
-            for (const auto& gpu : m_gpus)
+            for (const auto& gpu : gpus_)
             {
-                if (gpu.first == deviceName)
+                if (gpu.first == device_name)
                 {
-                    deviceHandle = gpu.second;
+                    device_handle = gpu.second;
                     break;
                 }
             }
         }
 
-        if (deviceHandle == VK_NULL_HANDLE)
+        if (device_handle == VK_NULL_HANDLE)
         {
-            std::cerr << STR_ERR_INVALID_GPU << deviceName << std::endl;
+            std::cerr << kStrVulkanErrorInvalidGpu << device_name << std::endl;
         }
     }
     else
     {
-        std::cerr << STR_ERR_NO_DEVICES_AVAILABLE << std::endl;
+        std::cerr << kStrVulkanErrorNoDevicesAvailable << std::endl;
     }
 
-    return deviceHandle;
+    return device_handle;
 }
 
-bool rgVulkanBackend::BuildForDevice(const std::string& deviceName)
+bool RgVulkanBackend::BuildForDevice(const std::string& device_name)
 {
     // Create a Vulkan instance.
     bool status = InitVulkan(true);
@@ -1780,15 +1750,15 @@ bool rgVulkanBackend::BuildForDevice(const std::string& deviceName)
     // Get the device info.
     status = status && EnumerateDevices();
 
-    VkPhysicalDevice deviceHandle = GetDeviceHandle(deviceName);
+    VkPhysicalDevice device_handle = GetDeviceHandle(device_name);
 
-    if (deviceHandle != VK_NULL_HANDLE)
+    if (device_handle != VK_NULL_HANDLE)
     {
         // Check if target GPU supports required extensions.
-        status = status && VerifyDevice(deviceHandle);
+        status = status && VerifyDevice(device_handle);
 
         // Create a Vulkan device compatible with VK_AMD_shader_info (no queues needed)
-        status = status && CreateDevice(deviceHandle);
+        status = status && CreateDevice(device_handle);
 
         // Create a Vulkan pipeline.
         status = status && CreatePipeline();
@@ -1800,53 +1770,52 @@ bool rgVulkanBackend::BuildForDevice(const std::string& deviceName)
     return status;
 }
 
-bool rgVulkanBackend::CreatePipeline()
+bool RgVulkanBackend::CreatePipeline()
 {
     bool ret = false;
-    bool shouldAbort = false;
+    bool should_abort = false;
 
     // Determine the type of pipeline being created by searching for SPIR-V files attached to each stage.
-    bool hasComputeShader = !m_config.m_spvFiles[rgPipelineStage::Compute].empty();
+    bool has_compute_shader = !config_.spv_files[rgPipelineStage::Compute].empty();
 
-    bool hasGraphicsShaders = (!m_config.m_spvFiles[rgPipelineStage::Vertex].empty() ||
-                               !m_config.m_spvFiles[rgPipelineStage::TessellationControl].empty() ||
-                               !m_config.m_spvFiles[rgPipelineStage::TessellationEvaluation].empty() ||
-                               !m_config.m_spvFiles[rgPipelineStage::Geometry].empty() ||
-                               !m_config.m_spvFiles[rgPipelineStage::Fragment].empty());
+    bool has_graphics_shaders = (!config_.spv_files[rgPipelineStage::Vertex].empty() ||
+        !config_.spv_files[rgPipelineStage::TessellationControl].empty() ||
+        !config_.spv_files[rgPipelineStage::TessellationEvaluation].empty() ||
+        !config_.spv_files[rgPipelineStage::Geometry].empty() ||
+        !config_.spv_files[rgPipelineStage::Fragment].empty());
 
-    if (hasGraphicsShaders && m_config.m_spvFiles[rgPipelineStage::Vertex].empty())
+    if (has_graphics_shaders && config_.spv_files[rgPipelineStage::Vertex].empty())
     {
-        std::cerr << STR_ERR_GRAPHICS_PIPELINE_WITHOUT_VERTEX << std::endl;
-        shouldAbort = true;
+        std::cerr << kStrVulkanWarningGraphicsPipelineWithoutVertexShader << std::endl;
     }
 
-    if (!shouldAbort)
+    if (!should_abort)
     {
         // If the user specified a direct path to a PSO file, deserialize it.
-        if (!m_config.m_pipelineStateFile.empty())
+        if (!config_.pipeline_state_file.empty())
         {
             // Expect one of compute or graphic shader is specified (not both).
-            if (hasComputeShader != hasGraphicsShaders)
+            if (has_compute_shader != has_graphics_shaders)
             {
-                if (hasGraphicsShaders)
+                if (has_graphics_shaders)
                 {
-                    ret = LoadGraphicsPipelineStateFile(m_config.m_pipelineStateFile);
+                    ret = LoadGraphicsPipelineStateFile(config_.pipeline_state_file);
                 }
                 else
                 {
-                    ret = LoadComputePipelineStateFile(m_config.m_pipelineStateFile);
+                    ret = LoadComputePipelineStateFile(config_.pipeline_state_file);
                 }
 
-                assert(ret && STR_ERR_FAILED_LOAD_PIPELINE_FILE);
+                assert(ret && kStrVulkanErrorFailedToLoadPipelineFile);
                 if (!ret)
                 {
-                    std::cerr << STR_ERR_FAILED_LOAD_PIPELINE_FILE << std::endl;
+                    std::cerr << kStrVulkanErrorFailedToLoadPipelineFile << std::endl;
                 }
             }
             else
             {
-                assert(false && STR_ERR_GRAPH_OR_COMP_SHADERS_EXPECTED);
-                std::cerr << STR_ERR_GRAPH_OR_COMP_SHADERS_EXPECTED << std::endl;
+                assert(false && kStrVulkanErrorGraphicsOrComputeShaderExpected);
+                std::cerr << kStrVulkanErrorGraphicsOrComputeShaderExpected << std::endl;
             }
         }
         else
@@ -1854,22 +1823,22 @@ bool rgVulkanBackend::CreatePipeline()
             // The user didn't provide a Pipeline State file, so create one using the pipeline factory.
             rgPsoFactoryVulkan pipelineFactory;
 
-            if (hasComputeShader)
+            if (has_compute_shader)
             {
-                m_pComputePipelineCreateInfo = pipelineFactory.GetDefaultComputePsoCreateInfo();
-                assert(m_pComputePipelineCreateInfo != nullptr);
-                if (m_pComputePipelineCreateInfo == nullptr)
+                compute_pipeline_create_info_ = pipelineFactory.GetDefaultComputePsoCreateInfo();
+                assert(compute_pipeline_create_info_ != nullptr);
+                if (compute_pipeline_create_info_ == nullptr)
                 {
-                    std::cerr << STR_ERR_FAILED_CREATE_DEFAULT_COMP_PIPELINE << std::endl;
+                    std::cerr << kStrVulkanErrorFailedToCreateDefaultComputePipeline << std::endl;
                 }
             }
-            else if (hasGraphicsShaders)
+            else if (has_graphics_shaders)
             {
-                m_pGraphicsPipelineCreateInfo = pipelineFactory.GetDefaultGraphicsPsoCreateInfo();
-                assert(m_pGraphicsPipelineCreateInfo != nullptr);
-                if (m_pGraphicsPipelineCreateInfo == nullptr)
+                graphics_pipeline_create_info_ = pipelineFactory.GetDefaultGraphicsPsoCreateInfo();
+                assert(graphics_pipeline_create_info_ != nullptr);
+                if (graphics_pipeline_create_info_ == nullptr)
                 {
-                    std::cerr << STR_ERR_FAILED_CREATE_DEFAULT_GRAPH_PIPELINE << std::endl;
+                    std::cerr << kStrVulkanErrorFailedToCreateDefaultGraphicsPipeline << std::endl;
                 }
             }
             else
@@ -1880,11 +1849,11 @@ bool rgVulkanBackend::CreatePipeline()
         }
 
         // If the user provided a path to a compute shader, create a compute pipeline.
-        if (hasComputeShader)
+        if (has_compute_shader)
         {
             ret = CreateComputePipeline();
         }
-        else if (hasGraphicsShaders)
+        else if (has_graphics_shaders)
         {
             ret = CreateGraphicsPipeline();
         }
@@ -1900,154 +1869,154 @@ bool rgVulkanBackend::CreatePipeline()
     return ret;
 }
 
-bool rgVulkanBackend::BuildPipeline() const
+bool RgVulkanBackend::BuildPipeline() const
 {
     bool status = true;
 
-    if (!m_config.m_binaryFile.empty())
+    if (!config_.binary_file.empty())
     {
         // Build the pipeline if it's present.
-        if (!m_pipeline.first.empty())
+        if (!pipeline_.first.empty())
         {
-            status = status && BuildToBinary(m_pipeline.first, m_pipeline.second);
+            status = status && BuildToBinary(pipeline_.first, pipeline_.second);
         }
     }
 
-    // "targetStages": a vector of tuples {stage_bits, out_isa_file_name, out_stats_file_name}.
-    std::vector<std::tuple<VkShaderStageFlagBits, std::string, std::string>>  targetStages;
+    // "target_stages": a vector of tuples {stage_bits, out_isa_file_name, out_stats_file_name}.
+    std::vector<std::tuple<VkShaderStageFlagBits, std::string, std::string>>  target_stages;
 
-    if (!m_config.m_spvFiles[rgPipelineStage::Vertex].empty())
+    if (!config_.spv_files[rgPipelineStage::Vertex].empty())
     {
-        targetStages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
-                                 VK_SHADER_STAGE_VERTEX_BIT,
-                                 m_config.m_isaFiles[rgPipelineStage::Vertex],
-                                 m_config.m_statsFiles[rgPipelineStage::Vertex]
-                               ));
+        target_stages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
+            VK_SHADER_STAGE_VERTEX_BIT,
+            config_.isa_files[rgPipelineStage::Vertex],
+            config_.stats_files[rgPipelineStage::Vertex]
+            ));
     }
-    if (!m_config.m_spvFiles[rgPipelineStage::TessellationControl].empty())
+    if (!config_.spv_files[rgPipelineStage::TessellationControl].empty())
     {
-        targetStages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
-                                 VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
-                                 m_config.m_isaFiles[rgPipelineStage::TessellationControl],
-                                 m_config.m_statsFiles[rgPipelineStage::TessellationControl]
-                               ));
+        target_stages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
+            VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
+            config_.isa_files[rgPipelineStage::TessellationControl],
+            config_.stats_files[rgPipelineStage::TessellationControl]
+            ));
     }
-    if (!m_config.m_spvFiles[rgPipelineStage::TessellationEvaluation].empty())
+    if (!config_.spv_files[rgPipelineStage::TessellationEvaluation].empty())
     {
-        targetStages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
-                                 VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-                                 m_config.m_isaFiles[rgPipelineStage::TessellationEvaluation],
-                                 m_config.m_statsFiles[rgPipelineStage::TessellationEvaluation]
-                               ));
+        target_stages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
+            VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+            config_.isa_files[rgPipelineStage::TessellationEvaluation],
+            config_.stats_files[rgPipelineStage::TessellationEvaluation]
+            ));
     }
-    if (!m_config.m_spvFiles[rgPipelineStage::Geometry].empty())
+    if (!config_.spv_files[rgPipelineStage::Geometry].empty())
     {
-        targetStages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
-                                 VK_SHADER_STAGE_GEOMETRY_BIT,
-                                 m_config.m_isaFiles[rgPipelineStage::Geometry],
-                                 m_config.m_statsFiles[rgPipelineStage::Geometry]
-                               ));
+        target_stages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
+            VK_SHADER_STAGE_GEOMETRY_BIT,
+            config_.isa_files[rgPipelineStage::Geometry],
+            config_.stats_files[rgPipelineStage::Geometry]
+            ));
     }
-    if (!m_config.m_spvFiles[rgPipelineStage::Fragment].empty())
+    if (!config_.spv_files[rgPipelineStage::Fragment].empty())
     {
-        targetStages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
-                                 VK_SHADER_STAGE_FRAGMENT_BIT,
-                                 m_config.m_isaFiles[rgPipelineStage::Fragment],
-                                 m_config.m_statsFiles[rgPipelineStage::Fragment]
-                               ));
+        target_stages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
+            VK_SHADER_STAGE_FRAGMENT_BIT,
+            config_.isa_files[rgPipelineStage::Fragment],
+            config_.stats_files[rgPipelineStage::Fragment]
+            ));
     }
-    if (!m_config.m_spvFiles[rgPipelineStage::Compute].empty())
+    if (!config_.spv_files[rgPipelineStage::Compute].empty())
     {
-        targetStages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
-                                 VK_SHADER_STAGE_COMPUTE_BIT,
-                                 m_config.m_isaFiles[rgPipelineStage::Compute],
-                                 m_config.m_statsFiles[rgPipelineStage::Compute]
-                               ));
+        target_stages.push_back(std::tuple<VkShaderStageFlagBits, std::string, std::string>(
+            VK_SHADER_STAGE_COMPUTE_BIT,
+            config_.isa_files[rgPipelineStage::Compute],
+            config_.stats_files[rgPipelineStage::Compute]
+            ));
     }
 
-    for (const auto& stage : targetStages)
+    for (const auto& stage : target_stages)
     {
         if (!std::get<1>(stage).empty())
         {
             // Build ISA for the pipeline if it's present.
-            if (!m_pipeline.first.empty())
+            if (!pipeline_.first.empty())
             {
-                status = status && BuildToDisasm(std::get<1>(stage), m_pipeline.second, std::get<0>(stage));
+                status = status && BuildToDisasm(std::get<1>(stage), pipeline_.second, std::get<0>(stage));
             }
         }
 
         if (!std::get<2>(stage).empty())
         {
             // Build stats for the pipeline if it's present.
-            if (!m_pipeline.first.empty())
+            if (!pipeline_.first.empty())
             {
-                status = status && BuildToStatistics(std::get<2>(stage), m_pipeline.first, m_pipeline.second, std::get<0>(stage));
+                status = status && BuildToStatistics(std::get<2>(stage), pipeline_.first, pipeline_.second, std::get<0>(stage));
             }
         }
     }
 
     // We're done with dumping data from the pipeline. Destroy the pipeline before exiting.
-    VkPipeline pipelineHandle = m_pipeline.second;
+    VkPipeline pipelineHandle = pipeline_.second;
     if (pipelineHandle != VK_NULL_HANDLE)
     {
-        vkDestroyPipeline(m_device, pipelineHandle, nullptr);
+        vkDestroyPipeline(device_, pipelineHandle, nullptr);
     }
 
     return status;
 }
 
-bool rgVulkanBackend::BuildToStatistics(const std::string& statsFileName, const std::string& pipelineName,
-                                        VkPipeline pipeline, VkShaderStageFlagBits stage) const
+bool RgVulkanBackend::BuildToStatistics(const std::string& stats_filename, const std::string& pipeline_name,
+    VkPipeline pipeline, VkShaderStageFlagBits stage) const
 {
     VkShaderStatisticsInfoAMD stats = {};
     size_t size = sizeof(stats);
 
-    assert(m_pFuncGetShaderInfo != nullptr);
-    bool status = (m_pFuncGetShaderInfo != nullptr);
+    assert(function_get_shader_info_ != nullptr);
+    bool status = (function_get_shader_info_ != nullptr);
 
-    status = status && (m_pFuncGetShaderInfo(m_device, pipeline, stage, VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats) == VK_SUCCESS);
-    assert(status && STR_ERR_FAILED_GET_SHADER_STATS);
+    status = status && (function_get_shader_info_(device_, pipeline, stage, VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats) == VK_SUCCESS);
+    assert(status && kStrVulkanErrorFailedToGetShaderStats);
     if (status)
     {
-        std::stringstream statisticsStream;
+        std::stringstream statistics_stream;
 
-        statisticsStream << "Statistics:" << std::endl;
-        statisticsStream << "    - shaderStageMask                           = " << stats.shaderStageMask << std::endl;
-        statisticsStream << "    - resourceUsage.numUsedVgprs                = " << stats.resourceUsage.numUsedVgprs << std::endl;
-        statisticsStream << "    - resourceUsage.numUsedSgprs                = " << stats.resourceUsage.numUsedSgprs << std::endl;
-        statisticsStream << "    - resourceUsage.ldsSizePerLocalWorkGroup    = " << stats.resourceUsage.ldsSizePerLocalWorkGroup << std::endl;
-        statisticsStream << "    - resourceUsage.ldsUsageSizeInBytes         = " << stats.resourceUsage.ldsUsageSizeInBytes << std::endl;
-        statisticsStream << "    - resourceUsage.scratchMemUsageInBytes      = " << stats.resourceUsage.scratchMemUsageInBytes << std::endl;
-        statisticsStream << "    - numPhysicalVgprs                          = " << stats.numPhysicalVgprs << std::endl;
-        statisticsStream << "    - numPhysicalSgprs                          = " << stats.numPhysicalSgprs << std::endl;
-        statisticsStream << "    - numAvailableVgprs                         = " << stats.numAvailableVgprs << std::endl;
-        statisticsStream << "    - numAvailableSgprs                         = " << stats.numAvailableSgprs << std::endl;
+        statistics_stream << "Statistics:" << std::endl;
+        statistics_stream << "    - shaderStageMask                           = " << stats.shaderStageMask << std::endl;
+        statistics_stream << "    - resourceUsage.numUsedVgprs                = " << stats.resourceUsage.numUsedVgprs << std::endl;
+        statistics_stream << "    - resourceUsage.numUsedSgprs                = " << stats.resourceUsage.numUsedSgprs << std::endl;
+        statistics_stream << "    - resourceUsage.ldsSizePerLocalWorkGroup    = " << stats.resourceUsage.ldsSizePerLocalWorkGroup << std::endl;
+        statistics_stream << "    - resourceUsage.ldsUsageSizeInBytes         = " << stats.resourceUsage.ldsUsageSizeInBytes << std::endl;
+        statistics_stream << "    - resourceUsage.scratchMemUsageInBytes      = " << stats.resourceUsage.scratchMemUsageInBytes << std::endl;
+        statistics_stream << "    - numPhysicalVgprs                          = " << stats.numPhysicalVgprs << std::endl;
+        statistics_stream << "    - numPhysicalSgprs                          = " << stats.numPhysicalSgprs << std::endl;
+        statistics_stream << "    - numAvailableVgprs                         = " << stats.numAvailableVgprs << std::endl;
+        statistics_stream << "    - numAvailableSgprs                         = " << stats.numAvailableSgprs << std::endl;
 
         if (stage == VK_SHADER_STAGE_COMPUTE_BIT)
         {
             for (int i = 0; i < 3; ++i)
             {
-                statisticsStream << "    - computeWorkGroupSize" << i << " = " << stats.computeWorkGroupSize[i] << std::endl;
+                statistics_stream << "    - computeWorkGroupSize" << i << " = " << stats.computeWorkGroupSize[i] << std::endl;
             }
         }
 
-        status = WriteTextFile(statsFileName, statisticsStream.str());
+        status = WriteTextFile(stats_filename, statistics_stream.str());
     }
 
     if (!status)
     {
-        std::cerr << STR_ERR_PIPELINE_STATS_NOT_AVAILABLE << std::endl;
+        std::cerr << kStrVulkanErrorPipelineStatsNotAvailable << std::endl;
     }
 
     return status;
 }
 
-bool rgVulkanBackend::BuildToBinary(const std::string& pipelineName, VkPipeline pipeline) const
+bool RgVulkanBackend::BuildToBinary(const std::string& pipeline_name, VkPipeline pipeline) const
 {
-    size_t binarySize = 0;
+    size_t binary_size = 0;
 
-    assert(m_pFuncGetShaderInfo != nullptr);
-    bool status = (m_pFuncGetShaderInfo != nullptr);
+    assert(function_get_shader_info_ != nullptr);
+    bool status = (function_get_shader_info_ != nullptr);
 
     // Note: When retrieving the binary for an entire pipeline, the shader stage argument is
     // irrelevant, and is ignored by the extension. Despite this, the validation layer will still
@@ -2057,19 +2026,19 @@ bool rgVulkanBackend::BuildToBinary(const std::string& pipelineName, VkPipeline 
     VkShaderStageFlagBits stageFlagBits = VK_SHADER_STAGE_VERTEX_BIT;
 
     // Query the size of the binary file being dumped.
-    status = status && (m_pFuncGetShaderInfo(m_device, pipeline, stageFlagBits,
-        VK_SHADER_INFO_TYPE_BINARY_AMD, &binarySize, nullptr) == VK_SUCCESS);
-    assert(status && STR_ERR_FAILED_GET_BINARY_SIZE);
+    status = status && (function_get_shader_info_(device_, pipeline, stageFlagBits,
+        VK_SHADER_INFO_TYPE_BINARY_AMD, &binary_size, nullptr) == VK_SUCCESS);
+    assert(status && kStrVulkanErrorFailedToGetBinarySize);
 
-    if (status && binarySize > 0)
+    if (status && binary_size > 0)
     {
         // Allocate storage for the binary, fill it with the binary bytes, and write to disk.
-        uint8_t* binary = new uint8_t[binarySize];
+        uint8_t* binary = new uint8_t[binary_size];
 
-        if (binary && m_pFuncGetShaderInfo(m_device, pipeline, stageFlagBits,
-            VK_SHADER_INFO_TYPE_BINARY_AMD, &binarySize, binary) == VK_SUCCESS)
+        if (binary && function_get_shader_info_(device_, pipeline, stageFlagBits,
+            VK_SHADER_INFO_TYPE_BINARY_AMD, &binary_size, binary) == VK_SUCCESS)
         {
-            status = WriteBinaryFile(m_config.m_binaryFile, std::vector<char>(binary, binary + binarySize));
+            status = WriteBinaryFile(config_.binary_file, std::vector<char>(binary, binary + binary_size));
         }
 
         delete[] binary;
@@ -2077,30 +2046,30 @@ bool rgVulkanBackend::BuildToBinary(const std::string& pipelineName, VkPipeline 
 
     if (!status)
     {
-        std::cerr << STR_ERR_PIPELINE_BINARY_NOT_AVAILABLE << std::endl;
+        std::cerr << kStrVulkanErrorBinaryNotAvailable << std::endl;
     }
 
     return status;
 }
 
-bool rgVulkanBackend::BuildToDisasm(const std::string& isaFileName, VkPipeline pipeline, VkShaderStageFlagBits stage) const
+bool RgVulkanBackend::BuildToDisasm(const std::string& isa_filename, VkPipeline pipeline, VkShaderStageFlagBits stage) const
 {
-    size_t disassemblySize = 0;
+    size_t disassembly_size = 0;
 
-    assert(m_pFuncGetShaderInfo != nullptr);
-    bool status = (m_pFuncGetShaderInfo != nullptr);
+    assert(function_get_shader_info_ != nullptr);
+    bool status = (function_get_shader_info_ != nullptr);
 
-    status = status && (m_pFuncGetShaderInfo(m_device, pipeline, stage, VK_SHADER_INFO_TYPE_DISASSEMBLY_AMD,
-                                             &disassemblySize, nullptr) == VK_SUCCESS);
-    assert(status && disassemblySize > 0);
-    if (status && disassemblySize > 0)
+    status = status && (function_get_shader_info_(device_, pipeline, stage, VK_SHADER_INFO_TYPE_DISASSEMBLY_AMD,
+        &disassembly_size, nullptr) == VK_SUCCESS);
+    assert(status && disassembly_size > 0);
+    if (status && disassembly_size > 0)
     {
-        char* disassembly = new char[disassemblySize];
+        char* disassembly = new char[disassembly_size];
 
-        if (disassembly && m_pFuncGetShaderInfo(m_device, pipeline, stage,
-            VK_SHADER_INFO_TYPE_DISASSEMBLY_AMD, &disassemblySize, disassembly) == VK_SUCCESS)
+        if (disassembly && function_get_shader_info_(device_, pipeline, stage,
+            VK_SHADER_INFO_TYPE_DISASSEMBLY_AMD, &disassembly_size, disassembly) == VK_SUCCESS)
         {
-            status = WriteTextFile(isaFileName, disassembly);
+            status = WriteTextFile(isa_filename, disassembly);
         }
 
         delete[] disassembly;
@@ -2108,7 +2077,7 @@ bool rgVulkanBackend::BuildToDisasm(const std::string& isaFileName, VkPipeline p
 
     if (!status)
     {
-        std::cerr << STR_ERR_DISASM_NOT_AVAILABLE << std::endl;
+        std::cerr << kStrVulkanErrorDisassemblyNotAvailable << std::endl;
     }
 
     return status;

@@ -10,7 +10,7 @@
 
 // Forward declarations.
 class rgEditorElement;
-class rgEditorElementArray;
+class rgEditorElementArrayElementAdd;
 class rgPipelineStateModel;
 class rgPipelineStateSearcher;
 
@@ -107,7 +107,7 @@ protected:
 
 private slots:
     // Handler invoked when a node in the tree should be expanded.
-    void HandleNodeExpanded(rgEditorElementArray* pArrayRoot);
+    void HandleNodeExpanded(rgEditorElementArrayElementAdd* pArrayRoot);
 
 private:
     // Connect interface signals to handlers.

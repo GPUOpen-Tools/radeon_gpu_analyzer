@@ -385,6 +385,7 @@ bool rgStatusBar::ShowConfirmationDialogBox(const char* pMessage) const
     confirmationDialog.setIcon(QMessageBox::Question);
     confirmationDialog.setModal(true);
     confirmationDialog.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    confirmationDialog.setFocus();
 
     // Set button cursor to pointing hand cursor.
     QAbstractButton* pButton = confirmationDialog.button(QMessageBox::Button::Yes);
@@ -572,4 +573,14 @@ void rgStatusBar::HandleTreeWidgetItemEntered(QTreeWidgetItem* pItem, const int 
             pItem->setBackgroundColor(columnNumber, lightBlue);
         }
     }
+}
+
+rgModePushButton* rgStatusBar::GetModePushButton()
+{
+    return m_pModePushButton;
+}
+
+QTreeWidget* rgStatusBar::GetApiListTreeWidget()
+{
+    return m_pApiModeTreeWidget;
 }

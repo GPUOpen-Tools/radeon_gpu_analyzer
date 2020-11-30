@@ -148,11 +148,15 @@ void rgSettingsTab::ConnectSignals()
     bool isConnected = connect(m_pGlobalSettingsView, &rgGlobalSettingsView::PendingChangesStateChanged, this, &rgSettingsTab::HandleGlobalPendingChangesStateChanged);
     assert(isConnected);
 
+    // Global settings view has empty input file names.
+    isConnected = connect(m_pGlobalSettingsView, &rgGlobalSettingsView::InputFileNameBlankSignal, this, &rgSettingsTab::HandleInputFileNameBlank);
+    assert(isConnected);
+
     // "Save" button.
     isConnected = connect(ui.settingsButtonsView, &rgSettingsButtonsView::SaveSettingsButtonClickedSignal, this, &rgSettingsTab::HandleSaveSettingsButtonClicked);
     assert(isConnected);
 
-    // "Restore defaults" button.
+    // "Restore default settings" button.
     isConnected = connect(ui.settingsButtonsView, &rgSettingsButtonsView::RestoreDefaultSettingsButtonClickedSignal, this, &rgSettingsTab::HandleRestoreDefaultsSettingsClicked);
     assert(isConnected);
 
@@ -163,6 +167,23 @@ void rgSettingsTab::ConnectSignals()
     // Connect the settings list widget to detect clicks.
     isConnected = connect(ui.settingsListWidget, &QListWidget::currentRowChanged, this, &rgSettingsTab::HandleSettingsListWidgetClick);
     assert(isConnected);
+
+    // Connect the settings command line update.
+    isConnected = connect(this, &rgSettingsTab::UpdateCommandLineTextSignal, m_pBuildSettingsView, &rgBuildSettingsView::UpdateCommandLineText);
+    assert(isConnected);
+}
+
+void rgSettingsTab::HandleInputFileNameBlank(bool isBlank)
+{
+    // Disable clicking on the list widget.
+    if (isBlank)
+    {
+        ui.settingsListWidget->setSelectionMode(QAbstractItemView::NoSelection);
+    }
+    else
+    {
+        ui.settingsListWidget->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
+    }
 }
 
 bool rgSettingsTab::eventFilter(QObject* pObject, QEvent* pEvent)
@@ -190,10 +211,9 @@ bool rgSettingsTab::eventFilter(QObject* pObject, QEvent* pEvent)
                 {
                     if (pItem != pCurrentItem)
                     {
-                        // User clicked on the settings list widget.
-                        if (PromptToSavePendingChanges() == false)
+                        if (m_pGlobalSettingsView->IsInputFileBlank() == false && PromptToSavePendingChanges() == false)
                         {
-                            // User cancelled the dialog, so the event should be filtered out.
+                            // User canceled the dialog, so the event should be filtered out.
                             isFiltered = true;
                         }
                     }
@@ -234,7 +254,7 @@ void rgSettingsTab::SelectNextListWidgetItem(const int keyPressed)
     }
 }
 
-void rgSettingsTab::HandleSaveSettingsButtonClicked()
+void rgSettingsTab::SaveSettings()
 {
     // First verify all inputs before saving them by calling all their handlers.
     assert(m_pGlobalSettingsView != nullptr);
@@ -262,6 +282,11 @@ void rgSettingsTab::HandleSaveSettingsButtonClicked()
     }
 }
 
+void rgSettingsTab::HandleSaveSettingsButtonClicked()
+{
+    PromptToSavePendingChanges();
+}
+
 void rgSettingsTab::HandleRestoreDefaultsSettingsClicked()
 {
     // Ask the user for confirmation.
@@ -272,16 +297,35 @@ void rgSettingsTab::HandleRestoreDefaultsSettingsClicked()
         // Disable the "Save" button.
         ui.settingsButtonsView->EnableSaveButton(false);
 
-        // Restore the default settings.
-        if (m_pGlobalSettingsView != nullptr)
+        // Only restore the settings for the current view.
+        const SettingsListWidgetEntries currentRow = static_cast<SettingsListWidgetEntries>(ui.settingsListWidget->currentRow());
+        switch (currentRow)
         {
-            m_pGlobalSettingsView->RestoreDefaultSettings();
+        case (SettingsListWidgetEntries::Global):
+        {
+            // Restore default values for global settings.
+            if (m_pGlobalSettingsView != nullptr)
+            {
+                m_pGlobalSettingsView->RestoreDefaultSettings();
+            }
         }
-
-        // Restore default settings for the API
-        if (m_pBuildSettingsView != nullptr)
+        break;
+        case (SettingsListWidgetEntries::Api):
         {
-            m_pBuildSettingsView->RestoreDefaultSettings();
+            // Restore default values for the default API settings.
+            if (m_pBuildSettingsView != nullptr)
+            {
+                m_pBuildSettingsView->RestoreDefaultSettings();
+
+                // Also update the settings command line.
+                emit UpdateCommandLineTextSignal();
+            }
+        }
+        break;
+        default:
+            // We shouldn't get here.
+            assert(false);
+            break;
         }
     }
 }
@@ -327,11 +371,11 @@ bool rgSettingsTab::PromptToSavePendingChanges()
     bool result = true;
     if (m_hasPendingChanges)
     {
-        rgUnsavedItemsDialog::UnsavedFileDialogResult saveSettingsResult = SaveSettings();
+        rgUnsavedItemsDialog::UnsavedFileDialogResult saveSettingsResult = ShowSaveSettingsConfirmationDialog();
 
         if (saveSettingsResult == rgUnsavedItemsDialog::UnsavedFileDialogResult::Yes)
         {
-            HandleSaveSettingsButtonClicked();
+            SaveSettings();
         }
         else if (saveSettingsResult == rgUnsavedItemsDialog::UnsavedFileDialogResult::No)
         {
@@ -348,10 +392,10 @@ bool rgSettingsTab::PromptToSavePendingChanges()
 
 void rgSettingsTab::SavePendingChanges()
 {
-    HandleSaveSettingsButtonClicked();
+    PromptToSavePendingChanges();
 }
 
-rgUnsavedItemsDialog::UnsavedFileDialogResult rgSettingsTab::SaveSettings()
+rgUnsavedItemsDialog::UnsavedFileDialogResult rgSettingsTab::ShowSaveSettingsConfirmationDialog()
 {
     rgUnsavedItemsDialog::UnsavedFileDialogResult result = rgUnsavedItemsDialog::No;
 
@@ -384,6 +428,9 @@ rgUnsavedItemsDialog::UnsavedFileDialogResult rgSettingsTab::SaveSettings()
 
             // Execute the dialog and get the result.
             result = static_cast<rgUnsavedItemsDialog::UnsavedFileDialogResult>(pUnsavedChangesDialog->exec());
+
+            // Set the focus to settings tab so keyboard shortcuts work.
+            setFocus();
         }
     }
 
@@ -430,56 +477,88 @@ void rgSettingsTab::HandleSettingsListWidgetClick(int index)
 
     bool isSaveEnabled = false;
 
-    switch (index)
+    if (m_pGlobalSettingsView->IsInputFileBlank() == false)
     {
-    case (static_cast<int>(SettingsListWidgetEntries::Global)):
-    {
-        if (m_pBuildSettingsView != nullptr)
+        switch (index)
         {
-            m_pBuildSettingsView->hide();
-        }
-
-        if (m_pGlobalSettingsView != nullptr)
+        case (static_cast<int>(SettingsListWidgetEntries::Global)):
         {
-            m_pGlobalSettingsView->show();
+            if (m_pBuildSettingsView != nullptr)
+            {
+                m_pBuildSettingsView->hide();
+            }
 
-            isSaveEnabled = m_pGlobalSettingsView->GetHasPendingChanges();
+            if (m_pGlobalSettingsView != nullptr)
+            {
+                m_pGlobalSettingsView->show();
 
-            m_pGlobalSettingsView->SetInitialWidgetFocus();
+                isSaveEnabled = m_pGlobalSettingsView->GetHasPendingChanges();
+
+                m_pGlobalSettingsView->SetInitialWidgetFocus();
+            }
         }
-    }
-    break;
-    case (static_cast<int>(SettingsListWidgetEntries::Api)):
-    {
-        if (m_pGlobalSettingsView != nullptr)
-        {
-            m_pGlobalSettingsView->hide();
-        }
-
-        if (m_pBuildSettingsView != nullptr)
-        {
-            m_pBuildSettingsView->show();
-
-            isSaveEnabled = m_pBuildSettingsView->GetHasPendingChanges();
-
-            m_pBuildSettingsView->SetInitialWidgetFocus();
-        }
-    }
-    break;
-    default:
-        // We shouldn't get here.
-        assert(false);
         break;
+        case (static_cast<int>(SettingsListWidgetEntries::Api)):
+        {
+            if (m_pGlobalSettingsView != nullptr)
+            {
+                m_pGlobalSettingsView->hide();
+            }
+
+            if (m_pBuildSettingsView != nullptr)
+            {
+                m_pBuildSettingsView->show();
+
+                isSaveEnabled = m_pBuildSettingsView->GetHasPendingChanges();
+
+                m_pBuildSettingsView->SetInitialWidgetFocus();
+            }
+        }
+        break;
+        default:
+            // We shouldn't get here.
+            assert(false);
+            break;
+        }
+
+        // Enable or disable the save button.
+        ui.settingsButtonsView->EnableSaveButton(isSaveEnabled);
+
+        // Set the list widget cursor to arrow cursor.
+        ui.settingsListWidget->setCursor(Qt::ArrowCursor);
+
+        // Set the focus to settings buttons view.
+        ui.settingsButtonsView->setFocus();
     }
+    else
+    {
+        if (m_pGlobalSettingsView != nullptr)
+        {
+            // Reset the current item for the list widget to the previous one.
+            switch (index)
+            {
+            case (static_cast<int>(SettingsListWidgetEntries::Global)):
+            {
+                QSignalBlocker signalBlocker(ui.settingsListWidget);
+                ui.settingsListWidget->selectionModel()->setCurrentIndex(ui.settingsListWidget->model()->index(static_cast<int>(SettingsListWidgetEntries::Api), 0), QItemSelectionModel::SelectionFlag::Select);
+            }
+            break;
+            case (static_cast<int>(SettingsListWidgetEntries::Api)):
+            {
+                QSignalBlocker signalBlocker(ui.settingsListWidget);
+                ui.settingsListWidget->selectionModel()->setCurrentIndex(ui.settingsListWidget->model()->index(static_cast<int>(SettingsListWidgetEntries::Global), 0), QItemSelectionModel::SelectionFlag::Select);
+            }
+            break;
+            default:
+                // We shouldn't get here.
+                assert(false);
+                break;
+            }
 
-    // Enable or disable the save button.
-    ui.settingsButtonsView->EnableSaveButton(isSaveEnabled);
-
-    // Set the list widget cursor to arrow cursor.
-    ui.settingsListWidget->setCursor(Qt::ArrowCursor);
-
-    // Set the focus to settings buttons view.
-    ui.settingsButtonsView->setFocus();
+            // Display the empty input file name message box.
+            m_pGlobalSettingsView->ProcessInputFileBlank();
+        }
+    }
 }
 
 void rgSettingsTab::HandleBuildSettingsPendingChangesStateChanged(bool hasPendingChanges)
@@ -540,3 +619,14 @@ void rgSettingsTab::SetCursor()
     // Set the cursor to pointing hand cursor.
     ui.settingsListWidget->setCursor(Qt::PointingHandCursor);
 }
+
+rgListWidget* rgSettingsTab::GetSettingsListWidget()
+{
+    return ui.settingsListWidget;
+}
+
+rgGlobalSettingsView* rgSettingsTab::GetGlobalSettingsView()
+{
+    return m_pGlobalSettingsView;
+}
+

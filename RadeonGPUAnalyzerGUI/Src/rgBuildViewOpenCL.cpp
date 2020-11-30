@@ -8,8 +8,8 @@
 #include <QTextStream>
 
 // Infra.
-#include <QtCommon/Scaling/ScalingManager.h>
-#include <Utils/Include/rgaSharedUtils.h>
+#include "QtCommon/Scaling/ScalingManager.h"
+#include "Utils/Include/rgaSharedUtils.h"
 
 // Local.
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildSettingsViewOpenCL.h>

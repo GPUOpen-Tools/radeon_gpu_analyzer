@@ -65,7 +65,7 @@ VkPipelineInputAssemblyStateCreateInfo* rgPsoGraphicsVulkan::GetPipelineInputAss
     return m_pInputAssemblyStateCreateInfo;
 }
 
-VkPipelineTessellationStateCreateInfo* rgPsoGraphicsVulkan::GetipelineTessellationStateCreateInfo()
+VkPipelineTessellationStateCreateInfo* rgPsoGraphicsVulkan::GetPipelineTessellationStateCreateInfo()
 {
     return m_pTessellationStateCreateInfo;
 }
@@ -115,10 +115,10 @@ const std::vector<VkSamplerCreateInfo*> rgPsoCreateInfoVulkan::GetSamplerCreateI
     return m_samplerCreateInfo;
 }
 
-void rgPsoCreateInfoVulkan::AddDescriptorSetLayoutCreateInfo(VkDescriptorSetLayoutCreateInfo* pDescriptorSetLayoutCreateInfo)
+void rgPsoCreateInfoVulkan::AddDescriptorSetLayoutCreateInfo(VkDescriptorSetLayoutCreateInfo* descriptor_set_layout_create_info)
 {
     // Add the item to our descriptor set layout collection.
-    m_descriptorSetLayoutCreateInfo.push_back(pDescriptorSetLayoutCreateInfo);
+    m_descriptorSetLayoutCreateInfo.push_back(descriptor_set_layout_create_info);
 
     // Update the size from the pipeline layout create info to match the descriptor set layout.
     m_pPipelineLayoutCreateInfo->setLayoutCount = static_cast<uint32_t>(m_descriptorSetLayoutCreateInfo.size());

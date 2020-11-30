@@ -3,6 +3,7 @@
 
 // Local.
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgAppState.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgGlobalSettingsView.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgSettingsTab.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgStartTab.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildView.h>
@@ -47,4 +48,23 @@ rgAppStateGraphics::rgAppStateGraphics()
 {
     // Set the graphics flag to true.
     m_isGraphics = true;
+}
+
+bool rgAppState::IsInputFileNameBlank() const
+{
+    bool result = false;
+
+    // Handle blank input file in global settings view.
+    rgGlobalSettingsView* pGlobalSettings = m_pSettingsTab->GetGlobalSettingsView();
+    if (pGlobalSettings != nullptr)
+    {
+        bool isInputFileNameBlank = pGlobalSettings->IsInputFileBlank();
+        if (isInputFileNameBlank)
+        {
+            pGlobalSettings->ProcessInputFileBlank();
+            result = true;
+        }
+    }
+
+    return result;
 }

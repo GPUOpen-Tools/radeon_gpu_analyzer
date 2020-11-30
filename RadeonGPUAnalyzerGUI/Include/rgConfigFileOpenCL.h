@@ -15,7 +15,7 @@ public:
     virtual bool ReadProjectConfigFile(tinyxml2::XMLDocument& doc, const char* pFileDataModelVersion, std::shared_ptr<rgProject>& pRgaProject) override;
 
     // Parse OpenCL-specific project build settings.
-    virtual bool ReadApiBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings) override;
+    virtual bool ReadApiBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings, const std::string& version) override;
 };
 
 class rgConfigFileWriterOpenCL : public rgXmlConfigFileWriterImpl

@@ -13,6 +13,9 @@ rgEditorElementBool::rgEditorElementBool(QWidget* pParent, const std::string& me
     assert(m_pEditorWidget != nullptr);
     if (m_pEditorWidget != nullptr)
     {
+        // Set the value for the widget.
+        m_pEditorWidget->SetValue(GetValue());
+
         // Insert the editor widget into the row.
         ui.editorLayout->insertWidget(0, m_pEditorWidget);
 

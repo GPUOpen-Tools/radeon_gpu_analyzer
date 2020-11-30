@@ -15,7 +15,7 @@ public:
     virtual bool ReadProjectConfigFile(tinyxml2::XMLDocument& doc, const char* pFileDataModelVersion, std::shared_ptr<rgProject>& pRgaProject) override;
 
     // Responsible for reading all Vulkan-specific build settings.
-    virtual bool ReadApiBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings) override;
+    virtual bool ReadApiBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings, const std::string& version) override;
 
 private:
     // Read single project clone info. The data is stored to the project structure pointer by "pVulkanProject".

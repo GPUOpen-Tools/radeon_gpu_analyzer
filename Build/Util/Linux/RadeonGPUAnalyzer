@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------------------------------------------------------------------------
+# This script launches the rga GUI executable after configuring the environment.
+# (c) 2017-2020 Advanced Micro Devices Inc. All Rights Reserved.
+# ----------------------------------------------------------------------------------------------------------------------------------
+
+if echo "$0" | grep '^/' ; then
+	thisScriptFullPath="$0"
+else
+	thisScriptFullPath=`pwd`/$0
+fi
+
+# Use the amdgpu-pro driver Vulkan ICD files
+if [ -d /opt/amdgpu-pro/etc/vulkan/icd.d ]
+then
+    export VK_ICD_FILENAMES=/opt/amdgpu-pro/etc/vulkan/icd.d/amd_icd64.json
+fi
+
+RGA_GUI_BIN_PATH=`dirname "$thisScriptFullPath"`
+
+# Add RGA's bin and lib directories to LD_LIBRARY_PATH:
+export LD_LIBRARY_PATH="$RGA_GUI_BIN_PATH":"$RGA_GUI_BIN_PATH/lib":"$RGA_BIN_PATH/utils":$LD_LIBRARY_PATH
+
+# Add RGA/utils folder to PATH:
+export PATH="$RGA_GUI_BIN_PATH":"$RGA_GUI_BIN_PATH/utils":$PATH
+
+# Set path to the Qt platform plugin.
+export QT_QPA_PLATFORM_PLUGIN_PATH="$RGA_GUI_BIN_PATH/lib/platforms"
+
+# Call RGA GUI executable
+"$RGA_GUI_BIN_PATH"/RadeonGPUAnalyzer-bin "$@"

@@ -13,16 +13,6 @@ rgIsaDisassemblyViewTitlebar::rgIsaDisassemblyViewTitlebar(QWidget* pParent) :
 {
 }
 
-void rgIsaDisassemblyViewTitlebar::mousePressEvent(QMouseEvent* pEvent)
-{
-    emit FrameFocusInSignal();
-}
-
-void rgIsaDisassemblyViewTitlebar::mouseDoubleClickEvent(QMouseEvent* pEvent)
-{
-    emit ViewTitleBarDoubleClickedSignal();
-}
-
 void rgIsaDisassemblyViewTitlebar::paintEvent(QPaintEvent *pEvent)
 {
     QStyleOption option;

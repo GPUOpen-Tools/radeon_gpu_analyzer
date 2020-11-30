@@ -80,11 +80,14 @@ static const char* gs_SWITCH_CONTAINER_SIZE = "Ctrl+R";
 static const char* gs_RESTORE_DEFAULT_SETTINGS = "Ctrl+R";
 
 // Icon resource paths.
-static const char* gs_ICON_RESOURCE_RGA_LOGO                = ":/icons/rgaIcon.svg";
+static const char* gs_ICON_RESOURCE_RGA_LOGO                = ":/icons/rgaIcon.png";
 static const char* gs_ICON_RESOURCE_FIND_MAGNIFYING_GLASS   = ":/icons/magnifyingGlassIcon.svg";
 static const char* gs_ICON_RESOURCE_EXPANDED_ROW            = ":/icons/expandFileItem.svg";
 static const char* gs_ICON_RESOURCE_COLLAPSED_ROW           = ":/icons/collapsedArrow.svg";
 static const char* gs_ICON_RESOURCE_REMOVE_NOTIFICATION     = ":/icons/correlationWarningIcon.svg";
+
+// Build settings options list delimiter.
+static const char* s_OPTIONS_LIST_DELIMITER = ";";
 
 // Macros.
 #define RG_SAFE_DELETE(ptr) { delete ptr; ptr = nullptr;}

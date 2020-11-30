@@ -13,6 +13,10 @@ set SPHINXPROJ=RadeonGPUAnalyzer
 
 if "%1" == "" goto help
 
+REM   The sphinx-rtd-theme dependency was depreciated in newer versions of Sphinx
+REM   and is no longer included by default
+python -m pip install -q --disable-pip-version-check --user sphinx-rtd-theme
+
 %SPHINXBUILD% >NUL 2>NUL
 if errorlevel 9009 (
 	echo.

@@ -6,18 +6,18 @@
 // Local.
 #include <Utils/Vulkan/Include/rgPipelineTypes.h>
 
-class rgPsoSerializerVulkan
+class RgPsoSerializerVulkan
 {
 public:
     // Read Pipeline State Object recipe structure from a file.
-    static bool ReadStructureFromFile(const std::string& filePath, rgPsoGraphicsVulkan** ppCreateInfo, std::string& errorString);
-    static bool ReadStructureFromFile(const std::string& filePath, rgPsoComputeVulkan** ppCreateInfo, std::string& errorString);
+    static bool ReadStructureFromFile(const std::string& file_path, rgPsoGraphicsVulkan** create_info_array, std::string& error_string);
+    static bool ReadStructureFromFile(const std::string& file_path, rgPsoComputeVulkan** create_info_array, std::string& error_string);
 
     // Write Pipeline State Object recipe structure to a file.
-    static bool WriteStructureToFile(rgPsoGraphicsVulkan* pCreateInfo, const std::string& filePath, std::string& errorString);
-    static bool WriteStructureToFile(rgPsoComputeVulkan* pCreateInfo, const std::string& filePath, std::string& errorString);
+    static bool WriteStructureToFile(rgPsoGraphicsVulkan* create_info, const std::string& file_path, std::string& error_string);
+    static bool WriteStructureToFile(rgPsoComputeVulkan* create_info, const std::string& file_path, std::string& error_string);
 
 private:
-    rgPsoSerializerVulkan() = delete;
-    ~rgPsoSerializerVulkan() = delete;
+    RgPsoSerializerVulkan() = delete;
+    ~RgPsoSerializerVulkan() = delete;
 };

@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QFileDialog>
+#include <QFocusEvent>
 #include <QMessageBox>
 #include <QWidget>
 
@@ -22,6 +23,7 @@
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgGlobalSettingsView.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgHideListWidgetEventFilter.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgIsaDisassemblyTableModel.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgLineEdit.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgStringConstants.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgUtils.h>
 
@@ -323,6 +325,22 @@ void rgGlobalSettingsView::ConnectSignals()
     isConnected = connect(this->ui.assocExtSpvBinaryLineEdit, &QLineEdit::textChanged, this, &rgGlobalSettingsView::HandleTextBoxChanged);
     assert(isConnected);
 
+    // GLSL File extension associations textChanged signal.
+    isConnected = connect(this->ui.assocExtGlslLineEdit, &rgLineEdit::LineEditFocusOutEvent, this, &rgGlobalSettingsView::HandleFocusOutEvent);
+    assert(isConnected);
+
+    // HLSL File extension associations textChanged signal.
+    isConnected = connect(this->ui.assocExtHlslLineEdit, &rgLineEdit::LineEditFocusOutEvent, this, &rgGlobalSettingsView::HandleFocusOutEvent);
+    assert(isConnected);
+
+    // SPV Text File extension associations textChanged signal.
+    isConnected = connect(this->ui.assocExtSpvasLineEdit, &rgLineEdit::LineEditFocusOutEvent, this, &rgGlobalSettingsView::HandleFocusOutEvent);
+    assert(isConnected);
+
+    // SPV Binary File extension associations textChanged signal.
+    isConnected = connect(this->ui.assocExtSpvBinaryLineEdit, &rgLineEdit::LineEditFocusOutEvent, this, &rgGlobalSettingsView::HandleFocusOutEvent);
+    assert(isConnected);
+
     // Default shader language combobox currentIndexChanged signal.
     isConnected = connect(this->ui.defaultLangComboBox, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &rgGlobalSettingsView::HandleComboBoxChanged);
     assert(isConnected);
@@ -338,6 +356,78 @@ void rgGlobalSettingsView::ConnectSignals()
     // Include files viewer text changed.
     isConnected = connect(this->ui.includeFilesViewerLineEdit, &QLineEdit::textChanged, this, &rgGlobalSettingsView::HandleTextBoxChanged);
     assert(isConnected);
+}
+
+void rgGlobalSettingsView::ProcessInputFileBlank() const
+{
+    if (ui.assocExtGlslLineEdit->text().isEmpty())
+    {
+        emit ui.assocExtGlslLineEdit->LineEditFocusOutEvent();
+    }
+    else if (ui.assocExtHlslLineEdit->text().isEmpty())
+    {
+        emit ui.assocExtHlslLineEdit->LineEditFocusOutEvent();
+    }
+    else if (ui.assocExtSpvasLineEdit->text().isEmpty())
+    {
+        emit ui.assocExtSpvasLineEdit->LineEditFocusOutEvent();
+    }
+    else if (ui.assocExtSpvBinaryLineEdit->text().isEmpty())
+    {
+        emit ui.assocExtSpvBinaryLineEdit->LineEditFocusOutEvent();
+    }
+}
+
+void rgGlobalSettingsView::HandleFocusOutEvent()
+{
+    static const char* STR_GLSL_LINE_EDIT = "assocExtGlslLineEdit";
+    static const char* STR_HLSL_LINE_EDIT = "assocExtHlslLineEdit";
+    static const char* STR_SPV_BIN_LINE_EDIT = "assocExtSpvBinaryLineEdit";
+    static const char* STR_SPV_TEXT_LINE_EDIT = "assocExtSpvasLineEdit";
+    static const char* STR_VALUE_BLANK_MESSAGE = "Input file type fields cannot be blank";
+
+    // Figure out the sender and process appropriately.
+    QObject* pSender = QObject::sender();
+    assert(pSender != nullptr);
+
+    rgLineEdit* pLineEdit = qobject_cast<rgLineEdit*>(pSender);
+    assert(pLineEdit != nullptr);
+
+    // Process the click.
+    if (pLineEdit != nullptr)
+    {
+        QString text = pLineEdit->text();
+        if (text.isEmpty())
+        {
+            QWidget* pWidget = static_cast<QWidget*>(pSender);
+            assert(pWidget != nullptr);
+
+            // Set the focus back to this widget.
+            pWidget->setFocus();
+
+            // Set the value to the previous one.
+            QString name = pLineEdit->objectName();
+            if (name.compare(STR_GLSL_LINE_EDIT) == 0)
+            {
+                pLineEdit->setText(QString::fromStdString(m_initialSettings.m_inputFileExtGlsl));
+            }
+            else if (name.compare(STR_HLSL_LINE_EDIT) == 0)
+            {
+                pLineEdit->setText(QString::fromStdString(m_initialSettings.m_inputFileExtHlsl));
+            }
+            else if (name.compare(STR_SPV_BIN_LINE_EDIT) == 0)
+            {
+                pLineEdit->setText(QString::fromStdString(m_initialSettings.m_inputFileExtSpvBin));
+            }
+            else if (name.compare(STR_SPV_TEXT_LINE_EDIT) == 0)
+            {
+                pLineEdit->setText(QString::fromStdString(m_initialSettings.m_inputFileExtSpvTxt));
+            }
+
+            // Display an error message.
+            rgUtils::ShowErrorMessageBox(STR_VALUE_BLANK_MESSAGE, this);
+        }
+    }
 }
 
 void rgGlobalSettingsView::HandlePendingChangesStateChanged(bool hasPendingChanges)
@@ -549,7 +639,6 @@ std::string rgGlobalSettingsView::GetDisassemblyColumnName(rgIsaDisassemblyTable
     }
 
     return result;
-
 }
 
 void rgGlobalSettingsView::PopulateColumnVisibilityList()
@@ -712,6 +801,27 @@ void rgGlobalSettingsView::HandleLogFileEditBoxChanged(const QString& text)
 
 void rgGlobalSettingsView::HandleTextBoxChanged(const QString& text)
 {
+    // Figure out the sender and process appropriately.
+    QObject* pSender = QObject::sender();
+    assert(pSender != nullptr);
+
+    rgLineEdit* pLineEdit = qobject_cast<rgLineEdit*>(pSender);
+    assert(pLineEdit != nullptr);
+
+    // Signal whether the text box is empty or not.
+    if (pLineEdit != nullptr)
+    {
+        QString text = pLineEdit->text();
+        if (text.isEmpty())
+        {
+            emit InputFileNameBlankSignal(true);
+        }
+        else
+        {
+            emit InputFileNameBlankSignal(false);
+        }
+    }
+
     // Signal to any listeners that the values in the UI have changed.
     HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
@@ -825,4 +935,12 @@ void rgGlobalSettingsView::HandleIncludeFilesViewerEditingFinished()
 void rgGlobalSettingsView::SetInitialWidgetFocus()
 {
     ui.logFileLocationLineEdit->setFocus();
+}
+
+bool rgGlobalSettingsView::IsInputFileBlank() const
+{
+    return ui.assocExtGlslLineEdit->text().isEmpty() ||
+        ui.assocExtHlslLineEdit->text().isEmpty() ||
+        ui.assocExtSpvasLineEdit->text().isEmpty() ||
+        ui.assocExtSpvBinaryLineEdit->text().isEmpty();
 }

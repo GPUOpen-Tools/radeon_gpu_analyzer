@@ -32,6 +32,9 @@ signals:
     // A signal to indicate list widget status change.
     void EnumListWidgetStatusSignal(bool isOpen);
 
+    // A signal to indicate change of view.
+    void HotKeyPressedSignal();
+
 protected:
     // Check that the pipeline state is valid.
     virtual bool CheckValidPipelineState(std::string& errorString) const;

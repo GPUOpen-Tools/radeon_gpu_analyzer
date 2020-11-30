@@ -37,6 +37,9 @@ public:
     virtual std::string GetTitleString() override;
     virtual void SetInitialWidgetFocus() override;
 
+    // Update the generated command line text.
+    void UpdateCommandLineText() override;
+
 public slots:
     // Handler for the add the target GPU button.
     void HandleAddTargetGpusButtonClick();
@@ -58,6 +61,12 @@ public slots:
 
     // Handler for when the preprocessor directives are updated.
     void HandlePreprocessorDirectivesUpdated(QStringList preprocessorDirectives);
+
+    // Handler for when output binary editing is finished.
+    void HandleOutputBinaryFileEditingFinished();
+
+    // Handler for when the output binary file edit box changed.
+    void HandleOutputBinaryEditBoxChanged(const QString& text);
 
 signals:
     void ProjectBuildSettingsSaved(std::shared_ptr<rgBuildSettings> pBuildSettings);
@@ -126,9 +135,6 @@ private:
 
     // Hide HLSL options for now.
     void HideHLSLOptions();
-
-    // Update the generated command line text.
-    void UpdateCommandLineText();
 
     // Check the validity of the TargetGPUs string.
     bool IsTargetGpusStringValid(std::vector<std::string>& errors) const;

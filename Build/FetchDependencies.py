@@ -87,16 +87,16 @@ gitMapping = {
     "common-src-AMDTOSWrappers.git"           : ["Common/Src/AMDTOSWrappers",        "6a5293d6a4f00c70747f935a4122a1b986129396"],
     "common-src-AMDTMutex.git"                : ["Common/Src/AMDTMutex",             "master"],
     "common-src-CElf.git"                     : ["Common/Src/CElf",                  "master"],
-    ghRoot + "common-src-DeviceInfo.git"      : ["Common/Src/DeviceInfo",            "master"],
+    "common-src-DeviceInfo.git"               : ["Common/Src/DeviceInfo",            "master"],
     "common-src-DynamicLibraryModule.git"     : ["Common/Src/DynamicLibraryModule",  "master"],
     "common-src-TSingleton.git"               : ["Common/Src/TSingleton",            "master"],
     "common-src-VersionInfo.git"              : ["Common/Src/VersionInfo",           "master"],
     "common-src-Vsprops.git"                  : ["Common/Src/Vsprops",               "master"],
     "common-src-Miniz.git"                    : ["Common/Src/Miniz",                 "master"],
     "common-src-Misc.git"                     : ["Common/Src/Misc",                  "master"],
-    "UpdateCheckAPI.git"                      : ["Common/Src/UpdateCheckAPI",        "master"],
+    "UpdateCheckAPI.git"                      : ["Common/Src/UpdateCheckAPI",        "amd-1.1.0"],
  # QtCommon.
-    "QtCommon"                                : ["QtCommon",                         "rga-2.3"]
+    "QtCommon"                                : ["QtCommon",                         "rga-2.4"]
 }
 
 # The following section contains OS-specific dependencies that are downloaded and placed in the specified target directory.

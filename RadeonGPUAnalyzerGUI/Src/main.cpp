@@ -9,7 +9,7 @@
 #include <QtCommon/Scaling/ScalingManager.h>
 #include <RadeonGPUAnalyzerGUI/../Utils/Include/rgLog.h>
 #ifdef RGA_GUI_AUTOMATION
-#include <rgTestClientThread.h>
+#include <rg_test_client_thread.h>
 #endif
 
 // Local.
@@ -24,6 +24,7 @@
 int main(int argc, char *argv[])
 {
     int result = -1;
+    static const int s_TOP_MARGIN = 8;
     const int EXPLICIT_MIN_WIDTH = 700;
     const int EXPLICIT_MIN_HEIGHT = 700;
 
@@ -31,9 +32,9 @@ int main(int argc, char *argv[])
     // Parse the command line and start Testing Thread.
     rgTestConfig testConfig = rgTestClientThread::ParseCmdLine(argc, argv);
     rgTestClientThread  tester(testConfig);
-    if (testConfig.m_listTests || testConfig.m_testGui)
+    if (testConfig.list_tests_ || testConfig.test_gui_)
     {
-        if (testConfig.m_testGui && testConfig.m_iteration == 1)
+        if (testConfig.test_gui_ && testConfig.iteration_ == 1)
         {
             // Delete old config & project files.
             rgTestClientThread::DeleteOldFiles();
@@ -44,7 +45,7 @@ int main(int argc, char *argv[])
     }
 
     // Don't start GUI if test list is requested.
-    if (testConfig.m_listTests)
+    if (testConfig.list_tests_)
     {
         tester.wait();
         return 0;
@@ -101,6 +102,10 @@ int main(int argc, char *argv[])
         rgConfigManager::Instance().SetCurrentAPI(selectedApi);
     }
 
+    // Get the window geometry from config manager.
+    rgWindowConfig windowConfig = {};
+    rgConfigManager::Instance().GetWindowGeometry(windowConfig);
+
     // Create the main window instance.
     rgMainWindow mainWindow;
 
@@ -111,17 +116,35 @@ int main(int argc, char *argv[])
     // Initialize the main window.
     mainWindow.InitMainWindow();
 
+    // Update the Y position.
+    if (windowConfig.m_windowYPos <= 0)
+    {
+        windowConfig.m_windowYPos = mainWindow.statusBar()->height() + s_TOP_MARGIN;
+    }
+
     // Force an explicit minimum size.
     mainWindow.setMinimumSize(EXPLICIT_MIN_WIDTH, EXPLICIT_MIN_HEIGHT);
-    mainWindow.show();
 
     // Initialize the scaling manager.
     ScalingManager& scalingManager = ScalingManager::Get();
     scalingManager.Initialize(&mainWindow);
     scalingManager.RegisterAll();
 
-    // Show maximized after scaling operations
-    mainWindow.showMaximized();
+    // Show maximized if either geometry value is zero, or if the window was closed maximized.
+    if (windowConfig.m_windowWidth == 0 || windowConfig.m_windowHeight == 0 || windowConfig.m_windowState & Qt::WindowMaximized || windowConfig.m_windowState & Qt::WindowFullScreen)
+    {
+        mainWindow.showMaximized();
+    }
+    else
+    {
+        // Set the window geometry and size policy.
+        QSizePolicy sizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+        mainWindow.setSizePolicy(sizePolicy);
+        mainWindow.setGeometry(windowConfig.m_windowXPos, windowConfig.m_windowYPos, windowConfig.m_windowWidth, windowConfig.m_windowHeight);
+
+        // Show main window.
+        mainWindow.show();
+    }
 
     // Before starting the app, check if there is any queued fatal initialization error.
     std::string fatalErrorMsg = rgConfigManager::Instance().GetFatalErrorMessage();

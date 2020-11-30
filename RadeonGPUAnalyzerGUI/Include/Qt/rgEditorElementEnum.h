@@ -67,6 +67,10 @@ public:
     // Set the current value of the element.
     void SetValue(uint32_t value);
 
+signals:
+    // A signal to indicate change of view.
+    void HotKeyPressedSignal();
+
 protected:
     // A handler invoked when the user has changed the editable value.
     virtual void ValueChangedHandler() override;

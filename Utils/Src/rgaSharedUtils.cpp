@@ -1,4 +1,3 @@
-
 // C++
 #include <cassert>
 #include <sstream>
@@ -10,10 +9,10 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include <AMDTBaseTools/Include/gtString.h>
-#include <AMDTOSWrappers/Include/osFilePath.h>
-#include <AMDTOSWrappers/Include/osFile.h>
-#include <AMDTOSWrappers/Include/osDirectory.h>
+#include "AMDTBaseTools/Include/gtString.h"
+#include "AMDTOSWrappers/Include/osFilePath.h"
+#include "AMDTOSWrappers/Include/osFile.h"
+#include "AMDTOSWrappers/Include/osDirectory.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -23,29 +22,29 @@
 #include "../Include/rgLog.h"
 
 // *** INTERNALLY LINKED SYMBOLS - BEGIN ***
-static const int  WINDOWS_DATE_STRING_LEN = 14;
-static const int  WINDOWS_DATE_STRING_YEAR_OFFSET = 10;
-static const int  WINDOWS_DATE_STRING_DAY_OFFSET = 7;
-static const int  WINDOWS_DATE_STRING_MONTH_OFFSET = 4;
+static const int  kWindowsDateStringLength = 14;
+static const int  kWindowsDateStringYearOffset = 10;
+static const int  kWindowsDateStringDayOffset = 7;
+static const int  kWindowsDateStringMonthOffset = 4;
 // *** INTERNALLY LINKED SYMBOLS - END ***
 
-bool rgaSharedUtils::ConvertDateString(std::string& dateString)
+bool rgaSharedUtils::ConvertDateString(std::string& date_string)
 {
     bool ret = false;
 
 #ifdef _WIN32
 
-    bool isConversionRequired = (dateString != STR_RGA_BUILD_DATE_DEV);
+    bool is_conversion_required = (date_string != STR_RGA_BUILD_DATE_DEV);
 
     // Convert Windows date format to "YYYY-MM-DD".
-    if (isConversionRequired)
+    if (is_conversion_required)
     {
-        ret = (dateString.find('/') != std::string::npos && dateString.size() == WINDOWS_DATE_STRING_LEN);
+        ret = (date_string.find('/') != std::string::npos && date_string.size() == kWindowsDateStringLength);
         if (ret)
         {
-            dateString = dateString.substr(WINDOWS_DATE_STRING_MONTH_OFFSET, 2) + "/" +
-                dateString.substr(WINDOWS_DATE_STRING_DAY_OFFSET, 2) + "/" +
-                dateString.substr(WINDOWS_DATE_STRING_YEAR_OFFSET, 4);
+            date_string = date_string.substr(kWindowsDateStringMonthOffset, 2) + "/" +
+                date_string.substr(kWindowsDateStringDayOffset, 2) + "/" +
+                date_string.substr(kWindowsDateStringYearOffset, 4);
         }
         else
         {
@@ -55,7 +54,7 @@ bool rgaSharedUtils::ConvertDateString(std::string& dateString)
     }
 
     // If a conversion is not required, this is really a success.
-    ret = (!isConversionRequired || ret);
+    ret = (!is_conversion_required || ret);
 
 #else
     // Conversion is only required on Windows.
@@ -80,19 +79,19 @@ bool rgaSharedUtils::ComparePaths(const std::string& path1, const std::string& p
 }
 
 // Get current system time.
-static bool  CurrentTime(struct tm& time)
+static bool CurrentTime(struct tm& time_data)
 {
-    bool  ret = false;
-    std::stringstream  suffix;
+    bool ret = false;
+    std::stringstream suffix;
     time_t  currentTime = std::time(0);
 #ifdef _WIN32
-    struct tm* pTime = &time;
-    ret = (localtime_s(pTime, &currentTime) == 0);
+    struct tm* time_local = &time_data;
+    ret = (localtime_s(time_local, &currentTime) == 0);
 #else
-    struct tm*  pTime = localtime(&currentTime);
-    if (pTime != nullptr)
+    struct tm* time_local = localtime(&currentTime);
+    if (time_local != nullptr)
     {
-        time = *pTime;
+        time_data = *time_local;
         ret = true;
     }
 #endif
@@ -100,42 +99,41 @@ static bool  CurrentTime(struct tm& time)
 }
 
 // Delete log files older than "daysNum" days.
-bool rgaSharedUtils::DeleteOldLogs(const std::string& dir, const std::string& baseFileName, unsigned int daysNum)
+bool rgaSharedUtils::DeleteOldLogs(const std::string& dir, const std::string& base_file_name, unsigned int days_num)
 {
-    bool  ret = false;
-    const double  secondsNum = static_cast<double>(daysNum * 24 * 60 * 60);
-    gtString    gDir, gBaseFileName;
-    gDir << dir.c_str();
-    gBaseFileName << baseFileName.c_str();
-    osFilePath  logFilePath(gBaseFileName);
-    logFilePath.setFileDirectory(gDir);
-    osDirectory logDir;
-    ret = logFilePath.getFileDirectory(logDir) && logDir.exists();
-    assert(logDir.exists());
+    bool ret = false;
+    const double seconds_num = static_cast<double>(days_num * 24 * 60 * 60);
+    gtString dir_gtstr, base_file_name_gtstr;
+    dir_gtstr << dir.c_str();
+    base_file_name_gtstr << base_file_name.c_str();
+    osFilePath  log_file_path(base_file_name_gtstr);
+    log_file_path.setFileDirectory(dir_gtstr);
+    osDirectory log_dir;
+    ret = log_file_path.getFileDirectory(log_dir) && log_dir.exists();
+    assert(log_dir.exists());
 
     if (ret)
     {
-        gtString  logFilePattern, gFileName, gFileExt;
-        gtList<osFilePath>  filePaths;
-        logFilePath.getFileName(gFileName);
-        logFilePath.getFileExtension(gFileExt);
-        if ((ret = !gFileName.isEmpty()) == true)
+        gtString log_file_pattern, filename_gtstr, file_ext_gtstr;
+        gtList<osFilePath>  file_paths;
+        log_file_path.getFileName(filename_gtstr);
+        log_file_path.getFileExtension(file_ext_gtstr);
+        if ((ret = !filename_gtstr.isEmpty()) == true)
         {
-            logFilePattern << gFileName.asASCIICharArray() << "*." << gFileExt.asASCIICharArray();
-
-            if (logDir.getContainedFilePaths(logFilePattern, osDirectory::SORT_BY_DATE_ASCENDING, filePaths))
+            log_file_pattern << filename_gtstr.asASCIICharArray() << "*." << file_ext_gtstr.asASCIICharArray();
+            if (log_dir.getContainedFilePaths(log_file_pattern, osDirectory::SORT_BY_DATE_ASCENDING, file_paths))
             {
-                for (const osFilePath& path : filePaths)
+                for (const osFilePath& path : file_paths)
                 {
-                    osStatStructure  fileStat;
-                    if ((ret = (osWStat(path.asString(), fileStat) == 0)) == true)
+                    osStatStructure file_stat;
+                    if ((ret = (osWStat(path.asString(), file_stat) == 0)) == true)
                     {
-                        time_t  fileTime = fileStat.st_ctime;
+                        time_t file_time = file_stat.st_ctime;
                         struct tm  time;
                         if ((ret = CurrentTime(time)) == true)
                         {
-                            time_t  curTime = std::mktime(&time);
-                            if (std::difftime(curTime, fileTime) > secondsNum)
+                            time_t curr_time = std::mktime(&time);
+                            if (std::difftime(curr_time, file_time) > seconds_num)
                             {
                                 std::remove(path.asString().asASCIICharArray());
                             }
@@ -149,57 +147,53 @@ bool rgaSharedUtils::DeleteOldLogs(const std::string& dir, const std::string& ba
     return ret;
 }
 
-std::string  rgaSharedUtils::ConstructLogFileName(const std::string& baseFileName)
+std::string rgaSharedUtils::ConstructLogFileName(const std::string& base_file_name)
 {
-    struct tm   tt;
-    osFilePath  logFileName;
-    bool  status = !baseFileName.empty();
+    struct tm tt;
+    osFilePath log_file_name;
+    bool status = !base_file_name.empty();
     if (status)
     {
-        gtString  gBaseFileName;
-        gBaseFileName << baseFileName.c_str();
-        logFileName = gBaseFileName;
+        gtString base_file_name_gtstr;
+        base_file_name_gtstr << base_file_name.c_str();
+        log_file_name = base_file_name_gtstr;
     }
 
     // Lambda extending numbers < 10 with leading 0.
-    auto ZeroExt = [](int n) {std::string nS = std::to_string(n); return (n < 10 ? std::string("0") + nS : nS); };
-
+    auto zero_ext = [](int n) {std::string n_str = std::to_string(n); return (n < 10 ? std::string("0") + n_str : n_str); };
     status = status && CurrentTime(tt);
-
     if (status)
     {
         // Append current date/time to the log file name.
         std::stringstream  suffix;
-        suffix << "-" << std::to_string(tt.tm_year + 1900) << ZeroExt(tt.tm_mon + 1) << ZeroExt(tt.tm_mday) <<
-                  "-" << ZeroExt(tt.tm_hour) << ZeroExt(tt.tm_min) << ZeroExt(tt.tm_sec);
+        suffix << "-" << std::to_string(tt.tm_year + 1900) << zero_ext(tt.tm_mon + 1) << zero_ext(tt.tm_mday) <<
+                  "-" << zero_ext(tt.tm_hour) << zero_ext(tt.tm_min) << zero_ext(tt.tm_sec);
 
-        gtString  gFileName;
-        logFileName.getFileName(gFileName);
-        std::string  fileName = gFileName.asASCIICharArray();
-        gFileName.fromASCIIString((fileName + suffix.str()).c_str());
-        logFileName.setFileName(gFileName);
+        gtString  filename_gtstr;
+        log_file_name.getFileName(filename_gtstr);
+        std::string  fileName = filename_gtstr.asASCIICharArray();
+        filename_gtstr.fromASCIIString((fileName + suffix.str()).c_str());
+        log_file_name.setFileName(filename_gtstr);
     }
 
-    return (status ? logFileName.asString().asASCIICharArray() : "");
+    return (status ? log_file_name.asString().asASCIICharArray() : "");
 }
 
-bool  rgaSharedUtils::InitLogFile(const std::string& dir, const std::string& baseFileName, unsigned int oldFilesDaysNum)
+bool rgaSharedUtils::InitLogFile(const std::string& dir, const std::string& base_file_name, unsigned int oldFilesDaysNum)
 {
-    bool  status = DeleteOldLogs(dir, baseFileName, oldFilesDaysNum);
-
+    bool status = DeleteOldLogs(dir, base_file_name, oldFilesDaysNum);
     if (status)
     {
-        std::string  logFileName = ConstructLogFileName(baseFileName);
-        if ((status = !logFileName.empty()) == true)
+        std::string  log_filename = ConstructLogFileName(base_file_name);
+        if ((status = !log_filename.empty()) == true)
         {
-            status = rgLog::OpenLogFile(dir, logFileName);
+            status = rgLog::OpenLogFile(dir, log_filename);
         }
     }
-
     return status;
 }
 
-void  rgaSharedUtils::CloseLogFile()
+void rgaSharedUtils::CloseLogFile()
 {
     rgLog::Close();
 }

@@ -11,8 +11,8 @@
 
 // Local.
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElement.h>
-#include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementArray.h>
-#include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementArrayElement.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementArrayElementAdd.h>
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementArrayElementRemove.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgDefinitions.h>
 #include <RadeonGPUAnalyzerGUI/Include/rgPipelineStateSearcher.h>
 
@@ -44,7 +44,7 @@ public:
 
 signals:
     // A signal emitted when a node should be expanded.
-    void ExpandNode(rgEditorElementArray* pArrayRoot);
+    void ExpandNode(rgEditorElementArrayElementAdd* pArrayRoot);
 
 protected:
     // Check that the pipeline state is valid.
@@ -130,7 +130,7 @@ protected:
                 numExistingElements = newElementCount;
             }
 
-            rgEditorElementArray* pArrayRoot = static_cast<rgEditorElementArray*>(pRootElement);
+            rgEditorElementArrayElementAdd* pArrayRoot = static_cast<rgEditorElementArrayElementAdd*>(pRootElement);
             if (pArrayRoot != nullptr)
             {
                 if (newElementCount == 0)
@@ -143,31 +143,27 @@ protected:
                 }
                 else
                 {
-                    assert(pArrayPointer != nullptr);
-                    if (pArrayPointer != nullptr)
+                    // Allocate the new element array with the updated size.
+                    T* pResized =
+                        ResizeArray(pArrayPointer, static_cast<uint32_t>(numExistingElements), static_cast<uint32_t>(newElementCount));
+
+                    // Remove all existing child element items from the array root node.
+                    pRootElement->ClearChildren();
+
+                    // Create a new element row for each item in the resized array.
+                    CreateArrayElements(newElementCount, pElementTypeName, pArrayRoot, initializationHandler, pResized);
+
+                    // Destroy the old model data.
+                    RG_SAFE_DELETE(pArrayPointer);
+                    pArrayPointer = pResized;
+
+                    // Invoke the array's resized callback.
+                    pArrayRoot->InvokeElementResizedCallback();
+
+                    if (!isFirstInit)
                     {
-                        // Allocate the new element array with the updated size.
-                        T* pResized =
-                            ResizeArray(pArrayPointer, static_cast<uint32_t>(numExistingElements), static_cast<uint32_t>(newElementCount));
-
-                        // Remove all existing child element items from the array root node.
-                        pRootElement->ClearChildren();
-
-                        // Create a new element row for each item in the resized array.
-                        CreateArrayElements(newElementCount, pElementTypeName, pArrayRoot, initializationHandler, pResized);
-
-                        // Destroy the old model data.
-                        RG_SAFE_DELETE(pArrayPointer);
-                        pArrayPointer = pResized;
-
-                        // Invoke the array's resized callback.
-                        pArrayRoot->InvokeElementResizedCallback();
-
-                        if (!isFirstInit)
-                        {
-                            // Expand the array root node that was resized.
-                            emit ExpandNode(pArrayRoot);
-                        }
+                        // Expand the array root node that was resized.
+                        emit ExpandNode(pArrayRoot);
                     }
                 }
             }
@@ -178,7 +174,7 @@ protected:
     // Each new element will be appended to the given pArrayRoot row, and use the provided
     // initializationHandler callback to initialize the new element row.
     template <typename T, typename U = std::function<void>(rgEditorElement*, T*, int)>
-    void CreateArrayElements(int newElementCount, const char* pElementTypeName, rgEditorElementArray* pArrayRoot, U initializationHandler, T* pResized)
+    void CreateArrayElements(int newElementCount, const char* pElementTypeName, rgEditorElementArrayElementAdd* pArrayRoot, U initializationHandler, T* pResized)
     {
         for (int newChildIndex = 0; newChildIndex < newElementCount; ++newChildIndex)
         {
@@ -189,7 +185,7 @@ protected:
             elementNameStream << pElementTypeName;
 
             // Create an element node for each item in the array.
-            rgEditorElementArrayElement* pArrayElement = new rgEditorElementArrayElement(pArrayRoot, elementNameStream.str());
+            rgEditorElementArrayElementRemove* pArrayElement = new rgEditorElementArrayElementRemove(pArrayRoot, elementNameStream.str());
 
             assert(pArrayElement != nullptr);
             assert(pArrayRoot != nullptr);

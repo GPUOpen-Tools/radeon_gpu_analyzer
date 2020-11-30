@@ -155,7 +155,7 @@ void rgPipelineStateView::ResetSearch()
     }
 }
 
-void rgPipelineStateView::HandleNodeExpanded(rgEditorElementArray* pArrayRoot)
+void rgPipelineStateView::HandleNodeExpanded(rgEditorElementArrayElementAdd* pArrayRoot)
 {
     assert(pArrayRoot != nullptr);
     if (pArrayRoot != nullptr)

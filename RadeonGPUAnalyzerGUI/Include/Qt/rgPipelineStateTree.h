@@ -74,6 +74,10 @@ signals:
     // A signal to indicate pipeline state tree focus out.
     void PipelineStateTreeFocusOut();
 
+protected:
+    // The root element in the tree.
+    rgEditorElement* m_pRootElement = nullptr;
+
 private:
     // Compute the vertical offset to the given element, starting at a root element.
     bool ComputeVerticalOffset(rgEditorElement* pRootElement, rgEditorElement* pTargetRow, int& offset);
@@ -110,9 +114,6 @@ private:
 
     // The current search results being highlighted.
     rgPipelineStateSearcher::SearchResultData m_searcherResults;
-
-    // The root element in the tree.
-    rgEditorElement* m_pRootElement = nullptr;
 
     // A structure containing the current selection info.
     CurrentSelection m_currentSelection = {};

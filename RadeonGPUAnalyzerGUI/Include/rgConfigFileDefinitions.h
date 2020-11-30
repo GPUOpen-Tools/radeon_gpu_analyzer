@@ -13,7 +13,8 @@
 // The data model version that RGA uses.
 static const std::string RGA_DATA_MODEL_2_0 = "2.0";
 static const std::string RGA_DATA_MODEL_2_1 = "2.1";
-static const std::string RGA_DATA_MODEL = RGA_DATA_MODEL_2_1;
+static const std::string RGA_DATA_MODEL_2_2 = "2.2";
+static const std::string RGA_DATA_MODEL = RGA_DATA_MODEL_2_2;
 
 // The XML declaration string.
 static const char* RGA_XML_DECLARATION = "xml version = \"1.0\" encoding = \"UTF-8\"";
@@ -190,6 +191,9 @@ static const char* XML_NODE_VULKAN_GLSLANG_OPTIONS_LOCATION = "glslangOptions";
 // Used to serialize the Enable validation layers build setting.
 static const char* XML_NODE_VULKAN_ENABLE_VALIDATION_LAYER = "EnableValidationLayer";
 
+// Binary output file association.
+static const char* XML_NODE_GLOBAL_BINARY_OUTPUT_FILE_NAME = "BinaryOutputFileName";
+
 // *******************************
 // *** VULKAN-SPECIFIC - END ***
 // *******************************
@@ -257,6 +261,24 @@ static const char* XML_NODE_GLOBAL_GUI_SPLITTER_NAME = "SplitterName";
 
 // Splitter config values.
 static const char* XML_NODE_GLOBAL_GUI_SPLITTER_VALUES = "SplitterValues";
+
+// RGA window size values.
+static const char* XML_NODE_GLOBAL_GUI_WINDOW_GEOMETRY = "WindowGeometry";
+
+// RGA window width.
+static const char* XML_NODE_GLOBAL_GUI_WINDOW_WIDTH = "WindowWidth";
+
+// RGA window height.
+static const char* XML_NODE_GLOBAL_GUI_WINDOW_HEIGHT = "WindowHeight";
+
+// RGA window state.
+static const char* XML_NODE_GLOBAL_GUI_WINDOW_STATE = "WindowState";
+
+// RGA window X location.
+static const char* XML_NODE_GLOBAL_GUI_WINDOW_X_POS = "WindowXPos";
+
+// RGA window Y location.
+static const char* XML_NODE_GLOBAL_GUI_WINDOW_Y_POS = "WindowYPos";
 
 // Default build settings.
 static const char* XML_NODE_GLOBAL_DEFAULT_BUILD_SETTINGS = "DefaultBuildSettings";

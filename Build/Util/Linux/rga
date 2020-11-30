@@ -2,7 +2,7 @@
 
 # ----------------------------------------------------------------------------------------------------------------------------------
 # This script launches the rga executable after configuring the environment.
-# (c) 2017 Advanced Micro Devices Inc. All Rights Reserved.
+# (c) 2017-2020 Advanced Micro Devices Inc. All Rights Reserved.
 # ----------------------------------------------------------------------------------------------------------------------------------
 
 if echo "$0" | grep '^/' ; then
@@ -12,23 +12,29 @@ else
 fi
 
 # Enable the use of symbolic links to the script
-if [ -h ${thisScriptFullPath} ]
+if [ -h "$thisScriptFullPath" ]
 then
     LINKTARGET=`readlink -f "$thisScriptFullPath"`
-    thisScriptFullPath=${LINKTARGET}
+    thisScriptFullPath="$LINKTARGET"
 fi
 
 RGA_BIN_PATH=`dirname "$thisScriptFullPath"`
 
 # Add RGA's binaries directory to PATH:
-export PATH="${RGA_BIN_PATH}:$PATH"
+export PATH="$RGA_BIN_PATH":"$RGA_BIN_PATH/utils":$PATH
 
-# Add RGA's binaries directory to LD_LIBRARY_PATH:
-export LD_LIBRARY_PATH="${RGA_BIN_PATH}:$LD_LIBRARY_PATH"
+# Add RGA's bin and lib directories to LD_LIBRARY_PATH:
+export LD_LIBRARY_PATH="$RGA_BIN_PATH":"$RGA_BIN_PATH/lib":"$RGA_BIN_PATH/utils":$LD_LIBRARY_PATH
+
+# Use the amdgpu-pro driver Vulkan ICD files
+if [ -d /opt/amdgpu-pro/etc/vulkan/icd.d ]
+then
+    export VK_ICD_FILENAMES=/opt/amdgpu-pro/etc/vulkan/icd.d/amd_icd64.json
+fi
 
 # Call RGA executable
-if [ -e $RGA_BIN_PATH/rga-bin-internal ]; then
-    $RGA_BIN_PATH/rga-bin-internal "$@"
+if [ -e "$RGA_BIN_PATH/rga-bin-internal" ]; then
+    "$RGA_BIN_PATH"/rga-bin-internal "$@"
 else
-    $RGA_BIN_PATH/rga-bin "$@"
+    "$RGA_BIN_PATH"/rga-bin "$@"
 fi

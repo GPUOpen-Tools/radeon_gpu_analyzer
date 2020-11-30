@@ -104,6 +104,9 @@ rgBuildSettingsViewOpenCL::rgBuildSettingsViewOpenCL(QWidget* pParent, const rgB
     // Set the event filter for "Additional Options" and "All Options" text edits.
     ui.additionalOptionsTextEdit->installEventFilter(this);
     ui.allOptionsTextEdit->installEventFilter(this);
+
+    // Disable tabbing in additional options text edit, so tabbing moves focus to the next widget.
+    this->ui.additionalOptionsTextEdit->setTabChangesFocus(true);
 }
 
 void rgBuildSettingsViewOpenCL::PushToWidgets(const rgBuildSettingsOpenCL& buildSettings)
@@ -128,7 +131,7 @@ void rgBuildSettingsViewOpenCL::PushToWidgets(const rgBuildSettingsOpenCL& build
     ui.allowUnsafeOptimizationsCheckBox->setChecked(buildSettings.m_isUnsafeOptimizations);
     ui.assumeNoNanNorInfiniteCheckBox->setChecked(buildSettings.m_isNoNanNorInfinite);
     ui.aggressiveMathOptimizationsCheckBox->setChecked(buildSettings.m_isAggressiveMathOptimizations);
-    ui.correctlyRoundSinglePercisionCheckBox->setChecked(buildSettings.m_isCorrectlyRoundDivSqrt);
+    ui.correctlyRoundSinglePrecisionCheckBox->setChecked(buildSettings.m_isCorrectlyRoundDivSqrt);
     ui.additionalOptionsTextEdit->document()->setPlainText(buildSettings.m_additionalOptions.c_str());
     ui.compilerBinariesLineEdit->setText(std::get<CompilerFolderType::Bin>(buildSettings.m_compilerPaths).c_str());
     ui.compilerIncludesLineEdit->setText(std::get<CompilerFolderType::Include>(buildSettings.m_compilerPaths).c_str());
@@ -200,7 +203,7 @@ rgBuildSettingsOpenCL rgBuildSettingsViewOpenCL::PullFromWidgets() const
     settings.m_isAggressiveMathOptimizations = ui.aggressiveMathOptimizationsCheckBox->isChecked();
 
     // CorrectlyRoundSingleDivideAndSqrt:
-    settings.m_isCorrectlyRoundDivSqrt = ui.correctlyRoundSinglePercisionCheckBox->isChecked();
+    settings.m_isCorrectlyRoundDivSqrt = ui.correctlyRoundSinglePrecisionCheckBox->isChecked();
 
     return settings;
 }
@@ -256,7 +259,7 @@ void rgBuildSettingsViewOpenCL::ConnectSignals()
     isConnected = connect(this->ui.aggressiveMathOptimizationsCheckBox, &rgCheckBox::stateChanged, this, &rgBuildSettingsViewOpenCL::HandleCheckboxStateChanged);
     assert(isConnected);
 
-    isConnected = connect(this->ui.correctlyRoundSinglePercisionCheckBox, &rgCheckBox::stateChanged, this, &rgBuildSettingsViewOpenCL::HandleCheckboxStateChanged);
+    isConnected = connect(this->ui.correctlyRoundSinglePrecisionCheckBox, &rgCheckBox::stateChanged, this, &rgBuildSettingsViewOpenCL::HandleCheckboxStateChanged);
     assert(isConnected);
 
     // Connect "Additional Options" text box.
@@ -342,7 +345,7 @@ void rgBuildSettingsViewOpenCL::ConnectCheckBoxClickedEvents()
     isConnected = connect(this->ui.assumeNoNanNorInfiniteCheckBox, &rgCheckBox::clicked, this, &rgBuildSettingsViewOpenCL::HandleCheckBoxClickedEvent);
     assert(isConnected);
 
-    isConnected = connect(this->ui.correctlyRoundSinglePercisionCheckBox, &rgCheckBox::clicked, this, &rgBuildSettingsViewOpenCL::HandleCheckBoxClickedEvent);
+    isConnected = connect(this->ui.correctlyRoundSinglePrecisionCheckBox, &rgCheckBox::clicked, this, &rgBuildSettingsViewOpenCL::HandleCheckBoxClickedEvent);
     assert(isConnected);
 
     isConnected = connect(this->ui.doubleAsSingleCheckBox, &rgCheckBox::clicked, this, &rgBuildSettingsViewOpenCL::HandleCheckBoxClickedEvent);
@@ -643,7 +646,7 @@ void rgBuildSettingsViewOpenCL::SetCursor()
     ui.aggressiveMathOptimizationsCheckBox->setCursor(Qt::PointingHandCursor);
     ui.allowUnsafeOptimizationsCheckBox->setCursor(Qt::PointingHandCursor);
     ui.assumeNoNanNorInfiniteCheckBox->setCursor(Qt::PointingHandCursor);
-    ui.correctlyRoundSinglePercisionCheckBox->setCursor(Qt::PointingHandCursor);
+    ui.correctlyRoundSinglePrecisionCheckBox->setCursor(Qt::PointingHandCursor);
     ui.doubleAsSingleCheckBox->setCursor(Qt::PointingHandCursor);
     ui.enableMADCheckBox->setCursor(Qt::PointingHandCursor);
     ui.flushDenormalizedCheckBox->setCursor(Qt::PointingHandCursor);
@@ -741,7 +744,7 @@ void rgBuildSettingsViewOpenCL::SetToolTipGeometry()
     ui.aggressiveMathOptimizationsCheckBox->setStyleSheet("QToolTip {" + widthString + "}");
     ui.allowUnsafeOptimizationsCheckBox->setStyleSheet("QToolTip {" + widthString + "}");
     ui.assumeNoNanNorInfiniteCheckBox->setStyleSheet("QToolTip {" + widthString + "}");
-    ui.correctlyRoundSinglePercisionCheckBox->setStyleSheet("QToolTip {" + widthString + "}");
+    ui.correctlyRoundSinglePrecisionCheckBox->setStyleSheet("QToolTip {" + widthString + "}");
     ui.doubleAsSingleCheckBox->setStyleSheet("QToolTip {" + widthString + "}");
     ui.enableMADCheckBox->setStyleSheet("QToolTip {" + widthString + "}");
     ui.ignoreZeroSignednessCheckBox->setStyleSheet("QToolTip {" + widthString + "}");

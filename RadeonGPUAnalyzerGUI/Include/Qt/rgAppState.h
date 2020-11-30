@@ -77,6 +77,9 @@ public:
     // Returns true if the app state is of a graphics API type, false otherwise.
     bool IsGraphics() const;
 
+    // Check to see if the input file names in global build settings are blank.
+    bool IsInputFileNameBlank() const;
+
 protected:
     // Create API-specific file actions, and add each new action to the top of the File menu.
     virtual void CreateApiSpecificFileActions(QMenu* pMenubar) = 0;

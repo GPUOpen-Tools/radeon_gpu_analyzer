@@ -62,7 +62,7 @@ bool rgConfigFileReaderVulkan::ReadProjectClone(tinyxml2::XMLDocument& doc, tiny
         assert(ret);
 
         // Read the build settings that apply only to Vulkan.
-        ret = ret && ReadApiBuildSettings(pNode, pBuildSettings);
+        ret = ret && ReadApiBuildSettings(pNode, pBuildSettings, pVulkanProject->m_projectDataModelVersion);
         assert(ret);
 
         if (ret)
@@ -80,10 +80,13 @@ bool rgConfigFileReaderVulkan::ReadProjectClone(tinyxml2::XMLDocument& doc, tiny
 
 bool rgConfigFileReaderVulkan::ReadProjectConfigFile(tinyxml2::XMLDocument& doc, const char* pFileDataModelVersion, std::shared_ptr<rgProject>& pRgaProject)
 {
-    // The config files are the same format for v2.0 and v2.1
+    // The config files are the same format for v2.0 and v2.1.
+    // Version 2.2 requires processing of binary output file, which
+    // is handled later.
     bool isVersionCompatible =
         (RGA_DATA_MODEL_2_0.compare(pFileDataModelVersion) == 0) ||
-        (RGA_DATA_MODEL_2_1.compare(pFileDataModelVersion) == 0);
+        (RGA_DATA_MODEL_2_1.compare(pFileDataModelVersion) == 0) ||
+        (RGA_DATA_MODEL_2_2.compare(pFileDataModelVersion) == 0);
 
     assert(isVersionCompatible);
 
@@ -114,6 +117,7 @@ bool rgConfigFileReaderVulkan::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
                     // Create the RGA project object.
                     std::shared_ptr<rgProjectVulkan> pVulkanProject = std::make_shared<rgProjectVulkan>();
                     pVulkanProject->m_projectName = projectName;
+                    pVulkanProject->m_projectDataModelVersion = pFileDataModelVersion;
                     pRgaProject = pVulkanProject;
 
                     // Iterate through the project's clones: get the first clone.
@@ -136,7 +140,7 @@ bool rgConfigFileReaderVulkan::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
     return ret;
 }
 
-bool rgConfigFileReaderVulkan::ReadApiBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings)
+bool rgConfigFileReaderVulkan::ReadApiBuildSettings(tinyxml2::XMLNode* pNode, std::shared_ptr<rgBuildSettings> pBuildSettings, const std::string& version)
 {
     bool ret = false;
 
@@ -147,12 +151,43 @@ bool rgConfigFileReaderVulkan::ReadApiBuildSettings(tinyxml2::XMLNode* pNode, st
         assert(pBuildSettingsVulkan != nullptr);
         if (pBuildSettingsVulkan != nullptr)
         {
-            assert(pNode != nullptr);
-            if (pNode != nullptr)
+            if (RGA_DATA_MODEL_2_2.compare(version) == 0)
             {
-                // Generate Debug Info.
-                pNode = pNode->FirstChildElement(XML_NODE_VULKAN_GENERATE_DEBUG_INFO);
-                ret = rgXMLUtils::ReadNodeTextBool(pNode, pBuildSettingsVulkan->m_isGenerateDebugInfoChecked);
+                assert(pNode != nullptr);
+                if (pNode != nullptr)
+                {
+                    // Binary output file name.
+                    pNode = pNode->FirstChildElement(XML_NODE_GLOBAL_BINARY_OUTPUT_FILE_NAME);
+                    ret = (pNode != nullptr);
+                    assert(pNode != nullptr);
+                    std::string binaryFileName;
+                    bool shouldRead = rgXMLUtils::ReadNodeTextString(pNode, binaryFileName);
+                    if (shouldRead)
+                    {
+                        pBuildSettingsVulkan->m_binaryFileName = binaryFileName;
+                    }
+                }
+
+                assert(pNode != nullptr);
+                if (ret && pNode != nullptr)
+                {
+                    // Generate Debug Info.
+                    pNode = pNode->NextSiblingElement(XML_NODE_VULKAN_GENERATE_DEBUG_INFO);
+                    ret = rgXMLUtils::ReadNodeTextBool(pNode, pBuildSettingsVulkan->m_isGenerateDebugInfoChecked);
+                }
+            }
+            else
+            {
+                // Use the default binary output file name here.
+                pBuildSettingsVulkan->m_binaryFileName = STR_BUILD_SETTINGS_OUTPUT_BINARY_FILE_NAME;
+
+                assert(pNode != nullptr);
+                if (pNode != nullptr)
+                {
+                    // Generate Debug Info.
+                    pNode = pNode->FirstChildElement(XML_NODE_VULKAN_GENERATE_DEBUG_INFO);
+                    ret = rgXMLUtils::ReadNodeTextBool(pNode, pBuildSettingsVulkan->m_isGenerateDebugInfoChecked);
+                }
             }
 
             if (ret && pNode != nullptr)
@@ -315,6 +350,9 @@ bool rgConfigFileWriterVulkan::WriteBuildSettingsElement(const std::shared_ptr<r
             ret = WriteGeneralBuildSettings(pBuildSettings, doc, pBuildSettingsElem);
 
             // Write Vulkan-specific settings.
+
+            // Binary output file name.
+            rgXMLUtils::AppendXMLElement(doc, pBuildSettingsElem, XML_NODE_GLOBAL_BINARY_OUTPUT_FILE_NAME, pBuildSettingsVulkan->m_binaryFileName.c_str());
 
             // Generate debug information.
             rgXMLUtils::AppendXMLElement(doc, pBuildSettingsElem, XML_NODE_VULKAN_GENERATE_DEBUG_INFO, pBuildSettingsVulkan->m_isGenerateDebugInfoChecked);

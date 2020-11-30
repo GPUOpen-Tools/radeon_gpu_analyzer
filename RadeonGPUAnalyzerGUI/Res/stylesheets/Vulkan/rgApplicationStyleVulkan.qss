@@ -40,3 +40,32 @@ rgViewContainer[viewFocused="true"] #viewTitlebar
 {
     border-bottom: 3px solid rgb(224, 30, 55);
 }
+
+/********************************************************************/
+/* Target GPUs line edit background
+/********************************************************************/
+rgBuildSettingsViewVulkan #targetGPUsLineEdit
+{
+    background-color: rgb(240, 240, 240);
+}
+
+/********************************************************************/
+/* Line edit border color
+/********************************************************************/
+QLineEdit
+{
+    border: 1px solid black;
+}
+
+rgPipelineStateEditorWidgetNumeric #lineEdit:focus
+{
+    border: 1px solid rgb(224, 30, 55);
+}
+
+/********************************************************************/
+/* All options text edit
+/********************************************************************/
+rgBuildSettingsViewVulkan #allOptionsTextEdit
+{
+    border: 1px solid black;
+}

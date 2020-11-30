@@ -64,6 +64,9 @@ rgBuildSettingsViewVulkan::rgBuildSettingsViewVulkan(QWidget* pParent, const rgB
     // Initialize the UI based on the incoming build settings.
     PushToWidgets(buildSettings);
 
+    // Initialize the command line preview text.
+    UpdateCommandLineText();
+
     // Set tooltips for general items.
     ui.targetGPUsLabel->setToolTip(STR_BUILD_SETTINGS_TARGET_GPUS_TOOLTIP);
     ui.predefinedMacrosLabel->setToolTip(STR_BUILD_SETTINGS_PREDEFINED_MACROS_TOOLTIP);
@@ -134,6 +137,20 @@ void rgBuildSettingsViewVulkan::ConnectCheckBoxClickedEvents()
 // Make the UI reflect the values in the supplied settings struct.
 void rgBuildSettingsViewVulkan::PushToWidgets(const rgBuildSettingsVulkan& settings)
 {
+    // Disable any signals from the widgets while they're being populated.
+    QSignalBlocker signalBlockerTargetGPUsLineEdit(ui.targetGPUsLineEdit);
+    QSignalBlocker signalBlockerPredefinedMacrosLineEdit(ui.predefinedMacrosLineEdit);
+    QSignalBlocker signalBlockerIncludeDirectoriesLineEdit(ui.includeDirectoriesLineEdit);
+    QSignalBlocker signalBlockerGenerateDebugInfoCheckBox(ui.generateDebugInfoCheckBox);
+    QSignalBlocker signalBlockerNoExplicitBindingsCheckBox(ui.noExplicitBindingsCheckBox);
+    QSignalBlocker signalBlockerUseHLSLBlockOffsetsCheckBox(ui.useHLSLBlockOffsetsCheckBox);
+    QSignalBlocker signalBlockerUseHLSLIOMappingCheckBox(ui.useHLSLIOMappingCheckBox);
+    QSignalBlocker signalBlockerEnableValidationLayersCheckBox(ui.enableValidationLayersCheckBox);
+    QSignalBlocker signalBlockerICDLocationLineEdit(ui.ICDLocationLineEdit);
+    QSignalBlocker signalBlockerGlslangOptionsLineEdit(ui.glslangOptionsLineEdit);
+    QSignalBlocker signalBlockerCompilerBinariesLineEdit(ui.compilerBinariesLineEdit);
+    QSignalBlocker signalBlockerOutputFileBinaryNameLineEdit(ui.outputFileBinaryNameLineEdit);
+
     // The items below are common build settings for all API types.
     QString targetGpusList(rgUtils::BuildSemicolonSeparatedStringList(settings.m_targetGpus).c_str());
     ui.targetGPUsLineEdit->setText(targetGpusList);
@@ -153,31 +170,34 @@ void rgBuildSettingsViewVulkan::PushToWidgets(const rgBuildSettingsVulkan& setti
     ui.ICDLocationLineEdit->setText(QString::fromStdString(settings.m_ICDLocation));
     ui.glslangOptionsLineEdit->setText(QString::fromStdString(settings.m_glslangOptions));
     ui.compilerBinariesLineEdit->setText(QString::fromStdString(std::get<CompilerFolderType::Bin>(settings.m_compilerPaths)));
+
+    // Output binary file name.
+    ui.outputFileBinaryNameLineEdit->setText(settings.m_binaryFileName.c_str());
 }
 
 rgBuildSettingsVulkan rgBuildSettingsViewVulkan::PullFromWidgets() const
 {
     rgBuildSettingsVulkan settings;
 
-    // Target GPUs
+    // Target GPUs.
     std::vector<std::string> targetGPUsVector;
     const std::string& commaSeparatedTargetGPUs = ui.targetGPUsLineEdit->text().toStdString();
     rgUtils::splitString(commaSeparatedTargetGPUs, rgConfigManager::RGA_LIST_DELIMITER, targetGPUsVector);
     settings.m_targetGpus = targetGPUsVector;
 
-    // Predefined Macros
+    // Predefined Macros.
     std::vector<std::string> predefinedMacrosVector;
     const std::string& commaSeparatedPredefinedMacros = ui.predefinedMacrosLineEdit->text().toStdString();
     rgUtils::splitString(commaSeparatedPredefinedMacros, rgConfigManager::RGA_LIST_DELIMITER, predefinedMacrosVector);
     settings.m_predefinedMacros = predefinedMacrosVector;
 
-    // Additional Include Directories
+    // Additional Include Directories.
     std::vector<std::string> additionalIncludeDirectoriesVector;
     const std::string& commaSeparatedAdditionalIncludeDirectories = ui.includeDirectoriesLineEdit->text().toStdString();
     rgUtils::splitString(commaSeparatedAdditionalIncludeDirectories, rgConfigManager::RGA_LIST_DELIMITER, additionalIncludeDirectoriesVector);
     settings.m_additionalIncludeDirectories = additionalIncludeDirectoriesVector;
 
-    // Vulkan-specific settings
+    // Vulkan-specific settings.
     settings.m_isGenerateDebugInfoChecked = ui.generateDebugInfoCheckBox->isChecked();
     settings.m_isNoExplicitBindingsChecked = ui.noExplicitBindingsCheckBox->isChecked();
     settings.m_isUseHlslBlockOffsetsChecked = ui.useHLSLBlockOffsetsCheckBox->isChecked();
@@ -186,6 +206,9 @@ rgBuildSettingsVulkan rgBuildSettingsViewVulkan::PullFromWidgets() const
     settings.m_ICDLocation = ui.ICDLocationLineEdit->text().toStdString();
     settings.m_glslangOptions = ui.glslangOptionsLineEdit->text().toStdString();
     std::get<CompilerFolderType::Bin>(settings.m_compilerPaths) = ui.compilerBinariesLineEdit->text().toStdString();
+
+    // Binary output file name.
+    settings.m_binaryFileName = ui.outputFileBinaryNameLineEdit->text().toStdString();
 
     return settings;
 }
@@ -263,6 +286,53 @@ void rgBuildSettingsViewVulkan::ConnectSignals()
     // Handle changes to the Alternative Compiler path line edit.
     isConnected = connect(this->ui.compilerBinariesLineEdit, &QLineEdit::textChanged, this, &rgBuildSettingsViewVulkan::HandleAlternativeCompilerLineEditChanged);
     assert(isConnected);
+
+    // Binary Output File name textChanged signal.
+    isConnected = connect(this->ui.outputFileBinaryNameLineEdit, &QLineEdit::textChanged, this, &rgBuildSettingsViewVulkan::HandleOutputBinaryEditBoxChanged);
+    assert(isConnected);
+
+    // Binary Output File name editingFinished signal.
+    isConnected = connect(this->ui.outputFileBinaryNameLineEdit, &QLineEdit::editingFinished, this, &rgBuildSettingsViewVulkan::HandleOutputBinaryFileEditingFinished);
+    assert(isConnected);
+}
+
+void rgBuildSettingsViewVulkan::HandleOutputBinaryFileEditingFinished()
+{
+    // Verify that the output binary file text is not empty before losing the focus.
+    if (this->ui.outputFileBinaryNameLineEdit->text().trimmed().isEmpty() || !rgUtils::IsValidFileName(ui.outputFileBinaryNameLineEdit->text().toStdString()))
+    {
+        // Initialize the binary output file name edit line.
+        std::shared_ptr<rgBuildSettings> pDefaultSettings = rgConfigManager::Instance().GetUserGlobalBuildSettings(rgProjectAPI::Vulkan);
+        auto pVkDefaultSettings = std::dynamic_pointer_cast<rgBuildSettingsVulkan>(pDefaultSettings);
+
+        assert(pVkDefaultSettings != nullptr);
+        if (pVkDefaultSettings != nullptr)
+        {
+            this->ui.outputFileBinaryNameLineEdit->setText(pVkDefaultSettings->m_binaryFileName.c_str());
+        }
+        this->ui.outputFileBinaryNameLineEdit->setFocus();
+    }
+
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
+
+    // Update the command line preview text.
+    UpdateCommandLineText();
+}
+
+void rgBuildSettingsViewVulkan::HandleOutputBinaryEditBoxChanged(const QString& text)
+{
+    // Update the tooltip.
+    ui.outputFileBinaryNameLineEdit->setToolTip(text);
+
+    // Restore the cursor to the original position when the text has changed.
+    QtCommon::QtUtil::RestoreCursorPosition cursorPosition(ui.outputFileBinaryNameLineEdit);
+
+    // Signal to any listeners that the values in the UI have changed.
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
+
+    // Update the command line preview text.
+    UpdateCommandLineText();
 }
 
 void rgBuildSettingsViewVulkan::HandleICDLocationBrowseButtonClick(bool /* checked */)

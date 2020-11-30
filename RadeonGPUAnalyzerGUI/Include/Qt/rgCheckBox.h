@@ -14,6 +14,7 @@ public:
 protected:
     virtual void focusInEvent(QFocusEvent* pEvent) override;
     virtual void focusOutEvent(QFocusEvent* pEvent) override;
+    virtual void mouseMoveEvent(QMouseEvent* pEvent) override;
 
 signals:
     void CheckBoxFocusInEvent();
