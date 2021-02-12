@@ -155,11 +155,11 @@
     <ROW File="Qt5Gui.dll" Component_="Qt5Gui.dll" FileName="Qt5Gui.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Gui.dll" SelfReg="false" NextFile="Qt5Svg.dll"/>
     <ROW File="Qt5Svg.dll" Component_="Qt5Svg.dll" FileName="Qt5Svg.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Svg.dll" SelfReg="false" NextFile="Qt5Widgets.dll"/>
     <ROW File="Qt5Widgets.dll" Component_="Qt5Widgets.dll" FileName="QT5WID~1.DLL|Qt5Widgets.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Widgets.dll" SelfReg="false" NextFile="rga.exe"/>
+    <ROW File="README.md" Component_="License.txt" FileName="README.md" Attributes="0" SourcePath="..\README.md" SelfReg="false"/>
     <ROW File="RGADX11.exe" Component_="RGADX11.exe" FileName="RGADX11.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\RGADX11.exe" SelfReg="false" NextFile="spvgen.dll" DigSign="true"/>
     <ROW File="RGALayerLauncher.exe" Component_="RGALayerLauncher.exe" FileName="RGALAY~1.EXE|RGALayerLauncher.exe" Attributes="0" SourcePath="..\Utils\Vulkan\Windows\RGALayer\RGALayerLauncher\bin\Release\RGALayerLauncher.exe" SelfReg="false" NextFile="EULA.txt" DigSign="true"/>
-    <ROW File="RGA_NOTICES.txt" Component_="License.txt" FileName="RGA_NO~1.TXT|RGA_NOTICES.txt" Attributes="0" SourcePath="..\RGA_NOTICES.txt" SelfReg="false" NextFile="RGA_README.md"/>
-    <ROW File="RGA_README.md" Component_="License.txt" FileName="RGA_RE~1.MD|RGA_README.md" Attributes="0" SourcePath="..\RGA_README.md" SelfReg="false" NextFile="RGA_RELEASE_NOTES.txt"/>
-    <ROW File="RGA_RELEASE_NOTES.txt" Component_="License.txt" FileName="RGA_RE~1.TXT|RGA_RELEASE_NOTES.txt" Attributes="0" SourcePath="..\Documentation\RGA_RELEASE_NOTES.txt" SelfReg="false"/>
+    <ROW File="RGA_NOTICES.txt" Component_="License.txt" FileName="RGA_NO~1.TXT|RGA_NOTICES.txt" Attributes="0" SourcePath="..\RGA_NOTICES.txt" SelfReg="false" NextFile="RGA_RELEASE_NOTES.txt"/>
+    <ROW File="RGA_RELEASE_NOTES.txt" Component_="License.txt" FileName="RGA_RE~1.TXT|RGA_RELEASE_NOTES.txt" Attributes="0" SourcePath="..\Documentation\RGA_RELEASE_NOTES.txt" SelfReg="false" NextFile="README.md"/>
     <ROW File="RadeonGPUAnalyzer.exe" Component_="RadeonGPUAnalyzer.exe" FileName="RADEON~1.EXE|RadeonGPUAnalyzer.exe" Attributes="0" SourcePath="..\BuildOutput\bin\RadeonGPUAnalyzer.exe" SelfReg="false" NextFile="qwindowsvistastyle.dll" DigSign="true"/>
     <ROW File="RobotoSlabBold.ttf" Component_="fontawesomewebfont.eot" FileName="ROBOTO~1.TTF|RobotoSlab-Bold.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\RobotoSlab-Bold.ttf" SelfReg="false" NextFile="RobotoSlabRegular.ttf"/>
     <ROW File="RobotoSlabRegular.ttf" Component_="fontawesomewebfont.eot" FileName="ROBOTO~2.TTF|RobotoSlab-Regular.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\fonts\RobotoSlab-Regular.ttf" SelfReg="false" NextFile="jquery3.1.0.js"/>
