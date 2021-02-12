@@ -1,11 +1,26 @@
 /********************************************************************/
-/* Frame focus border
+/* Line Edit and Checkbox focus border
 /********************************************************************/
-QFrame:focus,
 QLineEdit:focus,
 QCheckBox:focus
 {
     border: 1px solid lightGreen;
+}
+
+/********************************************************************/
+/* OpenCL File Menu border color
+/********************************************************************/
+rgMenuOpenCL
+{
+    border: 1px solid black;
+}
+
+/********************************************************************/
+/* Frame focus border
+/********************************************************************/
+QFrame:focus
+{
+    border: 1px solid black;
 }
 
 rgBuildSettingsViewOpenCL #addTargetGPUsButton:focus,

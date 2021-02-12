@@ -65,6 +65,7 @@ public:
     std::vector<std::string> include_path;                      ///< Additional Include paths
     bool                     should_avoid_binary_device_prefix; ///< If true then CLI will not add the asic name to the generated binary output file.
     bool                     should_avoid_binary_suffix;        ///< If true, no extension would be added to the output binary file.
+    bool                     should_retain_temp_files;          ///< If true, temporary files will not be cleaned up.
     std::string              version_info_file;                 ///< RGA CLI config file name.
     std::string              session_metadata_file;             ///< RGA CLI session metadata file name.
     std::string              log_file;                          ///< RGA CLI log file name (full path).
@@ -134,7 +135,9 @@ public:
 
     // DX12: DXR.
     std::string dxr_state_desc;                                 ///< Full path to the DXR state description file.
+    std::string dxr_hlsl;                                       ///< Full path to the DXR HLSL input file.
     std::string dxr_mode;                                       ///< DXR mode: shader or pipeline.
+    std::string dxr_shader_model;                               ///< DXR shader model: shader model to be used for DXR front-end compilation.
     std::vector<std::string> dxr_exports;                       ///< DXR exports to retrieve disassembly for. In pipeline mode this should be one or more a raygeneration shaders.
 
     // DX12: debug layer.

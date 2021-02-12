@@ -233,9 +233,6 @@ protected:
     // Set the cursor to pointing hand cursor for various widgets.
     void SetCursor();
 
-    // Set the border stylesheet.
-    virtual void SetBorderStylesheet() = 0;
-
     // Set the current target GPU to display disassembly for.
     void SetTargetGpu(const std::string& targetGpu);
 

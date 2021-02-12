@@ -279,6 +279,9 @@ signals:
     // Update the application notification message.
     void UpdateApplicationNotificationMessageSignal(const std::string& message, const std::string& tooltip);
 
+    // Emit a signal to indicate change in splitter location.
+    void SplitterMoved();
+
 public slots:
     // Handle switching focus to the next view in the rgViewManager.
     void HandleFocusNextView();

@@ -63,14 +63,17 @@ static const char* kStrErrorInvalidDxcOptionArgument = "Error: argument to --dxc
 // DXR-specific error messages.
 static const char* kStrErrorDxrIsaNotGeneratedB = " export.";
 static const char* kStrErrorDxrIsaNotGeneratedBPipeline = " pipeline.";
-static const char* kStrErrorDxrStateDescFileMissing = "Error: no state description file provided (use --state-desc option).";
+static const char* kStrErrorDxrHlslInputFileMissing = "Error: no HLSL input source file provided (use --hlsl option).";
+static const char* kStrErrorDxrStateDescAndHlslFileMix = "Error: cannot mix --state-desc and --hlsl options.If --hlsl option is used, it must contain the entire state definition in the HLSL source code.";
 static const char* kStrErrorDxrStateDescFileNotFoundOrEmpty = "Error: DXR state JSON file not found or empty: ";
+static const char* kStrErrorDxrHlslFileNotFoundOrEmpty = "Error: HLSL input file not found or empty: ";
 static const char* kStrErrorDxrModeNotProvided = "Error: no DXR mode provided (use --mode with either 'pipeline' or 'shader' as the argument).";
 static const char* kStrErrorDxrModeNotRecognizedA = "Error: unrecognized DXR mode given: ";
 static const char* kStrErrorDxrModeNotRecognizedB = ". Expected: pipeline or shader.";
 static const char* kStrErrorDxrExportNotProvided = "Error: DXR export not provided (use --export option).";
 static const char* kStrErrorDxrRootSignatureHlslFileDefined = "Error: use --rs-hlsl option together with --rs-macro to specify the HLSL file where the macro is defined.";
 static const char* kStrErrorDxrNoSupportedTargetsFound = "Error: non of the targets which are supported by the driver is gfx1030 or beyond. Aborting.";
+static const char* kStrErrorDxrExportNotSupportedInPipelineMode = "Error: --export option not supported in pipeline mode.";
 
 // Constants - warnings messages.
 static const char* kStrWarningDx12AutoDeducingRootSignatureAsHlsl = "Warning: --rs-hlsl option not provided, assuming that root signature macro is defined in ";
@@ -88,7 +91,11 @@ static const char* kStrInfoTemplateGpsoFileGenerated = "Template .gpso file crea
 static const char* kStrInfoDx12PostProcessingSeparator = "-=-=-=-=-=-=-";
 static const char* kStrInfoDx12PostProcessing = "Post-processing...";
 static const char* kStrInfoDxrPerformingPostProcessing = "...";
-
+static const char* kStrInfoDxrAssumingShaderMode = "Info: no --mode argument detected, assuming '--mode shader' by default.";
+static const char* kStrInfoDxrOutputPipelineNumber = "pipeline #";
+static const char* kStrInfoDxrOutputPipelineName = "pipeline assoicated with raygeneration shader ";
+static const char* kStrInfoDxrOutputShader = "shader ";
+static const char* kStrInfoDxrUsingDefaultShaderModel = "Info: using user-provided shader model instead of the default model (";
 
 // Constants other.
 static const char* kStrTemplateGpsoFileContent = "# schemaVersion\n1.0\n\n# InputLayoutNumElements (the number of "
@@ -106,6 +113,8 @@ static const char* kStrDxrModePipeline = "pipeline";
 static const char* kStrDxrModeShader = "shader";
 static const char* kStrDxrUnifiedSuffix = "_unified";
 const char kStrFileNmaeTokenIndirect = '*';
+const char* kStrDxrNullPipelineName = "null";
+const char* kStrDefaultDxrShaderModel = "lib_6_3";
 
 // Validates the input arguments for a specific stage, and prints appropriate error messages to the console.
 static bool IsShaderInputsValid(const Config& config, const std::string& shader_hlsl, const std::string& shader_model,
@@ -154,7 +163,7 @@ static bool IsDxbcInputValid(const std::string& dxbc_input_file, const std::stri
 // Returns true if this is DXR Shader mode and false otherwise.
 static bool IsDxrShaderMode(const Config& config)
 {
-    std::string dxr_mode = KcUtils::ToLower(config.dxr_mode);;
+    std::string dxr_mode = KcUtils::ToLower(config.dxr_mode);
     return (dxr_mode.compare(kStrDxrModeShader) == 0);
 }
 
@@ -162,16 +171,28 @@ static bool IsDxrShaderMode(const Config& config)
 static bool IsInputValidDxr(const Config& config)
 {
     bool ret = true;
-    if (config.dxr_state_desc.empty())
+    if (config.dxr_hlsl.empty() && config.dxr_state_desc.empty())
     {
-        // State description file not provided.
-        std::cout << kStrErrorDxrStateDescFileMissing << std::endl;
+        // HLSL file not provided.
+        std::cout << kStrErrorDxrHlslInputFileMissing << std::endl;
         ret = false;
     }
-    else if (!KcUtils::FileNotEmpty(config.dxr_state_desc))
+    else if (!config.dxr_state_desc.empty() && !config.dxr_hlsl.empty())
+    {
+        // Mix of state description file and HLSL input.
+        std::cout << kStrErrorDxrStateDescAndHlslFileMix << std::endl;
+        ret = false;
+    }
+    else if (!config.dxr_state_desc.empty() && !KcUtils::FileNotEmpty(config.dxr_state_desc))
     {
         // Empty state description file.
         std::cout << kStrErrorDxrStateDescFileNotFoundOrEmpty << config.dxr_state_desc << std::endl;
+        ret = false;
+    }
+    else if (!config.dxr_hlsl.empty() && !KcUtils::FileNotEmpty(config.dxr_hlsl))
+    {
+        // Empty HLSL input file.
+        std::cout << kStrErrorDxrHlslFileNotFoundOrEmpty << config.dxr_hlsl << std::endl;
         ret = false;
     }
     else if (config.dxr_mode.empty())
@@ -180,10 +201,16 @@ static bool IsInputValidDxr(const Config& config)
         std::cout << kStrErrorDxrModeNotProvided << std::endl;
         ret = false;
     }
-    else if (config.dxr_exports.empty())
+    else if (IsDxrShaderMode(config) && config.dxr_exports.empty())
     {
-        // Export not provided.
+        // Export not provided in Shader mode.
         std::cout << kStrErrorDxrExportNotProvided << std::endl;
+        ret = false;
+    }
+    else if (!IsDxrShaderMode(config) && !config.dxr_exports.empty())
+    {
+        // Export not supported in Pipeline mode.
+        std::cout << kStrErrorDxrExportNotSupportedInPipelineMode << std::endl;
         ret = false;
     }
     else
@@ -198,18 +225,18 @@ static bool IsInputValidDxr(const Config& config)
         }
         if (ret && dxr_mode.compare(kStrDxrModeShader) == 0 && !config.dxr_exports.empty() &&
             std::find_if(config.dxr_exports.begin(), config.dxr_exports.end(), [&](const std::string currExp)
-            {
-            std::string curr_export_lower = KcUtils::ToLower(currExp);
-            return (curr_export_lower.compare("all") == 0);
-            }) != config.dxr_exports.end())
+                {
+                    std::string curr_export_lower = KcUtils::ToLower(currExp);
+                    return (curr_export_lower.compare("all") == 0);
+                }) != config.dxr_exports.end())
         {
             std::cout << "Error: 'all' is not a valid argument for --export in Shader mode (only valid in Pipeline mode). Please specify a shader name." << std::endl;
             ret = false;
         }
-        if (ret && dxr_mode.compare(kStrDxrModeShader) == 0 && !config.binary_output_file.empty())
-        {
-            std::cout << kStrWarningDxrBinaryExtractionNotSupportedInShaderMode << std::endl;
-        }
+                if (ret && dxr_mode.compare(kStrDxrModeShader) == 0 && !config.binary_output_file.empty())
+                {
+                    std::cout << kStrWarningDxrBinaryExtractionNotSupportedInShaderMode << std::endl;
+                }
     }
 
     return ret;
@@ -418,88 +445,153 @@ static bool IsInputValid(const Config& config)
 static void UpdateConfig(const Config& user_input, Config& updated_config)
 {
     updated_config = user_input;
-    if (!updated_config.all_hlsl.empty())
+    bool is_dxr = (user_input.mode == RgaMode::kModeDxr);
+    if (!is_dxr)
     {
-        if (!updated_config.vs_entry_point.empty() && updated_config.vs_hlsl.empty() && updated_config.vs_dxbc.empty())
+        if (!updated_config.all_hlsl.empty())
         {
-            updated_config.vs_hlsl = updated_config.all_hlsl;
+            if (!updated_config.vs_entry_point.empty() && updated_config.vs_hlsl.empty() && updated_config.vs_dxbc.empty())
+            {
+                updated_config.vs_hlsl = updated_config.all_hlsl;
+            }
+            if (!updated_config.hs_entry_point.empty() && updated_config.hs_hlsl.empty() && updated_config.hs_dxbc.empty())
+            {
+                updated_config.hs_hlsl = updated_config.all_hlsl;
+            }
+            if (!updated_config.ds_entry_point.empty() && updated_config.ds_hlsl.empty() && updated_config.ds_dxbc.empty())
+            {
+                updated_config.ds_hlsl = updated_config.all_hlsl;
+            }
+            if (!updated_config.gs_entry_point.empty() && updated_config.gs_hlsl.empty() && updated_config.gs_dxbc.empty())
+            {
+                updated_config.gs_hlsl = updated_config.all_hlsl;
+            }
+            if (!updated_config.ps_entry_point.empty() && updated_config.ps_hlsl.empty() && updated_config.ps_dxbc.empty())
+            {
+                updated_config.ps_hlsl = updated_config.all_hlsl;
+            }
+            if (!updated_config.cs_entry_point.empty() && updated_config.cs_hlsl.empty() && updated_config.cs_dxbc.empty())
+            {
+                updated_config.cs_hlsl = updated_config.all_hlsl;
+            }
         }
-        if (!updated_config.hs_entry_point.empty() && updated_config.hs_hlsl.empty() && updated_config.hs_dxbc.empty())
+
+        if (!user_input.rs_macro.empty() && user_input.cs_hlsl.empty() && user_input.rs_hlsl.empty() && user_input.all_hlsl.empty())
         {
-            updated_config.hs_hlsl = updated_config.all_hlsl;
-        }
-        if (!updated_config.ds_entry_point.empty() && updated_config.ds_hlsl.empty() && updated_config.ds_dxbc.empty())
-        {
-            updated_config.ds_hlsl = updated_config.all_hlsl;
-        }
-        if (!updated_config.gs_entry_point.empty() && updated_config.gs_hlsl.empty() && updated_config.gs_dxbc.empty())
-        {
-            updated_config.gs_hlsl = updated_config.all_hlsl;
-        }
-        if (!updated_config.ps_entry_point.empty() && updated_config.ps_hlsl.empty() && updated_config.ps_dxbc.empty())
-        {
-            updated_config.ps_hlsl = updated_config.all_hlsl;
-        }
-        if (!updated_config.cs_entry_point.empty() && updated_config.cs_hlsl.empty() && updated_config.cs_dxbc.empty())
-        {
-            updated_config.cs_hlsl = updated_config.all_hlsl;
+            // If in a graphics pipeline --rs-macro is used without --rs-hlsl, check if all stages point to the same file.
+            // If this is the case, just use that file as if it was the input to --rs-hlsl.
+            std::vector<std::string> present_stages;
+            if (!user_input.vs_hlsl.empty())
+            {
+                present_stages.push_back(user_input.vs_hlsl);
+            }
+            if (!user_input.hs_hlsl.empty())
+            {
+                present_stages.push_back(user_input.hs_hlsl);
+            }
+            if (!user_input.ds_hlsl.empty())
+            {
+                present_stages.push_back(user_input.ds_hlsl);
+            }
+            if (!user_input.gs_hlsl.empty())
+            {
+                present_stages.push_back(user_input.gs_hlsl);
+            }
+            if (!user_input.ps_hlsl.empty())
+            {
+                present_stages.push_back(user_input.ps_hlsl);
+            }
+
+            // If we have a single HLSL file for all stages - use that file for --rs-hlsl.
+            if (!present_stages.empty() &&
+                (present_stages.size() == 1 || std::adjacent_find(present_stages.begin(), present_stages.end(), std::not_equal_to<>()) == present_stages.end()))
+            {
+                updated_config.rs_hlsl = present_stages[0];
+                std::cout << kStrWarningDx12AutoDeducingRootSignatureAsHlsl << updated_config.rs_hlsl << std::endl;
+            }
         }
     }
-
-    if (!user_input.rs_macro.empty() && user_input.cs_hlsl.empty() && user_input.rs_hlsl.empty() && user_input.all_hlsl.empty())
+    else
     {
-        // If in a graphics pipeline --rs-macro is used without --rs-hlsl, check if all stages point to the same file.
-        // If this is the case, just use that file as if it was the input to --rs-hlsl.
-        std::vector<std::string> present_stages;
-        if (!user_input.vs_hlsl.empty())
+        // Use shader mode by default.
+        if (user_input.dxr_mode.compare(kStrDxrModeShader) != 0 &&
+            user_input.dxr_mode.compare(kStrDxrModePipeline) != 0)
         {
-            present_stages.push_back(user_input.vs_hlsl);
-        }
-        if (!user_input.hs_hlsl.empty())
-        {
-            present_stages.push_back(user_input.hs_hlsl);
-        }
-        if (!user_input.ds_hlsl.empty())
-        {
-            present_stages.push_back(user_input.ds_hlsl);
-        }
-        if (!user_input.gs_hlsl.empty())
-        {
-            present_stages.push_back(user_input.gs_hlsl);
-        }
-        if (!user_input.ps_hlsl.empty())
-        {
-            present_stages.push_back(user_input.ps_hlsl);
+            std::cout << kStrInfoDxrAssumingShaderMode << std::endl;
+            updated_config.dxr_mode = kStrDxrModeShader;
         }
 
-        // If we have a single HLSL file for all stages - use that file for --rs-hlsl.
-        if (!present_stages.empty() && (present_stages.size() == 1 || std::adjacent_find(present_stages.begin(),
-            present_stages.end(), std::not_equal_to<>()) == present_stages.end()))
+        if (user_input.dxr_shader_model.empty())
         {
-            updated_config.rs_hlsl = present_stages[0];
-            std::cout << kStrWarningDx12AutoDeducingRootSignatureAsHlsl << updated_config.rs_hlsl << std::endl;
+            // Use the default shader model unless specified otherwise by the user.
+            updated_config.dxr_shader_model = kStrDefaultDxrShaderModel;
+        }
+        else
+        {
+            std::cout << kStrInfoDxrUsingDefaultShaderModel <<
+                kStrDefaultDxrShaderModel << "): " << user_input.dxr_shader_model << std::endl;
         }
     }
 }
 
-static void PerformLiveRegisterAnalysis(const std::string& isa_file, const std::string& stage_name, const std::string& target,
-    const Config &config_updated, bool is_dxr, bool& is_ok)
+// Accepts a DXR pipeline name as reported in the DXR output metadata file and
+// returns true if this is a "NULL" pipeline (empty pipeline generated as a container in Shader mode).
+static bool IsDxrNullPipeline(const std::string& pipeline_name)
+{
+    return (pipeline_name.empty() || pipeline_name.compare(kStrDxrNullPipelineName) == 0);
+}
+
+static bool PerformLiveRegisterAnalysisDxr(const Config& config_updated, const std::string& isa_file,
+    const std::string& output_filename, const std::string& stage_name, const RgDxrShaderResults& shader_results)
+{
+    bool is_ok = false;
+    if (!isa_file.empty())
+    {
+        std::cout << kStrInfoPerformingLiveregAnalysis1;
+        std::cout << kStrInfoDxrOutputShader << shader_results.export_name << kStrInfoDxrPerformingPostProcessing << std::endl;
+
+        // Delete the file if it already exists.
+        if (BeUtils::IsFilePresent(output_filename))
+        {
+            KcUtils::DeleteFile(output_filename.c_str());
+        }
+
+        is_ok = KcUtils::PerformLiveRegisterAnalysis(isa_file, output_filename, NULL,
+            config_updated.print_process_cmd_line);
+
+        if (is_ok)
+        {
+            if (KcUtils::FileNotEmpty(output_filename))
+            {
+                std::cout << kStrInfoSuccess << std::endl;
+            }
+            else
+            {
+                std::cout << kStrInfoFailed << std::endl;
+                KcUtils::DeleteFile(output_filename);
+            }
+        }
+    }
+
+    return is_ok;
+}
+
+static void PerformLiveRegisterAnalysis(const std::string& isa_file,
+    const std::string& stage_name,
+    const std::string& target,
+    const Config& config_updated,
+    bool& is_ok)
 {
     if (!isa_file.empty())
     {
-        std::cout << kStrInfoPerformingLiveregAnalysis1 << stage_name;
-        if (is_dxr)
-        {
-            std::cout << kStrInfoDxrPerformingPostProcessing << std::endl;
-        }
-        else
-        {
-            std::cout << kStrInfoPerformingLiveregAnalysis2 << std::endl;
-        }
+        std::cout << kStrInfoPerformingLiveregAnalysis1;
+        std::cout << stage_name << kStrInfoPerformingLiveregAnalysis2 << std::endl;
 
         // Construct a name for the output file.
         std::string output_filename;
-        is_ok = KcUtils::ConstructOutFileName(config_updated.livereg_analysis_file, stage_name,
+        std::string file_suffix = stage_name;
+
+        is_ok = KcUtils::ConstructOutFileName(config_updated.livereg_analysis_file, file_suffix,
             target, kStrDefaultExtensionLivereg, output_filename);
 
         if (is_ok)
@@ -532,15 +624,50 @@ static void PerformLiveRegisterAnalysis(const std::string& isa_file, const std::
     }
 }
 
-static void GeneratePerBlockCfg(const std::string& isa_file, const std::string& stage_name, const std::string& target,
-    const Config &config_updated, bool is_dxr, bool& is_ok)
+static bool GeneratePerBlockCfgDxr(const Config& config_updated, const std::string& isa_file,
+    const std::string& output_filename, const std::string& stage_name, const RgDxrShaderResults& shader_results)
+{
+    bool is_ok = false;
+    if (!isa_file.empty())
+    {
+        std::cout << kStrInfoContructingPerBlockCfg1;
+        std::cout << kStrInfoDxrOutputShader << shader_results.export_name << kStrInfoDxrPerformingPostProcessing << std::endl;
+
+        // Delete the file if it already exists.
+        if (BeUtils::IsFilePresent(output_filename))
+        {
+            KcUtils::DeleteFile(output_filename.c_str());
+        }
+
+        is_ok = KcUtils::GenerateControlFlowGraph(isa_file, output_filename, NULL,
+            false, config_updated.print_process_cmd_line);
+
+        if (is_ok)
+        {
+            if (KcUtils::FileNotEmpty(output_filename))
+            {
+                std::cout << kStrInfoSuccess << std::endl;
+            }
+            else
+            {
+                std::cout << kStrInfoFailed << std::endl;
+                KcUtils::DeleteFile(output_filename);
+            }
+        }
+    }
+
+    return is_ok;
+}
+
+static void GeneratePerBlockCfg(const std::string& isa_file, const std::string& pipeline_name_dxr, const std::string& stage_name, const std::string& target,
+    const Config& config_updated, bool is_dxr, bool& is_ok)
 {
     if (!isa_file.empty())
     {
         std::cout << kStrInfoContructingPerBlockCfg1;
         if (is_dxr)
         {
-            std::cout << stage_name << kStrInfoDxrPerformingPostProcessing << std::endl;
+            std::cout << kStrInfoDxrOutputShader << stage_name << kStrInfoDxrPerformingPostProcessing << std::endl;
         }
         else
         {
@@ -549,7 +676,15 @@ static void GeneratePerBlockCfg(const std::string& isa_file, const std::string& 
 
         // Construct a name for the output file.
         std::string output_filename;
-        is_ok = KcUtils::ConstructOutFileName(config_updated.block_cfg_file, stage_name,
+        std::string file_suffix = stage_name;
+        if (is_dxr && !IsDxrNullPipeline(pipeline_name_dxr))
+        {
+            std::stringstream suffix_updated;
+            suffix_updated << pipeline_name_dxr << "_" << stage_name;
+            file_suffix = suffix_updated.str();
+        }
+
+        is_ok = KcUtils::ConstructOutFileName(config_updated.block_cfg_file, file_suffix,
             target, kStrDefaultExtensionDot, output_filename);
 
         if (is_ok)
@@ -582,15 +717,50 @@ static void GeneratePerBlockCfg(const std::string& isa_file, const std::string& 
     }
 }
 
-static void GeneratePerInstructionCfg(const std::string& isa_file, const std::string& stage_name, const std::string& target,
-    const Config &config_updated, bool is_dxr, bool& is_ok)
+static bool GeneratePerInstructionCfgDxr(const Config& config_updated, const std::string& isa_file,
+    const std::string& output_filename, const std::string& stage_name, const RgDxrShaderResults& shader_results)
+{
+    bool is_ok = false;
+    if (!isa_file.empty())
+    {
+        std::cout << kStrInfoContructingPerInstructionCfg1;
+        std::cout << kStrInfoDxrOutputShader << shader_results.export_name << kStrInfoDxrPerformingPostProcessing << std::endl;
+
+        // Delete the file if it already exists.
+        if (BeUtils::IsFilePresent(output_filename))
+        {
+            KcUtils::DeleteFile(output_filename.c_str());
+        }
+
+        is_ok = KcUtils::GenerateControlFlowGraph(isa_file, output_filename, NULL,
+            true, config_updated.print_process_cmd_line);
+
+        if (is_ok)
+        {
+            if (KcUtils::FileNotEmpty(output_filename))
+            {
+                std::cout << kStrInfoSuccess << std::endl;
+            }
+            else
+            {
+                std::cout << kStrInfoFailed << std::endl;
+                KcUtils::DeleteFile(output_filename);
+            }
+        }
+    }
+
+    return is_ok;
+}
+
+static void GeneratePerInstructionCfg(const std::string& isa_file, const std::string& pipeline_name_dxr, const std::string& stage_name, const std::string& target,
+    const Config& config_updated, bool is_dxr, bool& is_ok)
 {
     if (!isa_file.empty())
     {
         std::cout << kStrInfoContructingPerInstructionCfg1;
-        if (is_dxr)
+        if (is_dxr && !pipeline_name_dxr.empty())
         {
-            std::cout << stage_name << kStrInfoDxrPerformingPostProcessing << std::endl;
+            std::cout << kStrInfoDxrOutputShader << stage_name << kStrInfoDxrPerformingPostProcessing << std::endl;
         }
         else
         {
@@ -599,7 +769,14 @@ static void GeneratePerInstructionCfg(const std::string& isa_file, const std::st
 
         // Construct a name for the output file.
         std::string output_filename;
-        is_ok = KcUtils::ConstructOutFileName(config_updated.inst_cfg_file, stage_name,
+        std::string file_suffix = stage_name;
+        if (is_dxr && !IsDxrNullPipeline(pipeline_name_dxr))
+        {
+            std::stringstream suffix_updated;
+            suffix_updated << pipeline_name_dxr << "_" << stage_name;
+            file_suffix = suffix_updated.str();
+        }
+        is_ok = KcUtils::ConstructOutFileName(config_updated.inst_cfg_file, file_suffix,
             target, kStrDefaultExtensionDot, output_filename);
 
         if (is_ok)
@@ -634,7 +811,7 @@ static void GeneratePerInstructionCfg(const std::string& isa_file, const std::st
 
 // Disassembles ELF container and saves it to the requested output file according to the given Config.
 // pipelineBinary is the full path to the pipeline binary ELF container file.
-static void DisassembleElfBinary(const std::string& target, const std::string& pipeline_binary, const Config &config, const std::string& output_filename, std::string error_msg)
+static void DisassembleElfBinary(const std::string& target, const std::string& pipeline_binary, const Config& config, const std::string& output_filename, std::string error_msg)
 {
     const char* kStrInfoDisassemblingBinaryElfContainer = "Disassembling pipeline binary ELF container ";
     const char* kStrInfoDisassemblingBinaryElfContainerSuccess = "Pipeline binary ELF container disassembled successfully.";
@@ -714,9 +891,9 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
             UpdateConfig(config, config_updated);
 
             // Validate the --dxc option argument.
-            if (!config.dxc_path.empty())
+            if (!config_updated.dxc_path.empty())
             {
-                if (BeUtils::IsFilePresent(config.dxc_path))
+                if (BeUtils::IsFilePresent(config_updated.dxc_path))
                 {
                     std::cout << kStrErrorInvalidDxcOptionArgument << std::endl;
                     should_abort = true;
@@ -726,8 +903,15 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
             if (!should_abort)
             {
                 // Validate the input.
-                bool is_dxr = (config.mode == RgaMode::kModeDxr);
+                bool is_dxr = (config_updated.mode == RgaMode::kModeDxr);
                 bool is_input_valid = (is_dxr ? IsInputValidDxr(config_updated) : IsInputValid(config_updated));
+
+                // In DXR pipeline mode, always assume "all" as the export.
+                if (is_dxr && !IsDxrShaderMode(config_updated) && config_updated.dxr_exports.empty())
+                {
+                    config_updated.dxr_exports.push_back("all");
+                }
+
                 bool was_asic_list_auto_generated = false;
                 if (is_input_valid)
                 {
@@ -749,7 +933,7 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                     }
                     else
                     {
-                        target_devices = config.asics;
+                        target_devices = config_updated.asics;
                     }
 
                     if (is_dxr)
@@ -760,9 +944,12 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                         target_devices.clear();
                         for (const std::string& target : target_devices_tmp)
                         {
-                            if (KcUtils::IsNavi21AndBeyond(target))
+                            // Convert to lower case.
+                            const std::string target_lower = KcUtils::ToLower(target);
+
+                            if (KcUtils::IsNavi21AndBeyond(target_lower))
                             {
-                                target_devices.push_back(target);
+                                target_devices.push_back(target_lower);
                             }
                             else
                             {
@@ -797,9 +984,9 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
 
                                 if (is_dxr)
                                 {
-                                    bool is_all_mode = (config.dxr_exports.size() == 1 && config.dxr_exports[0].compare("all") == 0);
+                                    bool is_all_mode = (config_updated.dxr_exports.size() == 1 && config_updated.dxr_exports[0].compare("all") == 0);
                                     std::vector<RgDxrPipelineResults> output_mapping;
-                                    rc = dx12_backend_.CompileDXRPipeline(config, target, out_text, output_mapping, error_msg);
+                                    rc = dx12_backend_.CompileDXRPipeline(config_updated, target, out_text, output_mapping, error_msg);
                                     is_ok = (rc == kBeStatusSuccess);
                                     assert(is_ok);
                                     if (!out_text.empty())
@@ -839,7 +1026,7 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
 
                                             // Verify binary files created.
                                             bool should_extract_pipeline_binaries =
-                                                config.dxr_mode.compare(kStrDxrModeShader) != 0 && !curr_pipeline_results.pipeline_binary.empty();
+                                                config_updated.dxr_mode.compare(kStrDxrModeShader) != 0 && !curr_pipeline_results.pipeline_binary.empty();
                                             if (should_extract_pipeline_binaries)
                                             {
                                                 if (!curr_pipeline_results.pipeline_binary.empty() && !KcUtils::FileNotEmpty(curr_pipeline_results.pipeline_binary))
@@ -851,15 +1038,16 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                                 else
                                                 {
                                                     // Generate ELF disassembly if needed.
-                                                    if (!config.elf_dis.empty())
+                                                    if (!config_updated.elf_dis.empty())
                                                     {
                                                         // Construct a name for the output file.
                                                         std::string output_filename;
-                                                        is_ok = KcUtils::ConstructOutFileName(config.elf_dis, "",
+                                                        is_ok = KcUtils::ConstructOutFileName(config_updated.elf_dis, "",
                                                             target, kStrDefaultExtensionText, output_filename);
 
                                                         // Disassemble the pipeline binary.
-                                                        DisassembleElfBinary(target, curr_pipeline_results.pipeline_binary, config, output_filename, error_msg);
+                                                        DisassembleElfBinary(target, curr_pipeline_results.pipeline_binary,
+                                                            config_updated, output_filename, error_msg);
                                                     }
                                                 }
                                             }
@@ -868,34 +1056,53 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
 
                                     if (is_success)
                                     {
-                                        const bool is_shader_mode = IsDxrShaderMode(config);
+                                        const bool is_shader_mode = IsDxrShaderMode(config_updated);
                                         std::cout << kStrInfoSuccess << std::endl;
-                                        if (!config.livereg_analysis_file.empty() ||
-                                            !config.inst_cfg_file.empty() || !config.block_cfg_file.empty())
+                                        if (!config_updated.livereg_analysis_file.empty() || !config_updated.inst_cfg_file.empty() ||
+                                            !config_updated.block_cfg_file.empty())
                                         {
                                             // Post-processing.
                                             std::cout << kStrInfoDx12PostProcessingSeparator << std::endl;
                                             std::cout << kStrInfoDx12PostProcessing << std::endl;
 
                                             // Live register analysis files.
-                                            if (!config.livereg_analysis_file.empty())
+                                            if (!config_updated.livereg_analysis_file.empty())
                                             {
                                                 for (const RgDxrPipelineResults& curr_pipeline_results : output_mapping)
                                                 {
+                                                    if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name))
+                                                    {
+                                                        // Announce the pipeline name in pipeline mode.
+                                                        std::cout << kStrInfoPerformingLiveregAnalysis1 <<
+                                                            (curr_pipeline_results.isUnified ? kStrInfoDxrOutputPipelineName : kStrInfoDxrOutputPipelineNumber) <<
+                                                            curr_pipeline_results.pipeline_name << "..." << std::endl;
+                                                    }
+
                                                     for (const RgDxrShaderResults& curr_shader_results : curr_pipeline_results.results)
                                                     {
-                                                        const std::string& curr_export = curr_shader_results.export_name;
-                                                        if (!curr_shader_results.isa_disassembly.empty())
+                                                        std::stringstream filename_suffix_stream;
+                                                        if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name) &&
+                                                            !curr_pipeline_results.isUnified)
                                                         {
-                                                            std::string curr_export_for_filename = curr_export;
-                                                            if (!is_shader_mode && curr_pipeline_results.isUnified)
-                                                            {
-                                                                // Add "_unified" suffix for the file name
-                                                                // if pipeline was compiled in unified mode.
-                                                                curr_export_for_filename.append(kStrDxrUnifiedSuffix);
-                                                            }
-                                                            PerformLiveRegisterAnalysis(curr_shader_results.isa_disassembly, curr_export_for_filename, target, config_updated, is_dxr, is_ok);
+                                                            filename_suffix_stream << curr_pipeline_results.pipeline_name << "_";
                                                         }
+                                                        filename_suffix_stream << curr_shader_results.export_name;
+                                                        if (!is_shader_mode && curr_pipeline_results.isUnified)
+                                                        {
+                                                            filename_suffix_stream << kStrDxrUnifiedSuffix;
+                                                        }
+                                                        std::string filename_suffix = filename_suffix_stream.str();
+
+                                                        // Do not append a suffix in case that the file name is empty,
+                                                        // to prevent a situation where we have the shader name appearing twice.
+                                                        bool should_append_suffix = !KcUtils::IsDirectory(config.livereg_analysis_file);
+
+                                                        std::string output_filename;
+                                                        KcUtils::ConstructOutFileName(config.livereg_analysis_file, filename_suffix,
+                                                            target, kStrDefaultExtensionLivereg, output_filename, should_append_suffix);
+
+                                                        PerformLiveRegisterAnalysisDxr(config_updated, curr_shader_results.isa_disassembly,
+                                                            output_filename, filename_suffix, curr_shader_results);
                                                     }
                                                 }
                                             }
@@ -905,20 +1112,39 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                             {
                                                 for (const RgDxrPipelineResults& curr_pipeline_results : output_mapping)
                                                 {
+                                                    if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name))
+                                                    {
+                                                        // Announce the pipeline name in pipeline mode.
+                                                        std::cout << kStrInfoContructingPerBlockCfg1 <<
+                                                            (curr_pipeline_results.isUnified ? kStrInfoDxrOutputPipelineName : kStrInfoDxrOutputPipelineNumber) <<
+                                                            curr_pipeline_results.pipeline_name << "..." << std::endl;
+                                                    }
+
                                                     for (const RgDxrShaderResults& curr_shader_results : curr_pipeline_results.results)
                                                     {
-                                                        const std::string& curr_export = curr_shader_results.export_name;
-                                                        if (!curr_shader_results.isa_disassembly.empty())
+                                                        std::stringstream filename_suffix_stream;
+                                                        if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name) &&
+                                                            !curr_pipeline_results.isUnified)
                                                         {
-                                                            std::string curr_export_for_filename = curr_export;
-                                                            if (!is_shader_mode && curr_pipeline_results.isUnified)
-                                                            {
-                                                                // Add "_unified" suffix for the file name
-                                                                // if pipeline was compiled in unified mode.
-                                                                curr_export_for_filename.append(kStrDxrUnifiedSuffix);
-                                                            }
-                                                            GeneratePerBlockCfg(curr_shader_results.isa_disassembly, curr_export_for_filename, target, config_updated, is_dxr, is_ok);
+                                                            filename_suffix_stream << curr_pipeline_results.pipeline_name << "_";
                                                         }
+                                                        filename_suffix_stream << curr_shader_results.export_name;
+                                                        if (!is_shader_mode && curr_pipeline_results.isUnified)
+                                                        {
+                                                            filename_suffix_stream << kStrDxrUnifiedSuffix;
+                                                        }
+                                                        std::string filename_suffix = filename_suffix_stream.str();
+
+                                                        // Do not append a suffix in case that the file name is empty,
+                                                        // to prevent a situation where we have the shader name appearing twice.
+                                                        bool should_append_suffix = !KcUtils::IsDirectory(config.block_cfg_file);
+
+                                                        std::string output_filename;
+                                                        KcUtils::ConstructOutFileName(config.block_cfg_file, filename_suffix,
+                                                            target, "cfg", output_filename, should_append_suffix);
+
+                                                        GeneratePerBlockCfgDxr(config_updated, curr_shader_results.isa_disassembly,
+                                                            output_filename, filename_suffix, curr_shader_results);
                                                     }
                                                 }
                                             }
@@ -928,20 +1154,39 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                             {
                                                 for (const RgDxrPipelineResults& curr_pipeline_results : output_mapping)
                                                 {
+                                                    if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name))
+                                                    {
+                                                        // Announce the pipeline name in pipeline mode.
+                                                        std::cout << kStrInfoContructingPerInstructionCfg1 <<
+                                                            (curr_pipeline_results.isUnified ? kStrInfoDxrOutputPipelineName : kStrInfoDxrOutputPipelineNumber) <<
+                                                            curr_pipeline_results.pipeline_name << "..." << std::endl;
+                                                    }
+
                                                     for (const RgDxrShaderResults& curr_shader_results : curr_pipeline_results.results)
                                                     {
-                                                        const std::string& curr_export = curr_shader_results.export_name;
-                                                        if (!curr_shader_results.isa_disassembly.empty())
+                                                        std::stringstream filename_suffix_stream;
+                                                        if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name) &&
+                                                            !curr_pipeline_results.isUnified)
                                                         {
-                                                            std::string curr_export_for_filename = curr_export;
-                                                            if (!is_shader_mode && curr_pipeline_results.isUnified)
-                                                            {
-                                                                // Add "_unified" suffix for the file name
-                                                                // if pipeline was compiled in unified mode.
-                                                                curr_export_for_filename.append(kStrDxrUnifiedSuffix);
-                                                            }
-                                                            GeneratePerInstructionCfg(curr_shader_results.isa_disassembly, curr_export_for_filename, target, config_updated, is_dxr, is_ok);
+                                                            filename_suffix_stream << curr_pipeline_results.pipeline_name << "_";
                                                         }
+                                                        filename_suffix_stream << curr_shader_results.export_name;
+                                                        if (!is_shader_mode && curr_pipeline_results.isUnified)
+                                                        {
+                                                            filename_suffix_stream << kStrDxrUnifiedSuffix;
+                                                        }
+                                                        std::string filename_suffix = filename_suffix_stream.str();
+
+                                                        // Do not append a suffix in case that the file name is empty,
+                                                        // to prevent a situation where we have the shader name appearing twice.
+                                                        bool should_append_suffix = !KcUtils::IsDirectory(config.inst_cfg_file);
+
+                                                        std::string output_filename;
+                                                        KcUtils::ConstructOutFileName(config.inst_cfg_file, filename_suffix,
+                                                            target, "cfg", output_filename, should_append_suffix);
+
+                                                        GeneratePerInstructionCfgDxr(config_updated, curr_shader_results.isa_disassembly,
+                                                            output_filename, filename_suffix, curr_shader_results);
                                                     }
                                                 }
                                             }
@@ -967,7 +1212,7 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                         }
 
                                         // Warnings.
-                                        if (!config.il_file.empty())
+                                        if (!config_updated.il_file.empty())
                                         {
                                             std::cout << kStrWarningDx12AmdilOptionNotSupported << std::endl;
                                         }
@@ -996,15 +1241,15 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                                 std::cout << kStrErrorDx12BinaryNotGeneratedA << target << std::endl;
                                                 is_success = false;
                                             }
-                                            else if (!config.elf_dis.empty())
+                                            else if (!config_updated.elf_dis.empty())
                                             {
                                                 // Construct a name for the output file.
                                                 std::string output_filename;
-                                                is_ok = KcUtils::ConstructOutFileName(config.elf_dis, "",
+                                                is_ok = KcUtils::ConstructOutFileName(config_updated.elf_dis, "",
                                                     target, kStrDefaultExtensionText, output_filename);
 
                                                 // Disassemble the pipeline binary.
-                                                DisassembleElfBinary(target, binary_file, config, output_filename, error_msg);
+                                                DisassembleElfBinary(target, binary_file, config_updated, output_filename, error_msg);
 
                                             }
                                         }
@@ -1012,19 +1257,19 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                         if (is_success)
                                         {
                                             std::cout << kStrInfoSuccess << std::endl;
-                                            if (!config.livereg_analysis_file.empty() ||
-                                                !config.inst_cfg_file.empty() || !config.block_cfg_file.empty())
+                                            if (!config_updated.livereg_analysis_file.empty() || !config_updated.inst_cfg_file.empty() ||
+                                                !config_updated.block_cfg_file.empty())
                                             {
                                                 // Post-processing.
                                                 std::cout << kStrInfoDx12PostProcessingSeparator << std::endl;
                                                 std::cout << kStrInfoDx12PostProcessing << std::endl;
 
-                                                if (!config.livereg_analysis_file.empty())
+                                                if (!config_updated.livereg_analysis_file.empty())
                                                 {
                                                     // Live register analysis files.
                                                     for (int stage = 0; stage < BePipelineStage::kCount; stage++)
                                                     {
-                                                        PerformLiveRegisterAnalysis(isa_files[stage], kStrDx12StageNames[stage], target, config_updated, is_dxr, is_ok);
+                                                        PerformLiveRegisterAnalysis(isa_files[stage], kStrDx12StageNames[stage], target, config_updated, is_ok);
                                                     }
                                                 }
 
@@ -1033,7 +1278,7 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                                     // Per-block control-flow graphs.
                                                     for (int stage = 0; stage < BePipelineStage::kCount; stage++)
                                                     {
-                                                        GeneratePerBlockCfg(isa_files[stage], kStrDx12StageNames[stage], target, config_updated, is_dxr, is_ok);
+                                                        GeneratePerBlockCfg(isa_files[stage], "", kStrDx12StageNames[stage], target, config_updated, is_dxr, is_ok);
                                                     }
                                                 }
 
@@ -1042,7 +1287,7 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                                     // Per-instruction control-flow graphs.
                                                     for (int stage = 0; stage < BePipelineStage::kCount; stage++)
                                                     {
-                                                        GeneratePerInstructionCfg(isa_files[stage], kStrDx12StageNames[stage], target, config_updated, is_dxr, is_ok);
+                                                        GeneratePerInstructionCfg(isa_files[stage], "", kStrDx12StageNames[stage], target, config_updated, is_dxr, is_ok);
                                                     }
                                                 }
                                             }

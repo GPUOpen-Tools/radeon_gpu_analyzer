@@ -27,11 +27,6 @@ bool rgIsaDisassemblyViewOpenCL::PopulateBuildOutput(const std::shared_ptr<rgPro
     return ret;
 }
 
-void rgIsaDisassemblyViewOpenCL::SetBorderStylesheet()
-{
-    ui.frame->setStyleSheet(STR_DISASSEMBLY_FRAME_BORDER_GREEN_STYLESHEET);
-}
-
 bool rgIsaDisassemblyViewOpenCL::PopulateDisassemblyView(const std::vector<rgSourceFileInfo>& sourceFiles, const rgBuildOutputsMap& buildOutput)
 {
     bool isProblemFound = false;

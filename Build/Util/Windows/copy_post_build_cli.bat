@@ -52,9 +52,9 @@ XCopy /r /d /y "..\..\..\Core\LC\Disassembler\Windows\amdgpu-dis.exe" "%OUTPUT_D
 XCopy /r /e /d /y "..\..\..\Core\Vulkan\tools\Win64\bin" "%OUTPUT_DIR%\utils\Vulkan\"
 XCopy /r /e /d /y "..\..\..\Core\DX12\DXC\*" "%OUTPUT_DIR%\utils\DX12\DXC\"
 XCopy /r /d /y "..\..\..\License.txt" "%OUTPUT_DIR%\License.txt*"
-XCopy /r /d /y "..\..\..\RGAThirdPartyLicenses.txt" "%OUTPUT_DIR%\RGAThirdPartyLicenses.txt*"
-XCopy /r /d /y "..\..\..\README.md" "%OUTPUT_DIR%\README.md*"
-XCopy /r /d /y "..\..\..\Documentation\releases\%MAJOR%.%MINOR%\RGA_RELEASE_NOTES_v%MAJOR%.%MINOR%.txt" "%OUTPUT_DIR%\RGA_RELEASE_NOTES_v%MAJOR%.%MINOR%.txt*"
+XCopy /r /d /y "..\..\..\RGA_NOTICES.txt" "%OUTPUT_DIR%\RGA_NOTICES.txt*"
+XCopy /r /d /y "..\..\..\RGA_README.md" "%OUTPUT_DIR%\RGA_README.md*"
+XCopy /r /d /y "..\..\..\Documentation\RGA_RELEASE_NOTES.txt" "%OUTPUT_DIR%\RGA_RELEASE_NOTES.txt*"
 XCopy /r /d /y "..\..\..\..\Common\Src\UpdateCheckAPI\rtda\windows\rtda.exe" "%OUTPUT_DIR%\rtda.exe*"
 
 XCopy /r /d /y "..\..\..\Core\VulkanOffline\win64\amdspv.exe" "%OUTPUT_DIR%\utils\"

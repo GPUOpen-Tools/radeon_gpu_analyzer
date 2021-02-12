@@ -10,3 +10,4 @@ Documentation/build
 *.csproj.user
 obj
 bin
+Build/__pycache__

@@ -30,7 +30,7 @@ static const char* kStrErrorMixComputeAndGraphics = "Cannot mix and match comput
 static const char* kStrErrorNoDxrStateDescriptionFile = "Error: no DXR state description file provided.";
 static const char* kStrInfoCompilingComputePipeline = "Compiling compute pipeline...";
 static const char* kStrInfoCompilingGraphicsPipeline = "Compiling graphics pipeline...";
-static const char* kStrInfoCompilingDxrPipeline = "Compiling ray tracing pipeline...";
+static const char* kStrInfoCompilingDxrPipeline = "Compiling ray tracing pipelines...";
 static const char* kStrInfoCompilingDxrShader = "Compiling ray tracing shader...";
 
 // *** CONSTANTS - END ***
@@ -81,7 +81,7 @@ static bool IsInputValid(rga::RgDx12Config& config)
             bool is_dxr = IsDxrConfig(config, is_dxr_pipeline, is_dxr_shader);
             if (is_dxr)
             {
-                if (config.dxr_state_file.empty())
+                if (config.dxr_state_file.empty() && config.dxr_hlsl_input.empty())
                 {
                     std::cout << kStrErrorNoDxrStateDescriptionFile << std::endl;
                     ret = false;
@@ -314,6 +314,8 @@ int main(int argc, char* argv[])
                         cxxopts::value<std::string>(config.dxr_hlsl_mapping))
                  ("output-metadata", "Full path to output metadata file.",
                         cxxopts::value<std::string>(config.output_metadata))
+                 ("hlsl", "Full path to input HLSL file.",
+                        cxxopts::value<std::string>(config.dxr_hlsl_input))
 
                 // General options.
                 ("include", "Additional include directories for the front-end compiler.",

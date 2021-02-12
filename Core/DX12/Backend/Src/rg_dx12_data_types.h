@@ -98,6 +98,9 @@ namespace rga
         // Output metadata file.
         std::string output_metadata;
 
+        // DXR HLSL input.
+        std::string dxr_hlsl_input;
+
         // The ID of the GPU for which to compile the pipeline. If not specified,
         // the pipeline would be compiled for the physically installed GPU.
         int target_gpu = -1;

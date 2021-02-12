@@ -99,30 +99,40 @@ private:
         assert(pVersionInfo != nullptr);
         if (pVersionInfo != nullptr)
         {
-            const char* TOKEN_RDNA = "RDNA";
-            const char* TOKEN_VEGA = "Vega";
+            const char* kTokenRdna2 = "RDNA2";
+            const char* kTokenRdna = "RDNA";
+            const char* kTokenVega = "Vega";
 
             // Find the set of GPU architectures supported in the current mode.
             auto modeArchitecturesIter = pVersionInfo->m_gpuArchitectures.find(apiMode);
             if (modeArchitecturesIter != pVersionInfo->m_gpuArchitectures.end())
             {
-                // Search for the latest target. Start with RDNA, if not look for Vega. As a fall back
+                // Search for the latest target. Start with RDNA2, if not look for RDNA and Vega. As a fall back
                 // just take the first element.
                 const std::vector<rgGpuArchitecture>& modeArchitectures = modeArchitecturesIter->second;
                 auto lastArchitectureIter = std::find_if(modeArchitectures.begin(), modeArchitectures.end(),
-                    [&](const rgGpuArchitecture& arch) { return arch.m_architectureName.compare(TOKEN_RDNA) == 0; });
+                    [&](const rgGpuArchitecture& arch) { return arch.m_architectureName.compare(kTokenRdna2) == 0; });
 
                 if (lastArchitectureIter == modeArchitectures.end())
                 {
+                    // Search for the latest target. Start with RDNA, if not look for Vega. As a fall back
+                    // just take the first element.
+                    const std::vector<rgGpuArchitecture>& modeArchitectures = modeArchitecturesIter->second;
                     lastArchitectureIter = std::find_if(modeArchitectures.begin(), modeArchitectures.end(),
-                        [&](const rgGpuArchitecture& arch) { return arch.m_architectureName.compare(TOKEN_VEGA) == 0; });
+                        [&](const rgGpuArchitecture& arch) { return arch.m_architectureName.compare(kTokenRdna) == 0; });
+
                     if (lastArchitectureIter == modeArchitectures.end())
                     {
-                        // Take the first element.
-                        lastArchitectureIter = modeArchitectures.begin();
+                        lastArchitectureIter = std::find_if(modeArchitectures.begin(), modeArchitectures.end(),
+                            [&](const rgGpuArchitecture& arch) { return arch.m_architectureName.compare(kTokenVega) == 0; });
+                        if (lastArchitectureIter == modeArchitectures.end())
+                        {
+                            // Take the first element.
+                            lastArchitectureIter = modeArchitectures.begin();
 
-                        // We shouldn't be getting here normally.
-                        assert(false);
+                            // We shouldn't be getting here normally.
+                            assert(false);
+                        }
                     }
                 }
 
@@ -130,9 +140,9 @@ private:
                 std::vector<rgGpuFamily> architectureFamilies = lastArchitectureIter->m_gpuFamilies;
                 std::sort(architectureFamilies.begin(), architectureFamilies.end(),
                     [&](const rgGpuFamily& family1, const rgGpuFamily& family2)
-                {
-                    return family1.m_familyName < family2.m_familyName;
-                });
+                    {
+                        return family1.m_familyName < family2.m_familyName;
+                    });
 
                 const auto& latestFamily = architectureFamilies.rbegin();
                 const std::string& latestFamilyName = latestFamily->m_familyName;

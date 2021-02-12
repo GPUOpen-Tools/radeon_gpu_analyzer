@@ -78,7 +78,7 @@ bool rgBuildViewOpenCL::ConnectMenuSignals()
             assert(isConnected);
 
             // Connect the rgBuildView's entry point changed signal to the file menu's handler.
-            isConnected =  connect(this, &rgBuildViewOpenCL::SelectedEntrypointChanged, pMenuOpenCL, &rgMenuOpenCL::HandleSelectedEntrypointChanged);
+            isConnected = connect(this, &rgBuildViewOpenCL::SelectedEntrypointChanged, pMenuOpenCL, &rgMenuOpenCL::HandleSelectedEntrypointChanged);
             assert(isConnected);
 
             // Connect the file menu item selection handler for each new item.

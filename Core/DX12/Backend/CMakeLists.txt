@@ -9,7 +9,7 @@ file(GLOB  SOURCE_FILES
 )
 
 # API symbol export definition.
-add_definitions(-DRGA_API_EXPORTS -DINITGUID -DNOMINMAX)
+add_definitions(-DRGA_API_EXPORTS -DINITGUID -DNOMINMAX -DRGA_DXR_ENABLED)
 
 file(GLOB  INCLUDES
     "${PROJECT_SOURCE_DIR}/src/*.h"

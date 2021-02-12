@@ -356,6 +356,8 @@ std::string rgAppStateOpenCL::GetBuildSettingsViewStylesheet() const
         "rgBuildSettingsView #compilerIncludesLineEdit:hover,"
         "rgBuildSettingsView #additionalOptionsTextEdit:focus,"
         "rgBuildSettingsView #additionalOptionsTextEdit:hover,"
+        "rgBuildSettingsView #allOptionsTextEdit:focus,"
+        "rgBuildSettingsView #allOptionsTextEdit:hover,"
         "rgBuildSettingsView #compilerLibrariesLineEdit:focus,"
         "rgBuildSettingsView #compilerLibrariesLineEdit:hover"
         "{"

@@ -10,6 +10,7 @@
 #include <Utils/Vulkan/Include/rgPsoSerializerVulkan.h>
 
 // Local.
+#include <RadeonGPUAnalyzerGUI/Include/Qt/rgBuildViewVulkan.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgPipelineStateModelVulkan.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElement.h>
 #include <RadeonGPUAnalyzerGUI/Include/Qt/rgEditorElementArrayElementAdd.h>
@@ -1125,11 +1126,15 @@ void rgPipelineStateModelVulkan::InitializeVkGraphicsPipelineCreateInfo(rgEditor
         rgEditorElement* pFlagsItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_FLAGS, pipelineFlagsEnumerators, reinterpret_cast<uint32_t*>(&pVkGraphicsPipelineCreateInfo->flags), true);
         pGraphicsPipelineCreateInfoRoot->AppendChildItem(pFlagsItem);
 
+        // Connect to the splitter moved signal to close the drop down.
+        rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pFlagsItem), &rgEditorElementEnum::HotKeyPressedSignal);
+
         // Set object name.
         pFlagsItem->setObjectName(STR_FLAGS_ITEM);
 
         // Connect to the flags enum list widget status signal.
-        bool isConnected = connect(pFlagsItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        isConnected = connect(pFlagsItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(isConnected);
 
         // Connect the shortcut hot key signal.
@@ -1328,11 +1333,15 @@ void rgPipelineStateModelVulkan::InitializeVertexInputBindingDescriptionCreateIn
             rgEditorElement* pInputRateElement = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_VERTEX_INPUT_RATE, inputRateValues, reinterpret_cast<uint32_t*>(&pOffsetInputBindingDescriptionItem->inputRate));
             pRootElement->AppendChildItem(pInputRateElement);
 
+            // Connect to the splitter moved signal to close the drop down.
+            rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pInputRateElement), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pInputRateElement->setObjectName(STR_INPUT_RATE_ELEMENT);
 
             // Connect to the enum list widget status signal.
-            bool isConnected = connect(pInputRateElement, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            isConnected = connect(pInputRateElement, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(isConnected);
 
             // Connect the shortcut hot key signal.
@@ -1371,11 +1380,15 @@ void rgPipelineStateModelVulkan::InitializeVertexInputAttributeDescriptionCreate
             rgEditorElement* pFormatElement = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_VERTEX_FORMAT, formatEnumerators, reinterpret_cast<uint32_t*>(&pOffsetInputAttributeDescription->format));
             pRootElement->AppendChildItem(pFormatElement);
 
+            // Connect to the splitter moved signal to close the drop down.
+            rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pFormatElement), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pFormatElement->setObjectName(STR_FORMAT_ELEMENT);
 
             // Connect to the enum list widget status signal.
-            bool isConnected = connect(pFormatElement, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            isConnected = connect(pFormatElement, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(isConnected);
 
             // Connect the shortcut hot key signal.
@@ -1415,11 +1428,15 @@ void rgPipelineStateModelVulkan::InitializeInputAssemblyStateCreateInfo(rgEditor
         rgEditorElement* pTopologyItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_TOPOLOGY, primitiveTopologyEnumerators, reinterpret_cast<uint32_t*>(&pInputAssemblyStateCreateInfo->topology));
         pInputAssemblyStateRoot->AppendChildItem(pTopologyItem);
 
+        // Connect to the splitter moved signal to close the drop down.
+        rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pTopologyItem), &rgEditorElementEnum::HotKeyPressedSignal);
+
         // Set object name.
         pTopologyItem->setObjectName(STR_TOPOLOGY_ITEM);
 
         // Connect to the enum list widget status signal.
-        bool isConnected = connect(pTopologyItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        isConnected = connect(pTopologyItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(isConnected);
 
         // Connect the shortcut hot key signal.
@@ -1699,11 +1716,15 @@ void rgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(rgEditor
         rgEditorElement* pPolygonModeNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_POLYGON_MODE, polygonModeEnumerators, reinterpret_cast<uint32_t*>(&pRasterizationStateCreateInfo->polygonMode));
         pRasterizationStateRoot->AppendChildItem(pPolygonModeNode);
 
+        // Connect to the splitter moved signal to close the drop down.
+        rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pPolygonModeNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
         // Set object name.
         pPolygonModeNode->setObjectName(STR_POLYGON_MODE_NODE);
 
         // Connect to the enum list widget status signal.
-        bool isConnected = connect(pPolygonModeNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        isConnected = connect(pPolygonModeNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(isConnected);
 
         // Connect the shortcut hot key signal.
@@ -1714,6 +1735,10 @@ void rgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(rgEditor
         const rgEnumValuesVector& cullModeEnumerators = GetCullModeFlagEnumerators();
         rgEditorElement* pCullModeNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_CULL_MODE, cullModeEnumerators, reinterpret_cast<uint32_t*>(&pRasterizationStateCreateInfo->cullMode), true);
         pRasterizationStateRoot->AppendChildItem(pCullModeNode);
+
+        // Connect to the splitter moved signal to close the drop down.
+        pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pCullModeNode), &rgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         pCullModeNode->setObjectName(STR_CULL_MODE_NODE);
@@ -1730,6 +1755,10 @@ void rgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(rgEditor
         const rgEnumValuesVector& frontFaceEnumerators = GetFrontFaceEnumerators();
         rgEditorElement* pFrontFaceNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_RASTERIZER_FRONT_FACE, frontFaceEnumerators, reinterpret_cast<uint32_t*>(&pRasterizationStateCreateInfo->frontFace));
         pRasterizationStateRoot->AppendChildItem(pFrontFaceNode);
+
+        // Connect to the splitter moved signal to close the drop down.
+        pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pFrontFaceNode), &rgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         pFrontFaceNode->setObjectName(STR_FRONT_FACE_NODE);
@@ -1868,11 +1897,15 @@ void rgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(rgEditorEl
         rgEditorElement* pRasterizationSamples = new rgEditorElementEnum(m_pParent, STR_VULKAN_MULTISAMPLE_RASTERIZATION_SAMPLES, rasterizationSamplesEnumerators, reinterpret_cast<uint32_t*>(&pPipelineMultisampleStateCreateInfo->rasterizationSamples));
         pMultisampleStateRoot->AppendChildItem(pRasterizationSamples);
 
+        // Connect to the splitter moved signal to close the drop down.
+        rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pRasterizationSamples), &rgEditorElementEnum::HotKeyPressedSignal);
+
         // Set object name.
         pRasterizationSamples->setObjectName(STR_RASTERIZATION_SAMPLES);
 
         // Connect to the enum list widget status signal.
-        bool isConnected = connect(pRasterizationSamples, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        isConnected = connect(pRasterizationSamples, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(isConnected);
 
         // Connect the shortcut hot key signal.
@@ -1925,11 +1958,15 @@ void rgPipelineStateModelVulkan::InitializeStencilOpState(rgEditorElement* pDept
         rgEditorElement* pFailOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_DEPTH_STENCIL_STATE_FAIL_OP, stencilOpEnumerators, reinterpret_cast<uint32_t*>(&pStencilOpState->failOp));
         pDepthStencilStateRoot->AppendChildItem(pFailOpNode);
 
+        // Connect to the splitter moved signal to close the drop down.
+        rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pFailOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
         // Set object name.
         pFailOpNode->setObjectName(STR_FAIL_OP_NODE);
 
         // Connect to the enum list widget status signal.
-        bool isConnected = connect(pFailOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        isConnected = connect(pFailOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(isConnected);
 
         // Connect the shortcut hot key signal.
@@ -1939,6 +1976,10 @@ void rgPipelineStateModelVulkan::InitializeStencilOpState(rgEditorElement* pDept
         // Add the "passOp" node.
         rgEditorElement* pPassOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_DEPTH_STENCIL_STATE_PASS_OP, stencilOpEnumerators, reinterpret_cast<uint32_t*>(&pStencilOpState->passOp));
         pDepthStencilStateRoot->AppendChildItem(pPassOpNode);
+
+        // Connect to the splitter moved signal to close the drop down.
+        pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pPassOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         pPassOpNode->setObjectName(STR_PASS_OP_NODE);
@@ -1955,6 +1996,10 @@ void rgPipelineStateModelVulkan::InitializeStencilOpState(rgEditorElement* pDept
         rgEditorElement* pDepthFailOp = new rgEditorElementEnum(m_pParent, STR_VULKAN_DEPTH_STENCIL_STATE_DEPTH_FAIL_OP, stencilOpEnumerators, reinterpret_cast<uint32_t*>(&pStencilOpState->depthFailOp));
         pDepthStencilStateRoot->AppendChildItem(pDepthFailOp);
 
+        // Connect to the splitter moved signal to close the drop down.
+        pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pDepthFailOp), &rgEditorElementEnum::HotKeyPressedSignal);
+
         // Set object name.
         pDepthFailOp->setObjectName(STR_DEPTH_FAIL_OP);
 
@@ -1970,6 +2015,10 @@ void rgPipelineStateModelVulkan::InitializeStencilOpState(rgEditorElement* pDept
         const rgEnumValuesVector& compareOpEnumerators = GetCompareOpEnumerators();
         rgEditorElement* pCompareOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_DEPTH_STENCIL_STATE_COMPARE_OP, compareOpEnumerators, reinterpret_cast<uint32_t*>(&pStencilOpState->compareOp));
         pDepthStencilStateRoot->AppendChildItem(pCompareOpNode);
+
+        // Connect to the splitter moved signal to close the drop down.
+        pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pCompareOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         pCompareOpNode->setObjectName(STR_COMPARE_OP_NODE);
@@ -2042,11 +2091,15 @@ void rgPipelineStateModelVulkan::InitializeDepthStencilStateCreateInfo(rgEditorE
         rgEditorElement* pDepthCompareOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_DEPTH_STENCIL_DEPTH_COMPARE_OP, compareOpEnumerators, reinterpret_cast<uint32_t*>(&pPipelineDepthStencilStateCreateInfo->depthCompareOp), m_pParent);
         pDepthStencilStateRoot->AppendChildItem(pDepthCompareOpNode);
 
+        // Connect to the splitter moved signal to close the drop down.
+        rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pDepthCompareOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
         // Set object name.
         pDepthCompareOpNode->setObjectName(STR_DEPTH_COMPARE_OP_NODE);
 
         // Connect to the enum list widget status signal.
-        bool isConnected = connect(pDepthCompareOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        isConnected = connect(pDepthCompareOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(isConnected);
 
         // Connect the shortcut hot key signal.
@@ -2129,11 +2182,15 @@ void rgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(rgEditorEle
         rgEditorElement* pLogicOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_STATE_LOGIC_OP, logicOpEnumerators, reinterpret_cast<uint32_t*>(&pPipelineColorBlendStateCreateInfo->logicOp));
         pColorBlendStateRoot->AppendChildItem(pLogicOpNode);
 
+        // Connect to the splitter moved signal to close the drop down.
+        rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pLogicOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
         // Set object name.
         pLogicOpNode->setObjectName(STR_LOGIC_OP_NODE);
 
         // Connect to the enum list widget status signal.
-        bool isConnected = connect(pLogicOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        isConnected = connect(pLogicOpNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(isConnected);
 
         // Connect the shortcut hot key signal.
@@ -2228,11 +2285,15 @@ void rgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             rgEditorElement* pSrcColorBlendFactorNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_SRC_COLOR_BLEND_FACTOR, blendFactorEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->srcColorBlendFactor));
             pRootElement->AppendChildItem(pSrcColorBlendFactorNode);
 
+            // Connect to the splitter moved signal to close the drop down.
+            rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pSrcColorBlendFactorNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pSrcColorBlendFactorNode->setObjectName(STR_SRC_COLOR_BLEND_FACTOR_NODE);
 
             // Connect to the enum list widget status signal.
-            bool isConnected = connect(pSrcColorBlendFactorNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            isConnected = connect(pSrcColorBlendFactorNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(isConnected);
 
             // Connect the shortcut hot key signal.
@@ -2242,6 +2303,10 @@ void rgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             // Add the "dstColorBlendFactor" node.
             rgEditorElement* pDstColorBlendFactorNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_DST_COLOR_BLEND_FACTOR, blendFactorEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->dstColorBlendFactor));
             pRootElement->AppendChildItem(pDstColorBlendFactorNode);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pDstColorBlendFactorNode), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pDstColorBlendFactorNode->setObjectName(STR_DST_COLOR_BLEND_FACTOR_NODE);
@@ -2258,6 +2323,10 @@ void rgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             rgEditorElement* pColorBlendOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_COLOR_BLEND_OP, blendOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->colorBlendOp));
             pRootElement->AppendChildItem(pColorBlendOpNode);
 
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pColorBlendOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pColorBlendOpNode->setObjectName(STR_COLOR_BLEND_OP_NODE);
 
@@ -2272,6 +2341,10 @@ void rgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             // Add the "srcAlphaBlendFactor" node.
             rgEditorElement* pSrcAlphaBlendFactorNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_SRC_ALPHA_BLEND_FACTOR, blendFactorEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->srcAlphaBlendFactor));
             pRootElement->AppendChildItem(pSrcAlphaBlendFactorNode);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pSrcAlphaBlendFactorNode), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pSrcAlphaBlendFactorNode->setObjectName(STR_SRC_ALPHA_BLEND_FACTOR_NODE);
@@ -2288,6 +2361,10 @@ void rgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             rgEditorElement* pDstAlphaBlendFactorNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_DST_ALPHA_BLEND_FACTOR, blendFactorEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->dstAlphaBlendFactor));
             pRootElement->AppendChildItem(pDstAlphaBlendFactorNode);
 
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pDstAlphaBlendFactorNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pDstAlphaBlendFactorNode->setObjectName(STR_DST_ALPHA_BLEND_FACTOR_NODE);
 
@@ -2302,6 +2379,10 @@ void rgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             // Add the "alphaBlendOp" node.
             rgEditorElement* pAlphaBlendOpNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_ALPHA_BLEND_OP, blendOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->alphaBlendOp));
             pRootElement->AppendChildItem(pAlphaBlendOpNode);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pAlphaBlendOpNode), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pAlphaBlendOpNode->setObjectName(STR_ALPHA_BLEND_OP_NODE);
@@ -2318,6 +2399,10 @@ void rgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             const rgEnumValuesVector& colorComponentFlagEnumerators = GetColorComponentFlagEnumerators();
             rgEditorElement* pColorComponentWriteMask = new rgEditorElementEnum(m_pParent, STR_VULKAN_COLOR_BLEND_ATTACHMENT_STATE_COLOR_WRITE_MASK, colorComponentFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetColorBlendAttachmentState->colorWriteMask), true);
             pRootElement->AppendChildItem(pColorComponentWriteMask);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pColorComponentWriteMask), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pColorComponentWriteMask->setObjectName(STR_COLOR_COMPONENT_WRITE_MASK);
@@ -2493,11 +2578,15 @@ void rgPipelineStateModelVulkan::InitializeVkComputePipelineCreateInfo(rgEditorE
             rgEditorElement* pFlagsItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_FLAGS, pipelineFlagsEnumerators, reinterpret_cast<uint32_t*>(&pVkComputePipelineCreateInfo->flags), true);
             pVkComputePipelineCreateInfoRoot->AppendChildItem(pFlagsItem);
 
+            // Connect to the splitter moved signal to close the drop down.
+            rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pFlagsItem), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pFlagsItem->setObjectName(STR_FLAGS_ITEM);
 
             // Connect to the flags enum list widget status signal.
-            bool isConnected = connect(pFlagsItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            isConnected = connect(pFlagsItem, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(isConnected);
 
             // Connect the shortcut hot key signal.
@@ -2593,11 +2682,15 @@ void rgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfo(rgEdito
         rgEditorElement* pDescriptorSetLayoutFlagsNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_FLAGS, descriptorSetLayoutCreateFlags, reinterpret_cast<uint32_t*>(&pDescriptorSetLayoutCreateInfo->flags), true);
         pRootElement->AppendChildItem(pDescriptorSetLayoutFlagsNode);
 
+        // Connect to the splitter moved signal to close the drop down.
+        rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+        bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pDescriptorSetLayoutFlagsNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
         // Set object name.
         pDescriptorSetLayoutFlagsNode->setObjectName(STR_DESCRIPTOR_SET_LAYOUT_FLAGS_NODE);
 
         // Connect to the enum list widget status signal.
-        bool isConnected = connect(pDescriptorSetLayoutFlagsNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        isConnected = connect(pDescriptorSetLayoutFlagsNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(isConnected);
 
         // Connect the shortcut hot key signal.
@@ -2682,11 +2775,15 @@ void rgPipelineStateModelVulkan::InitializeDescriptorSetLayoutBinding(rgEditorEl
             rgEditorElement* pDescriptorTypeNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_DESCRIPTOR_SET_LAYOUT_BINDING_DESCRIPTOR_TYPE, descriptorTypeEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDescriptorSetLayout->descriptorType));
             pRootElement->AppendChildItem(pDescriptorTypeNode);
 
+            // Connect to the splitter moved signal to close the drop down.
+            rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pDescriptorTypeNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pDescriptorTypeNode->setObjectName(STR_DESCRIPTOR_TYPE_NODE);
 
             // Connect to the enum list widget status signal.
-            bool isConnected = connect(pDescriptorTypeNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            isConnected = connect(pDescriptorTypeNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(isConnected);
 
             // Connect the shortcut hot key signal.
@@ -2704,6 +2801,10 @@ void rgPipelineStateModelVulkan::InitializeDescriptorSetLayoutBinding(rgEditorEl
             const rgEnumValuesVector& stageFlagEnumerators = GetShaderStageFlagEnumerators();
             rgEditorElement* pStageFlagsNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_LAYOUT_STAGE_FLAGS, stageFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDescriptorSetLayout->stageFlags), true);
             pRootElement->AppendChildItem(pStageFlagsNode);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pStageFlagsNode), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pStageFlagsNode->setObjectName(STR_STAGE_FLAGS_NODE);
@@ -2754,11 +2855,15 @@ void rgPipelineStateModelVulkan::InitializePushConstantRange(rgEditorElement* pR
             rgEditorElement* pStageFlagsNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_LAYOUT_STAGE_FLAGS, stageFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetPushConstant->stageFlags), true);
             pRootElement->AppendChildItem(pStageFlagsNode);
 
+            // Connect to the splitter moved signal to close the drop down.
+            rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pStageFlagsNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pStageFlagsNode->setObjectName(STR_STAGE_FLAGS_NODE);
 
             // Connect to the enum list widget status signal.
-            bool isConnected = connect(pStageFlagsNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            isConnected = connect(pStageFlagsNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(isConnected);
 
             // Connect the shortcut hot key signal.
@@ -2940,11 +3045,15 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             rgEditorElement* pFlagsElement = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_FLAGS, attachmentDescriptionFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->flags), true);
             pRootElement->AppendChildItem(pFlagsElement);
 
+            // Connect to the splitter moved signal to close the drop down.
+            rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pFlagsElement), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pFlagsElement->setObjectName(STR_FLAGS_ELEMENT);
 
             // Connect to the enum list widget status signal.
-            bool isConnected = connect(pFlagsElement, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            isConnected = connect(pFlagsElement, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(isConnected);
 
             // Connect the shortcut hot key signal.
@@ -2955,6 +3064,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             const rgEnumValuesVector& formatEnumerators = GetFormatEnumerators();
             rgEditorElement* pFormatElement = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_VERTEX_FORMAT, formatEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->format));
             pRootElement->AppendChildItem(pFormatElement);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pFormatElement), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pFormatElement->setObjectName(STR_FORMAT_ELEMENT);
@@ -2979,6 +3092,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             rgEditorElement* pLoadOpItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_LOAD_OP, loadOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->loadOp));
             pRootElement->AppendChildItem(pLoadOpItem);
 
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pLoadOpItem), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pLoadOpItem->setObjectName(STR_LOAD_OP_ITEM);
 
@@ -2995,6 +3112,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             rgEditorElement* pStoreOpItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_STORE_OP, storeOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->storeOp));
             pRootElement->AppendChildItem(pStoreOpItem);
 
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pStoreOpItem), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pStoreOpItem->setObjectName(STR_STORE_OP_ITEM);
 
@@ -3010,6 +3131,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             rgEditorElement* pStencilLoadOpItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_STENCIL_LOAD_OP, loadOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->stencilLoadOp));
             pRootElement->AppendChildItem(pStencilLoadOpItem);
 
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pStencilLoadOpItem), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pStencilLoadOpItem->setObjectName(STR_STENCIL_LOAD_OP_ITEM);
 
@@ -3024,6 +3149,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             // Add the "stencilStoreOp" member values.
             rgEditorElement* pStencilStoreOpItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_STENCIL_STORE_OP, storeOpEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->stencilStoreOp));
             pRootElement->AppendChildItem(pStencilStoreOpItem);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pStencilStoreOpItem), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pStencilStoreOpItem->setObjectName(STR_STENCIL_STORE_OP_ITEM);
@@ -3041,6 +3170,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             rgEditorElement* pIinitialLayoutItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_INITIAL_LAYOUT, imageLayoutEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->initialLayout));
             pRootElement->AppendChildItem(pIinitialLayoutItem);
 
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pIinitialLayoutItem), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pIinitialLayoutItem->setObjectName(STR_INITIAL_LAYOUT_ITEM);
 
@@ -3055,6 +3188,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             // Add the "finalLayout" member values.
             rgEditorElement* pFinalLayoutItem = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_FINAL_LAYOUT, imageLayoutEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentDescription->finalLayout));
             pRootElement->AppendChildItem(pFinalLayoutItem);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pFinalLayoutItem), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pFinalLayoutItem->setObjectName(STR_FINAL_LAYOUT_ITEM);
@@ -3085,11 +3222,15 @@ void rgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
             rgEditorElement* pFlags = new rgEditorElementEnum(m_pParent, STR_VULKAN_PIPELINE_MEMBER_FLAGS, subpassDescriptionFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetSubpassDescription->flags), true);
             pRootElement->AppendChildItem(pFlags);
 
+            // Connect to the splitter moved signal to close the drop down.
+            rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pFlags), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pFlags->setObjectName(STR_FLAGS);
 
             // Connect to the enum list widget status signal.
-            bool isConnected = connect(pFlags, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            isConnected = connect(pFlags, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(isConnected);
 
             // Connect the shortcut hot key signal.
@@ -3100,6 +3241,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
             const rgEnumValuesVector& pipelineBindPointEnumerators = GetPipelineBindPointEnumerators();
             rgEditorElement* pPipelineBindPointNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_PIPELINE_BIND_POINT, pipelineBindPointEnumerators, reinterpret_cast<uint32_t*>(&pOffsetSubpassDescription->pipelineBindPoint));
             pRootElement->AppendChildItem(pPipelineBindPointNode);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pPipelineBindPointNode), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pPipelineBindPointNode->setObjectName(STR_PIPELINE_BIND_POINT_NODE);
@@ -3326,11 +3471,15 @@ void rgPipelineStateModelVulkan::InitializeAttachmentReference(rgEditorElement* 
             rgEditorElement* pImageLayoutNode = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_SUBPASS_ATTACHMENT_LAYOUT, imageLayoutEnumerators, reinterpret_cast<uint32_t*>(&pOffsetAttachmentReference->layout));
             pRootElement->AppendChildItem(pImageLayoutNode);
 
+            // Connect to the splitter moved signal to close the drop down.
+            rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pImageLayoutNode), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pImageLayoutNode->setObjectName(STR_IMAGE_LAYOUT_NODE);
 
             // Connect to the enum list widget status signal.
-            bool isConnected = connect(pImageLayoutNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            isConnected = connect(pImageLayoutNode, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(isConnected);
 
             // Connect the shortcut hot key signal.
@@ -3391,11 +3540,15 @@ void rgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             rgEditorElement* pSrcStageMask = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_SRC_STAGE_MASK, stageFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->srcStageMask), true);
             pRootElement->AppendChildItem(pSrcStageMask);
 
+            // Connect to the splitter moved signal to close the drop down.
+            rgBuildViewVulkan* pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            bool isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pSrcStageMask), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pSrcStageMask->setObjectName(STR_SRC_STAGE_MASK);
 
             // Connect to the enum list widget status signal.
-            bool isConnected = connect(pSrcStageMask, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            isConnected = connect(pSrcStageMask, &rgEditorElement::EnumListWidgetStatusSignal, this, &rgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(isConnected);
 
             // Connect the shortcut hot key signal.
@@ -3405,6 +3558,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             // Add the "dstStageMask" member.
             rgEditorElement* pDstStageMask = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_DST_STAGE_MASK, stageFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->dstStageMask), true);
             pRootElement->AppendChildItem(pDstStageMask);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pDstStageMask), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pDstStageMask->setObjectName(STR_DST_STAGE_MASK);
@@ -3424,6 +3581,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             rgEditorElement* pSrcAccessMask = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_SRC_ACCESS_MASK, accessFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->srcAccessMask), true);
             pRootElement->AppendChildItem(pSrcAccessMask);
 
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pSrcAccessMask), &rgEditorElementEnum::HotKeyPressedSignal);
+
             // Set object name.
             pSrcAccessMask->setObjectName(STR_SRC_ACCESS_MASK);
 
@@ -3438,6 +3599,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             // Add the "dstAccessMask" member.
             rgEditorElement* pDstAccessMask = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_DST_ACCESS_MASK, accessFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->dstAccessMask), true);
             pRootElement->AppendChildItem(pDstAccessMask);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pDstAccessMask), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pDstAccessMask->setObjectName(STR_DST_ACCESS_MASK);
@@ -3454,6 +3619,10 @@ void rgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             const rgEnumValuesVector& dependencyFlagEnumerators = GetDependencyFlagEnumerators();
             rgEditorElement* pDependencyFlags = new rgEditorElementEnum(m_pParent, STR_VULKAN_RENDER_PASS_DEPENDENCY_DEPENDENCY_FLAGS, dependencyFlagEnumerators, reinterpret_cast<uint32_t*>(&pOffsetDependencyDescription->dependencyFlags), true);
             pRootElement->AppendChildItem(pDependencyFlags);
+
+            // Connect to the splitter moved signal to close the drop down.
+            pBuildViewVulkan = static_cast<rgBuildViewVulkan*>(m_pParent);
+            isConnected = connect(pBuildViewVulkan, &rgBuildViewVulkan::SplitterMoved, static_cast<rgEditorElementEnum*>(pDependencyFlags), &rgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             pDependencyFlags->setObjectName(STR_DEPENDENCY_FLAGS);

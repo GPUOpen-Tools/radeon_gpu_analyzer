@@ -1,11 +1,26 @@
 /********************************************************************/
-/* Frame focus border
+/* Line Edit and Checkbox focus border
 /********************************************************************/
-QFrame:focus,
 QLineEdit:focus,
 rgCheckBox:focus
 {
     border: 1px solid rgb(224, 30, 55);
+}
+
+/********************************************************************/
+/* Graphics File Menu border color
+/********************************************************************/
+rgMenuGraphics
+{
+    border: 1px solid black;
+}
+
+/********************************************************************/
+/* Frame focus border
+/********************************************************************/
+QFrame:focus
+{
+    border: 1px solid black;
 }
 
 rgBuildSettingsViewVulkan #addTargetGPUsButton:focus,

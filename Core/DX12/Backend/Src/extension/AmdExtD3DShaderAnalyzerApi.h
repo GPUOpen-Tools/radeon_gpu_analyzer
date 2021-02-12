@@ -255,7 +255,7 @@ public:
 * @brief Version 2 Shader Analyzer extension API object (adding DXR extension support)
 ***********************************************************************************************************************
 */
-interface __declspec(uuid("5d547a81-10a1-4f73-84a6-1049f8c37223"))
+interface __declspec(uuid("B63EEBE2-411B-494D-A4D1-08676225773C"))
 IAmdExtD3DShaderAnalyzer2 : public IAmdExtD3DShaderAnalyzer1
 {
    // Overload the CreateStateObject compile the pipeline.
@@ -313,25 +313,27 @@ IAmdExtD3DShaderAnalyzer2 : public IAmdExtD3DShaderAnalyzer1
         size_t*                     pIsaCodeSize) = 0;
 
     // Check if a pipeline was compiled in Indirect mode.
-    // Returns true if the given pipeline was compiled in Indirect mode and false otherwise
-    virtual bool IsRayTracingPipelineIndirect(
-        AmdExtD3DPipelineHandle     pipelineHandle) const = 0;
-
-    // Gets the number of shaders which have been compiled as part of the pipeline,
-    // assuming Indirect compilation was used (IsRayTracingPipelineIndirect() is true for this pipeline).
-    virtual HRESULT GetRayTracingPipelineIndirectShaderCount(
+    virtual HRESULT IsRayTracingPipelineIndirect(
         AmdExtD3DPipelineHandle     pipelineHandle,
+        uint32_t                    pipelineIndex,
+        bool*                       pIsIndirect) const = 0;
+
+    // Gets the number of shaders which have been compiled as part of the pipeline.
+    virtual HRESULT GetRayTracingPipelineShaderCount(
+        AmdExtD3DPipelineHandle     pipelineHandle,
+        uint32_t                    pipelineIndex,
         uint32_t*                   pShaderCount) = 0;
 
-    // Retrieves the name of a shader that was compiled as part of a raytracing pipeline in Indirect mode.
+    // Retrieves the name of a shader that was compiled as part of a raytracing pipeline.
     // If pNameBuffer is nullptr - sets the name size in bytes to nameBytes, otherwise copies the name to pNameBuffer.
     // Note: the given index has to be in the range between 0 and
-    // the count returned by GetRayTracingPipelineIndirectShaderCount().
-    virtual HRESULT GetRayTracingPipelineIndirectShaderName(
+    // the count returned by GetRayTracingPipelineShaderCount().
+    virtual HRESULT GetRayTracingPipelineShaderName(
         AmdExtD3DPipelineHandle   pipelineHandle,
+        uint32_t                  pipelineIndex,
         uint32_t                  shaderIndex,
-        size_t*                   pNameBytes,
-        char*                     pNameBuffer) = 0;
+        size_t*                   pNameCount,
+        wchar_t*                  pNameBuffer) = 0;
 
     // Retrieve the disassembly for a ray tracing pipeline.
     // If the call to this function is performed with pIsaCode as nullptr, pIsaCodeSize would be set

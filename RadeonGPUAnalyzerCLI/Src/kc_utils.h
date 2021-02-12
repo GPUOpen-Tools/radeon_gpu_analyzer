@@ -100,6 +100,9 @@ public:
     // fileFullPath - the full path to the file to be deleted.
     static bool DeleteFile(const std::string& file_full_path);
 
+    // Returns true if the given string represents a directory path, otherwise returns false.
+    static bool IsDirectory(const std::string& dir_path);
+
     // Replaces a backend statistics file with a CLI statistics file.
     // statistics_file - full path to the file to be replaced
     // config - user configuration
@@ -165,7 +168,8 @@ public:
         const std::string& stage,
         const std::string& device,
         const std::string& ext,
-        std::string& out_filename);
+        std::string& out_filename,
+        bool should_append_suffix = true);
 
     // Append suffix to the provided file name.
     // If the file name has an extension, the suffix will be appended before the extension.

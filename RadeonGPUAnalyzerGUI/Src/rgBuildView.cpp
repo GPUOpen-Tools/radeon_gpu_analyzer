@@ -3174,6 +3174,9 @@ void rgBuildView::HandleSplitterMoved(int pos, int index)
 {
     // Update the splitter dimensions in the config file.
     SetConfigSplitterPositions();
+
+    // Emit a signal to indicate change in splitter position.
+    emit SplitterMoved();
 }
 
 std::string rgBuildView::GetCurrentProjectAPIName() const

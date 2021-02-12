@@ -46,7 +46,7 @@ static char* kStrErrorBothCfgAndCfgiSpecified = "Error: only one of \"--cfg\" an
 static const char* kStrErrorNoModeSpecified = "No mode specified. Please specify mode using - s <arg>.";
 static const char* kStrDxAdaptersHelpCommonText = "This is only relevant if you have multiple display adapters installed on your system, and you would like RGA to use the driver which is associated with "
 "a non-primary display adapter.By default RGA will use the driver that is associated with the primary display adapter.";
-static const char* kStrInfoLinuxLegacyOpenclNoLongerSupported = "Legacy OpenCL mode (-s cl) is no longer supported on Linux.";
+static const char* kStrInfoLegacyOpenclNoLongerSupported = "Legacy OpenCL mode (-s cl) is no longer supported.";
 
 bool ParseCmdLine(int argc, char* argv[], Config& config)
 {
@@ -62,9 +62,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         po::options_description generic_opt("Generic options");
         generic_opt.add_options()
             // The next two options here can be repeated, so they are vectors.
-            ("csv-separator", po::value<string>(&config.csv_separator), "Override to default separator for analysis items.")
             ("list-asics,l", "List the known GPU codenames, architecture names and variant names.\nTo target a specific GPU, use its codename as the argument to the \"-c\" command line switch.")
-            ("asic,c", po::value< vector<string> >(&config.asics), "Which ASIC to target.  Repeatable.")
+            ("asic,c", po::value<vector<string>>(&config.asics), "Which ASIC to target.  Repeatable.")
             ("version", "Print version string.")
             ("help,h", "Produce this help message.")
             ("analysis,a", po::value<string>(&config.analysis_file), "Path to output analysis file.")
@@ -73,12 +72,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("livereg", po::value<string>(&config.livereg_analysis_file), "Path to live register analysis output file(s).")
             ("cfg", po::value<string>(&config.block_cfg_file), "Path to per-block control flow graph output file(s).")
             ("cfg-i", po::value<string>(&config.inst_cfg_file), "Path to per-instruction control flow graph output file(s).")
-            ("source-kind,s", po::value<string>(&config.source_kind), "Source platform: dx12 for DirectX 12, dx11 for DirectX 11, vulkan for Vulkan, opengl for OpenGL, "
-#ifndef __linux
+            ("source-kind,s", po::value<string>(&config.source_kind), "Source platform: dx12 for DirectX 12, dxr for DXR, dx11 for DirectX 11, vulkan for Vulkan, opengl for OpenGL, "
+#ifdef _LEGACY_OPENCL_ENABLED
                 "cl for OpenCL legacy,"
-#endif // !__linux
+#endif // !_LEGACY_OPENCL_ENABLED
                 "rocm-cl for OpenCL Lightning Compiler and amdil for AMDIL.")
-            ("parse-isa", "Generate a CSV file with a breakdown of each ISA instruction into opcode, operands. etc.")
             ("updates,u", "Check for available updates.")
             ("verbose,v", "Print command line strings that RGA uses to launch external processes.")
             ;
@@ -180,7 +178,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         // Vulkan hidden options (are not presented to the user in -h).
         po::options_description vulkan_opt_hidden("Vulkan-specific hidden options");
         vulkan_opt_hidden.add_options()
-            ("assemble-spv", po::value<string>(&config.spv_bin), "Assemble SPIR-V textual code to a SPIR-V binary file. arg is the full path to the output SPIR-V binary file.");
+            ("assemble-spv", po::value<string>(&config.spv_bin), "Assemble SPIR-V textual code to a SPIR-V binary file. arg is the full path to the output SPIR-V binary file.")
+            ;
 #endif
 
         // DX12-specific.
@@ -268,14 +267,25 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("elf-dis", po::value<std::string>(&config.elf_dis), "Full path to output text file where disassembly of the pipeline ELF binary would be saved.")
             ;
 
-#ifndef __linux
+        // DXR-specific.
+        po::options_description dxr_opt("DXR mode options");
+        dxr_opt.add_options()
+            ("hlsl", po::value<std::string>(&config.dxr_hlsl), "Full path to DXR HLSL input file that contains the state definition.")
+            ("mode", po::value<std::string>(&config.dxr_mode), "DXR mode: 'shader' to compile a specific shader, or 'pipeline' to compile all pipelines in the State Object. By default, shader mode is assumed.")
+            ("export", po::value<std::vector<std::string>>(&config.dxr_exports), "The export name of the shader for which to retrieve results - only relevant to shader mode (--mode shader)."
+                " this can be an export name of any shader in the state object.")
+            ("dxr-model", po::value<std::string>(&config.dxr_shader_model), "Shader model used for DXR HLSL compilation. Use this option to override "
+                "the shader model that is used for HLSL compilation by default (lib_6_3).")
+            ;
+
+#ifdef _LEGACY_OPENCL_ENABLED
         // Legacy OpenCL options.
         po::options_description legacy_cl_opt("");
         legacy_cl_opt.add_options()
             ("suppress", po::value<vector<std::string> >(&config.suppress_section), "Section to omit from binary output.  Repeatable. Available options: .source, .amdil, .debugil,"
                 ".debug_info, .debug_abbrev, .debug_line, .debug_pubnames, .debug_pubtypes, .debug_loc, .debug_str,"
                 ".llvmir, .text\nNote: Debug sections are valid only with \"-g\" compile option");
-#endif // !__linux
+#endif // _LEGACY_OPENCL_ENABLED
 
         // IL dump.
         po::options_description il_dump_opt("");
@@ -326,17 +336,20 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("log", po::value<string>(&config.log_file), "Path to the CLI log file")
             ("no-suffix-bin", "If specified, do not add a suffix to names of generated binary files.")
             ("no-prefix-device-bin", "If specified, do not add a device prefix to names of generated binary files.")
+            ("state-desc", po::value<std::string>(&config.dxr_state_desc), "Full path to the DXR state description file.")
+            ("parse-isa", "Generate a CSV file with a breakdown of each ISA instruction into opcode, operands. etc.")
+            ("csv-separator", po::value<string>(&config.csv_separator), "Override to default separator for analysis items.")
+            ("retain", "Retain temporary output files.")
             ;
 
         // All options available from command line
         po::options_description all_opt;
-        all_opt.add(generic_opt).add(macro_and_include_opt).add(cl_opt).add(hidden_opt).add(dx_opt).add(dx12_opt).add(pipelined_opt_offline)
+        all_opt.add(generic_opt).add(macro_and_include_opt).add(cl_opt).add(hidden_opt).add(dx_opt).add(dx12_opt).add(dxr_opt).add(pipelined_opt_offline)
               .add(il_dump_opt).add(line_numbers_opt).add(warnings_opt).add(opt_level_opt2).add(rocm_compiler_paths_opt).add(dxc_options).add(dx12_other_options);
 
-#ifndef __linux
-        // Legacy OpenCL mode is no longer supported on Linux.
+#ifdef _LEGACY_OPENCL_ENABLED
         all_opt.add(legacy_cl_opt);
-#endif // !__linux
+#endif // _LEGACY_OPENCL_ENABLED
 
 #ifdef RGA_ENABLE_VULKAN
         all_opt.add(vulkan_opt).add(vulkan_input_type_opt).add(vulkan_opt_hidden);
@@ -356,6 +369,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         if (vm.count("help") || vm.count("?") || vm.size() == 0)
         {
             config.requested_command = Config::kHelp;
+        }
+
+        if (vm.count("retain"))
+        {
+            config.should_retain_temp_files = true;
         }
 
         if (vm.count("list-asics"))
@@ -507,6 +525,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.mode = kModeDx12;
         }
+        else if (src_kind == Config::source_kind_dxr)
+        {
+            config.mode = kModeDxr;
+        }
         else if (src_kind == Config::source_kind_amdil)
         {
             config.mode = RgaMode::kModeAmdil;
@@ -514,11 +536,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         else if (src_kind == Config::source_kind_opencl)
         {
             config.mode = kModeOpencl;
-#ifdef __linux
-            // Legacy OpenCL mode is no longer supported on Linux - abort.
-            std::cout << kStrInfoLinuxLegacyOpenclNoLongerSupported << std::endl;
+#ifndef _LEGACY_OPENCL_ENABLED
+            // Legacy OpenCL mode is no longer supported - abort.
+            std::cout << kStrInfoLegacyOpenclNoLongerSupported << std::endl;
             do_work = false;
-#endif // __linux
+#endif // _LEGACY_OPENCL_ENABLED
         }
         else if (src_kind == Config::source_kind_opengl)
         {
@@ -561,18 +583,14 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
                       {"tese", {&config.tess_evaluation_shader, &config.tese_shader_file_type}}, {"frag", {&config.fragment_shader, &config.frag_shader_file_type}},
                       {"geom", {&config.geometry_shader, &config.geom_shader_file_type}},       {"comp", {&config.compute_shader, &config.comp_shader_file_type}} })
             {
-                const auto file_type_mapping = { std::map<std::string, RgVulkanInputType>{ {"glsl", RgVulkanInputType::kGlsl} },
-                         std::map<std::string, RgVulkanInputType>{ {"spvas", RgVulkanInputType::kSpirvTxt} } };
-
-                for (const auto& mapping : file_type_mapping)
+                for (const std::pair<std::string, RgVulkanInputType>& fileType :
+                         std::map<std::string, RgVulkanInputType>{ {"glsl", RgVulkanInputType::kGlsl} },
+                         std::map<std::string, RgVulkanInputType>{ {"spvas", RgVulkanInputType::kSpirvTxt} })
                 {
-                    for (const std::pair<std::string, RgVulkanInputType>& fileType : mapping)
+                    if (vm.count(stage.first + "-" + fileType.first))
                     {
-                        if (vm.count(stage.first + "-" + fileType.first))
-                        {
-                            *(stage.second.first) = vm[stage.first + "-" + fileType.first].as<std::string>();
-                            *(stage.second.second) = fileType.second;
-                        }
+                        *(stage.second.first) = vm[stage.first + "-" + fileType.first].as<std::string>();
+                        *(stage.second.second) = fileType.second;
                     }
                 }
             }
@@ -604,20 +622,21 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 #if _WIN32
             cout << "To view help for DirectX 12 mode: -h -s dx12" << std::endl;
             cout << "To view help for DirectX 11 mode: -h -s dx11" << std::endl;
+            cout << "To view help for DXR mode: -h -s dxr" << std::endl;
             cout << "To view help for AMDIL mode: -h -s amdil" << std::endl;
 #endif
             cout << "To view help for OpenGL mode: -h -s opengl" << endl;
             cout << "To view help for ROCm OpenCL mode: -h -s rocm-cl" << std::endl;
-#ifndef __linux
+#ifdef _LEGACY_OPENCL_ENABLED
             cout << "To view help for legacy OpenCL mode: -h -s cl" << std::endl;
-#endif // !__linux
+#endif // !_LEGACY_OPENCL_ENABLED
             cout << std::endl;
             cout << "To see the current RGA version: --version" << std::endl;
             cout << "To check for available updates: --updates" << std::endl;
         }
         else if ((config.requested_command == Config::kHelp) && (config.mode == kModeOpencl))
         {
-#ifndef __linux
+#ifdef _LEGACY_OPENCL_ENABLED
             // Put all options valid for this mode to one group to make the description aligned.
             po::options_description ocl_options;
             ocl_options.add(generic_opt).add(il_dump_opt).add(macro_and_include_opt).add(cl_opt).add(legacy_cl_opt);
@@ -638,9 +657,30 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << "  " << "List the ASICs supported by Legacy OpenCL mode:" << endl;
             cout << "    " << program_name << " -s cl --list-asics" << endl;
             cout << endl;
-#else
-            cout << kStrInfoLinuxLegacyOpenclNoLongerSupported << std::endl;
-#endif // !__linux
+#endif // !_LEGACY_OPENCL_ENABLED
+        }
+        else if ((config.requested_command == Config::kHelp) && (config.mode == kModeDxr))
+        {
+            cout << "*** DXR mode options (Windows only) ***" << endl;
+            cout << "=======================================" << endl << endl;
+            cout << "Usage: " << program_name << " [options]" << endl << endl;
+            cout << generic_opt << endl;
+            cout << macro_and_include_opt << endl;
+            cout << dxr_opt << endl;
+            cout << dxc_options << endl;
+            cout << dx12_other_options << endl;
+            cout << "Examples:" << endl;
+            cout << "  View supported targets for DXR:" << endl;
+            cout << "    " << program_name << " -s dxr -l" << endl;
+            cout << "  Compile and generate RDNA ISA disassembly for a shader named MyRaygenShader which is defined in C:\\shaders\\Raytracing.hlsl:" << endl;
+            cout << "    " << program_name << " -s dxr --hlsl C:\\shaders\\Raytracing.hlsl --export MyRaygenShader --isa C:\\output\\isa.txt" << endl;
+            cout << "  Compile and generate RDNA ISA disassembly and HW resource usage statistics for a shader named MyClosestHitShader which is defined in C:\\shaders\\Raytracing.hlsl:" << endl;
+            cout << "    " << program_name << " -s dxr --hlsl C:\\shaders\\Raytracing.hlsl --export MyClosestHitShader --isa C:\\output\\isa.txt -a C:\\output\\stats.txt" << endl;
+            cout << "  Compile and generate RDNA ISA disassembly for all DXR pipelines defined in C:\\shaders\\Raytracing.hlsl:" << endl;
+            cout << "    " << program_name << " -s dxr --mode pipeline --hlsl C:\\shaders\\Raytracing.hlsl --isa C:\\output\\isa.txt" << endl;
+                        cout << "  Compile and generate RDNA ISA disassembly for all DXR pipelines which are defined in C:\\shaders\\rt.hlsl with additional headers that are located in C:\\shaders\\include:" << endl;
+            cout << "    " << program_name << " -s dxr --mode pipeline --hlsl C:\\shaders\\rt.hlsl -I C:\\shaders\\include --isa C:\\output\\isa.txt" << endl;
+
         }
         else if ((config.requested_command == Config::kHelp) && (config.mode == RgaMode::kModeRocmOpencl))
         {

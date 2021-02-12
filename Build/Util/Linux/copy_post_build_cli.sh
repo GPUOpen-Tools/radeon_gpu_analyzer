@@ -85,8 +85,8 @@ chmod +x $OUTPUT_DIR/rga
 
 # Copy license files.
 cp ../../../License.txt $OUTPUT_DIR/
-cp ../../../RGAThirdPartyLicenses.txt $OUTPUT_DIR/
+cp ../../../RGA_NOTICES.txt $OUTPUT_DIR/
 
-# Copy README.md and Release notes
-cp ../../../README.md $OUTPUT_DIR/
-cp ../../../Documentation/releases/$MAJOR.$MINOR/RGA_RELEASE_NOTES_v$MAJOR.$MINOR.txt $OUTPUT_DIR/
+# Copy RGA_README.md and Release notes
+cp ../../../RGA_README.md $OUTPUT_DIR/
+cp ../../../Documentation/RGA_RELEASE_NOTES.txt $OUTPUT_DIR/

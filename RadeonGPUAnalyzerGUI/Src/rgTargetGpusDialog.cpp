@@ -496,11 +496,18 @@ void rgTargetGpusDialog::PopulateTableData(std::shared_ptr<rgCliVersionInfo> pVe
                 }
                 else if (posGraphics1 == std::string::npos && posGraphics2 == std::string::npos)
                 {
-                    const char* NAVI_TOKEN = "RDNA";
-                    size_t naviPos1 = arch1.m_architectureName.find(NAVI_TOKEN);
-                    size_t naviPos2 = arch2.m_architectureName.find(NAVI_TOKEN);
+                    const char* RDNA2_TOKEN = "RDNA2";
+                    const char* RDNA_TOKEN = "RDNA";
+                    size_t rdna2Pos1 = arch1.m_architectureName.find(RDNA2_TOKEN);
+                    size_t rdna2Pos2 = arch2.m_architectureName.find(RDNA2_TOKEN);
+                    size_t rdnaPos1 = arch1.m_architectureName.find(RDNA_TOKEN);
+                    size_t rdnaPos2 = arch2.m_architectureName.find(RDNA_TOKEN);
 
-                    if (naviPos1 != std::string::npos && naviPos2 == std::string::npos)
+                    if (rdna2Pos1 != std::string::npos && rdna2Pos2 == std::string::npos)
+                    {
+                        is1LessThan2 = false;
+                    }
+                    else if (rdnaPos1 != std::string::npos && rdnaPos2 == std::string::npos)
                     {
                         is1LessThan2 = false;
                     }

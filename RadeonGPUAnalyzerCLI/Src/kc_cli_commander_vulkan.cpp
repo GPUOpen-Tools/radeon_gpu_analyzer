@@ -963,7 +963,11 @@ bool KcCliCommanderVulkan::RunPostCompileSteps(const Config& config)
         }
     }
 
-    DeleteTempFiles();
+    if (!config.should_retain_temp_files)
+    {
+        DeleteTempFiles();
+    }
+
     return ret;
 }
 

@@ -46,7 +46,8 @@ bool rga::RgDxrOutputMetadata::WriteOutputMetadata(const std::string& json_filen
         for (uint32_t pipeline_index = 0; pipeline_index < pipeline_results.size(); pipeline_index++)
         {
             // Pipeline name.
-            structure[kDxrOutputMetadataJsonElemPipelines][pipeline_index][kDxrOutputMetadataJsonElemName] = pipeline_results[pipeline_index].pipeline_name;
+            const char* pipeline_name = pipeline_results[pipeline_index].pipeline_name.data();
+            structure[kDxrOutputMetadataJsonElemPipelines][pipeline_index][kDxrOutputMetadataJsonElemName] = pipeline_name;
 
             // Pipeline compilation mode.
             structure[kDxrOutputMetadataJsonElemPipelines][pipeline_index][kDxrOutputMetadataJsonElemCompilationMode] =

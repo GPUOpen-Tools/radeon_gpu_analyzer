@@ -56,7 +56,8 @@ static bool AddSupportedGPUInfo(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement
         {
             bool is_less_than = true;
             const char * kStrIpv6Ipv7Ipv8Token = "Graphics";
-            const char * kStrNaviToken = "RDNA";
+            const char * kStrRdnaToken = "RDNA";
+            const char * kStrRdna2Token = "RDNA2";
             const char * kStrVegaToken = "Vega";
             auto gen_device_pair1 = GetGenAndCodeNames(d1.first);
             auto gen_device_pair2 = GetGenAndCodeNames(d2.first);
@@ -65,10 +66,16 @@ static bool AddSupportedGPUInfo(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement
             size_t gfx_token_pos2 = gen_device_pair2.first.find(kStrIpv6Ipv7Ipv8Token);
             size_t vega_token_pos1 = gen_device_pair1.first.find(kStrVegaToken);
             size_t vega_token_pos2 = gen_device_pair2.first.find(kStrVegaToken);
-            size_t navi_token_pos1 = gen_device_pair1.first.find(kStrNaviToken);
-            size_t navi_token_pos2 = gen_device_pair2.first.find(kStrNaviToken);
+            size_t rdna_token_pos1 = gen_device_pair1.first.find(kStrRdnaToken);
+            size_t rdna_token_pos2 = gen_device_pair2.first.find(kStrRdnaToken);
+            size_t rdna2_token_pos1 = gen_device_pair1.first.find(kStrRdna2Token);
+            size_t rdna2_token_pos2 = gen_device_pair2.first.find(kStrRdna2Token);
 
-            if (vega_token_pos2 != std::string::npos && navi_token_pos1 != std::string::npos)
+            if (rdna2_token_pos1 != std::string::npos && rdna2_token_pos2 == std::string::npos)
+            {
+                is_less_than = false;
+            }
+            else if (vega_token_pos2 != std::string::npos && rdna_token_pos1 != std::string::npos)
             {
                 is_less_than = false;
             }
@@ -81,7 +88,7 @@ static bool AddSupportedGPUInfo(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement
             {
                 is_less_than = false;
             }
-            else if (!(vega_token_pos1 != std::string::npos && navi_token_pos2 != std::string::npos))
+            else if (!(vega_token_pos1 != std::string::npos && rdna_token_pos2 != std::string::npos))
             {
                 is_less_than = GetGenAndCodeNames(d1.first).first < GetGenAndCodeNames(d2.first).first;
             }

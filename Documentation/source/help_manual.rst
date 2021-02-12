@@ -174,6 +174,10 @@ Default Vulkan® Build Settings
 
 	    Path to alternative compiler's binaries folder. The following executables are expected to be in this folder: glslangValidator, spirv-as, spirv-dis. If given, this package would be used instead of the glslang package that is bundled with RGA to compile GLSL to SPIR-V, disassemble SPIR-V™ binaries, reassemble SPIR-V™ binaries, etc.
 
+	* **Name of output binary:**
+
+	    The file name which will be used for the generated pipeline binary ELF file.
+
 	* **Settings command line**
 
 	    The command string which will be passed to the RGA backend when it is invoked. This command string is dynamically populated from the values that you set in the UI.

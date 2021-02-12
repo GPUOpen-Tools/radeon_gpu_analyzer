@@ -18,9 +18,9 @@ echo:
 echo Usage:  Prebuild.bat ^[options^]
 echo:
 echo Options:
-echo    --no-fetch           Do not call FetchDependencies.py script before running cmake. The default is "false".
+echo    --no-fetch           Do not call fetch_dependencies.py script before running cmake. The default is "false".
 echo    --cmake              Path to cmake executable to use. If not specified, the cmake from PATH env variable will be used.
-echo    --vs                 Microsoft Visual Studio verson. Currently supported values are: "2015", "2017". The default is "2017".
+echo    --vs                 Microsoft Visual Studio version. Currently supported values are: "2015", "2017". The default is "2017".
 echo    --qt                 Path to Qt5 root folder. The default is empty (cmake will look for Qt5 package istalled on the system).
 echo    --cli-only           Build RGA command-line tool only (do not build GUI). The default is "false".
 echo    --gui-only           Build GUI only (do not build RGA command-line tool). The default is "false".
@@ -164,19 +164,10 @@ rem clone or download dependencies
 if not "%NO_FETCH%"=="TRUE" (
     echo:
     echo Updating Common...
-    python %SCRIPT_DIR%\FetchDependencies.py
+    python %SCRIPT_DIR%\fetch_dependencies.py
 
     if "%ERRORLEVEL%"=="1" (
         echo Error: encountered an error while fetching dependencies. Aborting...
-        exit /b 1
-    )
-
-    if exist %SCRIPT_DIR%\FetchDependencies-Internal.py (
-        python %SCRIPT_DIR%\FetchDependencies-Internal.py
-    )
-
-    if "%ERRORLEVEL%"=="1" (
-        echo Error: encountered an error while fetching internal dependencies. Aborting...
         exit /b 1
     )
 )

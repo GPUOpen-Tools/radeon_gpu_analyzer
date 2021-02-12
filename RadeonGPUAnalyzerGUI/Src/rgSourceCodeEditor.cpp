@@ -28,6 +28,10 @@ rgSourceCodeEditor::rgSourceCodeEditor(QWidget* pParent, rgSrcLanguage lang) : Q
     // Connect signals.
     ConnectSignals();
 
+    // Set the border color.
+    setObjectName("sourceCodeEditor");
+    setStyleSheet("#sourceCodeEditor {border: 1px solid black;}");
+
     // Create the syntax highlighter.
     if (lang != rgSrcLanguage::Unknown)
     {

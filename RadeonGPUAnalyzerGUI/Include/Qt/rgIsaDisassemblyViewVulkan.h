@@ -14,8 +14,4 @@ class rgIsaDisassemblyViewVulkan : public rgIsaDisassemblyViewGraphics
 public:
     rgIsaDisassemblyViewVulkan(QWidget* pParent);
     virtual ~rgIsaDisassemblyViewVulkan() = default;
-
-protected:
-    // Set the border stylesheet.
-    virtual void SetBorderStylesheet() override;
 };

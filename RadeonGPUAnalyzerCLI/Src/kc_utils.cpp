@@ -447,6 +447,15 @@ bool KcUtils::DeleteFile(const std::string& file_full_path)
     return DeleteFile(path_gtstr);
 }
 
+bool KcUtils::IsDirectory(const std::string& dir_path)
+{
+    gtString path_gtstr;
+    path_gtstr << dir_path.c_str();
+    osFilePath file_path;
+    file_path.setFullPathFromString(path_gtstr);
+    return file_path.isDirectory();
+}
+
 void KcUtils::ReplaceStatisticsFile(const gtString& statistics_file, const Config& config,
                                     const std::string& device, IStatisticsParser& stats_parser, LoggingCallbackFunction log_cb)
 {
@@ -661,7 +670,7 @@ void KcUtils::ConstructOutputFileName(const std::string& base_output_file_name, 
 
 
 bool KcUtils::ConstructOutFileName(const std::string& base_filename, const std::string& stage,
-    const std::string& device, const std::string& ext, std::string& out_filename)
+    const std::string& device, const std::string& ext, std::string& out_filename, bool should_append_suffix)
 {
     static const std::string  STR_TEMP_FILE_NAME = "rga-temp-out";
     bool status = false;
@@ -689,7 +698,14 @@ bool KcUtils::ConstructOutFileName(const std::string& base_filename, const std::
         KcUtils::ConstructOutputFileName(base_name, stage, ext, "", device, out_name);
         if (!out_name.empty())
         {
-            KcUtils::AppendSuffix(out_name, stage);
+            // Add the wildcard token if it isn't already baked into the file name.
+            const char* kWildcardToken = "*";
+            if (should_append_suffix && out_name.find(kWildcardToken) == std::string::npos)
+            {
+                KcUtils::AppendSuffix(out_name, stage);
+            }
+
+            // We are done.
             out_filename = out_name;
             status = true;
         }

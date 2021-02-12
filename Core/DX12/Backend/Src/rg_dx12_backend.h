@@ -126,17 +126,16 @@ namespace rga
             std::vector<char>& pipeline_binary,
             std::string& error_msg) const;
 #ifdef RGA_DXR_ENABLED
-        // Compile a ray tracing pipeline to generate the disassembly and compiler resource usage info,
-        // and extract the results for a single pipeline (designated by the raygeneration shader name).
+        // Compile all ray tracing pipelines to generate the disassembly and compiler resource usage info,
+        // and extract the results for all pipelines (each pipeline is designated by the raygeneration shader name).
         // ray_tracing_state_object should contain all required data for the DXR State Object creation.
         // Any error messages would be set into error_msg.
         // Returns true on success, false otherwise.
         bool CreateStateObject(const D3D12_STATE_OBJECT_DESC* ray_tracing_state_object,
-            const std::wstring& raygen_shader_name,
-            std::vector<std::shared_ptr<RgDx12ShaderResultsRayTracing>>& raytracing_shader_stats,
-            std::vector<unsigned char>& pipeline_binary,
-            bool& is_unified_mode,
-            std::vector<std::string>& indirect_shader_names,
+            std::vector<std::shared_ptr<std::vector<std::shared_ptr<RgDx12ShaderResultsRayTracing>>>>& raytracing_shader_stats,
+            std::vector<std::shared_ptr<std::vector<unsigned char>>>& pipeline_binary,
+            std::vector<bool>& is_unified_mode,
+            std::vector<std::shared_ptr<std::vector<std::string>>>& indirect_shader_names,
             std::string& error_msg) const;
 
         // Compile a ray tracing shader to generate the disassembly and compiler resource usage info,
@@ -148,17 +147,6 @@ namespace rga
             const std::wstring& shader_name,
             RgDx12ShaderResultsRayTracing& shader_stats,
             std::vector<unsigned char>& pipeline_binary,
-            std::string& error_msg) const;
-
-        // Compile a ray tracing pipeline to generate the disassembly and compiler resource usage info,
-        // and extract the results for all generated pipelines.
-        // ray_tracing_state_object should contain all required data for the DXR State Object creation.
-        // Any error messages would be set into error_msg.
-        // Returns true on success, false otherwise.
-        bool CreateStateObjectAll(const RgDx12Config& config,
-            const D3D12_STATE_OBJECT_DESC* ray_tracing_state_object,
-            std::vector<std::shared_ptr<RgDx12ShaderResultsRayTracing>>& raytracing_shader_stats,
-            std::vector<std::shared_ptr<std::vector<unsigned char>>>& pipeline_binary,
             std::string& error_msg) const;
 #endif
 

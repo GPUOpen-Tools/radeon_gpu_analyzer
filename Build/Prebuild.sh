@@ -8,7 +8,7 @@ if [[ "$1" == "-h" ]] || [[ "$1" == "-help" ]] || [[ "$1" == "--h" ]] || [[ "$1"
     echo "Usage:  Prebuild.sh [options]"
     echo ""
     echo "Options:"
-    echo "   --no-fetch           Do not call FetchDependencies.py script before running cmake. The default is \"false\"."
+    echo "   --no-fetch           Do not call fetch_dependencies.py script before running cmake. The default is \"false\"."
     echo "   --cmake              Path to cmake executable to use. If not specified, the cmake from PATH env variable will be used.\n"
     echo "   --build              The build type: \"release\" or \"debug\". The default is \"debug\"."
     echo "   --qt                 Path to Qt5 root folder. The default is empty (cmake will look for Qt5 package istalled on the system)."
@@ -114,7 +114,7 @@ fi
 if [ "$NO_UPDATE" != "TRUE" ]; then
     echo ""
     echo "Updating Common..."
-    python $SCRIPT_DIR/FetchDependencies.py
+    python $SCRIPT_DIR/fetch_dependencies.py
 
     if [ $? -ne 0 ]; then
         echo "Error: encountered an error while fetching dependencies. Aborting..."

@@ -323,6 +323,8 @@ std::string rgAppStateVulkan::GetBuildSettingsViewStylesheet() const
         "rgBuildSettingsView #compilerLibrariesLineEdit:hover,"
         "rgBuildSettingsView #enableValidationLayersCheckBox:focus,"
         "rgBuildSettingsView #enableValidationLayersCheckBox:hover,"
+        "rgBuildSettingsView #allOptionsTextEdit:focus,"
+        "rgBuildSettingsView #allOptionsTextEdit:hover,"
         "rgBuildSettingsView #outputFileBinaryNameLineEdit:focus,"
         "rgBuildSettingsView #outputFileBinaryNameLineEdit:hover"
         "{"
