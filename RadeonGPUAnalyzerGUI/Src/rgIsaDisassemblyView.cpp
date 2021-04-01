@@ -729,9 +729,16 @@ void rgIsaDisassemblyView::PopulateTargetGpuList(const rgBuildOutputsMap& buildO
             assert(splitB.size() > 1);
             if (splitA.size() > 1 && splitB.size() > 1)
             {
-                int numA = std::stoi(splitA[1], nullptr);
-                int numB = std::stoi(splitB[1], nullptr);
-                ret = ((numB - numA) > 0);
+                try
+                {
+                    int numA = std::stoi(splitA[1], nullptr, 16);
+                    int numB = std::stoi(splitB[1], nullptr, 16);
+                    ret = ((numB - numA) > 0);
+                }
+                catch (...)
+                {
+                    ret = false;
+                }
             }
         }
         return !ret;

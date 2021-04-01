@@ -50,8 +50,10 @@ namespace rga
     static const char* kStrErrorDxrEmptyShaderName = "Error: empty shader name, for shader #";
     static const char* kStrErrorDxrFailedToRetrieveShaderName = "Error: failed to retrieve shader name, for shader #";
     static const char* kStrErrorDxrFailedToCheckPipelineCompilationType = "Error: failed to check pipeline compilation type (Indirect/Unified) for pipeline #";
-    static const char* kStrErrorDxrFailedToCreateStateObject = "Error: failed to create DXR state object.";
+    static const char* kStrErrorDxrFailedToCreateStateObject = "Error: failed to create DXR state object. This is likely caused by an error in the state subobject definition.";
     static const char* kStrErrorDxrFailedToRetrievePipelineCount = "Error: failed to retrieve DXR pipeline count.";
+    static const char* kStrHintDebugOutput = "Hint: consider enabling the D3D12 layer adding by adding --debug-layer to your rga command, and inspecting the Windows Debug Output for more detailed information on the actual error. "
+        "The Windows Debug Output can be monitored by tools like https://docs.microsoft.com/en-us/sysinternals/downloads/debugview";
 
     // Messages: warnings.
     static const char* kStrWarningMoreThanSinglePipelineBinaryForSinglePipeline1 = "Warning: more than a single pipeline binary detected ";
@@ -740,7 +742,7 @@ namespace rga
                                                 ret = false;
                                             }
 
-                                            bool is_binary_extraction_supported = (pipeline_count == 1);
+                                            bool is_binary_extraction_supported = (pipeline_count > 0);
                                             if (is_binary_extraction_supported)
                                             {
                                                 // Extract the pipeline binary.
@@ -878,7 +880,7 @@ namespace rga
                                     }
                                 }
 
-                                bool is_binary_extraction_supported = (pipeline_count == 1);
+                                bool is_binary_extraction_supported = (pipeline_count > 0);
                                 if (is_binary_extraction_supported)
                                 {
                                     // Retrieve the buffer size.
@@ -934,7 +936,7 @@ namespace rga
             else
             {
                 std::stringstream msg;
-                msg << kStrErrorDxrFailedToCreateStateObject;
+                msg << kStrErrorDxrFailedToCreateStateObject << std::endl << kStrHintDebugOutput;
                 error_msg.append(msg.str());
                 ret = false;
             }
@@ -1074,7 +1076,7 @@ namespace rga
             else
             {
                 std::stringstream msg;
-                msg << kStrErrorDxrFailedToCreateStateObject;
+                msg << kStrErrorDxrFailedToCreateStateObject << std::endl << kStrHintDebugOutput;
                 error_msg.append(msg.str());
                 ret = false;
             }

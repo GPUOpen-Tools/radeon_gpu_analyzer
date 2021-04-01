@@ -54,6 +54,7 @@ static const std::string  kAmdspvDeviceGfx1010 = "1010";
 static const std::string  kAmdspvDeviceGfx1011 = "1011";
 static const std::string  kAmdspvDeviceGfx1012 = "1012";
 static const std::string  kAmdspvDeviceGfx1030 = "1030";
+static const std::string  kAmdspvDeviceGfx1031 = "1031";
 
 static bool GetAmdspvPath(std::string& amdspv_path)
 {
@@ -102,7 +103,8 @@ static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* device_info, const VkOfflineO
     else if (vulkan_options.target_device_name.compare(kDeviceNameGfx1010) == 0 ||
         vulkan_options.target_device_name.compare(kDeviceNameGfx1011) == 0 ||
         vulkan_options.target_device_name.compare(kDeviceNameGfx1012) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx1030) == 0)
+        vulkan_options.target_device_name.compare(kDeviceNameGfx1030) == 0 ||
+        vulkan_options.target_device_name.compare(kDeviceNameGfx1031) == 0)
     {
         // Special case #4: gfx10 devices.
         gfx_ip_str =
@@ -110,6 +112,7 @@ static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* device_info, const VkOfflineO
             vulkan_options.target_device_name == kDeviceNameGfx1011 ? kAmdspvDeviceGfx1011 :
             vulkan_options.target_device_name == kDeviceNameGfx1012 ? kAmdspvDeviceGfx1012 :
             vulkan_options.target_device_name == kDeviceNameGfx1030 ? kAmdspvDeviceGfx1030 :
+            vulkan_options.target_device_name == kDeviceNameGfx1031 ? kAmdspvDeviceGfx1031 :
             "";
         ret = !gfx_ip_str.empty();
     }

@@ -170,6 +170,12 @@ beStatus Backend::GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& table_entry
 
     switch (table_entry.m_asicType)
     {
+    case GDT_GFX10_3_1:
+        chip_family = FAMILY_NV;
+        chip_revision = NV_NAVI22_P_A0;
+        ret = kBeStatusSuccess;
+        break;
+
     case GDT_GFX10_3_0:
         chip_family = FAMILY_NV;
         chip_revision = NV_NAVI21_P_A0;
@@ -203,6 +209,7 @@ beStatus Backend::GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& table_entry
     case GDT_GFX9_0_0:
     case GDT_GFX9_0_2:
     case GDT_GFX9_0_9:
+    case GDT_GFX9_0_C:
         chip_family = FAMILY_AI;
         chip_revision = AI_GD_P0;
         ret = kBeStatusSuccess;

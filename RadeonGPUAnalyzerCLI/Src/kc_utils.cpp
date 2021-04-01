@@ -470,12 +470,10 @@ void KcUtils::ReplaceStatisticsFile(const gtString& statistics_file, const Confi
     KcUtils::CreateStatisticsFile(statistics_file, config, device, statistics, log_cb);
 }
 
-bool KcUtils::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& output_filename,
-                                          LoggingCallbackFunction callback, bool print_cmd)
+// Evaluates the result by a backend analysis session. Prints the relevant message.
+// Returns true if analysis succeeded, false otherwise.
+static bool EvaluateAnalysisResult(beStatus rc, LoggingCallbackFunction callback)
 {
-    // Call the backend.
-    beStatus rc = BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isa_filename, output_filename, print_cmd);
-
     if (rc != kBeStatusSuccess)
     {
         // Inform the user in case of an error.
@@ -483,30 +481,30 @@ bool KcUtils::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gt
 
         switch (rc)
         {
-            case beKA::kBeStatusshaeCannotLocateAnalyzer:
-                // Failed to locate the ISA analyzer.
-                msg << kStrErrorCannotLocateLiveregAnalyzer << std::endl;
-                break;
+        case beKA::kBeStatusShaeCannotLocateAnalyzer:
+            // Failed to locate the ISA analyzer.
+            msg << kStrErrorCannotLocateLiveregAnalyzer << std::endl;
+            break;
 
-            case beKA::kBeStatusshaeIsaFileNotFound:
-                // ISA file not found.
-                msg << kStrErrorCannotFindIsaFile << std::endl;
-                break;
+        case beKA::kBeStatusShaeIsaFileNotFound:
+            // ISA file not found.
+            msg << kStrErrorCannotFindIsaFile << std::endl;
+            break;
 
-            case beKA::kBeStatusshaeFailedToLaunch:
+        case beKA::kBeStatusShaeFailedToLaunch:
 #ifndef __linux__
-                // Failed to launch the ISA analyzer.
-                // On Linux, there is an issue with this return code due to the
-                // executable format that we use for the backend.
-                msg << kStrErrorCannotLaunchLiveregAnalyzer << std::endl;
+            // Failed to launch the ISA analyzer.
+            // On Linux, there is an issue with this return code due to the
+            // executable format that we use for the backend.
+            msg << kStrErrorCannotLaunchLiveregAnalyzer << std::endl;
 #endif
-                break;
+            break;
 
-            case beKA::kBeStatusGeneralFailed:
-            default:
-                // Generic error message.
-                msg << kStrErrorCannotPerformLiveregAnalysis << std::endl;
-                break;
+        case beKA::kBeStatusGeneralFailed:
+        default:
+            // Generic error message.
+            msg << kStrErrorCannotPerformLiveregAnalysis << std::endl;
+            break;
         }
 
         const std::string& error_msg = msg.str();
@@ -527,6 +525,14 @@ bool KcUtils::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gt
     return (rc == kBeStatusSuccess);
 }
 
+bool KcUtils::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& output_filename,
+                                          LoggingCallbackFunction callback, bool print_cmd)
+{
+    // Call the backend.
+    beStatus rc = BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isa_filename, output_filename, print_cmd);
+
+    return EvaluateAnalysisResult(rc, callback);
+}
 
 bool KcUtils::PerformLiveRegisterAnalysis(const std::string& isa_filename,
     const std::string& output_filename, LoggingCallbackFunction callback, bool print_cmd)
@@ -541,6 +547,26 @@ bool KcUtils::PerformLiveRegisterAnalysis(const std::string& isa_filename,
     return PerformLiveRegisterAnalysis(isa_name_gtstr, output_filename_gtstr, callback, print_cmd);
 }
 
+bool KcUtils::PerformStallAnalysis(const std::string& isa_filename, const std::string& output_filename, LoggingCallbackFunction callback, bool print_cmd)
+{
+    // Convert the arguments to gtString.
+    gtString isa_name_gtstr;
+    isa_name_gtstr << isa_filename.c_str();
+    gtString output_filename_gtstr;
+    output_filename_gtstr << output_filename.c_str();
+
+    // Invoke the routine.
+    return PerformStallAnalysis(isa_name_gtstr, output_filename_gtstr, callback, print_cmd);
+}
+
+bool KcUtils::PerformStallAnalysis(const gtString& isa_filename, const gtString& output_filename, LoggingCallbackFunction callback, bool print_cmd)
+{
+    // Call the backend.
+    beStatus rc = BeStaticIsaAnalyzer::PerformStallAnalysis(isa_filename, output_filename, print_cmd);
+
+    return EvaluateAnalysisResult(rc, callback);
+}
+
 bool KcUtils::GenerateControlFlowGraph(const gtString& isa_file_name, const gtString& output_filename,
                                        LoggingCallbackFunction callback, bool per_inst_cfg, bool printCmd)
 {
@@ -553,17 +579,17 @@ bool KcUtils::GenerateControlFlowGraph(const gtString& isa_file_name, const gtSt
 
         switch (rc)
         {
-            case beKA::kBeStatusshaeCannotLocateAnalyzer:
+            case beKA::kBeStatusShaeCannotLocateAnalyzer:
                 // Failed to locate the ISA analyzer.
                 msg << kStrErrorCannotLocateLiveregAnalyzer << std::endl;
                 break;
 
-            case beKA::kBeStatusshaeIsaFileNotFound:
+            case beKA::kBeStatusShaeIsaFileNotFound:
                 // ISA file not found.
                 msg << kStrErrorCannotFindIsaFile << std::endl;
                 break;
 
-            case beKA::kBeStatusshaeFailedToLaunch:
+            case beKA::kBeStatusShaeFailedToLaunch:
 #ifndef __linux__
                 // Failed to launch the ISA analyzer.
                 // On Linux, there is an issue with this return code due to the
@@ -1675,6 +1701,11 @@ std::string KcUtils::AdjustBaseFileNameStats(const std::string& user_input_filen
 std::string KcUtils::AdjustBaseFileNameLivereg(const std::string& user_input_filename, const std::string& device)
 {
     return AdjustBaseFileName(user_input_filename, device, kStrDefaultExtensionLivereg);
+}
+
+std::string KcUtils::AdjustBaseFileNameStallAnalysis(const std::string& user_input_filename, const std::string& device)
+{
+    return AdjustBaseFileName(user_input_filename, device, kStrDefaultExtensionStalls);
 }
 
 std::string KcUtils::AdjustBaseFileNameCfg(const std::string& user_input_filename, const std::string& device)

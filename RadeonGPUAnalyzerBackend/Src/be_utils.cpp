@@ -276,8 +276,8 @@ bool BeUtils::DeviceNameLessThan(const std::string& a, const std::string& b)
         {
             try
             {
-                int num1 = std::stoi(split1[1], nullptr);
-                int num2 = std::stoi(split2[1], nullptr);
+                int num1 = std::stoi(split1[1], nullptr, 16);
+                int num2 = std::stoi(split2[1], nullptr, 16);
                 ret = ((num2 - num1) > 0);
             }
             catch (...)

@@ -170,6 +170,15 @@ if not "%NO_FETCH%"=="TRUE" (
         echo Error: encountered an error while fetching dependencies. Aborting...
         exit /b 1
     )
+
+    if exist %SCRIPT_DIR%\fetch_dependencies-Internal.py (
+        python %SCRIPT_DIR%\fetch_dependencies-Internal.py
+    )
+
+    if "%ERRORLEVEL%"=="1" (
+        echo Error: encountered an error while fetching internal dependencies. Aborting...
+        exit /b 1
+    )
 )
 
 rem Invoke cmake with required arguments.

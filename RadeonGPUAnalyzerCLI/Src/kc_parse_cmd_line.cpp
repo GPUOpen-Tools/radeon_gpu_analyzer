@@ -459,6 +459,12 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.livereg_analysis_file = kStrDefaultFilenameLivereg;
         }
 
+        // Set the default stall analysis output file name if not provided by a user.
+        if (vm.count("--stalls") && config.stall_analysis_file.empty())
+        {
+            config.stall_analysis_file = kStrDefaultFilenameStalls;
+        }
+
         if (vm.count("no-suffix-bin") > 0)
         {
             config.should_avoid_binary_suffix = true;
@@ -483,7 +489,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.requested_command = Config::kUpdate;
         }
         else if (!config.analysis_file.empty() || !config.il_file.empty() || !config.isa_file.empty() ||
-                 !config.livereg_analysis_file.empty() || !config.binary_output_file.empty() ||
+                 !config.livereg_analysis_file.empty() || !config.stall_analysis_file.empty() || !config.binary_output_file.empty() ||
                  !config.metadata_file.empty() || !config.block_cfg_file.empty() ||
                  !config.inst_cfg_file.empty() || !config.spv_txt.empty() || !config.spv_bin.empty() ||
                  !config.parsed_spv.empty())

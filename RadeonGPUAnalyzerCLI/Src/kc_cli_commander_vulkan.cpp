@@ -131,6 +131,7 @@ static const char* kStrWarningVulkanFailedToSetEnvVar2 = "environment variable."
 static const char* kStrWarningVulkanFallbackToVkOfflineMode = "Warning: falling back to building using Vulkan offline mode (-s vk-spv-offline). "
 "The generated ISA disassembly and HW resource usage information might be inaccurate. To get the most accurate results, adjust the pipeline state to match the shaders and rebuild.";
 static const char* kStrWarningLlpcDisassemblyNotSupportedLivereg = "Warning: live register analysis ";
+static const char* kStrWarningLlpcDisassemblyNotSupportedStalls = "Warning: stall analysis ";
 static const char* kStrWarningLlpcDisassemblyNotSupportedCfg = "Warning: control-flow graph generation ";
 static const char* kStrWarningLlpcDisassemblySkipping =  "is not supported for LLPC disassembly - skipping.";
 
@@ -937,6 +938,12 @@ void KcCliCommanderVulkan::RunCompileCommands(const Config& config, LoggingCallb
                     if (status && !configPerDevice.livereg_analysis_file.empty())
                     {
                         status = PerformLiveRegAnalysis(config);
+                    }
+
+                    // Perform stall analysis if requested.
+                    if (status && !configPerDevice.stall_analysis_file.empty())
+                    {
+                        status = PerformStallAnalysis(config);
                     }
 
                     // Generate CFG if requested.
@@ -1776,6 +1783,69 @@ bool KcCliCommanderVulkan::PerformLiveRegAnalysis(const Config& conf) const
                         kStrWarningLlpcDisassemblySkipping << std::endl;
                 }
             }
+        }
+    }
+
+    LogResult(ret);
+
+    return ret;
+}
+
+bool KcCliCommanderVulkan::PerformStallAnalysis(const Config& config) const
+{
+    bool  ret = true;
+
+    for (const auto& device_md_node : output_metadata_)
+    {
+        const std::string& device = device_md_node.first;
+
+        if (KcUtils::IsNaviTarget(device))
+        {
+            const std::string& device_suffix = (config.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
+            const RgVkOutputMetadata& device_md = device_md_node.second;
+
+            std::cout << kStrInfoPerformingStallAnalysis1 << device << "... " << std::endl;
+
+            for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
+            {
+                const RgOutputFiles& stage_md = device_md[stage];
+                if (!stage_md.input_file.empty())
+                {
+                    bool is_llpc_disassembly = KcUtils::IsLlpcDisassembly(stage_md.isa_file);
+                    if (!is_llpc_disassembly)
+                    {
+                        std::string out_file_name;
+                        gtString out_filename_gtstr, isa_filename_gtstr;
+
+                        // Construct a name for the stall analysis output file.
+                        ret = KcUtils::ConstructOutFileName(config.stall_analysis_file, kVulkanStageFileSuffixDefault[stage],
+                            device_suffix, kStrDefaultExtensionText, out_file_name);
+
+                        if (ret && !out_file_name.empty())
+                        {
+                            out_filename_gtstr << out_file_name.c_str();
+                            isa_filename_gtstr << stage_md.isa_file.c_str();
+
+                            KcUtils::PerformStallAnalysis(isa_filename_gtstr,
+                                out_filename_gtstr, log_callback_, config.print_process_cmd_line);
+                            ret = BeUtils::IsFilePresent(out_file_name);
+                        }
+                        else
+                        {
+                            rgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
+                        }
+                    }
+                    else
+                    {
+                        std::cout << kStrWarningLlpcDisassemblyNotSupportedStalls <<
+                            kStrWarningLlpcDisassemblySkipping << std::endl;
+                    }
+                }
+            }
+        }
+        else
+        {
+            std::cout << kStrWarningStallAnalysisNotSupportedForRdna << device << std::endl;
         }
     }
 

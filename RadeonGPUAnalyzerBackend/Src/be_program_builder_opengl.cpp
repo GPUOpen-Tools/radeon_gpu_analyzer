@@ -336,10 +336,12 @@ bool BeProgramBuilderOpengl::GetDeviceGLInfo(const std::string& device_name, siz
         gl_backend_values["gfx902"] = std::pair<int, int>(141, 27);
         gl_backend_values["gfx906"] = std::pair<int, int>(141, 40);
         gl_backend_values["gfx909"] = std::pair<int, int>(141, 20);
+        gl_backend_values["gfx90c"] = std::pair<int, int>(141, 20);
         gl_backend_values["gfx1010"] = std::pair<int, int>(143, 1);
         gl_backend_values["gfx1011"] = std::pair<int, int>(143, 10);
         gl_backend_values["gfx1012"] = std::pair<int, int>(143, 20);
         gl_backend_values["gfx1030"] = std::pair<int, int>(143, 40);
+        gl_backend_values["gfx1031"] = std::pair<int, int>(143, 50);
     }
 
     // Fetch the relevant value.

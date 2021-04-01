@@ -164,29 +164,6 @@ void KcCliCommanderDX::ExtractISA(const string& device_name, const Config& confi
             // If we managed to detect the ISA size, don't do it again.
             should_detect_isa_size = !is_isa_size_detected;
 
-            // We need to pre-process the ISA in case that any post-processing
-            // operation is going to be performed.
-            bool should_pre_process_isa = !config.livereg_analysis_file.empty() ||
-                !config.inst_cfg_file.empty() || !config.block_cfg_file.empty();
-
-            std::string pre_processed_isa_file;
-            if (should_pre_process_isa)
-            {
-                // Generate a pre-processed ISA file before passing the ISA for analysis.
-                // This is required since, sometimes, depending on the order of compilation,
-                // the ISA disassembly for even pre-Navi targets would be in the Navi format.
-                pre_processed_isa_file = KcUtils::ConstructTempFileName(kStrDefaultFilenamePreprocessedIsa, "txt");
-                assert(!pre_processed_isa_file.empty());
-
-                if (config.print_process_cmd_line)
-                {
-                    std::cout << "Creating temporary file for pre-processed ISA: " << pre_processed_isa_file << std::endl;
-                }
-
-                // Pre-process the ISA.
-                BeStaticIsaAnalyzer::PreprocessIsaFile(isa_output_filename.asASCIICharArray(), pre_processed_isa_file);
-            }
-
             if (!config.livereg_analysis_file.empty())
             {
                 // Perform the live register analysis.
@@ -196,8 +173,28 @@ void KcCliCommanderDX::ExtractISA(const string& device_name, const Config& confi
                     device_name, liveRegAnalysisOutputFileName);
 
                 // Call the kcUtils routine to analyze <generatedFileName> and write the analysis file.
-                KcUtils::PerformLiveRegisterAnalysis(pre_processed_isa_file, liveRegAnalysisOutputFileName.asASCIICharArray(),
+                KcUtils::PerformLiveRegisterAnalysis(isa_output_filename.asASCIICharArray(), liveRegAnalysisOutputFileName.asASCIICharArray(),
                     log_callback_, config.print_process_cmd_line);
+            }
+
+            if (!config.stall_analysis_file.empty())
+            {
+                if (KcUtils::IsNaviTarget(device_name))
+                {
+                    // Perform the stall analysis.
+                    gtString stallAnalysisOutputFileName;
+                    KcUtils::ConstructOutputFileName(config.stall_analysis_file, kStrDefaultExtensionStalls,
+                        kStrDefaultExtensionText, config.function,
+                        device_name, stallAnalysisOutputFileName);
+
+                    // Call the kcUtils routine to analyze <generatedFileName> and write the analysis file.
+                    KcUtils::PerformStallAnalysis(isa_output_filename.asASCIICharArray(), stallAnalysisOutputFileName.asASCIICharArray(),
+                        log_callback_, config.print_process_cmd_line);
+                }
+                else
+                {
+                    std::cout << kStrWarningStallAnalysisNotSupportedForRdna << device_name << std::endl;
+                }
             }
 
             if (!config.inst_cfg_file.empty() || !config.block_cfg_file.empty())
@@ -207,14 +204,8 @@ void KcCliCommanderDX::ExtractISA(const string& device_name, const Config& confi
                 KcUtils::ConstructOutputFileName(base_name, KC_STR_DEFAULT_CFG_SUFFIX, kStrDefaultExtensionDot,
                     config.function, device_name, cfg_output_ilename);
 
-                KcUtils::GenerateControlFlowGraph(pre_processed_isa_file, cfg_output_ilename.asASCIICharArray(), log_callback_,
+                KcUtils::GenerateControlFlowGraph(isa_output_filename.asASCIICharArray(), cfg_output_ilename.asASCIICharArray(), log_callback_,
                     !config.inst_cfg_file.empty(), config.print_process_cmd_line);
-            }
-
-            // Delete the temporary pre-processed ISA file.
-            if (should_pre_process_isa)
-            {
-                BeUtils::DeleteFileFromDisk(pre_processed_isa_file);
             }
 
             // Delete temporary ISA file.

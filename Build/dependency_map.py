@@ -2,8 +2,27 @@
 # RGA git project names and revisions
 #
 
+# Binaries dependencies in zip files
+zip_files = {
+             "DX10ASM.zip"   : "Core/DX10ASM/Lib/VS2015/",
+             "LC.zip"        : "Core/LC/",
+             "dxcompiler.dll": "Core/DX12/DXC/",
+             "VkOffline.zip" : "Core/VulkanOffline/",
+             "Vulkan.zip"    : "Core/Vulkan/"
+            }
+
+# key = GitHub release link
+# value = location
+download_mapping_windows = {
+    "https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp" : "../../Common/Lib/Ext/json/json-3.2.0/single_include/nlohmann"
+}
+download_mapping_linux = {
+    "https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp" : "../../Common/Lib/Ext/json/json-3.2.0/single_include/nlohmann"
+}
+
 # Some repos are only hosted on github - these are defined with an absolute URL based here
 github_root = "https://github.com/GPUOpen-Tools/"
+git_root = "ssh://gerritgit/DevTools/ec/"
 
 # repositories.
 git_mapping = {
@@ -21,18 +40,18 @@ git_mapping = {
  # Src.
     "common-src-ACLModuleManager.git"         : ["Common/Src/ACLModuleManager",      "master"],
     "common-src-ADLUtil.git"                  : ["Common/Src/ADLUtil",               "master"],
-    "common-src-AMDTBaseTools.git"            : ["Common/Src/AMDTBaseTools",         "master"],
+    "common-src-AMDTBaseTools.git"            : ["Common/Src/AMDTBaseTools",         "rga-v2.4"],
     "common-src-AMDTOSWrappers.git"           : ["Common/Src/AMDTOSWrappers",        "6a5293d6a4f00c70747f935a4122a1b986129396"],
     "common-src-AMDTMutex.git"                : ["Common/Src/AMDTMutex",             "master"],
     "common-src-CElf.git"                     : ["Common/Src/CElf",                  "master"],
-    "common-src-DeviceInfo.git"               : ["Common/Src/DeviceInfo",            "rga-v2.4.1"],
+    "common-src-DeviceInfo.git"               : ["Common/Src/DeviceInfo",            "rga-v2.4.2"],
     "common-src-DynamicLibraryModule.git"     : ["Common/Src/DynamicLibraryModule",  "master"],
     "common-src-TSingleton.git"               : ["Common/Src/TSingleton",            "master"],
     "common-src-VersionInfo.git"              : ["Common/Src/VersionInfo",           "master"],
     "common-src-Vsprops.git"                  : ["Common/Src/Vsprops",               "master"],
     "common-src-Miniz.git"                    : ["Common/Src/Miniz",                 "master"],
     "common-src-Misc.git"                     : ["Common/Src/Misc",                  "master"],
-    "UpdateCheckAPI.git"                      : ["Common/Src/UpdateCheckAPI",        "v1.1.0"],
+    "UpdateCheckAPI.git"                      : ["Common/Src/UpdateCheckAPI",        "amd-1.1.0"],
  # QtCommon.
     "QtCommon"                                : ["QtCommon",                         "rga-2.4"]
 }

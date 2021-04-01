@@ -54,6 +54,7 @@ public:
     std::string              livereg_analysis_file;             ///< Live register analysis output file.
     std::string              block_cfg_file;                    ///< Output file for per-block control flow graph.
     std::string              inst_cfg_file;                     ///< Output file for per-instruction control flow graph.
+    std::string              stall_analysis_file;               ///< Output file for stall analysis.
     std::string              binary_output_file;                ///< Output binary file template.
     std::string              function;                          ///< Kernel/Function of interest in analysis.
     std::string              csv_separator;                     ///< Override for CSV list separator.

@@ -33,6 +33,7 @@ using namespace beKA;
 static const std::string kShaeOptLivereg = "analyse-liveness";
 static const std::string kShaeOptCfgPerBlock = "dump-bb-cfg";
 static const std::string kShaeOptCfgPerInstruciton = "dump-pi-cfg";
+static const std::string kShaeOptStallAnalysis = "stall-cycles";
 
 static bool GetLiveRegAnalyzerPath(std::string& analyzer_path)
 {
@@ -59,6 +60,57 @@ static bool GetLiveRegAnalyzerPath(std::string& analyzer_path)
 #endif // AMD_INTERNAL
     return true;
 }
+
+static beKA::beStatus PerformAnalysis(const gtString& isa_filename, const gtString& output_filename,
+    const std::string& shae_cmd, bool should_print_cmd)
+{
+    beStatus ret = kBeStatusGeneralFailed;
+
+    // Get the ISA analyzer's path.
+    std::string analyzer_path;
+    bool is_ok = GetLiveRegAnalyzerPath(analyzer_path);
+
+    if (is_ok && !analyzer_path.empty())
+    {
+        // Validate the input ISA file.
+        osFilePath isa_file_path(isa_filename);
+
+        if (isa_file_path.exists())
+        {
+            // Construct the command.
+            std::stringstream cmd;
+            cmd << analyzer_path << " " << shae_cmd << " \"" << isa_filename.asASCIICharArray()
+                << "\" \"" << output_filename.asASCIICharArray() << '"';
+
+            // Cancel signal. Not in use for now.
+            bool should_cancel = false;
+
+            gtString analyzer_output;
+            BeUtils::PrintCmdLine(cmd.str(), should_print_cmd);
+            is_ok = osExecAndGrabOutput(cmd.str().c_str(), should_cancel, analyzer_output);
+
+            if (is_ok)
+            {
+                ret = kBeStatusSuccess;
+            }
+            else
+            {
+                ret = kBeStatusShaeFailedToLaunch;
+            }
+        }
+        else
+        {
+            ret = kBeStatusShaeIsaFileNotFound;
+        }
+    }
+    else
+    {
+        ret = kBeStatusShaeCannotLocateAnalyzer;
+    }
+
+    return ret;
+}
+
 
 beKA::beStatus beKA::BeStaticIsaAnalyzer::PreprocessIsaFile(const std::string& isa_filename, const std::string& output_filename)
 {
@@ -93,53 +145,16 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::PreprocessIsaFile(const std::string& i
     return ret;
 }
 
-beKA::beStatus beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& output_filename, bool should_print_cmd)
+beKA::beStatus beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtString& isa_filename,
+    const gtString& output_filename, bool should_print_cmd)
 {
-    beStatus ret = kBeStatusGeneralFailed;
+    return PerformAnalysis(isa_filename, output_filename, kShaeOptLivereg, should_print_cmd);
+}
 
-    // Get the ISA analyzer's path.
-    std::string analyzer_path;
-    bool is_ok = GetLiveRegAnalyzerPath(analyzer_path);
-
-    if (is_ok && !analyzer_path.empty())
-    {
-        // Validate the input ISA file.
-        osFilePath isa_file_path(isa_filename);
-
-        if (isa_file_path.exists())
-        {
-            // Construct the command.
-            std::stringstream cmd;
-            cmd << analyzer_path << " " << kShaeOptLivereg << " \"" << isa_filename.asASCIICharArray()
-                << "\" \"" << output_filename.asASCIICharArray() << '"';
-
-            // Cancel signal. Not in use for now.
-            bool should_cancel = false;
-
-            gtString analyzer_output;
-            BeUtils::PrintCmdLine(cmd.str(), should_print_cmd);
-            is_ok = osExecAndGrabOutput(cmd.str().c_str(), should_cancel, analyzer_output);
-
-            if (is_ok)
-            {
-                ret = kBeStatusSuccess;
-            }
-            else
-            {
-                ret = kBeStatusshaeFailedToLaunch;
-            }
-        }
-        else
-        {
-            ret = kBeStatusshaeIsaFileNotFound;
-        }
-    }
-    else
-    {
-        ret = kBeStatusshaeCannotLocateAnalyzer;
-    }
-
-    return ret;
+beKA::beStatus BeStaticIsaAnalyzer::PerformStallAnalysis(const gtString& isa_filename, const gtString& output_filename,
+    bool should_print_cmd)
+{
+    return PerformAnalysis(isa_filename, output_filename, kShaeOptStallAnalysis, should_print_cmd);
 }
 
 beKA::beStatus beKA::BeStaticIsaAnalyzer::GenerateControlFlowGraph(const gtString& isa_filename, const gtString& output_filename,
@@ -177,17 +192,17 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::GenerateControlFlowGraph(const gtStrin
             }
             else
             {
-                ret = kBeStatusshaeFailedToLaunch;
+                ret = kBeStatusShaeFailedToLaunch;
             }
         }
         else
         {
-            ret = kBeStatusshaeIsaFileNotFound;
+            ret = kBeStatusShaeIsaFileNotFound;
         }
     }
     else
     {
-        ret = kBeStatusshaeCannotLocateAnalyzer;
+        ret = kBeStatusShaeCannotLocateAnalyzer;
     }
 
     return ret;

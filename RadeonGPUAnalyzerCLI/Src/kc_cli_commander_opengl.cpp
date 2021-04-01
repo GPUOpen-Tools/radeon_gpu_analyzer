@@ -166,9 +166,11 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
     bool is_frag_shader_present = (!config.fragment_shader.empty());
     bool is_comp_shader_present = (!config.compute_shader.empty());
     bool is_isa_required = (!config.isa_file.empty() || !config.livereg_analysis_file.empty() ||
-                          !config.block_cfg_file.empty() || !config.inst_cfg_file.empty() || !config.analysis_file.empty());
+                            !config.stall_analysis_file.empty() || !config.block_cfg_file.empty() ||
+                            !config.inst_cfg_file.empty() || !config.analysis_file.empty());
     bool is_il_required = !config.il_file.empty();
     bool is_livereg_analysis_required = (!config.livereg_analysis_file.empty());
+    bool is_stall_analysis_required = (!config.stall_analysis_file.empty());
     bool is_block_cfg_required = (!config.block_cfg_file.empty());
     bool is_inst_cfg_required = (!config.inst_cfg_file.empty());
     bool is_isa_binary = (!config.binary_output_file.empty());
@@ -243,6 +245,11 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
     if (!should_abort && is_livereg_analysis_required)
     {
         should_abort = !KcUtils::ValidateShaderOutputDir(config.livereg_analysis_file, log_msg);
+    }
+
+    if (!should_abort && is_stall_analysis_required)
+    {
+        should_abort = !KcUtils::ValidateShaderOutputDir(config.stall_analysis_file, log_msg);
     }
 
     if (!should_abort && is_block_cfg_required)
@@ -329,7 +336,15 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                         gl_options.is_livereg_required = true;
                         std::string adjustedIsaFileName = KcUtils::AdjustBaseFileNameLivereg(config.livereg_analysis_file, device);
                         status &= GenerateRenderingPipelineOutputPaths(config, adjustedIsaFileName, kStrDefaultExtensionLivereg,
-                                                                       kStrDefaultExtensionText, device, gl_options.livereg_output_files);
+                            kStrDefaultExtensionText, device, gl_options.livereg_output_files);
+                    }
+
+                    if (is_stall_analysis_required)
+                    {
+                        gl_options.is_stalls_required = true;
+                        std::string adjustedIsaFileName = KcUtils::AdjustBaseFileNameStallAnalysis(config.stall_analysis_file, device);
+                        status &= GenerateRenderingPipelineOutputPaths(config, adjustedIsaFileName, kStrDefaultExtensionStalls,
+                            kStrDefaultExtensionText, device, gl_options.stall_analysis_output_files);
                     }
 
                     if (is_block_cfg_required)
@@ -492,6 +507,53 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                             {
                                 KcUtils::PerformLiveRegisterAnalysis(gl_options.isa_disassembly_output_files.compute_shader,
                                     gl_options.livereg_output_files.compute_shader, callback, config.print_process_cmd_line);
+                            }
+                        }
+
+                        // Perform stall analysis if required.
+                        if (is_stall_analysis_required)
+                        {
+                            if (KcUtils::IsNaviTarget(device))
+                            {
+                                if (is_vert_shader_present)
+                                {
+                                    KcUtils::PerformStallAnalysis(gl_options.isa_disassembly_output_files.vertex_shader,
+                                        gl_options.stall_analysis_output_files.vertex_shader, callback, config.print_process_cmd_line);
+                                }
+
+                                if (is_tess_control_shader_present)
+                                {
+                                    KcUtils::PerformStallAnalysis(gl_options.isa_disassembly_output_files.tessellation_control_shader,
+                                        gl_options.stall_analysis_output_files.tessellation_control_shader, callback, config.print_process_cmd_line);
+                                }
+
+                                if (is_tess_evaluation_shader_present)
+                                {
+                                    KcUtils::PerformStallAnalysis(gl_options.isa_disassembly_output_files.tessellation_evaluation_shader,
+                                        gl_options.stall_analysis_output_files.tessellation_evaluation_shader, callback, config.print_process_cmd_line);
+                                }
+
+                                if (is_geom_shader_present)
+                                {
+                                    KcUtils::PerformStallAnalysis(gl_options.isa_disassembly_output_files.geometry_shader,
+                                        gl_options.stall_analysis_output_files.geometry_shader, callback, config.print_process_cmd_line);
+                                }
+
+                                if (is_frag_shader_present)
+                                {
+                                    KcUtils::PerformStallAnalysis(gl_options.isa_disassembly_output_files.fragment_shader,
+                                        gl_options.stall_analysis_output_files.fragment_shader, callback, config.print_process_cmd_line);
+                                }
+
+                                if (is_comp_shader_present)
+                                {
+                                    KcUtils::PerformStallAnalysis(gl_options.isa_disassembly_output_files.compute_shader,
+                                        gl_options.stall_analysis_output_files.compute_shader, callback, config.print_process_cmd_line);
+                                }
+                            }
+                            else
+                            {
+                                std::cout << kStrWarningStallAnalysisNotSupportedForRdna << device << std::endl;
                             }
                         }
 

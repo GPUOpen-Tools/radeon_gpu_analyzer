@@ -83,6 +83,9 @@ private:
     // Perform the live registers analysis.
     bool PerformLiveRegAnalysis(const Config& config) const;
 
+    // Perform stall analysis.
+    bool PerformStallAnalysis(const Config& config) const;
+
     // Generate the per-block or per-instruction Control Flow Graph.
     bool ExtractCFG(const Config& config) const;
 

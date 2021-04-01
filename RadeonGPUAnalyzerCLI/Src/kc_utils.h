@@ -130,6 +130,24 @@ public:
     static bool PerformLiveRegisterAnalysis(const std::string& isa_filename, const std::string& output_filename,
         LoggingCallbackFunction callback, bool print_cmd);
 
+    // Performs stall analysis for the ISA in the given file, and dumps
+    // the output to the given output file name.
+    // isa_filename - the disassembled ISA file name
+    // output_filename - the output file name
+    // callback - callback to log messages
+    // print_cmd - print command line to stdout
+    static bool PerformStallAnalysis(const gtString& isa_filename, const gtString& output_filename,
+        LoggingCallbackFunction callback, bool print_cmd);
+
+    // Performs stall analysis for the ISA in the given file, and dumps
+    // the output to the given output file name.
+    // isa_filename - the disassembled ISA file name
+    // output_filename - the output file name
+    // callback - callback to log messages
+    // print_cmd - print command line to stdout
+    static bool PerformStallAnalysis(const std::string& isa_filename, const std::string& output_filename,
+        LoggingCallbackFunction callback, bool print_cmd);
+
     // Generates control flow graph for the given ISA.
     // isa_file_name - the disassembled ISA file name
     // outputFileName - the output file name
@@ -311,6 +329,9 @@ public:
 
     // Adjust base file name for live register analysis output file.
     static std::string AdjustBaseFileNameLivereg(const std::string& user_input_filename, const std::string& device);
+
+    // Adjust base file name for stall analysis output file.
+    static std::string AdjustBaseFileNameStallAnalysis(const std::string& user_input_filename, const std::string& device);
 
     // Adjust base file name for cfg output file.
     static std::string AdjustBaseFileNameCfg(const std::string& user_input_filename, const std::string& device);

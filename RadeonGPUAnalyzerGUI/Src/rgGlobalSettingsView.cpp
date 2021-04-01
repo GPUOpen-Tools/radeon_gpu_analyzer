@@ -805,7 +805,7 @@ void rgGlobalSettingsView::HandleTextBoxChanged(const QString& text)
     QObject* pSender = QObject::sender();
     assert(pSender != nullptr);
 
-    rgLineEdit* pLineEdit = qobject_cast<rgLineEdit*>(pSender);
+    rgLineEdit* pLineEdit = static_cast<rgLineEdit*>(pSender);
     assert(pLineEdit != nullptr);
 
     // Signal whether the text box is empty or not.

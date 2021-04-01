@@ -26,6 +26,7 @@
 // DXR.
 #include "Core/DX12/Backend/src/rg_dxr_state_desc_reader.h"
 #include "Core/DX12/Backend/src/rg_dxr_output_metadata.h"
+#include "RadeonGPUAnalyzerCLI/Src/kc_cli_string_constants.h"
 
 using namespace rga;
 
@@ -86,7 +87,6 @@ STR_DX12_STAGE_SUFFIX =
 static const char* FILE_NAME_TOKEN_DXR = "*";
 static const char* STR_DXIL_FILE_NAME = "dxil";
 static const char* STR_DXIL_FILE_SUFFIX = "obj";
-static const char* STR_DX12_TEXT_FILE_EXTENSION = "txt";
 
 static void AddDebugLayerCommand(const Config &config, std::stringstream& cmd)
 {
@@ -1065,7 +1065,7 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config, const std::st
                     {
                         bool is_filename_constructed = KcUtils::ConstructOutFileName(config.analysis_file,
                             STR_DX12_STAGE_SUFFIX[stage], target_device_lower,
-                            STR_DX12_TEXT_FILE_EXTENSION, generated_stats_files[stage]);
+                            kStrDefaultExtensionStats, generated_stats_files[stage]);
                         assert(is_filename_constructed);
                         if (is_filename_constructed && !generated_stats_files[stage].empty())
                         {
@@ -1265,7 +1265,7 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config& config, co
 
         if (!temp_dxil_files.empty())
         {
-            hlsl_mapping_file = KcUtils::ConstructTempFileName("rga-hlsl-dxr-mapping", STR_DX12_TEXT_FILE_EXTENSION);
+            hlsl_mapping_file = KcUtils::ConstructTempFileName("rga-hlsl-dxr-mapping", kStrDefaultExtensionText);
             bool is_hlsl_mappinig_file_created =  KcUtils::WriteTextFile(hlsl_mapping_file, hlsl_mapping_content.str(), nullptr);
             assert(is_hlsl_mappinig_file_created);
             if (!is_hlsl_mappinig_file_created)
@@ -1294,7 +1294,7 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config& config, co
             cmd << " --mode " << config.dxr_mode << " ";
 
             // Metadata output file, generate a temporary file for that.
-            std::string metadata_filename = KcUtils::ConstructTempFileName("rga-dxr-output", STR_DX12_TEXT_FILE_EXTENSION);
+            std::string metadata_filename = KcUtils::ConstructTempFileName("rga-dxr-output", kStrDefaultExtensionText);
             cmd << "--output-metadata " << metadata_filename << " ";
 
             for (const std::string& currExport : config.dxr_exports)
@@ -1352,7 +1352,9 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config& config, co
 
                     std::string generated_stats_filename;
                     bool is_filename_constructed = KcUtils::ConstructOutFileName(config.analysis_file,
-                        patched_export_name, target_device, "stats", generated_stats_filename, (is_pipeline_mode || !is_dir_output));
+                        patched_export_name, target_device, kStrDefaultExtensionStats,
+                        generated_stats_filename, (is_pipeline_mode || !is_dir_output));
+
                     assert(is_filename_constructed);
                     if (is_filename_constructed && !generated_stats_filename.empty())
                     {

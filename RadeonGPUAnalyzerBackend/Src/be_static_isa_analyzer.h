@@ -30,6 +30,10 @@ public:
     // and dump the analysis output to another file.
     static beStatus PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& output_filename, bool should_print_cmd);
 
+    // Perform stall analysis on the ISA disassembly contained in the given file,
+    // and dump the analysis output to another file.
+    static beStatus PerformStallAnalysis(const gtString& isa_filename, const gtString& output_filename, bool should_print_cmd);
+
     // Generate control flow graph for the ISA disassembly contained in the given file, and dump the analysis output to another file.
     static beStatus GenerateControlFlowGraph(const gtString& isa_filename, const gtString& output_filename, bool is_per_instruction, bool should_print_cmd);
 

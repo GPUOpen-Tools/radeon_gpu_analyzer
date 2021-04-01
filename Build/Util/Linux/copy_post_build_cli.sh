@@ -88,5 +88,5 @@ cp ../../../License.txt $OUTPUT_DIR/
 cp ../../../RGA_NOTICES.txt $OUTPUT_DIR/
 
 # Copy README.md and Release notes
-cp ../../../README.md $OUTPUT_DIR/
+cp ../../../README.md $OUTPUT_DIR/README.md
 cp ../../../Documentation/RGA_RELEASE_NOTES.txt $OUTPUT_DIR/

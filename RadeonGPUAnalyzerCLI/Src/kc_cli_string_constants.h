@@ -46,12 +46,14 @@ static const char* kStrWarningOpenclMetadataNotSupported2 = " is not supported."
 static const char* kStrWarningLiveregNotSupported = "Warning: live register analysis is disabled in this mode ";
 static const char* kStrWarningCfgNotSupported = "Warning: control-flow graph generation is disabled in this mode ";
 static const char* kStrWarningSkipping = "- skipping.";
+static const char* kStrWarningStallAnalysisNotSupportedForRdna = "Warning: stall analysis is not supported for pre-RDNA targets - skipping for ";
 
 // Info.
 static const char* kStrInfoVulkanUsingCustomIcdFile = "Info: forcing the Vulkan runtime to load a custom ICD: ";
 static const char* kStrInfoGeneratingVersionInfoFile = "Generating version info header in file: ";
 static const char* kStrInfoPerformingLiveregAnalysis1 = "Performing live register analysis for ";
-static const char* kStrInfoPerformingLiveregAnalysis2 = " shader...";
+static const char* kStrInfoPerformingStallAnalysis1 = "Performing stall analysis for ";
+static const char* kStrInfoPerformingAnalysis2 = " shader...";
 static const char* kStrInfoContructingPerBlockCfg1 = "Generating per-block control-flow graph for ";
 static const char* kStrInfoContructingPerBlockCfg2 = " shader...";
 static const char* kStrInfoContructingPerInstructionCfg1 = "Generating per-instruction control-flow graph for ";
@@ -78,6 +80,7 @@ static const char* kStrDefaultExtensionIsa = "amdisa";
 static const char* kStrDefaultExtensionAmdil = "amdil";
 static const char* kStrDefaultExtensionLlvmir = "llvmir";
 static const char* kStrDefaultExtensionLivereg = "livereg";
+static const char* kStrDefaultExtensionStalls = "stalls";
 static const char* kStrDefaultExtensionText = "txt";
 static const char* KC_STR_DEFAULT_CFG_SUFFIX = "cfg";
 static const char* kStrDefaultExtensionDot = "dot";
@@ -89,6 +92,7 @@ static const char* kStrDefaultExtensionCsv = "csv";
 
 // Default file names.
 static const char* kStrDefaultFilenameLivereg = "livereg";
+static const char* kStrDefaultFilenameStalls = "stall_analysis";
 static const char* kStrDefaultFilenameIl = "il";
 static const char* kStrDefaultFilenameIsa = "isa";
 static const char* kStrDefaultFilenamePreprocessedIsa = "preprocessed_isa";

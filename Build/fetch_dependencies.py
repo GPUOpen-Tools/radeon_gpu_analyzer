@@ -33,21 +33,42 @@ script_root = os.path.dirname(os.path.realpath(__file__))
 
 # Assume workspace root is two folders up from script_root (RGA/Build)
 workspace = os.path.abspath(os.path.normpath(os.path.join(script_root, "../..")))
+rga_root = os.path.abspath(os.path.normpath(os.path.join(script_root, "..")))
+rga_internal_root = os.path.abspath(os.path.normpath(os.path.join(script_root, "../../RGA-Internal")))
 
 # add path to project build directory to python dependency path
 sys.path.insert(0, script_root)
 from dependency_map import git_mapping
 from dependency_map import github_mapping
 from dependency_map import github_root
+from dependency_map import download_mapping_windows
+from dependency_map import download_mapping_linux
+from dependency_map import zip_files
+
+# Calculate the root of the git server - all git and zip file dependencies should be retrieved from the same server.
+git_url = subprocess.check_output(["git", "-C", script_root, "remote", "get-url", "origin"], shell=SHELLARG)
+git_url_string = (str(git_url).lstrip("b'"))
+if git_url == None:
+    print("Error: Unable to determine origin for RGA git project")
+    exit(1)
+elif "github" not in git_url_string:
+    sys.path.insert(0, os.path.join(rga_internal_root, "build"))
+    from artifactory_helper import ArtifactoryHelper
+    from artifactory_helper import artifactory_root
+    from artifactory_helper import artifactory_server
+
+# URL to root of radeon_gpu_analyzer releases on github.com.
+github_release_root = "https://github.com/GPUOpen-Tools/radeon_gpu_analyzer/releases/download/"
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="A script that updates the build enviroment")
     parser.add_argument('--latest', action='store_true', default=False, help='Use latest version on the default branch')
     return (parser.parse_args())
 
+
 def downloadandunzip(key, value):
     # convert targetPath to OS specific format
-    tmppath = os.path.join(script_root, "", value)
+    tmppath = os.path.join(script_root, value)
 
     # clean up path, collapsing any ../ and converting / to \ for Windows
     targetPath = os.path.normpath(tmppath)
@@ -55,8 +76,8 @@ def downloadandunzip(key, value):
     # Create target folder if necessary.
     if False == os.path.isdir(targetPath):
         os.makedirs(targetPath)
-    zipfileName = key.split('/')[-1].split('#')[0].split('?')[0]
-    zipPath = os.path.join(targetPath, zipfileName)
+    zip_file_name = key.split('/')[-1].split('#')[0].split('?')[0]
+    zipPath = os.path.join(targetPath, zip_file_name)
     if False == os.path.isfile(zipPath):
         print("\nDownloading " + key + " into " + zipPath)
         if isPython3OrAbove:
@@ -69,6 +90,48 @@ def downloadandunzip(key, value):
         elif os.path.splitext(zipPath)[1] == ".gz":
             tarfile.open(zipPath).extractall(targetPath)
             os.remove(zipPath)
+
+
+def getVersion():
+    rga_version_file = os.path.normpath(os.path.join(rga_root, 'Utils/Include/rgaVersionInfo.h'))
+    rga_version_data = None
+    if os.path.exists(rga_version_file):
+        rga_version_data = open(rga_version_file)
+    else:
+        print("ERROR: Unable to open file: %s"%rga_version_file)
+        sys.exit(1)
+
+    # Get major, minor, and update version strings.
+    major = None
+    minor = None
+    update = None
+    for line in rga_version_data:
+        if 'define RGA_VERSION_MAJOR  ' in line:
+            major = (line.split()[2])
+        if 'define RGA_VERSION_MINOR ' in line:
+            minor = (line.split()[2])
+        if 'define RGA_VERSION_UPDATE ' in line:
+            update = (line.split()[2])
+    if update == "0":
+        return major + "." + minor
+    else:
+        return major + "." + minor + "." + update
+
+
+def artifactoryDownload(file_path, value):
+    # path is artifactory server relative path to zip file.
+    # value is <rga-relative-target-path>.
+    zip_file_name = file_path.split('/')[-1].split('#')[0].split('?')[0]
+    target_path = os.path.normpath(os.path.join(rga_root, value))
+    artifactory_download = ArtifactoryHelper(artifactory_server)
+    artifactory_path = artifactory_server + file_path
+    artifactory_download.DownloadFile(artifactory_path)
+    if os.path.splitext(zip_file_name)[1] == ".zip":
+        zipfile.ZipFile(zip_file_name).extractall(target_path)
+        os.remove(zip_file_name)
+    else:
+        os.rename(zip_file_name, os.path.join(target_path, zip_file_name))
+
 
 def fetch_git_map(arguments, git_branch, git_root):
     for key in git_mapping:
@@ -110,6 +173,7 @@ def fetch_git_map(arguments, git_branch, git_root):
                 sys.exit(1)
             sys.stderr.flush()
             sys.stdout.flush()
+
 
 def fetch_github_map(arguments, git_branch):
     for key in github_mapping:
@@ -153,36 +217,30 @@ def fetch_github_map(arguments, git_branch):
             sys.stderr.flush()
             sys.stdout.flush()
 
+
 def do_fetch_dependencies(arguments):
     # When running this script on Windows (and not under cygwin), we need to set the shell=True argument to Popen and similar calls
     # Without this option, Jenkins builds fail to find the correct version of git
     SHELLARG = False
-    if ( sys.platform.startswith("win32")):
+    if (sys.platform.startswith("win32")):
         # running on windows under default shell
         SHELLARG = True
 
     # Print the version of git being used. This also confirms that the script can find git
     try:
-        subprocess.call(["git","--version"], shell=SHELLARG)
+        subprocess.call(["git", "--version"], shell=SHELLARG)
     except OSError:
         # likely to be due to inability to find git command
         print("Error calling command: git --version")
 
-    # Calculate the root of the git server - all dependencies should be retrieved from the same server
-    git_url = subprocess.check_output(["git", "-C", script_root, "remote", "get-url", "origin"], shell=SHELLARG)
-
     # Strip everything after the last '/' from the URL to retrieve the root
-    if git_url == None:
-        print("Error: Unable to determine origin for RGA git project")
-        exit(1)
-
-    git_url_string = (str(git_url).lstrip("b'"))
-    git_root = (git_url_string.rsplit('/',1))[0] + '/'
+    git_root = (git_url_string.rsplit('/', 1))[0] + '/'
 
     # If cloning from github - use the master branch as the default branch - otherwise use amd-master
     git_branch = "amd-master"
     if "github" in git_url_string:
         git_branch = "master"
+        # temporary for testing
 
     print("\nFetching dependencies from: " + git_root + " - using branch: " + git_branch)
 
@@ -190,15 +248,6 @@ def do_fetch_dependencies(arguments):
     # "git repo name"  : ["Directory for clone relative to this script",  "branch or commit to checkout (or None for top of tree)"
 
     # The following section contains OS-specific dependencies that are downloaded and placed in the specified target directory.
-    # key = GitHub release link
-    # value = location
-    download_mapping_windows = {
-        "https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp" : "../../Common/Lib/Ext/json/json-3.2.0/single_include/nlohmann",
-    }
-    download_mapping_linux = {
-        "https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp" : "../../Common/Lib/Ext/json/json-3.2.0/single_include/nlohmann",
-    }
-
     # for each dependency - test if it has already been fetched - if not, then fetch it, otherwise update it to top of tree
     fetch_git_map(arguments, git_branch, git_root)
     fetch_github_map(arguments, git_branch)
@@ -216,7 +265,7 @@ def do_fetch_dependencies(arguments):
         sys.exit(1)
 
     # reference the correct archive path
-    download_mapping = ""
+    download_mapping = None
     if MACHINE_OS == "Linux":
         download_mapping = download_mapping_linux
     else:
@@ -226,6 +275,32 @@ def do_fetch_dependencies(arguments):
     # for each archived release, download and unzip the artifacts into the target location
     for key in download_mapping:
         downloadandunzip(key, download_mapping[key])
+
+    # If one of the binaries exists, assume they all do.
+    if os.path.isfile(os.path.normpath(os.path.join(rga_root, "Core/LC/OpenCL/win64/bin/clang.exe"))):
+        print("\nBinaries already exist\n")
+        return
+    else:
+        # Download and extract additional zip files if necessary.
+        if "github" in git_url_string:
+            version = getVersion()
+            rga_dependencies_zip_file = github_release_root + version + "/" + "rga_dependencies.zip"
+            downloadandunzip(rga_dependencies_zip_file, workspace)
+            for key in zip_files:
+                zip_file_path = os.path.join(workspace, key)
+                target_path = os.path.normpath(os.path.join(rga_root, zip_files[key]))
+                if os.path.splitext(zip_file_path)[1] == ".zip":
+                    zipfile.ZipFile(zip_file_path).extractall(target_path)
+                    os.remove(zip_file_path)
+                else:
+                    # Support file dxcompiler.dll.
+                    target_path = os.path.join(target_path, key)
+                    os.rename(zip_file_path, target_path)
+        else:
+            for key in zip_files:
+                artifactory_path = artifactory_root + key
+                artifactoryDownload(artifactory_path, zip_files[key])
+
 
 if __name__ == '__main__':
     # fetch_dependencies.py executed as a script
