@@ -51,7 +51,7 @@ git_mapping = {
     "common-src-Vsprops.git"                  : ["Common/Src/Vsprops",               "master"],
     "common-src-Miniz.git"                    : ["Common/Src/Miniz",                 "master"],
     "common-src-Misc.git"                     : ["Common/Src/Misc",                  "master"],
-    "UpdateCheckAPI.git"                      : ["Common/Src/UpdateCheckAPI",        "amd-1.1.0"],
+    "UpdateCheckAPI.git"                      : ["Common/Src/UpdateCheckAPI",        "v1.1.0"],
  # QtCommon.
     "QtCommon"                                : ["QtCommon",                         "rga-2.4"]
 }
