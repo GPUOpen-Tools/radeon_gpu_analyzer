@@ -1,6 +1,12 @@
 Build/CMake
 Build/Windows
 Build/Linux
+Core/DX10ASM/Lib/VS2015/Win32/Release*
+Core/DX10ASM/Lib/VS2015/x64
+Core/DX12/DXC/dxcompiler.dll
+Core/LC/Disassembler
+Core/Vulkan/tools/Win64/lib/Debug
+Core/VulkanOffline
 Output
 .vscode
 Output_Test

@@ -11,6 +11,7 @@
 import argparse
 import os
 import platform
+import stat
 import subprocess
 import sys
 import tarfile
@@ -64,6 +65,35 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="A script that updates the build enviroment")
     parser.add_argument('--latest', action='store_true', default=False, help='Use latest version on the default branch')
     return (parser.parse_args())
+
+
+def get_os():
+    # detect the OS
+    MACHINE_OS = ""
+    if "windows" in platform.system().lower():
+        MACHINE_OS = "Windows"
+    elif "cygwin" in platform.system().lower():
+        MACHINE_OS = "Windows"
+    elif "linux" in platform.system().lower():
+        MACHINE_OS = "Linux"
+    else:
+        print("Operating system not recognized correctly")
+        sys.exit(1)
+    return MACHINE_OS
+
+
+def make_executable(file_path):
+    # chmod +x the Ubuntu binaries.
+    cur_dir = os.getcwd()
+    os.chdir(file_path)
+    bin_files = subprocess.getoutput('find . -type f -print0 | xargs -0 -n 10 file -i | grep "application/x-executable"')
+    if len(bin_files) > 0:
+        bin_files_list = bin_files.split('\n')
+        for bin_file in bin_files_list:
+            file_name = bin_file.split(':')
+            target_bin_file = file_name[0]
+            os.chmod(target_bin_file, stat.S_IRWXU|stat.S_IRWXG|stat.S_IROTH|stat.S_IXOTH)
+    os.chdir(cur_dir)
 
 
 def downloadandunzip(key, value):
@@ -128,6 +158,8 @@ def artifactoryDownload(file_path, value):
     artifactory_download.DownloadFile(artifactory_path)
     if os.path.splitext(zip_file_name)[1] == ".zip":
         zipfile.ZipFile(zip_file_name).extractall(target_path)
+        if (get_os() == "Linux"):
+            make_executable(target_path)
         os.remove(zip_file_name)
     else:
         os.rename(zip_file_name, os.path.join(target_path, zip_file_name))
@@ -253,20 +285,11 @@ def do_fetch_dependencies(arguments):
     fetch_github_map(arguments, git_branch)
 
     # detect the OS
-    MACHINE_OS = ""
-    if "windows" in platform.system().lower():
-        MACHINE_OS = "Windows"
-    elif "cygwin" in platform.system().lower():
-        MACHINE_OS = "Windows"
-    elif "linux" in platform.system().lower():
-        MACHINE_OS = "Linux"
-    else:
-        print("Operating system not recognized correctly")
-        sys.exit(1)
+    machine_os = get_os()
 
     # reference the correct archive path
     download_mapping = None
-    if MACHINE_OS == "Linux":
+    if machine_os == "Linux":
         download_mapping = download_mapping_linux
     else:
         download_mapping = download_mapping_windows
@@ -291,6 +314,9 @@ def do_fetch_dependencies(arguments):
                 target_path = os.path.normpath(os.path.join(rga_root, zip_files[key]))
                 if os.path.splitext(zip_file_path)[1] == ".zip":
                     zipfile.ZipFile(zip_file_path).extractall(target_path)
+                    # extractall doesn't retain execute permissions on Linux binaries.
+                    if (machine_os == "Linux"):
+                        make_executable(target_path)
                     os.remove(zip_file_path)
                 else:
                     # Support file dxcompiler.dll.
