@@ -40,7 +40,7 @@ git_mapping = {
  # Src.
     "common-src-ACLModuleManager.git"         : ["Common/Src/ACLModuleManager",      "master"],
     "common-src-ADLUtil.git"                  : ["Common/Src/ADLUtil",               "master"],
-    "common-src-AMDTBaseTools.git"            : ["Common/Src/AMDTBaseTools",         "rga-v2.4"],
+    "common-src-AMDTBaseTools.git"            : ["Common/Src/AMDTBaseTools",         "master"],
     "common-src-AMDTOSWrappers.git"           : ["Common/Src/AMDTOSWrappers",        "6a5293d6a4f00c70747f935a4122a1b986129396"],
     "common-src-AMDTMutex.git"                : ["Common/Src/AMDTMutex",             "master"],
     "common-src-CElf.git"                     : ["Common/Src/CElf",                  "master"],
