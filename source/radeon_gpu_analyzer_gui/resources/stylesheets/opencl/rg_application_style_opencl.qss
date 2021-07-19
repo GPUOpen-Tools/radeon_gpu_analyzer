@@ -1,0 +1,62 @@
+/********************************************************************/
+/* Frame focus border
+/********************************************************************/
+QFrame:focus,
+QLineEdit:focus,
+QCheckBox:focus
+{
+    border: 1px solid lightGreen;
+}
+
+RgBuildSettingsViewOpencl #addTargetGPUsButton:focus,
+RgBuildSettingsViewOpencl #includeDirsBrowseButton:focus,
+RgBuildSettingsViewOpencl #predefinedMacrosBrowseButton:focus,
+RgBuildSettingsViewOpencl #compilerBinariesBrowseButton:focus,
+RgBuildSettingsViewOpencl #compilerIncludesBrowseButton:focus,
+RgBuildSettingsViewOpencl #compilerLibrariesBrowseButton:focus,
+RgBuildSettingsViewOpencl #optimizationLevelComboBox:focus,
+RgBuildSettingsViewOpencl #addTargetGPUsButton:hover,
+RgBuildSettingsViewOpencl #includeDirsBrowseButton:hover,
+RgBuildSettingsViewOpencl #predefinedMacrosBrowseButton:hover,
+RgBuildSettingsViewOpencl #compilerBinariesBrowseButton:hover,
+RgBuildSettingsViewOpencl #compilerIncludesBrowseButton:hover,
+RgBuildSettingsViewOpencl #compilerLibrariesBrowseButton:hover,
+RgBuildSettingsViewOpencl #optimizationLevelComboBox:hover
+{
+    border: 1px solid lightGreen;
+    background: rgb(240, 240, 240);
+}
+
+RgViewContainer[viewHovered="true"][viewFocused="false"] RgMenuTitlebar #itemBackground,
+RgViewContainer[viewHovered="true"][viewFocused="false"] RgFileMenuTitlebar #itemBackground,
+RgViewContainer[viewHovered="true"][viewFocused="false"] RgStandardTitlebar,
+RgViewContainer[viewHovered="true"][viewFocused="false"] RgSourceEditorTitlebar,
+RgViewContainer[viewHovered="true"][viewFocused="false"] #viewTitlebar
+{
+    border-bottom: 3px solid rgb(18, 95, 0);
+}
+
+RgViewContainer[viewFocused="true"] RgMenuTitlebar #itemBackground,
+RgViewContainer[viewFocused="true"] RgFileMenuTitlebar #itemBackground,
+RgViewContainer[viewFocused="true"] RgStandardTitlebar,
+RgViewContainer[viewFocused="true"] RgSourceEditorTitlebar,
+RgViewContainer[viewFocused="true"] #viewTitlebar
+{
+    border-bottom: 3px solid rgb(18, 152, 0);
+}
+
+/********************************************************************/
+/* Target GPUs line edit background
+/********************************************************************/
+RgBuildSettingsViewOpencl #targetGPUsLineEdit
+{
+    background-color: rgb(240, 240, 240);
+}
+
+/********************************************************************/
+/* Line edit border color
+/********************************************************************/
+QLineEdit
+{
+    border: 1px solid black;
+}

@@ -1,13 +1,13 @@
 #!python
 #
-# Get RGA version from RGA/Utils/include/rgaVersionInfo.h.
+# Get RGA version from RGA/source/common/rga_version_info.h.
 #
 # Usage:
 #    python RGA/Build/Util/get_version.py [--major] [--minor] [--update] [--versionfile <file_path>]
 #      --major     Return major version number
 #      --minor     Return minor version number
 #      --update    Return update version number
-#      --versionfile Use <file_path> as the full path name of for rgaVersionInfo.h
+#      --versionfile Use <file_path> as the full path name of for rga_version_info.h
 #
 import os
 import argparse
@@ -24,7 +24,7 @@ PARSER.add_argument('--versionfile', action='store', default=None, help='Use alt
 VERSIONARGS = PARSER.parse_args()
 
 # Initialize file for search.
-RGAVERSIONFILE = os.path.normpath(os.path.join(SCRIPTROOT, '../..', 'Utils/Include/rgaVersionInfo.h'))
+RGAVERSIONFILE = os.path.normpath(os.path.join(SCRIPTROOT, '../..', 'source/common/rga_version_info.h'))
 RGAVERSIONDATA = None
 if not VERSIONARGS.versionfile == None:
     RGAVERSIONFILE = os.path.normpath(VERSIONARGS.versionfile)

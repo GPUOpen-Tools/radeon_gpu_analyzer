@@ -2,6 +2,7 @@
 
 rem Make all variables defined in this script local.
 SETLOCAL
+SETLOCAL ENABLEEXTENSIONS
 
 set OUTPUT_DIR=%1
 
@@ -26,10 +27,10 @@ set INTERNAL=TRUE
 :no_internal
 
 REM Get version information to use in package name.
-for /F "tokens=* USEBACKQ" %%F in (`python ..\..\..\Build\Util\get_version.py --major`) do (
+for /F "tokens=* USEBACKQ" %%F in (`python ..\..\..\build\util\get_version.py --major`) do (
     set MAJOR=%%F
 )
-for /F "tokens=* USEBACKQ" %%F in (`python ..\..\..\Build\Util\get_version.py --minor`) do (
+for /F "tokens=* USEBACKQ" %%F in (`python ..\..\..\build\util\get_version.py --minor`) do (
     set MINOR=%%F
 )
 
@@ -40,22 +41,24 @@ IF NOT exist %OUTPUT_DIR%\utils\DX12\ mkdir %OUTPUT_DIR%\utils\DX12\
 IF NOT exist %OUTPUT_DIR%\utils\DX12\DXC\ mkdir %OUTPUT_DIR%\utils\DX12\DXC\
 IF NOT exist %OUTPUT_DIR%\utils\LC\ mkdir %OUTPUT_DIR%\utils\LC\
 IF NOT exist %OUTPUT_DIR%\utils\LC\Disassembler\ mkdir %OUTPUT_DIR%\utils\LC\Disassembler\
-IF NOT exist %OUTPUT_DIR%\utils\LC\OpenCL\ mkdir %OUTPUT_DIR%\utils\LC\OpenCL\
+IF NOT exist %OUTPUT_DIR%\utils\LC\OpenCL\ mkdir %OUTPUT_DIR%\utils\LC\OpenCL\lib\clang\13.0.0\include\
 echo
 
-XCopy /r /d /y "..\..\..\Core\OpenGL\VirtualContext\Release\win64\VirtualContext.exe" "%OUTPUT_DIR%\utils\"
-XCopy /r /d /y "..\..\..\Core\ShaderAnalysis\Windows\x64\shae.exe" "%OUTPUT_DIR%\utils\"
-XCopy /r /d /y "..\..\..\Core\DX\DX10\bin\RGADX11.exe" "%OUTPUT_DIR%\utils\"
-XCopy /r /e /d /y "..\..\..\Core\LC\OpenCL\win64\*" "%OUTPUT_DIR%\utils\LC\OpenCL\"
-XCopy /r /d /y "..\..\..\Core\LC\OpenCL\additional-targets" "%OUTPUT_DIR%\utils\LC\OpenCL\"
-XCopy /r /d /y "..\..\..\Core\LC\Disassembler\Windows\amdgpu-dis.exe" "%OUTPUT_DIR%\utils\LC\Disassembler\"
-XCopy /r /e /d /y "..\..\..\Core\Vulkan\tools\Win64\bin" "%OUTPUT_DIR%\utils\Vulkan\"
-XCopy /r /e /d /y "..\..\..\Core\DX12\DXC\*" "%OUTPUT_DIR%\utils\DX12\DXC\"
+XCopy /r /d /y "..\..\..\external\opengl\VirtualContext\windows\VirtualContext.exe" "%OUTPUT_DIR%\utils\"
+XCopy /r /d /y "..\..\..\source\utils\shader_analysis\windows\x64\shae.exe" "%OUTPUT_DIR%\utils\"
+XCopy /r /d /y "..\..\..\source\utils\dx11\bin\dx11_adapter.exe" "%OUTPUT_DIR%\utils\"
+XCopy /r /e /d /y "..\..\..\external\lc\opencl\windows\*" "%OUTPUT_DIR%\utils\LC\OpenCL\"
+del /f "%OUTPUT_DIR%\utils\LC\OpenCL\include\opencl-c-base.h"
+XCopy /r /d /y "..\..\..\external\lc\opencl\windows\include\opencl-c-base.h" "%OUTPUT_DIR%\utils\LC\OpenCL\lib\clang\13.0.0\include\"
+XCopy /r /d /y "..\..\..\external\lc\opencl\additional-targets" "%OUTPUT_DIR%\utils\LC\OpenCL\"
+XCopy /r /d /y "..\..\..\external\lc\disassembler\windows\amdgpu-dis.exe" "%OUTPUT_DIR%\utils\LC\Disassembler\"
+XCopy /r /e /d /y "..\..\..\external\vulkan\tools\windows\bin" "%OUTPUT_DIR%\utils\Vulkan\"
+XCopy /r /e /d /y "..\..\..\external\dxc\*" "%OUTPUT_DIR%\utils\DX12\DXC\"
 XCopy /r /d /y "..\..\..\License.txt" "%OUTPUT_DIR%\License.txt*"
 XCopy /r /d /y "..\..\..\RGA_NOTICES.txt" "%OUTPUT_DIR%\RGA_NOTICES.txt*"
 XCopy /r /d /y "..\..\..\README.md" "%OUTPUT_DIR%\README.md*"
-XCopy /r /d /y "..\..\..\Documentation\RGA_RELEASE_NOTES.txt" "%OUTPUT_DIR%\RGA_RELEASE_NOTES.txt*"
+XCopy /r /d /y "..\..\..\documentation\RGA_RELEASE_NOTES.txt" "%OUTPUT_DIR%\RGA_RELEASE_NOTES.txt*"
 XCopy /r /d /y "..\..\..\..\Common\Src\UpdateCheckAPI\rtda\windows\rtda.exe" "%OUTPUT_DIR%\rtda.exe*"
 
-XCopy /r /d /y "..\..\..\Core\VulkanOffline\win64\amdspv.exe" "%OUTPUT_DIR%\utils\"
-XCopy /r /d /y "..\..\..\Core\VulkanOffline\win64\spvgen.dll" "%OUTPUT_DIR%\utils\"
+XCopy /r /d /y "..\..\..\external\vulkan_offline\windows\amdspv.exe" "%OUTPUT_DIR%\utils\"
+XCopy /r /d /y "..\..\..\external\vulkan_offline\windows\spvgen.dll" "%OUTPUT_DIR%\utils\"

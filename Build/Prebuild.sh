@@ -5,7 +5,7 @@ if [[ "$1" == "-h" ]] || [[ "$1" == "-help" ]] || [[ "$1" == "--h" ]] || [[ "$1"
     echo ""
     echo "This script generates Makefiles for RGA on Linux."
     echo ""
-    echo "Usage:  Prebuild.sh [options]"
+    echo "Usage:  prebuild.sh [options]"
     echo ""
     echo "Options:"
     echo "   --no-fetch           Do not call fetch_dependencies.py script before running cmake. The default is \"false\"."
@@ -18,13 +18,14 @@ if [[ "$1" == "-h" ]] || [[ "$1" == "-help" ]] || [[ "$1" == "--h" ]] || [[ "$1"
     echo "   --vulkan-sdk         Path to the Vulkan SDK. The Vulkan SDK is required to build the RGA vulkan backend."
     echo "   --vk-include         Path to the Vulkan SDK include folder."
     echo "   --vk-lib             Path to the Vulkan SDK library folder."
+    echo "   --cppcheck           Add CMAKE_CXX_CPPCHECK preprocess option to cmake."
     echo ""
     echo "Examples:"
-    echo "   Prebuild.sh"
-    echo "   Prebuild.sh --build release"
-    echo "   Prebuild.sh --qt C:\Qt\5.7\msvc2015_64"
-    echo "   Prebuild.sh --build release --cli-only"
-    echo "   Prebuild.sh --no-vulkan"
+    echo "   prebuild.sh"
+    echo "   prebuild.sh --build release"
+    echo "   prebuild.sh --qt C:\Qt\5.7\msvc2015_64"
+    echo "   prebuild.sh --build release --cli-only"
+    echo "   prebuild.sh --no-vulkan"
     echo ""
     exit 0
 fi
@@ -42,6 +43,7 @@ CLI_ONLY=
 GUI_ONLY=
 NO_VULKAN=
 TEST_DIR_SUFFIX=""
+CMAKE_CPPCHECK=
 
 # Parse command line arguments
 args=("$@")
@@ -78,7 +80,9 @@ for ((i=0; i<$#; i++)); do
         NO_UPDATE="TRUE"
     elif [ "$arg" == "--automation" ]; then
         AUTOMATION="-DGUI_AUTOMATION=ON"
-        TEST_DIR_SUFFIX="_Test"
+        TEST_DIR_SUFFIX="_test"
+    elif [ "$arg" == "--cppcheck" ]; then
+        CMAKE_CPPCHECK="-DCMAKE_CXX_CPPCHECK=cppcheck"
     else
         echo "Unexpected argument: $arg. Aborting...";
         exit 1
@@ -99,8 +103,8 @@ fi
 
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$(dirname "$0")
-OUTPUT_LINUX_DIR="$SCRIPT_DIR/Linux"
-OUTPUT_DIR="$OUTPUT_LINUX_DIR/Make$TEST_DIR_SUFFIX"
+OUTPUT_LINUX_DIR="$SCRIPT_DIR/linux"
+OUTPUT_DIR="$OUTPUT_LINUX_DIR/make$TEST_DIR_SUFFIX"
 
 # Create output folder
 if [ ! -d "$OUTPUT_LINUX_DIR" ]; then
@@ -120,23 +124,12 @@ if [ "$NO_UPDATE" != "TRUE" ]; then
         echo "Error: encountered an error while fetching dependencies. Aborting..."
         exit 1
     fi
-
-    if [ -e $SCRIPT_DIR/FetchDependencies-Internal.py ]; then
-        python $SCRIPT_DIR/FetchDependencies-Internal.py
-
-        if [ $? -ne 0 ]; then
-            echo "Error: encountered an error while fetching internal dependencies. Aborting..."
-            exit 1
-        fi
-    fi
 fi
-
-
 
 # Launch cmake
 echo ""
 echo "Running cmake to generate Makefiles..."
 cd $OUTPUT_DIR
-$CMAKE_PATH -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_QT $CMAKE_VK_INC $CMAKE_VK_LIB $CLI_ONLY $GUI_ONLY $NO_VULKAN $AUTOMATION ../../..
+$CMAKE_PATH -DCMAKE_BUILD_TYPE=$BUILD_TYPE $CMAKE_QT $CMAKE_VK_INC $CMAKE_VK_LIB $CLI_ONLY $GUI_ONLY $NO_VULKAN $AUTOMATION $CMAKE_CPPCHECK ../../..
 cd $CURRENT_DIR
 echo "Done."

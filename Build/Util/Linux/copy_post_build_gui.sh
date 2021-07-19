@@ -14,9 +14,9 @@ if [ -n "$QT_LIB_DIR" ]; then
   cp $QT_LIB_DIR/libQt5Gui.so.5 $OUTPUT_DIR/lib/
   cp $QT_LIB_DIR/libQt5Widgets.so.5 $OUTPUT_DIR/lib/
   cp $QT_LIB_DIR/libQt5XcbQpa.so.5 $OUTPUT_DIR/lib/
-  cp $QT_LIB_DIR/libicui18n.so.56 $OUTPUT_DIR/lib/
-  cp $QT_LIB_DIR/libicudata.so.56 $OUTPUT_DIR/lib/
-  cp $QT_LIB_DIR/libicuuc.so.56 $OUTPUT_DIR/lib/
+  cp $QT_LIB_DIR/libicui18n.so.50 $OUTPUT_DIR/lib/
+  cp $QT_LIB_DIR/libicudata.so.50 $OUTPUT_DIR/lib/
+  cp $QT_LIB_DIR/libicuuc.so.50 $OUTPUT_DIR/lib/
   cp $QT_LIB_DIR/libQt5Svg.so.5 $OUTPUT_DIR/lib/
   cp $QT_PLUGINS_DIR/imageformats/libqsvg.so $OUTPUT_DIR/lib/platforms/imageformats/
   cp $QT_PLUGINS_DIR/platforms/libqxcb.so $OUTPUT_DIR/lib/platforms/

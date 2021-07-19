@@ -28,6 +28,21 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     option(CMAKE_64BIT_TARGET "On if the target architecture is 64-bit" ON)
 endif()
 
+# Define cppcheck options
+if (CMAKE_CXX_CPPCHECK)
+    if (NOT ${CMAKE_GENERATOR} MATCHES "^.*Makefiles$|^Ninja$")
+        add_custom_target(ANALYZE_CPPCHECK DEPENDS RGA
+            COMMAND ${CMAKE_CXX_CPPCHECK} ${CMAKE_SOURCE_DIR}
+        )
+    else()
+        list(
+            APPEND CMAKE_CXX_CPPCHECK
+                "--xml"
+                ${CMAKE_SOURCE_DIR}
+        )
+    endif()
+endif()
+
 # Pass the build number and build date
 if (NOT "$ENV{BUILD_NUMBER}" STREQUAL "")
     add_definitions(-DRGA_BUILD_NUMBER=$ENV{BUILD_NUMBER})
@@ -102,7 +117,6 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(CMAKE_CONFIGURATION_TYPES "Release;Debug")
 endif()
 
-
 # Vulkan support
 if (RGA_ENABLE_VULKAN)
     add_definitions("-DRGA_ENABLE_VULKAN")
@@ -120,25 +134,18 @@ endif()
 
 # Add RGA CLI projects
 if(NOT BUILD_GUI_ONLY)
-    add_subdirectory (RadeonGPUAnalyzerBackend)
-    add_subdirectory (RadeonGPUAnalyzerCLI)
     if (RGA_ENABLE_VULKAN)
-        add_subdirectory (Core/Vulkan/Backend)
-        add_dependencies (radeon_gpu_analyzer_cli VulkanBackend)
+        add_subdirectory (source/utils/vulkan/backend)
     endif()
     if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        add_subdirectory (Core/DX12/Backend)
-        add_dependencies (radeon_gpu_analyzer_cli dx12_backend)
+        add_subdirectory (source/utils/dx12/backend)
     endif()
 endif()
 
-# Add RGA GUI
-if(NOT BUILD_CLI_ONLY)
-    add_subdirectory (RadeonGPUAnalyzerGUI)
-    add_dependencies (RadeonGPUAnalyzer radeon_gpu_analyzer_cli)
-endif()
+# Add source folder
+add_subdirectory (source)
 
 # Add Tests
 if(AMD_INTERNAL)
-    add_subdirectory (${PROJECT_SOURCE_DIR}/../RGA-Internal/Tests ${CMAKE_CURRENT_BINARY_DIR}/Tests)
+    add_subdirectory (${PROJECT_SOURCE_DIR}/../RGA-Internal/tests ${CMAKE_CURRENT_BINARY_DIR}/tests)
 endif()

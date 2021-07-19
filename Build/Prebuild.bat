@@ -1,5 +1,6 @@
 @echo off
-:: Prebuild.bat --vs 2017 --qt <path_to_qt>
+:: prebuild.bat --vs 2017 --qt <path_to_qt>
+
 SETLOCAL
 
 rem Print help message
@@ -15,7 +16,7 @@ goto :start
 echo:
 echo This script generates Visual Studio project and solution files for RGA on Windows.
 echo:
-echo Usage:  Prebuild.bat ^[options^]
+echo Usage:  prebuild.bat ^[options^]
 echo:
 echo Options:
 echo    --no-fetch           Do not call fetch_dependencies.py script before running cmake. The default is "false".
@@ -27,12 +28,13 @@ echo    --gui-only           Build GUI only (do not build RGA command-line tool)
 echo    --no-vulkan          Build RGA without live Vulkan mode support. If this option is used, Vulkan SDK is not required. The default is "false".
 echo    --vk-include         Path to the Vulkan SDK include folder.
 echo    --vk-lib             Path to the Vulkan SDK library folder.
+echo    --cppcheck           Add "-DCMAKE_CXX_CPPCHECK" to cmake command
 echo:
 echo Examples:
-echo    Prebuild.bat
-echo    Prebuild.bat --vs 2017 --qt C:\Qt\5.7\msvc2015_64
-echo    Prebuild.bat --vs 2015 --cli-only
-echo    Prebuild.bat --no-vulkan
+echo    prebuild.bat
+echo    prebuild.bat --vs 2017 --qt C:\Qt\5.7\msvc2015_64
+echo    prebuild.bat --vs 2015 --cli-only
+echo    prebuild.bat --no-vulkan
 goto :exit
 
 :start
@@ -45,6 +47,7 @@ set VS_VER=2017
 set QT_ROOT=
 set VK_INCLUDE=
 set VK_LIB=
+set CPPCHECK=
 
 :begin
 if [%1]==[] goto :start_cmake
@@ -60,6 +63,7 @@ if "%1"=="--no-fetch" goto :set_no_fetch
 if "%1"=="--automation" goto :set_automation
 if "%1"=="--internal" goto :set_internal
 if "%1"=="--verbose" goto :set_verbose
+if "%1"=="--cppcheck" goto :set_cppcheck
 goto :bad_arg
 
 :set_cmake
@@ -100,7 +104,7 @@ goto :shift_arg
 
 :set_automation
 set AUTOMATION=-DGUI_AUTOMATION^=ON
-set TEST_DIR_SUFFIX=_Test
+set TEST_DIR_SUFFIX=_test
 goto :shift_arg
 
 :set_internal
@@ -110,6 +114,10 @@ goto :shift_arg
 
 :set_verbose
 @echo on
+goto :shift_arg
+
+:set_cppcheck
+set CPPCHECK=-DCMAKE_CXX_CPPCHECK="C:\Program Files\Cppcheck\cppcheck.exe"
 goto :shift_arg
 
 :shift_2args
@@ -135,7 +143,7 @@ if "%VS_VER%"=="2015" (
             set CMAKE_VS="Visual Studio 16 2019"
             set CMAKE_VSARCH=-A x64
         ) else (
-            echo Error: Unknows VisualStudio version provided. Aborting...
+            echo Error: Unknown VisualStudio version provided. Aborting...
             exit /b 1
         )
     )
@@ -154,8 +162,8 @@ if not [%VK_LIB%]==[] (
 )
 
 rem Create an output folder
-set VS_FOLDER=VS%VS_VER%
-set OUTPUT_FOLDER=%SCRIPT_DIR%Windows\%VS_FOLDER%%TEST_DIR_SUFFIX%
+set VS_FOLDER=vs%VS_VER%
+set OUTPUT_FOLDER=%SCRIPT_DIR%windows\%VS_FOLDER%%TEST_DIR_SUFFIX%
 if not exist %OUTPUT_FOLDER% (
     mkdir %OUTPUT_FOLDER%
 )
@@ -185,7 +193,7 @@ rem Invoke cmake with required arguments.
 echo:
 echo Running cmake to generate a VisualStudio solution...
 cd %OUTPUT_FOLDER%
-%CMAKE_PATH% -G %CMAKE_VS% %CMAKE_VSARCH% %CMAKE_QT% %CMAKE_VK_INCLUDE% %CMAKE_VK_LIB% %CLI_ONLY% %GUI_ONLY% %NO_VULKAN% %AUTOMATION% %AMD_INTERNAL% ..\..\..
+%CMAKE_PATH% -G %CMAKE_VS% %CMAKE_VSARCH% %CMAKE_QT% %CMAKE_VK_INCLUDE% %CMAKE_VK_LIB% %CLI_ONLY% %GUI_ONLY% %NO_VULKAN% %AUTOMATION% %AMD_INTERNAL% %CPPCHECK% ..\..\..
 if not %ERRORLEVEL%==0 (
     echo "ERROR: cmake failed. Aborting..."
     exit /b 1

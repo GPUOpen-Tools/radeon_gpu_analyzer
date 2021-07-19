@@ -70,10 +70,10 @@ In the Start tab for Vulkan® mode, you have two options:
 	* May contain a single Compute shader stage.
 	* Within the compute pipeline project, you would be able to configure the Vulkan® compute pipeline state in the UI
 
-You can also create a compute or graphics pipeline this through the File menu by:
+You can also create a compute or graphics pipeline through the File menu by:
 
-* Clicking on File -> "Create new Vulkan® graphics pipeline" (Ctrl+Shift+G)
-* Clicking on File -> "Create new Vulkan® compute pipeline" (Ctrl+Shift+C)
+* Clicking on File -> "Create new Vulkan® graphics pipeline" (Ctrl+Alt+G)
+* Clicking on File -> "Create new Vulkan® compute pipeline" (Ctrl+Alt+C)
 
 .. image:: images/2_1/file_menu_create_pipeline_vulkan.png
 
@@ -327,7 +327,7 @@ Resource hazards that may require the developer's attention are defined as:
 	* Scratch memory hazard: scratch memory is used.
 	* Instruction cache hazard: code size is larger than the instruction cache.
 
-ROCm OpenCL™ Mode
+OpenCL™ Offline Mode
 -----------------
 
 The Home Page
@@ -555,19 +555,19 @@ On the left side of the Source Code View, you will find running line numbers.
 
 You can use the Ctrl+F (Edit -> Find) and Ctrl+G (Edit -> Go to...) to search for a string or jump to a specific line.
 
-.. image:: images/013_build_view_source_view.png
+.. image:: images/013_build_view_source_view_opencl.png
 
 After a successful build, when the disassembly view becomes visible alongside the Source Code View,
 you can double-click on the view's black title bar to maximize it.
 You can also click on the resize icon at the top right corner to maximize/minimize the view:
 
-.. image:: images/013_build_view_title_bar.png
+.. image:: images/013_build_view_title_bar_opencl.png
 
 Build Output View
 `````````````````
 When a build is triggered, the RGA command line app is being launched to execute the build. Its output would be streamed into the Build Output View.
 
-.. image:: images/014_build_view_build_output.png
+.. image:: images/014_build_view_build_output_opencl.png
 
 Double-clicking on the top black title bar (or clicking on the resize button at its right corner) would maximize/minimize the Build Output View.
 
@@ -577,7 +577,7 @@ Disassembly View
 ````````````````
 The disassembly for the relevant kernel will be displayed in the disassembly view on the right:
 
-.. image:: images/006_disassembly_view.png
+.. image:: images/023_disassembly_view_opencl.png
 
 * Highlighted rows are correlated to the current line in the source code view on the left
 * Memory instructions are colored in red to help you identify spots with high memory pressure
@@ -796,14 +796,14 @@ The RGA Layer Launcher is a Windows-only application that can be used to simplif
 
 	.. image:: images/2_1/layer_launcher_vulkan.png
 
-ROCm OpenCL™ Mode
+OpenCL™ Offline Mode
 ^^^^^^^^^^^^^^^^^
 
 Find Code Object Binary and Build Artifacts
 ```````````````````````````````````````````
 Right click on the disassembly view and click on "Show disassembly file in explorer".
 
-.. image:: images/017_disassembly_view_context_menu.png
+.. image:: images/017_disassembly_view_context_menu_opencl.png
 
 Use an Alternative Compiler
 ```````````````````````````
@@ -842,14 +842,14 @@ Go to (source line)                        Ctrl+G
 Maximize/minimize views in build view      Ctrl+R
 Save file                                  Ctrl+S
 Build project                              Ctrl+Shift+B
-Cancel build                               Ctrl+Shift+C
+Cancel build                               Ctrl+Shift+X
 Cycle thru various views in build view     Ctrl+Tab & Ctrl+Shift+Tab
 Cycle thru various widgets in build view   Tab & Shift+Tab
 **Settings view**
 Restore default settings                   Ctrl+R
 **Vulkan® mode**
-Create new Vulkan® compute pipeline        Ctrl+Shift+C
-Create new Vulkan® graphics pipeline       Ctrl+Shift+G
+Create new Vulkan® compute pipeline        Ctrl+Alt+C
+Create new Vulkan® graphics pipeline       Ctrl+Alt+G
 **OpenCL™ mode**
 Create new .cl file                        Ctrl+N
 Open existing .cl file                     Ctrl+O

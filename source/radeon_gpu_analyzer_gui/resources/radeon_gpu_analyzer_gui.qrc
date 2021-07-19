@@ -1,0 +1,45 @@
+<RCC>
+    <qresource prefix="/">
+        <file>stylesheets/rg_file_menu_style.qss</file>
+        <file>stylesheets/rg_main_window_style.qss</file>
+        <file>stylesheets/rg_application_style.qss</file>
+        <file>icons/add_element_icon.svg</file>
+        <file>icons/add_file_icon.svg</file>
+        <file>icons/arrow_down.svg</file>
+        <file>icons/arrow_left.svg</file>
+        <file>icons/arrow_right.svg</file>
+        <file>icons/arrow_up.svg</file>
+        <file>icons/new_file_icon.svg</file>
+        <file>icons/close_icon.svg</file>
+        <file>icons/clear_icon.svg</file>
+        <file>icons/collapsed_arrow.svg</file>
+        <file>icons/contract_file_item.svg</file>
+        <file>icons/expand_file_item.svg</file>
+        <file>icons/filter_rows_icon.svg</file>
+        <file>icons/trash_can.svg</file>
+        <file>icons/view_minimize_icon.svg</file>
+        <file>icons/view_minimize_icon_hover.svg</file>
+        <file>icons/view_maximize_icon.svg</file>
+        <file>icons/view_maximize_icon_hover.svg</file>
+        <file>icons/gear_icon.svg</file>
+        <file>icons/rga_icon.png</file>
+        <file>icons/rga_icon.svg</file>
+        <file>icons/find_previous_icon.svg</file>
+        <file>icons/find_next_icon.svg</file>
+        <file>icons/magnifying_glass_icon.svg</file>
+        <file>icons/correlation_warning_icon.svg</file>
+        <file>icons/api_logos/opencl_icon_wide.png</file>
+        <file>icons/api_logos/vulkan_icon.png</file>
+        <file>stylesheets/opencl/rg_application_style_opencl.qss</file>
+        <file>stylesheets/opencl/rg_main_window_style_opencl.qss</file>
+        <file>stylesheets/opencl/rg_file_menu_style_opencl.qss</file>
+        <file>stylesheets/vulkan/rg_application_style_vulkan.qss</file>
+        <file>stylesheets/vulkan/rg_main_window_style_vulkan.qss</file>
+        <file>icons/gear_icon_white.svg</file>
+        <file>icons/checked_disabled_icon.svg</file>
+        <file>icons/state_settings_cube.svg</file>
+        <file>stylesheets/vulkan/rg_file_menu_style_vulkan.qss</file>
+        <file>icons/delete_icon.svg</file>
+        <file>icons/notification_icon.svg</file>
+    </qresource>
+</RCC>

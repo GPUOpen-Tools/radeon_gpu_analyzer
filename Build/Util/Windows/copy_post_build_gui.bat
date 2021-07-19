@@ -2,6 +2,7 @@
 
 rem Make all variables defined in this script local.
 SETLOCAL
+SETLOCAL ENABLEEXTENSIONS
 
 set OUTPUT_DIR=%1
 set QT_LIB_DIR=%2

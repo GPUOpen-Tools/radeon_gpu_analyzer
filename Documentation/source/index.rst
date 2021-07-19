@@ -7,7 +7,7 @@ The GUI application works on top of the RGA command line tool, which supports a 
 This documentation will focus on the GUI application, which currently supports:
 
 - Vulkan™ live-driver mode
-- OpenCL™ for Rocm, on top AMD's LLVM-based Lightning compiler
+- OpenCL™ Offline, on top of AMD's LLVM-based Lightning compiler
 
 More information about the RGA command line tool can be found in its help manual ("-h" option), or on the `RGA Github page <https://github.com/GPUOpen-Tools/RGA>`_.
 

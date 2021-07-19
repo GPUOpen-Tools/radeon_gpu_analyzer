@@ -123,7 +123,7 @@ And, in case of a successful build, the disassembly and HW resource usage info w
 
 That's it - we got our first Vulkan® pipeline built with RGA.
 
-ROCm OpenCL™ Mode
+OpenCL™ Offline Mode
 -----------------
 
 The Home Page
@@ -170,7 +170,7 @@ Use that list to control which kernel is in focus (highlighted in yellow):
 
 The disassembly for the relevant kernel will be displayed in the disassembly view on the right:
 
-.. image:: images/006_disassembly_view.png
+.. image:: images/023_disassembly_view_opencl.png
 
 * Highlighted rows are correlated to the current line in the source code view on the left
 * Memory instructions are colored in red to help you identify spots with high memory pressure

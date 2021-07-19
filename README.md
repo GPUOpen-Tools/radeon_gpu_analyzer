@@ -5,7 +5,7 @@ independent of the type of GPU/APU that is physically installed on your system.
 
 You can use RGA to produce the following output:
 * RDNA™ and GCN ISA disassembly
-* Intermediate language disassembly: AMDIL, DXIL and DXBC for DirectX, SPIR-V for Vulkan, LLVM IR for ROCm OpenCL
+* Intermediate language disassembly: AMDIL, DXIL and DXBC for DirectX, SPIR-V for Vulkan, LLVM IR for Offline OpenCL
 * Hardware resource usage statistics, such as register consumption, static memory allocation and more
 * Compiled binaries
 * Live register analysis (see http://gpuopen.com/live-vgpr-analysis-radeon-gpu-analyzer/ for more info)
@@ -16,7 +16,7 @@ The RGA package contains both a GUI app and a command-line executable.
 
 The supported modes by the **GUI app** are:
 * Vulkan - GLSL/SPIR-V as input, together with the Vulkan pipeline state; compiled through AMD's Vulkan driver
-* OpenCL - AMD's LLVM-based Lightning Compiler for ROCm
+* OpenCL - AMD's LLVM-based Lightning Compiler for OpenCL
 
 The supported modes by the **command-line tool** are:
 * DX12 (see https://gpuopen.com/radeon-gpu-analyzer-2-2-direct3d12-compute/ and https://gpuopen.com/radeon-gpu-analyzer-2-3-direct3d-12-graphics/ for more details)
@@ -24,19 +24,19 @@ The supported modes by the **command-line tool** are:
 * DXR
 * Vulkan - compilation of GLSL/SPIR-V together with the API's pipeline state, using AMD's Vulkan driver
 * Vulkan Offline - using a static compiler, accepts GLSL/SPIR-V as input. Note: to ensure that the results that RGA provides are accurate and reflect the real-world case, please use the new Vulkan live driver mode (which is also supported in the GUI application).
-* OpenCL - AMD's LLVM-based Lightning Compiler for ROCm (-s rocm-cl)
+* OpenCL - AMD's LLVM-based Lightning Compiler for Offline OpenCL
 * OpenGL
 * AMDIL
 
 ## System Requirements ##
 
 * Windows: 10, 64-bit. Visual Studio 2015 or later.
-* Linux: Ubuntu 18.04, Red Hat 6.4 or later. Build with gcc 4.7.2 or later.
+* Linux: Ubuntu 20.04. Build with gcc 4.7.2 or later.
 * Vulkan SDK 1.1.97.0 or later. To download the Vulkan SDK, visit https://vulkan.lunarg.com/
 
 To run the tool, you would need to have the AMD Radeon Adrenalin Software (Windows) or amdgpu-pro driver (Linux) installed for all modes, except for the following "offline" modes, which are independent of the driver and hardware:
 * Vulkan offline mode
-* ROCm OpenCL
+* OpenCL offline mode
 
 For the non-offline modes, it is strongly recommended to run with the latest drivers so that the latest compiler is used and the latest architectures can be targeted.
 
@@ -49,16 +49,18 @@ to your build output folder (make sure to place the folder in the same folder hi
 
 ### Building on Windows ###
 As a preliminary step, make sure that you have the following installed on your system:
-* CMake 3.5 or above. For auto-detecting the Vulkan SDK version 3.7 or above is required.
+* CMake 3.10 or above. For auto-detecting the Vulkan SDK version 3.7 or above is required.
 * Python 2.7 or above
-* Qt (in case that you are interested in building the GUI app; you can build the command line executable without Qt). Qt 5.9.2 is recommended.
+* Qt (in case that you are interested in building the GUI app; you can build the command line executable without Qt). Qt 5.15.2 is recommended.
 
 cd to the Build sub-folder, and run:
 
-Prebuild.bat --qt C:\Qt\Qt5.9.2\msvc2017_64 --vs 2017
+Prebuild.bat --qt <path of Qt's msvc2017_64 folder> --vs 2017
+
+Where <path to Qt's msvc2017_64 folder> is the path to the Qt msvc2017_64 folder, such as C:\Qt\Qt5.15.2\msvc2017_64.
 
 Running the Prebuild script will fetch all the dependencies and generate the solution file for Visual Studio.
-After successfully running the preuild script, open RGA.sln from Build\CMake\VS2017 (or VS2015), and build:
+After successfully running the preuild script, open RGA.sln from build\windows\vs2019 (or vs2017), and build:
 * RadeonGPUAnalyzerCLI project for the command line executable
 * RadeonGPUAnalyzerGUI project for the GUI app
 
@@ -70,7 +72,7 @@ Some useful options of the Prebuild script:
 * --no-fetch: do not attempt to update the third-party repositories
 
 If you are intending to analyze DirectX 11 shaders using RGA, copy the x64 version of Microsoft's D3D compiler to a subdirectory
-named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dll).
+named "utils" under the RGA executable's directory (for example, D3DCompiler_47.dll).
 
 -=-
 
@@ -81,7 +83,7 @@ To generate the solution file for VS 2017 in x64 configuration, use:
   cmake.exe -G "Visual Studio 15 2017 Win64" <full path to the RGA repo directory>
 
 If you are intending to analyze DirectX shaders using RGA, copy the x64 version of Microsoft's D3D compiler to a subdirectory
-named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dll).
+named "utils" under the RGA executable's directory (for example, D3DCompiler_47.dll).
 
 ### Building on Ubuntu ###
 * One time setup:
@@ -90,7 +92,7 @@ named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dl
   * sudo apt-get install gcc-multilib g++-multilib
   * sudo apt-get install libglu1-mesa-dev mesa-common-dev libgtk2.0-dev
   * sudo apt-get install zlib1g-dev libx11-dev:i386
-  * Install CMake 3.5 or above. For auto-detecting the Vulkan SDK version 3.7 or above is required.
+  * Install CMake 3.10 or above. For auto-detecting the Vulkan SDK version 3.7 or above is required.
   * Install python 2.7 (or above)
   * To build the GUI app, you should also have Qt installed
 
@@ -100,11 +102,11 @@ named "x64" under the RGA executable's directory (for example, D3DCompiler_47.dl
 
    On Linux, it is recommended to explicitly pass to CMake the location of the Vulkan SDK include and lib directories as well as the location of Qt. For example:
 
-   ./Prebuild.sh --qt ~/Qt-5.9.2/5.9.2/gcc_64 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
+   ./Prebuild.sh --qt ~/Qt-5.15.2/5.15.2/gcc_64 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
 
    This will fetch all the dependencies and generate the make files.
 
-   Then, cd to the auto-generated subfolder Build/CMake/linux and run make.
+   Then, cd to the auto-generated subfolder build/linux/make and run make.
 
    -=-
 
@@ -136,11 +138,11 @@ Run the rga executable.
   * DirectX 11: rga -s dx11 -h
   * DirectX Raytracing: rga -s dxr -h
 
-    Note: RGA's DX11 mode requires Microsoft's D3D Compiler DLL in runtime. If you copy the relevant D3D Compiler DLL to the x64
+    Note: RGA's DX11 mode requires Microsoft's D3D Compiler DLL in runtime. If you copy the relevant D3D Compiler DLL to the utils
     subdirectory under the executable's directory, RGA will use that DLL in runtime. The default D3D compiler that RGA public releases ship with
     is d3dcompiler_47.dll.
   * OpenGL:  rga -s opengl -h
-  * ROCm OpenCL:  rga -s rocm-cl -h
+  * OpenCL offline:  rga -s opencl -h
   * Vulkan live-driver:  rga -s vulkan -h
   * Vulkan offline - glsl:  rga -s vk-offline -h
   * Vulkan offline - SPIR-V binary input:  rga -s vk-offline-spv -h

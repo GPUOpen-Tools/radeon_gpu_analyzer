@@ -1,0 +1,94 @@
+/********************************************************************/
+/* File menu item (RgMenuFileItemOpencl)
+/********************************************************************/
+
+/* The default color is grayish light yellow. */
+RgMenuFileItemOpencl #itemBackground
+{
+    background-color: rgb(253, 255, 242);
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgb(18, 152, 0);
+}
+
+/* Current item color is light yellow (the RGA "highlight" color). */
+RgMenuFileItemOpencl #itemBackground[current=true]
+{
+    background-color: rgb(255, 255, 178);
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgb(18, 152, 0);
+}
+
+/* Hovered item (unselected) border is OpenCL green. */
+RgMenuFileItemOpencl #itemBackground[hovered=true][current=false]
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(18, 152, 0);
+}
+
+/* Hovered item (unselected) border is OpenCL green. */
+RgMenuFileItemOpencl #itemBackground[occupied=false]:hover
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(18, 152, 0);
+}
+
+RgMenuFileItemOpencl #closeButton:hover
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(18, 152, 0);
+}
+
+/********************************************************************/
+/* Disassemblyview Frame (RgIsaDisassemblyView)
+/********************************************************************/
+RgIsaDisassemblyView #frame[selected=true]
+{
+    border: 1px solid rgb(18, 152, 0);
+}
+
+RgIsaDisassemblyView #frame[selected=false]
+{
+    border: 1px solid black;
+}
+
+/********************************************************************/
+/* Add/create menu item (RgAddCreateMenuItem)
+/********************************************************************/
+
+RgAddCreateMenuItem QPushButton
+{
+    background-color: rgb(214, 214, 214);
+    text-align: left;
+    padding-left: 11px;
+}
+
+RgAddCreateMenuItem QPushButton:hover
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(18, 152, 0);
+}
+
+/********************************************************************/
+/* Build settings menu item (RgMenuBuildSettingsItem)
+/********************************************************************/
+
+RgMenuBuildSettingsItem QPushButton
+{
+    background-color: rgb(214, 214, 214);
+    text-align: left;
+    padding-left: 11px;
+}
+
+RgMenuBuildSettingsItem QPushButton:hover
+{
+	border-style: solid;
+    border-width: 2px;
+    border-color: rgb(18, 152, 0);
+}
+

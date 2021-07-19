@@ -1,0 +1,85 @@
+/********************************************************************/
+/* File menu item (RgMenuFileItemGraphics)
+/********************************************************************/
+
+/* The default color is gray. */
+RgMenuFileItemGraphics #itemBackground
+{
+    background-color: rgb(234, 235, 230);
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgb(135,20,16);
+}
+
+/* Current item color is light yellow (the RGA "highlight" color). */
+RgMenuFileItemGraphics #itemBackground[current=true]
+{
+    background-color: rgb(253,255,174);
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgb(135,20,16);
+}
+
+/* Occupied but not current item color is grayish light yellow. */
+RgMenuFileItemGraphics #itemBackground[current=false][occupied=true]
+{
+    background-color: rgb(253, 255, 238);
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgb(135,20,16);
+}
+
+/* Hovered item (unselected) border is Vulkan red. */
+RgMenuFileItemGraphics #itemBackground[hovered=true][current=false]
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
+}
+
+RgMenuFileItemGraphics #createFilePushButton:hover
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
+}
+
+RgMenuFileItemGraphics #addFilePushButton:hover
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
+}
+
+RgMenuFileItemGraphics #removeButton:hover
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
+}
+
+
+/********************************************************************/
+/* Pipeline state menu item (RgMenuPipelineStateItem)
+/********************************************************************/
+
+RgMenuPipelineStateItem QPushButton
+{
+    background-color: rgb(214, 214, 214);
+    text-align: left;
+    padding-left: 11px;
+}
+
+RgMenuPipelineStateItem QPushButton:hover
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
+}
+
+RgMenuPipelineStateItem QPushButton:selected
+{
+    border-style: solid;
+    border-width: 2px;
+    border-color: rgb(135,20,16);
+}

@@ -1,0 +1,86 @@
+/********************************************************************/
+/* Line Edit and Checkbox focus border
+/********************************************************************/
+QLineEdit:focus,
+RgCheckBox:focus
+{
+    border: 1px solid rgb(224, 30, 55);
+}
+
+/********************************************************************/
+/* Graphics File Menu border color
+/********************************************************************/
+RgMenuGraphics
+{
+    border: 1px solid black;
+}
+
+/********************************************************************/
+/* Frame focus border
+/********************************************************************/
+QFrame:focus
+{
+    border: 1px solid black;
+}
+
+RgBuildSettingsViewVulkan #addTargetGPUsButton:focus,
+RgBuildSettingsViewVulkan #includeDirsBrowseButton:focus,
+RgBuildSettingsViewVulkan #predefinedMacrosBrowseButton:focus,
+RgBuildSettingsViewVulkan #ICDLocationBrowseButton:focus,
+RgBuildSettingsViewVulkan #compilerBrowseButton:focus,
+RgBuildSettingsViewVulkan #addTargetGPUsButton:hover,
+RgBuildSettingsViewVulkan #includeDirsBrowseButton:hover,
+RgBuildSettingsViewVulkan #predefinedMacrosBrowseButton:hover,
+RgBuildSettingsViewVulkan #ICDLocationBrowseButton:hover,
+RgBuildSettingsViewVulkan #compilerBrowseButton:hover
+{
+    border: 1px solid rgb(224, 30, 55);
+    background: rgb(240, 240, 240);
+}
+
+RgViewContainer[viewHovered="true"][viewFocused="false"] RgMenuTitlebar #itemBackground,
+RgViewContainer[viewHovered="true"][viewFocused="false"] RgFileMenuTitlebar #itemBackground,
+RgViewContainer[viewHovered="true"][viewFocused="false"] RgStandardTitlebar,
+RgViewContainer[viewHovered="true"][viewFocused="false"] RgSourceEditorTitlebar,
+RgViewContainer[viewHovered="true"][viewFocused="false"] #viewTitlebar
+{
+    border-bottom: 3px solid rgb(135,20,16);
+}
+
+RgViewContainer[viewFocused="true"] RgMenuTitlebar #itemBackground,
+RgViewContainer[viewFocused="true"] RgFileMenuTitlebar #itemBackground,
+RgViewContainer[viewFocused="true"] RgStandardTitlebar,
+RgViewContainer[viewFocused="true"] RgSourceEditorTitlebar,
+RgViewContainer[viewFocused="true"] #viewTitlebar
+{
+    border-bottom: 3px solid rgb(224, 30, 55);
+}
+
+/********************************************************************/
+/* Target GPUs line edit background
+/********************************************************************/
+RgBuildSettingsViewVulkan #targetGPUsLineEdit
+{
+    background-color: rgb(240, 240, 240);
+}
+
+/********************************************************************/
+/* Line edit border color
+/********************************************************************/
+QLineEdit
+{
+    border: 1px solid black;
+}
+
+rgPipelineStateEditorWidgetNumeric #lineEdit:focus
+{
+    border: 1px solid rgb(224, 30, 55);
+}
+
+/********************************************************************/
+/* All options text edit
+/********************************************************************/
+RgBuildSettingsViewVulkan #allOptionsTextEdit
+{
+    border: 1px solid black;
+}

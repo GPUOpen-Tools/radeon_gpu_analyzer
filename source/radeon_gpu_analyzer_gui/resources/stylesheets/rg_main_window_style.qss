@@ -1,0 +1,162 @@
+/********************************************************************/
+/* Main Window
+/********************************************************************/
+
+/* Home page background (appears as background color for empty tab bar space) */
+#homePage
+{
+    background: rgb(51,51,51);
+}
+
+RgMainWindow QMenuBar
+{
+    background: white;
+}
+
+RgMainWindow QMenuBar::item:selected
+{
+    background: rgb(229, 243, 255);
+}
+
+RgStatusBar
+{
+    border: none;
+}
+
+/********************************************************************/
+/* Start page link buttons
+/********************************************************************/
+
+/* Link button basic styling */
+#RgStartTab > QPushButton
+{
+    color: rgb(0, 0, 255);
+    border: none;
+    text-align: left;
+    font: 10pt;
+}
+
+/* Hovered link button */
+#RgStartTab > QPushButton:hover
+{
+    color: rgb(255, 128, 0);
+}
+
+/* Link button basic styling */
+#recentProgramsWrapper > QPushButton
+{
+    color: rgb(0, 0, 255);
+    border: none;
+    text-align: left;
+    font: 10pt;
+    spacing: 10;
+}
+
+/* Link button basic styling */
+QPushButton#recentTracesOtherPushButton
+{
+    color: rgb(0, 0, 255);
+    border: none;
+    text-align: left;
+    text-decoration: underline;
+    font: 10pt;
+}
+
+/* Hovered link button */
+#recentProgramsWrapper > QPushButton:hover
+{
+    color: rgb(255, 128, 0);
+}
+
+/* No recent sessions push button styling */
+QPushButton#noRecentSessionsDummyPushButton
+{
+    color: rgb(113, 115, 114);
+    border: none;
+    text-align: left;
+    font: 10pt;
+}
+
+/********************************************************************/
+/* SETTINGS tab.
+/********************************************************************/
+
+RgSettingsTab #rightFrame
+{
+    background: white;
+}
+
+RgSettingsTab #leftFrame
+{
+    background: rgb(240, 240, 240);
+}
+
+RgSettingsTab #scrollArea
+{
+    background: white;
+}
+
+RgSettingsTab #scrollAreaWidgetContents
+{
+    background: white;
+}
+
+RgSettingsTab #settingsListWidget
+{
+    background: rgb(240, 240, 240);
+    border-right: 2px groove gray;
+    outline: none;
+    border: none;
+    font: bold 8pt;
+}
+
+RgSettingsTab #settingsListWidget::item:hover
+{
+    background: rgb(214, 214, 214);
+}
+
+RgSettingsTab #settingsListWidget::item:selected
+{
+    background: rgb(253,255,174);
+}
+
+RgSettingsTab #settingsListWidget::item
+{
+    border-bottom: none;
+    padding: 7px;
+    padding-left: 30px;
+    color: rgb(51, 51, 51);
+}
+
+RgSettingsTab #rightFrame > QFrame:focus
+{
+    border: none;
+}
+
+RgSettingsTab #globalSettingsLabel
+{
+    background:  rgb(240, 240, 240);
+}
+
+QComboBox::drop-down
+{
+    width: 17px;
+}
+
+/********************************************************************/
+/* About Dialog buttons
+/********************************************************************/
+
+/* Link button basic styling */
+RgAboutDialog #checkForUpdatesButton
+{
+    color: rgb(0, 0, 255);
+    border: none;
+    text-align: left;
+    font: 8pt;
+}
+
+RgAboutDialog #checkForUpdatesButton:hover
+{
+    color: rgb(255, 128, 0);
+}

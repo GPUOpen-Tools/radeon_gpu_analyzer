@@ -1,66 +1,52 @@
-Radeon‚Ñ¢ GPU Analyzer 2.4.2 ‚Äì Release Notes
-------------------------------------------
-
+Radeonô GPU Analyzer 2.5 ñ Release Notes
+========================================
 Highlights
-----------
--    Added support for gfx1031 (RX 6700 XT) in Vulkan, DX12, DXR, DX11 and OpenGL modes.
--    DXR:
-    o    Improved error reporting to help diagnose State Object creation failures.
-    o    You can now extract pipeline binaries even in cases where the driver generated multiple raytracing pipelines.
--    Improved static analysis engine‚Äôs stability.
--    The following RDNA and RDNA2 instructions are now supported by the static analysis engine:
-    o    V_DOT2C_F32_F16
-    o    V_DOT4C_I32_I8
-    o    V_DOT2_F32_F16
-    o    V_DOT2_I32_I16
-    o    V_DOT2_U32_U16
-    o    V_DOT4_I32_I8
-    o    V_DOT4_U32_U8
-    o    V_DOT8_I32_I4
-    o    V_DOT8_U32_U4
-    o    V_FMAC_LEGACY_F32
-    o    V_FMA_LEGACY_F32
--    Vulkan offline mode: added support for new SPIR-V extensions and capabilities. See the accompanying Release Notes document for the complete list of supported extensions and capabilities.
--    Notable bug fixes:
-    o    DXR: Fixes to the command line tool‚Äôs DXR help manual.
-    o    DXR: Auto-generated file name extension is now aligned with DX12 mode.
-    o    Fixed the compute capability for certain APU products (gfx909 -> gfx90C).
+==========
+- Added support for gfx1032 as a target in Vulkan, DX12, DXR, DX11, OpenCL and OpenGL modes.
+- [GitHub-59] DX12 mode: support for multi-GPU configurations where the primary display adapter is a non-AMD card. The tool will now use the driver that is associated with the first AMD display adapter on the system.
+- OpenCL:
+o [GitHub-67, GitHub-76] Added support for RDNA targets, including the Radeon Instinct MI100.
+o [GitHub-34] Updated the Lightning Compiler package that is bundled with the tool.
+o Added support for live VGPR analysis and control-flow graph generation.
+o ROCM-CL mode (-s rocm-cl) was replaced with an ìOffline OpenCLî mode (-s opencl).
+- Vulkan: 
+o Live VGPR analysis and control-flow graph can now be generated from LLPC disassembly.
+o Updated the SPIR-V tools.
+- Vulkan offline: updated the Vulkan offline backend.
+- Major refactoring of the codebase to conform with Google C++ style guide. You may notice files and folders have been renamed and relocated in the binary package and GitHub repository.
+- Notable bug fixes:
+o DXR: Disassembly for Wave32 shaders no longer shows references of shared VGPRs.
+o [GitHub-82] Vulkan offline compiler assertion when using EXT_buffer_reference.
+o [GitHub-66] Added support for Radeon RX Vega M GL and GH in Offline OpenCL mode.
 
+Note: on Ubuntu, the minimum required OS version is Ubuntu 20.04.
 
 Known Issues
-------------
-DXR Mode
---------
--    Disassembly for Wave32 shaders may show references of shared VGPRs.
--    In scenarios where multiple raytracing pipelines are created from the same State Object, some binaries may not be of valid ELF format. A fix will be provided in an upcoming Adrenalin software release (users do not need to update the tool to consume the fix).
-
-Vulkan Live Driver Mode
+============
+Vulkan Live Driver Mode 
 -----------------------
--    Source to disassembly correlation is not supported by AMD‚Äôs shader compiler at the moment and is therefore not supported in the UI.
--    Keyboard navigation is not supported from some views in the GUI application.
--    The RGA layer is a beta feature. It fails to extract the shaders and pipeline state from certain Vulkan apps.
--    Notifications about the fact that modified SPIR-V binary does not match the disassembly will not appear for loaded projects (in case that you changed the SPIR-V code, did not build and re-loaded the project).
+- Source to disassembly correlation is not supported by AMDís shader compiler at the moment and is therefore not supported in the UI.
+- Keyboard navigation is not supported from some views in the GUI application.
+- The RGA layer is a beta feature. It fails to extract the shaders and pipeline state from certain Vulkan apps.
+- Notifications about the fact that modified SPIR-V binary does not match the disassembly will not appear for loaded projects (in case that you changed the SPIR-V code, did not build and re-loaded the project).
 
-ROCM OpenCL Mode
-----------------
--    RDNA targets are not supported as targets for ROCM-CL modes.
--    The Lightning Compiler does not support disassembling of binaries for Graphics IP v7 targets.
--    OpenCL C++ kernels are not yet supported by the Lightning Compiler.
--    No support for live register analysis and control-flow graph generation in this mode.
--    Cycle estimate for certain VALU instructions appears as ‚ÄúVaries‚Äù instead of 4.
+Offline OpenCL Mode
+-------------------
+- OpenCL C++ kernels are not yet supported by the Lightning Compiler.
+- Cycle estimate for certain VALU instructions appears as ìVariesî instead of 4.
 
 OpenGL Mode
 -----------
-Resource usage statistics for OpenGL mode only displays usage of SGPRs and VGPRs.
+Resource usage statistics for OpenGL mode only displays usage of SGPRs and VGPRs. 
 
 DirectX 12 Mode
 ---------------
-Live register analysis & CFG generation require using the --isa option to generate ISA disassembly.
+Live register analysis & CFG generation require using the --isa option to generate ISA disassembly. 
 
 Vulkan Offline Modes (vk-offline, vk-spv-offline, vk-spv-txt-offline)
 ---------------------------------------------------------------------
-SPIR-V support limitations:
-a.    The following capabilities, which are defined in the SPIR-V spec, are currently supported:
+SPIR-V support limitations:  
+a. The Vulkan Offline modes currently only support the following SPIR-V capabilities:
 CapabilityMatrix
 CapabilityShader
 CapabilityGeometry
@@ -168,7 +154,7 @@ CapabilityRayTracingProvisionalKHR
 CapabilityRayQueryProvisionalKHR
 CapabilityRayTraversalPrimitiveCullingProvisionalKHR
 
-b.    SPIR-V modes currently only support the following extensions:
+b. The Vulkan Offline modes currently only support the following extensions:  
 SPV_KHR_shader_ballot
 SPV_KHR_subgroup_vote
 SPV_KHR_device_group
@@ -212,40 +198,44 @@ SPV_KHR_ray_query
 
 GUI Application
 ---------------
--    "Correlation Disabled" notification in the source code editor is not being saved for projects after they were closed.
--    Certain SALU instructions are being misclassified as VALU instructions.
+- ìCorrelation Disabledî notification in the source code editor is not being saved for projects after they were closed.
+- Certain SALU instructions are being misclassified as VALU instructions. 
+- Certain GDS instructions are being misclassified as SALU.
+- Changing disassembly columns can be sluggish on certain systems in projects with multiple .cl files.
 
-Notes for OpenCL Mode Users
----------------------------
-The ‚Äú-s rocm-cl‚Äù mode uses the Lightning Compiler package that ships with RGA, which is based on clang.
-As of version 2.0, RGA allows developers to replace the Lightning Compiler package that ships with the product with a user-provided LLVM-based package. For more information, see the Radeon GPU Analyzer GUI app‚Äôs help manual, or run the command line tool with ‚Äìs rocm-cl ‚Äìh as arguments (look for the ‚ÄúAlternative ROCm OpenCL compiler‚Äù section).
+Notes for OpenCL Mode Users 
+===========================
+The Offline OpenCL mode uses the Lightning Compiler package that ships with RGA, which is based on clang. 
+As of version 2.0, RGA allows developers to replace the Lightning Compiler package that ships with the product with a user-provided LLVM-based package. For more information, see the Radeon GPU Analyzer GUI appís help manual, or run the command line tool with ñs opencl ñh as arguments (look for the ìAlternative OpenCL Lightning Compilerî section).
+
 Notes for DirectX 11 Mode Users
-RGA‚Äôs DirectX 11 (-s dx11) mode will use the driver that is associated with the primary display adapter, by default. If your primary display adapter is not an AMD GPU, or if you would like RGA to use a driver that is associated with a different display adapter that is installed on your system, use the --adapters and --set-adapter <id> command line switches in order to instruct RGA to use the relevant driver.
+===============================
+RGAís DirectX 11 (-s dx11) mode will use the driver that is associated with the primary display adapter, by default. If your primary display adapter is not an AMD GPU, or if you would like RGA to use a driver that is associated with a different display adapter that is installed on your system, use the --adapters and --set-adapter <id> command line switches to instruct RGA to use the relevant driver.
 
 System Requirements
--------------------
-It is generally recommended to use RGA with the latest Radeon Software version. Specifically, to target the RDNA architecture, the latest Radeon Software version is required (except for all Vulkan¬Æ modes and the rocm-cl mode, which are independent of the driver).
+===================
+It is generally recommended to use RGA with the latest Radeon Software version. Specifically, to target the RDNA architecture, the latest Radeon Software version is required (except for all VulkanÆ modes and the Offline OpenCL mode, which are independent of the driver).
 
 Vulkan Mode
 -----------
 To use the installed driver in Vulkan mode:
-a.    Vulkan SDK 1.1.97.0 or later is required.
-b.    Latest Adrenalin or amdgpu-pro driver is required.
-
-RGA ships with a compatible Vulkan driver to support users who do not have an AMD driver installed on their system. In cases where RGA fails to detect the installed driver, it falls back to using the bundled driver. To make sure that you are using the latest compiler and can compile for the latest Radeon targets, we strongly recommend running on a machine that has an AMD driver installed.
+a. Vulkan SDK 1.1.97.0 or later is required.
+b. Latest Adrenalin or amdgpu-pro driver is required.
 
 Vulkan Offline Modes (vk-offline, vk-spv-offline, vk-spv-txt-offline)
 ---------------------------------------------------------------------
-All Vulkan offline modes (vk-offline, vk-spv-offline and vk-spv-txt-offline) are independent of the installed driver and graphics hardware and should work on any x86-based system.
+All Vulkan offline modes (vk-offline, vk-spv-offline and vk-spv-txt-offline) are independent of the installed driver and graphics hardware and should work on any x86-based system. 
 
 DirectX 12 and DirectX 11 Modes
 -------------------------------
 It is recommended to use the latest Adrenalin drivers for the best experience in DirectX 12 and DirectX 11 modes.
 
-ROCM OpenCL Mode
-----------------
-ROCM OpenCL mode (rocm-cl) is independent of the installed driver and graphics hardware and should work on any x86-based system.
+Offline OpenCL Mode
+-------------------
+Offline OpenCL mode (-s opencl) is independent of the installed driver and graphics hardware and should work on any x86-based system. 
 
 OpenGL Mode
 -----------
-OpenGL mode on Linux requires the latest amdgpu-pro driver.
+OpenGL mode requires the latest amdgpu-pro driver on Linux and latest Adrenalin Software on Windows.
+
+
