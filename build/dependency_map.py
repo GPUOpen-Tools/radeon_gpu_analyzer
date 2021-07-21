@@ -43,14 +43,14 @@ git_mapping = {
     "common-src-AMDTOSWrappers"           : ["Common/Src/AMDTOSWrappers",        "6a5293d6a4f00c70747f935a4122a1b986129396"],
     "common-src-AMDTMutex"                : ["Common/Src/AMDTMutex",             "master"],
     "common-src-CElf"                     : ["Common/Src/CElf",                  "master"],
-    "common-src-DeviceInfo"               : ["Common/Src/DeviceInfo",            "rga-v2.5"],
+    "common-src-DeviceInfo"               : ["Common/Src/DeviceInfo",            "amd-navi23-mi100"],
     "common-src-DynamicLibraryModule"     : ["Common/Src/DynamicLibraryModule",  "master"],
     "common-src-TSingleton"               : ["Common/Src/TSingleton",            "master"],
     "common-src-VersionInfo"              : ["Common/Src/VersionInfo",           "master"],
     "common-src-Vsprops"                  : ["Common/Src/Vsprops",               "master"],
     "common-src-Miniz"                    : ["Common/Src/Miniz",                 "master"],
     "common-src-Misc"                     : ["Common/Src/Misc",                  "master"],
-    "UpdateCheckAPI"                      : ["Common/Src/UpdateCheckAPI",        "v2.0.0"],
+    "UpdateCheckAPI"                      : ["Common/Src/UpdateCheckAPI",        "amd-2.0.0"],
  # QtCommon.
     "QtCommon"                            : ["QtCommon",                         "rga-2.5"]
 }
