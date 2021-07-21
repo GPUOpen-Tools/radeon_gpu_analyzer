@@ -15,6 +15,5 @@ buildOutput
 documentation/build
 *.csproj.user
 obj
-bin
 build/__pycache__
 external/code_sanitizer
