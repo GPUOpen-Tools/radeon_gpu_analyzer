@@ -46,6 +46,8 @@ CURDIR=`pwd`
 rm -f $X64_DIR/LC/OpenCL/bin/clang
 cd $X64_DIR/LC/OpenCL/bin/
 ln -s clang-13 clang
+ln -s lld ld.lld
+ln -s llvm-readobj llvm-readelf
 cd $CURDIR
 
 chmod +x $X64_DIR/LC/OpenCL/bin/lld $X64_DIR/LC/OpenCL/bin/clang-13 $X64_DIR/LC/OpenCL/bin/llvm-objdump $X64_DIR/LC/OpenCL/bin/llvm-readobj
