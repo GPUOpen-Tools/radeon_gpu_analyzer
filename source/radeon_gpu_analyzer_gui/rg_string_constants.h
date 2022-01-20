@@ -103,8 +103,9 @@ static const char* kStrErrCannotLoadBuildOutput = "Failed to load project build 
 static const char* kStrErrCannotLoadVersionInfoFile = "RGA Failed to load version the info file: ";
 static const char* kStrErrCannotLoadSupportedGpusListForModeA = "Failed to load list of supported GPUs for '";
 static const char* kStrErrCannotLoadSupportedGpusListForModeB = "' mode.";
-static const char* kStrErrCannotLoadDisassemblyCsvFile = "Failed to load disassembly output file at ";
-static const char* kStrErrIllegalProjectName = "Project name is not a legal file name or exceeds 50 characters: ";
+static const char* kStrErrCannotLoadDisassemblyCsvFile = "Failed to load disassembly output file. ";
+static const char* kStrErrCannotLoadLiveVgprFile              = "Failed to load live VGPR output file. ";
+static const char* kStrErrIllegalProjectName                  = "Project name is not a legal file name or exceeds 50 characters: ";
 static const char* kStrErrFailedToOpenFileBrowser = "Failed to open the system's file explorer.";
 static const char* kStrErrCsvParsingFailedA = "Failed to parse ";
 static const char* kStrErrCsvParsingFailedB = " at line ";
@@ -475,8 +476,10 @@ static const char* kStrDisassemblyTableColumnAddress         = "Address";
 static const char* kStrDisassemblyTableColumnOpcode          = "Opcode";
 static const char* kStrDisassemblyTableColumnOperands        = "Operands";
 static const char* kStrDisassemblyTableColumnCycles          = "Cycles";
-static const char* kStrDisassemblyTableColumnFunctionalUnit = "Functional unit";
-static const char* kStrDisassemblyTableColumnBinaryEncoding    = "Binary encoding";
+static const char* kStrDisassemblyTableColumnFunctionalUnit  = "Functional unit";
+static const char* kStrDisassemblyTableColumnBinaryEncoding  = "Binary encoding";
+static const char* kStrDisassemblyTableLiveVgprs             = "VGPR pressure (used:%1, allocated:%2)";
+static const char* kStrDisassemblyTableLiveVgprHeaderPart    = "VGPR pressure";
 
 // Context menu strings
 static const char* kStrDisassemblyTableContextMenuCopy = "Copy selected disassembly";

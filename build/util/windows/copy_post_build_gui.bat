@@ -22,11 +22,11 @@ IF "%4"=="-automation" (
 )
 
 rem Create the output folders:
-IF NOT exist %OUTPUT_DIR% mkdir %OUTPUT_DIR%
-IF NOT exist %OUTPUT_DIR%\platforms mkdir %OUTPUT_DIR%\platforms
-IF NOT exist %OUTPUT_DIR%\iconengines mkdir %OUTPUT_DIR%\iconengines
-IF NOT exist %OUTPUT_DIR%\imageformats mkdir %OUTPUT_DIR%\imageformats
-IF NOT exist %OUTPUT_DIR%\styles mkdir %OUTPUT_DIR%\styles
+IF NOT exist "%OUTPUT_DIR%" ( mkdir "%OUTPUT_DIR%" )
+IF NOT exist "%OUTPUT_DIR%"\platforms ( mkdir "%OUTPUT_DIR%"\platforms )
+IF NOT exist "%OUTPUT_DIR%"\iconengines ( mkdir "%OUTPUT_DIR%"\iconengines )
+IF NOT exist "%OUTPUT_DIR%"\imageformats ( mkdir "%OUTPUT_DIR%"\imageformats )
+IF NOT exist "%OUTPUT_DIR%"\styles ( mkdir "%OUTPUT_DIR%"\styles )
 
 rem Copy Qt5 dlls
 IF NOT [%QT_LIB_DIR%]==[] (
@@ -64,4 +64,4 @@ IF DEFINED AUTOMATION (
 )
 
 rem Copy the Radeon Tools Download Assistant.
-XCopy /r /d /y "..\..\..\..\Common\Src\UpdateCheckAPI\rtda\windows\rtda.exe" "%OUTPUT_DIR%\"
+XCopy /r /d /y "..\..\..\..\Common\Src\update_check_api\rtda\windows\rtda.exe" "%OUTPUT_DIR%\"

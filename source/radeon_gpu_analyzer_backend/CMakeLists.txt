@@ -33,23 +33,18 @@ configure_file (
 include_directories("${PROJECT_SOURCE_DIR}/../")
 include_directories("${PROJECT_SOURCE_DIR}/../../")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/")
+include_directories("${PROJECT_SOURCE_DIR}/../../external")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/dx11")
 include_directories("${PROJECT_SOURCE_DIR}/emulator/parser")
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/CElf/Include")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/celf/Include")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/DeviceInfo")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/DynamicLibraryModule")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/AMDTMutex")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/TSingleton")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/Misc")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/ACLModuleManager")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/AMD/DX10ASM")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/AMD/CAL/8.95")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/AMD/CAL/8.95/include")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/AMD/ACL/TOT/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/AMD/APPSDK/3-0/include")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/yaml-cpp/include")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/yaml-cpp/include")
 include_directories("${PROJECT_SOURCE_DIR}/../common")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/third-party")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/dx11/GSA")
@@ -89,16 +84,10 @@ file(GLOB COMMON_SRC
     "emulator/parser/be_parser_si_vintrp.cpp"
     "emulator/parser/be_parser_si_vop.cpp"
     "${PROJECT_SOURCE_DIR}/../../../Common/Src/DynamicLibraryModule/DynamicLibraryModule.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/DynamicLibraryModule/ACLModule.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/ACLModuleManager/ACLModuleManager.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/AMDTMutex/AMDTMutex.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/DynamicLibraryModule/CALModule.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/CElf/Src/CElf.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/CElf/Src/CElfSection.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/CElf/Src/CElfStringTable.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/CElf/Src/CElfSymbolTable.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/Misc/GDT_Memory.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/DynamicLibraryModule/OpenCLModule.cpp"
+    "${PROJECT_SOURCE_DIR}/../../external/celf/Src/CElf.cpp"
+    "${PROJECT_SOURCE_DIR}/../../external/celf/Src/CElfSection.cpp"
+    "${PROJECT_SOURCE_DIR}/../../external/celf/Src/CElfStringTable.cpp"
+    "${PROJECT_SOURCE_DIR}/../../external/celf/Src/CElfSymbolTable.cpp"
 )
 
 # Windows-specific source files

@@ -10,12 +10,13 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTBaseTools/Include/gtString.h"
-#include "AMDTOSWrappers/Include/osFilePath.h"
-#include "AMDTOSWrappers/Include/osFile.h"
-#include "AMDTOSWrappers/Include/osDirectory.h"
-#include "AMDTOSWrappers/Include/osProcess.h"
-#include "AMDTOSWrappers/Include/osEnvironmentVariable.h"
+#include "external/amdt_base_tools/Include/gtString.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osFile.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
+#include "external/amdt_os_wrappers/Include/osProcess.h"
+#include "external/amdt_os_wrappers/Include/osEnvironmentVariable.h"
+#include "external/amdt_os_wrappers/Include/osApplication.h"
 #include "update_check_api.h"
 #ifdef _WIN32
     #pragma warning(pop)
@@ -523,11 +524,14 @@ static bool EvaluateAnalysisResult(beStatus rc, LoggingCallbackFunction callback
     return (rc == kBeStatusSuccess);
 }
 
-bool KcUtils::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& target, const gtString& output_filename,
-                                          LoggingCallbackFunction callback, bool print_cmd)
+bool KcUtils::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& target,
+                                          const gtString&          output_filename,
+                                          LoggingCallbackFunction  callback,
+                                          bool print_cmd,
+                                          beWaveSize wave_size)
 {
     // Call the backend.
-    beStatus rc = BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isa_filename, target, output_filename, print_cmd);
+    beStatus rc = BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isa_filename, target, output_filename, wave_size, print_cmd);
 
     return EvaluateAnalysisResult(rc, callback);
 }
@@ -1548,6 +1552,43 @@ bool KcUtils::SetEnvrironmentVariable(const::std::string& var_name, const std::s
     return ret;
 }
 
+bool KcUtils::ReadEnvrironmentVariable(const ::std::string& var_name, std::string& var_value)
+{
+    // Convert to gtString.
+    gtString var_name_gtstr;
+    var_name_gtstr << var_name.c_str();
+
+    // Get the environment variable.
+    gtString var_value_gtstr;
+    bool     ret = osGetCurrentProcessEnvVariableValue(var_name_gtstr, var_value_gtstr);
+    var_value    = var_value_gtstr.asASCIICharArray();
+
+    return ret;
+}
+
+#ifdef _WIN32
+bool KcUtils::UpdatePathEnvVar()
+{
+    const std::string kPathEnvVarName = "PATH";
+    bool              ret             = false;
+    std::string       env_var_value;
+    ret = KcUtils::ReadEnvrironmentVariable(kPathEnvVarName, env_var_value);
+    assert(ret);
+    if (ret)
+    {
+        // Append the RGA top folder to the PATH environment variable.
+        osFilePath rga_top_folder;
+        osGetCurrentApplicationPath(rga_top_folder, false);
+        std::string       rga_top_folder_str = rga_top_folder.fileDirectoryAsString().asASCIICharArray();
+        std::stringstream updated_path;
+        updated_path << rga_top_folder_str << ";" << env_var_value;
+        KcUtils::SetEnvrironmentVariable(kPathEnvVarName, updated_path.str().c_str());
+    }
+
+    return ret;
+}
+#endif  // _WIN32
+
 void KcUtils::CheckForUpdates()
 {
     UpdateCheck::VersionInfo rga_cli_version;
@@ -1645,6 +1686,11 @@ bool KcUtils::IsNavi21AndBeyond(const std::string& target_name)
     return(IsNaviTarget(target_name) && target_name >= "gfx1030");
 }
 
+bool KcUtils::IsNavi21(const std::string& target_name)
+{
+    return target_name == "gfx1030";
+}
+
 bool KcUtils::IsVegaTarget(const std::string& target_name)
 {
     // Token to identify Vega targets.
@@ -1703,11 +1749,6 @@ std::string KcUtils::AdjustBaseFileNameStats(const std::string& user_input_filen
 std::string KcUtils::AdjustBaseFileNameLivereg(const std::string& user_input_filename, const std::string& device)
 {
     return AdjustBaseFileName(user_input_filename, device, kStrDefaultExtensionLivereg);
-}
-
-std::string KcUtils::AdjustBaseFileNameStallAnalysis(const std::string& user_input_filename, const std::string& device)
-{
-    return AdjustBaseFileName(user_input_filename, device, kStrDefaultExtensionStalls);
 }
 
 std::string KcUtils::AdjustBaseFileNameCfg(const std::string& user_input_filename, const std::string& device)

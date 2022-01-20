@@ -6,6 +6,7 @@
 
 // Qt.
 #include <QWidget>
+#include <QPlainTextEdit>
 
 // Local.
 #include "source/radeon_gpu_analyzer_gui/rg_data_types.h"
@@ -167,6 +168,9 @@ protected slots:
     // Handler to open the GPU list widget.
     void HandleOpenGpuListWidget();
 
+    // Handler invoked when disassembly view tab widget tab is changed.
+    void HandleCurrentTabChanged(int index);
+
 protected:
     // A map that associates an GPU name to a list of program build outputs.
     typedef std::map<std::string, std::vector<RgEntryOutput>> GpuToEntryVector;
@@ -176,6 +180,12 @@ protected:
 
     // A map of full input file path to a map of RgResourceUsageViews for the file.
     typedef std::map<std::string, EntrypointToResourcesView> InputToEntrypointViews;
+
+    // A type of map that associates an entry point name with a livereg analysis view for the entrypoint.
+    typedef std::map<std::string, QPlainTextEdit*> EntryPointToLiveregAnalysisViews;
+
+    // A map of full input file path to a map of QPlainTextEdit for the file.
+    typedef std::map<std::string, EntryPointToLiveregAnalysisViews> InputToEntrypointLiveregViews;
 
     // Remove all items from the given list widget.
     void ClearListWidget(ListWidget* &list_widget);
@@ -248,6 +258,9 @@ protected:
 
     // A map of GPU name to a map of an input file's entry point resource usage views.
     std::map<std::string, InputToEntrypointViews> gpu_resource_usage_views_;
+
+    // A map of GPU name to a map of an input file's livereg analysis views.
+    std::map<std::string, InputToEntrypointLiveregViews> gpu_livereg_analysis_views_;
 
     // The current target GPU tab being viewed.
     RgIsaDisassemblyTabView* current_tab_view_ = nullptr;

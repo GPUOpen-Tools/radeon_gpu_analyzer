@@ -310,6 +310,17 @@ struct RgResourceUsageData
     int isa_size;
 };
 
+// A structure used to hold data parsed from a livereg output file.
+struct RgLiveregData
+{
+    int total_vgprs;
+    int vgprs_granularity;
+    int used;
+    int allocated;
+    int max_vgprs;
+    int unmatched_count;
+};
+
 // A structure used to hold project path and api type for each RGA project.
 struct RgRecentProject
 {
@@ -560,4 +571,52 @@ struct RgStylesheetPackage
     // The main window api-specific stylesheet.
     std::string main_window_api_stylesheet;
 };
+
+
+// An enumeration used to classify different types of parsed disassembly lines.
+enum class RgIsaLineType
+{
+    kInstruction,
+    kLabel
+};
+
+// A simple data class used as a common base for storing lines parsed from a disassembly CSV file.
+struct RgIsaLine
+{
+    // The type of line parsed from the disassembly file.
+    RgIsaLineType type;
+
+    // The number of live registers for this instruction.
+    std::string num_live_registers;
+};
+
+// A class used to store a disassembled instruction line.
+struct RgIsaLineInstruction : RgIsaLine
+{
+    // The instruction address within the disassembled binary.
+    std::string address;
+
+    // The instruction opcode.
+    std::string opcode;
+
+    // The instruction operands.
+    std::string operands;
+
+    // The cycle count of the instruction.
+    std::string cycles;
+
+    // The functional unit responsible for execution.
+    std::string functional_unit;
+
+    // The hex representation of the instruction.
+    std::string binary_encoding;
+};
+
+// A class used to store a disassembly line label.
+struct RgIsaLineLabel : RgIsaLine
+{
+    // The name of the label, if applicable.
+    std::string label_name;
+};
+
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DATA_TYPES_H_

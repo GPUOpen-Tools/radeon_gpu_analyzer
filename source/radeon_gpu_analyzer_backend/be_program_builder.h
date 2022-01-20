@@ -4,13 +4,16 @@
 
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_H_
-
 // Disable warning:
 #ifdef _WIN32
     #pragma warning(push)
     #pragma warning( disable : 4996 )
     #pragma warning( disable : 4251 )
 #endif
+
+// C++.
+#include <vector>
+#include <string>
 
 #include "radeon_gpu_analyzer_backend/be_include.h"
 #include "DeviceInfo.h"

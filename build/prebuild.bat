@@ -1,7 +1,7 @@
 @echo off
 :: prebuild.bat --vs 2017 --qt <path_to_qt>
 
-SETLOCAL
+SETLOCAL enabledelayedexpansion
 
 rem Print help message
 if "%1"=="-h" goto :print_help
@@ -25,7 +25,8 @@ echo    --vs                 Microsoft Visual Studio version. Currently supporte
 echo    --qt                 Path to Qt5 root folder. The default is empty (cmake will look for Qt5 package istalled on the system).
 echo    --cli-only           Build RGA command-line tool only (do not build GUI). The default is "false".
 echo    --gui-only           Build GUI only (do not build RGA command-line tool). The default is "false".
-echo    --no-vulkan          Build RGA without live Vulkan mode support. If this option is used, Vulkan SDK is not required. The default is "false".
+echo    --no-vulkan          Build RGA without live Vulkan mode support. If this option is used, the Vulkan SDK is not required. The default is "false".
+echo                         This option is only valid in conjunction with --cli-only.
 echo    --vk-include         Path to the Vulkan SDK include folder.
 echo    --vk-lib             Path to the Vulkan SDK library folder.
 echo    --cppcheck           Add "-DCMAKE_CXX_CPPCHECK" to cmake command
@@ -132,6 +133,13 @@ echo Error: Unexpected argument: %1%. Aborting...
 exit /b 1
 
 :start_cmake
+if not "!NO_VULKAN!"=="" (
+    if "%CLI_ONLY%"=="" (
+        echo ERROR: Invalid Syntax: must use --cli-only with --no-vulkan
+        exit /b 1
+    )
+)
+
 set CMAKE_VSARCH=
 if "%VS_VER%"=="2015" (
     set CMAKE_VS="Visual Studio 14 2015 Win64"
@@ -172,19 +180,9 @@ rem clone or download dependencies
 if not "%NO_FETCH%"=="TRUE" (
     echo:
     echo Updating Common...
-    python %SCRIPT_DIR%\fetch_dependencies.py
-
-    if "%ERRORLEVEL%"=="1" (
+    call python %SCRIPT_DIR%\fetch_dependencies.py
+    if not !ERRORLEVEL!==0 (
         echo Error: encountered an error while fetching dependencies. Aborting...
-        exit /b 1
-    )
-
-    if exist %SCRIPT_DIR%\fetch_dependencies-Internal.py (
-        python %SCRIPT_DIR%\fetch_dependencies-Internal.py
-    )
-
-    if "%ERRORLEVEL%"=="1" (
-        echo Error: encountered an error while fetching internal dependencies. Aborting...
         exit /b 1
     )
 )
@@ -194,7 +192,7 @@ echo:
 echo Running cmake to generate a VisualStudio solution...
 cd %OUTPUT_FOLDER%
 %CMAKE_PATH% -G %CMAKE_VS% %CMAKE_VSARCH% %CMAKE_QT% %CMAKE_VK_INCLUDE% %CMAKE_VK_LIB% %CLI_ONLY% %GUI_ONLY% %NO_VULKAN% %AUTOMATION% %AMD_INTERNAL% %CPPCHECK% ..\..\..
-if not %ERRORLEVEL%==0 (
+if not !ERRORLEVEL!==0 (
     echo "ERROR: cmake failed. Aborting..."
     exit /b 1
 )

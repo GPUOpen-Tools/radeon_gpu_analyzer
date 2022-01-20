@@ -13,9 +13,11 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTOSWrappers/Include/osProcess.h"
-#include "AMDTOSWrappers/Include/osFilePath.h"
-#include "AMDTOSWrappers/Include/osFile.h"
+#include "external/amdt_os_wrappers/Include/osProcess.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osFile.h"
+#include "external/amdt_os_wrappers/Include/osApplication.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -30,7 +32,9 @@
 using namespace beKA;
 
 // Static constants.
-static const std::string kShaeOptLivereg = "analyse-liveness";
+static const std::string kShaeOptLivereg = "analyse-liveness --arch-info";
+static const std::string kShaeOptLiveregWave64 = "analyse-liveness --arch-info --wave-size 64";
+static const std::string kShaeOptLiveregWave32     = "analyse-liveness --arch-info --wave-size 32";
 static const std::string kShaeOptCfgPerBlock = "dump-bb-cfg";
 static const std::string kShaeOptCfgPerInstruciton = "dump-pi-cfg";
 static const std::string kShaeOptStallAnalysis = "stall-cycles";
@@ -66,13 +70,18 @@ static std::string GetShaeIsaCmd(const gtString& target)
 {
     const gtString kShaeGfx8  = L"gfx8";
     const gtString kShaeGfx9  = L"gfx9";
-    const gtString kShaeGfx10 = L"gfx10";
+    const gtString kShaeGfx10_1 = L"gfx10_1";
+    const gtString kShaeGfx10_3 = L"gfx10_3";
 
     std::stringstream    shae_gfx_generation;
     shae_gfx_generation << "--isa ";
-    if (KcUtils::IsNaviTarget(target.asASCIICharArray()))
+    if (KcUtils::IsNavi21AndBeyond(target.asASCIICharArray()))
     {
-        shae_gfx_generation << kShaeGfx10.asASCIICharArray();
+        shae_gfx_generation << kShaeGfx10_3.asASCIICharArray();
+    }
+    else if (KcUtils::IsNaviTarget(target.asASCIICharArray()))
+    {
+        shae_gfx_generation << kShaeGfx10_1.asASCIICharArray();
     }
     else if (KcUtils::IsVegaTarget(target.asASCIICharArray()))
     {
@@ -170,9 +179,30 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::PreprocessIsaFile(const std::string& i
 }
 
 beKA::beStatus beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& target,
-    const gtString& output_filename, bool should_print_cmd)
+    const gtString& output_filename, beWaveSize wave_size, bool should_print_cmd)
 {
-    return PerformAnalysis(isa_filename, target, output_filename, kShaeOptLivereg, should_print_cmd);
+    std::string        shae_option;
+    switch (wave_size)
+    {
+    case kUnknown:
+        // Let Shae deduce the wave size from the disassembly.
+        shae_option = kShaeOptLivereg;
+        break;
+    case kWave32:
+        // Force wave32.
+        shae_option = kShaeOptLiveregWave32;
+        break;
+    case kWave64:
+        // Force wave64.
+        shae_option = kShaeOptLiveregWave64;
+        break;
+    default:
+        // We shouldn't get here.
+        assert(false);
+        break;
+    }
+
+    return PerformAnalysis(isa_filename, target, output_filename, shae_option, should_print_cmd);
 }
 
 beKA::beStatus BeStaticIsaAnalyzer::PerformStallAnalysis(const gtString& isa_filename, const gtString& target, const gtString& output_filename,

@@ -7,8 +7,8 @@
 
 // Infra.
 #include "QtCommon/Scaling/ScalingManager.h"
-#include "UpdateCheckAPI/source/update_check_thread.h"
-#include "UpdateCheckAPI/source/update_check_results_dialog.h"
+#include "update_check_api/source/update_check_thread.h"
+#include "update_check_api/source/update_check_results_dialog.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_data_types.h"

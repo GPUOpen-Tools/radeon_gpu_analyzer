@@ -16,8 +16,8 @@
 
 // Infra.
 #include "DeviceInfo.h"
-#include "AMDTBaseTools/Include/gtIgnoreCompilerWarnings.h"
-#include "AMDTBaseTools/Include/gtAssert.h"
+#include "amdt_base_tools/Include/gtIgnoreCompilerWarnings.h"
+#include "amdt_base_tools/Include/gtAssert.h"
 #include "source/radeon_gpu_analyzer_backend/be_string_constants.h"
 
 // This value means no label in an instruction.

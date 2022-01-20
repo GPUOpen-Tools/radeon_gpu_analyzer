@@ -327,8 +327,49 @@ Resource hazards that may require the developer's attention are defined as:
 	* Scratch memory hazard: scratch memory is used.
 	* Instruction cache hazard: code size is larger than the instruction cache.
 
+VGPR Pressure Visualization
+
+After successfully building your code, you will notice a new column in the disassembly view named “VGPR pressure”.
+This column is shown by default and can be hidden using the "Columns" dropdown.
+Below is a screenshot showing this column.
+
+.. image:: images/027_live_vgpr_pressure_column.png
+
+The column header text format is “VGPR pressure (used x; allocated: y/256)”, which provides a summary for the entire shader, where ‘x’ gives the total VGPRs used by the current shader and ‘y’ gives the total number of VGPRs allocated.
+Hovering over any of the column’s cells, will show a tooltip with a summary of the live VGPR at that specific instruction, with a hint about how many VGPRs need to be reduced to save a VGPR block at that instruction.
+Note that VGPRs are allocated in blocks, which vary in size. The VGPR block size is determined by the target GPU and, in certain cases, by specific characteristics of the shader, such as the wave size it was compiled for. The hint indicates how many VGPRs need to be freed to free up an entire block of VGPRs at that point of the shader:
+
+.. image:: images/026_live_vgpr_tooltip.png
+
+Note that, when generating the hint, the tool will take into account the target GPU and the relevant shader characteristics for determining the VGPR allocation block size for you.
+When examining the VGPR pressure column cells, in addition to the numerical value, which gives the number of live VGPRs at that instruction, you would notice a utilization bar that visualizes the VGPR usage and the VGPR block utilization. The emptier the utilization bar is, the less of the allocated VGPR block is being utilized, which means that less VGPRs would need to be reduced to free up that block:
+
+.. image:: images/029_live_vgpr_allocation_block.png
+
+In the above screenshot, we have a shader with a VGPR allocation block size of 8 VGPRs. You can see that different lines have different colors
+in their visualization bar. The bar’s color would be greener as the live VGPR value at that instruction gets closer to 0 and redder as the value
+gets closer to 256. The lines where the visualization bar is full (where the VGPR usage value is a multiple of 8, like 104, 96, 88 etc.)
+show points in the shader where the VGPR allocation block is fully utilized. However, in lines where the bar is partially empty, not all allocated VGPRs
+are being used. The tooltip hint that we mentioned earlier will let you know how many VGPRs need to be reduced to free up that VGPR allocation block.
+
+If the register pressure details of any instruction could not be generated, there will be a red hazard symbol as shown in the image below.
+The instructions that could not be parsed will have "N/A" in the VGPR pressure column.
+Hovering over the hazard symbol provides the count of instructions that could not be parsed in the form of a tooltip.
+
+.. image:: images/025_live_vgpr_NA_Error.png
+
+In case the number of VGPRs used hits the max on any instruction, there will be a yellow hazard symbol as shown in the image below.
+
+.. image:: images/028_live_vgpr_yellow_hazard.png
+
+As mentioned earlier, a visualization bar’s color would be greener as the live VGPR value at that instruction gets closer to 0 and redder as the value gets closer to 256.
+To calculate the color for each instruction's visualization bar, we break down the 0-256 VGPR range into 8 ranges, each of which covers 32 VGPRs (0-32, 32-64 etc.).
+Each range is assigned a unique color starting with light green for the first range to dark red for the last range. Below is a screenshot showing various color ranges:
+
+.. image:: images/024_live_vgpr_range_colors.png
+
 OpenCL™ Offline Mode
------------------
+--------------------
 
 The Home Page
 ^^^^^^^^^^^^^
@@ -797,7 +838,7 @@ The RGA Layer Launcher is a Windows-only application that can be used to simplif
 	.. image:: images/2_1/layer_launcher_vulkan.png
 
 OpenCL™ Offline Mode
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 Find Code Object Binary and Build Artifacts
 ```````````````````````````````````````````

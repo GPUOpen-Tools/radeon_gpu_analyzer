@@ -8,14 +8,14 @@
 #include <cassert>
 
 // Infra.
-#include "AMDTBaseTools/Include/gtString.h"
-#include "AMDTBaseTools/Include/gtList.h"
-#include "AMDTOSWrappers/Include/osDirectory.h"
-#include "AMDTOSWrappers/Include/osFilePath.h"
+#include "external/amdt_base_tools/Include/gtString.h"
+#include "external/amdt_base_tools/Include/gtList.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
 
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_utils.h"
-#include "utils/dx12/backend/rg_dx12_data_types.h"
+#include "radeon_gpu_analyzer_backend/be_data_types.h"
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_dx12.h"
@@ -41,7 +41,8 @@ static const char* kStrErrorDx12NoEntryPointProvidedB = " shader.";
 static const char* kStrErrorDx12ShaderNotFoundOrEmptyA = "Error: ";
 static const char* kStrErrorDx12ShaderNotFoundOrEmptyB = " shader does not exist or file is empty: ";
 static const char* kStrErrorDx12IsaNotGeneratedA = "Error: failed to generate ISA disassembly for ";
-static const char* kStrErrorDx12IsaNotGeneratedB = " shader";
+static const char* kStrErrorDx12AmdilNotGeneratedA = "Error: failed to generate AMDIL disassembly for ";
+static const char* kStrErrorDx12OutputNotGeneratedB = " shader";
 static const char* kStrErrorDx12CannotGenerateElfDisassemblyWithoutPipelineBinary = "Error: cannot generate ELF disassembly if pipeline binary is not "
 "generated (must use -b option together with --elf-dis option).";
 static const char* kStrErrorDx12StatsNotGeneratedA = "Error: failed to generate resource usage statistics for ";
@@ -57,7 +58,6 @@ static const char* kStrErrorMixComputeGraphicsInputShaderModel = "shader model."
 static const char* kStrErrorMixComputeGraphicsInputEntryPoint = "entry point.";
 static const char* kStrErrorNoIsaNoStatsOption = "Error: one of --isa or -a/--analysis or -b/--binary options must be provided.";
 static const char* kStrErrorFailedToConstructLiveregOutputFilename = "Error: failed to construct live register analysis output file name.";
-static const char* kStrErrorFailedToConstructStallAnalysisOutputFilename = "Error: failed to construct stall analysis output file name.";
 static const char* kStrErrorFailedToConstructCfgOutputFilename = "Error: failed to construct control-flow graph output file name.";
 static const char* kStrErrorInvalidDxcOptionArgument = "Error: argument to --dxc option should be path to the folder where DXC is located, not a full path to a file.";
 
@@ -75,12 +75,10 @@ static const char* kStrErrorDxrExportNotProvided = "Error: DXR export not provid
 static const char* kStrErrorDxrRootSignatureHlslFileDefined = "Error: use --rs-hlsl option together with --rs-macro to specify the HLSL file where the macro is defined.";
 static const char* kStrErrorDxrNoSupportedTargetsFound = "Error: non of the targets which are supported by the driver is gfx1030 or beyond. Aborting.";
 static const char* kStrErrorDxrExportNotSupportedInPipelineMode = "Error: --export option not supported in pipeline mode.";
+static const char* kStrErrorOfflineTargetDeviceMustBeSpecifed   = "Error: target device must be specified in offline mode (use -c option).";
 
 // Constants - warnings messages.
 static const char* kStrWarningDx12AutoDeducingRootSignatureAsHlsl = "Warning: --rs-hlsl option not provided, assuming that root signature macro is defined in ";
-static const char* kStrWarningDx12AmdilOptionNotSupported = "Warning: extracting AMD IL disassembly is currently not "
-"supported for DX12 mode. You can extract DXIL disassembly (for shader model 5.1 and above) using the <stage>-dxil-dis option. "
-"See -h for more details.";
 
 // DXR-specific warning messages.
 static const char* kStrWarningDxrBinaryExtractionNotSupportedInShaderMode = "Warning: pipeline binary extraction (-b option) "
@@ -238,6 +236,13 @@ static bool IsInputValidDxr(const Config& config)
         {
             std::cout << kStrWarningDxrBinaryExtractionNotSupportedInShaderMode << std::endl;
         }
+    }
+
+    // In Offline mode, the target device must be specified.
+    if ((config.dx12_offline_session || !config.alternative_amdxc.empty()) && config.asics.empty())
+    {
+        std::cout << kStrErrorOfflineTargetDeviceMustBeSpecifed << std::endl;
+        ret = false;
     }
 
     return ret;
@@ -439,6 +444,13 @@ static bool IsInputValid(const Config& config)
         }
     }
 
+    // In Offline mode, the target device must be specified.
+    if ((config.dx12_offline_session || !config.alternative_amdxc.empty()) && config.asics.empty())
+    {
+        std::cout << kStrErrorOfflineTargetDeviceMustBeSpecifed << std::endl;
+        ret = false;
+    }
+
     return ret;
 }
 
@@ -577,45 +589,6 @@ static bool PerformLiveRegisterAnalysisDxr(const Config& config_updated, const s
     return is_ok;
 }
 
-static bool PerformStallAnalysisDxr(const Config&             config_updated,
-                                    const std::string&        isa_file,
-                                    const std::string&        target,
-                                    const std::string&        output_filename,
-                                    const std::string&        stage_name,
-                                    const RgDxrShaderResults& shader_results)
-{
-    bool is_ok = false;
-    if (!isa_file.empty())
-    {
-        std::cout << kStrInfoPerformingStallAnalysis1;
-        std::cout << kStrInfoDxrOutputShader << shader_results.export_name << kStrInfoDxrPerformingPostProcessing << std::endl;
-
-        // Delete the file if it already exists.
-        if (BeUtils::IsFilePresent(output_filename))
-        {
-            KcUtils::DeleteFile(output_filename.c_str());
-        }
-
-        is_ok = KcUtils::PerformStallAnalysis(isa_file, target, output_filename, NULL,
-            config_updated.print_process_cmd_line);
-
-        if (is_ok)
-        {
-            if (KcUtils::FileNotEmpty(output_filename))
-            {
-                std::cout << kStrInfoSuccess << std::endl;
-            }
-            else
-            {
-                std::cout << kStrInfoFailed << std::endl;
-                KcUtils::DeleteFile(output_filename);
-            }
-        }
-    }
-
-    return is_ok;
-}
-
 static void PerformLiveRegisterAnalysis(const std::string& isa_file,
     const std::string& stage_name,
     const std::string& target,
@@ -663,57 +636,6 @@ static void PerformLiveRegisterAnalysis(const std::string& isa_file,
         else
         {
             std::cout << kStrErrorFailedToConstructLiveregOutputFilename << std::endl;
-        }
-    }
-}
-
-static void PerformStallAnalysis(const std::string& isa_file,
-    const std::string& stage_name,
-    const std::string& target,
-    const Config& config_updated,
-    bool& is_ok)
-{
-    if (!isa_file.empty())
-    {
-        std::cout << kStrInfoPerformingStallAnalysis1;
-        std::cout << stage_name << kStrInfoPerformingAnalysis2 << std::endl;
-
-        // Construct a name for the output file.
-        std::string output_filename;
-        std::string file_suffix = stage_name;
-
-        is_ok = KcUtils::ConstructOutFileName(config_updated.stall_analysis_file, file_suffix,
-                                              target,
-                                              kStrDefaultExtensionStalls,
-                                              output_filename,
-                                              !KcUtils::IsDirectory(config_updated.stall_analysis_file));
-
-        if (is_ok)
-        {
-            // Delete that file if it already exists.
-            if (BeUtils::IsFilePresent(output_filename))
-            {
-                KcUtils::DeleteFile(output_filename.c_str());
-            }
-
-            is_ok = KcUtils::PerformStallAnalysis(isa_file, target, output_filename, NULL,
-                config_updated.print_process_cmd_line);
-            if (is_ok)
-            {
-                if (KcUtils::FileNotEmpty(output_filename))
-                {
-                    std::cout << kStrInfoSuccess << std::endl;
-                }
-                else
-                {
-                    std::cout << kStrInfoFailed << std::endl;
-                    KcUtils::DeleteFile(output_filename);
-                }
-            }
-        }
-        else
-        {
-            std::cout << kStrErrorFailedToConstructStallAnalysisOutputFilename << std::endl;
         }
     }
 }
@@ -1153,7 +1075,7 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                         const bool is_shader_mode = IsDxrShaderMode(config_updated);
                                         std::cout << kStrInfoSuccess << std::endl;
                                         if (!config_updated.livereg_analysis_file.empty() ||
-                                            !config_updated.stall_analysis_file.empty() ||
+                                            !config_updated.inference_analysis_file.empty() ||
                                             !config_updated.inst_cfg_file.empty() ||
                                             !config_updated.block_cfg_file.empty())
                                         {
@@ -1200,55 +1122,6 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                                         PerformLiveRegisterAnalysisDxr(config_updated, curr_shader_results.isa_disassembly, target,
                                                             output_filename, filename_suffix, curr_shader_results);
                                                     }
-                                                }
-                                            }
-
-                                            // Stall analysis files.
-                                            if (!config_updated.stall_analysis_file.empty())
-                                            {
-                                                if (KcUtils::IsNaviTarget(target))
-                                                {
-                                                    for (const RgDxrPipelineResults& curr_pipeline_results : output_mapping)
-                                                    {
-                                                        if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name))
-                                                        {
-                                                            // Announce the pipeline name in pipeline mode.
-                                                            std::cout << kStrInfoPerformingStallAnalysis1 <<
-                                                                (curr_pipeline_results.isUnified ? kStrInfoDxrOutputPipelineName : kStrInfoDxrOutputPipelineNumber) <<
-                                                                curr_pipeline_results.pipeline_name << "..." << std::endl;
-                                                        }
-
-                                                        for (const RgDxrShaderResults& curr_shader_results : curr_pipeline_results.results)
-                                                        {
-                                                            std::stringstream filename_suffix_stream;
-                                                            if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name) &&
-                                                                !curr_pipeline_results.isUnified)
-                                                            {
-                                                                filename_suffix_stream << curr_pipeline_results.pipeline_name << "_";
-                                                            }
-                                                            filename_suffix_stream << curr_shader_results.export_name;
-                                                            if (!is_shader_mode && curr_pipeline_results.isUnified)
-                                                            {
-                                                                filename_suffix_stream << kStrDxrUnifiedSuffix;
-                                                            }
-                                                            std::string filename_suffix = filename_suffix_stream.str();
-
-                                                            // Do not append a suffix in case that the file name is empty,
-                                                            // to prevent a situation where we have the shader name appearing twice.
-                                                            bool should_append_suffix = !KcUtils::IsDirectory(config.stall_analysis_file);
-
-                                                            std::string output_filename;
-                                                            KcUtils::ConstructOutFileName(config.stall_analysis_file, filename_suffix,
-                                                                target, kStrDefaultExtensionStalls, output_filename, should_append_suffix);
-
-                                                            PerformStallAnalysisDxr(config_updated, curr_shader_results.isa_disassembly, target,
-                                                                output_filename, filename_suffix, curr_shader_results);
-                                                        }
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    std::cout << kStrWarningStallAnalysisNotSupportedForRdna << target << std::endl;
                                                 }
                                             }
 
@@ -1341,9 +1214,11 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                 else
                                 {
                                     BeVkPipelineFiles isa_files;
+                                    BeVkPipelineFiles amdil_files;
                                     BeVkPipelineFiles stats_files;
                                     std::string binary_file;
-                                    rc = dx12_backend_.Compile(config_updated, target, out_text, error_msg, isa_files, stats_files, binary_file);
+                                    rc = dx12_backend_.Compile(config_updated, target, out_text, error_msg,
+                                        isa_files, amdil_files, stats_files, binary_file);
                                     is_ok = (rc == kBeStatusSuccess);
                                     if (!out_text.empty())
                                     {
@@ -1356,19 +1231,19 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                             std::cout << error_msg << std::endl;
                                         }
 
-                                        // Warnings.
-                                        if (!config_updated.il_file.empty())
-                                        {
-                                            std::cout << kStrWarningDx12AmdilOptionNotSupported << std::endl;
-                                        }
-
                                         bool is_success = true;
                                         for (int stage = 0; stage < BePipelineStage::kCount; stage++)
                                         {
                                             if (!isa_files[stage].empty() && !KcUtils::FileNotEmpty(isa_files[stage]))
                                             {
                                                 std::cout << kStrErrorDx12IsaNotGeneratedA <<
-                                                    kStrDx12StageNames[stage] << kStrErrorDx12IsaNotGeneratedB << std::endl;
+                                                    kStrDx12StageNames[stage] << kStrErrorDx12OutputNotGeneratedB << std::endl;
+                                                is_success = false;
+                                            }
+                                            if (!amdil_files[stage].empty() && !KcUtils::FileNotEmpty(amdil_files[stage]))
+                                            {
+                                                std::cout << kStrErrorDx12AmdilNotGeneratedA <<
+                                                    kStrDx12StageNames[stage] << kStrErrorDx12OutputNotGeneratedB << std::endl;
                                                 is_success = false;
                                             }
                                             if (!stats_files[stage].empty() && !KcUtils::FileNotEmpty(stats_files[stage]))
@@ -1403,7 +1278,7 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                         {
                                             std::cout << kStrInfoSuccess << std::endl;
                                             if (!config_updated.livereg_analysis_file.empty() || !config_updated.inst_cfg_file.empty() ||
-                                                !config_updated.block_cfg_file.empty() || !config_updated.stall_analysis_file.empty())
+                                                !config_updated.block_cfg_file.empty() || !config_updated.inference_analysis_file.empty())
                                             {
                                                 // Post-processing.
                                                 std::cout << kStrInfoDx12PostProcessingSeparator << std::endl;
@@ -1415,22 +1290,6 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                                     for (int stage = 0; stage < BePipelineStage::kCount; stage++)
                                                     {
                                                         PerformLiveRegisterAnalysis(isa_files[stage], kStrDx12StageNames[stage], target, config_updated, is_ok);
-                                                    }
-                                                }
-
-                                                if (!config_updated.stall_analysis_file.empty())
-                                                {
-                                                    if (KcUtils::IsNaviTarget(target))
-                                                    {
-                                                        // Stall analysis files.
-                                                        for (int stage = 0; stage < BePipelineStage::kCount; stage++)
-                                                        {
-                                                            PerformStallAnalysis(isa_files[stage], kStrDx12StageNames[stage], target, config_updated, is_ok);
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        std::cout << kStrWarningStallAnalysisNotSupportedForRdna << target << std::endl;
                                                     }
                                                 }
 

@@ -24,9 +24,9 @@
 #pragma warning(push)
 #pragma warning(disable:4309)
 #endif
-#include <AMDTOSWrappers/Include/osFilePath.h>
-#include <AMDTOSWrappers/Include/osDirectory.h>
-#include <AMDTBaseTools/Include/gtString.h>
+#include <external/amdt_os_wrappers/Include/osFilePath.h>
+#include <external/amdt_os_wrappers/Include/osDirectory.h>
+#include <external/amdt_base_tools/Include/gtString.h>
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
@@ -1497,6 +1497,28 @@ bool RgUtils::IsInList(const std::string & list, const std::string & token, char
 
     return ret;
 }
+
+void RgUtils::FindSearchResultIndices(const QString& text, const QString& text_to_find, std::vector<size_t>& search_result_indices)
+{
+    // Make sure that neither text value is empty.
+    if (!text.isEmpty() && !text_to_find.isEmpty())
+    {
+        // Step the cursor through the entire field of text to search.
+        size_t cursor_index = text.indexOf(text_to_find, 0);
+
+        // Step through the text to search until we hit the end.
+        size_t search_string_length = text_to_find.size();
+        while (cursor_index != std::string::npos)
+        {
+            // Found a result occurrence. Push it into the results list.
+            search_result_indices.push_back(cursor_index);
+
+            // Search for the next result location.
+            cursor_index = text.indexOf(text_to_find, static_cast<int>(cursor_index + search_string_length));
+        }
+    }
+}
+
 
 bool RgUtils::IsSpvasTextFile(const std::string& stage_input_file, std::string& stage_abbreviation)
 {

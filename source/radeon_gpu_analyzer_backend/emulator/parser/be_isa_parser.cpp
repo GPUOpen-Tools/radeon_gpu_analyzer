@@ -13,7 +13,7 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTOSWrappers/Include/osDebugLog.h"
+#include "amdt_os_wrappers/Include/osDebugLog.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -760,66 +760,3 @@ bool ParserIsa::SplitIsaLine(const std::string& isaInstruction, std::string& ins
 {
     return ExtractBuildingBlocks(isaInstruction, instrOpCode, params, binaryRepresentation, offset);
 }
-
-bool ParserIsa::ParseHsailStatistics(const std::string& hsailIsa, beKA::AnalysisData& stats)
-{
-    // Constants that are specific to this function's logic.
-    const std::string kUsedSgprsToken = " wavefront_sgpr_count";
-    const std::string kUsedVgprsToken = " workitem_vgpr_count";
-    const std::string kWavefrontSizeToken = " wavefront_size";
-    const std::string kUsedLdsBytesToken = " workgroup_group_segment_byte_size";
-
-    // Reset the output buffer.
-    stats.num_sgprs_used = 0;
-    stats.num_vgprs_used = 0;
-    stats.wavefront_size = 0;
-    stats.lds_size_used = 0;
-
-    // Extract the values.
-    ExtractHsailIsaNumericValue(hsailIsa, kUsedSgprsToken, stats.num_sgprs_used);
-    ExtractHsailIsaNumericValue(hsailIsa, kUsedVgprsToken, stats.num_vgprs_used);
-    ExtractHsailIsaNumericValue(hsailIsa, kWavefrontSizeToken, stats.wavefront_size);
-    ExtractHsailIsaNumericValue(hsailIsa, kUsedLdsBytesToken, stats.lds_size_used);
-
-    // Return true if we managed to successfully extract at least one value.
-    bool ret = (stats.wavefront_size != 0 || stats.num_sgprs_used != 0 || stats.num_vgprs_used != 0 || stats.lds_size_used != 0);
-    return ret;
-}
-
-void ParserIsa::ExtractHsailIsaNumericValue(const std::string& hsailIsa, const std::string valueToken, CALuint64& valueBuffer)
-{
-    const std::string EQUALS_TOKEN = "= ";
-    size_t posBegin = hsailIsa.find(valueToken);
-
-    if (posBegin != std::string::npos)
-    {
-        posBegin = hsailIsa.find(EQUALS_TOKEN, posBegin);
-
-        if (posBegin != std::string::npos && posBegin < (hsailIsa.size() - 2))
-        {
-            // Advance the position to the actual value's begin index.
-            posBegin += 2;
-
-            // Extract the value as a string.
-            std::stringstream valueStream;
-
-            while (std::isdigit(hsailIsa[posBegin]))
-            {
-                valueStream << hsailIsa[posBegin++];
-            }
-
-            // Convert the string to a numerical integer value.
-            const std::string& valueStr = valueStream.str();
-
-            if (!valueStr.empty())
-            {
-                try
-                {
-                    valueBuffer = std::stoi(valueStr);
-                }
-                catch (...){}
-            }
-        }
-    }
-}
-

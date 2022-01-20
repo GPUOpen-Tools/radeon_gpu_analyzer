@@ -9,7 +9,7 @@
 // Infra.
 #include "source/common/rga_shared_utils.h"
 #include "source/common/rg_log.h"
-#include "Common/Src/AMDTOSWrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
@@ -348,12 +348,13 @@ void RgConfigManager::ResetToFactoryDefaults(RgGlobalSettings& global_settings)
     RgConfigManager::GetDefaultDataFolder(global_settings.log_file_location);
 
     // Initialize the visible columns in the ISA disassembly table.
-    // Only the Address, Opcode and Operands columns are visible by default.
+    // Only the Address, Opcode, Operands and Live VGPR columns are visible by default.
     global_settings.visible_disassembly_view_columns =
     {
-        false,  // RgIsaDisassemblyTableColumns::kAddress
+        true,   // RgIsaDisassemblyTableColumns::kAddress
         true,   // RgIsaDisassemblyTableColumns::kOpcode
         true,   // RgIsaDisassemblyTableColumns::kOperands
+        true,   // RgIsaDisassemblyTableColumns::kLiveVgprs
         false,  // RgIsaDisassemblyTableColumns::kFunctionalUnit
         false,  // RgIsaDisassemblyTableColumns::kCycles
         false,  // RgIsaDisassemblyTableColumns::kBinaryEncoding

@@ -60,9 +60,11 @@ RgIsaDisassemblyCustomTableView QHeaderView::section:hover
     padding-left: 6px white;
 }
 
-RgIsaDisassemblyCustomTableView QHeaderView
+RgIsaDisassemblyCustomTableView QHeaderView::section:!hover
 {
-    font: normal 8pt;
+    background-color: white;
+    border: none;
+    padding-left: 6px white;
 }
 
 /********************************************************************/

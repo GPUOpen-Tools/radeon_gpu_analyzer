@@ -1,5 +1,5 @@
 //=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_UTILS_H_
@@ -23,7 +23,7 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTBaseTools/Include/gtString.h"
+#include "external/amdt_base_tools/Include/gtString.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif

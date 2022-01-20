@@ -105,11 +105,23 @@ bool RgIsaDisassemblyTableView::IsLineInEntrypoint(int line_index)
         is_entry_point = isa_table_model_->IsSourceLineInEntrypoint(line_index);
     }
 
+    bool is_live_vgpr_loaded = IsLiveVgprLoaded();
+    if (!is_live_vgpr_loaded)
+    {
+        // Load the live VGPR data.
+        is_live_vgpr_loaded = LoadLiveVgpr(GetLiveVgprsFilePath());
+    }
+
     return is_entry_point;
 }
 
-bool RgIsaDisassemblyTableView::LoadDisassembly(const std::string& disassembly_csv_file_path)
+void RgIsaDisassemblyTableView::InitializeModelData()
 {
+    isa_table_model_->InitializeModelData();
+}
+
+bool RgIsaDisassemblyTableView::LoadDisassembly(const std::string& disassembly_csv_file_path)
+    {
     is_disassembly_cached_ = isa_table_model_->PopulateFromCsvFile(disassembly_csv_file_path);
 
     if (is_disassembly_cached_)
@@ -125,6 +137,104 @@ bool RgIsaDisassemblyTableView::LoadDisassembly(const std::string& disassembly_c
     }
 
     return is_disassembly_cached_;
+}
+
+bool RgIsaDisassemblyTableView::LoadLiveVgpr(const std::string& live_vgpr_file_path)
+{
+    is_live_vgpr_cached_ = isa_table_model_->LoadLiveVgprsData(live_vgpr_file_path);
+
+    if (is_live_vgpr_cached_)
+    {
+       // Cache the path to the live Vgprs file being loaded.
+        live_vgprs_file_path_ = live_vgpr_file_path;
+
+        // Adjust the table column widths after populating with data.
+        QtCommon::QtUtil::AutoAdjustTableColumns(ui_.instructionsTreeView, 10, 20);
+
+        // Set the VGPR column width.
+        SetVgprColumnWidth();
+    }
+
+    return is_live_vgpr_cached_;
+}
+
+void RgIsaDisassemblyTableView::SetVgprColumnWidth()
+{
+    static const int kVgprColumnWidthExtension = 150;
+
+    // Fist check if the Live VGPR column is currently visible.
+    std::shared_ptr<RgGlobalSettings> global_settings = RgConfigManager::Instance().GetGlobalConfig();
+    assert(global_settings != nullptr);
+    if (global_settings != nullptr)
+    {
+        int  vgpr_column = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kLiveVgprs);
+        bool is_visible  = global_settings->visible_disassembly_view_columns[vgpr_column];
+        if (is_visible)
+        {
+            // Increase the width of Live VGPRs column to
+            // encompass the colored widget drawn in the column.
+            QHeaderView* header = ui_.instructionsTreeView->header();
+            assert(header != nullptr);
+            if (header != nullptr)
+            {
+               // Check the global settings to determine which disassembly table columns are visible.
+                std::shared_ptr<RgGlobalSettings> global_settings = RgConfigManager::Instance().GetGlobalConfig();
+                assert(global_settings != nullptr);
+                if (global_settings != nullptr)
+                {
+                    // Get the table model.
+                    if (isa_table_model_ != nullptr)
+                    {
+                        QStandardItemModel* isa_table_model = isa_table_model_->GetTableModel();
+                        assert(isa_table_model != nullptr);
+                        if (isa_table_model != nullptr)
+                        {
+                            // VGPR column index to be calculated.
+                            int vgpr_index = 0;
+
+                            // Get start and end column.
+                            int start_column = static_cast<int>(RgIsaDisassemblyTableColumns::kAddress);
+                            int end_column   = static_cast<int>(RgIsaDisassemblyTableColumns::kCount);
+
+                            // Calculate the VGPR column index from the currently displayed columns.
+                            for (int column_index = start_column; column_index < end_column; ++column_index)
+                            {
+                                bool is_valid_column_index = (column_index >= start_column) && (column_index < end_column);
+                                bool is_visible            = global_settings->visible_disassembly_view_columns[column_index];
+                                if (is_visible)
+                                {
+                                    // Compare the header name for each column until the VGPR column is found.
+                                    QStandardItem* item  = isa_table_model->horizontalHeaderItem(column_index);
+                                    assert(item != nullptr);
+                                    if (item != nullptr)
+                                    {
+                                        QString title = item->text();
+                                        if (title.contains(kStrDisassemblyTableLiveVgprHeaderPart))
+                                        {
+                                            // This is the VGPR column, so break out of here.
+                                            break;
+                                        }
+                                        vgpr_index++;
+                                    }
+                                }
+                            }
+
+                            // Set header resize mode.
+                            header->setSectionResizeMode(QHeaderView::Interactive);
+
+                            // Set column width for the VGPR column.
+                            int column_width = ui_.instructionsTreeView->columnWidth(vgpr_index);
+                            ui_.instructionsTreeView->setColumnWidth(vgpr_index, column_width + kVgprColumnWidthExtension);
+
+                            // Set the mode to fixed so the user cannot resize the VGPR
+                            // column smaller than it needs to be to display the color swatch.
+                            header->setSectionResizeMode(vgpr_index, QHeaderView::Fixed);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 void RgIsaDisassemblyTableView::RequestTableResize()
@@ -164,7 +274,7 @@ void RgIsaDisassemblyTableView::UpdateCorrelatedSourceFileLine(int line_number)
 void RgIsaDisassemblyTableView::UpdateFilteredTable()
 {
     // Invalidate the table's filtering model, since column visibility has changed.
-    isa_table_filtering_model_->InvalidateModel();
+    isa_table_filtering_model_->invalidate();
 
     // Add all label rows into the table after filtering.
     InitializeLabelRows();
@@ -174,6 +284,9 @@ void RgIsaDisassemblyTableView::UpdateFilteredTable()
 
     // Adjust the table column widths after populating with data.
     QtCommon::QtUtil::AutoAdjustTableColumns(ui_.instructionsTreeView, 32, 20);
+
+    // Set the VGPR column width.
+    SetVgprColumnWidth();
 }
 
 std::string RgIsaDisassemblyTableView::GetDisassemblyFilePath() const
@@ -181,14 +294,29 @@ std::string RgIsaDisassemblyTableView::GetDisassemblyFilePath() const
     return disassembly_file_path_;
 }
 
+std::string RgIsaDisassemblyTableView::GetLiveVgprsFilePath() const
+{
+    return live_vgprs_file_path_;
+}
+
 void RgIsaDisassemblyTableView::SetDisassemblyFilePath(const std::string& disassembly_file_path)
 {
     disassembly_file_path_ = disassembly_file_path;
 }
 
+void RgIsaDisassemblyTableView::SetLiveVgprsFilePath(const std::string& live_vgprs_file_path)
+{
+    live_vgprs_file_path_ = live_vgprs_file_path;
+}
+
 bool RgIsaDisassemblyTableView::IsDisassemblyLoaded() const
 {
     return is_disassembly_cached_;
+}
+
+bool RgIsaDisassemblyTableView::IsLiveVgprLoaded() const
+{
+    return is_live_vgpr_cached_;
 }
 
 bool RgIsaDisassemblyTableView::IsSourceLineCorrelated(int line_index) const
@@ -252,7 +380,6 @@ void RgIsaDisassemblyTableView::HandleCopyDisassemblyClicked()
 
         // Copy the range of row data to the user's clipboard.
         isa_table_model_->CopyRowsToClipboard(selected_row_numbers);
-
     }
 }
 

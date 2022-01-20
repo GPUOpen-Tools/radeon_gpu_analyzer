@@ -41,5 +41,7 @@
         <file>stylesheets/vulkan/rg_file_menu_style_vulkan.qss</file>
         <file>icons/delete_icon.svg</file>
         <file>icons/notification_icon.svg</file>
+        <file>icons/max_vgpr_warning_icon.svg</file>
+        <file>icons/max_vgpr_no_isa_match_icon.svg</file>
     </qresource>
 </RCC>

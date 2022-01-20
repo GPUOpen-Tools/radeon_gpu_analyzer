@@ -27,8 +27,8 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTOSWrappers/Include/osFilePath.h"
-#include "AMDTOSWrappers/Include/osDebugLog.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osDebugLog.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -103,11 +103,6 @@ beKA::beStatus Backend::Initialize(BuiltProgramKind program_kind, LoggingCallBac
 
 Backend::~Backend()
 {
-    if (builder_opencl_ != nullptr)
-    {
-        builder_opencl_->DeinitializeOpenCL();
-    }
-
     AMDTDeviceInfoUtils::DeleteInstance();
 }
 
@@ -169,6 +164,12 @@ beStatus Backend::GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& table_entry
 
     switch (table_entry.m_asicType)
     {
+    case GDT_GFX10_3_4:
+        chip_family   = FAMILY_NV;
+        chip_revision = NV_NAVI24_P_A0;
+        ret           = kBeStatusSuccess;
+        break;
+
     case GDT_GFX10_3_2:
         chip_family = FAMILY_NV;
         chip_revision = NV_NAVI23_P_A0;

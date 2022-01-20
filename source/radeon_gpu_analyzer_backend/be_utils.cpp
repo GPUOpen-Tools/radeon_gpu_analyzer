@@ -15,10 +15,10 @@
 #pragma warning(push)
 #pragma warning(disable:4309)
 #endif
-#include "AMDTBaseTools/Include/gtAssert.h"
-#include "AMDTOSWrappers/Include/osFilePath.h"
-#include "AMDTOSWrappers/Include/osFile.h"
-#include "AMDTOSWrappers/Include/osApplication.h"
+#include "external/amdt_base_tools/Include/gtAssert.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osFile.h"
+#include "external/amdt_os_wrappers/Include/osApplication.h"
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
@@ -113,8 +113,6 @@ bool BeUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& card_list,
     bool convert_to_lower /*= false*/)
 {
     // Retrieve the list of devices for every relevant hardware generations.
-    AddGenerationDevices(GDT_HW_GENERATION_SOUTHERNISLAND, card_list, public_device_unique_names, convert_to_lower);
-    AddGenerationDevices(GDT_HW_GENERATION_SEAISLAND, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_VOLCANICISLAND, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX9, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX10, card_list, public_device_unique_names, convert_to_lower);

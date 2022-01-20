@@ -15,13 +15,13 @@
 #endif
 #include "CElf.h"
 #include "DeviceInfoUtils.h"
-#include "AMDTBaseTools/Include/gtString.h"
-#include "AMDTBaseTools/Include/gtAssert.h"
-#include "AMDTOSWrappers/Include/osFilePath.h"
-#include "AMDTOSWrappers/Include/osDirectory.h"
-#include "AMDTOSWrappers/Include/osModule.h"
-#include "AMDTOSWrappers/Include/osApplication.h"
-#include "AMDTOSWrappers/Include/osProcess.h"
+#include "amdt_base_tools/Include/gtString.h"
+#include "amdt_base_tools/Include/gtAssert.h"
+#include "amdt_os_wrappers/Include/osFilePath.h"
+#include "amdt_os_wrappers/Include/osDirectory.h"
+#include "amdt_os_wrappers/Include/osModule.h"
+#include "amdt_os_wrappers/Include/osApplication.h"
+#include "amdt_os_wrappers/Include/osProcess.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif

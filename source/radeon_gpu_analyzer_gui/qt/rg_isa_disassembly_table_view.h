@@ -38,6 +38,9 @@ public:
     // Load a disassembly CSV file at the given file path.
     bool LoadDisassembly(const std::string& disassembly_csv_file_path);
 
+    // Load the live VGPR file at the given file path.
+    bool LoadLiveVgpr(const std::string& live_vgpr_file_path);
+
     // Emit a signal causing the disassembly view to be resized to the current table's width.
     void RequestTableResize();
 
@@ -50,14 +53,26 @@ public:
     // Get the file path of the textual file that is associated with this table.
     std::string GetDisassemblyFilePath() const;
 
+    // Get the file path of the Live VGPR textual file associated with this table.
+    std::string GetLiveVgprsFilePath() const;
+
     // Set the file path for the textual file that is associated with this table.
     void SetDisassemblyFilePath(const std::string& disassembly_file_path);
+
+    // Set the file path for the Live VGPRs textual file associated with this table.
+    void SetLiveVgprsFilePath(const std::string& live_vgprs_file_path);
 
     // Returns true if the disassembly was already loaded (and is therefore cached).
     bool IsDisassemblyLoaded() const;
 
+    // Returns true if the live VGPR data was already loaded (and is therefore cached).
+    bool IsLiveVgprLoaded() const;
+
     // Is the given source line correlated with some ISA line(s)?
     bool IsSourceLineCorrelated(int line_index) const;
+
+    // Initialize the model data.
+    void InitializeModelData();
 
 protected:
     // Re-implement keyPressEvent.
@@ -145,11 +160,20 @@ protected:
     // Scroll the disassembly table to the given line number.
     void ScrollToLine(int line_number);
 
+    // Set the width of the VGPR column.
+    void SetVgprColumnWidth();
+
     // The path to the currently-loaded disassembly CSV file.
     std::string disassembly_file_path_;
 
+    // The path to the currently-loaded live VGPR file.
+    std::string live_vgprs_file_path_;
+
     // A signal to indicate if the disassembly was already cached in this table.
     bool is_disassembly_cached_ = false;
+
+    // A bool to indicate if the live VGPR data was already cached in this table.
+    bool is_live_vgpr_cached_ = false;
 
     // The model containing the disassembly table data.
     RgIsaDisassemblyTableModel* isa_table_model_ = nullptr;

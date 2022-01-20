@@ -45,9 +45,9 @@ public:
     beStatus GetSupportGpus(const Config& config, std::vector<std::string>& gpus, std::map<std::string, int>& driver_ids);
 
     // Compile the pipeline based on the user-provided options.
-    beStatus Compile(const Config& config, const std::string& target_device,
-        std::string& out_text, std::string& error_msg, BeVkPipelineFiles& generated_isa_files,
-        BeVkPipelineFiles& generated_stat_files, std::string& generated_binary_file);
+    beStatus Compile(const Config& config, const std::string& target_device, std::string& out_text, std::string& error_msg,
+        BeVkPipelineFiles& generated_isa_files, BeVkPipelineFiles& generated_amdil_files, BeVkPipelineFiles& generated_stat_files,
+        std::string& generated_binary_file);
 
     // Compile for DXR based on the user-provided options.
     beStatus CompileDXRPipeline(const Config& config, const std::string& target_device,

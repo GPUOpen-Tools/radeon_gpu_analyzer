@@ -13,8 +13,8 @@
 #pragma warning(push)
 #pragma warning(disable:4309)
 #endif
-#include "AMDTOSWrappers/Include/osEnvironmentVariable.h"
-#include "AMDTOSWrappers/Include/osProcess.h"
+#include "external/amdt_os_wrappers/Include/osEnvironmentVariable.h"
+#include "external/amdt_os_wrappers/Include/osProcess.h"
 #include "common/rg_log.h"
 #ifdef _WIN32
 #pragma warning(pop)
@@ -67,6 +67,10 @@ int main(int argc, char* argv[])
     std::stringstream msg;
 
 #ifdef _WIN64
+
+    // Update the PATH environment variable so that spawned processes inherit the VC++ runtime libraries path.
+    KcUtils::UpdatePathEnvVar();
+
     // Enable 64-bit build for OpenCL.
     osEnvironmentVariable envVar64Bit(kStrOpenclEnvVarGpuForce64BitPtrName, kStrOpenclEnvVarGpuForce64BitPtrValue);
     osSetCurrentProcessEnvVariable(envVar64Bit);

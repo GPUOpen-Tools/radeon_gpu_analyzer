@@ -21,7 +21,7 @@ static const QString kStrModePushButtonStylesheet(
     "}"
     "QPushButton:hover"
     "{"
-    "background-color: rgb(20, 175, 0, 255);"
+    "background-color: rgba(20, 175, 0, 255);"
     "}"
 );
 static const QString kStrStatusBarBackgroundColorOpencl = "background-color: rgb(18, 152, 0)";

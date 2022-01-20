@@ -15,6 +15,8 @@
 #include <QAction>
 #include <QCheckBox>
 #include <QListWidgetItem>
+#include <QPlainTextEdit>
+#include <QTextStream>
 
 // Infra.
 #include "QtCommon/CustomWidgets/ArrowIconWidget.h"
@@ -47,6 +49,9 @@ static const char* kStrDisassemblyTargetGpuList = "TargetGpuList";
 
 // Columns push button font size.
 const int kPushButtonFontSize = 11;
+
+// Error message for missing live VGPR output file.
+const QString kStrLiveVgprFileMissingError = "Live VGPR output file missing.";
 
 RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent) :
     QWidget(parent)
@@ -526,6 +531,23 @@ void RgIsaDisassemblyView::ConnectSignals()
     assert(is_connected);
 }
 
+void RgIsaDisassemblyView::HandleCurrentTabChanged(int index)
+{
+    if (index == 0)
+    {
+        ui_.columnVisibilityArrowPushButton->setHidden(false);
+    }
+    else if (index == 1)
+    {
+        ui_.columnVisibilityArrowPushButton->setHidden(true);
+    }
+    else
+    {
+        // Should not get here.
+        assert(false);
+    }
+}
+
 void RgIsaDisassemblyView::CreateColumnVisibilityControls()
 {
     // Setup the list widget that opens when the user clicks the column visibility arrow.
@@ -621,6 +643,7 @@ std::string RgIsaDisassemblyView::GetDisassemblyColumnName(RgIsaDisassemblyTable
         { RgIsaDisassemblyTableColumns::kFunctionalUnit, kStrDisassemblyTableColumnFunctionalUnit },
         { RgIsaDisassemblyTableColumns::kCycles,         kStrDisassemblyTableColumnCycles },
         { RgIsaDisassemblyTableColumns::kBinaryEncoding, kStrDisassemblyTableColumnBinaryEncoding },
+        { RgIsaDisassemblyTableColumns::kLiveVgprs,      kStrDisassemblyTableLiveVgprHeaderPart},
     };
 
     auto column_name_iter = kColumnNameMap.find(column);

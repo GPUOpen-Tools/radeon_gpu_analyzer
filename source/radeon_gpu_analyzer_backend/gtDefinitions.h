@@ -15,7 +15,7 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include <AMDTBaseTools/Include/gtGRBaseToolsDLLBuild.h>
+#include <external/amdt_base_tools/Include/gtGRBaseToolsDLLBuild.h>
 #ifdef _WIN32
     #pragma warning(pop)
 #endif

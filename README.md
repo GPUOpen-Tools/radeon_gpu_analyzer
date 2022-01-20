@@ -53,18 +53,18 @@ As a preliminary step, make sure that you have the following installed on your s
 * Python 2.7 or above
 * Qt (in case that you are interested in building the GUI app; you can build the command line executable without Qt). Qt 5.15.2 is recommended.
 
-cd to the Build sub-folder, and run:
+cd to the build sub-folder, and run:
 
-Prebuild.bat --qt <path of Qt's msvc2017_64 folder> --vs 2017
+prebuild.bat --qt <path of Qt's msvc2017_64 folder> --vs 2017
 
 Where <path to Qt's msvc2017_64 folder> is the path to the Qt msvc2017_64 folder, such as C:\Qt\Qt5.15.2\msvc2017_64.
 
-Running the Prebuild script will fetch all the dependencies and generate the solution file for Visual Studio.
+Running the prebuild script will fetch all the dependencies and generate the solution file for Visual Studio.
 After successfully running the preuild script, open RGA.sln from build\windows\vs2019 (or vs2017), and build:
 * RadeonGPUAnalyzerCLI project for the command line executable
 * RadeonGPUAnalyzerGUI project for the GUI app
 
-Some useful options of the Prebuild script:
+Some useful options of the prebuild script:
 * --vs <VS version>: generate the solution files for a specific Visual Studio version. For example, to target VS 2019, add --vs 2019 to the command.
 * --qt <path>: full path to the folder from where you would like the Qt binaries to be retrieved. By default, CMake would try to auto-detect Qt on the system.
 * --vk-include and --vk-lib: full paths to where the Vulkan SDK include and Vulkan lib folders. By default, CMake would try to auto-detect the Vulkan SDK on the system.
@@ -76,7 +76,7 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
 
 -=-
 
-If for some reason you do not want to use the Prebuild.bat script, you can also manually fetch the dependencies and generate the solution and project files:
+If for some reason you do not want to use the prebuild.bat script, you can also manually fetch the dependencies and generate the solution and project files:
 Start by running the FetchDependencies.py script to fetch the solution's dependencies.
 To generate the solution file for VS 2017 in x64 configuration, use:
 
@@ -93,7 +93,7 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
   * sudo apt-get install libglu1-mesa-dev mesa-common-dev libgtk2.0-dev
   * sudo apt-get install zlib1g-dev libx11-dev:i386
   * Install CMake 3.10 or above. For auto-detecting the Vulkan SDK version 3.7 or above is required.
-  * Install python 2.7 (or above)
+  * Install python 3.6 (or above)
   * To build the GUI app, you should also have Qt installed
 
 * Build:
@@ -102,7 +102,7 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
 
    On Linux, it is recommended to explicitly pass to CMake the location of the Vulkan SDK include and lib directories as well as the location of Qt. For example:
 
-   ./Prebuild.sh --qt ~/Qt-5.15.2/5.15.2/gcc_64 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
+   ./prebuild.sh --qt ~/Qt-5.15.2/5.15.2/gcc_64 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
 
    This will fetch all the dependencies and generate the make files.
 
@@ -110,9 +110,9 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
 
    -=-
 
-   If for some reason you do not want to use the Prebuild.sh script, you can also manually fetch the dependencies and generate the makefiles:
+   If for some reason you do not want to use the prebuild.sh script, you can also manually fetch the dependencies and generate the makefiles:
 
-  * run: FetchDependencies.py
+  * run: python3 fetch_dependencies.py
   * run: cmake –DCMAKE_BUILD_TYPE=Release (or: Debug) <full or relative path to the RGA repo directory>
 
     It is recommended to create a directory to hold all build files, and launch cmake from that directory.

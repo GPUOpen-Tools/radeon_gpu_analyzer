@@ -124,7 +124,7 @@ And, in case of a successful build, the disassembly and HW resource usage info w
 That's it - we got our first Vulkan® pipeline built with RGA.
 
 OpenCL™ Offline Mode
------------------
+--------------------
 
 The Home Page
 ^^^^^^^^^^^^^
@@ -177,6 +177,15 @@ The disassembly for the relevant kernel will be displayed in the disassembly vie
 * The Columns drop-down menu at the top can be used to customize the presented columns
 * If more than one GPU was targeted, use the drop-down on the top left corner to switch devices
 * The resource usage line shows the GPU resources that are consumed by the presented code
+
+The disassembly view also shows the VGPR pressure throughout the shader's instructions. 
+The "VGPR Pressure" column's header shows the total number of VGPRs used by the shader and the total number of VGPRs allocated for the shader. 
+The cells of this column visualize the VGPR allocation and the utilization at each instruction. 
+Since VGPRs are allocated in blocks, reducing just a few VGPRs can save an entire block from being allocated. 
+Hovering over any of the VGPR Pressure cells would show a hint that takes into account the VGPR allocation block size for the specific shader and calculates 
+how many VGPRs need to be freed in order to save a single VGPR block at that point of the program. 
+Note that the VGPR allocation block size is dependent on the target GPU as well as on certain characteristics of the shader, 
+such as the wave size it was compiled for (if applicable).
 
 In case of a performance hazard due to the usage of a GPU resource, RGA will display a warning icon and highlight the relevant resources:
 

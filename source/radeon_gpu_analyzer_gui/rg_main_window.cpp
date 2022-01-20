@@ -590,15 +590,6 @@ void RgMainWindow::CreateFileMenu()
 
     // Set the mouse cursor to pointing hand cursor.
     menu_bar_->setCursor(Qt::PointingHandCursor);
-
-#ifdef __linux
-    // Workaround for broken shortcuts on linux - adding the actions to the main window as
-    // well as the menu bar seems to fix the issue.
-    addAction(open_project_action_);
-    addAction(save_action_);
-    addAction(back_to_home_action_);
-    addAction(exit_action_);
-#endif // __linux
 }
 
 void RgMainWindow::CreateEditMenu()
@@ -612,12 +603,6 @@ void RgMainWindow::CreateEditMenu()
 
     // Set the mouse cursor to pointing hand cursor.
     menu_bar_->setCursor(Qt::PointingHandCursor);
-
-#ifdef __linux
-    // Workaround for broken shortcuts on linux - adding the actions to the main window as
-    // well as the menu bar seems to fix the issue.
-    addAction(go_to_line_action_);
-#endif // __linux
 }
 
 void RgMainWindow::CreateHelpmenu()

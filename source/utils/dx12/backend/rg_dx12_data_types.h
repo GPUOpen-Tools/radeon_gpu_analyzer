@@ -23,6 +23,9 @@ namespace rga
         // Full path to ISA disassembly output file.
         std::string isa;
 
+        // Full path to AMDIL disassembly output file.
+        std::string amdil;
+
         // Full path to resource usage output file.
         std::string stats;
 
@@ -110,6 +113,9 @@ namespace rga
 
         // Enable the D3D12 debug layer.
         bool should_enable_debug_layer = false;
+
+        // Offline session.
+        bool is_offline_session = false;
     };
 
     // Per-stage boolean.

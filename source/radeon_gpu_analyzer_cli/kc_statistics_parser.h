@@ -12,7 +12,7 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTBaseTools/Include/gtString.h"
+#include "external/amdt_base_tools/Include/gtString.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif

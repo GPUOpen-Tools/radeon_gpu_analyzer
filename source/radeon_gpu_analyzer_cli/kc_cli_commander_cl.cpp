@@ -1,6 +1,7 @@
 //=================================================================
 // Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
+#ifdef _LEGACY_CL_ENABLED
 
 // C++.
 #include <vector>
@@ -15,10 +16,10 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTBaseTools/Include/gtString.h"
-#include "AMDTOSWrappers/Include/osFilePath.h"
-#include "AMDTOSWrappers/Include/osDirectory.h"
-#include "AMDTBaseTools/Include/gtAssert.h"
+#include "external/amdt_base_tools/Include/gtString.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
+#include "external/amdt_base_tools/Include/gtAssert.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -872,3 +873,4 @@ void KcCliCommanderCL::WriteAnalysisFile(const Config& config, const std::string
         output.close();
     }
 }
+#endif

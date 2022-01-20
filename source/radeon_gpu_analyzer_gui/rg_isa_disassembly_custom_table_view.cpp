@@ -20,22 +20,200 @@
 static QColor kCorrelationHighlightColor = QColor(Qt::yellow).lighter(170);
 static QColor kLightBlueSelectionColor = QColor(229, 243, 255);
 
+// Colors for VGPR pressure ranges.
+static const QColor kVgprRangeZeroColor    = QColor(3, 252, 152);
+static const QColor kVgprRangeOneColor     = QColor(20, 252, 3);
+static const QColor kVgprRangeTwoColor     = QColor(252, 244, 3);
+static const QColor kVgprRangeThreeColor   = QColor(252, 215, 3);
+static const QColor kVgprRangeFourColor    = QColor(252, 152, 3);
+static const QColor kVgprRangeFiveColor    = QColor(252, 115, 3);
+static const QColor kVgprRangeSixColor     = QColor(252, 74, 3);
+static const QColor kVgprRangeSevenColor   = QColor(252, 3, 3);
+
+static const QColor kVgprRangeColors[] =
+    {
+        kVgprRangeZeroColor,
+        kVgprRangeOneColor,
+        kVgprRangeTwoColor,
+        kVgprRangeThreeColor,
+        kVgprRangeFourColor,
+        kVgprRangeFiveColor,
+        kVgprRangeSixColor,
+        kVgprRangeSevenColor
+    };
+
+// Begin and end for color range indexes.
+static const int kBeginRange = 0;
+static const int kEndRange   = 7;
+
+// Live VGPR register allocation block.
+static const int kLiveVgprAllocationBlock = 8;
+
+static void DrawVgprWidget(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& model_index)
+{
+    int num_live_registers = 0;
+    int block_allocation_value = 0;
+    int allocated_rect_width   = 0;
+    QFont font;
+
+    // Save the painter object.
+    painter->save();
+
+    // Set the background highlight color for the cell when the row is selected.
+    if (option.state & QStyle::State_Selected)
+    {
+        painter->fillRect(option.rect, kCorrelationHighlightColor);
+    }
+
+    // Get the number of VGPR registers.
+    QString num_live_registers_str = model_index.data().toString();
+
+    // If this is a label, do not do anything.
+    if (num_live_registers_str.compare(kLiveVgprLabelString) == 0)
+    {
+        painter->restore();
+        return;
+    }
+    else
+    {
+        // Process the string to get the live VGPR number and
+        // the allocation block granularity.
+        QStringList values = num_live_registers_str.split(",");
+        if (values.size() == 2)
+        {
+            num_live_registers     = values.at(0).toInt();
+            block_allocation_value = values.at(1).toInt();
+        }
+    }
+
+    // If the number of live registers is greater than zero,
+    // process it.
+    if (num_live_registers > 0)
+    {
+        // Set painter options.
+        font = painter->font();
+        font.setBold(false);
+
+        // Get and set the global font size.
+        std::shared_ptr<RgGlobalSettings> global_config = RgConfigManager::Instance().GetGlobalConfig();
+        font.setPointSize(global_config->font_size);
+
+        // Set pen and font values.
+        QPen pen = painter->pen();
+        pen.setColor(Qt::GlobalColor::gray);
+        painter->setPen(pen);
+        painter->setFont(font);
+
+        // Calculate the color swatch rectangle.
+        QRect rect = option.rect;
+        rect.setWidth(num_live_registers);
+        rect.setY(rect.y() + 1);
+        if (rect.height() > 1)
+        {
+            rect.setHeight(rect.height() - 1);
+        }
+        else
+        {
+            rect.setHeight(rect.height());
+        }
+
+        // Convert the one-based live register number into the range that
+        // it falls into to use as an array index.
+        int array_index = (num_live_registers - 1) >> 5;
+
+        // If the range array_index comes out to be negative,
+        // set it to zero.
+        if (array_index < 0)
+        {
+            array_index = 0;
+        }
+
+        // If the range array_index comes out to be more than the max,
+        // set it to the max value of 7.
+        if (array_index > 7)
+        {
+            array_index = 7;
+        }
+
+        // Draw the rectangle indicating VGPR pressure.
+        allocated_rect_width = num_live_registers;
+        assert((array_index >= kBeginRange) && (array_index <= kEndRange));
+        if ((array_index >= kBeginRange) && (array_index <= kEndRange))
+        {
+            // Draw a rectangle upto the boundary of this range.
+            if (num_live_registers % block_allocation_value != 0)
+            {
+                allocated_rect_width = (num_live_registers / block_allocation_value + 1) * block_allocation_value;
+            }
+            rect.setWidth(allocated_rect_width);
+            painter->drawRect(rect);
+
+            // Draw the color swatch.
+            rect.setWidth(num_live_registers);
+            QColor color = kVgprRangeColors[array_index];
+            painter->fillRect(rect, color);
+        }
+        else
+        {
+            // We should not get here.
+            assert(false);
+        }
+    }
+
+    // Now draw the number of live registers value text.
+    QString live_reg_label;
+    QRect   r = option.rect;
+    QRect   text_rect = painter->fontMetrics().boundingRect(QString::number(num_live_registers));
+    if (num_live_registers_str.compare("N/A") == 0)
+    {
+        // If the number of VGPRs is N/A.
+        live_reg_label = "N/A";
+    }
+    else
+    {
+        live_reg_label = QString::number(num_live_registers);
+        r.setWidth(option.rect.width() + text_rect.width());
+        r.setX(r.x() + allocated_rect_width + 10);
+    }
+
+    // Set the font.
+    font = painter->font();
+    font.setBold(false);
+    painter->setFont(font);
+
+    // Draw the text.
+    qApp->style()->drawItemText(painter, r, option.displayAlignment, option.palette, true, live_reg_label, QPalette::Text);
+
+    // Restore the painter object.
+    painter->restore();
+}
+
 class RgTreeviewSelectionDelegateVulkan : public QItemDelegate
 {
 public:
-    RgTreeviewSelectionDelegateVulkan(QObject* parent = nullptr) : QItemDelegate(parent) {}
+    RgTreeviewSelectionDelegateVulkan(QObject* parent = nullptr)
+        : QItemDelegate(parent) {}
 
-    virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+    void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& model_index) const
     {
-        QStyleOptionViewItem view_option(option);
+        // If this is the VGPR pressure column, go ahead and draw the register information.
+        QString column_header = model_index.model()->headerData(model_index.column(), Qt::Orientation::Horizontal).toString();
+        if (column_header.contains(kStrDisassemblyTableLiveVgprHeaderPart))
+        {
+            DrawVgprWidget(painter, option, model_index);
+        }
+        else
+        {
+            QStyleOptionViewItem view_option(option);
 
-        QColor item_foreground_color = index.data(Qt::ForegroundRole).value<QColor>();
+            QColor item_foreground_color = model_index.data(Qt::ForegroundRole).value<QColor>();
 
-        view_option.palette.setColor(QPalette::HighlightedText, item_foreground_color);
-        QColor background_color(kCorrelationHighlightColor);
-        view_option.palette.setColor(QPalette::Highlight, background_color);
+            view_option.palette.setColor(QPalette::HighlightedText, item_foreground_color);
+            QColor background_color(kCorrelationHighlightColor);
+            view_option.palette.setColor(QPalette::Highlight, background_color);
 
-        QItemDelegate::paint(painter, view_option, index);
+            QItemDelegate::paint(painter, view_option, model_index);
+        }
     }
 };
 
@@ -44,17 +222,26 @@ class RgTreeviewSelectionDelegateOpencl : public QItemDelegate
 public:
     RgTreeviewSelectionDelegateOpencl(QObject* parent = nullptr) : QItemDelegate(parent) {}
 
-    virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+    virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& model_index) const
     {
-        QStyleOptionViewItem view_option(option);
+        // If this is the VGPR pressure column, go ahead and draw the register information.
+        QString column_header = model_index.model()->headerData(model_index.column(), Qt::Orientation::Horizontal).toString();
+        if (column_header.contains(kStrDisassemblyTableLiveVgprHeaderPart))
+        {
+            DrawVgprWidget(painter, option, model_index);
+        }
+        else
+        {
+            QStyleOptionViewItem view_option(option);
 
-        QColor item_foreground_color = index.data(Qt::ForegroundRole).value<QColor>();
+            QColor item_foreground_color = model_index.data(Qt::ForegroundRole).value<QColor>();
 
-        view_option.palette.setColor(QPalette::HighlightedText, item_foreground_color);
-        QColor background_color(kLightBlueSelectionColor);
-        view_option.palette.setColor(QPalette::Highlight, background_color);
+            view_option.palette.setColor(QPalette::HighlightedText, item_foreground_color);
+            QColor background_color(kCorrelationHighlightColor);
+            view_option.palette.setColor(QPalette::Highlight, background_color);
 
-        QItemDelegate::paint(painter, view_option, index);
+            QItemDelegate::paint(painter, view_option, model_index);
+        }
     }
 };
 

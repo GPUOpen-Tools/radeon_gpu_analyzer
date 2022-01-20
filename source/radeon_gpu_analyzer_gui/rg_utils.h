@@ -250,6 +250,9 @@ public:
     //    result --> true.
     static bool IsInList(const std::string& list, const std::string& token, char delim);
 
+    // Find and returns indices of test_to_find in text and return in search_result_indices.
+    static void FindSearchResultIndices(const QString& text, const QString& text_to_find, std::vector<size_t>& search_result_indices);
+
     // **************
     // Strings - END.
     // **************

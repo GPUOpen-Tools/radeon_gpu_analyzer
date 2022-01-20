@@ -81,9 +81,6 @@ struct VkOfflineOptions : public beKA::CompileOptions
     // True to perform live register analysis.
     bool is_livereg_required = false;
 
-    // True to perform stall analysis.
-    bool is_stall_analysis_required = false;
-
     // True to generate shader compiler statistics.
     bool is_stats_required = false;
 };

@@ -159,12 +159,12 @@ bool RgSourceEditorSearcher::FindResults(const QString& search_string)
                 lowercase_text_to_find = lowercase_text_to_find.toLower();
 
                 // Perform the search on the converted text.
-                FindSearchResultIndices(lowercase_text, lowercase_text_to_find, result_indices_);
+                RgUtils::FindSearchResultIndices(lowercase_text, lowercase_text_to_find, result_indices_);
             }
             else
             {
                 // Search the text for the given search string.
-                FindSearchResultIndices(text, search_string, result_indices_);
+                RgUtils::FindSearchResultIndices(text, search_string, result_indices_);
             }
 
             // If any results were found, store the search string.

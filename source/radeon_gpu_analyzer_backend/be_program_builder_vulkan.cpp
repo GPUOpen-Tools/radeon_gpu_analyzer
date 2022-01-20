@@ -11,9 +11,9 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTOSWrappers/Include/osFilePath.h"
-#include "AMDTOSWrappers/Include/osDirectory.h"
-#include "AMDTOSWrappers/Include/osApplication.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
+#include "external/amdt_os_wrappers/Include/osApplication.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif

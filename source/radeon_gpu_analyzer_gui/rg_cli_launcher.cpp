@@ -3,8 +3,8 @@
 #include <cassert>
 
 // Infra.
-#include <AMDTBaseTools/Include/gtString.h>
-#include <AMDTOSWrappers/Include/osProcess.h>
+#include <external/amdt_base_tools/Include/gtString.h>
+#include <external/amdt_os_wrappers/Include/osProcess.h>
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_cli_launcher.h"
@@ -43,6 +43,9 @@ void BuildCompileProjectCommandString(std::stringstream& command_stream, const s
 
     // ISA disassembly in text and CSV formats.
     command_stream << kStrCliOptIsa << " \"" << output_path << "disassem.txt\" " << kStrCliOptParseIsa << " ";
+
+    // Livereg analysis.
+    command_stream << kStrCliOptLivereg << " \"" << output_path << "livereg.txt\" ";
 
     // Include line numbers in the CSV file.
     command_stream << kStrCliOptLineNumbers << " ";

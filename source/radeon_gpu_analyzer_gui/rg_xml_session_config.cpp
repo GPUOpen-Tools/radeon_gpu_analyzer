@@ -259,6 +259,22 @@ bool RgXMLSessionConfig::ReadBuildOutputs(tinyxml2::XMLNode* outputs_node, std::
                         outputs.push_back(csv_output_item);
                     }
                 }
+
+                // Find the live register file path node.
+                tinyxml2::XMLNode* live_register_node = outputs_node->FirstChildElement(kStrXmlNodeLivereg);
+                if (live_register_node != nullptr)
+                {
+                    // Read the file path to the resource usage CSV file.
+                    std::string live_register_file_path;
+                    ret = RgXMLUtils::ReadNodeTextString(live_register_node, live_register_file_path);
+                    assert(ret);
+
+                    if (ret)
+                    {
+                        RgOutputItem live_reg_output_item = {live_register_file_path, target_asic, RgCliOutputFileType::kLiveRegisterAnalysisReport};
+                        outputs.push_back(live_reg_output_item);
+                    }
+                }
             }
         }
 
@@ -371,7 +387,8 @@ bool RgXMLSessionConfig::ReadPipelineStageOutputs(tinyxml2::XMLNode* outputs_nod
     {
         kStrXmlNodeIsa,
         kStrXmlNodeCsvIsa,
-        kStrXmlNodeResUsage
+        kStrXmlNodeResUsage,
+        kStrXmlNodeLivereg
     };
 
     // Loop to search for each possible output type.
@@ -406,6 +423,10 @@ bool RgXMLSessionConfig::ReadPipelineStageOutputs(tinyxml2::XMLNode* outputs_nod
                 else if (output_type_string.compare(kStrXmlNodeResUsage) == 0)
                 {
                     csv_output_item.file_type = RgCliOutputFileType::kHwResourceUsageFile;
+                }
+                else if (output_type_string.compare(kStrXmlNodeLivereg) == 0)
+                {
+                    csv_output_item.file_type = RgCliOutputFileType::kLiveRegisterAnalysisReport;
                 }
                 else
                 {

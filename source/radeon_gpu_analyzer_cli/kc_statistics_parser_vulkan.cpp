@@ -12,7 +12,7 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTOSWrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif

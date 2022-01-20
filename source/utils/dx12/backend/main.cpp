@@ -212,6 +212,7 @@ int main(int argc, char* argv[])
                 ("comp", "Full path to the HLSL file where the compute shader is defined.", cxxopts::value<std::string>(config.comp.hlsl))
                 ("comp-dxbc", "Full path to the compute shader's compiled DXBC binary.", cxxopts::value<std::string>(config.comp.dxbc))
                 ("comp-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.comp.isa))
+                ("comp-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.comp.amdil))
                 ("comp-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.comp.stats))
                 ("comp-entry", "Name of the entry point.", cxxopts::value<std::string>(config.comp.entry_point))
                 ("comp-dxbc-dump", "Full path to output file for compiled compute shader DXBC binary.",
@@ -224,6 +225,7 @@ int main(int argc, char* argv[])
                 ("vert", "Full path to the HLSL file where the vertex shader is defined.", cxxopts::value<std::string>(config.vert.hlsl))
                 ("vert-dxbc", "Full path to the vertex shader's compiled DXBC binary.", cxxopts::value<std::string>(config.vert.dxbc))
                 ("vert-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.vert.isa))
+                ("vert-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.vert.amdil))
                 ("vert-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.vert.stats))
                 ("vert-entry", "Name of the entry point.", cxxopts::value<std::string>(config.vert.entry_point))
                 ("vert-dxbc-dump", "Full path to output file for compiled vertex shader DXBC binary.",
@@ -236,6 +238,7 @@ int main(int argc, char* argv[])
                 ("hull", "Full path to the HLSL file where the hull shader is defined.", cxxopts::value<std::string>(config.hull.hlsl))
                 ("hull-dxbc", "Full path to the hull shader's compiled DXBC binary.", cxxopts::value<std::string>(config.hull.dxbc))
                 ("hull-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.hull.isa))
+                ("hull-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.hull.amdil))
                 ("hull-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.hull.stats))
                 ("hull-entry", "Name of the entry point.", cxxopts::value<std::string>(config.hull.entry_point))
                 ("hull-dxbc-dump", "Full path to output file for compiled hull shader DXBC binary.",
@@ -248,6 +251,7 @@ int main(int argc, char* argv[])
                 ("domain", "Full path to the HLSL file where the domain shader is defined.", cxxopts::value<std::string>(config.domain.hlsl))
                 ("domain-dxbc", "Full path to the domain shader's compiled DXBC binary.", cxxopts::value<std::string>(config.domain.dxbc))
                 ("domain-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.domain.isa))
+                ("domain-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.domain.amdil))
                 ("domain-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.domain.stats))
                 ("domain-entry", "Name of the entry point.", cxxopts::value<std::string>(config.domain.entry_point))
                 ("domain-dxbc-dump", "Full path to output file for compiled domain shader DXBC binary.",
@@ -260,6 +264,7 @@ int main(int argc, char* argv[])
                 ("geom", "Full path to the HLSL file where the geometry shader is defined.", cxxopts::value<std::string>(config.geom.hlsl))
                 ("geom-dxbc", "Full path to the geometry shader's compiled DXBC binary.", cxxopts::value<std::string>(config.geom.dxbc))
                 ("geom-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.geom.isa))
+                ("geom-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.geom.amdil))
                 ("geom-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.geom.stats))
                 ("geom-entry", "Name of the entry point.", cxxopts::value<std::string>(config.geom.entry_point))
                 ("geom-dxbc-dump", "Full path to output file for compiled geometry shader DXBC binary.",
@@ -272,6 +277,7 @@ int main(int argc, char* argv[])
                 ("pixel", "Full path to the HLSL file where the pixel shader is defined.", cxxopts::value<std::string>(config.pixel.hlsl))
                 ("pixel-dxbc", "Full path to the pixel shader's compiled DXBC binary.", cxxopts::value<std::string>(config.pixel.dxbc))
                 ("pixel-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.pixel.isa))
+                ("pixel-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.pixel.amdil))
                 ("pixel-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.pixel.stats))
                 ("pixel-entry", "Name of the entry point.", cxxopts::value<std::string>(config.pixel.entry_point))
                 ("pixel-dxbc-dump", "Full path to output file for compiled pixel shader DXBC binary.",
@@ -324,6 +330,8 @@ int main(int argc, char* argv[])
                     cxxopts::value<std::vector<std::string>>(config.defines))
                 ("debug-layer", "Enable the D3D12 debug layer.",
                         cxxopts::value<bool>(config.should_enable_debug_layer))
+                ("offline","If specified, the tool will not look for an AMD display adapter on the system.",
+                    cxxopts::value<bool>(config.is_offline_session))
                 ;
 
             // Parse command line.
@@ -371,7 +379,7 @@ int main(int argc, char* argv[])
                 // should be performed at the CLI level.
                 D3D_FEATURE_LEVEL feature_level = is_dxr ? D3D_FEATURE_LEVEL_12_0 : D3D_FEATURE_LEVEL_11_0;
                 rga::rgDx12Frontend rgFrontend(feature_level);
-                is_ok = rgFrontend.Init(is_dxr);
+                is_ok = rgFrontend.Init(is_dxr, config.is_offline_session);
                 assert(is_ok);
                 if (is_ok)
                 {

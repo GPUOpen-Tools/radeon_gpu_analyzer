@@ -10,10 +10,10 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTBaseTools/Include/gtAssert.h"
-#include "AMDTOSWrappers/Include/osDirectory.h"
-#include "AMDTOSWrappers/Include/osProcess.h"
-#include "AMDTOSWrappers/Include/osThread.h"
+#include "external/amdt_base_tools/Include/gtAssert.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
+#include "external/amdt_os_wrappers/Include/osProcess.h"
+#include "external/amdt_os_wrappers/Include/osThread.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif

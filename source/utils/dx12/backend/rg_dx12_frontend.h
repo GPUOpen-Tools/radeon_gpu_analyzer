@@ -24,7 +24,7 @@ namespace rga
         rgDx12Frontend(D3D_FEATURE_LEVEL feature_level) : feature_level_(feature_level) {}
 
         // Init.
-        bool Init(bool is_dxr_session);
+        bool Init(bool is_dxr_session, bool is_offline_session);
 
         // Retrieve the list of supported targets and their driver IDs.
         bool GetSupportedTargets(std::vector<std::string>& supported_targets,
@@ -45,7 +45,7 @@ namespace rga
 #endif
 
     private:
-        bool GetHardwareAdapter(IDXGIAdapter1** dxgi_dapter);
+        bool GetHardwareAdapter(IDXGIAdapter1** dxgi_dapter, bool is_offline_session);
 
         bool CreateComputePipeline(const RgDx12Config& config,
             D3D12_COMPUTE_PIPELINE_STATE_DESC*& pso,

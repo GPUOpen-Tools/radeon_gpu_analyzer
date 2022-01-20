@@ -56,7 +56,6 @@ struct RgOutputFiles
     std::string  isa_csv_file;
     std::string  stats_file;
     std::string  livereg_file;
-    std::string  stall_analysis_file;
     std::string  cfg_file;
     bool         is_bin_file_temp = false;
     bool         is_isa_file_temp = false;
@@ -84,7 +83,6 @@ struct RgOutputFiles
         , isa_csv_file(isa_csv_file)
         , stats_file(stat_file)
         , livereg_file(livereg_file)
-        , stall_analysis_file(stall_analysis_file)
         , cfg_file(cfg_file)
         , entry_type(type)
     {

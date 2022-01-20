@@ -83,7 +83,7 @@ static const char* kStrDefaultExtensionIsa = "amdisa";
 static const char* kStrDefaultExtensionAmdil = "amdil";
 static const char* kStrDefaultExtensionLlvmir = "llvmir";
 static const char* kStrDefaultExtensionLivereg = "livereg";
-static const char* kStrDefaultExtensionStalls = "stalls";
+static const char* kStrDefaultExtensionImage = "png";
 static const char* kStrDefaultExtensionText = "txt";
 static const char* KC_STR_DEFAULT_CFG_SUFFIX = "cfg";
 static const char* kStrDefaultExtensionDot = "dot";
@@ -95,7 +95,6 @@ static const char* kStrDefaultExtensionCsv = "csv";
 
 // Default file names.
 static const char* kStrDefaultFilenameLivereg = "livereg";
-static const char* kStrDefaultFilenameStalls = "stall_analysis";
 static const char* kStrDefaultFilenameIl = "il";
 static const char* kStrDefaultFilenameIsa = "isa";
 static const char* kStrDefaultFilenamePreprocessedIsa = "preprocessed_isa";

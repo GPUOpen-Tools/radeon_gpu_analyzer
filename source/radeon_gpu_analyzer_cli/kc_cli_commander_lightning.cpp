@@ -14,9 +14,9 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTOSWrappers/Include/osFilePath.h"
-#include "AMDTOSWrappers/Include/osDirectory.h"
-#include "AMDTOSWrappers/Include/osApplication.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
+#include "external/amdt_os_wrappers/Include/osApplication.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -54,7 +54,8 @@ kLcLlvmTargetsToDeviceInfoTargets = { {"gfx801", "carrizo"},
                                        {"gfx1012", "gfx1012"},
                                        {"gfx1030", "gfx1030"},
                                        {"gfx1031", "gfx1031"},
-                                       {"gfx1032", "gfx1032"} };
+                                       {"gfx1032", "gfx1032"},
+                                       {"gfx1034", "gfx1034"} };
 
 // For some devices, clang does not accept device names that RGA gets from DeviceInfo.
 // This table maps the DeviceInfo names to names accepted by clang for such devices.
@@ -150,7 +151,8 @@ static const std::map<std::string, DeviceProps> kRgaDeviceProps =
       {"gfx1012",   {104, 256, 65536, 16,  4}},
       {"gfx1030",   {104, 256, 65536, 16,  4}},
       {"gfx1031",   {104, 256, 65536, 16,  4}},
-      {"gfx1032",   {104, 256, 65536, 16,  4}} };
+      {"gfx1032",   {104, 256, 65536, 16,  4}},
+      {"gfx1034",   {104, 256, 65536, 16,  4}} };
 
 static const size_t  kIsaInstruction64BitCodeTextSize   = 16;
 static const int     kIsaInstruction64BitBytes          = 8;
@@ -893,16 +895,6 @@ void KcCLICommanderLightning::RunCompileCommands(const Config& config, LoggingCa
         }
     }
 
-    bool is_stall_analysis_required = (!config.stall_analysis_file.empty());
-    if (is_stall_analysis_required)
-    {
-        // Perform stall analysis.
-        if (status || is_multiple_devices)
-        {
-            PerformStallAnalysis(config);
-        }
-    }
-
     // Extract CodeObj metadata if required.
     if ((status || is_multiple_devices) && !config.metadata_file.empty())
     {
@@ -971,7 +963,13 @@ bool KcCLICommanderLightning::PerformLiveRegAnalysis(const Config& config)
                                              kStrDefaultExtensionText, entry_name, device, livereg_out_filename);
             if (!livereg_out_filename.isEmpty())
             {
-                KcUtils::PerformLiveRegisterAnalysis(isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line);
+                beWaveSize kernel_wave_size = (KcUtils::IsNaviTarget(device) ? beWaveSize::kWave64 : beWaveSize::kUnknown);
+
+                // Perform live VGPR analysis and force wave 64 for OpenCL kernels. Currently the wave size information
+                // is missing from LLVM disassembly, therefore Shae is not able to deduce the value from the disassembly.
+                // Therefore we will use a default of wave64 (this would be ignored by Shae for pre-RDNA targets).
+                KcUtils::PerformLiveRegisterAnalysis(isa_filename, device_gtstr, livereg_out_filename, log_callback_,
+                    config.print_process_cmd_line, kernel_wave_size);
                 if (BeProgramBuilderLightning::VerifyOutputFile(livereg_out_filename.asASCIICharArray()))
                 {
                     // Store the name of livereg output file in the RGA output files metadata.
@@ -989,76 +987,6 @@ bool KcCLICommanderLightning::PerformLiveRegAnalysis(const Config& config)
             {
                 error_msg << kStrErrorOpenclOfflineFailedToCreateOutputFilenameForKernel << entry_name << std::endl;
                 ret = false;
-            }
-        }
-    }
-
-    if (!ret)
-    {
-        log_callback_(error_msg.str());
-    }
-
-    return ret;
-}
-
-bool KcCLICommanderLightning::PerformStallAnalysis(const Config& config)
-{
-    bool              ret = true;
-    std::stringstream error_msg;
-
-    // Track the devices we ignored.
-    std::set<std::string> ignored_devices;
-
-    for (auto& output_md_item : output_metadata_)
-    {
-        RgOutputFiles& output_files = output_md_item.second;
-        if (output_files.status)
-        {
-            const std::string& device               = output_md_item.first.first;
-            if (KcUtils::IsNaviTarget(device))
-            {
-                const std::string& entry_name                  = output_md_item.first.second;
-                gtString           stall_analysis_out_filename = L"";
-                gtString           isa_filename;
-                isa_filename << output_files.isa_file.c_str();
-                gtString           device_gtstr;
-                device_gtstr << device.c_str();
-
-                std::cout << kStrInfoPerformingStallAnalysis1 << device << kStrInfoOpenclOfflineKernelForKernel << entry_name << "... ";
-
-                // Construct a name for the output stall analysis file.
-                KcUtils::ConstructOutputFileName(config.stall_analysis_file, kStrDefaultExtensionStalls,
-                    kStrDefaultExtensionText, entry_name, device, stall_analysis_out_filename);
-                if (!stall_analysis_out_filename.isEmpty())
-                {
-                    KcUtils::PerformStallAnalysis(isa_filename, device_gtstr, stall_analysis_out_filename, log_callback_, config.print_process_cmd_line);
-                    if (BeProgramBuilderLightning::VerifyOutputFile(stall_analysis_out_filename.asASCIICharArray()))
-                    {
-                        // Store the name of stall analysis output file in the RGA output files metadata.
-                        output_files.stall_analysis_file = stall_analysis_out_filename.asASCIICharArray();
-                        std::cout << kStrInfoSuccess << std::endl;
-                    }
-                    else
-                    {
-                        error_msg << kStrErrorCannotPerformStallAnalysis << " " << kStrKernelName << entry_name << std::endl;
-                        std::cout << kStrInfoFailed << std::endl;
-                        ret = false;
-                    }
-                }
-                else
-                {
-                    error_msg << kStrErrorOpenclOfflineFailedToCreateOutputFilenameForKernel << entry_name << std::endl;
-                    ret = false;
-                }
-            }
-            else
-            {
-                // Output a warning message for this device if we haven't done so already.
-                if (ignored_devices.find(device) == ignored_devices.end())
-                {
-                    ignored_devices.insert(device);
-                    std::cout << kStrWarningStallAnalysisNotSupportedForRdna << device << std::endl;
-                }
             }
         }
     }

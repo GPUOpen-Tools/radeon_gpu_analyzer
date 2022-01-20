@@ -86,6 +86,17 @@ static const char* kIconResourceFindMagnifyingGlass    = ":/icons/magnifying_gla
 static const char* kIconResourceExpandedRow            = ":/icons/expand_file_item.svg";
 static const char* kIconResourceCollapsedRow           = ":/icons/collapsed_arrow.svg";
 static const char* kIconResourceRemoveNotification     = ":/icons/correlation_warning_icon.svg";
+static const char* kIconMaxVgprNotification            = ":/icons/max_vgpr_warning_icon.svg";
+static const char* kIconMaxVgprNoIsaMatch              = ":/icons/max_vgpr_no_isa_match_icon.svg";
+
+// Live VGPR tootip.
+static const char* kLiveVgprTooltip1  = "%1 used, %2 allocated out of %3 VGPRs.";
+static const char* kLiveVgprTooltip2  = "\nReduce VGPR consumption by %1 to save %2 VGPRs (HW allocates VGPRs in blocks of %3)";
+static const char* kLiveVgprNATooltip = "Could not parse %1 instructions (look for \"N/A\" under VGPR pressure)";
+static const char* kLiveVgprMaxVgprTooltip = "Number of used VGPRs exceeded max VGPRs";
+
+// Live VGPR label string.
+static const char* kLiveVgprLabelString = "label";
 
 // Build settings options list delimiter.
 static const char* kOptionsListDelimiter = ";";

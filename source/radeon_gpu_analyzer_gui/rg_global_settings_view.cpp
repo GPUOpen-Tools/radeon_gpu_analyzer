@@ -625,6 +625,7 @@ std::string RgGlobalSettingsView::GetDisassemblyColumnName(RgIsaDisassemblyTable
         { RgIsaDisassemblyTableColumns::kFunctionalUnit,            kStrDisassemblyTableColumnFunctionalUnit },
         { RgIsaDisassemblyTableColumns::kCycles,                    kStrDisassemblyTableColumnCycles },
         { RgIsaDisassemblyTableColumns::kBinaryEncoding,            kStrDisassemblyTableColumnBinaryEncoding },
+        { RgIsaDisassemblyTableColumns::kLiveVgprs,                 kStrDisassemblyTableLiveVgprHeaderPart},
     };
 
     auto column_name_iter = column_name_map.find(column);

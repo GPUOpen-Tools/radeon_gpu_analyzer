@@ -81,7 +81,10 @@ private:
     bool ParseIsaFilesToCSV(bool add_line_numbers);
 
     // Perform the live registers analysis.
-    bool PerformLiveRegAnalysis(const Config& config) const;
+    bool PerformLiveRegAnalysis(const Config& config);
+
+    // Predict shader performance.
+    bool PredictShaderPerformance(const Config& config) const;
 
     // Perform stall analysis.
     bool PerformStallAnalysis(const Config& config) const;

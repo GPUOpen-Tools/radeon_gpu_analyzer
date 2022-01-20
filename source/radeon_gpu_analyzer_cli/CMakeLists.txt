@@ -19,8 +19,8 @@ endif()
 # Add this definitions if static linkage is used with the other projects
 add_definitions(-DRGA_BACKEND_STATIC -DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC)
 
-# Add UpdateCheckAPI
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/Src/UpdateCheckAPI ${CMAKE_CURRENT_BINARY_DIR}/Common/Src/UpdateCheckAPI)
+# Add update_check_api
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/Src/update_check_api ${CMAKE_CURRENT_BINARY_DIR}/Common/Src/update_check_api)
 
 # Configure a header file to pass some of the CMake settings
 # to the source code
@@ -33,15 +33,23 @@ configure_file (
 # so that we will find ProjectConfig.h
 include_directories("${PROJECT_BINARY_DIR}")
 
+IF (WIN32)
+    # get the location of the Visual Studio redist libraries - but don't create an install rule to install them
+    # the libs will be copied manually as a post build step
+    set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+    include(InstallRequiredSystemLibraries)
+ENDIF(WIN32)
+
 # Include directories
 include_directories("${PROJECT_SOURCE_DIR}/../../external/dx11/")
 include_directories("${PROJECT_SOURCE_DIR}/../common")
+include_directories("${PROJECT_SOURCE_DIR}/../../external")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/third-party")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/dx11/GSA")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src")
 include_directories("${PROJECT_SOURCE_DIR}/../")
 include_directories("${PROJECT_SOURCE_DIR}/../../")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/CELF/Include")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/celf/Include")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/DynamicLibraryModule")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/AMD/ACL/TOT/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/AMD/CAL/8.95/include")
@@ -134,17 +142,17 @@ endif()
 # Other libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Release/MD")
-    find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/yaml-cpp/lib/win64/Release")
+    find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/yaml-cpp/lib/win64/Release")
     find_library(SPIRVCROSS_LIB "spirv-cross-core.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/vulkan/tools/windows/lib/Release")
     find_library(TINYXML_LIBD "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
-    find_library(YAMLCPP_LIBD "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/yaml-cpp/lib/win64/Debug")
+    find_library(YAMLCPP_LIBD "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/yaml-cpp/lib/win64/Debug")
     find_library(SPIRVCROSS_LIBD "spirv-cross-core.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/vulkan/tools/windows/lib/Debug")
 else()
     find_library(TINYXML_LIB "libtinyxml2.a" HINTS "${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/tinyxml2/Lib/Linux/x64/Release")
     if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0)
-        find_library(YAMLCPP_LIB "libyaml-cpp.a" HINTS "${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/yaml-cpp/lib/linux/gcc5")
+        find_library(YAMLCPP_LIB "libyaml-cpp.a" HINTS "${PROJECT_SOURCE_DIR}/../../external/yaml-cpp/lib/linux/gcc5")
     else()
-        find_library(YAMLCPP_LIB "libyaml-cpp.a" HINTS "${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/yaml-cpp/lib/linux/gcc4")
+        find_library(YAMLCPP_LIB "libyaml-cpp.a" HINTS "${PROJECT_SOURCE_DIR}/../../external/yaml-cpp/lib/linux/gcc4")
     endif()
     find_library(SPIRVCROSS_LIB "libspirv-cross-core.a" HINTS "${PROJECT_SOURCE_DIR}/../../external/vulkan/tools/linux/lib")
 endif()
@@ -211,3 +219,26 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "D
                        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/../../build/util/linux
                       )
 endif()
+
+# Copy VC redist files into build folder.
+IF(WIN32)
+    # Copy the VisualStudio redist files
+    # the list of all redist files is contained in the variable CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS. We only want to copy
+    # a subset of these so we extract the directory from the first entry and then manually copy the files we want
+    foreach(VSLIB ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS})
+        message("VSLIB is ${VSLIB}")
+        get_filename_component(VSREDISTDIR ${VSLIB} DIRECTORY)
+        message("Visual Studio redistributable files directory = ${VSREDISTDIR}")
+        break()
+    endforeach()
+
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "copying Visual Studio redist files from ${VSREDISTDIR} to $<TARGET_FILE_DIR:${PROJECT_NAME}>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/msvcp140.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/concrt140.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/vccorlib140.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/vcruntime140.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/vcruntime140_1.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    )
+ENDIF(WIN32)
+

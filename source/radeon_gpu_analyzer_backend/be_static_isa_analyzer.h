@@ -10,25 +10,27 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTBaseTools/Include/gtString.h"
+#include "external/amdt_base_tools/Include/gtString.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
 
 // Local.
+#include "radeon_gpu_analyzer_backend/be_data_types.h"
 #include "radeon_gpu_analyzer_backend/be_include.h"
 
 namespace beKA
 {
-class BeStaticIsaAnalyzer
-{
-public:
+    class BeStaticIsaAnalyzer
+    {
+    public:
     // Pre-processes the ISA disassembly to allow it to be parsed by the static analysis engine.
     static beStatus PreprocessIsaFile(const std::string& isa_filename, const std::string& output_filename);
 
     // Perform live register analysis on the ISA disassembly contained in the given file,
     // and dump the analysis output to another file.
-    static beStatus PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& target, const gtString& output_filename, bool should_print_cmd);
+    static beStatus PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& target,
+        const gtString& output_filename, beWaveSize wave_size, bool should_print_cmd);
 
     // Perform stall analysis on the ISA disassembly contained in the given file,
     // and dump the analysis output to another file.

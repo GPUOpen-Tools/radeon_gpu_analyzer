@@ -9,6 +9,7 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_source_code_editor.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
+#include "radeon_gpu_analyzer_gui/rg_utils.h"
 
 // Use a light yellow to highlight the line that the cursor is on.
 static const QColor kColorHighlightedRow = QColor(Qt::yellow).lighter(170);
@@ -211,7 +212,7 @@ void RgSourceCodeEditor::HandleToggleCursorVisibility()
     viewport()->update();
 }
 
-void RgSourceCodeEditor::UpdateLineNumberAreaWidth(int /* newBlockCount */)
+void RgSourceCodeEditor::UpdateLineNumberAreaWidth(int /* new_block_count */)
 {
     setViewportMargins(LineNumberAreaWidth(), 0, 0, 0);
 }
@@ -219,12 +220,18 @@ void RgSourceCodeEditor::UpdateLineNumberAreaWidth(int /* newBlockCount */)
 void RgSourceCodeEditor::UpdateLineNumberArea(const QRect &rect, int dy)
 {
     if (dy)
+    {
         line_number_area_->scroll(0, dy);
+    }
     else
+    {
         line_number_area_->update(0, rect.y(), line_number_area_->width(), rect.height());
+    }
 
     if (rect.contains(viewport()->rect()))
+    {
         UpdateLineNumberAreaWidth(0);
+    }
 }
 
 void RgSourceCodeEditor::HandleOpenHeaderFile()
@@ -571,13 +578,63 @@ void RgSourceCodeEditor::mousePressEvent(QMouseEvent* event)
     }
 }
 
-void RgSourceCodeEditor::mouseDoubleClickEvent(QMouseEvent * event)
+void RgSourceCodeEditor::mouseDoubleClickEvent(QMouseEvent* event)
 {
+    static const QColor kHighlightGreenColor = QColor::fromRgb(124, 252, 0);
+    static const QColor kHighlightDarkGreenColor = QColor::fromRgb(0, 102, 51);
+
     // Override the double-click event to avoid QPlainTextEdit
     // from interpreting the sequence that happens when we simulate
     // a left click as an event of a triple click and select the entire
     // row's text.
+
+    // Get the word under the cursor.
     QTextCursor cursor = this->textCursor();
     cursor.select(QTextCursor::SelectionType::WordUnderCursor);
     this->setTextCursor(cursor);
+
+    // Highlight the current line with yellow background.
+    QTextEdit::ExtraSelection current_line_selection;
+    current_line_selection.format.setBackground(kColorHighlightedRow);
+    current_line_selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+    current_line_selection.cursor = textCursor();
+    current_line_selection.cursor.clearSelection();
+
+    // Add the current line's selection to the output list.
+    QList<QTextEdit::ExtraSelection> extra_selections;
+    extra_selections.append(current_line_selection);
+
+    // Setup foreground and background colors to
+    // highlight the double clicked word.
+    QBrush                           background_brush(kHighlightGreenColor);
+    QBrush                           text_brush(Qt::black);
+    QPen                             outline_color(Qt::gray, 1);
+    QString                          selected_text = cursor.selectedText();
+
+    // Get indices of all matching text.
+    std::vector<size_t> search_result_indices;
+    RgUtils::FindSearchResultIndices(this->toPlainText(), selected_text, search_result_indices);
+
+    for (auto text_position : search_result_indices)
+    {
+        QTextEdit::ExtraSelection selected_word;
+        selected_word.cursor = QTextCursor(document());
+        selected_word.cursor.setPosition(text_position);
+        selected_word.cursor.setPosition(text_position + selected_text.length(), QTextCursor::KeepAnchor);
+        selected_word.format.setForeground(text_brush);
+        selected_word.format.setBackground(background_brush);
+        selected_word.format.setProperty(QTextFormat::OutlinePen, outline_color);
+
+        // Save the selection.
+        extra_selections.append(selected_word);
+    }
+
+    // Highlight the current selection in darker green.
+    QPalette palette = this->palette();
+    palette.setColor(QPalette::Highlight, kHighlightDarkGreenColor);
+    setPalette(palette);
+
+    // Set the selections that were just created.
+    setExtraSelections(extra_selections);
 }
+

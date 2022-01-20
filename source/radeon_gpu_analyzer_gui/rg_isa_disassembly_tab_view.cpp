@@ -60,17 +60,18 @@ bool RgIsaDisassemblyTabView::PopulateEntries(const std::vector<RgEntryOutput>& 
     // Only a single entry point table will be visible at a time, and the user can switch between the current entry.
     for (const RgEntryOutput& entry : disassembled_entries)
     {
+        RgIsaDisassemblyTableView* table_view = nullptr;
         OutputFileTypeFinder output_file_type_searcher(RgCliOutputFileType::kIsaDisassemblyCsv);
         auto csv_file_iter = std::find_if(entry.outputs.begin(), entry.outputs.end(), output_file_type_searcher);
         if (csv_file_iter != entry.outputs.end())
         {
             // Create a new disassembly table view for each entry point.
-            RgIsaDisassemblyTableView* table_view = new RgIsaDisassemblyTableView(this);
+            table_view = new RgIsaDisassemblyTableView(this);
 
             // Get the path to the disassembly CSV file to load into the table.
             const std::string& disassembly_csv_file_path = csv_file_iter->file_path;
 
-            // Set the file path for the table.
+            // Set the ISA CSV file path for the table.
             table_view->SetDisassemblyFilePath(disassembly_csv_file_path);
 
             // Connect signals for the new table view.
@@ -97,6 +98,23 @@ bool RgIsaDisassemblyTabView::PopulateEntries(const std::vector<RgEntryOutput>& 
             // Add the new table to the list of tables associated with the input file.
             std::vector<RgIsaDisassemblyTableView*>& table_list = input_file_to_isa_table_list_[entry.input_file_path];
             table_list.push_back(table_view);
+        }
+
+        // Find and set the Live Vgprs file.
+        output_file_type_searcher.target_file_type = RgCliOutputFileType::kLiveRegisterAnalysisReport;
+        auto live_Vgprs_file_iter                  = std::find_if(entry.outputs.begin(), entry.outputs.end(), output_file_type_searcher);
+        if (live_Vgprs_file_iter != entry.outputs.end())
+        {
+            // Get the path to the live Vgprs file to load into the table.
+            const std::string& live_vgprs_file_path = live_Vgprs_file_iter->file_path;
+
+            if (table_view == nullptr)
+            {
+                table_view = new RgIsaDisassemblyTableView(this);
+            }
+
+            // Set the Live Vgprs file path for the table.
+            table_view->SetLiveVgprsFilePath(live_vgprs_file_path);
         }
     }
 
@@ -158,45 +176,60 @@ void RgIsaDisassemblyTabView::SwitchToEntryPoint(const std::string& input_file_p
                 if (!disassembly_file_path.empty())
                 {
                     is_table_loaded = table_view->LoadDisassembly(disassembly_file_path);
+                    assert(is_table_loaded);
                     if (!is_table_loaded)
                     {
                         // Tell the user that the disassembly file failed to load.
                         std::stringstream error_string;
                         error_string << kStrErrCannotLoadDisassemblyCsvFile;
-                        error_string << disassembly_file_path;
                         RgUtils::ShowErrorMessageBox(error_string.str().c_str(), this);
                     }
                 }
 
-            }
-
-            // If the table was loaded, either previously or just now, update the UI.
-            assert(is_table_cached || is_table_loaded);
-            if (is_table_cached || is_table_loaded)
-            {
-                // Hide the currently-visible disassembly table.
-                if (current_table_ != nullptr)
+                // Get the live Vgprs file path.
+                const std::string& live_vgprs_file_path = table_view->GetLiveVgprsFilePath();
+                bool               is_live_vgpr_loaded  = false;
+                if (!live_vgprs_file_path.empty())
                 {
-                    current_table_->hide();
+                    is_live_vgpr_loaded = table_view->LoadLiveVgpr(live_vgprs_file_path);
+                    assert(is_live_vgpr_loaded);
+                    if (!is_live_vgpr_loaded)
+                    {
+                        // Tell the user that the live VGPR file failed to load.
+                        std::stringstream error_string;
+                        error_string << kStrErrCannotLoadLiveVgprFile;
+                        RgUtils::ShowErrorMessageBox(error_string.str().c_str(), this);
+                    }
                 }
 
-                // Show the disassembly table that we're switching to.
-                table_view->show();
-                current_table_ = table_view;
-
-                // Use the current table view as the focus proxy for this view.
-                setFocusProxy(table_view);
-
-                // Filter the table we are about to show, without resizing
-                // since the table is inheriting the filter from its predecessor.
-                table_view->UpdateFilteredTable();
+                if (is_table_loaded)
+                {
+                    table_view->InitializeModelData();
+                }
             }
+
+            // Hide the currently-visible disassembly table.
+            if (current_table_ != nullptr)
+            {
+                current_table_->hide();
+            }
+
+            // Show the disassembly table that we're switching to.
+            table_view->show();
+            current_table_ = table_view;
+
+            // Use the current table view as the focus proxy for this view.
+            setFocusProxy(table_view);
+
+            // Filter the table we are about to show, without resizing
+            // since the table is inheriting the filter from its predecessor.
+            table_view->UpdateFilteredTable();
         }
     }
 }
 
 void RgIsaDisassemblyTabView::UpdateCorrelatedSourceFileLine(const std::string& input_file_path, int line_number, std::string& entry_name)
-{
+    {
     if (!entry_name.empty())
     {
         // Switch to view the disassembly table for the named entrypoint.

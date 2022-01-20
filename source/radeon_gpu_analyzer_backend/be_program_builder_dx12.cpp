@@ -10,10 +10,10 @@
 #include <cassert>
 
 // Infra.
-#include "AMDTBaseTools/Include/gtString.h"
-#include "AMDTOSWrappers/Include/osFilePath.h"
-#include "AMDTOSWrappers/Include/osApplication.h"
-#include "AMDTOSWrappers/Include/osDirectory.h"
+#include "external/amdt_base_tools/Include/gtString.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osApplication.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
 
 // Local.
 #include "radeon_gpu_analyzer_backend/be_string_constants.h"
@@ -35,16 +35,25 @@ using namespace rga;
 // *****************************************
 
 // DX12.
-static const wchar_t* DX12_BACKEND_DIR = L"utils/DX12";
-static const wchar_t* DX12_BACKEND_EXE = L"dx12_backend";
-static const wchar_t* DX12_DXC_DIR = L"utils/DX12/DXC";
-static const wchar_t* DX12_DXC_EXE = L"dxc";
+static const wchar_t* kStrEnvVarNameAmdVirtualGpuId = L"AmdVirtualGpuId";
+static const wchar_t* kDx12BackendDir               = L"utils/DX12";
+static const wchar_t* kDx12BackendExe               = L"dx12_backend";
+static const wchar_t* DX12_DXC_DIR                  = L"utils/DX12/DXC";
+static const wchar_t* DX12_DXC_EXE                  = L"dxc";
+static const wchar_t* kDx12OfflineBackend           = L"withDll";
+static const wchar_t* kDx12OfflineKmtmuxer          = L"umdrepoint";
+static const wchar_t* kDx12AmdxcBundledDriverDir    = L"utils/DX12/amdxc";
+static const wchar_t* kDx12AmdxcBundledDriver       = L"amdxc64";
+static const char*    kDx12BackendExeAscii          = "dx12_backend";
+static const char*    kDx12OfflineBackendAscii      = "withdll";
 
 // Error messages.
 static const char* kStrErrorNoSupportedTarget1 = "Error: no supported target detected for '";
-static const char* kStrErrorNoSupportedTarget2 = "'";
+static const char* kStrErrorNoSupportedTarget2 = "', ";
+static const char* kStrErrorNoSupportedTargetHintInstallDriver = "which is the default target. Please make sure that you have the latest AMD drivers installed.";
+static const char* kStrErrorNoSupportedTargetHintRetrieveDx12Targets = "For the list of supported targets run: rga -s dx12 -l";
 static const char* kStrErrorFailedToSetEnvVar = "Error: failed to set the environment variable for the DX12 backend.";
-static const char* kStrErrorCannotRetrieveSupportedTargetList = "Error: cannot retrieve the list of targets supported by the driver.";
+static const char* kStrErrorCannotRetrieveSupportedTargetList = "Error: cannot retrieve the list of targets supported by the driver. Consider adding --offline to the rga command to use the AMD driver (amdxc64.dll) that is bundled with the tool.";
 static const char* kStrErrorFailedToInvokeDx12Backend = "Error: failed to invoke the DX12 backend.";
 static const char* kStrErrorInvalidShaderModel = "Error: invalid shader model: ";
 static const char* kStrErrorHlslToDxilCompilationFailed1 = "Error: DXC HLSL->DXIL compilation of ";
@@ -126,6 +135,21 @@ static std::string GetShaderModelPrefix(BePipelineStage stage)
         break;
     }
     return ret;
+}
+
+// Filter out WithDll.exe's messages from the output unless in verbose mode (relevant to offline mode only).
+static void FilterWithDllOutput(const Config& config, std::string& out_text)
+{
+    if (!config.print_process_cmd_line && config.dx12_offline_session)
+    {
+        size_t line_start = out_text.find(kDx12OfflineBackendAscii);
+        while (line_start != std::string::npos)
+        {
+            size_t line_end = out_text.find('\n', line_start);
+            auto   iter     = out_text.erase(line_start, line_end - line_start + 1);
+            line_start      = out_text.find(kDx12OfflineBackendAscii);
+        }
+    }
 }
 
 static void FixIncludePath(const std::string& include_path, std::string& fixed_include_path)
@@ -513,31 +537,120 @@ bool BeUtils::IsNumericValue(const std::string& str)
         str.end(), [](char c) { return !std::isdigit(c); }) == str.end();
 }
 
-static beStatus InvokeDx12Backend(const std::string& cmd_line_options, bool should_print_cmd,
+static beStatus InvokeDx12Backend(const Config& config, const std::string& cmd_line_options, bool should_print_cmd,
     std::string& out_text, std::string& error_msg)
 {
+    beStatus ret = beStatus::kBeStatusSuccess;
+
     osFilePath dx12_backend_exe;
+    osFilePath dx12_offline_exe;
+    osFilePath dx12_kmtmuxer;
+    osFilePath dx12_amdxc_driver;
     long exit_code = 0;
 
+    // DX12 backend.
     osGetCurrentApplicationPath(dx12_backend_exe, false);
-    dx12_backend_exe.appendSubDirectory(DX12_BACKEND_DIR);
+    dx12_backend_exe.appendSubDirectory(kDx12BackendDir);
+    dx12_backend_exe.setFileName(kDx12BackendExe);
 
-    dx12_backend_exe.setFileName(DX12_BACKEND_EXE);
+    // DX12 offline invocation.
+    osGetCurrentApplicationPath(dx12_offline_exe, false);
+    dx12_offline_exe.appendSubDirectory(kDx12BackendDir);
+    dx12_offline_exe.setFileName(kDx12OfflineBackend);
 
     // Clear the error message buffer.
     error_msg.clear();
 
-    KcUtils::ProcessStatus status = KcUtils::LaunchProcess(dx12_backend_exe.asString().asASCIICharArray(),
-        cmd_line_options,
-        "",
-        kProcessWaitInfinite,
-        should_print_cmd,
-        out_text,
-        error_msg,
-        exit_code);
+    // If we are in an offline session, update the command accordingly.
+    std::string       cmd_line_updated;
+    std::stringstream cmd_update_stream;
 
-    assert(status == KcUtils::ProcessStatus::kSuccess);
-    return (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusdx12BackendLaunchFailure);
+    if (config.dx12_offline_session)
+    {
+        // Kmtmuxer.
+        osGetCurrentApplicationPath(dx12_kmtmuxer, false);
+        dx12_kmtmuxer.appendSubDirectory(kDx12BackendDir);
+        dx12_kmtmuxer.setFileName(kDx12OfflineKmtmuxer);
+        dx12_kmtmuxer.setFileExtension(L"dll");
+
+        // amdxc64 bundled driver.
+        bool is_alternative_driver_path_found = false;
+        if (!config.alternative_amdxc.empty())
+        {
+            // Use the user provided driver.
+            const char *kDx12DriverName = "amdxc64.dll";
+            is_alternative_driver_path_found = (config.alternative_amdxc.find(kDx12DriverName) != std::string::npos) &&
+                KcUtils::FileNotEmpty(config.alternative_amdxc);
+            if (!is_alternative_driver_path_found)
+            {
+                std::cout << "Warning: cannot find the provided alternative amdxc64.dll: " << config.alternative_amdxc << std::endl;
+                std::cout << "Warning: falling back to using the bundled driver." << std::endl;
+            }
+            else
+            {
+                gtString amdxc_path_gtstr;
+                amdxc_path_gtstr << config.alternative_amdxc.c_str();
+                dx12_amdxc_driver.setFullPathFromString(amdxc_path_gtstr);
+            }
+        }
+
+        if (!is_alternative_driver_path_found)
+        {
+            // Use the bundled driver.
+            osGetCurrentApplicationPath(dx12_amdxc_driver, false);
+            dx12_amdxc_driver.appendSubDirectory(kDx12AmdxcBundledDriverDir);
+            dx12_amdxc_driver.setFileName(kDx12AmdxcBundledDriver);
+            dx12_amdxc_driver.setFileExtension(L"dll");
+
+            is_alternative_driver_path_found = dx12_amdxc_driver.exists();
+            if (!is_alternative_driver_path_found)
+            {
+                std::cout << "Error: bundled DX12 driver (amdxc64.dll) is missing: " << dx12_amdxc_driver.asString().asASCIICharArray() << std::endl;
+                ret = beStatus::kBeStatusDx12AlternativeDriverMissing;
+            }
+        }
+
+        if (is_alternative_driver_path_found)
+        {
+            std::cout << "Info: in an offline session." << std::endl;
+
+            // Use kmtmuxer.
+            cmd_update_stream << " /d:\"" << dx12_kmtmuxer.asString().asASCIICharArray() << "\" ";
+
+            // Set the environment variable.
+            wchar_t* kKmtMuxerEnvVar = L"URSubDx12Path";
+            BOOL     rc              = SetEnvironmentVariable(kKmtMuxerEnvVar, dx12_amdxc_driver.asString().asCharArray());
+            std::cout << "Info: using amdxc64.dll from " << dx12_amdxc_driver.asString().asASCIICharArray() << std::endl;
+            assert(rc == TRUE);
+
+            // Append dx12_backend.exe to the command.
+            cmd_update_stream << kDx12BackendExeAscii << " " << cmd_line_options << " --offline ";
+        }
+    }
+    else
+    {
+        cmd_update_stream << cmd_line_options;
+    }
+    cmd_line_updated = cmd_update_stream.str().c_str();
+
+    if (ret == beStatus::kBeStatusSuccess)
+    {
+        const osFilePath&      backend_exe = (config.dx12_offline_session ? dx12_offline_exe : dx12_backend_exe);
+        std::stringstream      backend_exe_fixed;
+        backend_exe_fixed << "\"" << backend_exe.asString().asASCIICharArray() << "\"";
+        KcUtils::ProcessStatus status = KcUtils::LaunchProcess(backend_exe_fixed.str().c_str(), cmd_line_updated,
+            "", kProcessWaitInfinite, should_print_cmd, out_text, error_msg, exit_code);
+        assert(status == KcUtils::ProcessStatus::kSuccess);
+        ret = (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusdx12BackendLaunchFailure);
+
+        if (ret)
+        {
+            // Filter out WithDll.exe's messages from the output unless in verbose mode.
+            FilterWithDllOutput(config, out_text);
+        }
+    }
+
+    return ret;
 }
 
 static bool IsSupportedDevice(const std::string& device_name)
@@ -568,7 +681,10 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
 
     // Retrieve the list of targets.
     std::string supported_gpus;
-    beStatus ret = InvokeDx12Backend("-l", config.print_process_cmd_line, supported_gpus, errors);
+    BOOL rc = SetEnvironmentVariable(kStrEnvVarNameAmdVirtualGpuId, L"0");
+    assert(rc == TRUE);
+
+    beStatus ret = InvokeDx12Backend(config, "-l", config.print_process_cmd_line, supported_gpus, errors);
     assert(ret = beStatus::kBeStatusSuccess);
     assert(!supported_gpus.empty());
     if ((ret == beStatus::kBeStatusSuccess) && !supported_gpus.empty())
@@ -583,7 +699,7 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
             // then they would be passed to the code that compares them to known gpu names and filters as necessary.
             for (const std::string& driver_name : split_gpu_names)
             {
-                if (IsSupportedDevice(driver_name))
+                if (driver_name.find("withdll") == std::string::npos && IsSupportedDevice(driver_name))
                 {
                     // Break by ':'.
                     std::vector<std::string> split_names_colon;
@@ -769,7 +885,6 @@ bool BeProgramBuilderDx12::EnableNullBackendForDevice(const Config& config, cons
         assert(!code_name_to_driver_id_.empty());
         if (!code_name_to_driver_id_.empty())
         {
-            const wchar_t* kStrEnvVarNameAmdVirtualGpuId = L"AmdVirtualGpuId";
             std::string target_device_lower = device_name;
             std::transform(target_device_lower.begin(), target_device_lower.end(),
                 target_device_lower.begin(), ::tolower);
@@ -788,8 +903,14 @@ bool BeProgramBuilderDx12::EnableNullBackendForDevice(const Config& config, cons
             }
             else
             {
-                std::cout << kStrErrorNoSupportedTarget1 <<
-                    device_name << kStrErrorNoSupportedTarget2 << std::endl;
+                std::cout << kStrErrorNoSupportedTarget1 << device_name << kStrErrorNoSupportedTarget2;
+                if (config.asics.empty())
+                {
+                    // If this is the default device, the user needs to install the latest AMD drivers.
+                    std::cout << kStrErrorNoSupportedTargetHintInstallDriver;
+                }
+
+                std::cout << std::endl  << kStrErrorNoSupportedTargetHintRetrieveDx12Targets << std::endl;
             }
         }
         else
@@ -805,9 +926,9 @@ bool BeProgramBuilderDx12::EnableNullBackendForDevice(const Config& config, cons
     return ret;
 }
 
-beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config, const std::string& target_device,
-    std::string& out_text, std::string& error_msg, BeVkPipelineFiles& generated_isa_files,
-    BeVkPipelineFiles& generated_stats_files, std::string& generated_binary_files)
+beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
+ const std::string& target_device, std::string& out_text, std::string& error_msg, BeVkPipelineFiles& generated_isa_files,
+    BeVkPipelineFiles& generated_amdil_files, BeVkPipelineFiles& generated_stats_files, std::string& generated_binary_files)
 {
     beKA::beStatus ret = beStatus::kBeStatusInvalid;
     bool rc = EnableNullBackendForDevice(config, target_device);
@@ -1060,6 +1181,24 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config, const std::st
                         }
                     }
 
+                    // AMDIL files.
+                    if (!config.il_file.empty())
+                    {
+                        bool isFileNameConstructed = KcUtils::ConstructOutFileName(config.il_file,
+                            STR_DX12_STAGE_SUFFIX[stage], target_device_lower, "amdil", generated_amdil_files[stage]);
+                        assert(isFileNameConstructed);
+                        if (isFileNameConstructed && !generated_amdil_files[stage].empty())
+                        {
+                            cmd << " --" << STR_DX12_STAGE_SUFFIX[stage] << "-amdil " << "\"" << generated_amdil_files[stage] << "\" ";
+
+                            // Delete that file if it already exists.
+                            if (BeUtils::IsFilePresent(generated_amdil_files[stage]))
+                            {
+                                BeUtils::DeleteFileFromDisk(generated_amdil_files[stage]);
+                            }
+                        }
+                    }
+
                     // Statistics files.
                     if (!config.analysis_file.empty())
                     {
@@ -1147,7 +1286,7 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config, const std::st
             AddDebugLayerCommand(config, cmd);
 
             // Invoke the backend to perform the actual build.
-            ret = InvokeDx12Backend(cmd.str().c_str(), config.print_process_cmd_line, out_text, error_msg);
+            ret = InvokeDx12Backend(config, cmd.str().c_str(), config.print_process_cmd_line, out_text, error_msg);
             assert(ret == kBeStatusSuccess);
             if (ret == kBeStatusSuccess)
             {
@@ -1201,7 +1340,8 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config, const std::st
     return ret;
 }
 
-beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config& config, const std::string& target_device,
+beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&                      config,
+                                                        const std::string&                 target_device,
     std::string& out_text, std::vector<RgDxrPipelineResults>& output_mapping, std::string& error_msg)
 {
     beKA::beStatus ret = beStatus::kBeStatusInvalid;
@@ -1282,12 +1422,12 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config& config, co
             if (config.dxr_hlsl.empty())
             {
                 // State description file.
-                cmd << "--state-desc " << config.dxr_state_desc;
+                cmd << "--state-desc " << "\"" << config.dxr_state_desc << "\"";
             }
             else
             {
                 // HLSL input file.
-                cmd << "--hlsl " << config.dxr_hlsl;
+                cmd << "--hlsl " << "\"" << config.dxr_hlsl << "\"";
             }
 
             // Mode.
@@ -1295,7 +1435,7 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config& config, co
 
             // Metadata output file, generate a temporary file for that.
             std::string metadata_filename = KcUtils::ConstructTempFileName("rga-dxr-output", kStrDefaultExtensionText);
-            cmd << "--output-metadata " << metadata_filename << " ";
+            cmd << "--output-metadata " << "\"" << metadata_filename << "\"" << " ";
 
             for (const std::string& currExport : config.dxr_exports)
             {
@@ -1405,12 +1545,13 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config& config, co
             AddDebugLayerCommand(config, cmd);
 
             // Invoke the backend to perform the actual build.
-            ret = InvokeDx12Backend(cmd.str().c_str(), config.print_process_cmd_line, out_text, error_msg);
+            ret = InvokeDx12Backend(config, cmd.str().c_str(), config.print_process_cmd_line, out_text, error_msg);
             assert(ret == kBeStatusSuccess);
             if (ret == kBeStatusSuccess)
             {
                 bool is_success = out_text.find(kStrDx12TokenBackendErrorToken) == std::string::npos &&
                     error_msg.find(kStrDx12TokenBackendErrorToken) == std::string::npos;
+
                 if (is_success)
                 {
                     if (KcUtils::FileNotEmpty(metadata_filename))

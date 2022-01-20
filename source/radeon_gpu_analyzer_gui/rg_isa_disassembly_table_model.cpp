@@ -12,8 +12,10 @@
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_output_file_utils.h"
 #include "radeon_gpu_analyzer_gui/rg_config_manager.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "ui_rg_isa_disassembly_table_view.h"
@@ -38,6 +40,7 @@ RgIsaDisassemblyTableModel::RgIsaDisassemblyTableModel(uint32_t model_count, QWi
     isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kFunctionalUnit), new QStandardItem(kStrDisassemblyTableColumnFunctionalUnit));
     isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCycles),         new QStandardItem(kStrDisassemblyTableColumnCycles));
     isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kBinaryEncoding), new QStandardItem(kStrDisassemblyTableColumnBinaryEncoding));
+    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kLiveVgprs),      new QStandardItem(kStrDisassemblyTableLiveVgprs));
 }
 
 const std::vector<int>& RgIsaDisassemblyTableModel::GetCorrelatedLineIndices() const
@@ -71,13 +74,13 @@ void RgIsaDisassemblyTableModel::GetLabelNameToLineIndexMap(std::map<std::string
     for (int line_index = 0; line_index < num_lines; ++line_index)
     {
         std::shared_ptr<RgIsaLine> current_line = disassembled_isa_lines_[line_index];
-        if (current_line->type_ == RgIsaLineType::kLabel)
+        if (current_line->type == RgIsaLineType::kLabel)
         {
             // Cast the line into a label line.
             std::shared_ptr<RgIsaLineLabel> label_line = std::static_pointer_cast<RgIsaLineLabel>(current_line);
 
             // Extract the label name and insert into the output map.
-            std::string label_name = label_line->label_name_;
+            std::string label_name = label_line->label_name;
             link_labels[label_name] = line_index;
         }
     }
@@ -90,13 +93,13 @@ void RgIsaDisassemblyTableModel::GetLineIndexToLabelNameMap(std::map<int, std::s
     for (int line_index = 0; line_index < num_lines; ++line_index)
     {
         std::shared_ptr<RgIsaLine> current_line = disassembled_isa_lines_[line_index];
-        if (current_line->type_ == RgIsaLineType::kInstruction)
+        if (current_line->type == RgIsaLineType::kInstruction)
         {
             // Look for branch instructions, and extract the destination from the operands text.
             std::shared_ptr<RgIsaLineInstruction> instruction_line = std::static_pointer_cast<RgIsaLineInstruction>(current_line);
-            if (instruction_line->functional_unit_.compare("Branch") == 0)
+            if (instruction_line->functional_unit.compare("Branch") == 0)
             {
-                std::string jump_destination = instruction_line->operands_;
+                std::string jump_destination = instruction_line->operands;
                 link_labels[line_index] = jump_destination;
             }
         }
@@ -136,13 +139,13 @@ void RgIsaDisassemblyTableModel::InsertLabelRows()
     {
         std::shared_ptr<RgIsaLine> isa_line = disassembled_isa_lines_[row_index];
 
-        if (isa_line->type_ == RgIsaLineType::kLabel)
+        if (isa_line->type == RgIsaLineType::kLabel)
         {
             // Cast into a RgIsaLineLabel to extract the label name.
             std::shared_ptr<RgIsaLineLabel> label_line = std::static_pointer_cast<RgIsaLineLabel>(isa_line);
 
             // Add the label text to the model.
-            SetTableModelText(label_line->label_name_, row_index, label_column_index_);
+            SetTableModelText(label_line->label_name, row_index, label_column_index_);
 
             // Set the background color to yellow to make the label stand out more.
             SetTableModelBackgroundColor(kBranchLabelBackgroundColor, row_index, label_column_index_);
@@ -164,13 +167,13 @@ bool RgIsaDisassemblyTableModel::IsBranchOperandItem(const QModelIndex& model_in
     std::shared_ptr<RgIsaLine> isa_line = disassembled_isa_lines_[row_index];
 
     // Determine what kind of instruction is represented in this row.
-    if (isa_line->type_ == RgIsaLineType::kInstruction)
+    if (isa_line->type == RgIsaLineType::kInstruction)
     {
         // Cast the line to access the instruction data.
         std::shared_ptr<RgIsaLineInstruction> instruction_line = std::static_pointer_cast<RgIsaLineInstruction>(isa_line);
 
         // Is this a branch instruction?
-        if (instruction_line->functional_unit_.compare("Branch") == 0)
+        if (instruction_line->functional_unit.compare("Branch") == 0)
         {
             // Is the given index in the Operands column? That's the column a label needs to be painted in.
             int column_index = model_index.column();
@@ -242,15 +245,73 @@ bool RgIsaDisassemblyTableModel::IsSourceLineInEntrypoint(int line_index) const
 bool RgIsaDisassemblyTableModel::PopulateFromCsvFile(const std::string& csv_file_full_path)
 {
     // Attempt to load the CSV file, and then update the model's data.
-    bool is_data_loaded = LoadCsvData(csv_file_full_path);
-    assert(is_data_loaded);
-    if (is_data_loaded)
+    bool status = LoadCsvData(csv_file_full_path);
+    assert(status);
+
+    return status;
+}
+
+bool RgIsaDisassemblyTableModel::LoadLiveVgprsData(const std::string& live_vgpr_file_full_path)
+{
+    bool status = false;
+
+    // If the live vgpr file is not empty, attempt to load it, and then update the model's data.
+    if (!live_vgpr_file_full_path.empty())
     {
-        // Initialize the model using the CSV data that was just loaded.
-        InitializeModelData();
+        // Parse the live VGPR data.
+        status = RgOutputFileUtils::ParseLiveVgprsData(live_vgpr_file_full_path,
+                                                       disassembled_isa_lines_,
+                                                       vgpr_isa_lines_,
+                                                       vgpr_file_lines_,
+                                                       livereg_data_);
+        assert(status);
+
+        // Populate the view with live VGPR data.
+        PopulateLiveVgprData();
     }
 
-    return is_data_loaded;
+    return status;
+}
+
+void RgIsaDisassemblyTableModel::PopulateLiveVgprData()
+{
+    // Update the table header to show the max number of VGPRs used.
+    QStandardItem* item = isa_table_model_->horizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kLiveVgprs));
+    assert(item != nullptr);
+    if (item != nullptr)
+    {
+        QString max_string = QString(kStrDisassemblyTableLiveVgprs)
+                                 .arg(QString::number(livereg_data_.used))
+                                 .arg(QString::number(livereg_data_.allocated) + "/" + QString::number(livereg_data_.total_vgprs));
+        item->setText(max_string);
+
+        // Show the hazard icon if we've hit more than the max live VGPRs.
+        if (livereg_data_.max_vgprs >= livereg_data_.total_vgprs)
+        {
+            // Add the VGPR notification icon.
+            item->setIcon(QIcon(kIconMaxVgprNotification));
+
+            // Add a tooltip to the VGPR column.
+            item->setToolTip(QString(kLiveVgprMaxVgprTooltip));
+        }
+
+        // Show the warning icon and a tooltip if instructions did not match.
+        if (livereg_data_.unmatched_count > 0)
+        {
+            // Add the VGPR notification icon.
+            item->setIcon(QIcon(kIconMaxVgprNoIsaMatch));
+
+            // Add a tooltip to the VGPR column.
+            item->setToolTip(QString(kLiveVgprNATooltip).arg(livereg_data_.unmatched_count));
+        }
+
+        assert(isa_table_model_ != nullptr);
+        if (isa_table_model_ != nullptr)
+        {
+            // Set the Live VGPR column header.
+            isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kLiveVgprs), item);
+        }
+    }
 }
 
 bool RgIsaDisassemblyTableModel::SetCorrelatedSourceLineIndex(int line_index)
@@ -406,6 +467,11 @@ void RgIsaDisassemblyTableModel::SetTableModelText(const std::string& model_text
     isa_table_model_->setData(isa_table_model_->index(row_index, column_index), Qt::AlignLeft, Qt::TextAlignmentRole);
 }
 
+void RgIsaDisassemblyTableModel::SetTableModelTooltip(const std::string& model_text, uint row_index, uint column_index)
+{
+    isa_table_model_->setData(isa_table_model_->index(row_index, column_index), QString(model_text.c_str()), Qt::ToolTipRole);
+}
+
 void RgIsaDisassemblyTableModel::SetTableModelTextColor(const QColor& model_color, uint row_index)
 {
     // Set the table's model color for each column in the given row.
@@ -490,7 +556,8 @@ bool RgIsaDisassemblyTableModel::ParseCsvIsaLine(const std::string& disassembled
         {
             // This line is a label line that indicates a new section of instructions.
             std::shared_ptr<RgIsaLineLabel> label_line = std::make_shared<RgIsaLineLabel>();
-            label_line->label_name_ = line_tokens[0];
+            label_line->label_name = line_tokens[0];
+            label_line->type       = RgIsaLineType::kLabel;
 
             // The line was parsed successfully.
             parsed_line = std::static_pointer_cast<RgIsaLine>(label_line);
@@ -503,12 +570,12 @@ bool RgIsaDisassemblyTableModel::ParseCsvIsaLine(const std::string& disassembled
             std::shared_ptr<RgIsaLineInstruction> instruction_line = std::make_shared<RgIsaLineInstruction>();
 
             // Assign the values into the instruction line object.
-            instruction_line->address_             = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kAddress)];
-            instruction_line->opcode_              = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kOpcode)];
-            instruction_line->operands_            = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kOperands)];
-            instruction_line->functional_unit_      = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kFunctionalUnit)];
-            instruction_line->cycles_              = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kCycles)];
-            instruction_line->binary_encoding_      = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kBinaryEncoding)];
+            instruction_line->address             = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kAddress)];
+            instruction_line->opcode              = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kOpcode)];
+            instruction_line->operands            = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kOperands)];
+            instruction_line->functional_unit     = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kFunctionalUnit)];
+            instruction_line->cycles              = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kCycles)];
+            instruction_line->binary_encoding     = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kBinaryEncoding)];
 
             // Extract the source line number as an integer.
             input_source_line_index = std::stoi(line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kSourceLineNumber)].c_str());
@@ -534,7 +601,7 @@ void RgIsaDisassemblyTableModel::ClearLabelLines()
     for (int row_index = 0; row_index < row_count; ++row_index)
     {
         std::shared_ptr<RgIsaLine> isa_line = disassembled_isa_lines_[row_index];
-        if (isa_line->type_ == RgIsaLineType::kLabel)
+        if (isa_line->type == RgIsaLineType::kLabel)
         {
             // Add the label text to the model.
             SetTableModelText("", row_index, label_column_index_);
@@ -557,7 +624,7 @@ void RgIsaDisassemblyTableModel::GetColumnMaxWidths(const QVector<int>& selected
             {
                 foreach (auto row, selected_row_numbers)
                 {
-                    if (disassembled_isa_lines_[row]->type_ == RgIsaLineType::kInstruction)
+                    if (disassembled_isa_lines_[row]->type == RgIsaLineType::kInstruction)
                     {
                         QVariant  call_text = isa_table_model_->data(isa_table_model_->index(row, col));
                         max_width = std::max(max_width, call_text.toString().size());
@@ -587,7 +654,7 @@ void RgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selecte
     {
         // Is the current row an instruction or a label?
         std::shared_ptr<RgIsaLine> isa_line = disassembled_isa_lines_[row_index];
-        if (isa_line->type_ == RgIsaLineType::kInstruction)
+        if (isa_line->type == RgIsaLineType::kInstruction)
         {
             bool is_first_token_in_line = true;
             std::string  prev_column_text = "";
@@ -638,7 +705,7 @@ void RgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selecte
                                 assert(instruction_line != nullptr);
                                 if (instruction_line != nullptr)
                                 {
-                                    cell_text = QString::fromStdString(instruction_line->operands_);
+                                    cell_text = QString::fromStdString(instruction_line->operands);
                                 }
                             }
                         }
@@ -649,7 +716,7 @@ void RgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selecte
                 }
             }
         }
-        else if (isa_line->type_ == RgIsaLineType::kLabel)
+        else if (isa_line->type == RgIsaLineType::kLabel)
         {
             // Extract the label text from whatever column the label is in.
             QModelIndex cell_index = isa_table_model_->index(row_index, label_column_index_);
@@ -679,28 +746,77 @@ void RgIsaDisassemblyTableModel::InitializeModelData()
     {
         std::shared_ptr<RgIsaLine> isa_line = disassembled_isa_lines_[line_index];
 
-        if (isa_line->type_ == RgIsaLineType::kInstruction)
+        if (isa_line->type == RgIsaLineType::kInstruction)
         {
             std::shared_ptr<RgIsaLineInstruction> instruction_line = std::static_pointer_cast<RgIsaLineInstruction>(isa_line);
 
             // Update the model cells with data from each disassembled ISA instruction line.
-            SetTableModelText(instruction_line->address_,          line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress));
-            SetTableModelText(instruction_line->opcode_,           line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOpcode));
-            SetTableModelText(instruction_line->functional_unit_,   line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kFunctionalUnit));
-            SetTableModelText(instruction_line->cycles_,           line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCycles));
-            SetTableModelText(instruction_line->binary_encoding_,   line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kBinaryEncoding));
+            SetTableModelText(instruction_line->address,            line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress));
+            SetTableModelText(instruction_line->opcode,             line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOpcode));
+            SetTableModelText(instruction_line->functional_unit,    line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kFunctionalUnit));
+            SetTableModelText(instruction_line->cycles,             line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCycles));
+            SetTableModelText(instruction_line->binary_encoding,    line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kBinaryEncoding));
+            SetTableModelText(instruction_line->num_live_registers, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kLiveVgprs));
 
-            // Branch instructions are rendered with a separate delegate, so we don't need add them to the table model.
-            if (instruction_line->functional_unit_.compare("Branch") != 0)
+            // Set the tooltip for the live VGPR cell.
+            std::string tooltip;
+            CreateTooltip(tooltip, instruction_line->num_live_registers);
+            SetTableModelTooltip(tooltip, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kLiveVgprs));
+
+            // Branch instructions are rendered with a separate delegate, so we don't need to add them to the table model.
+            if (instruction_line->functional_unit.compare("Branch") != 0)
             {
-                SetTableModelText(instruction_line->operands_, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOperands));
+                SetTableModelText(instruction_line->operands, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOperands));
             }
 
             // The functional unit column's text color is based on value.
-            QColor text_color = GetFunctionalUnitColor(instruction_line->functional_unit_);
+            QColor text_color = GetFunctionalUnitColor(instruction_line->functional_unit);
             SetTableModelTextColor(text_color, line_index);
+        }
+        else if (isa_line->type == RgIsaLineType::kLabel)
+        {
+        	// Get the instruction line.
+            std::shared_ptr<RgIsaLine>            isa_line         = disassembled_isa_lines_[line_index];
+            std::shared_ptr<RgIsaLineInstruction> instruction_line = std::static_pointer_cast<RgIsaLineInstruction>(isa_line);
+
+            // Update the model cells with data from each disassembled ISA instruction line.
+            SetTableModelText(instruction_line->num_live_registers, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kLiveVgprs));
         }
     }
 
     InsertLabelRows();
+}
+
+void RgIsaDisassemblyTableModel::CreateTooltip(std::string& tooltip, const std::string& num_live_registers) const
+{
+    // Extract live VGPRs and granularity values.
+    QStringList values     = QString::fromStdString(num_live_registers).split(",");
+
+    // Verify the split.
+    if (values.size() == 2)
+    {
+        int used                   = values.at(0).toInt();
+        int block_allocation_value = values.at(1).toInt();
+        int allocated              = 0;
+        int reduction              = 0;
+
+        assert(block_allocation_value != 0);
+        if (block_allocation_value != 0)
+        {
+            // Calculate various values.
+            if (used % block_allocation_value == 0)
+            {
+                allocated = used;
+                tooltip   = QString(kLiveVgprTooltip1).arg(used).arg(allocated).arg(livereg_data_.total_vgprs).toStdString();
+            }
+            else
+            {
+                allocated = ((used / block_allocation_value) + 1) * block_allocation_value;
+                reduction = used % block_allocation_value;
+                tooltip   = (QString(kLiveVgprTooltip1).arg(used).arg(allocated).arg(livereg_data_.total_vgprs) +
+                           QString(kLiveVgprTooltip2).arg(reduction).arg(block_allocation_value).arg(block_allocation_value))
+                              .toStdString();
+            }
+        }
+    }
 }

@@ -7,6 +7,9 @@
 // Infra.
 #include "QtCommon/Util/ModelViewMapper.h"
 
+// Local.
+#include "radeon_gpu_analyzer_gui/qt/rg_output_file_utils.h"
+
 // Forward declarations.
 class QStandardItemModel;
 
@@ -16,6 +19,7 @@ enum class RgIsaDisassemblyTableColumns
     kAddress,
     kOpcode,
     kOperands,
+    kLiveVgprs,
     kFunctionalUnit,
     kCycles,
     kBinaryEncoding,
@@ -76,8 +80,14 @@ public:
     // Populate the model by loading a disassembly CSV file.
     bool PopulateFromCsvFile(const std::string& csv_file_full_path);
 
+     // Load the data in the given live VGPR file into the model.
+    bool LoadLiveVgprsData(const std::string& live_vgpr_file_full_path);
+
     // Set the correlated input source line index to highlight.
     bool SetCorrelatedSourceLineIndex(int line_index);
+
+    // Initialize the model's data with the disassembled instruction lines.
+    void InitializeModelData();
 
 protected:
     // An enumeration specifying each column we expect to find in an ISA CSV file.
@@ -91,61 +101,6 @@ protected:
         kCycles,
         kBinaryEncoding,
         kCount
-    };
-
-    // An enumeration used to classify different types of parsed disassembly lines.
-    enum class RgIsaLineType
-    {
-        kInstruction,
-        kLabel
-    };
-
-    // A simple data class used as a common base for storing lines parsed from a disassembly CSV file.
-    class RgIsaLine
-    {
-    public:
-        // A constructor used to initialize the type of disassembled instruction.
-        RgIsaLine(RgIsaLineType line_type) : type_(line_type) {}
-
-        // The type of line parsed from the disassembly file.
-        RgIsaLineType type_;
-    };
-
-    // A class used to store a disassembled instruction line.
-    class RgIsaLineInstruction : public RgIsaLine
-    {
-    public:
-        // A constructor used to initialize the line type.
-        RgIsaLineInstruction() : RgIsaLine(RgIsaLineType::kInstruction) {}
-
-        // The instruction address within the disassembled binary.
-        std::string address_;
-
-        // The instruction opcode.
-        std::string opcode_;
-
-        // The instruction operands.
-        std::string operands_;
-
-        // The cycle count of the instruction.
-        std::string cycles_;
-
-        // The functional unit responsible for execution.
-        std::string functional_unit_;
-
-        // The hex representation of the instruction.
-        std::string binary_encoding_;
-    };
-
-    // A class used to store a disassembly line label.
-    class RgIsaLineLabel : public RgIsaLine
-    {
-    public:
-        // A constructor used to initialize the line type.
-        RgIsaLineLabel() : RgIsaLine(RgIsaLineType::kLabel) {}
-
-        // The name of the label, if applicable.
-        std::string label_name_;
     };
 
     // Retrieve the list of disassembled instruction lines associated with the given input source line number.
@@ -163,6 +118,9 @@ protected:
     // Set the model's cell text.
     void SetTableModelText(const std::string& model_text, uint row_index, uint column_index);
 
+    // Set the model's cell tooltip.
+    void SetTableModelTooltip(const std::string& model_text, uint row_index, uint column_index);
+
     // Set the model's cell text foreground color.
     void SetTableModelTextColor(const QColor& model_color, uint row_index);
 
@@ -172,12 +130,15 @@ protected:
     // Parse an instruction line from an ISA disassembly CSV file.
     bool ParseCsvIsaLine(const std::string& disassembled_line, std::shared_ptr<RgIsaLine>& parsed_line, int& input_source_line_index);
 
-    // Initialize the model's data with the disassembled instruction lines.
-    void InitializeModelData();
-
     // Get the maximum text length for each column in the ISA region from start_row to EndRow.
     // The values of maximum width for all visible columns are added to the "widths" vector.
     void GetColumnMaxWidths(const QVector<int>& selected_row_numbers, std::vector<int>& widths) const;
+
+    // Populate the view with live VGPR data.
+    void PopulateLiveVgprData();
+
+    // Create the tooltip for live VGPR column.
+    void CreateTooltip(std::string& tooltip, const std::string& num_live_registers) const;
 
     // A vector of all disassembled instructions loaded from file.
     std::vector<std::shared_ptr<RgIsaLine>> disassembled_isa_lines_;
@@ -187,6 +148,9 @@ protected:
 
     // A map of input source file line index to a list of assembly instruction line indices.
     std::map<int, std::vector<int>> input_source_line_index_to_instruction_line_indices_;
+
+    // A structure to hold all the live vgpr data parsed from output file.
+    RgLiveregData livereg_data_ = {};
 
     // The entrypoint's start line number in the input source file.
     int source_file_entrypoint_start_line_ = INT_MAX;
@@ -202,5 +166,11 @@ protected:
 
     // The model containing the data used to populate the ISA disassembly table.
     QStandardItemModel* isa_table_model_ = nullptr;
+
+    // A vector for VGPR output file ISA lines.
+    std::vector<std::shared_ptr<RgIsaLineInstruction>> vgpr_isa_lines_;
+
+    // A vector for VGPR output file lines.
+    std::vector<QString> vgpr_file_lines_;
 };
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_TABLE_MODEL_H_

@@ -1,12 +1,6 @@
 build/CMake
 build/windows
 build/linux
-external/dx10_asm/lib/VS2015/Win32/Release*
-external/dx10_asm/lib/VS2015/x64
-external/dxc/dxcompiler.dll
-external/lc/disassembler
-external/vulkan/tools/windows/lib/Debug
-external/vulkan_offline
 Output
 .vscode
 Output_Test
@@ -17,3 +11,4 @@ documentation/build
 obj
 build/__pycache__
 external/code_sanitizer
+*.pyc

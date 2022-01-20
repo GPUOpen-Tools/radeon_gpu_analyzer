@@ -13,7 +13,7 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include <AMDTBaseTools/Include/gtString.h>
+#include <external/amdt_base_tools/Include/gtString.h>
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -74,6 +74,13 @@ struct BeVkPhysAdapterInfo
     std::string  name;
     std::string  vk_driver_version;
     std::string  vk_api_version;
+};
+
+enum beWaveSize
+{
+    kUnknown = 0,
+    kWave32,
+    kWave64
 };
 
 #endif // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_DATA_TYPES_H_

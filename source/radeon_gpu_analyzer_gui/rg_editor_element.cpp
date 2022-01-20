@@ -33,22 +33,22 @@ static const int kValueColumnPosition = 180;
 static const QString kStrRowStylesheet =
 "*                                                                      \
 {                                                                       \
-    background-color: rgb(255, 128 255, 255);                           \
+    background-color: rgba(255, 128 255, 255);                           \
 }                                                                       \
                                                                         \
 *[selected=true]                                                        \
 {                                                                       \
-    background-color: rgb(255, 255, 178, 255);                          \
+    background-color: rgba(255, 255, 178, 255);                          \
 }                                                                       \
                                                                         \
 *[resultOccurrence=true][currentResult=false][selected=false]           \
 {                                                                       \
-    background-color: rgb(192, 192, 192, 255);                          \
+    background-color: rgba(192, 192, 192, 255);                          \
 }                                                                       \
                                                                         \
 *[currentResult=true]                                                   \
 {                                                                       \
-    background-color: rgb(255, 255, 178, 255);                          \
+    background-color: rgba(255, 255, 178, 255);                          \
 }                                                                       \
 ";
 

@@ -48,6 +48,7 @@ static const char* kStrCliOptVulkanSpvDis = "--disassemble-spv";
 static const char* kStrCliOptSessionMetadata = "--session-metadata";
 static const char* kStrCliOptIsa = "--isa";
 static const char* kStrCliOptParseIsa = "--parse-isa";
+static const char* kStrCliOptLivereg  = "--livereg";
 static const char* kStrCliOptLineNumbers = "--line-numbers";
 static const char* kStrCliOptStatistics = "--analysis";
 static const char* kStrCliOptBinary = "-b";
@@ -80,7 +81,7 @@ static const char* kStrCliDescAlternativeLightningCompilerLibFolder = "Path to a
                                                           "oclc_isa_version_902.amdgcn.bc, oclc_isa_version_904.amdgcn.bc, oclc_isa_version_906.amdgcn.bc, \n"
                                                           "oclc_isa_version_908.amdgcn.bc, oclc_isa_version_909.amdgcn.bc, oclc_isa_version_90a.amdgcn.bc, \n"
                                                           "oclc_isa_version_90c.amdgcn.bc, oclc_unsafe_math_off.amdgcn.bc, oclc_unsafe_math_on.amdgcn.bc, \n"
-                                                          "oclc_wavefrontsize64_off.amdgcn.bc, oclc_wavefrontsize64_on.amdgcn.bc, \n"
+                                                          "oclc_isa_version_1034.amdgcn.bc, oclc_wavefrontsize64_off.amdgcn.bc, oclc_wavefrontsize64_on.amdgcn.bc, \n"
                                                           "ocml.amdgcn.bc, opencl.amdgcn.bc";
 static const char* kStrCliDescAlternativeVkBinFolder = "Path to alternative compiler's binaries folder. The following executables are expected\n"
                                                         "to be in this folder: glslangValidator, spirv-as, spirv-dis. If given, this package would be\n"

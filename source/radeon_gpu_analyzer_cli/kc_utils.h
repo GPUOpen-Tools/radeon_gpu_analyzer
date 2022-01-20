@@ -14,7 +14,7 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTBaseTools/Include/gtString.h"
+#include "external/amdt_base_tools/Include/gtString.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -122,7 +122,8 @@ public:
     static bool PerformLiveRegisterAnalysis(const gtString&         isa_filename,
                                             const gtString&         target,
                                             const gtString&         output_filename,
-                                            LoggingCallbackFunction callback, bool print_cmd);
+                                            LoggingCallbackFunction callback, bool print_cmd,
+                                            beWaveSize        wave_size = beWaveSize::kUnknown);
 
     // Performs live register analysis for the ISA in the given file, and dumps
     // the output to the given output file name.
@@ -301,9 +302,18 @@ public:
     // Returns file extension.
     static std::string GetFileExtension(const std::string& file_path);
 
-    // Set environment variable varName to varValue.
+    // Set environment variable var_name to var_value.
     // Returns true on success, false otherwise.
     static bool SetEnvrironmentVariable(const::std::string& var_name, const std::string var_value);
+
+    // Read the value of an environment variable var_name into var_value.
+    // Returns true on success, false otherwise.
+    static bool ReadEnvrironmentVariable(const ::std::string& var_name, std::string& var_value);
+
+#ifdef _WIN32
+    // Updates the Windows PATH environment variable by prepending the RGA top folder to it.
+    static bool UpdatePathEnvVar();
+#endif  // _WIN32
 
     // Checks for available updates.
     static void CheckForUpdates();
@@ -313,6 +323,9 @@ public:
 
     // Returns true if the target is Navi21 or beyond and false otherwise.
     static bool IsNavi21AndBeyond(const std::string& target_name);
+
+    // Returns true if the target is Navi21 otherwise.
+    static bool IsNavi21(const std::string& target_name);
 
     // Returns true if the target is of the Vega generation and false otherwise.
     static bool IsVegaTarget(const std::string& target_name);

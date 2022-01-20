@@ -43,7 +43,7 @@ set(Qt5_ROOT_DIR "${Qt5_LIB_DIR}/..")
 add_definitions(-DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC)
 
 # Add UpdateCheckAPI
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/Src/UpdateCheckAPI UpdateCheckAPI)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../../../Common/Src/update_check_api update_check_api)
 
 # Include folders
 include_directories("${PROJECT_SOURCE_DIR}/")
@@ -56,6 +56,7 @@ include_directories("${PROJECT_SOURCE_DIR}/../../../")
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/")
 include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src")
+include_directories("${PROJECT_SOURCE_DIR}/../../external")
 include_directories("${PROJECT_SOURCE_DIR}/../../")
 include_directories("${PROJECT_SOURCE_DIR}/../common")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/third-party")

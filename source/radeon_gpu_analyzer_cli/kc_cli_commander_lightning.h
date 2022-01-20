@@ -85,9 +85,6 @@ private:
     // Perform live VGPR analysis.
     bool  PerformLiveRegAnalysis(const Config& config);
 
-    // Perform stall analysis.
-    bool  PerformStallAnalysis(const Config& config);
-
     // Extract program Control Flow Graph.
     bool  ExtractCFG(const Config& config);
 

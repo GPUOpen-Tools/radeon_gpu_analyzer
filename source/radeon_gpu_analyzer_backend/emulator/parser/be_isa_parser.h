@@ -58,10 +58,6 @@ public:
     bool SplitIsaLine(const std::string& isa_source_code_line, std::string& instruction_opcode,
         std::string& params, std::string& binary_representation, std::string& offset) const;
 
-    // Extracts the statistics from ISA that was produced from HSAIL-path compilation.
-    // hsailIsa - the disassembled ISA (which was produced from HSAIL-path compilation).
-    static bool ParseHsailStatistics(const std::string& hsailIsa, beKA::AnalysisData& stats);
-
     // Get all ISA instructions for the program.
     const std::vector<Instruction*>& GetInstructions() const { return instructions_;}
 
@@ -79,10 +75,6 @@ private:
 
     // Parse the ISA disassembly line by line, and store the instructions internally.
     bool ParseToVector(const std::string& isa);
-
-    // Extracts a numeric value from an ISA string that was produced from HSAIL path.
-    static void ExtractHsailIsaNumericValue(const std::string& hsail_isa,
-        const std::string value_token, CALuint64& value_buffer);
 
     unsigned int sgprs_ = 0;
     unsigned int vgprs_ = 0;

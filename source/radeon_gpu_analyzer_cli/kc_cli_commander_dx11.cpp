@@ -8,8 +8,8 @@
 #pragma warning(push)
 #pragma warning(disable:4309)
 #endif
-#include "AMDTBaseTools/Include/gtString.h"
-#include "AMDTBaseTools/Include/gtAssert.h"
+#include "external/amdt_base_tools/Include/gtString.h"
+#include "external/amdt_base_tools/Include/gtAssert.h"
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
@@ -178,26 +178,6 @@ void KcCliCommanderDX::ExtractISA(const string& device_name, const Config& confi
                 // Call the kcUtils routine to analyze <generatedFileName> and write the analysis file.
                 KcUtils::PerformLiveRegisterAnalysis(isa_output_filename.asASCIICharArray(), device_name, liveRegAnalysisOutputFileName.asASCIICharArray(),
                     log_callback_, config.print_process_cmd_line);
-            }
-
-            if (!config.stall_analysis_file.empty())
-            {
-                if (KcUtils::IsNaviTarget(device_name))
-                {
-                    // Perform the stall analysis.
-                    gtString stallAnalysisOutputFileName;
-                    KcUtils::ConstructOutputFileName(config.stall_analysis_file, kStrDefaultExtensionStalls,
-                        kStrDefaultExtensionText, config.function,
-                        device_name, stallAnalysisOutputFileName);
-
-                    // Call the kcUtils routine to analyze <generatedFileName> and write the analysis file.
-                    KcUtils::PerformStallAnalysis(isa_output_filename.asASCIICharArray(), device_name, stallAnalysisOutputFileName.asASCIICharArray(),
-                        log_callback_, config.print_process_cmd_line);
-                }
-                else
-                {
-                    std::cout << kStrWarningStallAnalysisNotSupportedForRdna << device_name << std::endl;
-                }
             }
 
             if (!config.inst_cfg_file.empty() || !config.block_cfg_file.empty())

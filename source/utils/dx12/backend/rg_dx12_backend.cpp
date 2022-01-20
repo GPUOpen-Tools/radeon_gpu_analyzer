@@ -71,7 +71,7 @@ namespace rga
     // Extracts the XML file for the given pipeline state, and allocates the contents in the given buffer.
     // In case of any error messages, they will be set into error_msg.
     // Returns true on success, false otherwise.
-    static bool ExtractXmlContent(IAmdExtD3DShaderAnalyzer1* amd_shader_analyzer_ext,
+    static bool ExtractXmlContent(IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
         AmdExtD3DPipelineHandle* pipeline_handle, char*& xml_buffer, std::string& error_msg)
     {
         bool ret = false;
@@ -92,20 +92,124 @@ namespace rga
         return ret;
     }
 
+    static bool ExtractAmdilDisassemblyGraphics(IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
+                                                AmdExtD3DPipelineHandle*   pipeline_handle,
+                                                char*&                     xml_buffer,
+                                                RgDx12PipelineResults&     results,
+                                                std::string&               error_msg)
+    {
+        bool                         ret        = false;
+        size_t                       amdil_size = 0;
+        AmdExtD3DPipelineDisassembly disassembly;
+        HRESULT                      hr = amd_shader_analyzer_ext->GetShaderAmdIlDisassembly(*pipeline_handle, nullptr, &amdil_size, &disassembly);
+        assert(hr == S_OK);
+        assert(amdil_size > 0);
+        ret = (hr == S_OK && amdil_size > 0);
+        if (ret)
+        {
+            xml_buffer = new char[amdil_size]{};
+            hr         = amd_shader_analyzer_ext->GetShaderAmdIlDisassembly(*pipeline_handle, xml_buffer, &amdil_size, &disassembly);
+            assert(hr == S_OK);
+            ret = (hr == S_OK);
+            if (ret)
+            {
+                if (disassembly.pVertexDisassembly != nullptr)
+                {
+                    std::string amdil_vert           = disassembly.pVertexDisassembly;
+                    results.vertex.disassembly_amdil = new char[amdil_vert.size()]{0};
+                    memcpy(results.vertex.disassembly_amdil, disassembly.pVertexDisassembly, amdil_vert.size()-1);
+                }
+                if (disassembly.pHullDisassembly != nullptr)
+                {
+                    std::string amdil_hull         = disassembly.pHullDisassembly;
+                    results.hull.disassembly_amdil = new char[amdil_hull.size()]{0};
+                    std::copy(amdil_hull.begin(), amdil_hull.end(), results.hull.disassembly_amdil);
+                    memcpy(results.hull.disassembly_amdil, disassembly.pHullDisassembly, amdil_hull.size() - 1);
+                }
+                if (disassembly.pDomainDisassembly != nullptr)
+                {
+                    std::string amdil_domain         = disassembly.pDomainDisassembly;
+                    results.domain.disassembly_amdil = new char[amdil_domain.size()]{0};
+                    memcpy(results.domain.disassembly_amdil, disassembly.pDomainDisassembly, amdil_domain.size() - 1);
+                }
+                if (disassembly.pGeometryDisassembly != nullptr)
+                {
+                    std::string amdil_geom             = disassembly.pGeometryDisassembly;
+                    results.geometry.disassembly_amdil = new char[amdil_geom.size()]{0};
+                    memcpy(results.geometry.disassembly_amdil, disassembly.pGeometryDisassembly, amdil_geom.size() - 1);
+                }
+                if (disassembly.pPixelDisassembly != nullptr)
+                {
+                    std::string amdil_pixel         = disassembly.pPixelDisassembly;
+                    results.pixel.disassembly_amdil = new char[amdil_pixel.size()]{0};
+                    memcpy(results.pixel.disassembly_amdil, disassembly.pPixelDisassembly, amdil_pixel.size() - 1);
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    static bool ExtractAmdilDisassemblyCompute(IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
+                                               AmdExtD3DPipelineHandle*   pipeline_handle,
+                                               char*&                     xml_buffer,
+                                               RgDx12ShaderResults&       results,
+                                               std::string&               error_msg)
+    {
+        bool                         ret        = false;
+        size_t                       amdil_size = 0;
+        AmdExtD3DPipelineDisassembly disassembly;
+        HRESULT                      hr = amd_shader_analyzer_ext->GetShaderAmdIlDisassembly(*pipeline_handle, nullptr, &amdil_size, &disassembly);
+        assert(hr == S_OK);
+        assert(amdil_size > 0);
+        ret = (hr == S_OK && amdil_size > 0);
+        if (ret)
+        {
+            xml_buffer = new char[amdil_size]{};
+            hr         = amd_shader_analyzer_ext->GetShaderAmdIlDisassembly(*pipeline_handle, xml_buffer, &amdil_size, &disassembly);
+            assert(hr == S_OK);
+            ret = (hr == S_OK);
+            if (ret)
+            {
+                if (disassembly.pComputeDisassembly != nullptr)
+                {
+                    std::string amdil_comp    = disassembly.pComputeDisassembly;
+                    results.disassembly_amdil = new char[amdil_comp.size()]{};
+                    memcpy(results.disassembly_amdil, disassembly.pComputeDisassembly, amdil_comp.size() - 1);
+                }
+            }
+        }
+
+        return ret;
+    }
+
     // Retrieve the disassembly for the given pipeline state object.
     // The given pipeline state object is expected to be a valid object, which was received from a
     // call to CreateGraphicsPipeline or CreateComputePipeline using the same ID3D12Device which
     // was used in the call to rgDx12Backend::Init().
     // Returns true on success, false otherwise.
-    static bool RetrieveDisassemblyGraphics(IAmdExtD3DShaderAnalyzer1* amd_shader_analyzer_ext,
-        AmdExtD3DPipelineHandle* d3d12_pipeline_state,
-        RgDx12PipelineResults& results, std::string& error_msg)
+    static bool RetrieveDisassemblyGraphics(const RgDx12Config&        config,
+                                            IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
+                                            AmdExtD3DPipelineHandle*   d3d12_pipeline_state,
+                                            RgDx12PipelineResults&     results,
+                                            std::string&               error_msg)
     {
         bool ret = false;
 
         // Parse the XML string.
         tinyxml2::XMLDocument doc;
-        char* xml_buffer = NULL;
+        char*                 xml_buffer = NULL;
+
+        // AMDIL part.
+        bool is_amdil_required = !config.vert.amdil.empty() || !config.hull.amdil.empty() || !config.domain.amdil.empty() || !config.geom.amdil.empty() ||
+                                 !config.pixel.amdil.empty();
+        if (is_amdil_required)
+        {
+            ret = ExtractAmdilDisassemblyGraphics(amd_shader_analyzer_ext, d3d12_pipeline_state, xml_buffer, results, error_msg);
+            assert(ret);
+        }
+
+        // ISA - always required.
         ret = ExtractXmlContent(amd_shader_analyzer_ext, d3d12_pipeline_state, xml_buffer, error_msg);
         assert(ret);
         assert(xml_buffer != NULL);
@@ -203,15 +307,24 @@ namespace rga
         return ret;
     }
 
-    static bool RetrieveDisassemblyCompute(IAmdExtD3DShaderAnalyzer1* amd_shader_analyzer_ext,
-        AmdExtD3DPipelineHandle* d3d12_pipeline_state,
-        RgDx12ShaderResults& results, std::string& error_msg)
+    static bool RetrieveDisassemblyCompute(const RgDx12Config         config,
+                                           IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
+                                           AmdExtD3DPipelineHandle*   d3d12_pipeline_state,
+                                           RgDx12ShaderResults&       results,
+                                           std::string&               error_msg)
     {
         bool ret = false;
 
         // Parse the XML string.
         tinyxml2::XMLDocument doc;
-        char* xml_buffer = NULL;
+        char*                 xml_buffer = NULL;
+
+        if (!config.comp.amdil.empty())
+        {
+            ret = ExtractAmdilDisassemblyCompute(amd_shader_analyzer_ext, d3d12_pipeline_state, xml_buffer, results, error_msg);
+            assert(ret);
+        }
+
         ret = ExtractXmlContent(amd_shader_analyzer_ext, d3d12_pipeline_state, xml_buffer, error_msg);
         assert(ret);
         assert(xml_buffer != NULL);
@@ -270,7 +383,7 @@ namespace rga
         return ret;
     }
 
-    static bool ExtractPipelineBinary(IAmdExtD3DShaderAnalyzer1* amd_shader_analyzer_ext,
+    static bool ExtractPipelineBinary(IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
         AmdExtD3DPipelineHandle* pipeline_handle, std::vector<char>& pipeline_binary_data, std::string& error_msg)
     {
         bool ret = false;
@@ -332,21 +445,23 @@ namespace rga
     class RgDx12Backend::Impl
     {
     public:
-        bool InitImpl(ID3D12Device* d3d12_device);
+        bool InitImpl(ID3D12Device* d3d12_device, bool is_offline_session);
 
         bool GetSupportedTargets(std::vector<std::string>& supported_targets,
             std::map<std::string, unsigned>& target_to_id);
 
-        bool CompileGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* graphics_pso,
-            RgDx12PipelineResults& results,
-            std::vector<char>& pipeline_binary,
-            std::string& error_msg) const;
+        bool CompileGraphicsPipeline(const RgDx12Config&                       config,
+                                     const D3D12_GRAPHICS_PIPELINE_STATE_DESC* graphics_pso,
+                                     RgDx12PipelineResults&                    results,
+                                     std::vector<char>&                        pipeline_binary,
+                                     std::string&                              error_msg) const;
 
-        bool CompileComputePipeline(const D3D12_COMPUTE_PIPELINE_STATE_DESC* compute_pso,
-            RgDx12ShaderResults& shader_results,
-            RgDx12ThreadGroupSize& thread_group_size,
-            std::vector<char>& binary,
-            std::string& error_msg) const;
+        bool CompileComputePipeline(const RgDx12Config                       config,
+                                    const D3D12_COMPUTE_PIPELINE_STATE_DESC* compute_pso,
+                                    RgDx12ShaderResults&                     shader_results,
+                                    RgDx12ThreadGroupSize&                   thread_group_size,
+                                    std::vector<char>&                       binary,
+                                    std::string&                             error_msg) const;
 
         // Creates the state object and extracts the results for a single pipeline designated by the raygeneration shader name.
         bool CreateStateObject(const D3D12_STATE_OBJECT_DESC* ray_tracing_state_object,
@@ -360,10 +475,10 @@ namespace rga
             RgDx12ShaderResultsRayTracing& raytracing_shader_stats, std::vector<unsigned char>& pipeline_binary, std::string& error_msg) const;
 
     private:
-        HMODULE LoadUMDLibrary();
+        HMODULE LoadUMDLibrary(bool is_offline_session);
         HMODULE amd_d3d_dll_handle_ = NULL;
         IAmdExtD3DFactory* amd_ext_object_ = NULL;
-        IAmdExtD3DShaderAnalyzer2* amd_shader_analyzer_ext_ = NULL;
+        IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext_ = NULL;
     };
 
     static void SetShaderResults(const AmdExtD3DShaderStats& shader_stats, RgDx12ShaderResults& results)
@@ -410,30 +525,25 @@ namespace rga
         SetShaderResults(stats.pixelShaderStats, results.pixel);
     }
 
-    bool RgDx12Backend::Impl::InitImpl(ID3D12Device* d3d12_device)
+    bool RgDx12Backend::Impl::InitImpl(ID3D12Device* d3d12_device, bool is_offline_session)
     {
         // Load the user-mode driver.
-        amd_d3d_dll_handle_ = LoadUMDLibrary();
+        amd_d3d_dll_handle_ = LoadUMDLibrary(is_offline_session);
         assert(amd_d3d_dll_handle_ != NULL);
         bool ret = (amd_d3d_dll_handle_ != NULL);
         if (ret)
         {
-            PFNAmdExtD3DCreateInterface amd_ext_d3d_create_func =
-                (PFNAmdExtD3DCreateInterface)GetProcAddress(amd_d3d_dll_handle_,
-                    "AmdExtD3DCreateInterface");
+            PFNAmdExtD3DCreateInterface amd_ext_d3d_create_func = (PFNAmdExtD3DCreateInterface)GetProcAddress(amd_d3d_dll_handle_, "AmdExtD3DCreateInterface");
 
             assert(amd_ext_d3d_create_func != NULL);
             if (amd_ext_d3d_create_func != NULL)
             {
-                HRESULT hr = amd_ext_d3d_create_func(d3d12_device,
-                    __uuidof(IAmdExtD3DFactory), reinterpret_cast<void**>(&amd_ext_object_));
-
+                HRESULT hr = amd_ext_d3d_create_func(d3d12_device, __uuidof(IAmdExtD3DFactory), reinterpret_cast<void**>(&amd_ext_object_));
                 assert(hr == S_OK);
                 if (hr == S_OK)
                 {
-                    hr = amd_ext_object_->CreateInterface(d3d12_device,
-                        __uuidof(IAmdExtD3DShaderAnalyzer2),
-                        reinterpret_cast<void**>(&amd_shader_analyzer_ext_));
+                    hr = amd_ext_object_->CreateInterface(
+                        d3d12_device, __uuidof(IAmdExtD3DShaderAnalyzer3), reinterpret_cast<void**>(&amd_shader_analyzer_ext_));
                     assert(hr == S_OK);
                     assert(amd_shader_analyzer_ext_ != NULL);
                     ret = (hr == S_OK && amd_shader_analyzer_ext_ != NULL);
@@ -444,21 +554,30 @@ namespace rga
         return ret;
     }
 
-    bool RgDx12Backend::Init(ID3D12Device* d3d12_device)
+    bool RgDx12Backend::Init(ID3D12Device* d3d12_device, bool is_offline_session)
     {
         bool ret = false;
         assert(impl_ != nullptr);
         if (impl_ != nullptr)
         {
-            ret = impl_->InitImpl(d3d12_device);
+            ret = impl_->InitImpl(d3d12_device, is_offline_session);
         }
         return ret;
     }
 
-    HMODULE RgDx12Backend::Impl::LoadUMDLibrary()
+    HMODULE RgDx12Backend::Impl::LoadUMDLibrary(bool is_offline_session)
     {
         std::wstring umd_module_name = L"amdxc64.dll";
-        HMODULE umd_dll = LoadLibrary(umd_module_name.c_str());
+        HMODULE umd_dll  = nullptr;
+        if (!is_offline_session)
+        {
+            umd_dll = LoadLibrary(umd_module_name.c_str());
+        }
+        else
+        {
+            // The driver is already injected to the process's memory.
+            umd_dll = GetModuleHandle(L"amdxc64");
+        }
         return umd_dll;
     }
 
@@ -514,10 +633,11 @@ namespace rga
         return ret;
     }
 
-    bool RgDx12Backend::Impl::CompileGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* graphics_pso,
-        RgDx12PipelineResults& results,
-        std::vector<char>& pipeline_binary,
-        std::string& error_msg) const
+    bool RgDx12Backend::Impl::CompileGraphicsPipeline(const RgDx12Config&                       config,
+                                                      const D3D12_GRAPHICS_PIPELINE_STATE_DESC* graphics_pso,
+                                                      RgDx12PipelineResults&                    results,
+                                                      std::vector<char>&                        pipeline_binary,
+                                                      std::string&                              error_msg) const
     {
         assert(amd_shader_analyzer_ext_ != nullptr);
         bool ret = amd_shader_analyzer_ext_ != nullptr;
@@ -540,7 +660,7 @@ namespace rga
                 SetPipelineResults(stats, results);
 
                 // Retrieve the disassembly.
-                ret = RetrieveDisassemblyGraphics(amd_shader_analyzer_ext_, pipeline_handle, results, error_msg);
+                ret = RetrieveDisassemblyGraphics(config, amd_shader_analyzer_ext_, pipeline_handle, results, error_msg);
                 assert(ret);
 
                 // Retrieve the pipeline binary.
@@ -559,25 +679,27 @@ namespace rga
 
     }
 
-    bool RgDx12Backend::CompileGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* graphics_pso,
-        RgDx12PipelineResults& results,
-        std::vector<char>& pipeline_binary,
-        std::string& error_msg) const
+    bool RgDx12Backend::CompileGraphicsPipeline(const RgDx12Config&                       config,
+                                                const D3D12_GRAPHICS_PIPELINE_STATE_DESC* graphics_pso,
+                                                RgDx12PipelineResults&                    results,
+                                                std::vector<char>&                        pipeline_binary,
+                                                std::string&                              error_msg) const
     {
         bool ret = false;
         assert(impl_ != nullptr);
         if (impl_ != nullptr)
         {
-            ret = impl_->CompileGraphicsPipeline(graphics_pso, results, pipeline_binary, error_msg);
+            ret = impl_->CompileGraphicsPipeline(config, graphics_pso, results, pipeline_binary, error_msg);
         }
         return ret;
     }
 
-    bool RgDx12Backend::Impl::CompileComputePipeline(const D3D12_COMPUTE_PIPELINE_STATE_DESC* compute_pso,
-        RgDx12ShaderResults& shader_results,
-        RgDx12ThreadGroupSize& thread_group_size,
-        std::vector<char>& binary,
-        std::string& error_msg) const
+    bool RgDx12Backend::Impl::CompileComputePipeline(const RgDx12Config                       config,
+                                                     const D3D12_COMPUTE_PIPELINE_STATE_DESC* compute_pso,
+                                                     RgDx12ShaderResults&                     shader_results,
+                                                     RgDx12ThreadGroupSize&                   thread_group_size,
+                                                     std::vector<char>&                       binary,
+                                                     std::string&                             error_msg) const
     {
         assert(amd_shader_analyzer_ext_ != nullptr);
         bool ret = amd_shader_analyzer_ext_ != nullptr;
@@ -604,7 +726,7 @@ namespace rga
                     SetShaderResultsCompute(driverShaderStats, shader_results, thread_group_size);
 
                     // Retrieve the disassembly.
-                    ret = RetrieveDisassemblyCompute(amd_shader_analyzer_ext_, pipeline_handle, shader_results, error_msg);
+                    ret = RetrieveDisassemblyCompute(config, amd_shader_analyzer_ext_, pipeline_handle, shader_results, error_msg);
                     assert(ret);
 
                     // Retrieve the pipeline binary.
@@ -623,27 +745,28 @@ namespace rga
     }
 
 #ifdef RGA_DXR_ENABLED
-    bool RgDx12Backend::Impl::CreateStateObject(const D3D12_STATE_OBJECT_DESC* ray_tracing_state_object,
+    bool RgDx12Backend::Impl::CreateStateObject(
+        const D3D12_STATE_OBJECT_DESC*                                                             ray_tracing_state_object,
         std::vector<std::shared_ptr<std::vector<std::shared_ptr<RgDx12ShaderResultsRayTracing>>>>& raytracing_shader_stats,
-        std::vector<std::shared_ptr<std::vector<unsigned char>>>& pipeline_binary, std::vector<bool>& is_unified_mode,
-        std::vector<std::shared_ptr<std::vector<std::string>>>& indirect_shader_names,
-        std::string& error_msg) const
+        std::vector<std::shared_ptr<std::vector<unsigned char>>>&                                  pipeline_binaries,
+        std::vector<bool>&                                                                         is_unified_mode,
+        std::vector<std::shared_ptr<std::vector<std::string>>>&                                    indirect_shader_names,
+        std::string&                                                                               error_msg) const
     {
         assert(amd_shader_analyzer_ext_ != nullptr);
         bool ret = amd_shader_analyzer_ext_ != nullptr;
         if (ret)
         {
-            AmdExtD3DPipelineHandle* pipeline_handle = new AmdExtD3DPipelineHandle{};
-            ID3D12StateObject* dxr_state_object = nullptr;
-            HRESULT hr = amd_shader_analyzer_ext_->CreateStateObject(ray_tracing_state_object,
-                IID_PPV_ARGS(&dxr_state_object), pipeline_handle);
+            AmdExtD3DPipelineHandle* pipeline_handle  = new AmdExtD3DPipelineHandle{};
+            ID3D12StateObject*       dxr_state_object = nullptr;
+            HRESULT hr = amd_shader_analyzer_ext_->CreateStateObject(ray_tracing_state_object, IID_PPV_ARGS(&dxr_state_object), pipeline_handle);
             assert(SUCCEEDED(hr));
             ret = (SUCCEEDED(hr));
             if (ret)
             {
                 // Retrieve the number of pipelines.
                 uint32_t pipeline_count = 0;
-                hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfCount(*pipeline_handle, &pipeline_count);
+                hr                      = amd_shader_analyzer_ext_->GetRayTracingPipelineElfCount(*pipeline_handle, &pipeline_count);
                 assert(SUCCEEDED(hr));
                 ret = (SUCCEEDED(hr));
                 if (ret)
@@ -668,15 +791,17 @@ namespace rga
                             if (is_unified_mode[pipeline_index])
                             {
                                 // Retrieve shader name.
-                                size_t name_bytes = 0;
+                                size_t         name_bytes   = 0;
                                 const uint32_t kShaderIndex = 0;
-                                hr = amd_shader_analyzer_ext_->GetRayTracingPipelineShaderName(*pipeline_handle, pipeline_index, kShaderIndex, &name_bytes, nullptr);
+                                hr                          = amd_shader_analyzer_ext_->GetRayTracingPipelineShaderName(
+                                    *pipeline_handle, pipeline_index, kShaderIndex, &name_bytes, nullptr);
                                 assert(SUCCEEDED(hr));
                                 if (SUCCEEDED(hr))
                                 {
                                     std::wstring curr_shader_name_wide;
                                     curr_shader_name_wide.resize(name_bytes);
-                                    hr = amd_shader_analyzer_ext_->GetRayTracingPipelineShaderName(*pipeline_handle, pipeline_index, kShaderIndex, &name_bytes, (wchar_t*)curr_shader_name_wide.data());
+                                    hr = amd_shader_analyzer_ext_->GetRayTracingPipelineShaderName(
+                                        *pipeline_handle, pipeline_index, kShaderIndex, &name_bytes, (wchar_t*)curr_shader_name_wide.data());
                                     if (!curr_shader_name_wide.empty())
                                     {
                                         // Convert the export name to non-wide string.
@@ -691,22 +816,22 @@ namespace rga
 
                                         // Retrieve the disassembly for the pipeline.
                                         size_t diassembly_bytes = 0;
-                                        hr = amd_shader_analyzer_ext_->GetRayTracingPipelineIsaDisassembly(*pipeline_handle,
-                                            curr_shader_name_wide.c_str(), nullptr, &diassembly_bytes);
+                                        hr                      = amd_shader_analyzer_ext_->GetRayTracingPipelineIsaDisassembly(
+                                            *pipeline_handle, curr_shader_name_wide.c_str(), nullptr, &diassembly_bytes);
                                         assert(SUCCEEDED(hr));
                                         ret = (SUCCEEDED(hr));
                                         if (ret && diassembly_bytes > 0)
                                         {
-                                            curr_item->disassembly = new char[diassembly_bytes] {};
-                                            hr = amd_shader_analyzer_ext_->GetRayTracingPipelineIsaDisassembly(*pipeline_handle,
-                                                curr_shader_name_wide.c_str(), curr_item->disassembly, &diassembly_bytes);
+                                            curr_item->disassembly = new char[diassembly_bytes]{};
+                                            hr                     = amd_shader_analyzer_ext_->GetRayTracingPipelineIsaDisassembly(
+                                                *pipeline_handle, curr_shader_name_wide.c_str(), curr_item->disassembly, &diassembly_bytes);
                                             assert(SUCCEEDED(hr));
                                             assert(curr_item->disassembly != nullptr);
                                             if (!SUCCEEDED(hr) || curr_item->disassembly == nullptr)
                                             {
                                                 std::stringstream msg;
-                                                msg << kStrErrorDisassemblyContentsExtractionFailure <<
-                                                    kStrErrorPipelineIdentifiedByRaygenShaderName << raygen_shader_name_as_str;
+                                                msg << kStrErrorDisassemblyContentsExtractionFailure << kStrErrorPipelineIdentifiedByRaygenShaderName
+                                                    << raygen_shader_name_as_str;
                                                 error_msg.append(msg.str());
                                                 ret = false;
                                             }
@@ -714,9 +839,9 @@ namespace rga
                                         else
                                         {
                                             std::stringstream msg;
-                                            std::string shader_name_str = RgDx12Utils::wstrToStr(curr_shader_name_wide);
-                                            msg << kStrErrorDisassemblySizeExtractionFailure <<
-                                                kStrErrorPipelineIdentifiedByRaygenShaderName << shader_name_str;
+                                            std::string       shader_name_str = RgDx12Utils::wstrToStr(curr_shader_name_wide);
+                                            msg << kStrErrorDisassemblySizeExtractionFailure << kStrErrorPipelineIdentifiedByRaygenShaderName
+                                                << shader_name_str;
                                             msg << kStrHintWrongShaderName1 << kStrHintWrongShaderName2Raygen;
                                             error_msg.append(msg.str());
                                             ret = false;
@@ -726,8 +851,8 @@ namespace rga
                                         {
                                             // Retrieve the statistics.
                                             AmdExtD3DShaderStatsRayTracing rt_stats_driver{};
-                                            hr = amd_shader_analyzer_ext_->GetRayTracingPipelineStats(*pipeline_handle,
-                                                curr_shader_name_wide.c_str(), &rt_stats_driver);
+                                            hr = amd_shader_analyzer_ext_->GetRayTracingPipelineStats(
+                                                *pipeline_handle, curr_shader_name_wide.c_str(), &rt_stats_driver);
                                             assert(SUCCEEDED(hr));
                                             if (SUCCEEDED(hr))
                                             {
@@ -736,8 +861,8 @@ namespace rga
                                             else
                                             {
                                                 std::stringstream msg;
-                                                msg << kStrErrorStatisticsExtractionFailure <<
-                                                    kStrErrorPipelineIdentifiedByRaygenShaderName << raygen_shader_name_as_str;
+                                                msg << kStrErrorStatisticsExtractionFailure << kStrErrorPipelineIdentifiedByRaygenShaderName
+                                                    << raygen_shader_name_as_str;
                                                 error_msg.append(msg.str());
                                                 ret = false;
                                             }
@@ -748,34 +873,34 @@ namespace rga
                                                 // Extract the pipeline binary.
                                                 // Retrieve the buffer size.
                                                 uint32_t buffer_size = 0;
-                                                hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfBinary(*pipeline_handle, pipeline_index, nullptr, &buffer_size);
+                                                hr                   = amd_shader_analyzer_ext_->GetRayTracingPipelineElfBinary(
+                                                    *pipeline_handle, pipeline_index, nullptr, &buffer_size);
                                                 assert(buffer_size > 0);
                                                 assert(SUCCEEDED(hr));
                                                 if (buffer_size > 0 && SUCCEEDED(hr))
                                                 {
                                                     // Get the contents.
-                                                    std::shared_ptr<std::vector<unsigned char>> binary =
-                                                        std::make_shared<std::vector<unsigned char>>();
+                                                    std::shared_ptr<std::vector<unsigned char>> binary = std::make_shared<std::vector<unsigned char>>();
                                                     binary->resize(buffer_size);
-                                                    hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfBinary(*pipeline_handle,
-                                                        0, binary->data(), &buffer_size);
+                                                    hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfBinary(
+                                                        *pipeline_handle, pipeline_index, binary->data(), &buffer_size);
                                                     assert(SUCCEEDED(hr));
                                                     assert(!binary->empty());
                                                     if (binary->empty())
                                                     {
                                                         std::stringstream msg;
-                                                        msg << kStrErrorPipelineBinaryExtractionFailure <<
-                                                            kStrErrorPipelineIdentifiedByRaygenShaderName << raygen_shader_name_as_str;
+                                                        msg << kStrErrorPipelineBinaryExtractionFailure << kStrErrorPipelineIdentifiedByRaygenShaderName
+                                                            << raygen_shader_name_as_str;
                                                     }
 
                                                     // Track the pipeline binary.
-                                                    pipeline_binary.push_back(binary);
+                                                    pipeline_binaries.push_back(binary);
                                                 }
                                                 else
                                                 {
                                                     std::stringstream msg;
-                                                    msg << kStrErrorPipelineBinarySizeQueryFailure <<
-                                                        kStrErrorPipelineIdentifiedByRaygenShaderName << raygen_shader_name_as_str;
+                                                    msg << kStrErrorPipelineBinarySizeQueryFailure << kStrErrorPipelineIdentifiedByRaygenShaderName
+                                                        << raygen_shader_name_as_str;
                                                 }
                                             }
                                         }
@@ -793,13 +918,15 @@ namespace rga
                                 {
                                     // Retrieve shader name.
                                     size_t name_bytes = 0;
-                                    hr = amd_shader_analyzer_ext_->GetRayTracingPipelineShaderName(*pipeline_handle, pipeline_index, shader_index, &name_bytes, nullptr);
+                                    hr                = amd_shader_analyzer_ext_->GetRayTracingPipelineShaderName(
+                                        *pipeline_handle, pipeline_index, shader_index, &name_bytes, nullptr);
                                     assert(SUCCEEDED(hr));
                                     if (SUCCEEDED(hr))
                                     {
                                         std::wstring curr_shader_name_wide;
                                         curr_shader_name_wide.resize(name_bytes);
-                                        hr = amd_shader_analyzer_ext_->GetRayTracingPipelineShaderName(*pipeline_handle, pipeline_index, shader_index, &name_bytes, (wchar_t*)curr_shader_name_wide.data());
+                                        hr = amd_shader_analyzer_ext_->GetRayTracingPipelineShaderName(
+                                            *pipeline_handle, pipeline_index, shader_index, &name_bytes, (wchar_t*)curr_shader_name_wide.data());
                                         if (!curr_shader_name_wide.empty())
                                         {
                                             // Convert the shader name to non-wide string.
@@ -807,25 +934,25 @@ namespace rga
                                             pipeline_shader_names->push_back(curr_shader_name_as_str);
 
                                             // Retrieve shader disassembly.
-                                            std::shared_ptr<RgDx12ShaderResultsRayTracing> curr_results = std::make_shared<RgDx12ShaderResultsRayTracing>();
-                                            size_t diassembly_bytes = 0;
-                                            hr = amd_shader_analyzer_ext_->GetRayTracingShaderIsaDisassembly(*pipeline_handle,
-                                                curr_shader_name_wide.c_str(), nullptr, &diassembly_bytes);
+                                            std::shared_ptr<RgDx12ShaderResultsRayTracing> curr_results     = std::make_shared<RgDx12ShaderResultsRayTracing>();
+                                            size_t                                         diassembly_bytes = 0;
+                                            hr = amd_shader_analyzer_ext_->GetRayTracingShaderIsaDisassembly(
+                                                *pipeline_handle, curr_shader_name_wide.c_str(), nullptr, &diassembly_bytes);
                                             assert(SUCCEEDED(hr));
                                             ret = (SUCCEEDED(hr));
                                             if (ret && diassembly_bytes > 0)
                                             {
-                                                curr_results->disassembly = new char[diassembly_bytes] {};
-                                                hr = amd_shader_analyzer_ext_->GetRayTracingShaderIsaDisassembly(*pipeline_handle,
-                                                    curr_shader_name_wide.c_str(), curr_results->disassembly, &diassembly_bytes);
+                                                curr_results->disassembly = new char[diassembly_bytes]{};
+                                                hr                        = amd_shader_analyzer_ext_->GetRayTracingShaderIsaDisassembly(
+                                                    *pipeline_handle, curr_shader_name_wide.c_str(), curr_results->disassembly, &diassembly_bytes);
                                                 assert(SUCCEEDED(hr));
                                                 assert(curr_results->disassembly != nullptr);
                                                 if (!SUCCEEDED(hr) || curr_results->disassembly == nullptr)
                                                 {
                                                     std::stringstream msg;
-                                                    msg << kStrErrorDisassemblyContentsExtractionFailure <<
-                                                        kStrErrorDisassemblyContentsExtractionFailurePiplineNumber << pipeline_index << " " <<
-                                                        kStrErrorPerShaderName << curr_shader_name_wide.c_str();
+                                                    msg << kStrErrorDisassemblyContentsExtractionFailure
+                                                        << kStrErrorDisassemblyContentsExtractionFailurePiplineNumber << pipeline_index << " "
+                                                        << kStrErrorPerShaderName << curr_shader_name_wide.c_str();
                                                     error_msg.append(msg.str());
                                                     ret = false;
                                                 }
@@ -833,17 +960,16 @@ namespace rga
                                             else
                                             {
                                                 std::stringstream msg;
-                                                msg << kStrErrorDisassemblySizeExtractionFailure <<
-                                                    kStrErrorDisassemblyContentsExtractionFailurePiplineNumber << pipeline_index << " " <<
-                                                    kStrErrorPerShaderName << curr_shader_name_wide.c_str();
+                                                msg << kStrErrorDisassemblySizeExtractionFailure << kStrErrorDisassemblyContentsExtractionFailurePiplineNumber
+                                                    << pipeline_index << " " << kStrErrorPerShaderName << curr_shader_name_wide.c_str();
                                                 error_msg.append(msg.str());
                                                 ret = false;
                                             }
 
                                             // Retrieve the statistics.
                                             AmdExtD3DShaderStatsRayTracing rt_stats_driver{};
-                                            hr = amd_shader_analyzer_ext_->GetRayTracingPipelineStats(*pipeline_handle,
-                                                curr_shader_name_wide.c_str(), &rt_stats_driver);
+                                            hr = amd_shader_analyzer_ext_->GetRayTracingPipelineStats(
+                                                *pipeline_handle, curr_shader_name_wide.c_str(), &rt_stats_driver);
                                             assert(SUCCEEDED(hr));
                                             if (SUCCEEDED(hr))
                                             {
@@ -852,9 +978,8 @@ namespace rga
                                             else
                                             {
                                                 std::stringstream msg;
-                                                msg << kStrErrorStatisticsExtractionFailure <<
-                                                    kStrErrorDisassemblyContentsExtractionFailurePiplineNumber << pipeline_index << " " <<
-                                                    kStrErrorPerShaderName << curr_shader_name_wide.c_str();
+                                                msg << kStrErrorStatisticsExtractionFailure << kStrErrorDisassemblyContentsExtractionFailurePiplineNumber
+                                                    << pipeline_index << " " << kStrErrorPerShaderName << curr_shader_name_wide.c_str();
                                                 error_msg.append(msg.str());
                                                 ret = false;
                                             }
@@ -873,8 +998,8 @@ namespace rga
                                     else
                                     {
                                         std::stringstream msg;
-                                        msg << kStrErrorDxrFailedToRetrieveShaderName << shader_index <<
-                                            " " << kStrErrorPipelineIdentifiedByIndex << pipeline_index;
+                                        msg << kStrErrorDxrFailedToRetrieveShaderName << shader_index << " " << kStrErrorPipelineIdentifiedByIndex
+                                            << pipeline_index;
                                         error_msg.append(msg.str());
                                         ret = false;
                                     }
@@ -885,34 +1010,33 @@ namespace rga
                                 {
                                     // Retrieve the buffer size.
                                     uint32_t buffer_size = 0;
-                                    hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfBinary(*pipeline_handle, 0, nullptr, &buffer_size);
+                                    hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfBinary(*pipeline_handle, pipeline_index, nullptr, &buffer_size);
                                     assert(buffer_size > 0);
                                     assert(SUCCEEDED(hr));
                                     if (buffer_size > 0 && SUCCEEDED(hr))
                                     {
                                         // Get the contents.
-                                        std::shared_ptr<std::vector<unsigned char>> binary =
-                                            std::make_shared<std::vector<unsigned char>>();
+                                        std::shared_ptr<std::vector<unsigned char>> binary = std::make_shared<std::vector<unsigned char>>();
                                         binary->resize(buffer_size);
-                                        hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfBinary(*pipeline_handle,
-                                            0, binary->data(), &buffer_size);
+                                        hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfBinary(
+                                            *pipeline_handle, pipeline_index, binary->data(), &buffer_size);
                                         assert(SUCCEEDED(hr));
                                         assert(!binary->empty());
-                                        if (binary->empty())
+                                        if (!binary->empty())
+                                        {
+                                            pipeline_binaries.push_back(binary);
+                                        }
+                                        else
                                         {
                                             std::stringstream msg;
-                                            msg << kStrErrorPipelineBinaryExtractionFailure <<
-                                                kStrErrorPipelineIdentifiedByIndexPipelineBinary << pipeline_index;
+                                            msg << kStrErrorPipelineBinaryExtractionFailure << kStrErrorPipelineIdentifiedByIndexPipelineBinary
+                                                << pipeline_index;
                                         }
-
-                                        // Track the pipeline binary.
-                                        pipeline_binary.push_back(binary);
                                     }
                                     else
                                     {
                                         std::stringstream msg;
-                                        msg << kStrErrorPipelineBinarySizeQueryFailure <<
-                                            kStrErrorPipelineIdentifiedByIndex << pipeline_index;
+                                        msg << kStrErrorPipelineBinarySizeQueryFailure << kStrErrorPipelineIdentifiedByIndexPipelineBinary << pipeline_index;
                                     }
                                 }
                             }
@@ -941,7 +1065,6 @@ namespace rga
                 ret = false;
             }
         }
-
         return ret;
     }
 
@@ -1015,63 +1138,6 @@ namespace rga
                         ret = false;
                     }
                 }
-
-#ifdef _EXTRACT_BINARIES
-                // Retrieve the pipeline binaries.
-                uint32_t pipeline_count = 0;
-                hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfCount(*pipeline_handle, &pipeline_count);
-                assert(SUCCEEDED(hr));
-                assert(pipeline_count == 1);
-                ret = (SUCCEEDED(hr));
-                if (ret)
-                {
-                    if (pipeline_count > 1)
-                    {
-                        // This is unexpected. Warn the user that only the first pipeline binary is going to be extracted.
-                        std::stringstream msg;
-                        msg << kStrWarningMoreThanSinglePipelineBinaryForSinglePipeline1 <<
-                            kStrErrorPipelineIdentifiedByRaygenShaderName << shader_name_std_str.c_str() <<
-                            kStrWarningMoreThanSinglePipelineBinaryForSinglePipeline2;
-                        error_msg.append(msg.str());
-                    }
-
-                    // Retrieve the buffer size.
-                    uint32_t buffer_size = 0;
-                    hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfBinary(*pipeline_handle, 0, nullptr, &buffer_size);
-                    assert(buffer_size > 0);
-                    assert(SUCCEEDED(hr));
-                    if (buffer_size > 0 && SUCCEEDED(hr))
-                    {
-                        // Get the contents.
-                        pipeline_binary.clear();
-                        pipeline_binary.resize(buffer_size);
-                        hr = amd_shader_analyzer_ext_->GetRayTracingPipelineElfBinary(*pipeline_handle,
-                            0, pipeline_binary.data(), &buffer_size);
-                        assert(SUCCEEDED(hr));
-                        assert(!pipeline_binary.empty());
-                        if (pipeline_binary.empty())
-                        {
-                            std::stringstream msg;
-                            msg << kStrErrorPipelineBinaryExtractionFailure <<
-                                kStrErrorPipelineIdentifiedByIndexPipelineBinary << shader_name_std_str.c_str();
-                        }
-                    }
-                    else
-                    {
-                        std::stringstream msg;
-                        msg << kStrErrorPipelineBinarySizeQueryFailure <<
-                            kStrErrorPipelineIdentifiedByRaygenShaderName << shader_name_std_str.c_str();
-                    }
-                }
-                else
-                {
-                    std::stringstream msg;
-                    msg << kStrErrorPipelineBinaryCountExtractionFailure <<
-                        kStrErrorPipelineIdentifiedByRaygenShaderName << shader_name_std_str.c_str();
-                    error_msg.append(msg.str());
-                    ret = false;
-                }
-#endif // _EXTRACT_BINARIES
             }
             else
             {
@@ -1085,17 +1151,18 @@ namespace rga
         return ret;
     }
 #endif
-    bool RgDx12Backend::CompileComputePipeline(const D3D12_COMPUTE_PIPELINE_STATE_DESC* compute_pso,
-        RgDx12ShaderResults& compute_shader_stats,
-        RgDx12ThreadGroupSize& thread_group_size,
-        std::vector<char>& pipeline_binary,
-        std::string& error_msg) const
+    bool RgDx12Backend::CompileComputePipeline(const RgDx12Config                       config,
+                                               const D3D12_COMPUTE_PIPELINE_STATE_DESC* compute_pso,
+                                               RgDx12ShaderResults&                     compute_shader_stats,
+                                               RgDx12ThreadGroupSize&                   thread_group_size,
+                                               std::vector<char>&                       pipeline_binary,
+                                               std::string&                             error_msg) const
     {
         bool ret = false;
         assert(impl_ != nullptr);
         if (impl_ != nullptr)
         {
-            ret = impl_->CompileComputePipeline(compute_pso, compute_shader_stats, thread_group_size, pipeline_binary, error_msg);
+            ret = impl_->CompileComputePipeline(config, compute_pso, compute_shader_stats, thread_group_size, pipeline_binary, error_msg);
         }
         return ret;
     }

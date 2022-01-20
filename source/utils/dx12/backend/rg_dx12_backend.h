@@ -23,6 +23,9 @@ namespace rga
         // Disassembly.
         char* disassembly = nullptr;
 
+        // AMDIL disassembly.
+        char* disassembly_amdil = nullptr;
+
         // Number of VGPRs consumed by shader.
         size_t vgpr_used = 0;
 
@@ -97,7 +100,7 @@ namespace rga
         // Initialize rgDx12Backend instance.
         // This function expects a pointer to a valid ID3D12Device, created by the caller.
         // Returns true on success, false otherwise.
-        bool Init(ID3D12Device* d3d12_device);
+        bool Init(ID3D12Device* d3d12_device, bool is_offline_session);
 
         // Retrieve the list of supported GPUs for offline compilation and
         // a map that correlates between target names and their driver IDs.
@@ -109,7 +112,8 @@ namespace rga
         // The output would be set into results, pipeline_binary.
         // Any error messages would be set into error_msg.
         // Returns true on success, false otherwise.
-        bool CompileGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* graphics_pso,
+        bool CompileGraphicsPipeline(const RgDx12Config& config,
+            const D3D12_GRAPHICS_PIPELINE_STATE_DESC* graphics_pso,
             RgDx12PipelineResults& results,
             std::vector<char>& pipeline_binary,
             std::string& error_msg) const;
@@ -120,7 +124,8 @@ namespace rga
         // The output would be set into compute_shader_stats, thread_group_size, pipeline_binary.
         // Any error messages would be set into error_msg.
         // Returns true on success, false otherwise.
-        bool CompileComputePipeline(const D3D12_COMPUTE_PIPELINE_STATE_DESC* compute_pso,
+        bool CompileComputePipeline(const RgDx12Config config,
+            const D3D12_COMPUTE_PIPELINE_STATE_DESC* compute_pso,
             RgDx12ShaderResults& compute_shader_stats,
             RgDx12ThreadGroupSize& thread_group_size,
             std::vector<char>& pipeline_binary,

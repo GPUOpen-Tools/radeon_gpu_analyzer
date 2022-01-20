@@ -11,9 +11,9 @@
 #pragma warning(push)
 #pragma warning(disable:4309)
 #endif
-#include "AMDTOSWrappers/Include/osDirectory.h"
-#include "AMDTOSWrappers/Include/osProcess.h"
-#include "AMDTOSWrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
+#include "external/amdt_os_wrappers/Include/osProcess.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
@@ -56,6 +56,7 @@ static const std::string  kAmdspvDeviceGfx1012 = "1012";
 static const std::string  kAmdspvDeviceGfx1030 = "1030";
 static const std::string  kAmdspvDeviceGfx1031 = "1031";
 static const std::string  kAmdspvDeviceGfx1032 = "1032";
+static const std::string  kAmdspvDeviceGfx1034 = "1034";
 
 static bool GetAmdspvPath(std::string& amdspv_path)
 {
@@ -86,7 +87,7 @@ static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* device_info, const VkOfflineO
         vulkan_options.target_device_name.compare(kDeviceNameNolan) == 0)
     {
         // Special case #2: 8.1 devices.
-        gfx_ip_str = "8.1";
+        gfx_ip_str = "8";
         ret = true;
     }
     else if (vulkan_options.target_device_name.compare(kDeviceNameGfx900) == 0 ||
@@ -106,7 +107,8 @@ static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* device_info, const VkOfflineO
         vulkan_options.target_device_name.compare(kDeviceNameGfx1012) == 0 ||
         vulkan_options.target_device_name.compare(kDeviceNameGfx1030) == 0 ||
         vulkan_options.target_device_name.compare(kDeviceNameGfx1031) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx1032) == 0)
+        vulkan_options.target_device_name.compare(kDeviceNameGfx1032) == 0 ||
+        vulkan_options.target_device_name.compare(kDeviceNameGfx1034) == 0)
     {
         // Special case #4: gfx10 devices.
         gfx_ip_str =
@@ -116,6 +118,7 @@ static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* device_info, const VkOfflineO
             vulkan_options.target_device_name == kDeviceNameGfx1030 ? kAmdspvDeviceGfx1030 :
             vulkan_options.target_device_name == kDeviceNameGfx1031 ? kAmdspvDeviceGfx1031 :
             vulkan_options.target_device_name == kDeviceNameGfx1032 ? kAmdspvDeviceGfx1032 :
+            vulkan_options.target_device_name == kDeviceNameGfx1034 ? kAmdspvDeviceGfx1034 :
             "";
         ret = !gfx_ip_str.empty();
     }

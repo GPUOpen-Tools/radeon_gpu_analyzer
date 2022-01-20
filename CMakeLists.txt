@@ -122,16 +122,6 @@ if (RGA_ENABLE_VULKAN)
     add_definitions("-DRGA_ENABLE_VULKAN")
 endif()
 
-# Add Common projects
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTBaseTools ${CMAKE_CURRENT_BINARY_DIR}/Common/Src/AMDTBaseTools)
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../Common/Src/AMDTOSWrappers ${CMAKE_CURRENT_BINARY_DIR}/Common/Src/AMDTOSWrappers)
-
-# Disable specific MS compiler warnings for Common targets
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    target_compile_options(AMDTBaseTools PRIVATE "/wd4309")
-    target_compile_options(AMDTOSWrappers PRIVATE "/wd4275" "/wd4309")
-endif()
-
 # Add RGA CLI projects
 if(NOT BUILD_GUI_ONLY)
     if (RGA_ENABLE_VULKAN)
@@ -144,6 +134,16 @@ endif()
 
 # Add source folder
 add_subdirectory (source)
+
+# Add amdt_os_wrappers and amdt_base_tools.
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/external/amdt_base_tools)
+add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/external/amdt_os_wrappers)
+
+# Disable specific MS compiler warnings for Common targets
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    target_compile_options(AMDTBaseTools PRIVATE "/wd4309")
+    target_compile_options(AMDTOSWrappers PRIVATE "/wd4275" "/wd4309")
+endif()
 
 # Add Tests
 if(AMD_INTERNAL)

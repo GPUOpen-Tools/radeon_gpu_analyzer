@@ -89,7 +89,7 @@ bool KcCliCommander::GenerateVersionInfoFile(const Config& config)
     // Delete the version info file if it already exists.
     if (!filename.empty() && KcUtils::FileNotEmpty(filename))
     {
-        status = KcUtils::DeleteFile(filename);
+        BeUtils::DeleteFileFromDisk(filename);
     }
 
     // Generate the Version Info header.

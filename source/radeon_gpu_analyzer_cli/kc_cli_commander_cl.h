@@ -3,7 +3,7 @@
 //=================================================================
 #ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_CL_H_
 #define RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_CL_H_
-
+#ifdef _LEGACY_CL_ENABLED
 // C++.
 #include <string>
 #include <set>
@@ -66,3 +66,4 @@ private:
 };
 
 #endif // RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_CL_H_
+#endif

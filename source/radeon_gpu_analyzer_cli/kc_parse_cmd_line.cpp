@@ -72,13 +72,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("livereg", po::value<string>(&config.livereg_analysis_file), "Path to live register analysis output file(s).")
             ("cfg", po::value<string>(&config.block_cfg_file), "Path to per-block control flow graph output file(s).")
             ("cfg-i", po::value<string>(&config.inst_cfg_file), "Path to per-instruction control flow graph output file(s).")
-#ifdef _STALLS_ENABLED
-            ("stalls", po::value<string>(&config.stall_analysis_file), "Path to stall analysis output file(s).")
-#endif // !_STALLS_ENABLED
             ("source-kind,s", po::value<string>(&config.source_kind), "Source platform: dx12 for DirectX 12, dxr for DXR, dx11 for DirectX 11, vulkan for Vulkan, opengl for OpenGL, "
-#ifdef _LEGACY_OPENCL_ENABLED
-                "cl for OpenCL legacy,"
-#endif // !_LEGACY_OPENCL_ENABLED
                 "opencl for OpenCL offline mode and amdil for AMDIL.")
             ("updates,u", "Check for available updates.")
             ("verbose,v", "Print command line strings that RGA uses to launch external processes.")
@@ -198,6 +192,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         // D3D12 debug layer.
         po::options_description dx12_other_options("Other DX12 options");
         dx12_other_options.add_options() ("debug-layer", "Enable the D3D12 debug layer.");
+
+        // DX12 offline mode.
+        dx12_other_options.add_options() ("offline", "Assume no AMD display adapter is installed.");
+        dx12_other_options.add_options()("amdxc", po::value<string>(&config.alternative_amdxc), "Path to a an alternative amdxc64.dll to be loaded in offline mode (must be used together with --offline). "
+            "If provided, the alternative amdxc64.dll would be used as the DX12 offline driver, instead of the driver that is bundled with the tool.");
 
         // DX12 graphics/compute.
         po::options_description dx12_opt("DirectX 12 mode options");
@@ -432,6 +431,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.dx12_debug_layer_enabled = true;
         }
 
+        if (vm.count("offline") || !config.alternative_amdxc.empty())
+        {
+            config.dx12_offline_session = true;
+        }
+
         if (vm.count("cfg") && vm.count("cfg-i"))
         {
             std::cerr << kStrErrorBothCfgAndCfgiSpecified << std::endl;
@@ -462,14 +466,6 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.livereg_analysis_file = kStrDefaultFilenameLivereg;
         }
 
-#ifdef _STALLS_ENABLED
-        // Set the default stall analysis output file name if not provided by a user.
-        if (vm.count("--stalls") && config.stall_analysis_file.empty())
-        {
-            config.stall_analysis_file = kStrDefaultFilenameStalls;
-        }
-#endif  // !_STALLS_ENABLED
-
         if (vm.count("no-suffix-bin") > 0)
         {
             config.should_avoid_binary_suffix = true;
@@ -494,7 +490,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.requested_command = Config::kUpdate;
         }
         else if (!config.analysis_file.empty() || !config.il_file.empty() || !config.isa_file.empty() ||
-                 !config.livereg_analysis_file.empty() || !config.stall_analysis_file.empty() || !config.binary_output_file.empty() ||
+                 !config.livereg_analysis_file.empty() || !config.binary_output_file.empty() ||
                  !config.metadata_file.empty() || !config.block_cfg_file.empty() ||
                  !config.inst_cfg_file.empty() || !config.spv_txt.empty() || !config.spv_bin.empty() ||
                  !config.parsed_spv.empty())
@@ -584,19 +580,23 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         // Set the Vulkan per-stage input file types.
         if (config.mode == RgaMode::kModeVulkan)
         {
+            std::vector<std::map<std::string, RgVulkanInputType>> type_pairs_map = {
+                std::map<std::string, RgVulkanInputType>{{"glsl", RgVulkanInputType::kGlsl}},
+                std::map<std::string, RgVulkanInputType>{{"spvas", RgVulkanInputType::kSpirvTxt}}};
             for (const auto& stage : std::map<std::string, std::pair<std::string*, RgVulkanInputType*>>
                     { {"vert", {&config.vertex_shader, &config.vert_shader_file_type}},         {"tesc", {&config.tess_control_shader, &config.tesc_shader_file_type}},
                       {"tese", {&config.tess_evaluation_shader, &config.tese_shader_file_type}}, {"frag", {&config.fragment_shader, &config.frag_shader_file_type}},
                       {"geom", {&config.geometry_shader, &config.geom_shader_file_type}},       {"comp", {&config.compute_shader, &config.comp_shader_file_type}} })
             {
-                for (const std::pair<std::string, RgVulkanInputType>& fileType :
-                         std::map<std::string, RgVulkanInputType>{ {"glsl", RgVulkanInputType::kGlsl} },
-                         std::map<std::string, RgVulkanInputType>{ {"spvas", RgVulkanInputType::kSpirvTxt} })
+                for (const auto& type_pair_map : type_pairs_map)
                 {
-                    if (vm.count(stage.first + "-" + fileType.first))
+                    for (const std::pair<std::string, RgVulkanInputType>& file_type : type_pair_map)
                     {
-                        *(stage.second.first) = vm[stage.first + "-" + fileType.first].as<std::string>();
-                        *(stage.second.second) = fileType.second;
+                        if (vm.count(stage.first + "-" + file_type.first))
+                        {
+                            *(stage.second.first)  = vm[stage.first + "-" + file_type.first].as<std::string>();
+                            *(stage.second.second) = file_type.second;
+                        }
                     }
                 }
             }
@@ -742,6 +742,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         cout << "==============================================" << endl << endl;
         cout << "Usage: " << program_name << " [options]" << endl << endl;
         cout << generic_opt << endl;
+        cout << il_dump_opt << endl;
         cout << macro_and_include_opt << endl;
         cout << dx12_opt << endl;
         cout << dxc_options << endl;

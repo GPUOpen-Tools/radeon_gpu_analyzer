@@ -15,7 +15,7 @@
 #pragma warning(push)
 #pragma warning(disable:4309)
 #endif
-#include "AMDTOSWrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/vulkan/tools/include/spirv_cross/spirv_cross.hpp"
 #ifdef _WIN32
 #pragma warning(pop)
@@ -457,7 +457,7 @@ static bool ParseVulkanStats(const std::string isa_text, const std::string& stat
     bool result = false;
     std::string line, tag, dash, equals;
     std::stringstream text_content(stats_text), sLine;
-    CALuint64 value;
+    uint64_t          value;
 
     // Read the statistics text line by line and parse each line.
     // Skip the 1st line which is the title.
@@ -930,12 +930,6 @@ void KcCliCommanderVulkan::RunCompileCommands(const Config& config, LoggingCallb
                     if (status && !configPerDevice.livereg_analysis_file.empty())
                     {
                         status = PerformLiveRegAnalysis(config);
-                    }
-
-                    // Perform stall analysis if requested.
-                    if (status && !configPerDevice.stall_analysis_file.empty())
-                    {
-                        status = PerformStallAnalysis(config);
                     }
 
                     // Generate CFG if requested.
@@ -1729,15 +1723,15 @@ bool KcCliCommanderVulkan::ParseIsaFilesToCSV(bool line_numbers)
     return ret;
 }
 
-bool KcCliCommanderVulkan::PerformLiveRegAnalysis(const Config& conf) const
+bool KcCliCommanderVulkan::PerformLiveRegAnalysis(const Config& conf)
 {
     bool  ret = true;
 
-    for (const auto& device_md_node : output_metadata_)
+    for (auto& device_md_node : output_metadata_)
     {
         const std::string&        device        = device_md_node.first;
         const std::string&        device_suffix = (conf.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
-        const RgVkOutputMetadata& device_md     = device_md_node.second;
+        RgVkOutputMetadata& device_md     = device_md_node.second;
         gtString                  device_gtstr;
         device_gtstr << device.c_str();
 
@@ -1745,7 +1739,7 @@ bool KcCliCommanderVulkan::PerformLiveRegAnalysis(const Config& conf) const
 
         for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
         {
-            const RgOutputFiles& stage_md = device_md[stage];
+            RgOutputFiles& stage_md = device_md[stage];
             if (!stage_md.input_file.empty())
             {
                 std::string out_file_name;
@@ -1766,71 +1760,13 @@ bool KcCliCommanderVulkan::PerformLiveRegAnalysis(const Config& conf) const
 
                     KcUtils::PerformLiveRegisterAnalysis(isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, conf.print_process_cmd_line);
                     ret = BeUtils::IsFilePresent(out_file_name);
+                    stage_md.livereg_file = out_file_name;
                 }
                 else
                 {
                     RgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
                 }
             }
-        }
-    }
-
-    LogResult(ret);
-
-    return ret;
-}
-
-bool KcCliCommanderVulkan::PerformStallAnalysis(const Config& config) const
-{
-    bool ret = true;
-
-    for (const auto& device_md_node : output_metadata_)
-    {
-        const std::string& device = device_md_node.first;
-        gtString           device_gtstr;
-        device_gtstr << device.c_str();
-
-        if (KcUtils::IsNaviTarget(device))
-        {
-            const std::string&        device_suffix = (config.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
-            const RgVkOutputMetadata& device_md     = device_md_node.second;
-
-            std::cout << kStrInfoPerformingStallAnalysis1 << device << "... " << std::endl;
-
-            for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
-            {
-                const RgOutputFiles& stage_md = device_md[stage];
-                if (!stage_md.input_file.empty())
-                {
-                    std::string out_file_name;
-                    gtString    out_filename_gtstr, isa_filename_gtstr;
-
-                    // Construct a name for the stall analysis output file.
-                    ret = KcUtils::ConstructOutFileName(config.stall_analysis_file,
-                                                        kVulkanStageFileSuffixDefault[stage],
-                                                        device_suffix,
-                                                        kStrDefaultExtensionStalls,
-                                                        out_file_name,
-                                                        !KcUtils::IsDirectory(config.stall_analysis_file));
-
-                    if (ret && !out_file_name.empty())
-                    {
-                        out_filename_gtstr << out_file_name.c_str();
-                        isa_filename_gtstr << stage_md.isa_file.c_str();
-
-                        KcUtils::PerformStallAnalysis(isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, config.print_process_cmd_line);
-                        ret = BeUtils::IsFilePresent(out_file_name);
-                    }
-                    else
-                    {
-                        std::cout << kStrErrorFailedCreateOutputFilename << std::endl;
-                    }
-                }
-            }
-        }
-        else
-        {
-            std::cout << kStrWarningStallAnalysisNotSupportedForRdna << device << std::endl;
         }
     }
 

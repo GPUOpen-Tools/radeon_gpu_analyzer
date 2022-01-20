@@ -53,7 +53,11 @@ public:
     std::string              livereg_analysis_file;             ///< Live register analysis output file.
     std::string              block_cfg_file;                    ///< Output file for per-block control flow graph.
     std::string              inst_cfg_file;                     ///< Output file for per-instruction control flow graph.
-    std::string              stall_analysis_file;               ///< Output file for stall analysis.
+    std::string              inference_analysis_file;           ///< Output file for SPP inference (text).
+    std::string              inference_image_file;              ///< Output file for SPP inference (image).
+    std::string              inference_bottleneck_threshold;    ///< The number of cycles that defines a bottleneck for SPP.
+    std::string              inference_model_confidence;        ///< The prediction model's level of confidence.
+    std::string              inference_engine_path;             ///< Alternative path to the inference engine to be used for SPP.
     std::string              binary_output_file;                ///< Output binary file template.
     std::string              function;                          ///< Kernel/Function of interest in analysis.
     std::string              csv_separator;                     ///< Override for CSV list separator.
@@ -141,7 +145,11 @@ public:
     std::vector<std::string> dxr_exports;                       ///< DXR exports to retrieve disassembly for. In pipeline mode this should be one or more a raygeneration shaders.
 
     // DX12: debug layer.
-    bool dx12_debug_layer_enabled = false;
+    bool dx12_debug_layer_enabled = false;                      ///< True to enable D3D12 debug layer.
+
+    // DX12: offline session.
+    bool dx12_offline_session = false;                          ///< True to trigger DX12 offline mode.
+    std::string alternative_amdxc;                              ///< Alternative version of amdxc64.dll to be used in offline mode.
 
     // Vulkan.
     std::string              vertex_shader;                     ///< Vertex shader full path

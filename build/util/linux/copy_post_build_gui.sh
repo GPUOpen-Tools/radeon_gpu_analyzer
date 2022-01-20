@@ -37,6 +37,6 @@ if [ "$AUTOMATION" = "-automation" ]; then
 fi
 
 # Copy the Radeon Tools Download Assistant.
-cp ../../../../Common/Src/UpdateCheckAPI/rtda/linux/rtda $OUTPUT_DIR/
+cp ../../../../Common/Src/update_check_api/rtda/linux/rtda $OUTPUT_DIR/
 chmod +x $OUTPUT_DIR/rtda
 

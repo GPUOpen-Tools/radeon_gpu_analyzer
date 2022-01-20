@@ -7,11 +7,11 @@
     #pragma warning(push)
     #pragma warning(disable:4309)
 #endif
-#include "AMDTOSWrappers/Include/osFilePath.h"
-#include "AMDTOSWrappers/Include/osDirectory.h"
-#include "AMDTBaseTools/Include/gtAssert.h"
-#include "AMDTOSWrappers/Include/osProcess.h"
-#include "AMDTOSWrappers/Include/osApplication.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
+#include "external/amdt_base_tools/Include/gtAssert.h"
+#include "external/amdt_os_wrappers/Include/osProcess.h"
+#include "external/amdt_os_wrappers/Include/osApplication.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -37,10 +37,13 @@ static const std::vector<gtString>  kLcOpenclLibFiles = { L"opencl.amdgcn.bc", L
                                                         L"oclc_daz_opt_on.amdgcn.bc", L"oclc_daz_opt_off.amdgcn.bc",
                                                         L"oclc_unsafe_math_on.amdgcn.bc", L"oclc_unsafe_math_off.amdgcn.bc",
                                                         L"oclc_finite_only_on.amdgcn.bc", L"oclc_finite_only_off.amdgcn.bc",
-                                                        L"oclc_isa_version_900.amdgcn.bc", L"oclc_isa_version_90a.amdgcn.bc", L"oclc_isa_version_90c.amdgcn.bc", L"oclc_isa_version_902.amdgcn.bc",
-                                                        L"oclc_isa_version_904.amdgcn.bc", L"oclc_isa_version_906.amdgcn.bc", L"oclc_isa_version_908.amdgcn.bc", L"oclc_isa_version_909.amdgcn.bc",
+                                                        L"oclc_isa_version_900.amdgcn.bc", L"oclc_isa_version_90a.amdgcn.bc", L"oclc_isa_version_90c.amdgcn.bc",
+                                                        L"oclc_isa_version_902.amdgcn.bc",
+                                                        L"oclc_isa_version_904.amdgcn.bc", L"oclc_isa_version_906.amdgcn.bc", L"oclc_isa_version_908.amdgcn.bc",
+                                                        L"oclc_isa_version_909.amdgcn.bc",
                                                         L"oclc_isa_version_1010.amdgcn.bc", L"oclc_isa_version_1011.amdgcn.bc", L"oclc_isa_version_1012.amdgcn.bc",
-                                                        L"oclc_isa_version_1030.amdgcn.bc", L"oclc_isa_version_1031.amdgcn.bc", L"oclc_isa_version_1032.amdgcn.bc" };
+                                                        L"oclc_isa_version_1030.amdgcn.bc", L"oclc_isa_version_1031.amdgcn.bc", L"oclc_isa_version_1032.amdgcn.bc",
+                                                        L"oclc_isa_version_1034.amdgcn.bc" };
 
 static const std::string  kStrLcOpenclStdOption = "-cl-std";
 static const std::string  kStrLcOpenclStdDefaultValue = "cl2.0";

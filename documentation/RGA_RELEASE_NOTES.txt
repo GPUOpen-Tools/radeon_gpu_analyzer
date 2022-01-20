@@ -1,23 +1,13 @@
-Radeon™ GPU Analyzer 2.5 – Release Notes
+Radeon™ GPU Analyzer 2.6 – Release Notes
 ========================================
 Highlights
 ==========
-- Added support for gfx1032 as a target in Vulkan, DX12, DXR, DX11, OpenCL and OpenGL modes.
-- [GitHub-59] DX12 mode: support for multi-GPU configurations where the primary display adapter is a non-AMD card. The tool will now use the driver that is associated with the first AMD display adapter on the system.
-- OpenCL:
-o [GitHub-67, GitHub-76] Added support for RDNA targets, including the Radeon Instinct MI100.
-o [GitHub-34] Updated the Lightning Compiler package that is bundled with the tool.
-o Added support for live VGPR analysis and control-flow graph generation.
-o ROCM-CL mode (-s rocm-cl) was replaced with an “Offline OpenCL” mode (-s opencl).
-- Vulkan: 
-o Live VGPR analysis and control-flow graph can now be generated from LLPC disassembly.
-o Updated the SPIR-V tools.
-- Vulkan offline: updated the Vulkan offline backend.
-- Major refactoring of the codebase to conform with Google C++ style guide. You may notice files and folders have been renamed and relocated in the binary package and GitHub repository.
-- Notable bug fixes:
-o DXR: Disassembly for Wave32 shaders no longer shows references of shared VGPRs.
-o [GitHub-82] Vulkan offline compiler assertion when using EXT_buffer_reference.
-o [GitHub-66] Added support for Radeon RX Vega M GL and GH in Offline OpenCL mode.
+-	Added support for gfx1034 as a target in Vulkan, DX12, DXR, DX11, OpenCL and OpenGL modes.
+-	DX12 mode: you can now extract AMDIL disassembly for DX12 compute and graphics shaders.
+-	[GitHub-77] DXR and DX12 offline modes:
+o	You can now compile DXR and DX12 shaders and pipelines on machines that do not have an installed AMD card or driver by adding the --offline command line switch to your RGA command. The tool ships with the latest released AMD DXR/DX12 driver at the time of the tool's release, and it would use that driver if --offline is specified.
+o	Plug & play DXR/DX12 driver: force RGA to load amdxc64.dll from a specific location by using the new --amdxc command line switch. This option also works on machines which do not have an AMD DXR/DX12 driver installed.
+-	VGPR pressure GUI: the UI now visualizes VGPR pressure in the disassembly view at the instruction level, allowing you to spot areas in your code that have the highest VGPR pressure and helping you identify where to focus your optimization. The UI shows the allocation and usage of VGPRs for each instruction, and hints on how many VGPRs need to be reduced to reduce the allocation.
 
 Note: on Ubuntu, the minimum required OS version is Ubuntu 20.04.
 
@@ -25,15 +15,16 @@ Known Issues
 ============
 Vulkan Live Driver Mode 
 -----------------------
-- Source to disassembly correlation is not supported by AMD’s shader compiler at the moment and is therefore not supported in the UI.
-- Keyboard navigation is not supported from some views in the GUI application.
-- The RGA layer is a beta feature. It fails to extract the shaders and pipeline state from certain Vulkan apps.
-- Notifications about the fact that modified SPIR-V binary does not match the disassembly will not appear for loaded projects (in case that you changed the SPIR-V code, did not build and re-loaded the project).
+-	Source to disassembly correlation is not supported by AMD's shader compiler and is therefore not supported in the UI.
+-	Keyboard navigation is not supported from some views in the GUI application.
+-	The RGA layer is a beta feature. It fails to extract the shaders and pipeline state from certain Vulkan apps.
+-	Notifications about the fact that modified SPIR-V binary does not match the disassembly will not appear for loaded projects (in case that you changed the SPIR-V code, did not build and re-loaded the project).
+-	Cycle estimate for certain VALU instructions appears as “Varies” instead of 4.
 
 Offline OpenCL Mode
 -------------------
-- OpenCL C++ kernels are not yet supported by the Lightning Compiler.
-- Cycle estimate for certain VALU instructions appears as “Varies” instead of 4.
+-	OpenCL C++ kernels are not yet supported by the Lightning Compiler.
+-	Cycle estimate for certain VALU instructions appears as “Varies” instead of 4.
 
 OpenGL Mode
 -----------
@@ -41,7 +32,9 @@ Resource usage statistics for OpenGL mode only displays usage of SGPRs and VGPRs
 
 DirectX 12 Mode
 ---------------
-Live register analysis & CFG generation require using the --isa option to generate ISA disassembly. 
+-	Live register analysis & CFG generation require using the --isa option to generate ISA disassembly. 
+-	On Windows 11, when running the same RGA command more than once with the --il option in the command, the AMDIL disassembly for vertex shaders shows up corrupted.
+-	On Windows 11, Hull shader AMDIL disassembly contains a trail of a few garbage characters.
 
 Vulkan Offline Modes (vk-offline, vk-spv-offline, vk-spv-txt-offline)
 ---------------------------------------------------------------------
@@ -150,67 +143,143 @@ CapabilityVulkanMemoryModelDeviceScopeKHR
 CapabilityPhysicalStorageBufferAddresses
 CapabilityPhysicalStorageBufferAddressesEXT
 CapabilityDemoteToHelperInvocationEXT
-CapabilityRayTracingProvisionalKHR
-CapabilityRayQueryProvisionalKHR
-CapabilityRayTraversalPrimitiveCullingProvisionalKHR
+CapabilityAtomicFloat32MinMaxEXT
+CapabilityAtomicFloat64MinMaxEXT
+
 
 b. The Vulkan Offline modes currently only support the following extensions:  
-SPV_KHR_shader_ballot
-SPV_KHR_subgroup_vote
-SPV_KHR_device_group
-SPV_KHR_multiview
-SPV_KHR_shader_draw_parameters
-SPV_KHR_16bit_storage
-SPV_KHR_storage_buffer_storage_class
-SPV_KHR_8bit_storage
-SPV_KHR_variable_pointers
-SPV_KHR_float_controls
-SPV_KHR_shader_clock
-SPV_KHR_vulkan_memory_model
-SPV_KHR_post_depth_coverage
-SPV_KHR_non_semantic_info
-SPV_KHR_physical_storage_buffer
-SPV_KHR_terminate_invocation
-SPV_KHR_FRAGMENT_SHADING_RATE
-SPV_EXT_nonuniform_qualifier
-SPV_EXT_shader_stencil_export
-SPV_EXT_shader_viewport_index_layer
-SPV_EXT_demote_to_helper_invocation
-SPV_EXT_shader_image_atomic_int64
-SPV_AMD_shader_ballot
-SPV_AMD_shader_trinary_minmax
-SPV_AMD_shader_explicit_vertex_parameter
-SPV_AMD_gcn_shader
-SPV_AMD_gpu_shader_half_float
-SPV_AMD_texture_gather_bias_lod
-SPV_AMD_gpu_shader_int16
-SPV_AMD_shader_fragment_mask
-SPV_AMD_shader_image_load_store_lod
-SPV_AMD_shader_texel_buffer_explicit_format
-SPV_AMD_property_id_attachment
-SPV_AMD_anisotropic_lod_compensation
-SPV_ARB_shader_ballot
-SPV_GOOGLE_decorate_string
-SPV_GOOGLE_hlsl_functionality1
-SPV_GOOGLE_user_type
-SPV_KHR_ray_tracing
-SPV_KHR_ray_query
+CapabilityMatrix
+CapabilityShader
+CapabilityGeometry
+CapabilityTessellation
+CapabilityFloat16
+CapabilityFloat64
+CapabilityInt64
+CapabilityInt64Atomics
+CapabilityGroups
+CapabilityAtomicStorage
+CapabilityInt16
+CapabilityTessellationPointSize
+CapabilityGeometryPointSize
+CapabilityImageGatherExtended
+CapabilityStorageImageMultisample
+CapabilityUniformBufferArrayDynamicIndexing
+CapabilitySampledImageArrayDynamicIndexing
+CapabilityStorageBufferArrayDynamicIndexing
+CapabilityStorageImageArrayDynamicIndexing
+CapabilityClipDistance
+CapabilityCullDistance
+CapabilityImageCubeArray
+CapabilitySampleRateShading
+CapabilityImageRect
+CapabilitySampledRect
+CapabilityInt8
+CapabilityInputAttachment
+CapabilitySparseResidency
+CapabilityMinLod
+CapabilitySampled1D
+CapabilityImage1D
+CapabilitySampledCubeArray
+CapabilitySampledBuffer
+CapabilityImageBuffer
+CapabilityImageMSArray
+CapabilityStorageImageExtendedFormats
+CapabilityImageQuery
+CapabilityDerivativeControl
+CapabilityInterpolationFunction
+CapabilityTransformFeedback
+CapabilityGeometryStreams
+CapabilityStorageImageReadWithoutFormat
+CapabilityStorageImageWriteWithoutFormat
+CapabilityMultiViewport
+CapabilitySubgroupDispatch
+CapabilityNamedBarrier
+CapabilityPipeStorage
+CapabilityGroupNonUniform
+CapabilityGroupNonUniformVote
+CapabilityGroupNonUniformArithmetic
+CapabilityGroupNonUniformBallot
+CapabilityGroupNonUniformShuffle
+CapabilityGroupNonUniformShuffleRelative
+CapabilityGroupNonUniformClustered
+CapabilityGroupNonUniformQuad
+CapabilitySubgroupBallotKHR
+CapabilityDrawParameters
+CapabilitySubgroupVoteKHR
+CapabilityStorageBuffer16BitAccess
+CapabilityStorageUniformBufferBlock16
+CapabilityStorageUniform16
+CapabilityUniformAndStorageBuffer16BitAccess
+CapabilityStorageInputOutput16
+CapabilityDeviceGroup
+CapabilityMultiView
+CapabilityVariablePointersStorageBuffer
+CapabilityVariablePointers
+CapabilitySampleMaskPostDepthCoverage
+CapabilityStorageBuffer8BitAccess
+CapabilityUniformAndStorageBuffer8BitAccess
+CapabilityDenormPreserve
+CapabilityDenormFlushToZero
+CapabilitySignedZeroInfNanPreserve
+CapabilityRoundingModeRTE
+CapabilityRoundingModeRTZ
+CapabilityFloat16ImageAMD
+CapabilityImageGatherBiasLodAMD
+CapabilityFragmentMaskAMD
+CapabilityStencilExportEXT
+CapabilityImageReadWriteLodAMD
+CapabilityInt64ImageEXT
+CapabilityShaderClockKHR
+CapabilityShaderViewportIndexLayerEXT
+CapabilityFragmentShadingRateKHR
+CapabilityFragmentDensityEXT
+CapabilityShaderNonUniformEXT
+CapabilityRuntimeDescriptorArrayEXT
+CapabilityInputAttachmentArrayDynamicIndexingEXT
+CapabilityUniformTexelBufferArrayDynamicIndexingEXT
+CapabilityStorageTexelBufferArrayDynamicIndexingEXT
+CapabilityUniformBufferArrayNonUniformIndexingEXT
+CapabilitySampledImageArrayNonUniformIndexingEXT
+CapabilityStorageBufferArrayNonUniformIndexingEXT
+CapabilityStorageImageArrayNonUniformIndexingEXT
+CapabilityUniformTexelBufferArrayNonUniformIndexingEXT
+CapabilityStorageTexelBufferArrayNonUniformIndexingEXT
+CapabilityVulkanMemoryModel
+CapabilityVulkanMemoryModelKHR
+CapabilityVulkanMemoryModelDeviceScope
+CapabilityVulkanMemoryModelDeviceScopeKHR
+CapabilityPhysicalStorageBufferAddresses
+CapabilityPhysicalStorageBufferAddressesEXT
+CapabilityDemoteToHelperInvocationEXT
+CapabilityAtomicFloat32MinMaxEXT
+CapabilityAtomicFloat64MinMaxEXT
+
+-	In Vulkan offline mode, in the case where no output file name is provided and post-processing (live register analysis or control-flow graph generation) is enabled, a false error message is printed.
 
 GUI Application
 ---------------
-- “Correlation Disabled” notification in the source code editor is not being saved for projects after they were closed.
-- Certain SALU instructions are being misclassified as VALU instructions. 
-- Certain GDS instructions are being misclassified as SALU.
-- Changing disassembly columns can be sluggish on certain systems in projects with multiple .cl files.
+-	VGPR Pressure feature: certain instructions (image_* in particular) may report more live registers than actually used.
+-	“Correlation Disabled” notification in the source code editor is not being saved for projects after they were closed.
+-	Certain SALU instructions are being misclassified as VALU instructions. 
+-	Certain GDS instructions are being misclassified as SALU.
+-	Changing disassembly columns can be sluggish on certain systems in projects with multiple .cl files.
+
+Shader Analysis
+---------------
+The following instructions are marked as <unknown> in live VGPR reports and CFG files:
+-	v_mad_mixlo_f16
+-	v_mad_mixhi_f16
+-	v_dot2_*
+
 
 Notes for OpenCL Mode Users 
 ===========================
 The Offline OpenCL mode uses the Lightning Compiler package that ships with RGA, which is based on clang. 
-As of version 2.0, RGA allows developers to replace the Lightning Compiler package that ships with the product with a user-provided LLVM-based package. For more information, see the Radeon GPU Analyzer GUI app’s help manual, or run the command line tool with –s opencl –h as arguments (look for the “Alternative OpenCL Lightning Compiler” section).
+As of version 2.0, RGA allows developers to replace the Lightning Compiler package that ships with the product with a user-provided LLVM-based package. For more information, see the Radeon GPU Analyzer GUI app's help manual, or run the command line tool with –s opencl –h as arguments (look for the “Alternative OpenCL Lightning Compiler” section).
 
 Notes for DirectX 11 Mode Users
 ===============================
-RGA’s DirectX 11 (-s dx11) mode will use the driver that is associated with the primary display adapter, by default. If your primary display adapter is not an AMD GPU, or if you would like RGA to use a driver that is associated with a different display adapter that is installed on your system, use the --adapters and --set-adapter <id> command line switches to instruct RGA to use the relevant driver.
+RGA's DirectX 11 (-s dx11) mode will use the driver that is associated with the primary display adapter, by default. If your primary display adapter is not an AMD GPU, or if you would like RGA to use a driver that is associated with a different display adapter that is installed on your system, use the --adapters and --set-adapter <id> command line switches to instruct RGA to use the relevant driver.
 
 System Requirements
 ===================
@@ -219,8 +288,8 @@ It is generally recommended to use RGA with the latest Radeon Software version. 
 Vulkan Mode
 -----------
 To use the installed driver in Vulkan mode:
-a. Vulkan SDK 1.1.97.0 or later is required.
-b. Latest Adrenalin or amdgpu-pro driver is required.
+a.	Vulkan SDK 1.1.97.0 or later is required.
+b.	Latest Adrenalin or amdgpu-pro driver is required.
 
 Vulkan Offline Modes (vk-offline, vk-spv-offline, vk-spv-txt-offline)
 ---------------------------------------------------------------------

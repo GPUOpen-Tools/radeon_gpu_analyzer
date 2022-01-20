@@ -200,7 +200,7 @@ public:
 
     // Get shader ISA code
     ///@note The client will need to call this function twice to get the ISA code :
-    /// First time, client call it with null pIsaCode to query the side of whole ISA code buffer
+    /// First time, client call it with null pIsaCode to query the size of whole ISA code buffer
     /// Second time, the client is responsible for allocating enough space for ISA code buffer. And the pointer to
     /// the ISA code buffer will be returned as pIsaCode. Also, client can get the per-shader stage disassembly
     /// (will be nullptr if it is not present) by passing in the empty AmdExtD3DPipelineDisassembly struct
@@ -367,4 +367,26 @@ IAmdExtD3DShaderAnalyzer2 : public IAmdExtD3DShaderAnalyzer1
         AmdExtD3DPipelineElfHandle  pipelineElfHandle,
         uint32_t*                   pSize) = 0;
 
+};
+
+
+/**
+***********************************************************************************************************************
+* @brief Version 3 Shader Analyzer extension API object (adding dissasembly support)
+***********************************************************************************************************************
+*/
+interface __declspec(uuid("D54EA359-BE21-40A5-89FF-4E81ACAD88A1"))
+IAmdExtD3DShaderAnalyzer3 : public IAmdExtD3DShaderAnalyzer2
+{
+    // Get shader AMDIL code
+    ///@note The client will need to call this function twice to get the AMDIL code :
+    /// First time, client call it with null pAmdilCode to query the size of whole AMDIL code buffer.
+    /// Second time, the client is responsible for allocating enough space for AMDIL code buffer and passes it as
+    /// pAmdilCode. Also, if pDisassembly is not null, it will be populated with the AMDIL for the
+    /// individual pipeline stages.
+    virtual HRESULT GetShaderAmdIlDisassembly(
+        AmdExtD3DPipelineHandle       pipelineHandle,
+        char*                         pAmdilCode,
+        size_t*                       pAmdilCodeSize,
+        AmdExtD3DPipelineDisassembly* pDisassembly) = 0;
 };

@@ -41,7 +41,7 @@ IF NOT exist %OUTPUT_DIR%\utils\DX12\ mkdir %OUTPUT_DIR%\utils\DX12\
 IF NOT exist %OUTPUT_DIR%\utils\DX12\DXC\ mkdir %OUTPUT_DIR%\utils\DX12\DXC\
 IF NOT exist %OUTPUT_DIR%\utils\LC\ mkdir %OUTPUT_DIR%\utils\LC\
 IF NOT exist %OUTPUT_DIR%\utils\LC\Disassembler\ mkdir %OUTPUT_DIR%\utils\LC\Disassembler\
-IF NOT exist %OUTPUT_DIR%\utils\LC\OpenCL\ mkdir %OUTPUT_DIR%\utils\LC\OpenCL\lib\clang\13.0.0\include\
+IF NOT exist %OUTPUT_DIR%\utils\LC\OpenCL\ mkdir %OUTPUT_DIR%\utils\LC\OpenCL\lib\clang\14.0.0\include\
 echo
 
 XCopy /r /d /y "..\..\..\external\opengl\VirtualContext\windows\VirtualContext.exe" "%OUTPUT_DIR%\utils\"
@@ -49,16 +49,18 @@ XCopy /r /d /y "..\..\..\source\utils\shader_analysis\windows\x64\shae.exe" "%OU
 XCopy /r /d /y "..\..\..\source\utils\dx11\bin\dx11_adapter.exe" "%OUTPUT_DIR%\utils\"
 XCopy /r /e /d /y "..\..\..\external\lc\opencl\windows\*" "%OUTPUT_DIR%\utils\LC\OpenCL\"
 del /f "%OUTPUT_DIR%\utils\LC\OpenCL\include\opencl-c-base.h"
-XCopy /r /d /y "..\..\..\external\lc\opencl\windows\include\opencl-c-base.h" "%OUTPUT_DIR%\utils\LC\OpenCL\lib\clang\13.0.0\include\"
+XCopy /r /d /y "..\..\..\external\lc\opencl\windows\include\opencl-c-base.h" "%OUTPUT_DIR%\utils\LC\OpenCL\lib\clang\14.0.0\include\"
 XCopy /r /d /y "..\..\..\external\lc\opencl\additional-targets" "%OUTPUT_DIR%\utils\LC\OpenCL\"
 XCopy /r /d /y "..\..\..\external\lc\disassembler\windows\amdgpu-dis.exe" "%OUTPUT_DIR%\utils\LC\Disassembler\"
-XCopy /r /e /d /y "..\..\..\external\vulkan\tools\windows\bin" "%OUTPUT_DIR%\utils\Vulkan\"
+XCopy /r /e /d /y "..\..\..\external\vulkan\tools\windows\bin\*.exe" "%OUTPUT_DIR%\utils\Vulkan\"
 XCopy /r /e /d /y "..\..\..\external\dxc\*" "%OUTPUT_DIR%\utils\DX12\DXC\"
+XCopy /r /e /d /y "..\..\..\external\dx12\withdll.exe" "%OUTPUT_DIR%\utils\DX12\"
+XCopy /r /e /d /y "..\..\..\external\dx12\umdrepoint.dll" "%OUTPUT_DIR%\utils\DX12\"
 XCopy /r /d /y "..\..\..\License.txt" "%OUTPUT_DIR%\License.txt*"
 XCopy /r /d /y "..\..\..\RGA_NOTICES.txt" "%OUTPUT_DIR%\RGA_NOTICES.txt*"
 XCopy /r /d /y "..\..\..\README.md" "%OUTPUT_DIR%\README.md*"
 XCopy /r /d /y "..\..\..\documentation\RGA_RELEASE_NOTES.txt" "%OUTPUT_DIR%\RGA_RELEASE_NOTES.txt*"
-XCopy /r /d /y "..\..\..\..\Common\Src\UpdateCheckAPI\rtda\windows\rtda.exe" "%OUTPUT_DIR%\rtda.exe*"
+XCopy /r /d /y "..\..\..\..\Common\Src\update_check_api\rtda\windows\rtda.exe" "%OUTPUT_DIR%\rtda.exe*"
 
 XCopy /r /d /y "..\..\..\external\vulkan_offline\windows\amdspv.exe" "%OUTPUT_DIR%\utils\"
 XCopy /r /d /y "..\..\..\external\vulkan_offline\windows\spvgen.dll" "%OUTPUT_DIR%\utils\"

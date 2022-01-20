@@ -13,7 +13,7 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_pipeline_state_model.h"
 
 // A stylesheet applied to the entire pipeline state tree.
-static const QString kStrPsoTreeStylesheet = "background-color: rgb(255, 255, 255, 255);";
+static const QString kStrPsoTreeStylesheet = "background-color: rgba(255, 255, 255, 255);";
 
 RgPipelineStateTree::RgPipelineStateTree(QWidget* parent)
     : QScrollArea(parent)

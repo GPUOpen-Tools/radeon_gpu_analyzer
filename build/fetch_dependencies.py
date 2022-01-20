@@ -48,23 +48,21 @@ from dependency_map import github_mapping
 from dependency_map import github_root
 from dependency_map import download_mapping_windows
 from dependency_map import download_mapping_linux
-from dependency_map import zip_files
 
 # Calculate the root of the git server - all git and zip file dependencies should be retrieved from the same server.
 git_url = subprocess.check_output(["git", "-C", script_root, "remote", "get-url", "origin"], shell=SHELLARG)
-git_url_string = (str(git_url).lstrip("b'"))
+amd_github_url = (str(git_url).lstrip("b'"))
 if git_url is None:
     print("Error: Unable to determine origin for RGA git project")
     exit(1)
 
-# URL to root of radeon_gpu_analyzer releases on github.com.
-github_release_root = "https://github.com/GPUOpen-Tools/radeon_gpu_analyzer/releases/download/"
+# Temporary while repositories are on gerrit and github.amd.com.  This is used to clone DeviceInfo repo.
+gerrit_root = "ssh://gerritgit/DevTools/ec/"
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="A script that updates the build enviroment")
     parser.add_argument('--latest', action='store_true', default=False, help='Use latest version on the default branch')
-    parser.add_argument('--binary-path', action='store', default=None, help='Use rga_dependencies zip file at specified path')
     return (parser.parse_args())
 
 
@@ -157,27 +155,6 @@ def getVersion():
         return major + "." + minor + "." + update
 
 
-def artifactoryDownload(file_path, value):
-    from artifactory_helper import ArtifactoryHelper
-    from artifactory_helper import artifactory_server
-    # path is artifactory server relative path to zip file.
-    # value is <rga-relative-target-path>.
-    zip_file_name = file_path.split('/')[-1].split('#')[0].split('?')[0]
-    target_path = os.path.normpath(os.path.join(rga_root, value))
-    print("Downloading %s into %s"%(zip_file_name, target_path))
-    artifactory_download = ArtifactoryHelper(artifactory_server)
-    artifactory_path = artifactory_server + file_path
-    artifactory_download.DownloadFile(artifactory_path)
-    try:
-        zipfile.ZipFile(zip_file_name).extractall(target_path)
-    except (RuntimeError, ValueError):
-        print("Unable to expand package %s.\n"%file_path)
-        sys.exit(1)
-    if (get_os() == "Linux"):
-        make_executable(target_path)
-    os.remove(zip_file_name)
-
-
 def do_fetch(repo_target, repo_branch):
     status = True
 
@@ -203,11 +180,12 @@ def do_fetch(repo_target, repo_branch):
 
 def do_clone(repo_git_path, repo_target, repo_branch):
     status = True
-
     print("Directory %s does not exist. \n\tUsing 'git clone' to get latest from %s"%(repo_target, repo_git_path))
     sys.stdout.flush()
     try:
+        print("Cloning...%s\n"%(" ".join(["git", "clone", repo_git_path, repo_target])))
         subprocess.check_call(["git", "clone", repo_git_path, repo_target], shell=SHELLARG)
+        print("Checking out branch...\n")
         subprocess.check_call(["git", "-C", repo_target, "checkout", repo_branch], shell=SHELLARG)
     except subprocess.CalledProcessError as e:
         print("ERROR: 'git clone' failed with return code: %d\n"%e.returncode)
@@ -218,40 +196,11 @@ def do_clone(repo_git_path, repo_target, repo_branch):
     return status
 
 
-def fetch_private_map(git_server, repo_target):
-    # Clone repositories in git_private_mapping if they don't exist.
-    from dependency_map import git_private_mapping
-
-    # Determine checked out branch of RGA.
-    git_output = subprocess.check_output(["git", "-C", script_root, "branch", "--show-current"], shell=SHELLARG)
-    git_branch = git_output.decode()
-    rga_branch = git_branch.rstrip()
-
-    os.chdir(workspace)
-    for key in git_private_mapping:
-        if git_private_mapping[key][1] is None:
-            git_private_mapping[key][1] = rga_branch
-        private_git_path = git_server + key
-        private_repo_target = os.path.normpath(os.path.join(repo_target, git_private_mapping[key][0]))
-
-        print("\nChecking out commit: " + git_private_mapping[key][1] + " for " + key)
-        if os.path.isdir(private_repo_target):
-            # directory exists - get latest from git using pull
-            status = do_fetch(private_repo_target, git_private_mapping[key][1])
-            if not status:
-                sys.exit(1)
-        else:
-            # directory doesn't exist - clone from git
-            status = do_clone(private_git_path, private_repo_target, git_private_mapping[key][1])
-            if not status:
-                sys.exit(1)
-
-
-def fetch_git_map(arguments, git_branch, git_root):
+def fetch_git_map(arguments, git_branch):
     for key in git_mapping:
         # Target path, relative to workspace
         path = git_mapping[key][0]
-        source = git_root + key
+        source = gerrit_root + key
 
         required_commit = git_mapping[key][1]
         # required_commit may be "None" - or user may override commit via command line. In this case, use tip of tree
@@ -316,24 +265,25 @@ def do_fetch_dependencies(arguments):
         print("Error calling command: git --version")
 
     # Strip everything after the last '/' from the URL to retrieve the root
-    git_root = (git_url_string.rsplit('/', 1))[0] + '/'
-
-    # If cloning from github - use the master branch as the default branch - otherwise use amd-master
+    amd_github_root = (amd_github_url.rsplit('/', 1))[0] + '/'
+    
+    # If cloning from github.com - use the master branch as the default branch - otherwise use amd-master
     git_branch = "amd-master"
-    if "github.com" in git_url_string:
+    if "github.com" in amd_github_url:
         git_branch = "master"
 
-    print("\nFetching dependencies from: " + git_root + " - using branch: " + git_branch)
+    repo_origin = amd_github_root
+    
+    # Temporary during transition from gerrit to github.amd.com
+    if "github.amd.com" in amd_github_root:
+        repo_origin = gerrit_root
+
+    print("\nFetching dependencies from: " + repo_origin + " - using branch: " + git_branch)
 
     # The following section contains OS-specific dependencies that are downloaded and placed in the specified target directory.
     # for each dependency - test if it has already been fetched - if not, then fetch it, otherwise update it to top of tree
-    fetch_git_map(arguments, git_branch, git_root)
+    fetch_git_map(arguments, git_branch)
     fetch_github_map(arguments, git_branch)
-
-    # Handle git_private_mapping.
-    if "github.com" not in git_url_string:
-        if "JENKINS_URL" not in os.environ:
-            fetch_private_map(git_root, workspace)
 
     # Capture the operating system.
     machine_os = get_os()
@@ -349,45 +299,6 @@ def do_fetch_dependencies(arguments):
     # for each archived release, download and unzip the artifacts into the target location
     for key in download_mapping:
         downloadandunzip(key, download_mapping[key])
-
-    # If one of the large binaries exists, assume they all do.
-    if os.path.isfile(os.path.normpath(os.path.join(rga_root, "external/lc/opencl/windows/bin/clang.exe"))):
-        print("\nBinaries already exist, skipping rga_dependencies.zip download\n")
-        return
-    else:
-        # Download and extract additional zip files if necessary.
-        version = getVersion()
-        dependency_zip_file_name = "rga_dependencies_" + version + ".zip"
-        if arguments.binary_path is None:
-            # Download dependency zip file and unzip.
-            if "github" in git_url_string:
-                # Download from github.
-                rga_dependencies_zip_file = github_release_root + version + "/" + dependency_zip_file_name
-                downloadandunzip(rga_dependencies_zip_file, workspace)
-            else:
-                # Download from Artifactory.
-                # Import the artifactory_helper.py from RGA-Internal.
-                internal_repo_root = os.path.abspath(os.path.normpath(os.path.join(script_root, "../..")))
-                sys.path.insert(0, os.path.normpath(os.path.join(internal_repo_root, "RGA-Internal/build")))
-                from artifactory_helper import artifactory_root
-                os.chdir(workspace)
-
-                # Download and unzip dependency file from Artifactory.
-                artifactory_path = artifactory_root + version +"/" + dependency_zip_file_name
-                artifactoryDownload(artifactory_path, workspace)
-        else:
-            zipfile.ZipFile(arguments.binary_path).extractall(workspace)
-
-        # Copy extracted files to RGA folders.
-        for key in zip_files:
-            zip_file_path = os.path.join(workspace, key)
-            target_path = os.path.normpath(os.path.join(rga_root, zip_files[key]))
-            print("Extracting %s files into %s"%(key, target_path))
-            zipfile.ZipFile(zip_file_path).extractall(target_path)
-            # extractall doesn't retain execute permissions on Linux binaries.
-            if machine_os == "Linux":
-                make_executable(target_path)
-            os.remove(zip_file_path)
 
 
 if __name__ == '__main__':

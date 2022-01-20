@@ -30,6 +30,7 @@ namespace rga
     // *** CONSTANTS - START ***
 
     // Errors.
+    static const char* kStrErrorGraphicsShaderAmdilDisassemblyExtractionFailure1 = "Error: failed to extract AMDIL disassembly for ";
     static const char* kStrErrorRootSignatureExtractionFailure = "Error: failed to extract root signature from DXCB binary.";
     static const char* kStrErrorLocalRootSignatureCreateFromFileFailure = "Error: failed to create local root signature from file: ";
     static const char* kStrErrorGlobalRootSignatureCreateFromFileFailure = "Error: failed to create global root signature from file: ";
@@ -41,6 +42,7 @@ namespace rga
     static const char* kStrErrorDxbcDisassembleFailure = "Error: failed to disassemble compute shader DXBC binary.";
     static const char* kStrErrorExtractComputeShaderStatsFailure = "Error: failed to extract compute shader statistics.";
     static const char* kStrErrorExtractComputeShaderDisassemblyFailure = "Error: failed to extract compute shader disassembly.";
+    static const char* kStrErrorExtractComputeShaderAmdilDisassemblyFailure = "Error: failed to extract compute shader AMDIL disassembly.";
     static const char* kStrErrorExtractComputePipelineBinaryFailure = "Error: failed to extract compute pipeline binary.";
     static const char* kStrErrorExtractGraphicsShaderStatsFailure = "Error: failed to extract graphics pipeline binary.";
     static const char* kStrErrorExtractGraphicsShaderOutputFailure1 = "Error: failed to extract ";
@@ -76,8 +78,8 @@ namespace rga
     static const char* kStrErrorDxrFailedToReadHlslToDxilMappingFile1 = "Error: failed to read ";
     static const char* kStrErrorDxrFailedToParseHlslToDxilMappingFile1 = "Error: failed to parse ";
     static const char* kStrErrorDxrdHlslToDxilMappingFile2 = "HLSL->DXIL mapping file.";
+    static const char* kStrErrorAmdDisplayAdapterNotFound = "Error: could not find an AMD display adapter on the system. Consider adding --offline to the rga command to use the AMD driver (amdxc64.dll) that is bundled with the tool.";
     static const char* kStrErrorDxrFailedToRetrievePipelineShaderName = "Error: failed to retrieve shader name for shader #";
-    static const char* kStrErrorAmdDisplayAdapterNotFound              = "Error: could not find an AMD display adapter on the system.";
 
     // Warnings.
     static const char* kStrWarningBinaryExtractionNotSupportedInIndirectMode = "Warning: pipeline binary extraction (-b option) is not supported when driver performs Indirect compilation.";
@@ -85,6 +87,9 @@ namespace rga
     static const char* kStrWarningBinaryExtractionNotSupportedMultiplePipelines2 = " - there is currently no support for pipeline binary extraction when multiple pipelines are generated.";
 
     // Info.
+    static const char* kStrInfoExtractComputeShaderDisassemblyAmdil = "Extracting compute shader AMDIL disassembly...";
+    static const char* kStrInfoExtractGraphicsShaderDisassemblyAmdilSuccess = " shader AMDIL disassembly extracted successfully.";
+    static const char* kStrInfoExtractGraphicsShaderDisassemblyAmdil = " shader AMDIL disassembly...";
     static const char* kStrInfoExtractComputeShaderStats = "Extracting compute shader statistics...";
     static const char* kStrInfoExtractComputeShaderDisassembly = "Extracting compute shader disassembly...";
     static const char* kStrInfoExtractGraphicsShaderDisassembly = " shader disassembly...";
@@ -94,6 +99,7 @@ namespace rga
     static const char* kStrInfoExtractGraphicsShaderStats2 = " shader statistics...";
     static const char* kStrInfoExtractComputeShaderStatsSuccess = "Compute shader statistics extracted successfully.";
     static const char* kStrInfoExtractComputeShaderDisassemblySuccess = "Compute shader disassembly extracted successfully.";
+    static const char* kStrInfoExtractComputeShaderAmdilDisassemblySuccess  = "Compute shader AMDIL disassembly extracted successfully.";
     static const char* kStrInfoExtractComputePipelineBinarySuccess = "Compute pipeline binary extracted successfully.";
     static const char* kStrInfoExtractGraphicsPipelineBinarySuccess = "Graphics pipeline binary extracted successfully.";
     static const char* kStrInfoExtractGraphicsShaderStatsSuccess = " shader statistics extracted successfully.";
@@ -153,7 +159,7 @@ namespace rga
         // These are currently not supported by the driver.
         // Add DXR-specific part.
         serialized_stats << "    - stackSizeBytes                            = " << stats.stack_size_bytes << std::endl;
-        serialized_stats << "    - isInlined                                 = " << (stats.is_inlined ? "yes" : "no") << std::endl;
+        serialized_stats << "    - isInlined                                 = " << (stats.is_inlined ? 1 : 0) << std::endl;
 #endif
     }
 
@@ -1045,7 +1051,7 @@ namespace rga
         return ret;
     }
 
-    bool rga::rgDx12Frontend::GetHardwareAdapter(IDXGIAdapter1** dxgi_adapter)
+    bool rga::rgDx12Frontend::GetHardwareAdapter(IDXGIAdapter1** dxgi_adapter, bool is_offline_session)
     {
         bool ret = false;
 
@@ -1066,12 +1072,14 @@ namespace rga
                 DXGI_ADAPTER_DESC1 desc;
                 adapter->GetDesc1(&desc);
 
-                // Look for a physical AMD display adapter.
-                const UINT kAmdVendorId = 0x1002;
-                if (desc.VendorId != kAmdVendorId || (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE))
+                if (!is_offline_session)
                 {
-                    // Don't select the Basic Render Driver adapter.
-                    continue;
+                    // Look for a physical AMD display adapter.
+                    const UINT kAmdVendorId = 0x1002;
+                    if (desc.VendorId != kAmdVendorId || (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE))
+                    {
+                        continue;
+                    }
                 }
 
                 if (SUCCEEDED(D3D12CreateDevice(adapter.Get(),
@@ -1093,13 +1101,13 @@ namespace rga
         return ret;
     }
 
-    bool rgDx12Frontend::Init(bool is_dxr_session)
+    bool rgDx12Frontend::Init(bool is_dxr_session, bool is_offline_session)
     {
         bool ret = false;
 
         // Create the DXGI adapter.
         ComPtr<IDXGIAdapter1> hw_adapter;
-        ret = GetHardwareAdapter(&hw_adapter);
+        ret = GetHardwareAdapter(&hw_adapter, is_offline_session);
         assert(ret);
         assert(hw_adapter != nullptr);
         if (ret && hw_adapter != nullptr)
@@ -1112,7 +1120,7 @@ namespace rga
             if (SUCCEEDED(hr))
             {
                 // Initialize the backend with the D3D12 device.
-                ret = backend_.Init(device_.Get());
+                ret = backend_.Init(device_.Get(), is_offline_session);
                 assert(ret);
                 if (ret && is_dxr_session)
                 {
@@ -1156,7 +1164,7 @@ namespace rga
                 RgDx12ShaderResults results;
                 RgDx12ThreadGroupSize thread_group_size;
                 std::vector<char> pipeline_binary;
-                ret = backend_.CompileComputePipeline(pso, results, thread_group_size, pipeline_binary, error_msg);
+                ret = backend_.CompileComputePipeline(config, pso, results, thread_group_size, pipeline_binary, error_msg);
                 assert(ret);
                 if (ret)
                 {
@@ -1180,6 +1188,29 @@ namespace rga
                         }
                         assert(ret);
                     }
+
+                    // AMDIL.
+                    if (!config.comp.amdil.empty())
+                    {
+                        // Save results to file: AMDIL disassembly.
+                        assert(results.disassembly_amdil != nullptr);
+                        if (results.disassembly_amdil != nullptr)
+                        {
+                            // AMDIL Disassembly.
+                            std::cout << kStrInfoExtractComputeShaderDisassemblyAmdil << std::endl;
+                            ret = RgDx12Utils::WriteTextFile(config.comp.amdil, results.disassembly_amdil);
+
+                            // Report the result to the user.
+                            std::cout << (ret ? kStrInfoExtractComputeShaderAmdilDisassemblySuccess : kStrErrorExtractComputeShaderAmdilDisassemblyFailure)
+                                      << std::endl;
+                        }
+                        else
+                        {
+                            std::cerr << kStrErrorExtractComputeShaderAmdilDisassemblyFailure << std::endl;
+                        }
+                        assert(ret);
+                    }
+
 
                     if (!config.comp.stats.empty())
                     {
@@ -1250,8 +1281,32 @@ namespace rga
             }
             else
             {
-                std::cerr << kStrErrorGraphicsShaderDisassemblyExtractionFailure1 << stage_name <<
-                    kStrErrorGraphicsShaderDisassemblyExtractionFailure2 << std::endl;
+                std::cerr << kStrErrorGraphicsShaderDisassemblyExtractionFailure1 << stage_name << kStrErrorGraphicsShaderDisassemblyExtractionFailure2
+                          << std::endl;
+            }
+
+            if (!shader_config.amdil.empty())
+            {
+                // Save results to file: AMDIL disassembly.
+                assert(shader_results.disassembly_amdil != nullptr);
+                if (shader_results.disassembly_amdil != nullptr)
+                {
+                    // AMDIL disassembly.
+                    std::cout << kStrInfoExtractGraphicsShaderOutput1 << stage_name << kStrInfoExtractGraphicsShaderDisassemblyAmdil << std::endl;
+                    ret = RgDx12Utils::WriteTextFile(shader_config.amdil, shader_results.disassembly_amdil);
+                    assert(ret);
+
+                    // Report the result to the user.
+                    if (ret)
+                    {
+                        std::cout << stage_name << kStrInfoExtractGraphicsShaderDisassemblyAmdilSuccess << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << kStrErrorGraphicsShaderAmdilDisassemblyExtractionFailure1 << stage_name
+                                  << kStrErrorGraphicsShaderDisassemblyExtractionFailure2 << std::endl;
+                    }
+                }
             }
         }
 
@@ -1360,7 +1415,7 @@ namespace rga
 
                 if (ret)
                 {
-                    ret = backend_.CompileGraphicsPipeline(pso, results, pipeline_binary, error_msg);
+                    ret = backend_.CompileGraphicsPipeline(config, pso, results, pipeline_binary, error_msg);
                     assert(ret);
 
                     if (ret)

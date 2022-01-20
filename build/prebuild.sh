@@ -89,6 +89,13 @@ for ((i=0; i<$#; i++)); do
     fi
 done
 
+if [ "$NO_VULKAN" == "-DRGA_ENABLE_VULKAN=OFF" ]; then
+    if [ ! "$CLI_ONLY" == "-DBUILD_CLI_ONLY=ON" ]; then
+        echo "ERROR: Invalid syntax: must use --cli-only with --no-vulkan"
+        exit 1
+    fi
+fi
+
 if [ -n "$QT_ROOT" ]; then
     CMAKE_QT="-DQT_PACKAGE_ROOT=$QT_ROOT -DNO_DEFAULT_QT=ON"
 fi
