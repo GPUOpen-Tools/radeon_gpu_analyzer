@@ -16,7 +16,6 @@ github_root = "https://github.com/GPUOpen-Tools/"
 
 # repositories.
 git_mapping = {
-    "common-src-DeviceInfo"               : ["Common/Src/DeviceInfo",            "amd-navi24-alpha"]
 }
 
 github_mapping = {
@@ -34,7 +33,7 @@ github_mapping = {
     "common-src-TSingleton"               : ["Common/Src/TSingleton",            "master"],
     "common-src-Miniz"                    : ["Common/Src/Miniz",                 "master"],
     "update_check_api"                    : ["Common/Src/update_check_api",      "v2.0.0"],
+    "common-src-DeviceInfo"               : ["Common/Src/DeviceInfo",            "rga-v2.6"],
  # QtCommon.
     "QtCommon"                            : ["QtCommon",                         "rga-2.5"],
 }
-
