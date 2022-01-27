@@ -14,7 +14,6 @@ download_mapping_linux = {
 # Some repos are only hosted on github - these are defined with an absolute URL based here
 github_root = "https://github.com/GPUOpen-Tools/"
 
-# repositories.
 git_mapping = {
 }
 
