@@ -83,10 +83,9 @@ bool RgConfigFileReaderVulkan::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
     // The config files are the same format for v2.0 and v2.1.
     // Version 2.2 requires processing of binary output file, which
     // is handled later.
-    bool is_version_compatible =
-        (kRgaDataModel2_0.compare(file_data_model_version) == 0) ||
-        (kRgaDataModel2_1.compare(file_data_model_version) == 0) ||
-        (kRgaDataModel2_2.compare(file_data_model_version) == 0);
+    bool is_version_compatible = (kRgaDataModel2_0.compare(file_data_model_version) == 0) || (kRgaDataModel2_1.compare(file_data_model_version) == 0) ||
+                                 (kRgaDataModel2_2.compare(file_data_model_version) == 0) ||
+                                 (kRgaDataModel2_3.compare(file_data_model_version) == 0);
 
     assert(is_version_compatible);
 
@@ -151,7 +150,7 @@ bool RgConfigFileReaderVulkan::ReadApiBuildSettings(tinyxml2::XMLNode* node, std
         assert(build_settings_vulkan != nullptr);
         if (build_settings_vulkan != nullptr)
         {
-            if (kRgaDataModel2_2.compare(version) == 0)
+            if ((kRgaDataModel2_2.compare(version) == 0) || (kRgaDataModel2_3.compare(version) == 0))
             {
                 assert(node != nullptr);
                 if (node != nullptr)

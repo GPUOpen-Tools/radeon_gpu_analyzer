@@ -249,7 +249,7 @@ void RgAppStateVulkan::ConnectFileMenuActions()
         assert(is_connected);
 
         // Connect the "Create new compute pipeline" button in the start page.
-        is_connected =  connect(start_tab_, &RgStartTabVulkan::CreateComputePipelineEvent, this, &RgAppStateVulkan::HandleCreateNewComputePipeline);
+        is_connected = connect(start_tab_, &RgStartTabVulkan::CreateComputePipelineEvent, this, &RgAppStateVulkan::HandleCreateNewComputePipeline);
         assert(is_connected);
     }
 }
@@ -295,6 +295,8 @@ std::string RgAppStateVulkan::GetGlobalSettingsViewStylesheet() const
         "RgGlobalSettingsView #fontSizeComboBox:hover,"
         "RgGlobalSettingsView #logFileLocationLineEdit:focus,"
         "RgGlobalSettingsView #logFileLocationLineEdit:hover,"
+        "RgGlobalSettingsView #projectFileLocationLineEdit:focus,"
+        "RgGlobalSettingsView #projectFileLocationLineEdit:hover,"
         "RgGlobalSettingsView #includeFilesViewerLineEdit:focus,"
         "RgGlobalSettingsView #includeFilesViewerLineEdit:hover,"
         "RgGlobalSettingsView #includeFilesViewerBrowseButton:focus,"

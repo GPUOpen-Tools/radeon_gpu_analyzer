@@ -164,6 +164,12 @@ beStatus Backend::GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& table_entry
 
     switch (table_entry.m_asicType)
     {
+    case GDT_GFX10_3_5:
+        chip_family   = FAMILY_RMB;
+        chip_revision = REMBRANDT_A0;
+        ret           = kBeStatusSuccess;
+        break;
+
     case GDT_GFX10_3_4:
         chip_family   = FAMILY_NV;
         chip_revision = NV_NAVI24_P_A0;

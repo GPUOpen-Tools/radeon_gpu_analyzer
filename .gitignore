@@ -5,10 +5,13 @@ Output
 .vscode
 Output_Test
 *.vs
-buildOutput
+BuildOutput
 documentation/build
 *.csproj.user
 obj
 build/__pycache__
 external/code_sanitizer
 *.pyc
+*.msi
+RGA-Installer-cache
+source/common/vulkan_layer_launcher/RGALayerLauncher/bin

@@ -16,24 +16,25 @@ github_root = "https://github.com/GPUOpen-Tools/"
 
 # repositories.
 git_mapping = {
+    "device_info"                    : ["Common/Src/DeviceInfo",            "rga-v2.6.1"]
 }
 
 github_mapping = {
  # Lib.
-    "common-lib-amd-ADL"                  : ["Common/Lib/AMD/ADL",               "master"],
-    "common-lib-amd-APPSDK-3.0"           : ["Common/Lib/AMD/APPSDK",            "master"],
-    "common-lib-ext-Boost-1.59"           : ["Common/Lib/Ext/Boost",             "master"],
-    "common-lib-ext-WindowsKits"          : ["Common/Lib/Ext/Windows-Kits",      "master"],
-    "common-lib-ext-tinyxml2-5.0.1"       : ["Common/Lib/Ext/tinyxml2",          "master"],
-    "cxxopts"                             : ["Common/Lib/Ext/cxxopts",           "master"],
-    "volk"                                : ["Common/Lib/Ext/volk",              "master"],
+    "adl"                            : ["Common/Lib/AMD/ADL",               "master"],
+    "appsdk"                         : ["Common/Lib/AMD/APPSDK",            "master"],
+    "common_lib_ext_boost_1.59"      : ["Common/Lib/Ext/Boost",             "master"],
+    "windows_kits"                   : ["Common/Lib/Ext/Windows-Kits",      "master"],
+    "common_lib_ext_tinyxml2_5.0.1"  : ["Common/Lib/Ext/tinyxml2",          "master"],
+    "cxxopts"                        : ["Common/Lib/Ext/cxxopts",           "master"],
+    "volk"                           : ["Common/Lib/Ext/volk",              "master"],
  # Src.
-    "common-src-ADLUtil"                  : ["Common/Src/ADLUtil",               "master"],
-    "common-src-DynamicLibraryModule"     : ["Common/Src/DynamicLibraryModule",  "master"],
-    "common-src-TSingleton"               : ["Common/Src/TSingleton",            "master"],
-    "common-src-Miniz"                    : ["Common/Src/Miniz",                 "master"],
-    "update_check_api"                    : ["Common/Src/update_check_api",      "v2.0.0"],
-    "common-src-DeviceInfo"               : ["Common/Src/DeviceInfo",            "rga-v2.6"],
+    "adl_util"                       : ["Common/Src/ADLUtil",               "master"],
+    "dynamic_library_module"         : ["Common/Src/DynamicLibraryModule",  "master"],
+    "tsingleton"                     : ["Common/Src/TSingleton",            "master"],
+    "common_src_miniz"               : ["Common/Src/Miniz",                 "master"],
+    "update_check_api"               : ["Common/Src/update_check_api",      "v2.0.0"],
  # QtCommon.
-    "QtCommon"                            : ["QtCommon",                         "rga-2.5"],
+    "qt_common"                      : ["QtCommon",                         "rga-2.5"],
 }
+

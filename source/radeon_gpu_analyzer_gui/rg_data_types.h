@@ -36,7 +36,8 @@ enum class RgProjectAPI : char
 };
 
 // Supported textual source languages.
-enum class RgSrcLanguage {
+enum class RgSrcLanguage
+{
     kOpenCL,
     kGLSL,
     kHLSL,
@@ -101,27 +102,25 @@ struct RgPipelineState
 // General RGA settings structure.
 struct RgBuildSettings
 {
-    RgBuildSettings() = default;
+    RgBuildSettings()          = default;
     virtual ~RgBuildSettings() = default;
 
     // A copy constructor used to initialize using another instance.
-    RgBuildSettings(const RgBuildSettings& other) :
-        target_gpus(other.target_gpus),
-        predefined_macros(other.predefined_macros),
-        additional_include_directories(other.additional_include_directories),
-        additional_options(other.additional_options),
-        compiler_paths(other.compiler_paths),
-        binary_file_name(other.binary_file_name) {}
+    RgBuildSettings(const RgBuildSettings& other)
+        : target_gpus(other.target_gpus)
+        , predefined_macros(other.predefined_macros)
+        , additional_include_directories(other.additional_include_directories)
+        , additional_options(other.additional_options)
+        , compiler_paths(other.compiler_paths)
+        , binary_file_name(other.binary_file_name)
+    {
+    }
 
     virtual bool HasSameSettings(const RgBuildSettings& other) const
     {
-        bool isSame =
-            (target_gpus == other.target_gpus) &&
-            (predefined_macros == other.predefined_macros) &&
-            (additional_include_directories == other.additional_include_directories) &&
-            (additional_options == other.additional_options) &&
-            (binary_file_name == other.binary_file_name) &&
-            (compiler_paths == other.compiler_paths);
+        bool isSame = (target_gpus == other.target_gpus) && (predefined_macros == other.predefined_macros) &&
+                      (additional_include_directories == other.additional_include_directories) && (additional_options == other.additional_options) &&
+                      (binary_file_name == other.binary_file_name) && (compiler_paths == other.compiler_paths);
 
         return isSame;
     }
@@ -134,7 +133,7 @@ struct RgBuildSettings
     std::string              binary_file_name;
 
     // Alternative compiler paths: {bin, include, lib}.
-    std::tuple<std::string, std::string, std::string>  compiler_paths;
+    std::tuple<std::string, std::string, std::string> compiler_paths;
 };
 
 // An info structure for each source file in a project.
@@ -150,36 +149,43 @@ struct RgSourceFileInfo
 // A base class for project clones.
 struct RgProjectClone
 {
-    RgProjectClone() = default;
+    RgProjectClone()          = default;
     virtual ~RgProjectClone() = default;
 
-    RgProjectClone(const std::string& clone_name, std::shared_ptr<RgBuildSettings> build_settings) :
-        clone_name(clone_name), build_settings(build_settings){}
+    RgProjectClone(const std::string& clone_name, std::shared_ptr<RgBuildSettings> build_settings)
+        : clone_name(clone_name)
+        , build_settings(build_settings)
+    {
+    }
 
     // Returns "true" if the clone does not have any source files or "false" otherwise.
-    virtual bool IsEmpty() const { return source_files.empty(); }
+    virtual bool IsEmpty() const
+    {
+        return source_files.empty();
+    }
 
-    unsigned clone_id = 0;
-    std::string clone_name;
-    std::vector<RgSourceFileInfo> source_files;
+    unsigned                         clone_id = 0;
+    std::string                      clone_name;
+    std::vector<RgSourceFileInfo>    source_files;
     std::shared_ptr<RgBuildSettings> build_settings = nullptr;
 };
 
 // A project clone containing graphics or compute pipeline state info.
 struct RgGraphicsProjectClone : RgProjectClone
 {
-    RgGraphicsProjectClone() = default;
+    RgGraphicsProjectClone()          = default;
     virtual ~RgGraphicsProjectClone() = default;
 
     // CTOR used to initialize with existing build settings.
-    RgGraphicsProjectClone(const std::string& clone_name, std::shared_ptr<RgBuildSettings> build_settings) :
-        RgProjectClone(clone_name, build_settings) {}
+    RgGraphicsProjectClone(const std::string& clone_name, std::shared_ptr<RgBuildSettings> build_settings)
+        : RgProjectClone(clone_name, build_settings)
+    {
+    }
 
     // Returns "true" if the clone does not have any source files or "false" otherwise.
     virtual bool IsEmpty() const override
     {
-        return std::all_of(pipeline.shader_stages.cbegin(), pipeline.shader_stages.cend(),
-                           [&](const std::string& file) { return file.empty(); });
+        return std::all_of(pipeline.shader_stages.cbegin(), pipeline.shader_stages.cend(), [&](const std::string& file) { return file.empty(); });
     }
 
     // A list of pipeline states within the clone.
@@ -227,23 +233,33 @@ struct RgCliVersionInfo
 struct RgProject
 {
     // Default CTOR, DTOR.
-    RgProject() = default;
+    RgProject()          = default;
     virtual ~RgProject() = default;
 
     // CTOR #1.
-    RgProject(const std::string& project_name,
-        const std::string& project_file_full_path, RgProjectAPI api) : project_name(project_name),
-        project_file_full_path(project_file_full_path), api(api) {}
+    RgProject(const std::string& project_name, const std::string& project_file_full_path, RgProjectAPI api)
+        : project_name(project_name)
+        , project_file_full_path(project_file_full_path)
+        , api(api)
+    {
+    }
 
     // CTOR #2.
-    RgProject(const std::string& project_name, const std::string& project_file_full_path, RgProjectAPI api, const std::vector<std::shared_ptr<RgProjectClone>>& clones) :
-        project_name(project_name), project_file_full_path(project_file_full_path), api(api),  clones(clones) {}
+    RgProject(const std::string&                                  project_name,
+              const std::string&                                  project_file_full_path,
+              RgProjectAPI                                        api,
+              const std::vector<std::shared_ptr<RgProjectClone>>& clones)
+        : project_name(project_name)
+        , project_file_full_path(project_file_full_path)
+        , api(api)
+        , clones(clones)
+    {
+    }
 
     // Returns "true" if all clones of this project are empty.
     bool IsEmpty()
     {
-        return (std::all_of(clones.cbegin(), clones.cend(),
-                            [](const std::shared_ptr<RgProjectClone>& clone) { return clone->IsEmpty(); }));
+        return (std::all_of(clones.cbegin(), clones.cend(), [](const std::shared_ptr<RgProjectClone>& clone) { return clone->IsEmpty(); }));
     }
 
     // Project name.
@@ -293,21 +309,21 @@ struct RgWindowConfig
 struct RgResourceUsageData
 {
     std::string device;
-    int scratch_memory;
-    int threads_per_workgroup;
-    int wavefront_size;
-    int available_lds_bytes;
-    int used_lds_bytes;
-    int available_sgprs;
-    int used_sgprs;
-    int sgpr_spills;
-    int available_vgprs;
-    int used_vgprs;
-    int vgpr_spills;
-    int cl_workgroup_x_dimension;
-    int cl_workgroup_y_dimension;
-    int cl_workgroup_z_dimension;
-    int isa_size;
+    int         scratch_memory;
+    int         threads_per_workgroup;
+    int         wavefront_size;
+    int         available_lds_bytes;
+    int         used_lds_bytes;
+    int         available_sgprs;
+    int         used_sgprs;
+    int         sgpr_spills;
+    int         available_vgprs;
+    int         used_vgprs;
+    int         vgpr_spills;
+    int         cl_workgroup_x_dimension;
+    int         cl_workgroup_y_dimension;
+    int         cl_workgroup_z_dimension;
+    int         isa_size;
 };
 
 // A structure used to hold data parsed from a livereg output file.
@@ -324,7 +340,7 @@ struct RgLiveregData
 // A structure used to hold project path and api type for each RGA project.
 struct RgRecentProject
 {
-    std::string project_path;
+    std::string  project_path;
     RgProjectAPI api_type;
 };
 
@@ -337,47 +353,46 @@ struct RgGlobalSettings
     RgGlobalSettings() = default;
 
     // Initialize a copy of the incoming settings structure.
-    RgGlobalSettings(const RgGlobalSettings& other) :
-        log_file_location(other.log_file_location),
-        visible_disassembly_view_columns(other.visible_disassembly_view_columns),
-        gui_layout_splitters(other.gui_layout_splitters),
-        default_build_settings(other.default_build_settings),
-        recent_projects(other.recent_projects),
-        last_selected_directory(other.last_selected_directory),
-        use_default_project_name(other.use_default_project_name),
-        should_prompt_for_api(other.should_prompt_for_api),
-        default_api(other.default_api),
-        font_family(other.font_family),
-        font_size(other.font_size),
-        include_files_viewer(other.include_files_viewer),
-        input_file_ext_glsl(other.input_file_ext_glsl),
-        input_file_ext_hlsl(other.input_file_ext_hlsl),
-        input_file_ext_spv_txt(other.input_file_ext_spv_txt),
-        input_file_ext_spv_bin(other.input_file_ext_spv_bin),
-        default_lang(other.default_lang)
-    {}
+    RgGlobalSettings(const RgGlobalSettings& other)
+        : log_file_location(other.log_file_location)
+        , project_file_location(other.project_file_location)
+        , visible_disassembly_view_columns(other.visible_disassembly_view_columns)
+        , gui_layout_splitters(other.gui_layout_splitters)
+        , default_build_settings(other.default_build_settings)
+        , recent_projects(other.recent_projects)
+        , last_selected_directory(other.last_selected_directory)
+        , use_default_project_name(other.use_default_project_name)
+        , should_prompt_for_api(other.should_prompt_for_api)
+        , default_api(other.default_api)
+        , font_family(other.font_family)
+        , font_size(other.font_size)
+        , include_files_viewer(other.include_files_viewer)
+        , input_file_ext_glsl(other.input_file_ext_glsl)
+        , input_file_ext_hlsl(other.input_file_ext_hlsl)
+        , input_file_ext_spv_txt(other.input_file_ext_spv_txt)
+        , input_file_ext_spv_bin(other.input_file_ext_spv_bin)
+        , default_lang(other.default_lang)
+    {
+    }
 
     bool HasSameSettings(const RgGlobalSettings& other) const
     {
-        bool isSame = (log_file_location.compare(other.log_file_location) == 0) &&
+        bool isSame = (log_file_location.compare(other.log_file_location) == 0) && (project_file_location.compare(other.project_file_location) == 0) &&
                       (visible_disassembly_view_columns == other.visible_disassembly_view_columns) &&
-                      (use_default_project_name == other.use_default_project_name) &&
-                      (should_prompt_for_api == other.should_prompt_for_api) &&
-                      (default_api == other.default_api) &&
-                      (font_family == other.font_family) &&
-                      (font_size == other.font_size) &&
-                      (include_files_viewer == other.include_files_viewer) &&
-                      (input_file_ext_glsl == other.input_file_ext_glsl) &&
-                      (input_file_ext_hlsl == other.input_file_ext_hlsl) &&
-                      (input_file_ext_spv_txt == other.input_file_ext_spv_txt) &&
-                      (input_file_ext_spv_bin == other.input_file_ext_spv_bin) &&
-                      (default_lang == other.default_lang);
+                      (use_default_project_name == other.use_default_project_name) && (should_prompt_for_api == other.should_prompt_for_api) &&
+                      (default_api == other.default_api) && (font_family == other.font_family) && (font_size == other.font_size) &&
+                      (include_files_viewer == other.include_files_viewer) && (input_file_ext_glsl == other.input_file_ext_glsl) &&
+                      (input_file_ext_hlsl == other.input_file_ext_hlsl) && (input_file_ext_spv_txt == other.input_file_ext_spv_txt) &&
+                      (input_file_ext_spv_bin == other.input_file_ext_spv_bin) && (default_lang == other.default_lang);
 
         return isSame;
     }
 
     // A full path to the location where RGA's log file will be saved.
     std::string log_file_location;
+
+    // A full path to the location where RGA's project file will be saved.
+    std::string project_file_location;
 
     // Visibility flags for each column within the disassembly table.
     std::vector<bool> visible_disassembly_view_columns;
@@ -530,7 +545,10 @@ typedef std::map<std::string, std::shared_ptr<RgCliBuildOutput>> RgBuildOutputsM
 // A predicate used to find an RgOutputItem with a specific file type.
 struct OutputFileTypeFinder
 {
-    OutputFileTypeFinder(RgCliOutputFileType file_type) : target_file_type(file_type) {}
+    OutputFileTypeFinder(RgCliOutputFileType file_type)
+        : target_file_type(file_type)
+    {
+    }
 
     // A predicate that will compare each output item with a target file type to search for.
     bool operator()(const RgOutputItem& output_item) const
@@ -571,7 +589,6 @@ struct RgStylesheetPackage
     // The main window api-specific stylesheet.
     std::string main_window_api_stylesheet;
 };
-
 
 // An enumeration used to classify different types of parsed disassembly lines.
 enum class RgIsaLineType
@@ -619,4 +636,4 @@ struct RgIsaLineLabel : RgIsaLine
     std::string label_name;
 };
 
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DATA_TYPES_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DATA_TYPES_H_

@@ -56,8 +56,8 @@ if git_url is None:
     print("Error: Unable to determine origin for RGA git project")
     exit(1)
 
-# Temporary while repositories are on gerrit and github.amd.com.  This is used to clone DeviceInfo repo.
-gerrit_root = "ssh://gerritgit/DevTools/ec/"
+# Temporary for development during server migration.
+gerrit_root = "git@github.amd.com:Developer-Solutions/"
 
 
 def parse_arguments():
@@ -197,6 +197,7 @@ def do_clone(repo_git_path, repo_target, repo_branch):
 
 
 def fetch_git_map(arguments, git_branch):
+    print("\nFetching dependencies from: " + gerrit_root)
     for key in git_mapping:
         # Target path, relative to workspace
         path = git_mapping[key][0]
@@ -223,6 +224,7 @@ def fetch_git_map(arguments, git_branch):
 
 
 def fetch_github_map(arguments, git_branch):
+    print("\nFetching dependencies from: " + github_root)
     for key in github_mapping:
         # Target path, relative to workspace
         path = github_mapping[key][0]
@@ -271,14 +273,6 @@ def do_fetch_dependencies(arguments):
     git_branch = "amd-master"
     if "github.com" in amd_github_url:
         git_branch = "master"
-
-    repo_origin = amd_github_root
-    
-    # Temporary during transition from gerrit to github.amd.com
-    if "github.amd.com" in amd_github_root:
-        repo_origin = gerrit_root
-
-    print("\nFetching dependencies from: " + repo_origin + " - using branch: " + git_branch)
 
     # The following section contains OS-specific dependencies that are downloaded and placed in the specified target directory.
     # for each dependency - test if it has already been fetched - if not, then fetch it, otherwise update it to top of tree

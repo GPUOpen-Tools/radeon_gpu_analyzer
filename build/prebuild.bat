@@ -1,5 +1,5 @@
 @echo off
-:: prebuild.bat --vs 2017 --qt <path_to_qt>
+:: prebuild.bat --vs 2019 --qt <path_to_qt>
 
 SETLOCAL enabledelayedexpansion
 
@@ -21,7 +21,7 @@ echo:
 echo Options:
 echo    --no-fetch           Do not call fetch_dependencies.py script before running cmake. The default is "false".
 echo    --cmake              Path to cmake executable to use. If not specified, the cmake from PATH env variable will be used.
-echo    --vs                 Microsoft Visual Studio version. Currently supported values are: "2015", "2017". The default is "2017".
+echo    --vs                 Microsoft Visual Studio version. Currently supported values are: "2015", "2017", "2019", and "2022".
 echo    --qt                 Path to Qt5 root folder. The default is empty (cmake will look for Qt5 package istalled on the system).
 echo    --cli-only           Build RGA command-line tool only (do not build GUI). The default is "false".
 echo    --gui-only           Build GUI only (do not build RGA command-line tool). The default is "false".
@@ -30,6 +30,7 @@ echo                         This option is only valid in conjunction with --cli
 echo    --vk-include         Path to the Vulkan SDK include folder.
 echo    --vk-lib             Path to the Vulkan SDK library folder.
 echo    --cppcheck           Add "-DCMAKE_CXX_CPPCHECK" to cmake command
+echo    --clean              Delete the cmake build and output folders
 echo:
 echo Examples:
 echo    prebuild.bat
@@ -65,6 +66,7 @@ if "%1"=="--automation" goto :set_automation
 if "%1"=="--internal" goto :set_internal
 if "%1"=="--verbose" goto :set_verbose
 if "%1"=="--cppcheck" goto :set_cppcheck
+if "%1"=="--clean" goto :run_clean
 goto :bad_arg
 
 :set_cmake
@@ -121,6 +123,21 @@ goto :shift_arg
 set CPPCHECK=-DCMAKE_CXX_CPPCHECK="C:\Program Files\Cppcheck\cppcheck.exe"
 goto :shift_arg
 
+:run_clean
+if exist %SCRIPT_DIR%windows (
+    echo INFO: Deleting %SCRIPT_DIR%\windows folder
+    del /s /f /q %SCRIPT_DIR%\windows
+)
+if exist %SCRIPT_DIR%..\output (
+    echo INFO: Deleting %SCRIPT_DIR%..\output folder
+    del /s /f /q %SCRIPT_DIR%..\output
+)
+if exist %SCRIPT_DIR%..\output_test (
+    echo INFO: Deleting %SCRIPT_DIR%..\output_test folder
+    del /s /f /q %SCRIPT_DIR%..\output_test
+)
+exit /b 0
+
 :shift_2args
 rem Shift to the next pair of arguments
 shift
@@ -151,8 +168,13 @@ if "%VS_VER%"=="2015" (
             set CMAKE_VS="Visual Studio 16 2019"
             set CMAKE_VSARCH=-A x64
         ) else (
-            echo Error: Unknown VisualStudio version provided. Aborting...
-            exit /b 1
+            if "%VS_VER%"=="2022" (
+                set CMAKE_VS="Visual Studio 17 2022"
+                set CMAKE_VSARCH=-A x64
+            ) else (
+                echo Error: Unknown VisualStudio version provided. Aborting...
+                exit /b 1
+            )
         )
     )
 )

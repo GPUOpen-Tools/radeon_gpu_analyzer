@@ -40,6 +40,9 @@ static bool ExtractGlobalSettings_2_1(tinyxml2::XMLNode* global_settings_node, s
 // Read v2.2 of the GlobalSettings XML node from the config file.
 static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* global_settings_node, std::shared_ptr<RgGlobalSettings>& global_settings);
 
+// Read v2.3 of the GlobalSettings XML node from the config file.
+static bool ExtractGlobalSettings_2_3(tinyxml2::XMLNode* global_settings_node, std::shared_ptr<RgGlobalSettings>& global_settings);
+
 // Takes the comma-separated target devices list from the GUI, and returns the list of GPUs in it.
 static void ExtractTargetGpus(const std::string& target_devices, std::vector<std::string>& gpu_list)
 {
@@ -102,7 +105,7 @@ static bool ExtractRecentProjects(tinyxml2::XMLNode* node, std::vector<std::shar
                     assert(ret);
                     if (ret)
                     {
-                        auto recent_project = std::make_shared<RgRecentProject>();
+                        auto recent_project          = std::make_shared<RgRecentProject>();
                         recent_project->project_path = project_path;
 
                         // Get the project api element.
@@ -175,7 +178,7 @@ static bool ExtractFontInformation(tinyxml2::XMLNode* node, std::shared_ptr<RgGl
                 if (!ret)
                 {
                     // If we could not read the include files viewer, that's OK. Use the system's default.
-                    ret = true;
+                    ret                                   = true;
                     global_settings->include_files_viewer = kStrGlobalSettingsSrcViewIncludeViewerDefault;
                 }
             }
@@ -213,7 +216,7 @@ static bool ExtractSplitterConfigs(tinyxml2::XMLNode* node, std::vector<RgSplitt
 
                     // Get splitter name.
                     tinyxml2::XMLNode* splitter_node = node->FirstChildElement(kXmlNodeGlobalGuiSplitterName);
-                    ret = RgXMLUtils::ReadNodeTextString(splitter_node, splitter_name);
+                    ret                              = RgXMLUtils::ReadNodeTextString(splitter_node, splitter_name);
 
                     if (!ret)
                     {
@@ -222,7 +225,7 @@ static bool ExtractSplitterConfigs(tinyxml2::XMLNode* node, std::vector<RgSplitt
 
                     // Get splitter values.
                     splitter_node = node->FirstChildElement(kXmlNodeGlobalGuiSplitterValues);
-                    ret = RgXMLUtils::ReadNodeTextString(splitter_node, splitter_values);
+                    ret           = RgXMLUtils::ReadNodeTextString(splitter_node, splitter_values);
 
                     if (!ret)
                     {
@@ -230,7 +233,7 @@ static bool ExtractSplitterConfigs(tinyxml2::XMLNode* node, std::vector<RgSplitt
                     }
 
                     std::vector<std::string> value_string_list;
-                    std::vector<int> value_int_list;
+                    std::vector<int>         value_int_list;
 
                     // Create int list of splitter values from comma separated string.
                     RgUtils::splitString(splitter_values, RgConfigManager::kRgaListDelimiter, value_string_list);
@@ -241,7 +244,7 @@ static bool ExtractSplitterConfigs(tinyxml2::XMLNode* node, std::vector<RgSplitt
 
                     // Create splitter config object.
                     RgSplitterConfig splitter_config;
-                    splitter_config.splitter_name = splitter_name;
+                    splitter_config.splitter_name   = splitter_name;
                     splitter_config.splitter_values = value_int_list;
                     splitter_configurations.push_back(splitter_config);
 
@@ -273,33 +276,33 @@ static bool ExtractWindowGeometry(tinyxml2::XMLNode* node, RgWindowConfig& windo
             tinyxml2::XMLNode* window_size_node = node->FirstChildElement(kXmlNodeGlobalGuiWindowWidth);
             if (window_size_node != nullptr)
             {
-                ret = RgXMLUtils::ReadNodeTextString(window_size_node, window_value_str);
+                ret              = RgXMLUtils::ReadNodeTextString(window_size_node, window_value_str);
                 int window_width = stoi(window_value_str);
 
                 // Get "WindowHeight" value.
                 window_size_node = node->FirstChildElement(kXmlNodeGlobalGuiWindowHeight);
                 if (window_size_node != nullptr)
                 {
-                    ret = RgXMLUtils::ReadNodeTextString(window_size_node, window_value_str);
+                    ret               = RgXMLUtils::ReadNodeTextString(window_size_node, window_value_str);
                     int window_height = stoi(window_value_str);
 
                     // Get "WindowXPos" value.
                     window_size_node = node->FirstChildElement(kXmlNodeGlobalGuiWindowXPos);
                     if (window_size_node != nullptr)
                     {
-                        ret = RgXMLUtils::ReadNodeTextString(window_size_node, window_value_str);
+                        ret              = RgXMLUtils::ReadNodeTextString(window_size_node, window_value_str);
                         int window_x_pos = stoi(window_value_str);
 
                         // Get "WindowYPos" value.
                         window_size_node = node->FirstChildElement(kXmlNodeGlobalGuiWindowYPos);
                         if (window_size_node != nullptr)
                         {
-                            ret = RgXMLUtils::ReadNodeTextString(window_size_node, window_value_str);
+                            ret              = RgXMLUtils::ReadNodeTextString(window_size_node, window_value_str);
                             int window_y_pos = stoi(window_value_str);
 
                             // Update window config object.
                             window_config.window_height = window_height;
-                            window_config.window_width = window_width;
+                            window_config.window_width  = window_width;
 
                             // If the position values are negative, fix them here.
                             if (window_x_pos < 0)
@@ -317,8 +320,8 @@ static bool ExtractWindowGeometry(tinyxml2::XMLNode* node, RgWindowConfig& windo
                             window_size_node = node->FirstChildElement(kXmlNodeGlobalGuiWindowState);
                             if (window_size_node != nullptr)
                             {
-                                ret = RgXMLUtils::ReadNodeTextString(window_size_node, window_value_str);
-                                int window_state = stoi(window_value_str);
+                                ret                        = RgXMLUtils::ReadNodeTextString(window_size_node, window_value_str);
+                                int window_state           = stoi(window_value_str);
                                 window_config.window_state = window_state;
                             }
                         }
@@ -342,12 +345,12 @@ bool RgXmlConfigFileReaderImpl::ReadGeneralBuildSettings(tinyxml2::XMLNode* node
     if (node != nullptr)
     {
         node = node->FirstChildElement(kXmlNodeTargetDevices);
-        ret = (node != nullptr);
+        ret  = (node != nullptr);
         assert(ret);
         if (ret)
         {
             std::string target_devices;
-            bool has_target_devices = RgXMLUtils::ReadNodeTextString(node, target_devices);
+            bool        has_target_devices = RgXMLUtils::ReadNodeTextString(node, target_devices);
             if (has_target_devices)
             {
                 // Target GPUs.
@@ -360,13 +363,13 @@ bool RgXmlConfigFileReaderImpl::ReadGeneralBuildSettings(tinyxml2::XMLNode* node
             {
                 // Predefined macros.
                 node = node->NextSiblingElement(kXmlNodePredefinedMacros);
-                ret = (node != nullptr);
+                ret  = (node != nullptr);
                 assert(ret);
 
                 if (ret)
                 {
                     std::string predefined_macros;
-                    bool should_read = RgXMLUtils::ReadNodeTextString(node, predefined_macros);
+                    bool        should_read = RgXMLUtils::ReadNodeTextString(node, predefined_macros);
 
                     if (should_read)
                     {
@@ -375,7 +378,7 @@ bool RgXmlConfigFileReaderImpl::ReadGeneralBuildSettings(tinyxml2::XMLNode* node
 
                     // Additional include directories.
                     node = node->NextSiblingElement(kXmlNodeAdditionalIncludeDirectories);
-                    ret = (node != nullptr);
+                    ret  = (node != nullptr);
                     assert(ret);
 
                     if (ret)
@@ -389,7 +392,7 @@ bool RgXmlConfigFileReaderImpl::ReadGeneralBuildSettings(tinyxml2::XMLNode* node
 
                         // Read additional build options element.
                         node = node->NextSiblingElement(kXmlNodeAdditionalOptions);
-                        ret = (node != nullptr);
+                        ret  = (node != nullptr);
                         assert(ret);
                         if (node != nullptr)
                         {
@@ -425,7 +428,10 @@ public:
 };
 
 // Support for reading v2.0 of the project files
-static bool ReadProjectConfigFile_2_0(tinyxml2::XMLDocument& doc, const char* file_data_model_version, tinyxml2::XMLNode* project_node, std::shared_ptr<RgProject>& project)
+static bool ReadProjectConfigFile_2_0(tinyxml2::XMLDocument&      doc,
+                                      const char*                 file_data_model_version,
+                                      tinyxml2::XMLNode*          project_node,
+                                      std::shared_ptr<RgProject>& project)
 {
     bool ret = false;
     if (project_node != nullptr)
@@ -436,8 +442,8 @@ static bool ReadProjectConfigFile_2_0(tinyxml2::XMLDocument& doc, const char* fi
         if (ret)
         {
             // Get the relevant API name.
-            tinyxml2::XMLNode* node = project_node->FirstChild();
-            bool is_program_api_node = (node != nullptr) && (std::string(kXmlNodeApiName).compare(node->Value()) == 0);
+            tinyxml2::XMLNode* node                = project_node->FirstChild();
+            bool               is_program_api_node = (node != nullptr) && (std::string(kXmlNodeApiName).compare(node->Value()) == 0);
             assert(is_program_api_node);
             ret = is_program_api_node;
             if (ret)
@@ -469,7 +475,7 @@ bool RgXmlConfigFile::ReadProjectConfigFile(const std::string& config_file_path,
 
     // Load the XML document.
     tinyxml2::XMLDocument doc;
-    tinyxml2::XMLError rc = doc.LoadFile(config_file_path.c_str());
+    tinyxml2::XMLError    rc = doc.LoadFile(config_file_path.c_str());
 
     if (rc == tinyxml2::XML_SUCCESS)
     {
@@ -490,13 +496,12 @@ bool RgXmlConfigFile::ReadProjectConfigFile(const std::string& config_file_path,
 
                     // All v2.0 and v2.1 project files have the same format
                     // for the initial <Program> and <ProgramAPI> tags.
-                    if (kRgaDataModel2_0.compare(data_model_version) == 0 ||
-                        kRgaDataModel2_1.compare(data_model_version) == 0 ||
-                        kRgaDataModel2_2.compare(data_model_version) == 0)
+                    if (kRgaDataModel2_0.compare(data_model_version) == 0 || kRgaDataModel2_1.compare(data_model_version) == 0 ||
+                        kRgaDataModel2_2.compare(data_model_version) == 0 || kRgaDataModel2_3.compare(data_model_version) == 0)
                     {
                         // Skip to the <Program> node.
                         node = node->NextSibling();
-                        ret = ReadProjectConfigFile_2_0(doc, data_model_version, node, project);
+                        ret  = ReadProjectConfigFile_2_0(doc, data_model_version, node, project);
                     }
                     else
                     {
@@ -521,7 +526,9 @@ bool RgXmlConfigFile::ReadProjectConfigFile(const std::string& config_file_path,
 // *** WRITER AREA - BEGIN ***
 // ***************************
 
-bool RgXmlConfigFileWriterImpl::WriteGeneralBuildSettings(const std::shared_ptr<RgBuildSettings> build_settings, tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* build_settings_element)
+bool RgXmlConfigFileWriterImpl::WriteGeneralBuildSettings(const std::shared_ptr<RgBuildSettings> build_settings,
+                                                          tinyxml2::XMLDocument&                 doc,
+                                                          tinyxml2::XMLElement*                  build_settings_element)
 {
     bool ret = false;
 
@@ -530,13 +537,18 @@ bool RgXmlConfigFileWriterImpl::WriteGeneralBuildSettings(const std::shared_ptr<
     if (build_settings != nullptr && build_settings_element != nullptr)
     {
         // Target devices.
-        RgXMLUtils::AppendXMLElement(doc, build_settings_element, kXmlNodeTargetDevices, RgUtils::BuildSemicolonSeparatedStringList(build_settings->target_gpus).c_str());
+        RgXMLUtils::AppendXMLElement(
+            doc, build_settings_element, kXmlNodeTargetDevices, RgUtils::BuildSemicolonSeparatedStringList(build_settings->target_gpus).c_str());
 
         // Predefined Macros.
-        RgXMLUtils::AppendXMLElement(doc, build_settings_element, kXmlNodePredefinedMacros, RgUtils::BuildSemicolonSeparatedStringList(build_settings->predefined_macros).c_str());
+        RgXMLUtils::AppendXMLElement(
+            doc, build_settings_element, kXmlNodePredefinedMacros, RgUtils::BuildSemicolonSeparatedStringList(build_settings->predefined_macros).c_str());
 
         // Additional include directories.
-        RgXMLUtils::AppendXMLElement(doc, build_settings_element, kXmlNodeAdditionalIncludeDirectories, RgUtils::BuildSemicolonSeparatedStringList(build_settings->additional_include_directories).c_str());
+        RgXMLUtils::AppendXMLElement(doc,
+                                     build_settings_element,
+                                     kXmlNodeAdditionalIncludeDirectories,
+                                     RgUtils::BuildSemicolonSeparatedStringList(build_settings->additional_include_directories).c_str());
 
         // Additional options.
         RgXMLUtils::AppendXMLElement(doc, build_settings_element, kXmlNodeAdditionalOptions, build_settings->additional_options.c_str());
@@ -558,8 +570,10 @@ void RgXmlConfigFileWriterImpl::AddConfigFileDeclaration(tinyxml2::XMLDocument& 
     doc.LinkEndChild(element);
 }
 
-bool RgXmlGraphicsConfigFileReaderImpl::ReadPipeline(tinyxml2::XMLDocument& doc, tinyxml2::XMLNode* parent_clone,
-                                                     bool is_backup_spv, RgPipelineShaders& pipeline) const
+bool RgXmlGraphicsConfigFileReaderImpl::ReadPipeline(tinyxml2::XMLDocument& doc,
+                                                     tinyxml2::XMLNode*     parent_clone,
+                                                     bool                   is_backup_spv,
+                                                     RgPipelineShaders&     pipeline) const
 {
     bool ret = false;
 
@@ -567,7 +581,7 @@ bool RgXmlGraphicsConfigFileReaderImpl::ReadPipeline(tinyxml2::XMLDocument& doc,
     if (parent_clone != nullptr)
     {
         tinyxml2::XMLElement* pipeline_element = parent_clone->FirstChildElement(is_backup_spv ? kXmlNodeBackupSpvRoot : kXmlNodePipelineShadersRoot);
-        ret = (is_backup_spv || pipeline_element != nullptr);
+        ret                                    = (is_backup_spv || pipeline_element != nullptr);
         assert(ret);
 
         if (pipeline_element != nullptr)
@@ -581,16 +595,16 @@ bool RgXmlGraphicsConfigFileReaderImpl::ReadPipeline(tinyxml2::XMLDocument& doc,
                 ret = RgXMLUtils::ReadNodeTextString(pipeline_type_node, pipeline_type);
 
                 // Lambda that implements reading a single pipeline file path element.
-                auto ReadPipelineShaderFile = [&](RgPipelineStage stage, const char* tag, std::function<bool(RgPipelineStage, const std::string&, RgPipelineShaders&)> f)
-                {
-                    std::string shader_full_file_path;
-                    tinyxml2::XMLNode* node = pipeline_type_node->NextSiblingElement(tag);
-                    if (node != nullptr)
-                    {
-                        RgXMLUtils::ReadNodeTextString(node, shader_full_file_path);
-                        f(stage, shader_full_file_path, pipeline);
-                    }
-                };
+                auto ReadPipelineShaderFile =
+                    [&](RgPipelineStage stage, const char* tag, std::function<bool(RgPipelineStage, const std::string&, RgPipelineShaders&)> f) {
+                        std::string        shader_full_file_path;
+                        tinyxml2::XMLNode* node = pipeline_type_node->NextSiblingElement(tag);
+                        if (node != nullptr)
+                        {
+                            RgXMLUtils::ReadNodeTextString(node, shader_full_file_path);
+                            f(stage, shader_full_file_path, pipeline);
+                        }
+                    };
 
                 if (ret && (pipeline_type.compare(kXmlNodePipelineTypeGraphics) == 0))
                 {
@@ -598,11 +612,11 @@ bool RgXmlGraphicsConfigFileReaderImpl::ReadPipeline(tinyxml2::XMLDocument& doc,
                     pipeline.type = RgPipelineType::kGraphics;
 
                     // Read the paths to shader input files.
-                    ReadPipelineShaderFile(RgPipelineStage::kVertex,                 kXmlNodePipelineVertexStage,       RgUtils::SetStageShaderPath);
-                    ReadPipelineShaderFile(RgPipelineStage::kTessellationControl,    kXmlNodePipelineTessControlStage, RgUtils::SetStageShaderPath);
-                    ReadPipelineShaderFile(RgPipelineStage::kTessellationEvaluation, kXmlNodePipelineTessEvalStage,    RgUtils::SetStageShaderPath);
-                    ReadPipelineShaderFile(RgPipelineStage::kGeometry,               kXmlNodePipelineGeometryStage,     RgUtils::SetStageShaderPath);
-                    ReadPipelineShaderFile(RgPipelineStage::kFragment,               kXmlNodePipelineFragmentStage,     RgUtils::SetStageShaderPath);
+                    ReadPipelineShaderFile(RgPipelineStage::kVertex, kXmlNodePipelineVertexStage, RgUtils::SetStageShaderPath);
+                    ReadPipelineShaderFile(RgPipelineStage::kTessellationControl, kXmlNodePipelineTessControlStage, RgUtils::SetStageShaderPath);
+                    ReadPipelineShaderFile(RgPipelineStage::kTessellationEvaluation, kXmlNodePipelineTessEvalStage, RgUtils::SetStageShaderPath);
+                    ReadPipelineShaderFile(RgPipelineStage::kGeometry, kXmlNodePipelineGeometryStage, RgUtils::SetStageShaderPath);
+                    ReadPipelineShaderFile(RgPipelineStage::kFragment, kXmlNodePipelineFragmentStage, RgUtils::SetStageShaderPath);
                 }
                 else if (ret && (pipeline_type.compare(kXmlNodePipelineTypeCompute) == 0))
                 {
@@ -622,7 +636,9 @@ bool RgXmlGraphicsConfigFileReaderImpl::ReadPipeline(tinyxml2::XMLDocument& doc,
     return ret;
 }
 
-bool RgXmlGraphicsConfigFileReaderImpl::ReadPipelineState(std::shared_ptr<RgGraphicsProjectClone> clone, tinyxml2::XMLDocument& doc, tinyxml2::XMLNode* pipeline_state_element) const
+bool RgXmlGraphicsConfigFileReaderImpl::ReadPipelineState(std::shared_ptr<RgGraphicsProjectClone> clone,
+                                                          tinyxml2::XMLDocument&                  doc,
+                                                          tinyxml2::XMLNode*                      pipeline_state_element) const
 {
     bool ret = false;
 
@@ -673,8 +689,10 @@ bool RgXmlGraphicsConfigFileReaderImpl::ReadPipelineState(std::shared_ptr<RgGrap
     return ret;
 }
 
-bool RgXmlGraphicsConfigFileWriterImpl::WritePipeline(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* parent_clone,
-                                                      bool is_backup_spv, const RgPipelineShaders& pipeline) const
+bool RgXmlGraphicsConfigFileWriterImpl::WritePipeline(tinyxml2::XMLDocument&   doc,
+                                                      tinyxml2::XMLElement*    parent_clone,
+                                                      bool                     is_backup_spv,
+                                                      const RgPipelineShaders& pipeline) const
 {
     bool ret = false;
 
@@ -687,29 +705,28 @@ bool RgXmlGraphicsConfigFileWriterImpl::WritePipeline(tinyxml2::XMLDocument& doc
         assert(pipeline_node != nullptr);
         if (pipeline_node != nullptr)
         {
-            bool is_graphics_pipeline = pipeline.type == RgPipelineType::kGraphics;
-            const char* pipeline_type      = is_graphics_pipeline ? kXmlNodePipelineTypeGraphics : kXmlNodePipelineTypeCompute;
+            bool        is_graphics_pipeline = pipeline.type == RgPipelineType::kGraphics;
+            const char* pipeline_type        = is_graphics_pipeline ? kXmlNodePipelineTypeGraphics : kXmlNodePipelineTypeCompute;
             RgXMLUtils::AppendXMLElement(doc, pipeline_node, kXmlNodePipelineType, pipeline_type);
 
             // Lambda that implements writing a single pipeline file path element.
-            auto AppendPipelineShaderFile = [&](RgPipelineStage stage, const char* tag, std::function<bool(const RgPipelineShaders&, RgPipelineStage, std::string&)> f)
-            {
-                std::string shader_path;
-                if (f(pipeline, stage, shader_path))
-                {
-                    RgXMLUtils::AppendXMLElement(doc, pipeline_node, tag, shader_path.c_str());
-                }
-            };
+            auto AppendPipelineShaderFile =
+                [&](RgPipelineStage stage, const char* tag, std::function<bool(const RgPipelineShaders&, RgPipelineStage, std::string&)> f) {
+                    std::string shader_path;
+                    if (f(pipeline, stage, shader_path))
+                    {
+                        RgXMLUtils::AppendXMLElement(doc, pipeline_node, tag, shader_path.c_str());
+                    }
+                };
 
             if (is_graphics_pipeline)
             {
-
                 // Append each graphics pipeline shader stage's input file.
-                AppendPipelineShaderFile(RgPipelineStage::kVertex,                 kXmlNodePipelineVertexStage, RgUtils::GetStageShaderPath);
-                AppendPipelineShaderFile(RgPipelineStage::kTessellationControl,    kXmlNodePipelineTessControlStage, RgUtils::GetStageShaderPath);
+                AppendPipelineShaderFile(RgPipelineStage::kVertex, kXmlNodePipelineVertexStage, RgUtils::GetStageShaderPath);
+                AppendPipelineShaderFile(RgPipelineStage::kTessellationControl, kXmlNodePipelineTessControlStage, RgUtils::GetStageShaderPath);
                 AppendPipelineShaderFile(RgPipelineStage::kTessellationEvaluation, kXmlNodePipelineTessEvalStage, RgUtils::GetStageShaderPath);
-                AppendPipelineShaderFile(RgPipelineStage::kGeometry,               kXmlNodePipelineGeometryStage, RgUtils::GetStageShaderPath);
-                AppendPipelineShaderFile(RgPipelineStage::kFragment,               kXmlNodePipelineFragmentStage, RgUtils::GetStageShaderPath);
+                AppendPipelineShaderFile(RgPipelineStage::kGeometry, kXmlNodePipelineGeometryStage, RgUtils::GetStageShaderPath);
+                AppendPipelineShaderFile(RgPipelineStage::kFragment, kXmlNodePipelineFragmentStage, RgUtils::GetStageShaderPath);
             }
             else
             {
@@ -726,7 +743,9 @@ bool RgXmlGraphicsConfigFileWriterImpl::WritePipeline(tinyxml2::XMLDocument& doc
     return ret;
 }
 
-bool RgXmlGraphicsConfigFileWriterImpl::WritePipelineState(const std::shared_ptr<RgGraphicsProjectClone> clone, tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* parent_clone_element) const
+bool RgXmlGraphicsConfigFileWriterImpl::WritePipelineState(const std::shared_ptr<RgGraphicsProjectClone> clone,
+                                                           tinyxml2::XMLDocument&                        doc,
+                                                           tinyxml2::XMLElement*                         parent_clone_element) const
 {
     bool ret = false;
 
@@ -749,7 +768,8 @@ bool RgXmlGraphicsConfigFileWriterImpl::WritePipelineState(const std::shared_ptr
                 RgXMLUtils::AppendXMLElement(doc, pipeline_state_element, kXmlNodePipelineName, pipeline_state.name.c_str());
                 RgXMLUtils::AppendXMLElement(doc, pipeline_state_element, kXmlNodePipelineIsActive, pipeline_state.is_active);
                 RgXMLUtils::AppendXMLElement(doc, pipeline_state_element, kXmlNodePipelineStateFilePath, pipeline_state.pipeline_state_file_path.data());
-                RgXMLUtils::AppendXMLElement(doc, pipeline_state_element, kXmlNodeOriginalPipelineStateFilePath, pipeline_state.original_pipeline_state_file_path.data());
+                RgXMLUtils::AppendXMLElement(
+                    doc, pipeline_state_element, kXmlNodeOriginalPipelineStateFilePath, pipeline_state.original_pipeline_state_file_path.data());
 
                 // Insert the state into the list of pipeline states.
                 pipeline_state_root->InsertEndChild(pipeline_state_element);
@@ -818,7 +838,7 @@ bool RgXmlConfigFile::ReadGlobalSettings(const std::string& global_config_file_p
 
     // Load the XML document.
     tinyxml2::XMLDocument doc;
-    tinyxml2::XMLError rc = doc.LoadFile(global_config_file_path.c_str());
+    tinyxml2::XMLError    rc = doc.LoadFile(global_config_file_path.c_str());
 
     if (rc == tinyxml2::XML_SUCCESS)
     {
@@ -842,19 +862,25 @@ bool RgXmlConfigFile::ReadGlobalSettings(const std::string& global_config_file_p
                         {
                             // Get next sibling, which should be the GlobalSettings element.
                             tinyxml2::XMLNode* global_settings_node = node->NextSibling();
-                            ret = ExtractGlobalSettings_2_0(global_settings_node, global_settings);
+                            ret                                     = ExtractGlobalSettings_2_0(global_settings_node, global_settings);
                         }
                         else if (kRgaDataModel2_1.compare(data_model_version) == 0)
                         {
                             // Get Next sibling, which should be the GlobalSettings element.
                             tinyxml2::XMLNode* global_settings_node = node->NextSibling();
-                            ret = ExtractGlobalSettings_2_1(global_settings_node, global_settings);
+                            ret                                     = ExtractGlobalSettings_2_1(global_settings_node, global_settings);
                         }
                         else if (kRgaDataModel2_2.compare(data_model_version) == 0)
                         {
                             // Get Next sibling, which should be the GlobalSettings element.
                             tinyxml2::XMLNode* global_settings_node = node->NextSibling();
-                            ret = ExtractGlobalSettings_2_2(global_settings_node, global_settings);
+                            ret                                     = ExtractGlobalSettings_2_2(global_settings_node, global_settings);
+                        }
+                        else if (kRgaDataModel2_3.compare(data_model_version) == 0)
+                        {
+                            // Get Next sibling, which should be the GlobalSettings element.
+                            tinyxml2::XMLNode* global_settings_node = node->NextSibling();
+                            ret                                     = ExtractGlobalSettings_2_3(global_settings_node, global_settings);
                         }
                         else
                         {
@@ -900,6 +926,9 @@ bool RgXmlConfigFile::WriteGlobalSettings(std::shared_ptr<RgGlobalSettings> glob
             // Create the log file location element.
             RgXMLUtils::AppendXMLElement(doc, global_settings_elem, kXmlNodeGlobalLogFileLocation, global_settings->log_file_location.c_str());
 
+            // Create the project file location element.
+            RgXMLUtils::AppendXMLElement(doc, global_settings_elem, kXmlNodeGlobalProjectFileLocation, global_settings->project_file_location.c_str());
+
             // Create the last selected directory element.
             RgXMLUtils::AppendXMLElement(doc, global_settings_elem, kXmlNodeGlobalLastSelectedDirectory, global_settings->last_selected_directory.c_str());
 
@@ -926,7 +955,7 @@ bool RgXmlConfigFile::WriteGlobalSettings(std::shared_ptr<RgGlobalSettings> glob
 
                                 // Save the project api type.
                                 std::string api_type;
-                                bool ok = RgUtils::ProjectAPIToString(global_settings->recent_projects[project_index]->api_type, api_type);
+                                bool        ok = RgUtils::ProjectAPIToString(global_settings->recent_projects[project_index]->api_type, api_type);
                                 assert(ok);
                                 if (ok)
                                 {
@@ -1055,7 +1084,7 @@ bool RgXmlConfigFile::WriteGlobalSettings(std::shared_ptr<RgGlobalSettings> glob
                     RgProjectAPI current_api = static_cast<RgProjectAPI>(api_index);
 
                     std::string api_string;
-                    bool is_ok = RgUtils::ProjectAPIToString(current_api, api_string);
+                    bool        is_ok = RgUtils::ProjectAPIToString(current_api, api_string);
                     assert(is_ok);
                     if (is_ok)
                     {
@@ -1111,8 +1140,7 @@ static bool ExtractDefaultBuildSettings_2_0(tinyxml2::XMLNode* default_build_set
     assert(global_settings != nullptr);
 
     // Make sure this is actually the DefaultBuildSettings node.
-    bool ret = ((global_settings != nullptr) &&
-                (default_build_settings_node != nullptr) &&
+    bool ret = ((global_settings != nullptr) && (default_build_settings_node != nullptr) &&
                 (std::strcmp(default_build_settings_node->Value(), kXmlNodeGlobalDefaultBuildSettings) == 0));
 
     if (ret)
@@ -1154,7 +1182,7 @@ static bool ExtractDefaultBuildSettings_2_0(tinyxml2::XMLNode* default_build_set
 
                                 // Extract the default build settings.
                                 const std::string version = RgConfigManager::Instance().GetConfigFileDataModelVersion();
-                                ret = reader->ReadApiBuildSettings(build_settings_node, api_build_settings, version);
+                                ret                       = reader->ReadApiBuildSettings(build_settings_node, api_build_settings, version);
                                 assert(ret);
 
                                 // Store the default OpenCL build settings in our data object.
@@ -1176,9 +1204,8 @@ static bool ExtractDefaultBuildSettings_2_1(tinyxml2::XMLNode* default_build_set
     assert(global_settings != nullptr);
 
     // Make sure this is actually the DefaultBuildSettings node
-    bool ret = ((global_settings != nullptr) &&
-        (default_build_settings_node != nullptr) &&
-        (std::strcmp(default_build_settings_node->Value(), kXmlNodeGlobalDefaultBuildSettings) == 0));
+    bool ret = ((global_settings != nullptr) && (default_build_settings_node != nullptr) &&
+                (std::strcmp(default_build_settings_node->Value(), kXmlNodeGlobalDefaultBuildSettings) == 0));
 
     if (ret)
     {
@@ -1198,7 +1225,7 @@ static bool ExtractDefaultBuildSettings_2_1(tinyxml2::XMLNode* default_build_set
                 RgProjectAPI current_api = static_cast<RgProjectAPI>(api_index);
 
                 std::string api_string;
-                bool is_ok = RgUtils::ProjectAPIToString(current_api, api_string);
+                bool        is_ok = RgUtils::ProjectAPIToString(current_api, api_string);
                 assert(is_ok);
                 if (is_ok)
                 {
@@ -1229,8 +1256,8 @@ static bool ExtractDefaultBuildSettings_2_1(tinyxml2::XMLNode* default_build_set
                                     assert(ret);
 
                                     // Extract the API-specific default build settings.
-                                    const std::string version = RgConfigManager::Instance().GetConfigFileDataModelVersion();
-                                    bool has_api_build_settings = reader->ReadApiBuildSettings(build_settings_node, api_build_settings, version);
+                                    const std::string version                = RgConfigManager::Instance().GetConfigFileDataModelVersion();
+                                    bool              has_api_build_settings = reader->ReadApiBuildSettings(build_settings_node, api_build_settings, version);
 
                                     // TEMP: we don't have any valid Vulkan settings, so this can't be a required read.
                                     if (api_index == static_cast<int>(RgProjectAPI::kVulkan))
@@ -1267,8 +1294,7 @@ static bool ExtractGlobalSettings_2_0(tinyxml2::XMLNode* global_settings_node, s
     assert(global_settings != nullptr);
 
     // Make sure this is actually the GlobalSettings nodes.
-    bool ret = ((global_settings != nullptr) &&
-                (global_settings_node != nullptr) &&
+    bool ret = ((global_settings != nullptr) && (global_settings_node != nullptr) &&
                 (std::strcmp(global_settings_node->Value(), kXmlNodeGlobalLogFileGlobalSettings) == 0));
 
     if (ret)
@@ -1325,7 +1351,7 @@ static bool ExtractGlobalSettings_2_0(tinyxml2::XMLNode* global_settings_node, s
         if (ret)
         {
             tinyxml2::XMLNode* default_build_settings_node = global_settings_node->NextSibling();
-            ret = ExtractDefaultBuildSettings_2_0(default_build_settings_node, global_settings);
+            ret                                            = ExtractDefaultBuildSettings_2_0(default_build_settings_node, global_settings);
         }
     }
 
@@ -1336,14 +1362,14 @@ static bool ExtractGlobalSettings_2_1(tinyxml2::XMLNode* global_settings_node, s
 {
     // Make sure this is actually the GlobalSettings nodes.
     tinyxml2::XMLElement* elem = nullptr;
-    bool ret = (std::strcmp(global_settings_node->Value(), kXmlNodeGlobalLogFileGlobalSettings) == 0);
+    bool                  ret  = (std::strcmp(global_settings_node->Value(), kXmlNodeGlobalLogFileGlobalSettings) == 0);
 
     if (ret)
     {
         // Read the log file location.
         elem = global_settings_node->FirstChildElement(kXmlNodeGlobalLogFileLocation);
-        ret = elem != nullptr;
-        ret = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->log_file_location);
+        ret  = elem != nullptr;
+        ret  = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->log_file_location);
 
         // If the saved log directory does not exist, fall back to using the default one.
         if (!RgUtils::IsDirExists(global_settings->log_file_location))
@@ -1382,7 +1408,7 @@ static bool ExtractGlobalSettings_2_1(tinyxml2::XMLNode* global_settings_node, s
         // Extract default include files viewer.
         // Before we move on keep the current node in case that we fail reading this node.
         auto elem_before_read = elem;
-        elem = elem->NextSiblingElement(kXmlNodeGlobalIncludeFilesViewer);
+        elem                  = elem->NextSiblingElement(kXmlNodeGlobalIncludeFilesViewer);
         ret &= (elem != nullptr);
         ret = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->include_files_viewer);
         if (!ret)
@@ -1392,7 +1418,7 @@ static bool ExtractGlobalSettings_2_1(tinyxml2::XMLNode* global_settings_node, s
 
             // Roll back so that the next element read would be performed from the correct location.
             elem = elem_before_read;
-            ret = true;
+            ret  = true;
         }
     }
     if (ret)
@@ -1474,7 +1500,7 @@ static bool ExtractGlobalSettings_2_1(tinyxml2::XMLNode* global_settings_node, s
     if (ret)
     {
         tinyxml2::XMLNode* default_build_settings_node = global_settings_node->NextSibling();
-        ret = ExtractDefaultBuildSettings_2_1(default_build_settings_node, global_settings);
+        ret                                            = ExtractDefaultBuildSettings_2_1(default_build_settings_node, global_settings);
     }
 
     return ret;
@@ -1484,14 +1510,14 @@ static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* global_settings_node, s
 {
     // Make sure this is actually the GlobalSettings nodes.
     tinyxml2::XMLElement* elem = nullptr;
-    bool ret = (std::strcmp(global_settings_node->Value(), kXmlNodeGlobalLogFileGlobalSettings) == 0);
+    bool                  ret  = (std::strcmp(global_settings_node->Value(), kXmlNodeGlobalLogFileGlobalSettings) == 0);
 
     if (ret)
     {
         // Read the log file location.
         elem = global_settings_node->FirstChildElement(kXmlNodeGlobalLogFileLocation);
-        ret = elem != nullptr;
-        ret = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->log_file_location);
+        ret  = elem != nullptr;
+        ret  = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->log_file_location);
 
         // If the saved log directory does not exist, fall back to using the default one.
         if (!RgUtils::IsDirExists(global_settings->log_file_location))
@@ -1530,7 +1556,7 @@ static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* global_settings_node, s
         // Extract default include files viewer.
         // Before we move on keep the current node in case that we fail reading this node.
         auto elem_before_read = elem;
-        elem = elem->NextSiblingElement(kXmlNodeGlobalIncludeFilesViewer);
+        elem                  = elem->NextSiblingElement(kXmlNodeGlobalIncludeFilesViewer);
         ret &= (elem != nullptr);
         ret = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->include_files_viewer);
         if (!ret)
@@ -1540,7 +1566,7 @@ static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* global_settings_node, s
 
             // Roll back so that the next element read would be performed from the correct location.
             elem = elem_before_read;
-            ret = true;
+            ret  = true;
         }
     }
     if (ret)
@@ -1557,7 +1583,7 @@ static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* global_settings_node, s
             ExtractDisassemblyColumns(tmp_disassembly_columns, global_settings->visible_disassembly_view_columns);
 
             // Update the columns to have the new VGPR pressure column as well if it is missing.
-            if (global_settings->visible_disassembly_view_columns.size() == static_cast<int>(RgIsaDisassemblyTableColumns::kCount)-1)
+            if (global_settings->visible_disassembly_view_columns.size() == static_cast<int>(RgIsaDisassemblyTableColumns::kCount) - 1)
             {
                 global_settings->visible_disassembly_view_columns.push_back("true");
             }
@@ -1633,7 +1659,181 @@ static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* global_settings_node, s
     if (ret)
     {
         tinyxml2::XMLNode* default_build_settings_node = global_settings_node->NextSibling();
-        ret = ExtractDefaultBuildSettings_2_1(default_build_settings_node, global_settings);
+        ret                                            = ExtractDefaultBuildSettings_2_1(default_build_settings_node, global_settings);
+    }
+
+    return ret;
+}
+
+static bool ExtractGlobalSettings_2_3(tinyxml2::XMLNode* global_settings_node, std::shared_ptr<RgGlobalSettings>& global_settings)
+{
+    // Make sure this is actually the GlobalSettings nodes.
+    tinyxml2::XMLElement* elem = nullptr;
+    bool                  ret  = (std::strcmp(global_settings_node->Value(), kXmlNodeGlobalLogFileGlobalSettings) == 0);
+
+    if (ret)
+    {
+        // Read the log file location.
+        elem = global_settings_node->FirstChildElement(kXmlNodeGlobalLogFileLocation);
+        ret  = elem != nullptr;
+        ret  = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->log_file_location);
+
+        // If the saved log directory does not exist, fall back to using the default one.
+        if (!RgUtils::IsDirExists(global_settings->log_file_location))
+        {
+            std::string app_data_dir;
+            RgConfigManager::GetDefaultDataFolder(app_data_dir);
+            global_settings->log_file_location = app_data_dir;
+        }
+    }
+    if (ret)
+    {
+        // Read the project file location.
+        elem = global_settings_node->FirstChildElement(kXmlNodeGlobalProjectFileLocation);
+        ret  = elem != nullptr;
+        ret  = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->project_file_location);
+
+        // If the saved project directory does not exist, fall back to using the default one.
+        if (!RgUtils::IsDirExists(global_settings->project_file_location))
+        {
+            std::string documents_dir;
+            RgConfigManager::GetDefaultDocumentsFolder(documents_dir);
+            global_settings->project_file_location = documents_dir;
+        }
+    }
+    if (ret)
+    {
+        // Attempt to read the last selected directory. It might be empty, in which case the call returns false, and that's ok.
+        elem = elem->NextSiblingElement(kXmlNodeGlobalLastSelectedDirectory);
+        ret &= (elem != nullptr);
+        if (ret)
+        {
+            RgXMLUtils::ReadNodeTextString(elem, global_settings->last_selected_directory);
+        }
+    }
+    if (ret)
+    {
+        // Read the list of recently-accessed projects.
+        elem = elem->NextSiblingElement(kXmlNodeGlobalRecentProjectsRoot);
+        ret &= (elem != nullptr);
+        ret = ret && ExtractRecentProjects(elem, global_settings->recent_projects);
+    }
+    if (ret)
+    {
+        // Extract font family and size information.
+        elem = elem->NextSiblingElement(kXmlNodeGlobalFontFamilyRoot);
+        ret &= (elem != nullptr);
+        ret = ret && ExtractFontInformation(elem, global_settings);
+    }
+    if (ret)
+    {
+        // Extract default include files viewer.
+        // Before we move on keep the current node in case that we fail reading this node.
+        auto elem_before_read = elem;
+        elem                  = elem->NextSiblingElement(kXmlNodeGlobalIncludeFilesViewer);
+        ret &= (elem != nullptr);
+        ret = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->include_files_viewer);
+        if (!ret)
+        {
+            // If we couldn't read it from the file, just use the default.
+            global_settings->include_files_viewer = kStrGlobalSettingsSrcViewIncludeViewerDefault;
+
+            // Roll back so that the next element read would be performed from the correct location.
+            elem = elem_before_read;
+            ret  = true;
+        }
+    }
+    if (ret)
+    {
+        // Get the disassembly columns as a single string.
+        elem = elem->NextSiblingElement(kXmlNodeGlobalDisassemblyColumns);
+        ret &= (elem != nullptr);
+        std::string tmp_disassembly_columns;
+        ret = ret && RgXMLUtils::ReadNodeTextString(elem, tmp_disassembly_columns);
+
+        // Parse the disassembly columns string, and save the items in the data object.
+        if (ret)
+        {
+            ExtractDisassemblyColumns(tmp_disassembly_columns, global_settings->visible_disassembly_view_columns);
+
+            // Update the columns to have the new VGPR pressure column as well if it is missing.
+            if (global_settings->visible_disassembly_view_columns.size() == static_cast<int>(RgIsaDisassemblyTableColumns::kCount) - 1)
+            {
+                global_settings->visible_disassembly_view_columns.push_back("true");
+            }
+        }
+    }
+    if (ret)
+    {
+        // Read the option that determines if the project names are generated or provided by the user.
+        elem = elem->NextSiblingElement(kXmlNodeUseGeneratedProjectNames);
+        ret &= (elem != nullptr);
+        ret = ret && RgXMLUtils::ReadNodeTextBool(elem, global_settings->use_default_project_name);
+    }
+    if (ret)
+    {
+        // Read the default API.
+        elem = elem->NextSiblingElement(kXmlNodeGlobalDefaultApi);
+        ret &= (elem != nullptr);
+        ret = ret && RgXMLUtils::ReadNodeTextUnsigned(elem, (unsigned int&)global_settings->default_api);
+    }
+    if (ret)
+    {
+        // Read the "Should prompt for API" setting.
+        elem = elem->NextSiblingElement(kXmlNodeGlobalPromptForApi);
+        ret &= (elem != nullptr);
+        ret = ret && RgXMLUtils::ReadNodeTextBool(elem, global_settings->should_prompt_for_api);
+    }
+    if (ret)
+    {
+        // Read the input file associations.
+        elem = elem->NextSiblingElement(kXmlNodeGlobalInputFileExtGlsl);
+        ret &= (elem != nullptr);
+        ret = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->input_file_ext_glsl);
+        if (ret)
+        {
+            elem = elem->NextSiblingElement(kXmlNodeGlobalInputFileExtHlsl);
+            ret &= (elem != nullptr);
+            ret = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->input_file_ext_hlsl);
+        }
+        if (ret)
+        {
+            elem = elem->NextSiblingElement(kXmlNodeGlobalInputFileExtSpvTxt);
+            ret &= (elem != nullptr);
+            ret = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->input_file_ext_spv_txt);
+        }
+        if (ret)
+        {
+            elem = elem->NextSiblingElement(kXmlNodeGlobalInputFileExtSpvBin);
+            ret &= (elem != nullptr);
+            ret = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->input_file_ext_spv_bin);
+        }
+    }
+    if (ret)
+    {
+        // Read the default source language.
+        elem = elem->NextSiblingElement(kXmlNodeGlobalDefaultSrcLang);
+        ret &= (elem != nullptr);
+        ret = ret && RgXMLUtils::ReadNodeTextUnsigned(elem, (uint32_t&)global_settings->default_lang);
+    }
+    if (ret)
+    {
+        // Extract splitter config objects from the "GUI" node.
+        elem = elem->NextSiblingElement(kXmlNodeGlobalGui);
+        ret &= (elem != nullptr);
+        ret = ret && ExtractSplitterConfigs(elem, global_settings->gui_layout_splitters);
+    }
+    if (ret)
+    {
+        // Extract window size config objects from the "GUI" node.
+        ret = ret && ExtractWindowGeometry(elem, global_settings->gui_window_config);
+    }
+
+    // If the Global Settings could be read, then attempt to read the Default Build Settings.
+    if (ret)
+    {
+        tinyxml2::XMLNode* default_build_settings_node = global_settings_node->NextSibling();
+        ret                                            = ExtractDefaultBuildSettings_2_1(default_build_settings_node, global_settings);
     }
 
     return ret;

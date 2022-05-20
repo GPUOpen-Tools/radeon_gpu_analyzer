@@ -172,7 +172,7 @@ void RgAppStateOpencl::HandleOpenExistingCLFile()
                 RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
 
                 QStringList selected_files;
-                bool is_ok = RgUtils::OpenFileDialogForMultipleFiles(main_window_, current_api, selected_files);
+                bool        is_ok = RgUtils::OpenFileDialogForMultipleFiles(main_window_, current_api, selected_files);
                 if (is_ok && !selected_files.empty())
                 {
                     main_window_->setAcceptDrops(false);
@@ -302,6 +302,8 @@ std::string RgAppStateOpencl::GetGlobalSettingsViewStylesheet() const
         "RgGlobalSettingsView #fontSizeComboBox:hover,"
         "RgGlobalSettingsView #logFileLocationLineEdit:focus,"
         "RgGlobalSettingsView #logFileLocationLineEdit:hover,"
+        "RgGlobalSettingsView #projectFileLocationLineEdit:focus,"
+        "RgGlobalSettingsView #projectFileLocationLineEdit:hover,"
         "RgGlobalSettingsView #includeFilesViewerLineEdit:focus,"
         "RgGlobalSettingsView #includeFilesViewerLineEdit:hover,"
         "RgGlobalSettingsView #includeFilesViewerBrowseButton:focus,"

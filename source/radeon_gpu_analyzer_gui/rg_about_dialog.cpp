@@ -199,13 +199,14 @@ void RgAboutDialog::HandleCheckForUpdatesCompleted(UpdateCheck::ThreadController
             results_dialog->setWindowFlags(results_dialog->windowFlags() & ~Qt::WindowContextHelpButtonHint);
             results_dialog->setFixedSize(400 * ScalingManager::Get().GetScaleFactor(),
                 300 * ScalingManager::Get().GetScaleFactor());
-            QDialogButtonBox* button_box = results_dialog->findChild<QDialogButtonBox*>("buttonBox");
+            QDialogButtonBox* button_box = results_dialog->findChild<QDialogButtonBox*>("button_box_");
             if (button_box != nullptr)
             {
                 QPushButton* close_button = button_box->button(QDialogButtonBox::Close);
                 if (close_button != nullptr)
                 {
                     close_button->setCursor(Qt::PointingHandCursor);
+                    QObject::connect(button_box, SIGNAL(rejected()), results_dialog, SLOT(reject()));
                 }
             }
 

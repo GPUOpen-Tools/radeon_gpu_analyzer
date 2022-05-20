@@ -15,7 +15,8 @@
 static const std::string kRgaDataModel2_0 = "2.0";
 static const std::string kRgaDataModel2_1 = "2.1";
 static const std::string kRgaDataModel2_2 = "2.2";
-static const std::string kRgaDataModel = kRgaDataModel2_2;
+static const std::string kRgaDataModel2_3 = "2.3";
+static const std::string kRgaDataModel    = kRgaDataModel2_3;
 
 // The XML declaration string.
 static const char* kRgaXmlDeclaration = "xml version = \"1.0\" encoding = \"UTF-8\"";
@@ -209,6 +210,9 @@ static const char* kXmlNodeGlobalLogFileGlobalSettings = "GlobalSettings";
 // Log file location.
 static const char* kXmlNodeGlobalLogFileLocation = "LogFileLocation";
 
+// Project file location.
+static const char* kXmlNodeGlobalProjectFileLocation = "ProjectFileLocation";
+
 // Output directory.
 static const char* kXmlNodeGlobalOutputDir = "OutputDirectory";
 
@@ -285,8 +289,8 @@ static const char* kXmlNodeGlobalGuiWindowYPos = "WindowYPos";
 static const char* kXmlNodeGlobalDefaultBuildSettings = "DefaultBuildSettings";
 
 // Input file associations.
-static const char* kXmlNodeGlobalInputFileExtGlsl = "InputFileExtGLSL";
-static const char* kXmlNodeGlobalInputFileExtHlsl = "InputFileExtHLSL";
+static const char* kXmlNodeGlobalInputFileExtGlsl   = "InputFileExtGLSL";
+static const char* kXmlNodeGlobalInputFileExtHlsl   = "InputFileExtHLSL";
 static const char* kXmlNodeGlobalInputFileExtSpvTxt = "InputFileExtSpvTxt";
 static const char* kXmlNodeGlobalInputFileExtSpvBin = "InputFileExtSpvBin";
 
@@ -296,4 +300,4 @@ static const char* kXmlNodeGlobalDefaultSrcLang = "DefaultSrcLanguage";
 // *****************************
 // *** GLOBAL SETTINGS - END ***
 // *****************************
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_CONFIG_FILE_DEFINITIONS_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_CONFIG_FILE_DEFINITIONS_H_

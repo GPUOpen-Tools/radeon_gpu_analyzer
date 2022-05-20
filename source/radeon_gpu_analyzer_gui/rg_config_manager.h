@@ -23,7 +23,10 @@ enum RgPipelineStage : char;
 struct RgSourceFilePathSearcher
 {
     // Default constructor used to provide the path to search for.
-    RgSourceFilePathSearcher(const std::string& target_file_path) : target_file_path(target_file_path) {}
+    RgSourceFilePathSearcher(const std::string& target_file_path)
+        : target_file_path(target_file_path)
+    {
+    }
 
     // An overloaded function call operator used to compare file paths between RgSourceFileInfo instances.
     bool operator()(const RgSourceFileInfo& file_info) const;
@@ -85,16 +88,28 @@ public:
     static void UpdateSourceFilepath(const std::string& old_file_path, const std::string& new_file_path, std::shared_ptr<RgProject> program, int clone_index);
 
     // Update the file path for a shader stage source file that has been renamed.
-    static void UpdateShaderStageFilePath(const std::string& old_file_path, const std::string& new_file_path, std::shared_ptr<RgProjectVulkan> project, int clone_index);
+    static void UpdateShaderStageFilePath(const std::string&               old_file_path,
+                                          const std::string&               new_file_path,
+                                          std::shared_ptr<RgProjectVulkan> project,
+                                          int                              clone_index);
 
     // Generate a full path to a program's folder on disk.
     static void GetProjectFolder(const std::string& program_name, std::string& program_folder);
 
     // Generate a full path to a new source file for the given program.
-    static void GenerateNewSourceFilepath(const std::string& program_name, int clone_index, const std::string& source_filename, const std::string& sourcefile_extension, std::string& generated_file_name, std::string& full_source_file_path);
+    static void GenerateNewSourceFilepath(const std::string& program_name,
+                                          int                clone_index,
+                                          const std::string& source_filename,
+                                          const std::string& sourcefile_extension,
+                                          std::string&       generated_file_name,
+                                          std::string&       full_source_file_path);
 
     // Generate a full path to a new pipeline state file for the given program.
-    static void GenerateNewPipelineFilepath(const std::string& project_name, int clone_index, const std::string& pipeline_filename, const std::string& pipeline_file_extension, std::string& full_pipeline_file_path);
+    static void GenerateNewPipelineFilepath(const std::string& project_name,
+                                            int                clone_index,
+                                            const std::string& pipeline_filename,
+                                            const std::string& pipeline_file_extension,
+                                            std::string&       full_pipeline_file_path);
 
     // Load an existing program.
     std::shared_ptr<RgProject> LoadProjectFile(const std::string& program_file_path);
@@ -146,6 +161,12 @@ public:
     // Gets the default folder where RGA programs should stored.
     static void GetDefaultProjectsFolder(std::string& default_programs_folder);
 
+    // Gets the custom project folder location.
+    void GetCustomProjectsLocation(std::string& default_project_location);
+
+    // Gets the custom folder from global settings.
+    void GetCustomProjectFolder(std::string& custom_projects_folder);
+
     // Gets the last folder that the user selected in a File Dialog.
     std::string GetLastSelectedFolder() const;
 
@@ -196,7 +217,7 @@ public:
 
 private:
     // Non-copyable.
-    RgConfigManager() = default;
+    RgConfigManager()  = default;
     ~RgConfigManager() = default;
     RgConfigManager(const RgConfigManager& other);
     const RgConfigManager& operator=(const RgConfigManager& other);
@@ -225,4 +246,4 @@ private:
     // A flag that indicates if this object has been initialized.
     bool is_initialized_ = false;
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_CONFIG_MANAGER_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_CONFIG_MANAGER_H_

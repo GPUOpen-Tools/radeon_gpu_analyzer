@@ -19,6 +19,7 @@ if [[ "$1" == "-h" ]] || [[ "$1" == "-help" ]] || [[ "$1" == "--h" ]] || [[ "$1"
     echo "   --vk-include         Path to the Vulkan SDK include folder."
     echo "   --vk-lib             Path to the Vulkan SDK library folder."
     echo "   --cppcheck           Add CMAKE_CXX_CPPCHECK preprocess option to cmake."
+    echo "   --clean              Delete cmake files and build output folders."
     echo ""
     echo "Examples:"
     echo "   prebuild.sh"
@@ -44,6 +45,10 @@ GUI_ONLY=
 NO_VULKAN=
 TEST_DIR_SUFFIX=""
 CMAKE_CPPCHECK=
+
+CURRENT_DIR=$(pwd)
+SCRIPT_DIR=$(dirname "$0")
+OUTPUT_LINUX_DIR="$SCRIPT_DIR/linux"
 
 # Parse command line arguments
 args=("$@")
@@ -83,11 +88,31 @@ for ((i=0; i<$#; i++)); do
         TEST_DIR_SUFFIX="_test"
     elif [ "$arg" == "--cppcheck" ]; then
         CMAKE_CPPCHECK="-DCMAKE_CXX_CPPCHECK=cppcheck"
+    elif [ "$arg" == "--clean" ]; then
+        if [ -d "$OUTPUT_LINUX_DIR" ]; then
+            echo "INFO: Deleting $OUTPUT_LINUX_DIR"
+            rm -rf "$OUTPUT_LINUX_DIR"
+        fi
+        if [ -d "$SCRIPT_DIR/../build_output" ]; then
+            echo "INFO: Deleting $SCRIPT_DIR/../build_output"
+            rm -rf "$SCRIPT_DIR/../build_output"
+        fi
+        if [ -d "$SCRIPT_DIR/../output" ]; then
+            echo "INFO: Deleting $SCRIPT_DIR/../output"
+            rm -rf "$SCRIPT_DIR/../output"
+        fi
+        if [ -d "$SCRIPT_DIR/../output_test" ]; then
+            echo "INFO: Deleting $SCRIPT_DIR/../output_test"
+            rm -rf "$SCRIPT_DIR/../output_test"
+        fi
+        exit 0
     else
         echo "Unexpected argument: $arg. Aborting...";
         exit 1
     fi
 done
+
+OUTPUT_DIR="$OUTPUT_LINUX_DIR/make$TEST_DIR_SUFFIX"
 
 if [ "$NO_VULKAN" == "-DRGA_ENABLE_VULKAN=OFF" ]; then
     if [ ! "$CLI_ONLY" == "-DBUILD_CLI_ONLY=ON" ]; then
@@ -107,11 +132,6 @@ fi
 if [ -n "$VULKAN_LIB_DIR" ]; then
     CMAKE_VK_LIB="-DVULKAN_SDK_LIB_DIR=$VULKAN_LIB_DIR"
 fi
-
-CURRENT_DIR=$(pwd)
-SCRIPT_DIR=$(dirname "$0")
-OUTPUT_LINUX_DIR="$SCRIPT_DIR/linux"
-OUTPUT_DIR="$OUTPUT_LINUX_DIR/make$TEST_DIR_SUFFIX"
 
 # Create output folder
 if [ ! -d "$OUTPUT_LINUX_DIR" ]; then

@@ -1,13 +1,15 @@
-Radeon™ GPU Analyzer 2.6 – Release Notes
-========================================
+Radeon™ GPU Analyzer 2.6.1 – Release Notes
+==========================================
 Highlights
 ==========
--	Added support for gfx1034 as a target in Vulkan, DX12, DXR, DX11, OpenCL and OpenGL modes.
--	DX12 mode: you can now extract AMDIL disassembly for DX12 compute and graphics shaders.
--	[GitHub-77] DXR and DX12 offline modes:
-o	You can now compile DXR and DX12 shaders and pipelines on machines that do not have an installed AMD card or driver by adding the --offline command line switch to your RGA command. The tool ships with the latest released AMD DXR/DX12 driver at the time of the tool's release, and it would use that driver if --offline is specified.
-o	Plug & play DXR/DX12 driver: force RGA to load amdxc64.dll from a specific location by using the new --amdxc command line switch. This option also works on machines which do not have an AMD DXR/DX12 driver installed.
--	VGPR pressure GUI: the UI now visualizes VGPR pressure in the disassembly view at the instruction level, allowing you to spot areas in your code that have the highest VGPR pressure and helping you identify where to focus your optimization. The UI shows the allocation and usage of VGPRs for each instruction, and hints on how many VGPRs need to be reduced to reduce the allocation.
+-	Added support for gfx1035 as a target in Vulkan, DX12, DXR, DX11, OpenCL and OpenGL modes.
+-	DX12/DXR modes: 
+o	Updated the DXC compiler package that is bundled with the tool to the latest public version. 
+o	DX12/DXR offline modes now support up to gfx1035 (previously supported up to gfx1032).
+-	You can now build the RGA with the Visual Studio 2022 compiler toolchain (v143). To generate a Visual Studio 2022 solution for the tool, run the prebuild script with --vs 2022 as an argument.
+-	You can now change where RGA project files are saved by the GUI app. This can be used as a workaround on Windows systems where the path to the default project folder uses Unicode characters.
+-	Shader analysis: fixed an issue which caused v_mad_mixlo_f16 and v_mad_mixhi_f16 instructions to be marked as <unknown> in live register analysis reports and CFG output files.
+-	Fixed an issue that prevented the Close button in the GUI application’s About dialog from working.
 
 Note: on Ubuntu, the minimum required OS version is Ubuntu 20.04.
 
@@ -33,7 +35,6 @@ Resource usage statistics for OpenGL mode only displays usage of SGPRs and VGPRs
 DirectX 12 Mode
 ---------------
 -	Live register analysis & CFG generation require using the --isa option to generate ISA disassembly. 
--	On Windows 11, when running the same RGA command more than once with the --il option in the command, the AMDIL disassembly for vertex shaders shows up corrupted.
 -	On Windows 11, Hull shader AMDIL disassembly contains a trail of a few garbage characters.
 
 Vulkan Offline Modes (vk-offline, vk-spv-offline, vk-spv-txt-offline)
@@ -148,111 +149,45 @@ CapabilityAtomicFloat64MinMaxEXT
 
 
 b. The Vulkan Offline modes currently only support the following extensions:  
-CapabilityMatrix
-CapabilityShader
-CapabilityGeometry
-CapabilityTessellation
-CapabilityFloat16
-CapabilityFloat64
-CapabilityInt64
-CapabilityInt64Atomics
-CapabilityGroups
-CapabilityAtomicStorage
-CapabilityInt16
-CapabilityTessellationPointSize
-CapabilityGeometryPointSize
-CapabilityImageGatherExtended
-CapabilityStorageImageMultisample
-CapabilityUniformBufferArrayDynamicIndexing
-CapabilitySampledImageArrayDynamicIndexing
-CapabilityStorageBufferArrayDynamicIndexing
-CapabilityStorageImageArrayDynamicIndexing
-CapabilityClipDistance
-CapabilityCullDistance
-CapabilityImageCubeArray
-CapabilitySampleRateShading
-CapabilityImageRect
-CapabilitySampledRect
-CapabilityInt8
-CapabilityInputAttachment
-CapabilitySparseResidency
-CapabilityMinLod
-CapabilitySampled1D
-CapabilityImage1D
-CapabilitySampledCubeArray
-CapabilitySampledBuffer
-CapabilityImageBuffer
-CapabilityImageMSArray
-CapabilityStorageImageExtendedFormats
-CapabilityImageQuery
-CapabilityDerivativeControl
-CapabilityInterpolationFunction
-CapabilityTransformFeedback
-CapabilityGeometryStreams
-CapabilityStorageImageReadWithoutFormat
-CapabilityStorageImageWriteWithoutFormat
-CapabilityMultiViewport
-CapabilitySubgroupDispatch
-CapabilityNamedBarrier
-CapabilityPipeStorage
-CapabilityGroupNonUniform
-CapabilityGroupNonUniformVote
-CapabilityGroupNonUniformArithmetic
-CapabilityGroupNonUniformBallot
-CapabilityGroupNonUniformShuffle
-CapabilityGroupNonUniformShuffleRelative
-CapabilityGroupNonUniformClustered
-CapabilityGroupNonUniformQuad
-CapabilitySubgroupBallotKHR
-CapabilityDrawParameters
-CapabilitySubgroupVoteKHR
-CapabilityStorageBuffer16BitAccess
-CapabilityStorageUniformBufferBlock16
-CapabilityStorageUniform16
-CapabilityUniformAndStorageBuffer16BitAccess
-CapabilityStorageInputOutput16
-CapabilityDeviceGroup
-CapabilityMultiView
-CapabilityVariablePointersStorageBuffer
-CapabilityVariablePointers
-CapabilitySampleMaskPostDepthCoverage
-CapabilityStorageBuffer8BitAccess
-CapabilityUniformAndStorageBuffer8BitAccess
-CapabilityDenormPreserve
-CapabilityDenormFlushToZero
-CapabilitySignedZeroInfNanPreserve
-CapabilityRoundingModeRTE
-CapabilityRoundingModeRTZ
-CapabilityFloat16ImageAMD
-CapabilityImageGatherBiasLodAMD
-CapabilityFragmentMaskAMD
-CapabilityStencilExportEXT
-CapabilityImageReadWriteLodAMD
-CapabilityInt64ImageEXT
-CapabilityShaderClockKHR
-CapabilityShaderViewportIndexLayerEXT
-CapabilityFragmentShadingRateKHR
-CapabilityFragmentDensityEXT
-CapabilityShaderNonUniformEXT
-CapabilityRuntimeDescriptorArrayEXT
-CapabilityInputAttachmentArrayDynamicIndexingEXT
-CapabilityUniformTexelBufferArrayDynamicIndexingEXT
-CapabilityStorageTexelBufferArrayDynamicIndexingEXT
-CapabilityUniformBufferArrayNonUniformIndexingEXT
-CapabilitySampledImageArrayNonUniformIndexingEXT
-CapabilityStorageBufferArrayNonUniformIndexingEXT
-CapabilityStorageImageArrayNonUniformIndexingEXT
-CapabilityUniformTexelBufferArrayNonUniformIndexingEXT
-CapabilityStorageTexelBufferArrayNonUniformIndexingEXT
-CapabilityVulkanMemoryModel
-CapabilityVulkanMemoryModelKHR
-CapabilityVulkanMemoryModelDeviceScope
-CapabilityVulkanMemoryModelDeviceScopeKHR
-CapabilityPhysicalStorageBufferAddresses
-CapabilityPhysicalStorageBufferAddressesEXT
-CapabilityDemoteToHelperInvocationEXT
-CapabilityAtomicFloat32MinMaxEXT
-CapabilityAtomicFloat64MinMaxEXT
+SPV_KHR_shader_ballot
+SPV_KHR_subgroup_vote
+SPV_KHR_device_group
+SPV_KHR_multiview
+SPV_KHR_shader_draw_parameters
+SPV_KHR_16bit_storage
+SPV_KHR_storage_buffer_storage_class
+SPV_KHR_8bit_storage
+SPV_KHR_variable_pointers
+SPV_KHR_float_controls
+SPV_KHR_shader_clock
+SPV_KHR_vulkan_memory_model
+SPV_KHR_post_depth_coverage
+SPV_KHR_non_semantic_info
+SPV_KHR_physical_storage_buffer
+SPV_KHR_terminate_invocation
+SPV_KHR_FRAGMENT_SHADING_RATE
+SPV_EXT_nonuniform_qualifier
+SPV_EXT_shader_stencil_export
+SPV_EXT_shader_viewport_index_layer
+SPV_EXT_demote_to_helper_invocation
+SPV_EXT_shader_image_atomic_int64
+SPV_AMD_shader_ballot
+SPV_AMD_shader_trinary_minmax
+SPV_AMD_shader_explicit_vertex_parameter
+SPV_AMD_gcn_shader
+SPV_AMD_gpu_shader_half_float
+SPV_AMD_texture_gather_bias_lod
+SPV_AMD_gpu_shader_int16
+SPV_AMD_shader_fragment_mask
+SPV_AMD_shader_image_load_store_lod
+SPV_AMD_shader_texel_buffer_explicit_format
+SPV_AMD_property_id_attachment
+SPV_AMD_anisotropic_lod_compensation
+SPV_ARB_shader_ballot
+SPV_GOOGLE_decorate_string
+SPV_GOOGLE_hlsl_functionality1
+SPV_GOOGLE_user_type
+
 
 -	In Vulkan offline mode, in the case where no output file name is provided and post-processing (live register analysis or control-flow graph generation) is enabled, a false error message is printed.
 
@@ -263,14 +198,7 @@ GUI Application
 -	Certain SALU instructions are being misclassified as VALU instructions. 
 -	Certain GDS instructions are being misclassified as SALU.
 -	Changing disassembly columns can be sluggish on certain systems in projects with multiple .cl files.
-
-Shader Analysis
----------------
-The following instructions are marked as <unknown> in live VGPR reports and CFG files:
--	v_mad_mixlo_f16
--	v_mad_mixhi_f16
--	v_dot2_*
-
+-	On systems with default Unicode path for the RGA projects folder, the tool will not be able to save files. A workaround has been provided in version 2.6.1 (allowing the user to change the folder in which projects are saved).
 
 Notes for OpenCL Mode Users 
 ===========================

@@ -32,7 +32,7 @@ static const RgProjectAPI kInitialApiType = RgProjectAPI::kOpenCL;
 static const int kMaxRecentFiles = 10;
 
 // The default number of days for log files to be considered as "old".
-static const int  kDefaultOldLogFilesDays = 3;
+static const int kDefaultOldLogFilesDays = 3;
 
 // GUI log file name prefix.
 static const char* kGuiLogFilePrefix = "rga-gui.log";
@@ -42,7 +42,10 @@ static const char* kCliLogFilePrefix = "rga-cli.log";
 
 struct ProjectPathSearcher
 {
-    ProjectPathSearcher(const std::string& project_path) : project_path(project_path) {}
+    ProjectPathSearcher(const std::string& project_path)
+        : project_path(project_path)
+    {
+    }
 
     // A predicate that will compare each project path with a target path to search for.
     bool operator()(const std::shared_ptr<RgRecentProject> recent_project) const
@@ -51,7 +54,7 @@ struct ProjectPathSearcher
         assert(recent_project != nullptr);
         if (recent_project != nullptr)
         {
-            result =  recent_project->project_path.compare(project_path) == 0;
+            result = recent_project->project_path.compare(project_path) == 0;
         }
 
         return result;
@@ -85,7 +88,6 @@ public:
     }
 
 private:
-
     // Add default target GPU hardware. Suitable default target GPUs are discovered by looking at
     // the list of supported devices and choosing the last item in the list. Items at the end of
     // the list are the most recently released products.
@@ -93,8 +95,8 @@ private:
     {
         // Use the version info's list of supported GPUs to determine the most recent
         // hardware to build for by default.
-        RgConfigManager& config_manager = RgConfigManager::Instance();
-        std::shared_ptr<RgCliVersionInfo> version_info = config_manager.GetVersionInfo();
+        RgConfigManager&                  config_manager = RgConfigManager::Instance();
+        std::shared_ptr<RgCliVersionInfo> version_info   = config_manager.GetVersionInfo();
 
         assert(version_info != nullptr);
         if (version_info != nullptr)
@@ -145,7 +147,7 @@ private:
                     return family1.family_name < family2.family_name;
                 });
 
-                const auto& latest_family = architecture_families.rbegin();
+                const auto&        latest_family      = architecture_families.rbegin();
                 const std::string& latest_family_name = latest_family->family_name;
 
                 // Add the latest supported GPU family as the default target GPU.
@@ -190,7 +192,11 @@ private:
 static std::string GenConfigFileName()
 {
     std::string config_file_name = kStrGlobalConfigFileNamePrefix;
-    std::string versionSuffix = std::string("_") + std::to_string(RGA_VERSION_MAJOR) + "_" + std::to_string(RGA_VERSION_MINOR);
+    std::string versionSuffix    = std::string("_") + std::to_string(RGA_VERSION_MAJOR) + "_" + std::to_string(RGA_VERSION_MINOR);
+    if (RGA_VERSION_UPDATE != 0)
+    {
+        versionSuffix += "_" + std::to_string(RGA_VERSION_UPDATE);
+    }
     config_file_name += versionSuffix;
     config_file_name += ".";
     config_file_name += kStrGlobalConfigFileExtension;
@@ -221,15 +227,6 @@ bool RgConfigManager::Init()
             assert(is_dir_created);
         }
 
-        // If necessary - create the Projects sub-directory.
-        std::string project_sub_dir;
-        GetDefaultProjectsFolder(project_sub_dir);
-        if (!RgUtils::IsDirExists(project_sub_dir))
-        {
-            bool is_dir_created = RgUtils::CreateFolder(project_sub_dir);
-            assert(is_dir_created);
-        }
-
         // Attempt to load the version info file cached in the RGA data folder.
         std::string version_info_file_path;
         RgConfigManager::GetDefaultDataFolder(version_info_file_path);
@@ -240,7 +237,7 @@ bool RgConfigManager::Init()
         assert(is_successful);
 
         // Read the version info file.
-        version_info_ = std::make_shared<RgCliVersionInfo>();
+        version_info_                  = std::make_shared<RgCliVersionInfo>();
         bool is_version_info_file_read = RgXMLCliVersionInfo::ReadVersionInfo(version_info_file_path, version_info_);
         assert(is_version_info_file_read);
         if (is_version_info_file_read)
@@ -264,8 +261,9 @@ bool RgConfigManager::Init()
                 {
                     // Notify the user in case that we failed to read the config file.
                     std::stringstream msg;
-                    msg << kStrErrFatalPrefix << kStrErrCannotReadConfigFile << config_file_full_path <<
-                        std::endl << kStrErrDeleteFileAndRerun << std::endl << kStrErrRgaWillNowExit;
+                    msg << kStrErrFatalPrefix << kStrErrCannotReadConfigFile << config_file_full_path << std::endl
+                        << kStrErrDeleteFileAndRerun << std::endl
+                        << kStrErrRgaWillNowExit;
                     fatal_error_msg_ = msg.str();
                 }
 
@@ -291,12 +289,12 @@ bool RgConfigManager::Init()
                     RgProjectAPI current_api = static_cast<RgProjectAPI>(api_index);
 
                     std::string api_string;
-                    bool is_ok = RgUtils::ProjectAPIToString(current_api, api_string);
+                    bool        is_ok = RgUtils::ProjectAPIToString(current_api, api_string);
                     assert(is_ok);
                     if (is_ok)
                     {
                         std::shared_ptr<RgBuildSettings> default_build_settings = GetDefaultBuildSettings(current_api);
-                        global_settings_->default_build_settings[api_string] = default_build_settings;
+                        global_settings_->default_build_settings[api_string]    = default_build_settings;
                     }
                 }
 
@@ -307,8 +305,9 @@ bool RgConfigManager::Init()
         else
         {
             std::stringstream msg;
-            msg << kStrErrFatalPrefix << kStrErrCannotLoadVersionInfoFile << version_info_file_path << std::endl <<
-                kStrErrDeleteFileAndRerun << std::endl << kStrErrRgaWillNowExit;
+            msg << kStrErrFatalPrefix << kStrErrCannotLoadVersionInfoFile << version_info_file_path << std::endl
+                << kStrErrDeleteFileAndRerun << std::endl
+                << kStrErrRgaWillNowExit;
             fatal_error_msg_ = msg.str();
             RgLog::file << kStrLogFailedLoadVersionInfoFile << version_info_file_path << std::endl;
         }
@@ -316,8 +315,8 @@ bool RgConfigManager::Init()
         if (is_initialized_)
         {
             // Initialize GUI log file.
-            std::string  log_file_dir = (global_settings_->log_file_location.empty() ? app_data_dir : global_settings_->log_file_location);
-            bool is_successful = RgaSharedUtils::InitLogFile(log_file_dir, kGuiLogFilePrefix, kDefaultOldLogFilesDays);
+            std::string log_file_dir  = (global_settings_->log_file_location.empty() ? app_data_dir : global_settings_->log_file_location);
+            bool        is_successful = RgaSharedUtils::InitLogFile(log_file_dir, kGuiLogFilePrefix, kDefaultOldLogFilesDays);
             assert(is_successful);
             if (is_successful)
             {
@@ -336,6 +335,22 @@ bool RgConfigManager::Init()
             {
                 RgUtils::ShowErrorMessageBox(kStrErrCannotOpenLogFile);
             }
+
+            // Check to see if the user wants to use a custom projects folder.
+            std::string project_sub_dir, custom_projects_folder;
+            GetDefaultProjectsFolder(project_sub_dir);
+            GetCustomProjectsLocation(custom_projects_folder);
+            if (!custom_projects_folder.empty())
+            {
+                project_sub_dir = custom_projects_folder;
+            }
+
+            // If necessary - create the Projects sub-directory.
+            if (!RgUtils::IsDirExists(project_sub_dir))
+            {
+                bool is_dir_created = RgUtils::CreateFolder(project_sub_dir);
+                assert(is_dir_created);
+            }
         }
     }
 
@@ -347,10 +362,12 @@ void RgConfigManager::ResetToFactoryDefaults(RgGlobalSettings& global_settings)
     // Initialize the default log file location.
     RgConfigManager::GetDefaultDataFolder(global_settings.log_file_location);
 
+    // Initialize the default project file location.
+    RgConfigManager::GetDefaultDocumentsFolder(global_settings.project_file_location);
+
     // Initialize the visible columns in the ISA disassembly table.
     // Only the Address, Opcode, Operands and Live VGPR columns are visible by default.
-    global_settings.visible_disassembly_view_columns =
-    {
+    global_settings.visible_disassembly_view_columns = {
         true,   // RgIsaDisassemblyTableColumns::kAddress
         true,   // RgIsaDisassemblyTableColumns::kOpcode
         true,   // RgIsaDisassemblyTableColumns::kOperands
@@ -379,8 +396,8 @@ void RgConfigManager::ResetToFactoryDefaults(RgGlobalSettings& global_settings)
     // Default app to open include files.
     global_settings.include_files_viewer = kStrGlobalSettingsSrcViewIncludeViewerDefault;
 
-    global_settings.input_file_ext_glsl = kStrGlobalSettingsFileExtGlsl;
-    global_settings.input_file_ext_hlsl = kStrGlobalSettingsFileExtHlsl;
+    global_settings.input_file_ext_glsl    = kStrGlobalSettingsFileExtGlsl;
+    global_settings.input_file_ext_hlsl    = kStrGlobalSettingsFileExtHlsl;
     global_settings.input_file_ext_spv_txt = kStrGlobalSettingsFileExtSpvas;
     global_settings.input_file_ext_spv_bin = kStrGlobalSettingsFileExtSpv;
 
@@ -412,7 +429,7 @@ void RgConfigManager::AddSourceFileToProject(const std::string& source_file_path
 
                 // Add a new source file info instance to the list of source files in the clone.
                 RgSourceFileInfo new_source_file = {};
-                new_source_file.file_path = source_file_path;
+                new_source_file.file_path        = source_file_path;
                 clone->source_files.push_back(new_source_file);
             }
         }
@@ -436,11 +453,10 @@ void RgConfigManager::AddShaderStage(RgPipelineStage stage, const std::string& s
             {
                 std::shared_ptr<RgProjectClone> clone = project->clones[clone_index];
 
-                std::shared_ptr<RgGraphicsProjectClone> graphics_clone =
-                    std::dynamic_pointer_cast<RgGraphicsProjectClone>(clone);
+                std::shared_ptr<RgGraphicsProjectClone> graphics_clone = std::dynamic_pointer_cast<RgGraphicsProjectClone>(clone);
 
                 // Add a new source file info instance to the list of source files in the clone.
-                size_t stage_index = static_cast<size_t>(stage);
+                size_t stage_index                                  = static_cast<size_t>(stage);
                 graphics_clone->pipeline.shader_stages[stage_index] = source_file_path;
             }
         }
@@ -450,7 +466,7 @@ void RgConfigManager::AddShaderStage(RgPipelineStage stage, const std::string& s
 bool RgConfigManager::GetShaderStageFilePath(RgPipelineStage stage, std::shared_ptr<RgGraphicsProjectClone> graphics_clone, std::string& full_file_path) const
 {
     // Find the input file path for given pipeline stage shader.
-    size_t stage_index = static_cast<size_t>(stage);
+    size_t             stage_index     = static_cast<size_t>(stage);
     const std::string& input_file_path = graphics_clone->pipeline.shader_stages[stage_index];
 
     bool stage_in_use = !input_file_path.empty();
@@ -516,7 +532,10 @@ std::string RgConfigManager::GetCurrentModeString() const
 // A predicate used to find a given GPU family name within an ASIC architecture.
 struct GpuFamilyNameFinder
 {
-    GpuFamilyNameFinder(const std::string& target_name) : target_name(target_name) {}
+    GpuFamilyNameFinder(const std::string& target_name)
+        : target_name(target_name)
+    {
+    }
 
     // A predicate that will compare a GPU family's name with a target name.
     bool operator()(const RgGpuFamily& gpu_family) const
@@ -536,8 +555,8 @@ bool RgConfigManager::IsGpuFamilySupported(const std::string& family_name) const
     if (version_info_ != nullptr)
     {
         // Get the list of supported architectures for the current mode.
-        std::string current_mode = GetCurrentModeString();
-        auto gpu_architecture_iter = version_info_->gpu_architectures.find(current_mode);
+        std::string current_mode          = GetCurrentModeString();
+        auto        gpu_architecture_iter = version_info_->gpu_architectures.find(current_mode);
         if (gpu_architecture_iter != version_info_->gpu_architectures.end())
         {
             // Step through each architecture's family list to try to find the given name.
@@ -549,7 +568,7 @@ bool RgConfigManager::IsGpuFamilySupported(const std::string& family_name) const
 
                 // Search the list of GPU families for the incoming name.
                 GpuFamilyNameFinder family_name_searcher(family_name);
-                auto family_search_iter = std::find_if(families.begin(), families.end(), family_name_searcher);
+                auto                family_search_iter = std::find_if(families.begin(), families.end(), family_name_searcher);
                 if (family_search_iter != families.end())
                 {
                     is_supported = true;
@@ -582,8 +601,8 @@ void RgConfigManager::RemoveSourceFilePath(std::shared_ptr<RgProject> project, i
             {
                 // Search the list of source files in the clone to obtain an iterator to it.
                 RgSourceFilePathSearcher source_file_searcher(source_file_path);
-                auto sourceFileIter = std::find_if(clone->source_files.begin(), clone->source_files.end(), source_file_searcher);
-                bool isFileInList = (sourceFileIter != clone->source_files.end());
+                auto                     sourceFileIter = std::find_if(clone->source_files.begin(), clone->source_files.end(), source_file_searcher);
+                bool                     isFileInList   = (sourceFileIter != clone->source_files.end());
                 assert(isFileInList);
 
                 // If the path was found in the clone's source files, erase it.
@@ -616,7 +635,10 @@ void RgConfigManager::GetProjectSourceFilePaths(std::shared_ptr<RgProject> proje
     }
 }
 
-void RgConfigManager::UpdateSourceFilepath(const std::string& old_file_path, const std::string& new_file_path, std::shared_ptr<RgProject> project, int clone_index)
+void RgConfigManager::UpdateSourceFilepath(const std::string&         old_file_path,
+                                           const std::string&         new_file_path,
+                                           std::shared_ptr<RgProject> project,
+                                           int                        clone_index)
 {
     // Ensure that the incoming clone index is valid for the current project.
     bool is_valid_range = (clone_index >= 0 && clone_index < project->clones.size());
@@ -629,7 +651,7 @@ void RgConfigManager::UpdateSourceFilepath(const std::string& old_file_path, con
 
         // Attempt to find the old file path referenced within the clone.
         RgSourceFilePathSearcher source_file_searcher(old_file_path);
-        auto file_iter = std::find_if(clone->source_files.begin(), clone->source_files.end(), source_file_searcher);
+        auto                     file_iter = std::find_if(clone->source_files.begin(), clone->source_files.end(), source_file_searcher);
 
         // Verify that the old file path is referenced within the clone.
         bool old_file_path_found = file_iter != clone->source_files.end();
@@ -643,12 +665,15 @@ void RgConfigManager::UpdateSourceFilepath(const std::string& old_file_path, con
 
         // Add the updated file path to the list of source files for the clone.
         RgSourceFileInfo updated_file_path = {};
-        updated_file_path.file_path = new_file_path;
+        updated_file_path.file_path        = new_file_path;
         clone->source_files.push_back(updated_file_path);
     }
 }
 
-void RgConfigManager::UpdateShaderStageFilePath(const std::string& old_file_path, const std::string& new_file_path, std::shared_ptr<RgProjectVulkan> project, int clone_index)
+void RgConfigManager::UpdateShaderStageFilePath(const std::string&               old_file_path,
+                                                const std::string&               new_file_path,
+                                                std::shared_ptr<RgProjectVulkan> project,
+                                                int                              clone_index)
 {
     // Ensure that the incoming clone index is valid for the current project.
     bool is_valid_range = (clone_index >= 0 && clone_index < project->clones.size());
@@ -677,14 +702,31 @@ void RgConfigManager::UpdateShaderStageFilePath(const std::string& old_file_path
 void RgConfigManager::GetProjectFolder(const std::string& project_name, std::string& project_folder)
 {
     // Start with the default directory where project files live.
-    std::string projects_folder;
-    RgConfigManager::GetDefaultProjectsFolder(projects_folder);
+    std::string projects_folder, custom_folder;
+    RgConfigManager::Instance().GetDefaultProjectsFolder(projects_folder);
+
+    // Get the config manager.
+    RgConfigManager& config_manager = RgConfigManager::Instance();
+
+    // Update the recent project list to reference the new path.
+    config_manager.GetCustomProjectFolder(custom_folder);
+
+    // Check to see if the user wants to use a custom folder.
+    if (!custom_folder.empty())
+    {
+        projects_folder = custom_folder;
+    }
 
     // Append the project name as a subdirectory.
     RgUtils::AppendFolderToPath(projects_folder, project_name, project_folder);
 }
 
-void RgConfigManager::GenerateNewSourceFilepath(const std::string& project_name, int clone_index, const std::string& source_filename, const std::string& sourcefile_extension, std::string& generated_file_name, std::string& full_source_file_path)
+void RgConfigManager::GenerateNewSourceFilepath(const std::string& project_name,
+                                                int                clone_index,
+                                                const std::string& source_filename,
+                                                const std::string& sourcefile_extension,
+                                                std::string&       generated_file_name,
+                                                std::string&       full_source_file_path)
 {
     // Get the path to the folder for the given project.
     std::string project_folder;
@@ -724,7 +766,11 @@ void RgConfigManager::GenerateNewSourceFilepath(const std::string& project_name,
     RgUtils::StandardizePathSeparator(full_source_file_path);
 }
 
-void RgConfigManager::GenerateNewPipelineFilepath(const std::string& project_name, int clone_index, const std::string& pipeline_filename, const std::string& pipeline_file_extension, std::string& full_pipeline_file_path)
+void RgConfigManager::GenerateNewPipelineFilepath(const std::string& project_name,
+                                                  int                clone_index,
+                                                  const std::string& pipeline_filename,
+                                                  const std::string& pipeline_file_extension,
+                                                  std::string&       full_pipeline_file_path)
 {
     // Get the path to the folder for the given project.
     std::string project_folder;
@@ -751,17 +797,17 @@ void RgConfigManager::GenerateNewPipelineFilepath(const std::string& project_nam
 
 std::shared_ptr<RgProject> RgConfigManager::LoadProjectFile(const std::string& project_file_path)
 {
-    std::shared_ptr<RgProject> project = nullptr;
-    bool is_project_loaded = RgXmlConfigFile::ReadProjectConfigFile(project_file_path, project);
+    std::shared_ptr<RgProject> project           = nullptr;
+    bool                       is_project_loaded = RgXmlConfigFile::ReadProjectConfigFile(project_file_path, project);
 
     bool is_ok = is_project_loaded && project != nullptr;
     assert(is_ok);
 
     if (is_ok)
     {
-        auto recent_project = std::make_shared<RgRecentProject>();
+        auto recent_project          = std::make_shared<RgRecentProject>();
         recent_project->project_path = project_file_path;
-        recent_project->api_type = project->api;
+        recent_project->api_type     = project->api;
 
         // Add this path to the list of recently loaded projects.
         AddRecentProjectPath(recent_project);
@@ -783,12 +829,12 @@ bool RgConfigManager::SaveProjectFile(std::shared_ptr<RgProject> project)
         {
             // Add this project if it does not exist.
             ProjectPathSearcher searcher(project_file_full_path);
-            auto project_path_iter = std::find_if(global_settings_->recent_projects.begin(), global_settings_->recent_projects.end(), searcher);
+            auto                project_path_iter = std::find_if(global_settings_->recent_projects.begin(), global_settings_->recent_projects.end(), searcher);
             if (project_path_iter == global_settings_->recent_projects.end())
             {
-                auto recent_project = std::make_shared<RgRecentProject>();
+                auto recent_project          = std::make_shared<RgRecentProject>();
                 recent_project->project_path = project_file_full_path;
-                recent_project->api_type = project->api;
+                recent_project->api_type     = project->api;
 
                 AddRecentProjectPath(recent_project);
             }
@@ -813,7 +859,7 @@ bool RgConfigManager::SaveProjectFile(std::shared_ptr<RgProject> project)
 void RgConfigManager::RevertToDefaultBuildSettings(RgProjectAPI api)
 {
     std::string api_string;
-    bool is_ok = RgUtils::ProjectAPIToString(api, api_string);
+    bool        is_ok = RgUtils::ProjectAPIToString(api, api_string);
 
     assert(is_ok);
     if (is_ok)
@@ -865,7 +911,7 @@ bool RgConfigManager::SaveGlobalConfigFile() const
 
 void RgConfigManager::AddRecentProjectPath(std::shared_ptr<RgRecentProject> recent_project)
 {
-    const RgConfigManager& config_manager = RgConfigManager::Instance();
+    const RgConfigManager&            config_manager  = RgConfigManager::Instance();
     std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
 
     // Create a copy of the filepath, because it may be modified below.
@@ -875,8 +921,7 @@ void RgConfigManager::AddRecentProjectPath(std::shared_ptr<RgRecentProject> rece
         const std::string path_to_add = recent_project->project_path;
 
         // Strips a string from path separator characters ("\, /").
-        auto strip_string = [](std::string& str)
-        {
+        auto strip_string = [](std::string& str) {
             str.erase(std::remove(str.begin(), str.end(), '\\'), str.end());
             str.erase(std::remove(str.begin(), str.end(), '/'), str.end());
         };
@@ -886,21 +931,20 @@ void RgConfigManager::AddRecentProjectPath(std::shared_ptr<RgRecentProject> rece
         strip_string(stripped_path);
 
         // Is the project already in the list of recent projects?
-        auto path_iter = std::find_if(global_settings->recent_projects.begin(), global_settings->recent_projects.end(),
-            [&](std::shared_ptr<RgRecentProject> recent_project)
-        {
-            // Strip the current string and compare.
-            bool status = false;
-            std::string str = "";
-            assert(recent_project != nullptr);
-            if (recent_project != nullptr)
-            {
-                str = recent_project->project_path;
-                strip_string(str);
-                status = (0 == str.compare(stripped_path));
-            }
-            return status;
-        });
+        auto path_iter = std::find_if(
+            global_settings->recent_projects.begin(), global_settings->recent_projects.end(), [&](std::shared_ptr<RgRecentProject> recent_project) {
+                // Strip the current string and compare.
+                bool        status = false;
+                std::string str    = "";
+                assert(recent_project != nullptr);
+                if (recent_project != nullptr)
+                {
+                    str = recent_project->project_path;
+                    strip_string(str);
+                    status = (0 == str.compare(stripped_path));
+                }
+                return status;
+            });
 
         // If the project already exists, remove it.
         if (path_iter != global_settings->recent_projects.end())
@@ -918,7 +962,7 @@ void RgConfigManager::AddRecentProjectPath(std::shared_ptr<RgRecentProject> rece
 
             // Remove the entry with the above file path.
             ProjectPathSearcher searcher(oldest_recent_path);
-            auto projectPathIter = std::find_if(global_settings->recent_projects.begin(), global_settings->recent_projects.end(), searcher);
+            auto                projectPathIter = std::find_if(global_settings->recent_projects.begin(), global_settings->recent_projects.end(), searcher);
             if (projectPathIter != global_settings->recent_projects.end())
             {
                 global_settings->recent_projects.erase(projectPathIter);
@@ -932,12 +976,12 @@ void RgConfigManager::AddRecentProjectPath(std::shared_ptr<RgRecentProject> rece
 
 void RgConfigManager::UpdateRecentProjectPath(const std::string& old_file_path, const std::string& new_file_path, RgProjectAPI api)
 {
-    const RgConfigManager& config_manager = RgConfigManager::Instance();
+    const RgConfigManager&            config_manager  = RgConfigManager::Instance();
     std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
 
     // Is the project already in the list of recent projects?
     ProjectPathSearcher searcher(old_file_path);
-    auto project_path_iter = std::find_if(global_settings->recent_projects.begin(), global_settings->recent_projects.end(), searcher);
+    auto                project_path_iter = std::find_if(global_settings->recent_projects.begin(), global_settings->recent_projects.end(), searcher);
     if (project_path_iter != global_settings->recent_projects.end())
     {
         // Compute the vector index of the path being updated.
@@ -958,9 +1002,9 @@ void RgConfigManager::UpdateRecentProjectPath(const std::string& old_file_path, 
     }
 
     // Add the new path, which will bump it to the top, and save the config file.
-    auto recent_project = std::make_shared<RgRecentProject>();
+    auto recent_project          = std::make_shared<RgRecentProject>();
     recent_project->project_path = new_file_path;
-    recent_project->api_type = api;
+    recent_project->api_type     = api;
 
     AddRecentProjectPath(recent_project);
 }
@@ -973,7 +1017,8 @@ void RgConfigManager::SetApiBuildSettings(const std::string& api_name, RgBuildSe
     {
         if (api_name.compare(kStrApiNameOpencl) == 0)
         {
-            std::shared_ptr<RgBuildSettingsOpencl> api_build_settings = std::dynamic_pointer_cast<RgBuildSettingsOpencl>(global_settings_->default_build_settings[api_name]);
+            std::shared_ptr<RgBuildSettingsOpencl> api_build_settings =
+                std::dynamic_pointer_cast<RgBuildSettingsOpencl>(global_settings_->default_build_settings[api_name]);
             assert(api_build_settings != nullptr);
             if (api_build_settings != nullptr)
             {
@@ -982,7 +1027,8 @@ void RgConfigManager::SetApiBuildSettings(const std::string& api_name, RgBuildSe
         }
         else if (api_name.compare(kStrApiNameVulkan) == 0)
         {
-            std::shared_ptr<RgBuildSettingsVulkan> api_build_settings = std::dynamic_pointer_cast<RgBuildSettingsVulkan>(global_settings_->default_build_settings[api_name]);
+            std::shared_ptr<RgBuildSettingsVulkan> api_build_settings =
+                std::dynamic_pointer_cast<RgBuildSettingsVulkan>(global_settings_->default_build_settings[api_name]);
             assert(api_build_settings != nullptr);
             if (api_build_settings != nullptr)
             {
@@ -1044,9 +1090,30 @@ void RgConfigManager::GetDefaultDocumentsFolder(std::string& default_documents_f
 
 void RgConfigManager::GetDefaultProjectsFolder(std::string& default_projects_folder)
 {
-    // Projects are saved under the system's "Documents" folder.
     RgConfigManager::GetDefaultDocumentsFolder(default_projects_folder);
     RgUtils::AppendFolderToPath(default_projects_folder, kStrProjectsFolderName, default_projects_folder);
+}
+
+void RgConfigManager::GetCustomProjectsLocation(std::string& custom_project_location)
+{
+    if (global_settings_ != nullptr)
+    {
+        std::string temp_folder = global_settings_->project_file_location;
+
+        // Append the "projects" subdirectory.
+        RgUtils::AppendFolderToPath(temp_folder, kStrProjectsFolderName, custom_project_location);
+    }
+}
+
+void RgConfigManager::GetCustomProjectFolder(std::string& custom_project_folder)
+{
+    if (global_settings_ != nullptr)
+    {
+        std::string temp_folder = global_settings_->project_file_location;
+
+        // Append the "projects" subdirectory.
+        RgUtils::AppendFolderToPath(temp_folder, kStrProjectsFolderName, custom_project_folder);
+    }
 }
 
 std::shared_ptr<RgBuildSettings> RgConfigManager::GetUserGlobalBuildSettings(RgProjectAPI api) const
@@ -1056,7 +1123,7 @@ std::shared_ptr<RgBuildSettings> RgConfigManager::GetUserGlobalBuildSettings(RgP
     {
         // Translate the project API to string.
         std::string api_name;
-        bool is_ok = RgUtils::ProjectAPIToString(api, api_name);
+        bool        is_ok = RgUtils::ProjectAPIToString(api, api_name);
         if (is_ok && !api_name.empty())
         {
             // Get the relevant build settings.
@@ -1075,7 +1142,7 @@ std::shared_ptr<RgBuildSettings> RgConfigManager::GetUserGlobalBuildSettings(RgP
 std::string RgConfigManager::GetLastSelectedFolder() const
 {
     static const char* kDefaultFolder = "./";
-    std::string ret = kDefaultFolder;
+    std::string        ret            = kDefaultFolder;
 
     // Get global configuration file.
     std::shared_ptr<RgGlobalSettings> global_config = RgConfigManager::Instance().GetGlobalConfig();
@@ -1159,7 +1226,7 @@ void RgConfigManager::SetWindowGeometry(int x_pos, int y_pos, int width, int hei
         {
             window_config.window_y_pos = 0;
         }
-        window_config.window_width = width;
+        window_config.window_width  = width;
         window_config.window_height = height;
 
         // If the window is maximized, save the state.
@@ -1175,11 +1242,11 @@ void RgConfigManager::GetWindowGeometry(RgWindowConfig& window_values) const
     assert(global_settings_ != nullptr);
     if (global_settings_ != nullptr)
     {
-        window_values.window_x_pos = global_settings_->gui_window_config.window_x_pos;
-        window_values.window_y_pos = global_settings_->gui_window_config.window_y_pos;
+        window_values.window_x_pos  = global_settings_->gui_window_config.window_x_pos;
+        window_values.window_y_pos  = global_settings_->gui_window_config.window_y_pos;
         window_values.window_height = global_settings_->gui_window_config.window_height;
-        window_values.window_width = global_settings_->gui_window_config.window_width;
-        window_values.window_state = global_settings_->gui_window_config.window_state;
+        window_values.window_width  = global_settings_->gui_window_config.window_width;
+        window_values.window_state  = global_settings_->gui_window_config.window_state;
     }
 }
 
@@ -1197,7 +1264,7 @@ void RgConfigManager::SetSplitterValues(const std::string& splitter_name, const 
             if (splitter_config.splitter_name == splitter_name)
             {
                 splitter_config.splitter_values = splitter_values;
-                is_new_item = false;
+                is_new_item                     = false;
                 break;
             }
         }
@@ -1207,7 +1274,7 @@ void RgConfigManager::SetSplitterValues(const std::string& splitter_name, const 
         {
             // Construct new splitter config item.
             RgSplitterConfig new_splitter_config;
-            new_splitter_config.splitter_name = splitter_name;
+            new_splitter_config.splitter_name   = splitter_name;
             new_splitter_config.splitter_values = splitter_values;
 
             // Add the new config item.
@@ -1229,7 +1296,7 @@ bool RgConfigManager::GetSplitterValues(const std::string& splitter_name, std::v
             if (splitterConfig.splitter_name == splitter_name)
             {
                 splitter_values = splitterConfig.splitter_values;
-                ret = true;
+                ret             = true;
                 break;
             }
         }
@@ -1261,7 +1328,7 @@ void RgConfigManager::GetSupportedApis(std::vector<std::string>& supported_apis)
     }
 }
 
-const std::string & RgConfigManager::GetCLILogFilePath()
+const std::string& RgConfigManager::GetCLILogFilePath()
 {
     return cli_log_file_path_;
 }

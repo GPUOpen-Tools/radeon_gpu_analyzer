@@ -22,7 +22,7 @@
 // Infra.
 #ifdef _WIN32
 #pragma warning(push)
-#pragma warning(disable:4309)
+#pragma warning(disable : 4309)
 #endif
 #include <external/amdt_os_wrappers/Include/osFilePath.h>
 #include <external/amdt_os_wrappers/Include/osDirectory.h>
@@ -46,12 +46,15 @@
 
 // Static constants
 
-static const uint32_t  SPV_BINARY_MAGIC_NUMBER = 0x07230203;
+static const uint32_t SPV_BINARY_MAGIC_NUMBER = 0x07230203;
 
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - START ***
 
-static bool OpenFileDialogHelper(QWidget* parent, const QString& caption, const std::string& initial_folder,
-    const QString& filter, std::string& selected_file_path)
+static bool OpenFileDialogHelper(QWidget*           parent,
+                                 const QString&     caption,
+                                 const std::string& initial_folder,
+                                 const QString&     filter,
+                                 std::string&       selected_file_path)
 {
     bool ret = false;
     selected_file_path.clear();
@@ -61,14 +64,13 @@ static bool OpenFileDialogHelper(QWidget* parent, const QString& caption, const 
     if (!filename.isNull())
     {
         selected_file_path = filename.toStdString();
-        ret = !selected_file_path.empty();
+        ret                = !selected_file_path.empty();
     }
 
     return ret;
 }
 
-static bool OpenMultipleFileDialogHelper(QWidget* parent, const QString& caption,
-    const QString& filter, QStringList& selected_file_paths)
+static bool OpenMultipleFileDialogHelper(QWidget* parent, const QString& caption, const QString& filter, QStringList& selected_file_paths)
 {
     bool ret = false;
     selected_file_paths.clear();
@@ -78,7 +80,7 @@ static bool OpenMultipleFileDialogHelper(QWidget* parent, const QString& caption
     if (!filenames.isEmpty())
     {
         selected_file_paths = filenames;
-        ret = !selected_file_paths.empty();
+        ret                 = !selected_file_paths.empty();
     }
 
     return ret;
@@ -88,27 +90,36 @@ static bool OpenMultipleFileDialogHelper(QWidget* parent, const QString& caption
 static QString ConstructVulkanOpenFileFilter()
 {
     QString filter;
-    auto settings = RgConfigManager::Instance().GetGlobalConfig();
+    auto    settings = RgConfigManager::Instance().GetGlobalConfig();
     assert(settings != nullptr);
     if (settings != nullptr)
     {
         // Convert the extensions stored in the Global Settings to the Qt file filter format.
-        QStringList glsl_exts   = QString(settings->input_file_ext_glsl.c_str()).split(';');
+        QStringList glsl_exts    = QString(settings->input_file_ext_glsl.c_str()).split(';');
         QStringList spv_txt_exts = QString(settings->input_file_ext_spv_txt.c_str()).split(';');
         QStringList spv_bin_exts = QString(settings->input_file_ext_spv_bin.c_str()).split(';');
 
         QString glsl_ext_list, spv_txt_ext_list, spv_bin_ext_list;
 
-        for (QString& ext : glsl_exts)   { glsl_ext_list += ("*." + ext + " "); }
-        for (QString& ext : spv_txt_exts) { spv_txt_ext_list += ("*." + ext + " "); }
-        for (QString& ext : spv_bin_exts) { spv_bin_ext_list += ("*." + ext + " "); }
+        for (QString& ext : glsl_exts)
+        {
+            glsl_ext_list += ("*." + ext + " ");
+        }
+        for (QString& ext : spv_txt_exts)
+        {
+            spv_txt_ext_list += ("*." + ext + " ");
+        }
+        for (QString& ext : spv_bin_exts)
+        {
+            spv_bin_ext_list += ("*." + ext + " ");
+        }
 
         glsl_ext_list.chop(1);
         spv_txt_ext_list.chop(1);
         spv_bin_ext_list.chop(1);
 
-        filter += (QString(kStrFileDialogFilterGlslSpirv) + " (" + glsl_ext_list + " " + spv_txt_ext_list + " " +
-            kStrFileDialogFilterSpirvBinaryExt + " " + ");;");
+        filter +=
+            (QString(kStrFileDialogFilterGlslSpirv) + " (" + glsl_ext_list + " " + spv_txt_ext_list + " " + kStrFileDialogFilterSpirvBinaryExt + " " + ");;");
         filter += (QString(kStrFileDialogFilterSpirv) + ";;");
         filter += (QString(kStrFileDialogFilterGlsl) + " (" + glsl_ext_list + ");;");
         filter += (QString(kStrFileDialogFilterSpvTxt) + " (" + spv_txt_ext_list + ");;");
@@ -201,14 +212,14 @@ bool RgUtils::IsContainsWhitespace(const std::string& text)
 
 void RgUtils::LeftTrim(const std::string& text, std::string& trimmed_text)
 {
-    trimmed_text = text;
+    trimmed_text    = text;
     auto space_iter = std::find_if(trimmed_text.begin(), trimmed_text.end(), [](char ch) { return !std::isspace<char>(ch, std::locale::classic()); });
     trimmed_text.erase(trimmed_text.begin(), space_iter);
 }
 
 void RgUtils::RightTrim(const std::string& text, std::string& trimmed_text)
 {
-    trimmed_text = text;
+    trimmed_text    = text;
     auto space_iter = std::find_if(trimmed_text.rbegin(), trimmed_text.rend(), [](char ch) { return !std::isspace<char>(ch, std::locale::classic()); });
     trimmed_text.erase(space_iter.base(), trimmed_text.end());
 }
@@ -267,8 +278,8 @@ std::string RgUtils::GenerateDefaultProjectName()
     RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
 
     // Generate a timestamp to append to the base filename.
-    QDateTime right_now = QDateTime::currentDateTime();
-    QString local_time = right_now.toString("yyMMdd-HHmmss");
+    QDateTime         right_now  = QDateTime::currentDateTime();
+    QString           local_time = right_now.toString("yyMMdd-HHmmss");
     std::stringstream project_name(local_time.toStdString());
     return project_name.str();
 }
@@ -276,7 +287,7 @@ std::string RgUtils::GenerateDefaultProjectName()
 const char* RgUtils::GenerateProjectName(RgProjectAPI api_name)
 {
     static const char* kStrFileMenuProjectName = "Project";
-    const char* ret = nullptr;
+    const char*        ret                     = nullptr;
     switch (api_name)
     {
     case RgProjectAPI::kOpenCL:
@@ -302,13 +313,13 @@ bool RgUtils::GetStageShaderPath(const RgPipelineShaders& pipeline, RgPipelineSt
 {
     bool res = false;
 
-    size_t stage_index = static_cast<size_t>(stage);
+    size_t      stage_index           = static_cast<size_t>(stage);
     const auto& stage_input_file_path = pipeline.shader_stages[stage_index];
     if (!stage_input_file_path.empty())
     {
         // Extract the shader's file path.
         shader_path = stage_input_file_path;
-        res = true;
+        res         = true;
     }
 
     return res;
@@ -322,9 +333,9 @@ bool RgUtils::SetStageShaderPath(RgPipelineStage stage, const std::string& shade
     if (!shader_path.empty())
     {
         // Set the shader's file path within the pipeline.
-        size_t stage_index = static_cast<size_t>(stage);
+        size_t stage_index                  = static_cast<size_t>(stage);
         pipeline.shader_stages[stage_index] = shader_path;
-        res = true;
+        res                                 = true;
     }
 
     return res;
@@ -343,7 +354,7 @@ bool RgUtils::GetComputeCapabilityToArchMapping(std::map<std::string, std::strin
 
     // Find the architecture node for our current mode.
     auto current_mode_architectures_iter = version_info->gpu_architectures.find(current_mode);
-    bool is_mode_found = (current_mode_architectures_iter != version_info->gpu_architectures.end());
+    bool is_mode_found                   = (current_mode_architectures_iter != version_info->gpu_architectures.end());
     assert(is_mode_found);
     if (is_mode_found)
     {
@@ -354,14 +365,14 @@ bool RgUtils::GetComputeCapabilityToArchMapping(std::map<std::string, std::strin
             const std::string& current_architecture = hardware_architecture.architecture_name;
 
             // Determine how many families are found within the architecture.
-            std::vector<RgGpuFamily> gpu_families = hardware_architecture.gpu_families;
-            int num_families_in_architecture = static_cast<int>(gpu_families.size());
+            std::vector<RgGpuFamily> gpu_families                 = hardware_architecture.gpu_families;
+            int                      num_families_in_architecture = static_cast<int>(gpu_families.size());
 
             // Step through each family within the architecture.
             for (int family_index = 0; family_index < num_families_in_architecture; family_index++)
             {
                 // Create a copy of the family info and sort by product name.
-                RgGpuFamily current_family = gpu_families[family_index];
+                RgGpuFamily current_family                      = gpu_families[family_index];
                 device_name_mapping[current_family.family_name] = current_architecture;
             }
         }
@@ -376,38 +387,26 @@ bool RgUtils::GetGfxNotation(const std::string& code_name, std::string& gfx_nota
     bool ret = false;
 
     // Mapping between codename and gfx compute capability notation.
-    static const std::map<std::string, std::string> kGfxNotationMapping
-    {
-        std::make_pair<std::string, std::string>("Tahiti",              "gfx600"),
-        std::make_pair<std::string, std::string>("Hainan",              "gfx601"),
-        std::make_pair<std::string, std::string>("Oland",               "gfx601"),
-        std::make_pair<std::string, std::string>("Capeverde",           "gfx601"),
-        std::make_pair<std::string, std::string>("Pitcairn",            "gfx601"),
-        std::make_pair<std::string, std::string>("Kaveri",              "gfx700"),
-        std::make_pair<std::string, std::string>("Spectre",             "gfx700"),
-        std::make_pair<std::string, std::string>("Spooky",              "gfx700"),
-        std::make_pair<std::string, std::string>("Hawaii",              "gfx701"),
-        std::make_pair<std::string, std::string>("Kabini",              "gfx703"),
-        std::make_pair<std::string, std::string>("Kalindi",             "gfx703"),
-        std::make_pair<std::string, std::string>("Godavari",            "gfx703"),
-        std::make_pair<std::string, std::string>("Mullins",             "gfx703"),
-        std::make_pair<std::string, std::string>("Bonaire",             "gfx704"),
-        std::make_pair<std::string, std::string>("Carrizo",             "gfx801"),
-        std::make_pair<std::string, std::string>("Bristol Ridge",       "gfx801"),
-        std::make_pair<std::string, std::string>("Iceland",             "gfx802"),
-        std::make_pair<std::string, std::string>("Tonga",               "gfx802"),
-        std::make_pair<std::string, std::string>("Fiji",                "gfx803"),
-        std::make_pair<std::string, std::string>("Ellesmere",           "gfx803"),
-        std::make_pair<std::string, std::string>("Baffin",              "gfx803"),
-        std::make_pair<std::string, std::string>("Lexa",                "gfx803"),
-        std::make_pair<std::string, std::string>("Stoney",              "gfx810"),
+    static const std::map<std::string, std::string> kGfxNotationMapping{
+        std::make_pair<std::string, std::string>("Tahiti", "gfx600"),   std::make_pair<std::string, std::string>("Hainan", "gfx601"),
+        std::make_pair<std::string, std::string>("Oland", "gfx601"),    std::make_pair<std::string, std::string>("Capeverde", "gfx601"),
+        std::make_pair<std::string, std::string>("Pitcairn", "gfx601"), std::make_pair<std::string, std::string>("Kaveri", "gfx700"),
+        std::make_pair<std::string, std::string>("Spectre", "gfx700"),  std::make_pair<std::string, std::string>("Spooky", "gfx700"),
+        std::make_pair<std::string, std::string>("Hawaii", "gfx701"),   std::make_pair<std::string, std::string>("Kabini", "gfx703"),
+        std::make_pair<std::string, std::string>("Kalindi", "gfx703"),  std::make_pair<std::string, std::string>("Godavari", "gfx703"),
+        std::make_pair<std::string, std::string>("Mullins", "gfx703"),  std::make_pair<std::string, std::string>("Bonaire", "gfx704"),
+        std::make_pair<std::string, std::string>("Carrizo", "gfx801"),  std::make_pair<std::string, std::string>("Bristol Ridge", "gfx801"),
+        std::make_pair<std::string, std::string>("Iceland", "gfx802"),  std::make_pair<std::string, std::string>("Tonga", "gfx802"),
+        std::make_pair<std::string, std::string>("Fiji", "gfx803"),     std::make_pair<std::string, std::string>("Ellesmere", "gfx803"),
+        std::make_pair<std::string, std::string>("Baffin", "gfx803"),   std::make_pair<std::string, std::string>("Lexa", "gfx803"),
+        std::make_pair<std::string, std::string>("Stoney", "gfx810"),
     };
 
     auto iter = kGfxNotationMapping.find(code_name);
     if (iter != kGfxNotationMapping.end())
     {
         gfx_notation = iter->second;
-        ret = true;
+        ret          = true;
     }
 
     return ret;
@@ -416,7 +415,7 @@ bool RgUtils::GetGfxNotation(const std::string& code_name, std::string& gfx_nota
 std::string RgUtils::RemoveGfxNotation(const std::string& family_name)
 {
     std::string fixed_group_name;
-    size_t bracket_pos = family_name.find("/");
+    size_t      bracket_pos = family_name.find("/");
     if (bracket_pos != std::string::npos)
     {
         fixed_group_name = family_name.substr(bracket_pos + 1);
@@ -440,8 +439,8 @@ bool RgUtils::GetFirstValidOutputGpu(const RgBuildOutputsMap& build_outputs, std
         {
             // The current ASIC appears to have valid output, so return the output's info.
             first_valid_gpu = asic_outputs_iter->first;
-            output = asic_outputs_iter->second;
-            ret = true;
+            output          = asic_outputs_iter->second;
+            ret             = true;
             break;
         }
     }
@@ -449,7 +448,7 @@ bool RgUtils::GetFirstValidOutputGpu(const RgBuildOutputsMap& build_outputs, std
     return ret;
 }
 
-void RgUtils::SetupComboList(QWidget* parent, ListWidget* &list_widget, ArrowIconWidget* &button, QObject* &event_filter, bool hide)
+void RgUtils::SetupComboList(QWidget* parent, ListWidget*& list_widget, ArrowIconWidget*& button, QObject*& event_filter, bool hide)
 {
     assert(button != nullptr);
     if (button != nullptr)
@@ -625,7 +624,10 @@ bool RgUtils::IsSourceFileTypeValid(const std::string& str)
     return ret;
 }
 
-bool RgUtils::ShowBrowseMissingFilesDialog(std::shared_ptr<RgProject> project, const std::vector<std::string>& missing_files_list, std::map<std::string, std::string>& updated_file_paths, QWidget* parent)
+bool RgUtils::ShowBrowseMissingFilesDialog(std::shared_ptr<RgProject>          project,
+                                           const std::vector<std::string>&     missing_files_list,
+                                           std::map<std::string, std::string>& updated_file_paths,
+                                           QWidget*                            parent)
 {
     bool ret = false;
 
@@ -657,8 +659,8 @@ bool RgUtils::ShowBrowseMissingFilesDialog(std::shared_ptr<RgProject> project, c
         {
             // The user is finished browsing to the missing source files. Extract and return the map of updated file paths.
             auto updated_file_path_map = missing_file_dialog->GetUpdateFilePathsMap();
-            updated_file_paths = updated_file_path_map;
-            ret = true;
+            updated_file_paths         = updated_file_path_map;
+            ret                        = true;
         }
         break;
 
@@ -736,15 +738,13 @@ bool RgUtils::OpenFileDialog(QWidget* parent, RgProjectAPI api, std::string& sel
     case RgProjectAPI::kOpenCL:
     {
         QString filter = QString(kStrFileDialogFilterOpencl) + ";;" + kStrFileDialogFilterAll;
-        ret = OpenFileDialogHelper(parent, kStrFileDialogCaption,
-            RgConfigManager::Instance().GetLastSelectedFolder(), filter, selected_file_path);
+        ret            = OpenFileDialogHelper(parent, kStrFileDialogCaption, RgConfigManager::Instance().GetLastSelectedFolder(), filter, selected_file_path);
         break;
     }
     case RgProjectAPI::kVulkan:
     {
         QString filter = ConstructVulkanOpenFileFilter();
-        ret = OpenFileDialogHelper(parent, kStrFileDialogCaption,
-            RgConfigManager::Instance().GetLastSelectedFolder(), filter, selected_file_path);
+        ret            = OpenFileDialogHelper(parent, kStrFileDialogCaption, RgConfigManager::Instance().GetLastSelectedFolder(), filter, selected_file_path);
         break;
     }
     case RgProjectAPI::kUnknown:
@@ -759,7 +759,7 @@ bool RgUtils::OpenFileDialog(QWidget* parent, RgProjectAPI api, std::string& sel
     {
         // Extract directory from full path.
         std::string file_directory;
-        bool is_ok = RgUtils::ExtractFileDirectory(selected_file_path, file_directory);
+        bool        is_ok = RgUtils::ExtractFileDirectory(selected_file_path, file_directory);
         assert(is_ok);
 
         if (is_ok)
@@ -774,8 +774,7 @@ bool RgUtils::OpenFileDialog(QWidget* parent, RgProjectAPI api, std::string& sel
 
 bool RgUtils::OpenFileDialog(QWidget* parent, std::string& selected_file_path, const std::string& caption, const std::string& filter)
 {
-    bool ret = OpenFileDialogHelper(parent, caption.c_str(),
-        RgConfigManager::Instance().GetLastSelectedFolder(), filter.c_str(), selected_file_path);
+    bool ret = OpenFileDialogHelper(parent, caption.c_str(), RgConfigManager::Instance().GetLastSelectedFolder(), filter.c_str(), selected_file_path);
 
     return ret;
 }
@@ -842,8 +841,18 @@ bool RgUtils::OpenProjectDialog(QWidget* parent, std::string& selected_file_path
     bool ret = false;
 
     // Get RGA's default projects folder.
-    std::string initial_folder;
+    std::string initial_folder, custom_folder;
+
+    // Update the recent project list to reference the new path.
     RgConfigManager::GetDefaultProjectsFolder(initial_folder);
+
+    // Check to see if the user wants to use a custom projects folder.
+    RgConfigManager& config_manager = RgConfigManager::Instance();
+    config_manager.GetCustomProjectsLocation(custom_folder);
+    if (initial_folder.compare(custom_folder) != 0)
+    {
+        initial_folder = custom_folder;
+    }
 
     // Open the file dialog.
     ret = OpenFileDialogHelper(parent, kStrFileDialogRgaCaption, initial_folder, kStrFileDialogRgaFilter, selected_file_path);
@@ -853,7 +862,7 @@ bool RgUtils::OpenProjectDialog(QWidget* parent, std::string& selected_file_path
     {
         // Extract directory from full path.
         std::string file_directory;
-        bool is_ok = RgUtils::ExtractFileDirectory(selected_file_path, file_directory);
+        bool        is_ok = RgUtils::ExtractFileDirectory(selected_file_path, file_directory);
         assert(is_ok);
 
         if (is_ok)
@@ -866,7 +875,7 @@ bool RgUtils::OpenProjectDialog(QWidget* parent, std::string& selected_file_path
     return ret;
 }
 
-bool RgUtils::ExtractFileName(const std::string& file_full_path, std::string& filename, bool include_file_extension/* = true*/)
+bool RgUtils::ExtractFileName(const std::string& file_full_path, std::string& filename, bool include_file_extension /* = true*/)
 {
     bool ret = false;
     filename.clear();
@@ -888,7 +897,7 @@ bool RgUtils::ExtractFileName(const std::string& file_full_path, std::string& fi
         file_path.getFileName(gtstr_file_name);
     }
     filename = gtstr_file_name.asASCIICharArray();
-    ret = !filename.empty();
+    ret      = !filename.empty();
 
     return ret;
 }
@@ -908,7 +917,7 @@ bool RgUtils::ExtractFileDirectory(const std::string& file_full_path, std::strin
     if (ret)
     {
         const osFilePath& as_file_path = file_directory.asFilePath();
-        path_to_file_directory = as_file_path.asString().asASCIICharArray();
+        path_to_file_directory         = as_file_path.asString().asASCIICharArray();
     }
 
     return ret;
@@ -930,7 +939,7 @@ bool RgUtils::ExtractFileExtension(const std::string& file_path_string, std::str
     file_path.getFileExtension(gtstr_file_extension);
 
     file_extension = gtstr_file_extension.asASCIICharArray();
-    ret = !file_extension.empty();
+    ret            = !file_extension.empty();
 
     return ret;
 }
@@ -941,7 +950,7 @@ void RgUtils::GetDisplayText(const std::string& filename, std::string& display_t
     RgUtils::ExtractFileExtension(filename, extension);
 
     // Always include the file extension (the +1 is to include the '.' from the file extension too).
-    const int kNumBackChars = num_back_chars + static_cast<unsigned>(extension.length() + 1);
+    const int kNumBackChars  = num_back_chars + static_cast<unsigned>(extension.length() + 1);
     const int kNumFrontChars = kTextTruncateLengthFront;
 
     // Truncate filename within available space to get display text.
@@ -950,7 +959,7 @@ void RgUtils::GetDisplayText(const std::string& filename, std::string& display_t
 
 bool RgUtils::ReadTextFile(const std::string& file_full_path, QString& txt)
 {
-    bool ret = false;
+    bool  ret = false;
     QFile f(file_full_path.c_str());
     if (f.open(QFile::ReadOnly | QFile::Text))
     {
@@ -972,7 +981,7 @@ bool RgUtils::RenameFile(const std::string& old_file_path, const std::string& ne
 
     // Verify that the target file already exists.
     QFile f(old_file_path.c_str());
-    bool file_exists = f.exists();
+    bool  file_exists = f.exists();
     assert(file_exists);
     if (file_exists)
     {
@@ -1103,21 +1112,15 @@ bool RgUtils::CreateFolder(const std::string& dir_path)
 bool RgUtils::IsValidFileName(const std::string& filename)
 {
     // Verify that no illegal characters are included in the file name.
-    bool is_valid =
-        !filename.empty() &&
-        filename.find('/') == std::string::npos &&
-        filename.find('\\') == std::string::npos &&
-        filename.find(':') == std::string::npos &&
-        filename.find('|') == std::string::npos &&
-        filename.find('<') == std::string::npos &&
-        filename.find('>') == std::string::npos &&
+    bool is_valid = !filename.empty() && filename.find('/') == std::string::npos && filename.find('\\') == std::string::npos &&
+                    filename.find(':') == std::string::npos && filename.find('|') == std::string::npos && filename.find('<') == std::string::npos &&
+                    filename.find('>') == std::string::npos &&
 #ifdef _WIN32
-        // Windows only.
-        filename.find('*') == std::string::npos &&
-        filename.find('\"') == std::string::npos;
+                    // Windows only.
+                    filename.find('*') == std::string::npos && filename.find('\"') == std::string::npos;
 #else
-        // Linux only.
-        filename.find('&') == std::string::npos;
+                    // Linux only.
+                    filename.find('&') == std::string::npos;
 #endif
     return is_valid;
 }
@@ -1125,14 +1128,12 @@ bool RgUtils::IsValidFileName(const std::string& filename)
 bool RgUtils::IsValidProjectName(const std::string& filename)
 {
     const int kMaxProjectNameLength = 50;
-    return IsValidFileName(filename) &&
-        !filename.empty() &&
-        filename.size() <= kMaxProjectNameLength;
+    return IsValidFileName(filename) && !filename.empty() && filename.size() <= kMaxProjectNameLength;
 }
 
 bool RgUtils::IsSpvBinFile(const std::string& file_path)
 {
-    bool is_spv  = false;
+    bool is_spv = false;
 
     if (RgUtils::IsFileExists(file_path))
     {
@@ -1157,7 +1158,7 @@ bool RgUtils::ConstructSpvDisasmFileName(const std::string& proj_folder, const s
     if (result)
     {
         std::stringstream out_file_name;
-        std::string in_file_name;
+        std::string       in_file_name;
         RgUtils::ExtractFileName(spv_file_name, in_file_name);
         const std::string dir_sep = QString(QDir::separator()).toStdString();
 
@@ -1170,31 +1171,31 @@ bool RgUtils::ConstructSpvDisasmFileName(const std::string& proj_folder, const s
 
 std::pair<RgVulkanInputType, RgSrcLanguage> RgUtils::DetectInputFileType(const std::string& file_path)
 {
-    std::pair<RgVulkanInputType, RgSrcLanguage> ret = { RgVulkanInputType::kUnknown, RgSrcLanguage::Unknown };
+    std::pair<RgVulkanInputType, RgSrcLanguage> ret = {RgVulkanInputType::kUnknown, RgSrcLanguage::Unknown};
 
     if (RgUtils::IsSpvBinFile(file_path))
     {
-        ret = { RgVulkanInputType::kSpirv, RgSrcLanguage::kSPIRV_Text };
+        ret = {RgVulkanInputType::kSpirv, RgSrcLanguage::kSPIRV_Text};
     }
     else
     {
-        QFileInfo file_info(file_path.c_str());
+        QFileInfo      file_info(file_path.c_str());
         const QString& ext = file_info.suffix().toLower();
 
-        RgConfigManager& config_manager = RgConfigManager::Instance();
+        RgConfigManager&                  config_manager  = RgConfigManager::Instance();
         std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
 
         if (QString(QString(global_settings->input_file_ext_spv_txt.c_str())).split(kStrVkFileExtDelimiter).contains(ext))
         {
-            ret = { RgVulkanInputType::kSpirvTxt, RgSrcLanguage::kSPIRV_Text };
+            ret = {RgVulkanInputType::kSpirvTxt, RgSrcLanguage::kSPIRV_Text};
         }
         else if (QString(global_settings->input_file_ext_glsl.c_str()).split(kStrVkFileExtDelimiter).contains(ext))
         {
-            ret = { RgVulkanInputType::kGlsl, RgSrcLanguage::kGLSL };
+            ret = {RgVulkanInputType::kGlsl, RgSrcLanguage::kGLSL};
         }
         else if (QString(global_settings->input_file_ext_hlsl.c_str()).split(kStrVkFileExtDelimiter).contains(ext))
         {
-            ret = { RgVulkanInputType::kHlsl, RgSrcLanguage::kHLSL };
+            ret = {RgVulkanInputType::kHlsl, RgSrcLanguage::kHLSL};
         }
     }
 
@@ -1203,7 +1204,7 @@ std::pair<RgVulkanInputType, RgSrcLanguage> RgUtils::DetectInputFileType(const s
 
 bool RgUtils::LoadAndApplyStyle(const std::vector<std::string>& stylesheet_file_names, QWidget* widget)
 {
-    bool ret = false;
+    bool    ret        = false;
     QString styleSheet = "";
 
     for (const auto& filename : stylesheet_file_names)
@@ -1233,7 +1234,7 @@ bool RgUtils::LoadAndApplyStyle(const std::vector<std::string>& stylesheet_file_
 
 bool RgUtils::LoadAndApplyStyle(const std::vector<std::string>& stylesheet_file_names, QApplication* application)
 {
-    bool ret = false;
+    bool    ret        = false;
     QString styleSheet = "";
 
     for (const auto& filename : stylesheet_file_names)
@@ -1368,7 +1369,12 @@ void RgUtils::SetBackgroundColor(QWidget* widget, const QColor& color)
     }
 }
 
-std::string RgUtils::TruncateString(const std::string& text, unsigned int num_front_chars, unsigned int num_back_chars, unsigned int available_width, const QFont& text_font, TruncateType truncate_type)
+std::string RgUtils::TruncateString(const std::string& text,
+                                    unsigned int       num_front_chars,
+                                    unsigned int       num_back_chars,
+                                    unsigned int       available_width,
+                                    const QFont&       text_font,
+                                    TruncateType       truncate_type)
 {
     // Get font metrics for the given font.
     QFontMetrics fm(text_font);
@@ -1379,7 +1385,7 @@ std::string RgUtils::TruncateString(const std::string& text, unsigned int num_fr
 
     // Start indices for the front and back segments of the truncated string.
     const size_t kFrontStartIndex = 0;
-    const size_t kBackStartIndex = text.length() - num_back_chars;
+    const size_t kBackStartIndex  = text.length() - num_back_chars;
 
     // If the sum of the character minimums at the front and back of the string is
     // greater than the string length then no truncation is needed.
@@ -1387,81 +1393,81 @@ std::string RgUtils::TruncateString(const std::string& text, unsigned int num_fr
     {
         switch (truncate_type)
         {
-            // Non-expanding truncation.
-            case kExpandNone:
+        // Non-expanding truncation.
+        case kExpandNone:
+        {
+            front = text.substr(kFrontStartIndex, num_front_chars);
+            back  = text.substr(kBackStartIndex, num_back_chars);
+
+            // Combine strings into result string with delimeter.
+            truncated_string = front + kStrTruncatedStringDelimeter + back;
+        }
+        break;
+
+        // Expanding truncation.
+        case kExpandFront:
+        case kExpandBack:
+        {
+            // Some of these variables/calculations are a little unnecessary, but they have
+            // been written as such for convenience in understanding what the code is doing.
+            const size_t kFrontEndIndex         = num_front_chars;
+            const size_t kBackEndIndex          = text.length();
+            const size_t kFrontExpandStartIndex = kFrontStartIndex;
+            const size_t kBackExpandStartIndex  = kFrontEndIndex;
+            const size_t kFrontExpandLength     = kBackStartIndex - kFrontStartIndex;
+            const size_t kBackExpandLength      = kBackEndIndex - kFrontEndIndex;
+
+            // Determine front and back sub strings.
+            if (truncate_type == kExpandFront)
+            {
+                front = text.substr(kFrontExpandStartIndex, kFrontExpandLength);
+                back  = text.substr(kBackStartIndex, num_back_chars);
+            }
+            else if (truncate_type == kExpandBack)
             {
                 front = text.substr(kFrontStartIndex, num_front_chars);
-                back = text.substr(kBackStartIndex, num_back_chars);
-
-                // Combine strings into result string with delimeter.
-                truncated_string = front + kStrTruncatedStringDelimeter + back;
+                back  = text.substr(kBackExpandStartIndex, kBackExpandLength);
             }
-            break;
 
-            // Expanding truncation.
-            case kExpandFront:
-            case kExpandBack:
+            // Combine strings into result string (check first without delimeter).
+            truncated_string = front + back;
+
+            // Check text width/length to see if truncation is needed.
+            unsigned text_width       = fm.width(truncated_string.c_str());
+            bool     is_within_bounds = text_width <= available_width;
+            bool     is_at_min_length = front.length() <= num_front_chars && back.length() <= num_back_chars;
+
+            const unsigned MAX_ATTEMPTS = 1024;
+            unsigned       attempts     = 0;
+            while (!is_within_bounds && !is_at_min_length && ++attempts < MAX_ATTEMPTS)
             {
-                // Some of these variables/calculations are a little unnecessary, but they have
-                // been written as such for convenience in understanding what the code is doing.
-                const size_t kFrontEndIndex = num_front_chars;
-                const size_t kBackEndIndex = text.length();
-                const size_t kFrontExpandStartIndex = kFrontStartIndex;
-                const size_t kBackExpandStartIndex = kFrontEndIndex;
-                const size_t kFrontExpandLength = kBackStartIndex - kFrontStartIndex;
-                const size_t kBackExpandLength = kBackEndIndex - kFrontEndIndex;
-
-                // Determine front and back sub strings.
+                // Reduce string (either front or back depending on truncate type) by one character.
                 if (truncate_type == kExpandFront)
                 {
-                    front = text.substr(kFrontExpandStartIndex, kFrontExpandLength);
-                    back = text.substr(kBackStartIndex, num_back_chars);
+                    front.pop_back();
                 }
                 else if (truncate_type == kExpandBack)
                 {
-                    front = text.substr(kFrontStartIndex, num_front_chars);
-                    back = text.substr(kBackExpandStartIndex, kBackExpandLength);
+                    back.erase(0, 1);
                 }
 
-                // Combine strings into result string (check first without delimeter).
-                truncated_string = front + back;
+                // Combine strings into result string.
+                truncated_string = front + kStrTruncatedStringDelimeter + back;
 
-                // Check text width/length to see if truncation is needed.
-                unsigned text_width = fm.width(truncated_string.c_str());
-                bool is_within_bounds = text_width <= available_width;
-                bool is_at_min_length = front.length() <= num_front_chars && back.length() <= num_back_chars;
-
-                const unsigned MAX_ATTEMPTS = 1024;
-                unsigned attempts = 0;
-                while (!is_within_bounds && !is_at_min_length && ++attempts < MAX_ATTEMPTS)
-                {
-                    // Reduce string (either front or back depending on truncate type) by one character.
-                    if (truncate_type == kExpandFront)
-                    {
-                        front.pop_back();
-                    }
-                    else if (truncate_type == kExpandBack)
-                    {
-                        back.erase(0, 1);
-                    }
-
-                    // Combine strings into result string.
-                    truncated_string = front + kStrTruncatedStringDelimeter + back;
-
-                    // Check text width/length to see if truncation is still needed.
-                    text_width = fm.width(truncated_string.c_str());
-                    is_within_bounds = text_width <= available_width;
-                    is_at_min_length = front.length() <= num_front_chars && back.length() <= num_back_chars;
-                }
-
-                // This should never happen, but is a safeguard against hanging.
-                assert(attempts < MAX_ATTEMPTS);
+                // Check text width/length to see if truncation is still needed.
+                text_width       = fm.width(truncated_string.c_str());
+                is_within_bounds = text_width <= available_width;
+                is_at_min_length = front.length() <= num_front_chars && back.length() <= num_back_chars;
             }
-            break;
 
-            // Invalid truncation type.
-            default:
-                assert(false);
+            // This should never happen, but is a safeguard against hanging.
+            assert(attempts < MAX_ATTEMPTS);
+        }
+        break;
+
+        // Invalid truncation type.
+        default:
+            assert(false);
         }
     }
 
@@ -1483,15 +1489,15 @@ std::string RgUtils::GetPlainText(const std::string& text)
     return plain_text.toStdString();
 }
 
-bool RgUtils::IsInList(const std::string & list, const std::string & token, char delim)
+bool RgUtils::IsInList(const std::string& list, const std::string& token, char delim)
 {
     size_t start = 0, end = 0;
-    bool stop = false, ret = false;
+    bool   stop = false, ret = false;
     while (!stop)
     {
-        end = list.find(kStrVkFileExtDelimiter, start);
-        ret = (token == list.substr(start, (end == std::string::npos ? std::string::npos : end - start)));
-        stop = (ret || end == std::string::npos);
+        end   = list.find(kStrVkFileExtDelimiter, start);
+        ret   = (token == list.substr(start, (end == std::string::npos ? std::string::npos : end - start)));
+        stop  = (ret || end == std::string::npos);
         start = end + 1;
     }
 
@@ -1519,18 +1525,17 @@ void RgUtils::FindSearchResultIndices(const QString& text, const QString& text_t
     }
 }
 
-
 bool RgUtils::IsSpvasTextFile(const std::string& stage_input_file, std::string& stage_abbreviation)
 {
     static const std::string DEFAULT_TEXT_FILE_EXTENSION = "txt";
-    bool result = false;
+    bool                     result                      = false;
 
     // Extract file extension.
     std::string file_extension;
     RgUtils::ExtractFileExtension(stage_input_file, file_extension);
 
     // Get global settings.
-    RgConfigManager& config_manager = RgConfigManager::Instance();
+    RgConfigManager&                  config_manager  = RgConfigManager::Instance();
     std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
 
     // Extract allowed extensions.

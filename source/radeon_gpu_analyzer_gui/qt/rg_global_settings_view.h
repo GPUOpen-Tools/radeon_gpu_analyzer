@@ -57,6 +57,9 @@ public slots:
     // Handler for when the log file location browse button is clicked.
     void HandleLogFileLocationBrowseButtonClick(bool checked);
 
+    // Handler for when the project file location browse button is clicked.
+    void HandleProjectFileLocationBrowseButtonClick(bool checked);
+
     // Handler for when the include files viewer browse button is clicked.
     void HandleIncludeFilesViewerBrowseButtonClick(bool checked);
 
@@ -75,8 +78,14 @@ public slots:
     // Handler for when log file editing is finished.
     void HandleLogFileEditingFinished();
 
+    // Handler for when project file editing is finished.
+    void HandleProjectFileEditingFinished();
+
     // Handler for when the log file edit box changed.
     void HandleLogFileEditBoxChanged(const QString& text);
+
+    // Handler for when the project file edit box changed.
+    void HandleProjectFileEditBoxChanged(const QString& text);
 
     // Handler for any text box which signals about pending changes.
     void HandleTextBoxChanged(const QString& text);

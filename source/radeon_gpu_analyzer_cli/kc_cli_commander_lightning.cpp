@@ -55,7 +55,8 @@ kLcLlvmTargetsToDeviceInfoTargets = { {"gfx801", "carrizo"},
                                        {"gfx1030", "gfx1030"},
                                        {"gfx1031", "gfx1031"},
                                        {"gfx1032", "gfx1032"},
-                                       {"gfx1034", "gfx1034"} };
+                                       {"gfx1034", "gfx1034"},
+                                       {"gfx1035", "gfx1035"}};
 
 // For some devices, clang does not accept device names that RGA gets from DeviceInfo.
 // This table maps the DeviceInfo names to names accepted by clang for such devices.
@@ -151,8 +152,9 @@ static const std::map<std::string, DeviceProps> kRgaDeviceProps =
       {"gfx1012",   {104, 256, 65536, 16,  4}},
       {"gfx1030",   {104, 256, 65536, 16,  4}},
       {"gfx1031",   {104, 256, 65536, 16,  4}},
-      {"gfx1032",   {104, 256, 65536, 16,  4}},
-      {"gfx1034",   {104, 256, 65536, 16,  4}} };
+      {"gfx1032",   {104, 256, 65536, 16,  4}},   
+      {"gfx1034",   {104, 256, 65536, 16,  4}},
+      {"gfx1035",   {104, 256, 65536, 16,  4}}};
 
 static const size_t  kIsaInstruction64BitCodeTextSize   = 16;
 static const int     kIsaInstruction64BitBytes          = 8;

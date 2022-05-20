@@ -107,6 +107,8 @@ The Application settings view is used to configure global application settings t
 
 	* Log file location: The folder in which RGA would generate log files. Upon startup RGA will clean up the log files that are older than 3 days.
 
+	* Project file location: The folder in which RGA would generate project files.
+
 	* Always use auto-generated project names: If checked, RGA will always use the auto-generated project name, without prompting for a rename when creating a new project.
 
 	* Default API on startup: RGA will always enter the selected API Mode upon startup.
@@ -427,6 +429,8 @@ The Application settings view is used to configure global application settings t
 * **General**
 
 	* Log file location: The folder in which RGA would generate log files. Upon startup RGA will clean up the log files that are older than 3 days.
+
+	* Project file location: The folder in which RGA would generate project files.
 
 	* Always use auto-generated project names: If checked, RGA will always use the auto-generated project name, without prompting for a rename when creating a new project.
 
