@@ -15,9 +15,7 @@ download_mapping_linux = {
 github_root = "https://github.com/GPUOpen-Tools/"
 
 # repositories.
-git_mapping = {
-    "device_info"                    : ["Common/Src/DeviceInfo",            "rga-v2.6.1"]
-}
+git_mapping = {}
 
 github_mapping = {
  # Lib.
@@ -34,7 +32,8 @@ github_mapping = {
     "tsingleton"                     : ["Common/Src/TSingleton",            "master"],
     "common_src_miniz"               : ["Common/Src/Miniz",                 "master"],
     "update_check_api"               : ["Common/Src/update_check_api",      "v2.0.0"],
- # QtCommon.
+    "device_info"                    : ["Common/Src/DeviceInfo",            "rga-v2.6.1"],
+# QtCommon.
     "qt_common"                      : ["QtCommon",                         "rga-2.5"],
 }
 
