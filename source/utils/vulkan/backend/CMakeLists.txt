@@ -54,8 +54,8 @@ endif()
 add_executable(vulkan_backend ${SOURCE_FILES} ${INCLUDES})
 
 # Set output folder and executable name.
-set_target_properties(vulkan_backend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/utils/Vulkan")
-set_target_properties(vulkan_backend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/utils/Vulkan")
+set_target_properties(vulkan_backend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/utils/vulkan")
+set_target_properties(vulkan_backend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/utils/vulkan")
 
 # Set link properties
 set_target_properties(vulkan_backend PROPERTIES OUTPUT_NAME vulkan_backend)

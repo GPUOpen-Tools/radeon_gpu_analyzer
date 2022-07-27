@@ -168,7 +168,7 @@ public:
     static bool IsValidFileName(const std::string& filename);
 
     // Returns true if the given file name is a valid project name.
-    static bool IsValidProjectName(const std::string& filename);
+    static bool IsValidProjectName(const std::string& filename, std::string& error_message);
 
     // Check if the provided file is a SPIR-V binary file.
     static bool IsSpvBinFile(const std::string& file_path);

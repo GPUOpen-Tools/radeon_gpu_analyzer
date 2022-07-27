@@ -63,7 +63,8 @@ void RgRenameProjectDialog::accept()
     RgUtils::TrimLeadingAndTrailingWhitespace(project_name, project_name);
 
     // Input validation.
-    if (RgUtils::IsValidProjectName(project_name))
+    std::string error_message;
+    if (RgUtils::IsValidProjectName(project_name, error_message))
     {
         // Save the project name.
         project_name_ = project_name;
@@ -83,7 +84,7 @@ void RgRenameProjectDialog::accept()
     {
         // Notify the user that the project name is illegal.
         std::stringstream msg;
-        msg << kStrErrIllegalProjectName <<" \"";
+        msg << error_message <<" \"";
         msg << project_name << "\".";
         RgUtils::ShowErrorMessageBox(msg.str().c_str(), this);
     }

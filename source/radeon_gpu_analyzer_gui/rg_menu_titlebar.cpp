@@ -109,7 +109,8 @@ void RgMenuTitlebar::StopEditing()
     std::string updated_project_name = title_text_edit_->text().toStdString();
     RgUtils::TrimLeadingAndTrailingWhitespace(updated_project_name, updated_project_name);
 
-    if (RgUtils::IsValidProjectName(updated_project_name))
+    std::string error_message;
+    if (RgUtils::IsValidProjectName(updated_project_name, error_message))
     {
         // Check if the text has changed during editing.
         std::string label_text = title_label_->text().toStdString();
@@ -140,7 +141,7 @@ void RgMenuTitlebar::StopEditing()
     {
         // Notify the user that the project name is illegal.
         std::stringstream msg;
-        msg << kStrErrIllegalProjectName << " \"";
+        msg << error_message << " \"";
         msg << updated_project_name << "\".";
         RgUtils::ShowErrorMessageBox(msg.str().c_str());
 

@@ -106,7 +106,7 @@ protected:
     virtual void CreateFileMenuActions();
 
     // Add the build view interface to the MainWindow.
-    void AddBuildView();
+    bool AddBuildView();
 
     // Create the application state.
     void CreateAppState(RgProjectAPI api);

@@ -42,41 +42,41 @@
     <ROW Directory="APPDIR" Directory_Parent="TARGETDIR" DefaultDir="APPDIR:." IsPseudoRoot="1"/>
     <ROW Directory="AppDataFolder" Directory_Parent="TARGETDIR" DefaultDir="APPDAT~1|AppDataFolder" IsPseudoRoot="1"/>
     <ROW Directory="Assets" Directory_Parent="TARGETDIR" DefaultDir="Assets" IsPseudoRoot="1"/>
-    <ROW Directory="DX12_Dir" Directory_Parent="utils_Dir" DefaultDir="DX12"/>
-    <ROW Directory="DXC_Dir" Directory_Parent="DX12_Dir" DefaultDir="DXC" DirectoryOptions="3"/>
     <ROW Directory="DesktopFolder" Directory_Parent="TARGETDIR" DefaultDir="DESKTO~1|DesktopFolder" IsPseudoRoot="1"/>
-    <ROW Directory="Disassembler_Dir" Directory_Parent="LC_Dir" DefaultDir="DISASS~1|Disassembler"/>
     <ROW Directory="Documentation_Dir" Directory_Parent="APPDIR" DefaultDir="docs"/>
-    <ROW Directory="LC_Dir" Directory_Parent="utils_Dir" DefaultDir="LC"/>
-    <ROW Directory="OpenCL_Dir" Directory_Parent="LC_Dir" DefaultDir="OpenCL"/>
     <ROW Directory="RadeonGPUAnalyzer_Dir" Directory_Parent="AppDataFolder" DefaultDir="RADEON~1|RadeonGPUAnalyzer"/>
     <ROW Directory="SHORTCUTDIR" Directory_Parent="TARGETDIR" DefaultDir="SHORTC~1|SHORTCUTDIR" IsPseudoRoot="1"/>
     <ROW Directory="TARGETDIR" DefaultDir="SourceDir"/>
-    <ROW Directory="Vulkan_Dir" Directory_Parent="utils_Dir" DefaultDir="Vulkan"/>
     <ROW Directory="__Dir" Directory_Parent="clang_Dir" DefaultDir="140~1.0|14.0.0"/>
     <ROW Directory="_images_Dir" Directory_Parent="html_Dir" DefaultDir="_images"/>
     <ROW Directory="_sources_Dir" Directory_Parent="html_Dir" DefaultDir="_sources"/>
     <ROW Directory="_static_Dir" Directory_Parent="html_Dir" DefaultDir="_static"/>
-    <ROW Directory="amdvlk_Dir" Directory_Parent="Vulkan_Dir" DefaultDir="amdvlk"/>
-    <ROW Directory="amdxc_Dir" Directory_Parent="DX12_Dir" DefaultDir="amdxc"/>
-    <ROW Directory="bin_Dir" Directory_Parent="OpenCL_Dir" DefaultDir="bin"/>
+    <ROW Directory="amdvlk_Dir" Directory_Parent="vulkan_Dir" DefaultDir="amdvlk"/>
+    <ROW Directory="amdxc_Dir" Directory_Parent="dx12_Dir" DefaultDir="amdxc"/>
+    <ROW Directory="bin_Dir" Directory_Parent="opencl_Dir" DefaultDir="bin"/>
     <ROW Directory="bitcode_Dir" Directory_Parent="lib_Dir" DefaultDir="bitcode"/>
     <ROW Directory="clang_Dir" Directory_Parent="lib_Dir" DefaultDir="clang"/>
     <ROW Directory="css_Dir" Directory_Parent="_static_Dir" DefaultDir="css"/>
+    <ROW Directory="disassembler_Dir" Directory_Parent="lc_Dir" DefaultDir="DISASS~1|disassembler"/>
+    <ROW Directory="dx12_Dir" Directory_Parent="utils_Dir" DefaultDir="dx12"/>
+    <ROW Directory="dxc_Dir" Directory_Parent="dx12_Dir" DefaultDir="dxc"/>
     <ROW Directory="fonts_Dir" Directory_Parent="css_Dir" DefaultDir="fonts"/>
     <ROW Directory="help_Dir" Directory_Parent="Documentation_Dir" DefaultDir="help"/>
     <ROW Directory="html_Dir" Directory_Parent="rga_Dir" DefaultDir="html"/>
     <ROW Directory="iconengines_Dir" Directory_Parent="APPDIR" DefaultDir="ICONEN~1|iconengines"/>
     <ROW Directory="imageformats_Dir" Directory_Parent="APPDIR" DefaultDir="IMAGEF~1|imageformats"/>
     <ROW Directory="include_1_Dir" Directory_Parent="__Dir" DefaultDir="include"/>
-    <ROW Directory="include_Dir" Directory_Parent="OpenCL_Dir" DefaultDir="include"/>
+    <ROW Directory="include_Dir" Directory_Parent="opencl_Dir" DefaultDir="include"/>
     <ROW Directory="js_Dir" Directory_Parent="_static_Dir" DefaultDir="js"/>
     <ROW Directory="layer_Dir" Directory_Parent="APPDIR" DefaultDir="layer"/>
-    <ROW Directory="lib_Dir" Directory_Parent="OpenCL_Dir" DefaultDir="lib"/>
+    <ROW Directory="lc_Dir" Directory_Parent="utils_Dir" DefaultDir="lc"/>
+    <ROW Directory="lib_Dir" Directory_Parent="opencl_Dir" DefaultDir="lib"/>
+    <ROW Directory="opencl_Dir" Directory_Parent="lc_Dir" DefaultDir="opencl"/>
     <ROW Directory="platforms_Dir" Directory_Parent="APPDIR" DefaultDir="PLATFO~1|platforms"/>
     <ROW Directory="rga_Dir" Directory_Parent="help_Dir" DefaultDir="rga"/>
     <ROW Directory="styles_Dir" Directory_Parent="APPDIR" DefaultDir="styles"/>
     <ROW Directory="utils_Dir" Directory_Parent="APPDIR" DefaultDir="utils"/>
+    <ROW Directory="vulkan_Dir" Directory_Parent="utils_Dir" DefaultDir="vulkan"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiCompsComponent">
     <ROW Component="AIShRegAnswer" ComponentId="{EDCF4464-D197-4C77-8DAB-DE3819EA0CC2}" Directory_="APPDIR" Attributes="260" KeyPath="AIShRegAnswer"/>
@@ -93,40 +93,39 @@
     <ROW Component="Tiny44x44Logo.scale100.png" ComponentId="{FAD42D9F-547D-478F-95CA-A379E128B00C}" Directory_="Assets" Attributes="0" KeyPath="Tiny44x44Logo.scale100.png" Type="0"/>
     <ROW Component="VK_LAYER_RGA_pipeline_extraction.dll" ComponentId="{25BB089B-F869-4A9A-9256-2A59012BADB9}" Directory_="layer_Dir" Attributes="256" KeyPath="VK_LAYER_RGA_pipeline_extraction.dll"/>
     <ROW Component="VK_LAYER_RGA_pipeline_extraction_win32.j" ComponentId="{44E8ABA6-27DC-48D3-AA7E-69A96AE9F129}" Directory_="layer_Dir" Attributes="0" KeyPath="VK_LAYER_RGA_pipeline_extraction_win32.json" Type="0"/>
-    <ROW Component="VirtualContext.exe" ComponentId="{04A016A0-75F9-4F47-B35D-3C2002193DDB}" Directory_="utils_Dir" Attributes="256" KeyPath="VirtualContext.exe"/>
     <ROW Component="_open_file_link_button.png" ComponentId="{4DF5B283-B03E-4E80-ABF3-BE4385BE4F61}" Directory_="_images_Dir" Attributes="0" KeyPath="_open_file_link_button.png" Type="0"/>
-    <ROW Component="additionaltargets" ComponentId="{BE037B0E-9E6F-4F59-B420-0CB847899B78}" Directory_="OpenCL_Dir" Attributes="0" KeyPath="additionaltargets" Type="0"/>
-    <ROW Component="amdgpudis.exe" ComponentId="{62AE1FC2-BA59-4902-8BA0-622A751BD46C}" Directory_="Disassembler_Dir" Attributes="256" KeyPath="amdgpudis.exe"/>
+    <ROW Component="additionaltargets" ComponentId="{9AB08665-60FF-4C1F-A76E-BE7768EE23A9}" Directory_="opencl_Dir" Attributes="0" KeyPath="additionaltargets" Type="0"/>
+    <ROW Component="amdgpudis.exe" ComponentId="{FCAE9B4C-2723-47F5-8287-7298A1B23C2B}" Directory_="disassembler_Dir" Attributes="256" KeyPath="amdgpudis.exe"/>
     <ROW Component="amdspv.exe" ComponentId="{D201D0E4-A252-47E7-8868-0D8192D0AF01}" Directory_="utils_Dir" Attributes="256" KeyPath="amdspv.exe"/>
-    <ROW Component="amdvlk64.dll" ComponentId="{7ED86AED-0F50-44A6-90CC-44E7FB7CCC07}" Directory_="amdvlk_Dir" Attributes="256" KeyPath="amdvlk64.dll"/>
-    <ROW Component="amdxc64.dll" ComponentId="{28B7A6BD-5E35-4965-A17D-A81DDD36F912}" Directory_="amdxc_Dir" Attributes="256" KeyPath="amdxc64.dll"/>
+    <ROW Component="amdvlk64.dll" ComponentId="{F017FFB0-7016-432E-9925-D2C03D5F1974}" Directory_="amdvlk_Dir" Attributes="256" KeyPath="amdvlk64.dll"/>
+    <ROW Component="amdxc64.dll" ComponentId="{7FD64A4A-907C-4D35-B2DD-551812DC9959}" Directory_="amdxc_Dir" Attributes="256" KeyPath="amdxc64.dll"/>
     <ROW Component="badge_only.css" ComponentId="{725A9208-9AD6-4830-B8E0-B48E09FE9F19}" Directory_="css_Dir" Attributes="0" KeyPath="badge_only.css" Type="0"/>
     <ROW Component="buildinfo" ComponentId="{E629C567-D84B-4851-BF6B-0347FAA83C9D}" Directory_="html_Dir" Attributes="0" KeyPath="buildinfo" Type="0"/>
-    <ROW Component="clang" ComponentId="{C409FD7D-A382-41BF-9BE5-3F69C19B3639}" Directory_="clang_Dir" Attributes="0"/>
-    <ROW Component="clang.exe" ComponentId="{3CFFD4A9-B528-43B3-9639-0AED96ADD8C4}" Directory_="bin_Dir" Attributes="256" KeyPath="clang.exe"/>
+    <ROW Component="clang.exe" ComponentId="{5900F882-A5F9-42F5-8F6A-E27751EEC028}" Directory_="bin_Dir" Attributes="256" KeyPath="clang.exe"/>
     <ROW Component="concrt140.dll" ComponentId="{F6366CA5-6B9C-4E77-AD65-3E3C0E2460D2}" Directory_="APPDIR" Attributes="256" KeyPath="concrt140.dll"/>
     <ROW Component="d3dcompiler_47.dll" ComponentId="{E7FB221F-6BEF-4971-8CBB-AC957F061304}" Directory_="utils_Dir" Attributes="256" KeyPath="d3dcompiler_47.dll"/>
     <ROW Component="dx11_adapter.exe" ComponentId="{F4736061-4316-472C-A33A-3CDC9C446816}" Directory_="utils_Dir" Attributes="256" KeyPath="dx11_adapter.exe"/>
-    <ROW Component="dx12_backend.exe" ComponentId="{81ADE6B4-3550-40E3-9173-C350FC9784D0}" Directory_="DX12_Dir" Attributes="256" KeyPath="dx12_backend.exe"/>
-    <ROW Component="dxc.exe" ComponentId="{2EF16CD5-25F8-4D19-95F0-FC5C897AFDDE}" Directory_="DXC_Dir" Attributes="256" KeyPath="dxc.exe"/>
-    <ROW Component="dxcompiler.dll" ComponentId="{BBE718F4-5AA4-4594-AF4C-37F6BFC98F15}" Directory_="DXC_Dir" Attributes="256" KeyPath="dxcompiler.dll"/>
-    <ROW Component="dxil.dll" ComponentId="{A50B4772-37ED-4D9C-9146-60259E7CFC0D}" Directory_="DXC_Dir" Attributes="256" KeyPath="dxil.dll"/>
+    <ROW Component="dx12_backend.exe" ComponentId="{80DFA4B8-A854-414D-897A-3862A5D2B097}" Directory_="dx12_Dir" Attributes="256" KeyPath="dx12_backend.exe"/>
+    <ROW Component="dxc.exe" ComponentId="{5C4E3239-2129-4BE5-9970-EACF54B16F93}" Directory_="dxc_Dir" Attributes="256" KeyPath="dxc.exe"/>
+    <ROW Component="dxcompiler.dll" ComponentId="{2341D891-7C7E-4A1E-B71A-FB9A799223DB}" Directory_="dxc_Dir" Attributes="256" KeyPath="dxcompiler.dll"/>
+    <ROW Component="dxil.dll" ComponentId="{14F5CDE3-1007-4F57-AB70-B8A07BBF5E82}" Directory_="dxc_Dir" Attributes="256" KeyPath="dxil.dll"/>
     <ROW Component="fontawesomewebfont.eot" ComponentId="{8501D1FE-4341-4B0F-82F9-92FD197EE0C0}" Directory_="fonts_Dir" Attributes="0" KeyPath="fontawesomewebfont.eot" Type="0"/>
-    <ROW Component="gen_devices.py" ComponentId="{15211E3F-854C-4C5D-83AD-580E5E75EFC3}" Directory_="bin_Dir" Attributes="0" KeyPath="gen_devices.py" Type="0"/>
-    <ROW Component="glslangValidator.exe" ComponentId="{CCB757BE-A3A8-4D8B-8A4F-B5B26F1C464D}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="glslangValidator.exe"/>
+    <ROW Component="gen_devices.py" ComponentId="{8E56F29E-8249-4CBE-9202-2FCDCD2CF746}" Directory_="bin_Dir" Attributes="0" KeyPath="gen_devices.py" Type="0"/>
+    <ROW Component="glc.exe" ComponentId="{6C3517C9-B340-4E36-B489-269E4D2E7D73}" Directory_="utils_Dir" Attributes="256" KeyPath="glc.exe"/>
+    <ROW Component="glslangValidator.exe" ComponentId="{38618760-0DEB-42CC-A3BE-96184BF82CE5}" Directory_="vulkan_Dir" Attributes="256" KeyPath="glslangValidator.exe"/>
     <ROW Component="help" ComponentId="{FDEBB490-4599-494E-BBA1-5FF46DD8C032}" Directory_="help_Dir" Attributes="0"/>
     <ROW Component="help_manual.rst.txt" ComponentId="{195D61F0-338F-4B10-897A-F0834328EF01}" Directory_="_sources_Dir" Attributes="0" KeyPath="help_manual.rst.txt" Type="0"/>
     <ROW Component="htmlDocs" ComponentId="{1C1CE28F-455F-4533-A9D0-149BAD645E94}" Directory_="_static_Dir" Attributes="0" KeyPath="basic.css" Type="0"/>
-    <ROW Component="irif.amdgcn.bc" ComponentId="{390A8522-B53B-4081-AC42-062F2C86BCBA}" Directory_="bitcode_Dir" Attributes="0" KeyPath="irif.amdgcn.bc" Type="0"/>
-    <ROW Component="ld.lld.exe" ComponentId="{BFDF8873-FE15-4E6F-8891-16FAE3D3A876}" Directory_="bin_Dir" Attributes="256" KeyPath="ld.lld.exe"/>
-    <ROW Component="llvmobjdump.exe" ComponentId="{E7B736F7-22B9-421D-8D5F-9CAF807E6CB3}" Directory_="bin_Dir" Attributes="256" KeyPath="llvmobjdump.exe"/>
-    <ROW Component="llvmreadobj.exe" ComponentId="{006F188F-340A-4CC0-AA9A-B39E0AA2E61E}" Directory_="bin_Dir" Attributes="256" KeyPath="llvmreadobj.exe"/>
+    <ROW Component="irif.amdgcn.bc" ComponentId="{7B9D76CA-C7AE-4F36-9317-FC1F1CFAAC3D}" Directory_="bitcode_Dir" Attributes="0" KeyPath="irif.amdgcn.bc" Type="0"/>
+    <ROW Component="ld.lld.exe" ComponentId="{4C839EC8-496E-4995-BCA0-95B355502EA1}" Directory_="bin_Dir" Attributes="256" KeyPath="ld.lld.exe"/>
+    <ROW Component="llvmobjdump.exe" ComponentId="{F41F7AEA-2F9F-463C-956A-AB476522AF7D}" Directory_="bin_Dir" Attributes="256" KeyPath="llvmobjdump.exe"/>
+    <ROW Component="llvmreadobj.exe" ComponentId="{250E61A2-C6C6-4325-9CF4-8E401D3F7F0D}" Directory_="bin_Dir" Attributes="256" KeyPath="llvmreadobj.exe"/>
     <ROW Component="modernizr.min.js" ComponentId="{52C362A5-D899-4A7A-AE53-DED57130DCD5}" Directory_="js_Dir" Attributes="0" KeyPath="theme.js" Type="0"/>
-    <ROW Component="msvcp120.dll" ComponentId="{84904E89-16F8-45E9-B6F3-260A5F2F921A}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="msvcp120.dll"/>
+    <ROW Component="msvcp120.dll" ComponentId="{2CD26A4F-22BF-4A71-8C42-DA7A8548A3AE}" Directory_="vulkan_Dir" Attributes="256" KeyPath="msvcp120.dll"/>
     <ROW Component="msvcp140.dll" ComponentId="{96A16EF4-52D4-44E0-847C-E39BB93F8CCA}" Directory_="APPDIR" Attributes="256" KeyPath="msvcp140.dll"/>
-    <ROW Component="msvcr120.dll" ComponentId="{B4BF97D1-F797-4D30-BD6C-AEB1F90C1CA3}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="msvcr120.dll"/>
-    <ROW Component="openclc.h" ComponentId="{80622FE8-6A38-4418-9B59-F05AF4595546}" Directory_="include_Dir" Attributes="0" KeyPath="openclc.h" Type="0"/>
-    <ROW Component="openclcbase.h" ComponentId="{813AC971-B681-4052-AF29-E91E0DC45D46}" Directory_="include_1_Dir" Attributes="0" KeyPath="openclcbase.h" Type="0"/>
+    <ROW Component="msvcr120.dll" ComponentId="{DC25A694-B2B4-4462-91DA-6AFCEF11378D}" Directory_="vulkan_Dir" Attributes="256" KeyPath="msvcr120.dll"/>
+    <ROW Component="openclc.h" ComponentId="{D1B3A14F-C593-4649-A8C0-9D846614ABB8}" Directory_="include_Dir" Attributes="0" KeyPath="openclc.h" Type="0"/>
+    <ROW Component="openclcbase.h" ComponentId="{0585E69F-3F64-4AD8-989B-BD51AD1F17A8}" Directory_="include_1_Dir" Attributes="0" KeyPath="openclcbase.h" Type="0"/>
     <ROW Component="qsvg.dll" ComponentId="{E3CA603A-9CA1-46D2-957E-F8FD0C3C8332}" Directory_="imageformats_Dir" Attributes="256" KeyPath="qsvg.dll"/>
     <ROW Component="qsvgicon.dll" ComponentId="{D41D5B9F-56C9-4014-94BC-A81AB983E4BD}" Directory_="iconengines_Dir" Attributes="256" KeyPath="qsvgicon.dll"/>
     <ROW Component="qwindows.dll" ComponentId="{A47422D6-1883-49F7-8099-F71D4EA9C066}" Directory_="platforms_Dir" Attributes="256" KeyPath="qwindows.dll"/>
@@ -135,20 +134,20 @@
     <ROW Component="rga.exe" ComponentId="{B20133D0-67FA-48FA-8717-321A9A0C74B0}" Directory_="APPDIR" Attributes="256" KeyPath="rga.exe"/>
     <ROW Component="rtda.exe" ComponentId="{2CF65F98-4F25-4212-AD20-0560E7AB73FC}" Directory_="APPDIR" Attributes="256" KeyPath="rtda.exe"/>
     <ROW Component="shae.exe" ComponentId="{6C17208A-1F96-47B3-8FF7-6FED664B4B80}" Directory_="utils_Dir" Attributes="256" KeyPath="shae.exe"/>
-    <ROW Component="spirvas.exe" ComponentId="{88E28D7D-5665-43BA-8B97-FE7CC8271D37}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="spirvas.exe"/>
-    <ROW Component="spirvdis.exe" ComponentId="{0B1C6879-6690-4211-9D9F-99FA59806C6B}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="spirvdis.exe"/>
+    <ROW Component="spirvas.exe" ComponentId="{8EEE9857-0C41-4D71-AE79-2440CD99131B}" Directory_="vulkan_Dir" Attributes="256" KeyPath="spirvas.exe"/>
+    <ROW Component="spirvdis.exe" ComponentId="{479382CB-E3C9-4F1E-8AD3-BB0CFF1E224E}" Directory_="vulkan_Dir" Attributes="256" KeyPath="spirvdis.exe"/>
     <ROW Component="spvgen.dll" ComponentId="{762C4DA2-1ED2-486E-B4B4-73ADF3C9D4B6}" Directory_="utils_Dir" Attributes="256" KeyPath="spvgen.dll"/>
-    <ROW Component="umdrepoint.dll" ComponentId="{D3ED2244-EB7C-4E44-AD21-4D50BE5896BC}" Directory_="DX12_Dir" Attributes="256" KeyPath="umdrepoint.dll"/>
-    <ROW Component="vccorlib120.dll" ComponentId="{7E2E1269-6FF7-4197-BA13-D21687A9A81F}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="vccorlib120.dll"/>
+    <ROW Component="umdrepoint.dll" ComponentId="{F9F5E5E7-631E-4041-A915-8BBF3C371FB3}" Directory_="dx12_Dir" Attributes="256" KeyPath="umdrepoint.dll"/>
+    <ROW Component="vccorlib120.dll" ComponentId="{744AEF6C-3EAD-4C36-B077-F89A0971303E}" Directory_="vulkan_Dir" Attributes="256" KeyPath="vccorlib120.dll"/>
     <ROW Component="vccorlib140.dll" ComponentId="{055E8A78-D6DE-4352-8183-447912066744}" Directory_="APPDIR" Attributes="256" KeyPath="vccorlib140.dll"/>
     <ROW Component="vcruntime140.dll" ComponentId="{C918F87E-DCD7-45E8-8EE8-3020ED341FFB}" Directory_="APPDIR" Attributes="256" KeyPath="vcruntime140.dll"/>
     <ROW Component="vcruntime140_1.dll" ComponentId="{520905CC-1C7D-483C-92E9-935091B29C7B}" Directory_="APPDIR" Attributes="256" KeyPath="vcruntime140_1.dll"/>
-    <ROW Component="vulkan_backend.exe" ComponentId="{C27B953E-B641-4F90-88D7-9F227B12B8F6}" Directory_="Vulkan_Dir" Attributes="256" KeyPath="vulkan_backend.exe"/>
-    <ROW Component="withdll.exe" ComponentId="{C618BA9C-D05E-45B2-88F0-E4179E7B295A}" Directory_="DX12_Dir" Attributes="256" KeyPath="withdll.exe"/>
+    <ROW Component="vulkan_backend.exe" ComponentId="{C27F3337-4B63-444B-9045-4C4C023B2F0F}" Directory_="vulkan_Dir" Attributes="256" KeyPath="vulkan_backend.exe"/>
+    <ROW Component="withdll.exe" ComponentId="{431ADF8B-9BAE-4AE5-9338-C4A6053CA697}" Directory_="dx12_Dir" Attributes="256" KeyPath="withdll.exe"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiFeatsComponent">
     <ROW Feature="AiAppXAssets" Title="AiAppXAssets" Description="Description" Display="3" Level="0" Directory_="APPDIR" Attributes="0" Components="Tiny44x44Logo.scale100.png"/>
-    <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0" Components="AIShRegAnswer APPDIRlayerVK_LAYER_RGA_pipeline_extract License.txt ProductInformation Qt5Core.dll Qt5Gui.dll Qt5Svg.dll Qt5Widgets.dll RGALayerLauncher.exe RadeonGPUAnalyzer.exe SHORTCUTDIR VK_LAYER_RGA_pipeline_extraction.dll VK_LAYER_RGA_pipeline_extraction_win32.j VirtualContext.exe _open_file_link_button.png additionaltargets amdgpudis.exe amdspv.exe amdvlk64.dll amdxc64.dll badge_only.css buildinfo clang clang.exe concrt140.dll d3dcompiler_47.dll dx11_adapter.exe dx12_backend.exe dxc.exe dxcompiler.dll dxil.dll fontawesomewebfont.eot gen_devices.py glslangValidator.exe help help_manual.rst.txt htmlDocs irif.amdgcn.bc ld.lld.exe llvmobjdump.exe llvmreadobj.exe modernizr.min.js msvcp120.dll msvcp140.dll msvcr120.dll openclc.h openclcbase.h qsvg.dll qsvgicon.dll qwindows.dll qwindowsvistastyle.dll rga rga.exe rtda.exe shae.exe spirvas.exe spirvdis.exe spvgen.dll umdrepoint.dll vccorlib120.dll vccorlib140.dll vcruntime140.dll vcruntime140_1.dll vulkan_backend.exe withdll.exe"/>
+    <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0" Components="AIShRegAnswer APPDIRlayerVK_LAYER_RGA_pipeline_extract License.txt ProductInformation Qt5Core.dll Qt5Gui.dll Qt5Svg.dll Qt5Widgets.dll RGALayerLauncher.exe RadeonGPUAnalyzer.exe SHORTCUTDIR VK_LAYER_RGA_pipeline_extraction.dll VK_LAYER_RGA_pipeline_extraction_win32.j _open_file_link_button.png additionaltargets amdgpudis.exe amdspv.exe amdvlk64.dll amdxc64.dll badge_only.css buildinfo clang.exe concrt140.dll d3dcompiler_47.dll dx11_adapter.exe dx12_backend.exe dxc.exe dxcompiler.dll dxil.dll fontawesomewebfont.eot gen_devices.py glc.exe glslangValidator.exe help help_manual.rst.txt htmlDocs irif.amdgcn.bc ld.lld.exe llvmobjdump.exe llvmreadobj.exe modernizr.min.js msvcp120.dll msvcp140.dll msvcr120.dll openclc.h openclcbase.h qsvg.dll qsvgicon.dll qwindows.dll qwindowsvistastyle.dll rga rga.exe rtda.exe shae.exe spirvas.exe spirvdis.exe spvgen.dll umdrepoint.dll vccorlib120.dll vccorlib140.dll vcruntime140.dll vcruntime140_1.dll vulkan_backend.exe withdll.exe"/>
     <ATTRIBUTE name="CurrentFeature" value="MainFeature"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiFilesComponent">
@@ -159,9 +158,9 @@
     <ROW File="Qt5Gui.dll" Component_="Qt5Gui.dll" FileName="Qt5Gui.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Gui.dll" SelfReg="false" NextFile="Qt5Svg.dll"/>
     <ROW File="Qt5Svg.dll" Component_="Qt5Svg.dll" FileName="Qt5Svg.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Svg.dll" SelfReg="false" NextFile="Qt5Widgets.dll"/>
     <ROW File="Qt5Widgets.dll" Component_="Qt5Widgets.dll" FileName="QT5WID~1.DLL|Qt5Widgets.dll" Attributes="0" SourcePath="..\BuildOutput\bin\Qt5Widgets.dll" SelfReg="false" NextFile="rga.exe"/>
-    <ROW File="README.md" Component_="License.txt" FileName="README.md" Attributes="0" SourcePath="..\README.md" SelfReg="false" NextFile="vulkan_backend.exe"/>
+    <ROW File="README.md" Component_="License.txt" FileName="README.md" Attributes="0" SourcePath="..\README.md" SelfReg="false" NextFile="RGALayerLauncher.exe"/>
     <ROW File="RGALayerLauncher.exe" Component_="RGALayerLauncher.exe" FileName="RGALAY~1.EXE|RGALayerLauncher.exe" Attributes="0" SourcePath="..\source\common\vulkan_layer_launcher\RGALayerLauncher\bin\Release\RGALayerLauncher.exe" SelfReg="false" NextFile="dx11_adapter.exe" DigSign="true"/>
-    <ROW File="RGA_NOTICES.txt" Component_="License.txt" FileName="RGA_NO~1.TXT|RGA_NOTICES.txt" Attributes="0" SourcePath="..\RGA_NOTICES.txt" SelfReg="false" NextFile="oclc_isa_version_90a.amdgcn.bc"/>
+    <ROW File="RGA_NOTICES.txt" Component_="License.txt" FileName="RGA_NO~1.TXT|RGA_NOTICES.txt" Attributes="0" SourcePath="..\RGA_NOTICES.txt" SelfReg="false" NextFile="_disassembly_view_opencl.png"/>
     <ROW File="RGA_RELEASE_NOTES.txt" Component_="License.txt" FileName="RGA_RE~1.TXT|RGA_RELEASE_NOTES.txt" Attributes="0" SourcePath="..\documentation\RGA_RELEASE_NOTES.txt" SelfReg="false" NextFile="RGA_NOTICES.txt"/>
     <ROW File="RadeonGPUAnalyzer.exe" Component_="RadeonGPUAnalyzer.exe" FileName="RADEON~1.EXE|RadeonGPUAnalyzer.exe" Attributes="0" SourcePath="..\BuildOutput\bin\RadeonGPUAnalyzer.exe" SelfReg="false" NextFile="qwindowsvistastyle.dll" DigSign="true"/>
     <ROW File="RobotoSlabBold.woff" Component_="fontawesomewebfont.eot" FileName="ROBOTO~1.WOF|Roboto-Slab-Bold.woff" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\css\fonts\Roboto-Slab-Bold.woff" SelfReg="false" NextFile="RobotoSlabBold.woff2"/>
@@ -172,7 +171,6 @@
     <ROW File="Tiny44x44Logo.scale100.png" Component_="Tiny44x44Logo.scale100.png" FileName="TINY44~1.PNG|Tiny44x44Logo.scale-100.png" Attributes="0" SourcePath="&lt;AI_RES&gt;appx\SmallLogo10.png" SelfReg="false" NextFile="Medium150x150Logo.scale100.png"/>
     <ROW File="VK_LAYER_RGA_pipeline_extraction.dll" Component_="VK_LAYER_RGA_pipeline_extraction.dll" FileName="VK_LAY~1.DLL|VK_LAYER_RGA_pipeline_extraction.dll" Attributes="0" SourcePath="..\BuildOutput\bin\layer\VK_LAYER_RGA_pipeline_extraction.dll" SelfReg="false" NextFile="VK_LAYER_RGA_pipeline_extraction_win32.json"/>
     <ROW File="VK_LAYER_RGA_pipeline_extraction_win32.json" Component_="VK_LAYER_RGA_pipeline_extraction_win32.j" FileName="VK_LAY~1.JSO|VK_LAYER_RGA_pipeline_extraction_win32.json" Attributes="0" SourcePath="..\BuildOutput\bin\layer\VK_LAYER_RGA_pipeline_extraction_win32.json" SelfReg="false" NextFile="EULA.txt"/>
-    <ROW File="VirtualContext.exe" Component_="VirtualContext.exe" FileName="VIRTUA~1.EXE|VirtualContext.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\VirtualContext.exe" SelfReg="false" NextFile="amdvlk64.dll" DigSign="true"/>
     <ROW File="_about_dialog.png" Component_="_open_file_link_button.png" FileName="016_AB~1.PNG|016_about_dialog.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\016_about_dialog.png" SelfReg="false" NextFile="_start_tab_open_project.png"/>
     <ROW File="_build_project.png" Component_="_open_file_link_button.png" FileName="003_BU~1.PNG|003_build_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\003_build_project.png" SelfReg="false" NextFile="_project_file_menu.png"/>
     <ROW File="_build_view_build_output.png" Component_="_open_file_link_button.png" FileName="014_BU~1.PNG|014_build_view_build_output.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\014_build_view_build_output.png" SelfReg="false" NextFile="_build_view_disassembly_resource_usage_hazard.png"/>
@@ -185,7 +183,7 @@
     <ROW File="_build_view_source_view_opencl.png" Component_="_open_file_link_button.png" FileName="013_BU~3.PNG|013_build_view_source_view_opencl.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\013_build_view_source_view_opencl.png" SelfReg="false" NextFile="_build_view_title_bar_opencl.png"/>
     <ROW File="_build_view_title_bar.png" Component_="_open_file_link_button.png" FileName="013_BU~2.PNG|013_build_view_title_bar.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\013_build_view_title_bar.png" SelfReg="false" NextFile="_build_view_build_output.png"/>
     <ROW File="_build_view_title_bar_opencl.png" Component_="_open_file_link_button.png" FileName="013_BU~4.PNG|013_build_view_title_bar_opencl.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\013_build_view_title_bar_opencl.png" SelfReg="false" NextFile="_build_view_build_output_opencl.png"/>
-    <ROW File="_disassembly_view_context_menu_opencl.png" Component_="_open_file_link_button.png" FileName="017_DI~1.PNG|017_disassembly_view_context_menu_opencl.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\017_disassembly_view_context_menu_opencl.png" SelfReg="false" NextFile="amdxc64.dll"/>
+    <ROW File="_disassembly_view_context_menu_opencl.png" Component_="_open_file_link_button.png" FileName="017_DI~1.PNG|017_disassembly_view_context_menu_opencl.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\017_disassembly_view_context_menu_opencl.png" SelfReg="false" NextFile="vcruntime140_1.dll"/>
     <ROW File="_disassembly_view_opencl.png" Component_="_open_file_link_button.png" FileName="023_DI~1.PNG|023_disassembly_view_opencl.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\023_disassembly_view_opencl.png" SelfReg="false" NextFile="_build_view_source_view_opencl.png"/>
     <ROW File="_drag_n_drop_project.png" Component_="_open_file_link_button.png" FileName="021_DR~1.PNG|021_drag_n_drop_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\021_drag_n_drop_project.png" SelfReg="false" NextFile="_remove_source_file.png"/>
     <ROW File="_file_menu_open_project.png" Component_="_open_file_link_button.png" FileName="020_FI~1.PNG|020_file_menu_open_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\020_file_menu_open_project.png" SelfReg="false" NextFile="_drag_n_drop_project.png"/>
@@ -207,11 +205,11 @@
     <ROW File="_rename_project.png" Component_="_open_file_link_button.png" FileName="002_RE~1.PNG|002_rename_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\002_rename_project.png" SelfReg="false" NextFile="_build_project.png"/>
     <ROW File="_start_tab_open_project.png" Component_="_open_file_link_button.png" FileName="018_ST~1.PNG|018_start_tab_open_project.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\018_start_tab_open_project.png" SelfReg="false" NextFile="_start_tab_recent_list.png"/>
     <ROW File="_start_tab_recent_list.png" Component_="_open_file_link_button.png" FileName="019_ST~1.PNG|019_start_tab_recent_list.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\019_start_tab_recent_list.png" SelfReg="false" NextFile="_file_menu_open_project.png"/>
-    <ROW File="additionaltargets" Component_="additionaltargets" FileName="ADDITI~1|additional-targets" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\additional-targets" SelfReg="false" NextFile="clang.exe"/>
-    <ROW File="amdgpudis.exe" Component_="amdgpudis.exe" FileName="AMDGPU~1.EXE|amdgpu-dis.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\Disassembler\amdgpu-dis.exe" SelfReg="false" NextFile="additionaltargets" DigSign="true"/>
+    <ROW File="additionaltargets" Component_="additionaltargets" FileName="ADDITI~1|additional-targets" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\additional-targets" SelfReg="false" NextFile="clang.exe"/>
+    <ROW File="amdgpudis.exe" Component_="amdgpudis.exe" FileName="AMDGPU~1.EXE|amdgpu-dis.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\disassembler\amdgpu-dis.exe" SelfReg="false" NextFile="additionaltargets" DigSign="true"/>
     <ROW File="amdspv.exe" Component_="amdspv.exe" FileName="amdspv.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\amdspv.exe" SelfReg="false" NextFile="d3dcompiler_47.dll" DigSign="true"/>
-    <ROW File="amdvlk64.dll" Component_="amdvlk64.dll" FileName="amdvlk64.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\amdvlk\amdvlk64.dll" SelfReg="false" NextFile="glslangValidator.exe"/>
-    <ROW File="amdxc64.dll" Component_="amdxc64.dll" FileName="amdxc64.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\amdxc\amdxc64.dll" SelfReg="false" NextFile="openclcbase.h"/>
+    <ROW File="amdvlk64.dll" Component_="amdvlk64.dll" FileName="amdvlk64.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\vulkan\amdvlk\amdvlk64.dll" SelfReg="false" NextFile="glslangValidator.exe"/>
+    <ROW File="amdxc64.dll" Component_="amdxc64.dll" FileName="amdxc64.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\dx12\amdxc\amdxc64.dll" SelfReg="false" NextFile="dx12_backend.exe"/>
     <ROW File="app_settings_vulkan.png" Component_="_open_file_link_button.png" FileName="APP_SE~1.PNG|app_settings_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\app_settings_vulkan.png" SelfReg="false" NextFile="build_project_output_vulkan.png"/>
     <ROW File="badge_only.css" Component_="badge_only.css" FileName="BADGE_~1.CSS|badge_only.css" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\css\badge_only.css" SelfReg="false" NextFile="theme.css"/>
     <ROW File="badge_only.js" Component_="modernizr.min.js" FileName="BADGE_~1.JS|badge_only.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\js\badge_only.js" SelfReg="false" NextFile="html5shiv.min.js"/>
@@ -220,20 +218,20 @@
     <ROW File="build_project_vulkan.png" Component_="_open_file_link_button.png" FileName="BUILD_~2.PNG|build_project_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\build_project_vulkan.png" SelfReg="false" NextFile="build_settings_vulkan.png"/>
     <ROW File="build_settings_vulkan.png" Component_="_open_file_link_button.png" FileName="BUILD_~3.PNG|build_settings_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\build_settings_vulkan.png" SelfReg="false" NextFile="create_file_vulkan.png"/>
     <ROW File="buildinfo" Component_="buildinfo" FileName="BUILDI~1|.buildinfo" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\.buildinfo" SelfReg="false" NextFile="nojekyll"/>
-    <ROW File="clang.exe" Component_="clang.exe" FileName="clang.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\bin\clang.exe" SelfReg="false" NextFile="gen_devices.py" DigSign="true"/>
+    <ROW File="clang.exe" Component_="clang.exe" FileName="clang.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\bin\clang.exe" SelfReg="false" NextFile="gen_devices.py" DigSign="true"/>
     <ROW File="concrt140.dll" Component_="concrt140.dll" FileName="CONCRT~1.DLL|concrt140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\concrt140.dll" SelfReg="false" NextFile="Qt5Core.dll"/>
     <ROW File="create_file_vulkan.png" Component_="_open_file_link_button.png" FileName="CREATE~1.PNG|create_file_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\create_file_vulkan.png" SelfReg="false" NextFile="create_project_vulkan.png"/>
     <ROW File="create_project_vulkan.png" Component_="_open_file_link_button.png" FileName="CREATE~2.PNG|create_project_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\create_project_vulkan.png" SelfReg="false" NextFile="disassembly_view_vulkan.png"/>
-    <ROW File="d3dcompiler_47.dll" Component_="d3dcompiler_47.dll" FileName="D3DCOM~1.DLL|d3dcompiler_47.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\d3dcompiler_47.dll" SelfReg="false" NextFile="dx12_backend.exe"/>
+    <ROW File="d3dcompiler_47.dll" Component_="d3dcompiler_47.dll" FileName="D3DCOM~1.DLL|d3dcompiler_47.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\d3dcompiler_47.dll" SelfReg="false" NextFile="spvgen.dll"/>
     <ROW File="disassembly_view_vulkan.png" Component_="_open_file_link_button.png" FileName="DISASS~1.PNG|disassembly_view_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\disassembly_view_vulkan.png" SelfReg="false" NextFile="display_current_mode.png"/>
     <ROW File="display_current_mode.png" Component_="_open_file_link_button.png" FileName="DISPLA~1.PNG|display_current_mode.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\display_current_mode.png" SelfReg="false" NextFile="enable_validation_layers_vulkan.png"/>
     <ROW File="doctools.js" Component_="htmlDocs" FileName="doctools.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\doctools.js" SelfReg="false" NextFile="file.png"/>
     <ROW File="documentation_options.js" Component_="htmlDocs" FileName="DOCUME~1.JS|documentation_options.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\documentation_options.js" SelfReg="false" NextFile="jquery3.5.1.js"/>
     <ROW File="dx11_adapter.exe" Component_="dx11_adapter.exe" FileName="DX11_A~1.EXE|dx11_adapter.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\dx11_adapter.exe" SelfReg="false" NextFile="RGA_RELEASE_NOTES.txt" DigSign="true"/>
-    <ROW File="dx12_backend.exe" Component_="dx12_backend.exe" FileName="DX12_B~1.EXE|dx12_backend.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\dx12_backend.exe" SelfReg="false" NextFile="dxc.exe" DigSign="true"/>
-    <ROW File="dxc.exe" Component_="dxc.exe" FileName="dxc.exe" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\DXC\dxc.exe" SelfReg="false" NextFile="dxcompiler.dll" DigSign="true"/>
-    <ROW File="dxcompiler.dll" Component_="dxcompiler.dll" FileName="DXCOMP~1.DLL|dxcompiler.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\DXC\dxcompiler.dll" SelfReg="false" NextFile="dxil.dll"/>
-    <ROW File="dxil.dll" Component_="dxil.dll" FileName="dxil.dll" Version="65535.65535.65535.65535" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\DXC\dxil.dll" SelfReg="false" NextFile="amdgpudis.exe"/>
+    <ROW File="dx12_backend.exe" Component_="dx12_backend.exe" FileName="DX12_B~1.EXE|dx12_backend.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\dx12\dx12_backend.exe" SelfReg="false" NextFile="dxc.exe" DigSign="true"/>
+    <ROW File="dxc.exe" Component_="dxc.exe" FileName="dxc.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\dx12\dxc\dxc.exe" SelfReg="false" NextFile="dxcompiler.dll" DigSign="true"/>
+    <ROW File="dxcompiler.dll" Component_="dxcompiler.dll" FileName="DXCOMP~1.DLL|dxcompiler.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\dx12\dxc\dxcompiler.dll" SelfReg="false" NextFile="dxil.dll"/>
+    <ROW File="dxil.dll" Component_="dxil.dll" FileName="dxil.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\dx12\dxc\dxil.dll" SelfReg="false" NextFile="umdrepoint.dll"/>
     <ROW File="enable_validation_layers_vulkan.png" Component_="_open_file_link_button.png" FileName="ENABLE~1.PNG|enable_validation_layers_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\enable_validation_layers_vulkan.png" SelfReg="false" NextFile="file_menu_create_pipeline_vulkan.png"/>
     <ROW File="file.png" Component_="htmlDocs" FileName="file.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\file.png" SelfReg="false" NextFile="jquery.js"/>
     <ROW File="file_menu_create_pipeline_vulkan.png" Component_="_open_file_link_button.png" FileName="FILE_M~1.PNG|file_menu_create_pipeline_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\file_menu_create_pipeline_vulkan.png" SelfReg="false" NextFile="file_menu_vulkan.png"/>
@@ -243,18 +241,19 @@
     <ROW File="fontawesomewebfont.ttf" Component_="fontawesomewebfont.eot" FileName="FONTAW~1.TTF|fontawesome-webfont.ttf" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\css\fonts\fontawesome-webfont.ttf" SelfReg="false" NextFile="fontawesomewebfont.woff"/>
     <ROW File="fontawesomewebfont.woff" Component_="fontawesomewebfont.eot" FileName="FONTAW~1.WOF|fontawesome-webfont.woff" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\css\fonts\fontawesome-webfont.woff" SelfReg="false" NextFile="fontawesomewebfont.woff2"/>
     <ROW File="fontawesomewebfont.woff2" Component_="fontawesomewebfont.eot" FileName="FONTAW~2.WOF|fontawesome-webfont.woff2" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\css\fonts\fontawesome-webfont.woff2" SelfReg="false" NextFile="latobolditalic.woff"/>
-    <ROW File="gen_devices.py" Component_="gen_devices.py" FileName="GEN_DE~1.PY|gen_devices.py" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\bin\gen_devices.py" SelfReg="false" NextFile="ld.lld.exe"/>
+    <ROW File="gen_devices.py" Component_="gen_devices.py" FileName="GEN_DE~1.PY|gen_devices.py" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\bin\gen_devices.py" SelfReg="false" NextFile="ld.lld.exe"/>
     <ROW File="genindex.html" Component_="buildinfo" FileName="GENIND~1.HTM|genindex.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\genindex.html" SelfReg="false" NextFile="help_manual.html"/>
-    <ROW File="glslangValidator.exe" Component_="glslangValidator.exe" FileName="GLSLAN~1.EXE|glslangValidator.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\glslangValidator.exe" SelfReg="false" NextFile="msvcp120.dll" DigSign="true"/>
+    <ROW File="glc.exe" Component_="glc.exe" FileName="glc.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\glc.exe" SelfReg="false" NextFile="amdxc64.dll" DigSign="true"/>
+    <ROW File="glslangValidator.exe" Component_="glslangValidator.exe" FileName="GLSLAN~1.EXE|glslangValidator.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\vulkan\glslangValidator.exe" SelfReg="false" NextFile="msvcp120.dll" DigSign="true"/>
     <ROW File="help_manual.html" Component_="buildinfo" FileName="HELP_M~1.HTM|help_manual.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\help_manual.html" SelfReg="false" NextFile="index.html"/>
     <ROW File="help_manual.rst.txt" Component_="help_manual.rst.txt" FileName="HELP_M~1.TXT|help_manual.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_sources\help_manual.rst.txt" SelfReg="false" NextFile="index.rst.txt"/>
     <ROW File="home_page_tabs_vulkan.png" Component_="_open_file_link_button.png" FileName="HOME_P~1.PNG|home_page_tabs_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\home_page_tabs_vulkan.png" SelfReg="false" NextFile="home_page_vulkan.png"/>
     <ROW File="home_page_vulkan.png" Component_="_open_file_link_button.png" FileName="HOME_P~2.PNG|home_page_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\home_page_vulkan.png" SelfReg="false" NextFile="layer_launcher_vulkan.png"/>
     <ROW File="html5shiv.min.js" Component_="modernizr.min.js" FileName="HTML5S~1.JS|html5shiv.min.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\js\html5shiv.min.js" SelfReg="false" NextFile="html5shivprintshiv.min.js"/>
-    <ROW File="html5shivprintshiv.min.js" Component_="modernizr.min.js" FileName="HTML5S~2.JS|html5shiv-printshiv.min.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\js\html5shiv-printshiv.min.js" SelfReg="false"/>
+    <ROW File="html5shivprintshiv.min.js" Component_="modernizr.min.js" FileName="HTML5S~2.JS|html5shiv-printshiv.min.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\js\html5shiv-printshiv.min.js" SelfReg="false" NextFile="glc.exe"/>
     <ROW File="index.html" Component_="buildinfo" FileName="INDEX~1.HTM|index.html" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\index.html" SelfReg="false" NextFile="objects.inv"/>
     <ROW File="index.rst.txt" Component_="help_manual.rst.txt" FileName="INDEXR~1.TXT|index.rst.txt" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_sources\index.rst.txt" SelfReg="false" NextFile="quickstart.rst.txt"/>
-    <ROW File="irif.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="IRIFAM~1.BC|irif.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\irif.amdgcn.bc" SelfReg="false" NextFile="ockl.amdgcn.bc"/>
+    <ROW File="irif.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="IRIFAM~1.BC|irif.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\irif.amdgcn.bc" SelfReg="false" NextFile="ockl.amdgcn.bc"/>
     <ROW File="jquery.js" Component_="htmlDocs" FileName="jquery.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\jquery.js" SelfReg="false" NextFile="theme.js"/>
     <ROW File="jquery3.5.1.js" Component_="htmlDocs" FileName="JQUERY~1.JS|jquery-3.5.1.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\jquery-3.5.1.js" SelfReg="false" NextFile="language_data.js"/>
     <ROW File="language_data.js" Component_="htmlDocs" FileName="LANGUA~1.JS|language_data.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\language_data.js" SelfReg="false" NextFile="underscore1.13.1.js"/>
@@ -268,48 +267,48 @@
     <ROW File="latonormalitalic.woff2" Component_="fontawesomewebfont.eot" FileName="LATO-N~2.WOF|lato-normal-italic.woff2" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\css\fonts\lato-normal-italic.woff2" SelfReg="false" NextFile="latonormal.woff"/>
     <ROW File="layer_launcher_vulkan.png" Component_="_open_file_link_button.png" FileName="LAYER_~1.PNG|layer_launcher_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\layer_launcher_vulkan.png" SelfReg="false" NextFile="layer_output_vulkan.png"/>
     <ROW File="layer_output_vulkan.png" Component_="_open_file_link_button.png" FileName="LAYER_~2.PNG|layer_output_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\layer_output_vulkan.png" SelfReg="false" NextFile="load_existing_project_vulkan.png"/>
-    <ROW File="ld.lld.exe" Component_="ld.lld.exe" FileName="LDLLD~1.EXE|ld.lld.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\bin\ld.lld.exe" SelfReg="false" NextFile="llvmobjdump.exe" DigSign="true"/>
-    <ROW File="llvmobjdump.exe" Component_="llvmobjdump.exe" FileName="LLVM-O~1.EXE|llvm-objdump.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\bin\llvm-objdump.exe" SelfReg="false" NextFile="llvmreadobj.exe" DigSign="true"/>
-    <ROW File="llvmreadobj.exe" Component_="llvmreadobj.exe" FileName="LLVM-R~1.EXE|llvm-readobj.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\bin\llvm-readobj.exe" SelfReg="false" NextFile="openclc.h" DigSign="true"/>
+    <ROW File="ld.lld.exe" Component_="ld.lld.exe" FileName="LDLLD~1.EXE|ld.lld.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\bin\ld.lld.exe" SelfReg="false" NextFile="llvmobjdump.exe" DigSign="true"/>
+    <ROW File="llvmobjdump.exe" Component_="llvmobjdump.exe" FileName="LLVM-O~1.EXE|llvm-objdump.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\bin\llvm-objdump.exe" SelfReg="false" NextFile="llvmreadobj.exe" DigSign="true"/>
+    <ROW File="llvmreadobj.exe" Component_="llvmreadobj.exe" FileName="LLVM-R~1.EXE|llvm-readobj.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\bin\llvm-readobj.exe" SelfReg="false" NextFile="openclc.h" DigSign="true"/>
     <ROW File="load_existing_project_vulkan.png" Component_="_open_file_link_button.png" FileName="LOAD_E~1.PNG|load_existing_project_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\load_existing_project_vulkan.png" SelfReg="false" NextFile="new_file_vulkan.png"/>
     <ROW File="minus.png" Component_="htmlDocs" FileName="minus.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\minus.png" SelfReg="false" NextFile="plus.png"/>
-    <ROW File="msvcp120.dll" Component_="msvcp120.dll" FileName="msvcp120.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\msvcp120.dll" SelfReg="false" NextFile="msvcr120.dll"/>
-    <ROW File="msvcp140.dll" Component_="msvcp140.dll" FileName="msvcp140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\msvcp140.dll" SelfReg="false" NextFile="oclc_isa_version_1034.amdgcn.bc"/>
-    <ROW File="msvcr120.dll" Component_="msvcr120.dll" FileName="msvcr120.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\msvcr120.dll" SelfReg="false" NextFile="spirvas.exe"/>
+    <ROW File="msvcp120.dll" Component_="msvcp120.dll" FileName="msvcp120.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\vulkan\msvcp120.dll" SelfReg="false" NextFile="msvcr120.dll"/>
+    <ROW File="msvcp140.dll" Component_="msvcp140.dll" FileName="msvcp140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\msvcp140.dll" SelfReg="false" NextFile="_live_vgpr_range_colors.png"/>
+    <ROW File="msvcr120.dll" Component_="msvcr120.dll" FileName="msvcr120.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\vulkan\msvcr120.dll" SelfReg="false" NextFile="spirvas.exe"/>
     <ROW File="new_file_vulkan.png" Component_="_open_file_link_button.png" FileName="NEW_FI~1.PNG|new_file_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\new_file_vulkan.png" SelfReg="false" NextFile="open_existing_project_vulkan.png"/>
     <ROW File="nojekyll" Component_="buildinfo" FileName="NOJEKY~1|.nojekyll" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\.nojekyll" SelfReg="false" NextFile="genindex.html"/>
     <ROW File="objects.inv" Component_="buildinfo" FileName="objects.inv" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\objects.inv" SelfReg="false" NextFile="quickstart.html"/>
-    <ROW File="ockl.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCKLAM~1.BC|ockl.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\ockl.amdgcn.bc" SelfReg="false" NextFile="oclc_correctly_rounded_sqrt_off.amdgcn.bc"/>
-    <ROW File="oclc_correctly_rounded_sqrt_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_C~1.BC|oclc_correctly_rounded_sqrt_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_correctly_rounded_sqrt_off.amdgcn.bc" SelfReg="false" NextFile="oclc_correctly_rounded_sqrt_on.amdgcn.bc"/>
-    <ROW File="oclc_correctly_rounded_sqrt_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_C~2.BC|oclc_correctly_rounded_sqrt_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_correctly_rounded_sqrt_on.amdgcn.bc" SelfReg="false" NextFile="oclc_daz_opt_off.amdgcn.bc"/>
-    <ROW File="oclc_daz_opt_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_D~1.BC|oclc_daz_opt_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_daz_opt_off.amdgcn.bc" SelfReg="false" NextFile="oclc_daz_opt_on.amdgcn.bc"/>
-    <ROW File="oclc_daz_opt_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_D~2.BC|oclc_daz_opt_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_daz_opt_on.amdgcn.bc" SelfReg="false" NextFile="oclc_finite_only_off.amdgcn.bc"/>
-    <ROW File="oclc_finite_only_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_F~1.BC|oclc_finite_only_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_finite_only_off.amdgcn.bc" SelfReg="false" NextFile="oclc_finite_only_on.amdgcn.bc"/>
-    <ROW File="oclc_finite_only_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_F~2.BC|oclc_finite_only_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_finite_only_on.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_900.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_1010.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~9.BC|oclc_isa_version_1010.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_1010.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1011.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_1011.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~10.BC|oclc_isa_version_1011.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_1011.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1012.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_1012.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~11.BC|oclc_isa_version_1012.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_1012.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1030.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_1030.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~12.BC|oclc_isa_version_1030.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_1030.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1031.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_1031.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~13.BC|oclc_isa_version_1031.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_1031.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1032.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_1032.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~14.BC|oclc_isa_version_1032.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_1032.amdgcn.bc" SelfReg="false" NextFile="oclc_wavefrontsize64_on.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_1034.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~15.BC|oclc_isa_version_1034.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_1034.amdgcn.bc" SelfReg="false" NextFile="umdrepoint.dll"/>
-    <ROW File="oclc_isa_version_900.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~1.BC|oclc_isa_version_900.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_900.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_902.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_902.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~3.BC|oclc_isa_version_902.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_902.amdgcn.bc" SelfReg="false" NextFile="oclc_unsafe_math_off.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_904.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~5.BC|oclc_isa_version_904.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_904.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_906.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_906.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~6.BC|oclc_isa_version_906.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_906.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_908.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_908.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~7.BC|oclc_isa_version_908.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_908.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_909.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_909.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~8.BC|oclc_isa_version_909.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_909.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1010.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_90a.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~2.BC|oclc_isa_version_90a.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_90a.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_90c.amdgcn.bc"/>
-    <ROW File="oclc_isa_version_90c.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~4.BC|oclc_isa_version_90c.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_isa_version_90c.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_904.amdgcn.bc"/>
-    <ROW File="oclc_unsafe_math_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_U~1.BC|oclc_unsafe_math_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_unsafe_math_off.amdgcn.bc" SelfReg="false" NextFile="oclc_unsafe_math_on.amdgcn.bc"/>
-    <ROW File="oclc_unsafe_math_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_U~2.BC|oclc_unsafe_math_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_unsafe_math_on.amdgcn.bc" SelfReg="false" NextFile="ocml.amdgcn.bc"/>
-    <ROW File="oclc_wavefrontsize64_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_W~2.BC|oclc_wavefrontsize64_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_wavefrontsize64_off.amdgcn.bc" SelfReg="false" NextFile="_disassembly_view_opencl.png"/>
-    <ROW File="oclc_wavefrontsize64_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_W~1.BC|oclc_wavefrontsize64_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\oclc_wavefrontsize64_on.amdgcn.bc" SelfReg="false" NextFile="oclc_wavefrontsize64_off.amdgcn.bc"/>
-    <ROW File="ocml.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCMLAM~1.BC|ocml.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\ocml.amdgcn.bc" SelfReg="false" NextFile="opencl.amdgcn.bc"/>
+    <ROW File="ockl.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCKLAM~1.BC|ockl.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\ockl.amdgcn.bc" SelfReg="false" NextFile="oclc_correctly_rounded_sqrt_off.amdgcn.bc"/>
+    <ROW File="oclc_correctly_rounded_sqrt_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_C~1.BC|oclc_correctly_rounded_sqrt_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_correctly_rounded_sqrt_off.amdgcn.bc" SelfReg="false" NextFile="oclc_correctly_rounded_sqrt_on.amdgcn.bc"/>
+    <ROW File="oclc_correctly_rounded_sqrt_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_C~2.BC|oclc_correctly_rounded_sqrt_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_correctly_rounded_sqrt_on.amdgcn.bc" SelfReg="false" NextFile="oclc_daz_opt_off.amdgcn.bc"/>
+    <ROW File="oclc_daz_opt_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_D~1.BC|oclc_daz_opt_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_daz_opt_off.amdgcn.bc" SelfReg="false" NextFile="oclc_daz_opt_on.amdgcn.bc"/>
+    <ROW File="oclc_daz_opt_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_D~2.BC|oclc_daz_opt_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_daz_opt_on.amdgcn.bc" SelfReg="false" NextFile="oclc_finite_only_off.amdgcn.bc"/>
+    <ROW File="oclc_finite_only_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_F~1.BC|oclc_finite_only_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_finite_only_off.amdgcn.bc" SelfReg="false" NextFile="oclc_finite_only_on.amdgcn.bc"/>
+    <ROW File="oclc_finite_only_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_F~2.BC|oclc_finite_only_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_finite_only_on.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1010.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_1010.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~1.BC|oclc_isa_version_1010.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_1010.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1011.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_1011.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~2.BC|oclc_isa_version_1011.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_1011.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1012.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_1012.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~3.BC|oclc_isa_version_1012.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_1012.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1030.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_1030.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~4.BC|oclc_isa_version_1030.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_1030.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1031.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_1031.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~5.BC|oclc_isa_version_1031.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_1031.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1032.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_1032.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~6.BC|oclc_isa_version_1032.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_1032.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_1034.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_1034.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~7.BC|oclc_isa_version_1034.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_1034.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_900.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_900.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~8.BC|oclc_isa_version_900.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_900.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_902.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_902.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_I~9.BC|oclc_isa_version_902.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_902.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_904.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_904.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~10.BC|oclc_isa_version_904.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_904.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_906.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_906.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~11.BC|oclc_isa_version_906.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_906.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_908.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_908.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~12.BC|oclc_isa_version_908.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_908.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_909.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_909.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~13.BC|oclc_isa_version_909.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_909.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_90a.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_90a.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~14.BC|oclc_isa_version_90a.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_90a.amdgcn.bc" SelfReg="false" NextFile="oclc_isa_version_90c.amdgcn.bc"/>
+    <ROW File="oclc_isa_version_90c.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_~15.BC|oclc_isa_version_90c.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_isa_version_90c.amdgcn.bc" SelfReg="false" NextFile="oclc_unsafe_math_off.amdgcn.bc"/>
+    <ROW File="oclc_unsafe_math_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_U~1.BC|oclc_unsafe_math_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_unsafe_math_off.amdgcn.bc" SelfReg="false" NextFile="oclc_unsafe_math_on.amdgcn.bc"/>
+    <ROW File="oclc_unsafe_math_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_U~2.BC|oclc_unsafe_math_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_unsafe_math_on.amdgcn.bc" SelfReg="false" NextFile="oclc_wavefrontsize64_off.amdgcn.bc"/>
+    <ROW File="oclc_wavefrontsize64_off.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_W~1.BC|oclc_wavefrontsize64_off.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_wavefrontsize64_off.amdgcn.bc" SelfReg="false" NextFile="oclc_wavefrontsize64_on.amdgcn.bc"/>
+    <ROW File="oclc_wavefrontsize64_on.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCLC_W~2.BC|oclc_wavefrontsize64_on.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\oclc_wavefrontsize64_on.amdgcn.bc" SelfReg="false" NextFile="ocml.amdgcn.bc"/>
+    <ROW File="ocml.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OCMLAM~1.BC|ocml.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\ocml.amdgcn.bc" SelfReg="false" NextFile="opencl.amdgcn.bc"/>
     <ROW File="open_existing_project_vulkan.png" Component_="_open_file_link_button.png" FileName="OPEN_E~1.PNG|open_existing_project_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\open_existing_project_vulkan.png" SelfReg="false" NextFile="pipeline_state_button_vulkan.png"/>
-    <ROW File="opencl.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OPENCL~1.BC|opencl.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\bitcode\opencl.amdgcn.bc" SelfReg="false" NextFile="spvgen.dll"/>
-    <ROW File="openclc.h" Component_="openclc.h" FileName="opencl-c.h" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\include\opencl-c.h" SelfReg="false" NextFile="irif.amdgcn.bc"/>
-    <ROW File="openclcbase.h" Component_="openclcbase.h" FileName="OPENCL~1.H|opencl-c-base.h" Attributes="0" SourcePath="..\BuildOutput\bin\utils\LC\OpenCL\lib\clang\14.0.0\include\opencl-c-base.h" SelfReg="false" NextFile="vcruntime140_1.dll"/>
+    <ROW File="opencl.amdgcn.bc" Component_="irif.amdgcn.bc" FileName="OPENCL~1.BC|opencl.amdgcn.bc" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\bitcode\opencl.amdgcn.bc" SelfReg="false" NextFile="openclcbase.h"/>
+    <ROW File="openclc.h" Component_="openclc.h" FileName="opencl-c.h" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\include\opencl-c.h" SelfReg="false" NextFile="irif.amdgcn.bc"/>
+    <ROW File="openclcbase.h" Component_="openclcbase.h" FileName="OPENCL~1.H|opencl-c-base.h" Attributes="0" SourcePath="..\BuildOutput\bin\utils\lc\opencl\lib\clang\14.0.0\include\opencl-c-base.h" SelfReg="false" NextFile="amdvlk64.dll"/>
     <ROW File="pipeline_state_button_vulkan.png" Component_="_open_file_link_button.png" FileName="PIPELI~1.PNG|pipeline_state_button_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\pipeline_state_button_vulkan.png" SelfReg="false" NextFile="pipeline_state_search_results_filter_vulkan.png"/>
     <ROW File="pipeline_state_search_results_filter_vulkan.png" Component_="_open_file_link_button.png" FileName="PIPELI~2.PNG|pipeline_state_search_results_filter_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\pipeline_state_search_results_filter_vulkan.png" SelfReg="false" NextFile="pipeline_state_search_results_vulkan.png"/>
     <ROW File="pipeline_state_search_results_vulkan.png" Component_="_open_file_link_button.png" FileName="PIPELI~3.PNG|pipeline_state_search_results_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\pipeline_state_search_results_vulkan.png" SelfReg="false" NextFile="pipeline_state_search_viewport_vulkan.png"/>
@@ -334,25 +333,25 @@
     <ROW File="searchindex.js" Component_="buildinfo" FileName="SEARCH~1.JS|searchindex.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\searchindex.js" SelfReg="false" NextFile="_open_file_link_button.png"/>
     <ROW File="searchtools.js" Component_="htmlDocs" FileName="SEARCH~1.JS|searchtools.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\searchtools.js" SelfReg="false" NextFile="underscore.js"/>
     <ROW File="shae.exe" Component_="shae.exe" FileName="shae.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\shae.exe" SelfReg="false" NextFile="README.md" DigSign="true"/>
-    <ROW File="spirvas.exe" Component_="spirvas.exe" FileName="spirv-as.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\spirv-as.exe" SelfReg="false" NextFile="spirvdis.exe" DigSign="true"/>
-    <ROW File="spirvdis.exe" Component_="spirvdis.exe" FileName="SPIRV-~1.EXE|spirv-dis.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\spirv-dis.exe" SelfReg="false" NextFile="vccorlib120.dll" DigSign="true"/>
-    <ROW File="spvgen.dll" Component_="spvgen.dll" FileName="spvgen.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\spvgen.dll" SelfReg="false" NextFile="VirtualContext.exe"/>
+    <ROW File="spirvas.exe" Component_="spirvas.exe" FileName="spirv-as.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\vulkan\spirv-as.exe" SelfReg="false" NextFile="spirvdis.exe" DigSign="true"/>
+    <ROW File="spirvdis.exe" Component_="spirvdis.exe" FileName="SPIRV-~1.EXE|spirv-dis.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\vulkan\spirv-dis.exe" SelfReg="false" NextFile="vccorlib120.dll" DigSign="true"/>
+    <ROW File="spvgen.dll" Component_="spvgen.dll" FileName="spvgen.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\spvgen.dll" SelfReg="false" NextFile="buildinfo"/>
     <ROW File="startup_page_vulkan.png" Component_="_open_file_link_button.png" FileName="STARTU~1.PNG|startup_page_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\startup_page_vulkan.png" SelfReg="false" NextFile="switch_mode_from_settings.png"/>
     <ROW File="switch_mode_from_settings.png" Component_="_open_file_link_button.png" FileName="SWITCH~1.PNG|switch_mode_from_settings.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\switch_mode_from_settings.png" SelfReg="false" NextFile="switch_mode_from_start_page.png"/>
     <ROW File="switch_mode_from_start_page.png" Component_="_open_file_link_button.png" FileName="SWITCH~2.PNG|switch_mode_from_start_page.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\switch_mode_from_start_page.png" SelfReg="false" NextFile="use_alternative_compiler_vulkan.png"/>
     <ROW File="theme.css" Component_="badge_only.css" FileName="theme.css" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\css\theme.css" SelfReg="false" NextFile="doctools.js"/>
     <ROW File="theme.js" Component_="modernizr.min.js" FileName="theme.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\js\theme.js" SelfReg="false" NextFile="minus.png"/>
-    <ROW File="umdrepoint.dll" Component_="umdrepoint.dll" FileName="UMDREP~1.DLL|umdrepoint.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\umdrepoint.dll" SelfReg="false" NextFile="withdll.exe"/>
+    <ROW File="umdrepoint.dll" Component_="umdrepoint.dll" FileName="UMDREP~1.DLL|umdrepoint.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\dx12\umdrepoint.dll" SelfReg="false" NextFile="withdll.exe"/>
     <ROW File="underscore.js" Component_="htmlDocs" FileName="UNDERS~2.JS|underscore.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\underscore.js" SelfReg="false" NextFile="rtda.exe"/>
     <ROW File="underscore1.13.1.js" Component_="htmlDocs" FileName="UNDERS~1.JS|underscore-1.13.1.js" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_static\underscore-1.13.1.js" SelfReg="false" NextFile="fontawesomewebfont.eot"/>
     <ROW File="use_alternative_compiler_vulkan.png" Component_="_open_file_link_button.png" FileName="USE_AL~1.PNG|use_alternative_compiler_vulkan.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\use_alternative_compiler_vulkan.png" SelfReg="false" NextFile="vk_spv_offline_indicator.png"/>
-    <ROW File="vccorlib120.dll" Component_="vccorlib120.dll" FileName="VCCORL~1.DLL|vccorlib120.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\vccorlib120.dll" SelfReg="false" NextFile="buildinfo"/>
+    <ROW File="vccorlib120.dll" Component_="vccorlib120.dll" FileName="VCCORL~1.DLL|vccorlib120.dll" Attributes="0" SourcePath="..\BuildOutput\bin\utils\vulkan\vccorlib120.dll" SelfReg="false" NextFile="vulkan_backend.exe"/>
     <ROW File="vccorlib140.dll" Component_="vccorlib140.dll" FileName="VCCORL~1.DLL|vccorlib140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\vccorlib140.dll" SelfReg="false" NextFile="qsvg.dll"/>
     <ROW File="vcruntime140.dll" Component_="vcruntime140.dll" FileName="VCRUNT~1.DLL|vcruntime140.dll" Attributes="0" SourcePath="..\BuildOutput\bin\vcruntime140.dll" SelfReg="false" NextFile="msvcp140.dll"/>
     <ROW File="vcruntime140_1.dll" Component_="vcruntime140_1.dll" FileName="VCRUNT~2.DLL|vcruntime140_1.dll" Attributes="0" SourcePath="..\BuildOutput\bin\vcruntime140_1.dll" SelfReg="false" NextFile="vcruntime140.dll"/>
     <ROW File="vk_spv_offline_indicator.png" Component_="_open_file_link_button.png" FileName="VK_SPV~1.PNG|vk_spv_offline_indicator.png" Attributes="0" SourcePath="..\BuildOutput\bin\docs\help\rga\html\_images\vk_spv_offline_indicator.png" SelfReg="false" NextFile="help_manual.rst.txt"/>
-    <ROW File="vulkan_backend.exe" Component_="vulkan_backend.exe" FileName="VULKAN~1.EXE|vulkan_backend.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\Vulkan\vulkan_backend.exe" SelfReg="false" NextFile="RGALayerLauncher.exe" DigSign="true"/>
-    <ROW File="withdll.exe" Component_="withdll.exe" FileName="withdll.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\DX12\withdll.exe" SelfReg="false" NextFile="_live_vgpr_range_colors.png" DigSign="true"/>
+    <ROW File="vulkan_backend.exe" Component_="vulkan_backend.exe" FileName="VULKAN~1.EXE|vulkan_backend.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\vulkan\vulkan_backend.exe" SelfReg="false" DigSign="true"/>
+    <ROW File="withdll.exe" Component_="withdll.exe" FileName="withdll.exe" Attributes="0" SourcePath="..\BuildOutput\bin\utils\dx12\withdll.exe" SelfReg="false" NextFile="amdgpudis.exe" DigSign="true"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.AiRemoveFileComponent">
     <ROW RemoveFile="__1" Condition="(AI_CLEAN_RESOURCES_UNINSTALL = &quot;1&quot;)" Options="1"/>
@@ -436,7 +435,6 @@
     <ROW Directory_="help_Dir" Component_="help" ManualDelete="false"/>
     <ROW Directory_="rga_Dir" Component_="rga" ManualDelete="false"/>
     <ROW Directory_="SHORTCUTDIR" Component_="SHORTCUTDIR" ManualDelete="true"/>
-    <ROW Directory_="clang_Dir" Component_="clang" ManualDelete="false"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiCustActComponent">
     <ROW Action="AI_AiRemoveFilesCommit" Type="11777" Source="ResourceCleaner.dll" Target="OnAiRemoveFilesCommit" WithoutSeq="true"/>

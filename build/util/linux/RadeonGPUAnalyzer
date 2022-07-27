@@ -2,7 +2,7 @@
 
 # ----------------------------------------------------------------------------------------------------------------------------------
 # This script launches the rga GUI executable after configuring the environment.
-# (c) 2017-2020 Advanced Micro Devices Inc. All Rights Reserved.
+# (c) 2017-2022 Advanced Micro Devices Inc. All Rights Reserved.
 # ----------------------------------------------------------------------------------------------------------------------------------
 
 if echo "$0" | grep '^/' ; then
@@ -26,7 +26,7 @@ export LD_LIBRARY_PATH="$RGA_GUI_BIN_PATH":"$RGA_GUI_BIN_PATH/lib":"$RGA_BIN_PAT
 export PATH="$RGA_GUI_BIN_PATH":"$RGA_GUI_BIN_PATH/utils":$PATH
 
 # Set path to the Qt platform plugin.
-export QT_QPA_PLATFORM_PLUGIN_PATH="$RGA_GUI_BIN_PATH/lib/platforms"
+export QT_QPA_PLATFORM_PLUGIN_PATH="$RGA_GUI_BIN_PATH/plugins/"
 
 # Call RGA GUI executable
 "$RGA_GUI_BIN_PATH"/RadeonGPUAnalyzer-bin "$@"

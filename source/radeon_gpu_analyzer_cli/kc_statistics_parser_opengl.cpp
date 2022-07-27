@@ -16,10 +16,11 @@
 #include "radeon_gpu_analyzer_cli/kc_statistics_parser_opengl.h"
 
 // Constants.
-const char* kGlIsaSizeToken = "ISA_SIZE";
-const char* kGlUsedVgprsToken = "USED_VGPRS";
-const char* kGlUsedSgprsToken = "USED_SGPRS";
-const char* kGlUsedScratchRegsToken = "SCRATCH_REGS";
+const char* kGlIsaSizeToken = "codeLenInByte";
+const char* kGlUsedVgprsToken = "NumVgprs";
+const char* kGlUsedSgprsToken = "NumSgprs";
+const char* kGlUsedScratchSizeToken = "ScratchSize";
+const char* kGlLDSByteSizeToken = "LDSByteSize";
 const char* kGlEndOfLineDelimiter = "\n";
 
 // Extracts a numeric value from the SC's textual statistics for Vulkan.
@@ -82,10 +83,16 @@ static bool ExtractUsedVgprsGL(const std::string& file_content, size_t& used_vgp
     return ExtractNumericStatistic(file_content, kGlUsedVgprsToken, used_vgprs);
 }
 
-// Extracts the scratch registers attributes.
-static bool ExtractScratchRegsGL(const std::string& file_content, size_t& scratch_regs)
+// Extracts the scratch registers attribute.
+static bool ExtractScratchSizeGL(const std::string& file_content, size_t& scratch_regs)
 {
-    return ExtractNumericStatistic(file_content, kGlUsedScratchRegsToken, scratch_regs);
+    return ExtractNumericStatistic(file_content, kGlUsedScratchSizeToken, scratch_regs);
+}
+
+// Extracts the LDS byte size attribute.
+static bool ExtractLdsByteSizeGL(const std::string& file_content, size_t& scratch_regs)
+{
+    return ExtractNumericStatistic(file_content, kGlLDSByteSizeToken, scratch_regs);
 }
 
 bool KcOpenGLStatisticsParser::ParseStatistics(const std::string& device, const gtString& stats_file, beKA::AnalysisData& stats)
@@ -95,6 +102,7 @@ bool KcOpenGLStatisticsParser::ParseStatistics(const std::string& device, const 
     stats.num_sgprs_used = 0;
     stats.num_vgprs_used = 0;
     stats.scratch_memory_used = 0;
+    stats.lds_size_used = 0;
 
     // Check if the file exists.
     if (!stats_file.isEmpty())
@@ -132,14 +140,22 @@ bool KcOpenGLStatisticsParser::ParseStatistics(const std::string& device, const 
 
                 // Extract the scratch registers size.
                 size_t scratch_regs = 0;
-                bool is_scratch_regs_extracted = ExtractScratchRegsGL(file_content, scratch_regs);
+                bool is_scratch_regs_extracted = ExtractScratchSizeGL(file_content, scratch_regs);
                 if (is_scratch_regs_extracted)
                 {
                     stats.scratch_memory_used = scratch_regs;
                 }
 
+                // Extract the LDS Byte size.
+                size_t lds_byte_size = 0;
+                bool   is_lds_byte_size_extracted = ExtractLdsByteSizeGL(file_content, lds_byte_size);
+                if (is_scratch_regs_extracted)
+                {
+                    stats.lds_size_used = lds_byte_size;
+                }
+
                 // We succeeded if all data was extracted successfully.
-                ret = (is_isa_size_extracted && is_sgprs_extracted && is_vgprs_extracted && is_scratch_regs_extracted);
+                ret = (is_isa_size_extracted && is_sgprs_extracted && is_vgprs_extracted && is_scratch_regs_extracted && is_lds_byte_size_extracted);
             }
         }
     }

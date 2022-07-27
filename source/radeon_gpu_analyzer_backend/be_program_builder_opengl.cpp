@@ -30,24 +30,277 @@
 // *** INTERNALLY LINKED SYMBOLS - START ***
 // *****************************************
 
-// The list of devices not supported by VirtualContext.
-static const std::set<std::string> kOpenglDisabledDevices = {};
+// The list of devices not supported by glc.
+static const std::set<std::string> kOpenglDisabledDevices = {"Bristol Ridge", "Carrizo", "Iceland", "Tonga", "Stoney", "gfx804"};
+
+static const std::string kStrVkOfflineSpirvOutputFilenameVertex                 = "vert.spv";
+static const std::string kStrVkOfflineSpirvOutputFilenameTessellationControl    = "tesc.spv";
+static const std::string kStrVkOfflineSpirvOutputFilenameTessellationEvaluation = "tese.spv";
+static const std::string kStrVkOfflineSpirvOutputFilenameGeometry               = "geom.spv";
+static const std::string kStrVkOfflineSpirvOutputFilenameFragment               = "frag.spv";
+static const std::string kStrVkOfflineSpirvOutputFilenameCompute                = "comp.spv";
+
+static const std::string kStrPalIlOutputFilenameVert                   = "vert.palIl";
+static const std::string kStrPalIlOutputFilenameTessellationControl    = "tesc.palIl";
+static const std::string kStrPalIlOutputFilenameTessellationEvaluation = "tese.palIl";
+static const std::string kStrPalIlOutputFilenameGeometry               = "geom.palIl";
+static const std::string kStrPalIlOutputFilenameFragment               = "frag.palIl";
+static const std::string kStrPalIlOutputFilenameCompute                = "comp.palIl";
 
 // ***************************************
 // *** INTERNALLY LINKED SYMBOLS - END ***
 // ***************************************
 
 // Internally-linked utilities.
-static bool GetVirtualContextPath(std::string& virtual_context_path)
+static bool GetGlcPath(std::string& glc_path)
 {
 #ifdef __linux
-    virtual_context_path = "VirtualContext";
+    glc_path = "glc";
 #elif _WIN64
-    virtual_context_path = "utils\\VirtualContext.exe";
+    glc_path = "utils\\glc.exe";
 #else
-    virtual_context_path = "x86\\VirtualContext.exe";
+    glc_path = "x86\\glc.exe";
 #endif
     return true;
+}
+
+static beKA::beStatus AddInputFileNames(const OpenglOptions& options, std::stringstream& cmd)
+{
+    beKA::beStatus status = beKA::kBeStatusSuccess;
+
+    // Indicates that a stage-less input file name was provided.
+    bool is_non_stage_input = false;
+
+    // Indicates that some of stage-specific file names was provided (--frag, --vert, etc.).
+    bool is_stage_input = false;
+
+    // You cannot mix compute and non-compute shaders in opengl,
+    // so this has to be mutually exclusive.
+    if (options.pipeline_shaders.compute_shader.isEmpty())
+    {
+        // Vertex shader.
+        if (!options.pipeline_shaders.vertex_shader.isEmpty())
+        {
+            cmd << "in.vert.glsl=\"" << options.pipeline_shaders.vertex_shader.asASCIICharArray() << "\" ";
+            is_stage_input = true;
+        }
+
+        // Tessellation control shader.
+        if (!options.pipeline_shaders.tessellation_control_shader.isEmpty())
+        {
+            cmd << "in.tesc.glsl=\"" << options.pipeline_shaders.tessellation_control_shader.asASCIICharArray() << "\" ";
+            is_stage_input = true;
+        }
+
+        // Tessellation evaluation shader.
+        if (!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty())
+        {
+            cmd << "in.tese.glsl=\"" << options.pipeline_shaders.tessellation_evaluation_shader.asASCIICharArray() << "\" ";
+            is_stage_input = true;
+        }
+
+        // Geometry shader.
+        if (!options.pipeline_shaders.geometry_shader.isEmpty())
+        {
+            cmd << "in.geom.glsl=\"" << options.pipeline_shaders.geometry_shader.asASCIICharArray() << "\" ";
+            is_stage_input = true;
+        }
+
+        // Fragment shader.
+        if (!options.pipeline_shaders.fragment_shader.isEmpty())
+        {
+            cmd << "in.frag.glsl=\"" << options.pipeline_shaders.fragment_shader.asASCIICharArray() << "\" ";
+            is_stage_input = true;
+        }
+    }
+    else
+    {
+        // Compute shader.
+        cmd << "in.comp.glsl=\"" << options.pipeline_shaders.compute_shader.asASCIICharArray() << "\" ";
+        is_stage_input = true;
+    }
+
+    return status;
+}
+
+static void AddOutputFileNames(const OpenglOptions& options, std::stringstream& cmd)
+{
+    bool is_spirv = (options.mode == beKA::kModeVkOfflineSpv || options.mode == beKA::kModeVkOfflineSpvTxt);
+
+    auto add_output_file = [&](bool flag, const std::string& option, const std::string& fileName) {
+        if (flag)
+        {
+            cmd << option << "\"" << fileName << "\""
+                << " ";
+        }
+    };
+
+    // AMD ISA binary generation.
+    if (options.is_amd_isa_binaries_required)
+    {
+        // Compute.
+        add_output_file(
+            !options.pipeline_shaders.compute_shader.isEmpty(), "out.comp.isa=", options.il_disassembly_output_files.compute_shader.asASCIICharArray());
+
+        if (options.pipeline_shaders.compute_shader.isEmpty())
+        {
+            // Vertex.
+            add_output_file(
+                !options.pipeline_shaders.vertex_shader.isEmpty(), "out.vert.isa=", options.il_disassembly_output_files.vertex_shader.asASCIICharArray());
+            // Tessellation control.
+            add_output_file(!options.pipeline_shaders.tessellation_control_shader.isEmpty(),
+                            "out.tesc.isa=",
+                            options.il_disassembly_output_files.tessellation_control_shader.asASCIICharArray());
+            // Tessellation evaluation.
+            add_output_file(!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty(),
+                            "out.tese.isa=",
+                            options.il_disassembly_output_files.tessellation_evaluation_shader.asASCIICharArray());
+            // Geometry.
+            add_output_file(
+                !options.pipeline_shaders.geometry_shader.isEmpty(), "out.geom.isa=", options.il_disassembly_output_files.geometry_shader.asASCIICharArray());
+            // Fragment.
+            add_output_file(
+                !options.pipeline_shaders.fragment_shader.isEmpty(), "out.frag.isa=", options.il_disassembly_output_files.fragment_shader.asASCIICharArray());
+        }
+    }
+
+    // Pipeline ELF binary generation.
+    if (options.is_pipeline_binary_required)
+    {
+        add_output_file(!options.program_binary_filename.empty(), "out.pipeBin=", options.program_binary_filename);
+    }
+
+    // AMD ISA disassembly generation.
+    if (options.is_amd_isa_disassembly_required)
+    {
+        // Compute.
+        add_output_file(
+            !options.pipeline_shaders.compute_shader.isEmpty(), "out.comp.isaText=", options.isa_disassembly_output_files.compute_shader.asASCIICharArray());
+
+        if (options.pipeline_shaders.compute_shader.isEmpty())
+        {
+            // Vertex.
+            add_output_file(
+                !options.pipeline_shaders.vertex_shader.isEmpty(), "out.vert.isaText=", options.isa_disassembly_output_files.vertex_shader.asASCIICharArray());
+            // Tessellation control.
+            add_output_file(!options.pipeline_shaders.tessellation_control_shader.isEmpty(),
+                            "out.tesc.isaText=",
+                            options.isa_disassembly_output_files.tessellation_control_shader.asASCIICharArray());
+            // Tessellation evaluation.
+            add_output_file(!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty(),
+                            "out.tese.isaText=",
+                            options.isa_disassembly_output_files.tessellation_evaluation_shader.asASCIICharArray());
+            // Geometry.
+            add_output_file(!options.pipeline_shaders.geometry_shader.isEmpty(),
+                            "out.geom.isaText=",
+                            options.isa_disassembly_output_files.geometry_shader.asASCIICharArray());
+            // Fragment.
+            add_output_file(!options.pipeline_shaders.fragment_shader.isEmpty(),
+                            "out.frag.isaText=",
+                            options.isa_disassembly_output_files.fragment_shader.asASCIICharArray());
+        }
+    }
+
+    // Shader compiler statistics disassembly generation.
+    if (options.is_stats_required)
+    {
+        // Compute.
+        add_output_file(!options.pipeline_shaders.compute_shader.isEmpty(), "out.comp.isaInfo=", options.stats_output_files.compute_shader.asASCIICharArray());
+
+        if (options.pipeline_shaders.compute_shader.isEmpty())
+        {
+            // Vertex.
+            add_output_file(
+                !options.pipeline_shaders.vertex_shader.isEmpty(), "out.vert.isaInfo=", options.stats_output_files.vertex_shader.asASCIICharArray());
+            // Tessellation control.
+            add_output_file(!options.pipeline_shaders.tessellation_control_shader.isEmpty(),
+                            "out.tesc.isaInfo=",
+                            options.stats_output_files.tessellation_control_shader.asASCIICharArray());
+            // Tessellation evaluation.
+            add_output_file(!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty(),
+                            "out.tese.isaInfo=",
+                            options.stats_output_files.tessellation_evaluation_shader.asASCIICharArray());
+            // Geometry.
+            add_output_file(
+                !options.pipeline_shaders.geometry_shader.isEmpty(), "out.geom.isaInfo=", options.stats_output_files.geometry_shader.asASCIICharArray());
+            // Fragment.
+            add_output_file(
+                !options.pipeline_shaders.fragment_shader.isEmpty(), "out.frag.isaInfo=", options.stats_output_files.fragment_shader.asASCIICharArray());
+        }
+    }
+
+    // Shader compiler il disassembly generation.
+    if (options.is_il_disassembly_required)
+    {
+        // Compute.
+        add_output_file(!options.pipeline_shaders.compute_shader.isEmpty(), "out.comp.ilText=", options.il_disassembly_output_files.compute_shader.asASCIICharArray());
+
+        if (options.pipeline_shaders.compute_shader.isEmpty())
+        {
+            // Vertex.
+            add_output_file(
+                !options.pipeline_shaders.vertex_shader.isEmpty(), "out.vert.ilText=", options.il_disassembly_output_files.vertex_shader.asASCIICharArray());
+            // Tessellation control.
+            add_output_file(!options.pipeline_shaders.tessellation_control_shader.isEmpty(),
+                            "out.tesc.ilText=",
+                            options.il_disassembly_output_files.tessellation_control_shader.asASCIICharArray());
+            // Tessellation evaluation.
+            add_output_file(!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty(),
+                            "out.tese.ilText=",
+                            options.il_disassembly_output_files.tessellation_evaluation_shader.asASCIICharArray());
+            // Geometry.
+            add_output_file(
+                !options.pipeline_shaders.geometry_shader.isEmpty(), "out.geom.ilText=", options.il_disassembly_output_files.geometry_shader.asASCIICharArray());
+            // Fragment.
+            add_output_file(
+                !options.pipeline_shaders.fragment_shader.isEmpty(), "out.frag.ilText=", options.il_disassembly_output_files.fragment_shader.asASCIICharArray());
+        }
+    }
+}
+
+// Checks if the required output files are generated by the glc.
+// Only verifies the files requested in the "options.m_pipelineShaders" name list.
+static bool VerifyGlcOutput(const OpenglOptions& options, const std::string& glc_gfx_ip)
+{
+    bool ret = true;
+
+    // For now, only perform input validation for pre Vega targets.
+    // This should be updated to take into consideration shader merging
+    // which may happen in Vega subsequent generations.
+    if (!glc_gfx_ip.empty())
+    {
+        if (options.is_amd_isa_disassembly_required)
+        {
+            ret &= (options.pipeline_shaders.compute_shader.isEmpty() ||
+                    BeUtils::IsFilePresent(options.isa_disassembly_output_files.compute_shader.asASCIICharArray()));
+            ret &= (options.pipeline_shaders.fragment_shader.isEmpty() ||
+                    BeUtils::IsFilePresent(options.isa_disassembly_output_files.fragment_shader.asASCIICharArray()));
+            ret &= (options.pipeline_shaders.geometry_shader.isEmpty() ||
+                    BeUtils::IsFilePresent(options.isa_disassembly_output_files.geometry_shader.asASCIICharArray()));
+            ret &= (options.pipeline_shaders.tessellation_control_shader.isEmpty() ||
+                    BeUtils::IsFilePresent(options.isa_disassembly_output_files.tessellation_control_shader.asASCIICharArray()));
+            ret &= (options.pipeline_shaders.tessellation_evaluation_shader.isEmpty() ||
+                    BeUtils::IsFilePresent(options.isa_disassembly_output_files.tessellation_evaluation_shader.asASCIICharArray()));
+            ret &= (options.pipeline_shaders.vertex_shader.isEmpty() ||
+                    BeUtils::IsFilePresent(options.isa_disassembly_output_files.vertex_shader.asASCIICharArray()));
+        }
+
+        if (ret && options.is_stats_required)
+        {
+            ret &= (options.pipeline_shaders.compute_shader.isEmpty() || BeUtils::IsFilePresent(options.stats_output_files.compute_shader.asASCIICharArray()));
+            ret &=
+                (options.pipeline_shaders.fragment_shader.isEmpty() || BeUtils::IsFilePresent(options.stats_output_files.fragment_shader.asASCIICharArray()));
+            ret &=
+                (options.pipeline_shaders.geometry_shader.isEmpty() || BeUtils::IsFilePresent(options.stats_output_files.geometry_shader.asASCIICharArray()));
+            ret &= (options.pipeline_shaders.tessellation_control_shader.isEmpty() ||
+                    BeUtils::IsFilePresent(options.stats_output_files.tessellation_control_shader.asASCIICharArray()));
+            ret &= (options.pipeline_shaders.tessellation_evaluation_shader.isEmpty() ||
+                    BeUtils::IsFilePresent(options.stats_output_files.tessellation_evaluation_shader.asASCIICharArray()));
+            ret &= (options.pipeline_shaders.vertex_shader.isEmpty() || BeUtils::IsFilePresent(options.stats_output_files.vertex_shader.asASCIICharArray()));
+        }
+    }
+
+    return ret;
 }
 
 BeProgramBuilderOpengl::BeProgramBuilderOpengl()
@@ -94,9 +347,9 @@ beKA::beStatus BeProgramBuilderOpengl::GetDeviceTable(std::vector<GDT_GfxCardInf
     return beKA::kBeStatusInvalid;
 }
 
-// Checks if the required output files are generated by the amdspv.
+// Checks if the required output files are generated by the glc.
 // Only verifies the files requested in the "options.m_pipelineShaders" name list.
-static bool  VerifyVirtualContextOutput(const OpenglOptions& options)
+static bool  VerifyGlcOutput(const OpenglOptions& options)
 {
     bool ret = true;
     if (options.is_amd_isa_disassembly_required)
@@ -131,7 +384,7 @@ static bool  VerifyVirtualContextOutput(const OpenglOptions& options)
     }
     if (ret && options.is_amd_isa_binaries_required)
     {
-        ret &= BeUtils::IsFilePresent(options.program_binary_filename.asASCIICharArray());
+        ret &= BeUtils::IsFilePresent(options.program_binary_filename);
         assert(ret);
     }
     if (ret && options.is_stats_required)
@@ -153,118 +406,119 @@ static bool  VerifyVirtualContextOutput(const OpenglOptions& options)
     return ret;
 }
 
-beKA::beStatus BeProgramBuilderOpengl::Compile(const OpenglOptions& gl_options, bool& cancel_signal, bool should_print_cmd, gtString& virtual_context_output)
+beKA::beStatus BeProgramBuilderOpengl::Compile(const OpenglOptions& gl_options,
+                                               bool&                cancel_signal,
+                                               bool                 should_print_cmd,
+                                               gtString&            glc_output,
+                                               gtString&            build_log)
 {
     GT_UNREFERENCED_PARAMETER(cancel_signal);
     beKA::beStatus ret = beKA::kBeStatusSuccess;
 
     // Clear the output buffer if needed.
-    if (!virtual_context_output.isEmpty())
+    if (!glc_output.isEmpty())
     {
-        virtual_context_output.makeEmpty();
+        glc_output.makeEmpty();
     }
 
-    // Get VC's path.
-    std::string vcPath;
-    GetVirtualContextPath(vcPath);
+    // Get glc's path.
+    std::string glc_path;
+    GetGlcPath(glc_path);
 
-    AMDTDeviceInfoUtils* pDeviceInfo = AMDTDeviceInfoUtils::Instance();
-    if (pDeviceInfo != nullptr)
+    AMDTDeviceInfoUtils* device_info = AMDTDeviceInfoUtils::Instance();
+    if (device_info != nullptr)
     {
-        const char VC_CMD_DELIMITER = ';';
+        // Numerical representation of the HW generation.
+        std::string device_gfx_ip;
 
-        // Build the command for invoking Virtual Context.
-        std::stringstream cmd;
-
-        // ISA.
-        cmd << vcPath << " \"" << gl_options.isa_disassembly_output_files.vertex_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.isa_disassembly_output_files.tessellation_control_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.isa_disassembly_output_files.tessellation_evaluation_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.isa_disassembly_output_files.geometry_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.isa_disassembly_output_files.fragment_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.isa_disassembly_output_files.compute_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-
-        // Program binary.
-        cmd << gl_options.program_binary_filename.asASCIICharArray() << VC_CMD_DELIMITER;
-
-        // Statistics.
-        cmd << gl_options.stats_output_files.vertex_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.stats_output_files.tessellation_control_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.stats_output_files.tessellation_evaluation_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.stats_output_files.geometry_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.stats_output_files.fragment_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.stats_output_files.compute_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-
-        // Target device info.
-        cmd << gl_options.chip_family << VC_CMD_DELIMITER << gl_options.chip_revision << VC_CMD_DELIMITER;
-
-        // Input shaders.
-        cmd << gl_options.pipeline_shaders.vertex_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.pipeline_shaders.tessellation_control_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.pipeline_shaders.tessellation_evaluation_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.pipeline_shaders.geometry_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.pipeline_shaders.fragment_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.pipeline_shaders.compute_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-
-        // An additional delimiter for the version slot.
-        cmd << VC_CMD_DELIMITER;
-
-        // IL disassembly output.
-        cmd << gl_options.il_disassembly_output_files.vertex_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.il_disassembly_output_files.tessellation_control_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.il_disassembly_output_files.tessellation_evaluation_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.il_disassembly_output_files.geometry_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.il_disassembly_output_files.fragment_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << gl_options.il_disassembly_output_files.compute_shader.asASCIICharArray() << VC_CMD_DELIMITER;
-        cmd << "\"";
-
-        // Build the GL program.
-        bool is_compiler_output_relevant = false;
-        BeUtils::PrintCmdLine(cmd.str(), should_print_cmd);
-
-        // Workaround for random VirtualContext failures: make 3 attempts with increasing intervals.
-        static const unsigned long kVcWaitInternal1 = 2000;
-        static const unsigned long kVcWaitInternal2 = 4000;
-        bool is_launch_success = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, virtual_context_output);
-        if (!is_launch_success || virtual_context_output.isEmpty())
+        // Convert the HW generation to the glc string.
+        bool is_device_hw_gen_extracted = GetDeviceGLName(gl_options.device_name, device_gfx_ip);
+        if (is_device_hw_gen_extracted && !gl_options.device_name.empty())
         {
-            // First attempt failed, wait and make a second attempt.
-            osSleep(kVcWaitInternal1);
-            is_launch_success = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, virtual_context_output);
+            // Build the command for invoking glc.
+            std::stringstream cmd;
+            cmd << glc_path;
 
-            // Second attempt failed, wait and make the last attempt.
-            if (!is_launch_success || virtual_context_output.isEmpty())
+            if (gl_options.optimization_level != -1)
             {
-                osSleep(kVcWaitInternal2);
-                is_launch_success = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, virtual_context_output);
+                cmd << " -O" << std::to_string(gl_options.optimization_level) << " ";
             }
-        }
 
-        assert(is_launch_success && !virtual_context_output.isEmpty());
-        if (is_launch_success)
-        {
-            const gtString kVcErrorToken = L"error:";
-            gtString vc_output_lower_case = virtual_context_output;
-            vc_output_lower_case.toLowerCase();
-            if (vc_output_lower_case.find(kVcErrorToken) != -1)
+           cmd << " -gfxip " << device_gfx_ip << " -set ";
+
+            if ((ret = AddInputFileNames(gl_options, cmd)) == beKA::kBeStatusSuccess)
             {
-                ret = beKA::kBeStatusOpenglBuildError;
-                is_compiler_output_relevant = true;
-            }
-            else if (!VerifyVirtualContextOutput(gl_options))
-            {
-                ret = beKA::kBeStatusFailedOutputVerification;
+                AddOutputFileNames(gl_options, cmd);
+
+                // Redirect build log to a temporary file.
+                const gtString kGlcTmpOutputFile = L"glcTempFile.txt";
+                osFilePath     tmp_file_path(osFilePath::OS_TEMP_DIRECTORY);
+                tmp_file_path.setFileName(kGlcTmpOutputFile);
+
+                // Delete the log file if it already exists.
+                if (tmp_file_path.exists())
+                {
+                    osFile tmp_log_file(tmp_file_path);
+                    tmp_log_file.deleteFile();
+                }
+
+                cmd << "out.glslLog=\"" << tmp_file_path.asString().asASCIICharArray() << "\" ";
+
+                // No default output (only generate the output files that we explicitly specified).
+                cmd << "defaultOutput=0";
+
+                // Launch glc.
+                gtString glc_output;
+                BeUtils::PrintCmdLine(cmd.str(), should_print_cmd);
+                bool is_launch_success = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, glc_output);
+                if (is_launch_success)
+                {
+                    // This is how glc signals success.
+                    const gtString kGlcTokenSuccess = L"SUCCESS!";
+
+                    // Check if the output files were generated and glc returned "success".
+                    if (glc_output.find(kGlcTokenSuccess) == std::string::npos)
+                    {
+                        ret = beKA::kBeStatusGlcCompilationFailure;
+
+                        // Read the build log.
+                        if (tmp_file_path.exists())
+                        {
+                            // Read the build log.
+                            gtString      compiler_output;
+                            std::ifstream file(tmp_file_path.asString().asASCIICharArray());
+                            std::string   tmp_cmd_output((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+                            build_log << tmp_cmd_output.c_str();
+
+                            // Delete the temporary file.
+                            osFile file_to_delete(tmp_file_path);
+                            file_to_delete.deleteFile();
+                        }
+
+                        // Let's end the build log with the error that was provided by the backend.
+                        if (!glc_output.isEmpty())
+                        {
+                            build_log << "Error: " << glc_output << L"\n";
+                        }
+                    }
+                    else if (!VerifyGlcOutput(gl_options, device_gfx_ip))
+                    {
+                        ret = beKA::kBeStatusFailedOutputVerification;
+                    }
+                    else
+                    {
+                        ret = beKA::kBeStatusSuccess;
+                    }
+                }
+                else
+                {
+                    ret = beKA::kBeStatusGlcLaunchFailure;
+                }
             }
         }
         else
         {
-            ret = beKA::kBeStatusOpenglVirtualContextLaunchFailed;
-        }
-
-        // Clear the output if irrelevant.
-        if (!is_compiler_output_relevant)
-        {
-            virtual_context_output.makeEmpty();
+            ret = beKA::kBeStatusOpenglUnknownHwFamily;
         }
     }
 
@@ -273,13 +527,13 @@ beKA::beStatus BeProgramBuilderOpengl::Compile(const OpenglOptions& gl_options, 
 
 bool BeProgramBuilderOpengl::GetOpenGLVersion(bool should_print_cmd, gtString& opengl_version) const
 {
-    // Get VC's path.
-    std::string vc_path;
-    GetVirtualContextPath(vc_path);
+    // Get glc's path.
+    std::string glc_path;
+    GetGlcPath(glc_path);
 
-    // Build the command for invoking Virtual Context.
+    // Build the command for invoking glc.
     std::stringstream cmd;
-    cmd << vc_path << " \";;;;;;;;;;;;;;;;;;;;;version;;;;;;;\"";
+    cmd << glc_path << " \";;;;;;;;;;;;;;;;;;;;;version;;;;;;;\"";
 
     // A flag for canceling the operation, we will not use it.
     bool dummy_cancel_flag = false;
@@ -298,26 +552,6 @@ bool BeProgramBuilderOpengl::GetDeviceGLInfo(const std::string& device_name, siz
     if (gl_backend_values.empty())
     {
         // Fill in the values if that's the first time.
-        gl_backend_values["Bonaire"] = std::pair<int, int>(120, 20);
-        gl_backend_values["Bristol Ridge"] = std::pair<int, int>(130, 10);
-        gl_backend_values["Capeverde"] = std::pair<int, int>(110, 40);
-        gl_backend_values["Carrizo"] = std::pair<int, int>(130, 1);
-        gl_backend_values["Fiji"] = std::pair<int, int>(130, 60);
-        gl_backend_values["Hainan"] = std::pair<int, int>(110, 75);
-        gl_backend_values["Hawaii"] = std::pair<int, int>(120, 40);
-        gl_backend_values["Iceland"] = std::pair<int, int>(130, 19);
-        gl_backend_values["Kalindi"] = std::pair<int, int>(120, 129);
-        gl_backend_values["Mullins"] = std::pair<int, int>(120, 161);
-        gl_backend_values["Oland"] = std::pair<int, int>(110, 60);
-        gl_backend_values["Pitcairn"] = std::pair<int, int>(110, 20);
-        gl_backend_values["Spectre"] = std::pair<int, int>(120, 1);
-        gl_backend_values["Spooky"] = std::pair<int, int>(120, 65);
-        gl_backend_values["Stoney"] = std::pair<int, int>(130, 97);
-        gl_backend_values["Tahiti"] = std::pair<int, int>(110, 0);
-        gl_backend_values["Tonga"] = std::pair<int, int>(130, 20);
-        gl_backend_values["Baffin"] = std::pair<int, int>(130, 91);
-        gl_backend_values["Ellesmere"] = std::pair<int, int>(130, 89);
-        gl_backend_values["gfx804"] = std::pair<int, int>(130, 100);
         gl_backend_values["gfx900"] = std::pair<int, int>(141, 1);
         gl_backend_values["gfx902"] = std::pair<int, int>(141, 27);
         gl_backend_values["gfx906"] = std::pair<int, int>(141, 40);
@@ -330,7 +564,6 @@ bool BeProgramBuilderOpengl::GetDeviceGLInfo(const std::string& device_name, siz
         gl_backend_values["gfx1031"] = std::pair<int, int>(143, 50);
         gl_backend_values["gfx1032"] = std::pair<int, int>(143, 60);
         gl_backend_values["gfx1034"] = std::pair<int, int>(143, 70);
-        gl_backend_values["gfx1035"] = std::pair<int, int>(146, 1);
     }
 
     // Fetch the relevant value.
@@ -340,6 +573,48 @@ bool BeProgramBuilderOpengl::GetDeviceGLInfo(const std::string& device_name, siz
         device_family_id = device_iter->second.first;
         device_revision = device_iter->second.second;
         ret = true;
+    }
+
+    return ret;
+}
+
+bool BeProgramBuilderOpengl::GetDeviceGLName(const std::string& device_name, std::string& valid_device_name) const
+{
+    bool ret = false;
+
+    // This map will hold the device values as expected by the OpenGL backend.
+    static std::map<std::string, std::string> gl_backend_values;
+    if (gl_backend_values.empty())
+    {
+        // Fill in the values if that's the first time.
+        gl_backend_values["gfx803"]        = "803";
+        gl_backend_values["Ellesmere"]     = "803";
+        gl_backend_values["Baffin"]        = "803";
+        gl_backend_values["Fiji"]          = "803";
+        gl_backend_values["gfx900"]        = "900";
+        gl_backend_values["gfx902"]        = "902";
+        gl_backend_values["gfx904"]        = "904";
+        gl_backend_values["gfx906"]        = "906";
+        gl_backend_values["gfx90c"]        = "90c";
+        gl_backend_values["gfx1010"]       = "1010";
+        gl_backend_values["gfx1011"]       = "1011";
+        gl_backend_values["gfx1012"]       = "1012";
+        gl_backend_values["gfx1030"]       = "1030";
+        gl_backend_values["gfx1031"]       = "1031";
+        gl_backend_values["gfx1032"]       = "1032";
+        gl_backend_values["gfx1033"]       = "1033";
+        gl_backend_values["gfx1034"]       = "1034";
+        gl_backend_values["gfx1035"]       = "1035";
+        gl_backend_values["gfx1036"]       = "1036";
+        gl_backend_values["gfx1100"]       = "1100";
+    }
+
+    // Fetch the relevant value.
+    auto device_iter = gl_backend_values.find(device_name);
+    if (device_iter != gl_backend_values.end())
+    {
+        valid_device_name = device_iter->second;
+        ret               = true;
     }
 
     return ret;

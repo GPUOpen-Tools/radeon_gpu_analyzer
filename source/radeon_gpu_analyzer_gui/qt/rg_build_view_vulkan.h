@@ -165,7 +165,7 @@ protected:
     virtual void ConnectDisassemblyViewApiSpecificSignals() override;
 
     // Initialize views specific to the current mode only.
-    virtual void InitializeModeSpecificViews() override;
+    virtual bool InitializeModeSpecificViews() override;
 
     // Check if the given source editor has line correlation enabled.
     virtual bool IsLineCorrelationEnabled(RgSourceCodeEditor* source_editor) override;
@@ -198,7 +198,7 @@ private:
     void CreatePipelineStateFile();
 
     // Create the pipeline state model instance.
-    void CreatePipelineStateModel();
+    bool CreatePipelineStateModel();
 
     // Create the pipeline state editor interface.
     void CreatePipelineStateView(QWidget* parent);

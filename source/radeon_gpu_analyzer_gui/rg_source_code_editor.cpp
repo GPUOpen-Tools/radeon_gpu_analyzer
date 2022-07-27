@@ -619,8 +619,8 @@ void RgSourceCodeEditor::mouseDoubleClickEvent(QMouseEvent* event)
     {
         QTextEdit::ExtraSelection selected_word;
         selected_word.cursor = QTextCursor(document());
-        selected_word.cursor.setPosition(text_position);
-        selected_word.cursor.setPosition(text_position + selected_text.length(), QTextCursor::KeepAnchor);
+        selected_word.cursor.setPosition(static_cast<int>(text_position));
+        selected_word.cursor.setPosition(static_cast<int>(text_position) + selected_text.length(), QTextCursor::KeepAnchor);
         selected_word.format.setForeground(text_brush);
         selected_word.format.setBackground(background_brush);
         selected_word.format.setProperty(QTextFormat::OutlinePen, outline_color);

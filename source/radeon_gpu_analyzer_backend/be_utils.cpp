@@ -61,9 +61,6 @@ static void AddGenerationDevices(GDT_HW_GENERATION hw_generation, std::vector<GD
 
 bool BeUtils::GdtHwGenToNumericValue(GDT_HW_GENERATION hw_generation, size_t& gfx_ip)
 {
-    const size_t kGfxIp6 = 6;
-    const size_t kGfxIp7 = 7;
-    const size_t kGfxIp8 = 8;
     const size_t kGfxIp9 = 9;
     const size_t kGfxIp10 = 10;
 
@@ -71,17 +68,6 @@ bool BeUtils::GdtHwGenToNumericValue(GDT_HW_GENERATION hw_generation, size_t& gf
 
     switch (hw_generation)
     {
-    case GDT_HW_GENERATION_SOUTHERNISLAND:
-        gfx_ip = kGfxIp6;
-        break;
-
-    case GDT_HW_GENERATION_SEAISLAND:
-        gfx_ip = kGfxIp7;
-        break;
-
-    case GDT_HW_GENERATION_VOLCANICISLAND:
-        gfx_ip = kGfxIp8;
-        break;
 
     case GDT_HW_GENERATION_GFX9:
         gfx_ip = kGfxIp9;
@@ -113,7 +99,6 @@ bool BeUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& card_list,
     bool convert_to_lower /*= false*/)
 {
     // Retrieve the list of devices for every relevant hardware generations.
-    AddGenerationDevices(GDT_HW_GENERATION_VOLCANICISLAND, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX9, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX10, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX103, card_list, public_device_unique_names, convert_to_lower);
@@ -301,7 +286,7 @@ bool BeUtils::DisassembleCodeObject(const std::string& code_object_filename, boo
     std::string& disassembly_whole, std::string& disassembly_text, std::string& error_msg)
 {
     static const wchar_t* kLcDisassemblerExe = L"amdgpu-dis";
-    static const wchar_t* kLcDisassemblerDir = L"utils/LC/Disassembler";
+    static const wchar_t* kLcDisassemblerDir = L"utils/lc/disassembler";
     const char* kStrErrorCodeObjectParseFailure = "Error: failed to parse Code Object .text section.";
     const char* kStrErrorLcDisassemblerLaunchFailure = "Error: failed to launch the LC disassembler.";
 

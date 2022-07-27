@@ -582,14 +582,6 @@ int Instruction::GetInstructionClockCount(const std::string& device_name) const
         std::string opcode_lower_case(instruction_opcode_);
         std::transform(opcode_lower_case.begin(), opcode_lower_case.end(), opcode_lower_case.begin(), ::tolower);
 
-        // One quarter-precision-speed devices.
-        bool is_quater_double_device = (device_name.compare(kDeviceNameCypress) == 0 ||
-                                      device_name.compare(kDeviceNameCedar) == 0 ||
-                                      device_name.compare(kDeviceNameTahiti) == 0);
-
-        // One half double-precision-speed devices.
-        bool is_half_double_device = !is_quater_double_device && (device_name.compare(kDeviceNameHawaii) == 0);
-
         // First look at the scalar performance table.
         auto dev_iter = scalar_device_perf_table_.find(opcode_lower_case);
         if (dev_iter != scalar_device_perf_table_.end())
@@ -598,30 +590,10 @@ int Instruction::GetInstructionClockCount(const std::string& device_name) const
         }
         else
         {
-            // If this is not a scalar operation, check the other tables.
-            if (is_quater_double_device)
+            dev_iter = hybrid_device_perf_table_.find(opcode_lower_case);
+            if (dev_iter != hybrid_device_perf_table_.end())
             {
-                dev_iter = quarter_device_perf_table_.find(opcode_lower_case);
-                if (dev_iter != quarter_device_perf_table_.end())
-                {
-                    ret = dev_iter->second;
-                }
-            }
-            else if (is_half_double_device)
-            {
-                dev_iter = half_device_perf_table_.find(opcode_lower_case);
-                if (dev_iter != half_device_perf_table_.end())
-                {
-                    ret = dev_iter->second;
-                }
-            }
-            else
-            {
-                dev_iter = hybrid_device_perf_table_.find(opcode_lower_case);
-                if (dev_iter != hybrid_device_perf_table_.end())
-                {
-                    ret = dev_iter->second;
-                }
+                ret = dev_iter->second;
             }
         }
     }

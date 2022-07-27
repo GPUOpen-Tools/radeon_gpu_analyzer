@@ -6,8 +6,14 @@ AUTOMATION=$4
 
 # Copy the Qt5 dynamic libs
 if [ -n "$QT_LIB_DIR" ]; then
-  if [ ! -d "$OUTPUT_DIR/lib/platforms/imageformats" ]; then
-    mkdir -p $OUTPUT_DIR/lib/platforms/imageformats
+  if [ ! -d "$OUTPUT_DIR/lib" ]; then
+    mkdir -p $OUTPUT_DIR/lib
+  fi
+  if [ ! -d "$OUTPUT_DIR/plugins/platforms" ]; then
+    mkdir -p $OUTPUT_DIR/plugins/platforms
+  fi
+  if [ ! -d "$OUTPUT_DIR/plugins/imageformats" ]; then
+    mkdir -p $OUTPUT_DIR/plugins/imageformats
   fi
   cp $QT_LIB_DIR/libQt5Core.so.5 $OUTPUT_DIR/lib/
   cp $QT_LIB_DIR/libQt5DBus.so.5 $OUTPUT_DIR/lib/
@@ -18,8 +24,8 @@ if [ -n "$QT_LIB_DIR" ]; then
   cp $QT_LIB_DIR/libicudata.so.50 $OUTPUT_DIR/lib/
   cp $QT_LIB_DIR/libicuuc.so.50 $OUTPUT_DIR/lib/
   cp $QT_LIB_DIR/libQt5Svg.so.5 $OUTPUT_DIR/lib/
-  cp $QT_PLUGINS_DIR/imageformats/libqsvg.so $OUTPUT_DIR/lib/platforms/imageformats/
-  cp $QT_PLUGINS_DIR/platforms/libqxcb.so $OUTPUT_DIR/lib/platforms/
+  cp $QT_PLUGINS_DIR/imageformats/libqsvg.so $OUTPUT_DIR/plugins/imageformats/
+  cp $QT_PLUGINS_DIR/platforms/libqxcb.so $OUTPUT_DIR/plugins/platforms/
   if [ "$AUTOMATION" = "-automation" ]; then
     cp $QT_LIB_DIR/libQt5Test.so.5 $OUTPUT_DIR/lib/
   fi

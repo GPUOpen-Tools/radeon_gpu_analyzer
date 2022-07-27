@@ -91,7 +91,7 @@ void RgAboutDialog::HandleCheckForUpdatesClicked()
     if (check_for_updates_thread_ == nullptr)
     {
         // Create the check for updates thread
-        check_for_updates_thread_ = new UpdateCheck::ThreadController(this, RGA_VERSION_MAJOR, RGA_VERSION_MINOR, RGA_VERSION_UPDATE, RGA_BUILD_NUMBER);
+        check_for_updates_thread_ = new UpdateCheck::ThreadController(this, RGA_VERSION_MAJOR, RGA_VERSION_MINOR, RGA_BUILD_NUMBER, RGA_VERSION_UPDATE);
 
         // Build dialog to display and allow user to cancel the check if desired.
         if (check_for_updates_dialog_ == nullptr)

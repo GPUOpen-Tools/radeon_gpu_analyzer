@@ -6,15 +6,6 @@
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_STRING_CONSTANTS_H_
 
 // Device Names.
-static const char* kDeviceNameCypress = "Cypress";
-static const char* kDeviceNameCedar = "Cedar";
-static const char* kDeviceNameTahiti = "Tahiti";
-static const char* kDeviceNameHawaii = "Hawaii";
-static const char* kDeviceNameKalindi = "Kalindi";
-static const char* kDeviceNameGodavari = "Godavari";
-static const char* kDeviceNameAmur = "Amur";
-static const char* kDeviceNameNolan = "Nolan";
-static const char* kDeviceNameStoney = "Stoney";
 static const char* kDeviceNameGfx900 = "gfx900";
 static const char* kDeviceNameGfx902 = "gfx902";
 static const char* kDeviceNameGfx906 = "gfx906";
@@ -29,9 +20,9 @@ static const char* kDeviceNameGfx1035 = "gfx1035";
 
 // LLVM Lightning Compiler.
 #if defined(_WIN64) || defined(__linux)
-static const wchar_t* kLcOpenclRootDir = L"utils/LC/OpenCL";
+static const wchar_t* kLcOpenclRootDir = L"utils/lc/opencl";
 #elif defined(_WIN32)
-static const wchar_t* kLcOpenclRootDir = L"x86/LC/OpenCL";
+static const wchar_t* kLcOpenclRootDir = L"x86/lc/opencl";
 #endif
 
 #if defined(_WIN32)
@@ -41,8 +32,8 @@ static const wchar_t* kLcCompilerExecutableExtension = L"";
 #endif
 
 // Vulkan
-static const wchar_t* kGlslangRootDir = L"utils/Vulkan";
-static const wchar_t* kVulkanBackendRootDir = L"utils/Vulkan";
+static const wchar_t* kGlslangRootDir = L"utils/vulkan";
+static const wchar_t* kVulkanBackendRootDir = L"utils/vulkan";
 
 static const wchar_t* kGlslangExecutable = L"glslangValidator";
 static const wchar_t* kSpirvAsExecutable = L"spirv-as";

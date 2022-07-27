@@ -812,8 +812,10 @@ bool RgBuildView::CreateNewEmptyProject()
     return ret;
 }
 
-void RgBuildView::InitializeView()
+bool RgBuildView::InitializeView()
 {
+    bool status = false;
+
     // Create an empty panel to insert alongside the file menu when no files are open.
     empty_panel_ = new QWidget(this);
 
@@ -921,7 +923,7 @@ void RgBuildView::InitializeView()
     CreateBuildSettingsView();
 
     // Create and initialize views specific to the current mode only.
-    InitializeModeSpecificViews();
+    status = InitializeModeSpecificViews();
 
     // Apply the stylesheets for the build settings.
     RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
@@ -936,6 +938,8 @@ void RgBuildView::InitializeView()
             SetBuildSettingsStylesheet(app_state->GetBuildSettingsViewStylesheet());
         }
     }
+
+    return status;
 }
 
 void RgBuildView::SetBuildSettingsStylesheet(const std::string& stylesheet)

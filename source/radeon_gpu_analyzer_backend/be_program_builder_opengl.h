@@ -29,6 +29,9 @@ struct OpenglOptions : public beKA::CompileOptions
     // The target device's chip revision.
     size_t chip_revision = 0;
 
+    // The target device's name.
+    std::string device_name;
+
     // The input shader file names.
     BeProgramPipeline pipeline_shaders;
 
@@ -51,28 +54,31 @@ struct OpenglOptions : public beKA::CompileOptions
     BeProgramPipeline stats_output_files;
 
     // ISA binary output file name.
-    gtString program_binary_filename;
+    std::string program_binary_filename;
 
     // True to generate AMD ISA binaries.
-    bool is_amd_isa_binaries_required;
+    bool is_amd_isa_binaries_required = false;
 
     // True to generate AMD ISA disassembly.
-    bool is_amd_isa_disassembly_required;
+    bool is_amd_isa_disassembly_required = false;
 
     // True to generate AMD IL disassembly.
-    bool is_il_disassembly_required;
+    bool is_il_disassembly_required = false;
 
     // True to perform live register analysis.
-    bool is_livereg_required;
+    bool is_livereg_required = false;
 
     // True to perform stall analysis.
-    bool is_stalls_required;
+    bool is_stalls_required = false;
 
     // True to perform control flow graph.
-    bool is_cfg_required;
+    bool is_cfg_required = false;
 
     // True to generate shader compiler statistics.
-    bool is_stats_required;
+    bool is_stats_required = false;
+
+    // True to generate the pipeline ELF binary.
+    bool is_pipeline_binary_required = false;
 };
 
 class BeProgramBuilderOpengl : public BeProgramBuilder
@@ -89,13 +95,16 @@ public:
 
     virtual beKA::beStatus GetDeviceTable(std::vector<GDT_GfxCardInfo>& table) override;
 
-    beKA::beStatus Compile(const OpenglOptions& vulkanOptions, bool& cancelSignal, bool printCmd, gtString& compilerOutput);
+    beKA::beStatus Compile(const OpenglOptions& vulkanOptions, bool& cancelSignal, bool printCmd, gtString& compilerOutput, gtString& build_log);
 
     /// Extracts the OpenGL version of the installed runtime.
     bool GetOpenGLVersion(bool printCmd, gtString& glVersion) const;
 
     /// Retrieve the device ID and Revision ID from the OpenGL backend.
     bool GetDeviceGLInfo(const std::string& deviceName, size_t& deviceFamilyId, size_t& deviceRevision) const;
+
+    // Retrieve the device name as recognized by the OpenGl backend.
+    bool GetDeviceGLName(const std::string& device_name, std::string& valid_device_name) const;
 
     /// Retrieves the list of supported devices.
     static bool GetSupportedDevices(std::set<std::string>& deviceList);

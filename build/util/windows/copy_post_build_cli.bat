@@ -37,25 +37,25 @@ for /F "tokens=* USEBACKQ" %%F in (`python ..\..\..\build\util\get_version.py --
 rem Create the output folders:
 IF NOT exist %OUTPUT_DIR%\ mkdir %OUTPUT_DIR%\
 IF NOT exist %OUTPUT_DIR%\utils\ mkdir %OUTPUT_DIR%\utils\
-IF NOT exist %OUTPUT_DIR%\utils\DX12\ mkdir %OUTPUT_DIR%\utils\DX12\
-IF NOT exist %OUTPUT_DIR%\utils\DX12\DXC\ mkdir %OUTPUT_DIR%\utils\DX12\DXC\
-IF NOT exist %OUTPUT_DIR%\utils\LC\ mkdir %OUTPUT_DIR%\utils\LC\
-IF NOT exist %OUTPUT_DIR%\utils\LC\Disassembler\ mkdir %OUTPUT_DIR%\utils\LC\Disassembler\
-IF NOT exist %OUTPUT_DIR%\utils\LC\OpenCL\ mkdir %OUTPUT_DIR%\utils\LC\OpenCL\lib\clang\14.0.0\include\
+IF NOT exist %OUTPUT_DIR%\utils\dx12\ mkdir %OUTPUT_DIR%\utils\dx12\
+IF NOT exist %OUTPUT_DIR%\utils\dx12\dxc\ mkdir %OUTPUT_DIR%\utils\dx12\dxc\
+IF NOT exist %OUTPUT_DIR%\utils\lc\ mkdir %OUTPUT_DIR%\utils\lc\
+IF NOT exist %OUTPUT_DIR%\utils\lc\disassembler\ mkdir %OUTPUT_DIR%\utils\lc\disassembler\
+IF NOT exist %OUTPUT_DIR%\utils\lc\opencl\ mkdir %OUTPUT_DIR%\utils\lc\opencl\lib\clang\14.0.0\include\
 echo
 
-XCopy /r /d /y "..\..\..\external\opengl\VirtualContext\windows\VirtualContext.exe" "%OUTPUT_DIR%\utils\"
+XCopy /r /d /y "..\..\..\external\opengl\glc\windows\glc.exe" "%OUTPUT_DIR%\utils\"
 XCopy /r /d /y "..\..\..\source\utils\shader_analysis\windows\x64\shae.exe" "%OUTPUT_DIR%\utils\"
 XCopy /r /d /y "..\..\..\source\utils\dx11\bin\dx11_adapter.exe" "%OUTPUT_DIR%\utils\"
-XCopy /r /e /d /y "..\..\..\external\lc\opencl\windows\*" "%OUTPUT_DIR%\utils\LC\OpenCL\"
-del /f "%OUTPUT_DIR%\utils\LC\OpenCL\include\opencl-c-base.h"
-XCopy /r /d /y "..\..\..\external\lc\opencl\windows\include\opencl-c-base.h" "%OUTPUT_DIR%\utils\LC\OpenCL\lib\clang\14.0.0\include\"
-XCopy /r /d /y "..\..\..\external\lc\opencl\additional-targets" "%OUTPUT_DIR%\utils\LC\OpenCL\"
-XCopy /r /d /y "..\..\..\external\lc\disassembler\windows\amdgpu-dis.exe" "%OUTPUT_DIR%\utils\LC\Disassembler\"
-XCopy /r /e /d /y "..\..\..\external\vulkan\tools\windows\bin\*.exe" "%OUTPUT_DIR%\utils\Vulkan\"
-XCopy /r /e /d /y "..\..\..\external\dxc\*" "%OUTPUT_DIR%\utils\DX12\DXC\"
-XCopy /r /e /d /y "..\..\..\external\dx12\withdll.exe" "%OUTPUT_DIR%\utils\DX12\"
-XCopy /r /e /d /y "..\..\..\external\dx12\umdrepoint.dll" "%OUTPUT_DIR%\utils\DX12\"
+XCopy /r /e /d /y "..\..\..\external\lc\opencl\windows\*" "%OUTPUT_DIR%\utils\lc\opencl\"
+del /f "%OUTPUT_DIR%\utils\lc\opencl\include\opencl-c-base.h"
+XCopy /r /d /y "..\..\..\external\lc\opencl\windows\include\opencl-c-base.h" "%OUTPUT_DIR%\utils\lc\opencl\lib\clang\14.0.0\include\"
+XCopy /r /d /y "..\..\..\external\lc\opencl\additional-targets" "%OUTPUT_DIR%\utils\lc\opencl\"
+XCopy /r /d /y "..\..\..\external\lc\disassembler\windows\amdgpu-dis.exe" "%OUTPUT_DIR%\utils\lc\disassembler\"
+XCopy /r /e /d /y "..\..\..\external\vulkan\tools\windows\bin\*.exe" "%OUTPUT_DIR%\utils\vulkan\"
+XCopy /r /e /d /y "..\..\..\external\dxc\*" "%OUTPUT_DIR%\utils\dx12\dxc\"
+XCopy /r /e /d /y "..\..\..\external\dx12\withdll.exe" "%OUTPUT_DIR%\utils\dx12\"
+XCopy /r /e /d /y "..\..\..\external\dx12\umdrepoint.dll" "%OUTPUT_DIR%\utils\dx12\"
 XCopy /r /d /y "..\..\..\License.txt" "%OUTPUT_DIR%\License.txt*"
 XCopy /r /d /y "..\..\..\RGA_NOTICES.txt" "%OUTPUT_DIR%\RGA_NOTICES.txt*"
 XCopy /r /d /y "..\..\..\README.md" "%OUTPUT_DIR%\README.md*"

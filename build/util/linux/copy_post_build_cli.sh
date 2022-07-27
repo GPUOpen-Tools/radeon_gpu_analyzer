@@ -22,29 +22,29 @@ chmod +x $X64_DIR/amdspv
 chmod +x $X64_DIR/spvgen.so
 
 # Copy the OpenGL backend.
-cp ../../../external/opengl/VirtualContext/linux/VirtualContext $X64_DIR/
-chmod +x $X64_DIR/VirtualContext
+cp ../../../external/opengl/glc/linux/glc $X64_DIR/
+chmod +x $X64_DIR/glc
 
 # Copy the LC Compiler.
-if [ ! -d "$X64_DIR/LC" ]; then
-  mkdir -p $X64_DIR/LC
+if [ ! -d "$X64_DIR/lc" ]; then
+  mkdir -p $X64_DIR/lc
 fi
-mkdir -p $X64_DIR/LC/OpenCL/lib/clang/14.0.0/include
-cp -rf ../../../external/lc/opencl/linux/* $X64_DIR/LC/OpenCL
-rm -f $X64_DIR/LC/OpenCL/include/opencl-c-base.h
-cp -f ../../../external/lc/opencl/additional-targets $X64_DIR/LC/OpenCL/
-cp -f ../../../external/lc/opencl/linux/include/opencl-c-base.h $X64_DIR/LC/OpenCL/lib/clang/14.0.0/include/
+mkdir -p $X64_DIR/lc/opencl/lib/clang/14.0.0/include
+cp -rf ../../../external/lc/opencl/linux/* $X64_DIR/lc/opencl
+rm -f $X64_DIR/lc/opencl/include/opencl-c-base.h
+cp -f ../../../external/lc/opencl/additional-targets $X64_DIR/lc/opencl/
+cp -f ../../../external/lc/opencl/linux/include/opencl-c-base.h $X64_DIR/lc/opencl/lib/clang/14.0.0/include/
 
 # Copy the LC disassembler.
-if [ ! -d "$X64_DIR/LC/Disassembler" ]; then
-  mkdir $X64_DIR/LC/Disassembler
+if [ ! -d "$X64_DIR/lc/disassembler" ]; then
+  mkdir $X64_DIR/lc/disassembler
 fi
-cp ../../../external/lc/disassembler/linux/amdgpu-dis $X64_DIR/LC/Disassembler
+cp ../../../external/lc/disassembler/linux/amdgpu-dis $X64_DIR/lc/disassembler
 
-# make sure LC/OpenCL/bin/clang is link to clang-14
+# make sure lc/opencl/bin/clang is link to clang-14
 CURDIR=`pwd`
-rm -f $X64_DIR/LC/OpenCL/bin/clang
-cd $X64_DIR/LC/OpenCL/bin/
+rm -f $X64_DIR/lc/opencl/bin/clang
+cd $X64_DIR/lc/opencl/bin/
 # clean up old symlinks
 if [ -e clang ]; then
     rm -f clang
@@ -61,8 +61,8 @@ ln -s lld ld.lld
 ln -s llvm-readobj llvm-readelf
 cd $CURDIR
 
-chmod +x $X64_DIR/LC/OpenCL/bin/lld $X64_DIR/LC/OpenCL/bin/clang-14 $X64_DIR/LC/OpenCL/bin/llvm-objdump $X64_DIR/LC/OpenCL/bin/llvm-readobj
-chmod +x $X64_DIR/LC/OpenCL/lib/bitcode/*.bc
+chmod +x $X64_DIR/lc/opencl/bin/lld $X64_DIR/lc/opencl/bin/clang-14 $X64_DIR/lc/opencl/bin/llvm-objdump $X64_DIR/lc/opencl/bin/llvm-readobj
+chmod +x $X64_DIR/lc/opencl/lib/bitcode/*.bc
 
 # Copy the static analysis backend.
 if [ "$INTERNAL" = true ]; then
@@ -86,12 +86,12 @@ else
 fi
 
 # Copy the Vulkan tools.
-if [ ! -d "$X64_DIR/Vulkan" ]; then
-  mkdir -p $X64_DIR/Vulkan
+if [ ! -d "$X64_DIR/vulkan" ]; then
+  mkdir -p $X64_DIR/vulkan
 fi
-cp ../../../external/vulkan/tools/linux/bin/* "$X64_DIR/Vulkan/"
-chmod +x $X64_DIR/Vulkan/*spirv*
-chmod +x $X64_DIR/Vulkan/glslangValidator
+cp ../../../external/vulkan/tools/linux/bin/* "$X64_DIR/vulkan/"
+chmod +x $X64_DIR/vulkan/*spirv*
+chmod +x $X64_DIR/vulkan/glslangValidator
 
 # Copy the Radeon Tools Download Assistant.
 cp ../../../../Common/Src/update_check_api/rtda/linux/rtda $OUTPUT_DIR/

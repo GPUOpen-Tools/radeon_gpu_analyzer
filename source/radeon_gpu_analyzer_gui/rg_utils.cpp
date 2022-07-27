@@ -1114,7 +1114,7 @@ bool RgUtils::IsValidFileName(const std::string& filename)
     // Verify that no illegal characters are included in the file name.
     bool is_valid = !filename.empty() && filename.find('/') == std::string::npos && filename.find('\\') == std::string::npos &&
                     filename.find(':') == std::string::npos && filename.find('|') == std::string::npos && filename.find('<') == std::string::npos &&
-                    filename.find('>') == std::string::npos &&
+                    filename.find('>') == std::string::npos && filename.find(' ') == std::string::npos &&
 #ifdef _WIN32
                     // Windows only.
                     filename.find('*') == std::string::npos && filename.find('\"') == std::string::npos;
@@ -1125,10 +1125,42 @@ bool RgUtils::IsValidFileName(const std::string& filename)
     return is_valid;
 }
 
-bool RgUtils::IsValidProjectName(const std::string& filename)
+bool RgUtils::IsValidProjectName(const std::string& file_full_path, std::string& error_message)
 {
-    const int kMaxProjectNameLength = 50;
-    return IsValidFileName(filename) && !filename.empty() && filename.size() <= kMaxProjectNameLength;
+	const int kMaxProjectNameLength = 50;
+    QFileInfo file_info             = QFileInfo(QString::fromStdString(file_full_path));
+    QString   file_name             = file_info.fileName();
+
+    // If the file name does not end with the project file extension, add it.
+    // When creating a new project, no project file extension is present at this point,
+    // but when opening an existing project, there is a project file extension present.
+    // Adding the missing project file extension here makes the code below work for both
+    // scenarios.
+    if (!file_name.endsWith(kStrProjectFileExtension))
+    {
+        file_name = file_name + kStrProjectFileExtension;
+    }
+
+    // Check for valid file name.
+    bool is_valid = IsValidFileName(file_name.toStdString()) && !file_name.isEmpty() && file_name.size() <= kMaxProjectNameLength;
+
+    if (!is_valid)
+    {
+        error_message = kStrErrIllegalProjectName;
+    }
+
+    // Check for two or more dots in the name.
+    // If found, return a failure.
+    const QRegularExpression reg("(\\.{2,})");
+    QRegularExpressionMatch match = reg.match(file_name);
+
+    if (match.hasMatch())
+    {
+        is_valid = false;
+        error_message = kStrErrIllegalStringProjectName + std::string("\"") + match.captured(0).toStdString() + std::string("\":");
+    }
+
+    return is_valid;
 }
 
 bool RgUtils::IsSpvBinFile(const std::string& file_path)

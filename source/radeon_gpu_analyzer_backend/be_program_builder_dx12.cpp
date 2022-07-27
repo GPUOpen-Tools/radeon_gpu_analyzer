@@ -36,13 +36,13 @@ using namespace rga;
 
 // DX12.
 static const wchar_t* kStrEnvVarNameAmdVirtualGpuId = L"AmdVirtualGpuId";
-static const wchar_t* kDx12BackendDir               = L"utils/DX12";
+static const wchar_t* kDx12BackendDir               = L"utils/dx12";
 static const wchar_t* kDx12BackendExe               = L"dx12_backend";
-static const wchar_t* DX12_DXC_DIR                  = L"utils/DX12/DXC";
+static const wchar_t* DX12_DXC_DIR                  = L"utils/dx12/dxc";
 static const wchar_t* DX12_DXC_EXE                  = L"dxc";
 static const wchar_t* kDx12OfflineBackend           = L"withDll";
 static const wchar_t* kDx12OfflineKmtmuxer          = L"umdrepoint";
-static const wchar_t* kDx12AmdxcBundledDriverDir    = L"utils/DX12/amdxc";
+static const wchar_t* kDx12AmdxcBundledDriverDir    = L"utils/dx12/amdxc";
 static const wchar_t* kDx12AmdxcBundledDriver       = L"amdxc64";
 static const char*    kDx12BackendExeAscii          = "dx12_backend";
 static const char*    kDx12OfflineBackendAscii      = "withdll";

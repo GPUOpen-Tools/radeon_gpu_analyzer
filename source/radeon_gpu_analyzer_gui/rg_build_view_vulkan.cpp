@@ -831,13 +831,20 @@ void RgBuildViewVulkan::ConnectPipelineStateViewSignals()
     }
 }
 
-void RgBuildViewVulkan::InitializeModeSpecificViews()
+bool RgBuildViewVulkan::InitializeModeSpecificViews()
 {
+    bool status = false;
+
     // Create the pipeline state model.
-    CreatePipelineStateModel();
+    status = CreatePipelineStateModel();
 
     // Create the Vulkan Pipeline State editor view.
-    CreatePipelineStateView(this);
+    if (status)
+    {
+        CreatePipelineStateView(this);
+    }
+
+    return status;
 }
 
 void RgBuildViewVulkan::FocusOnFileMenu()
@@ -1251,8 +1258,10 @@ void RgBuildViewVulkan::HandleEnumListWidgetStatus(bool is_open)
     }
 }
 
-void RgBuildViewVulkan::CreatePipelineStateModel()
+bool RgBuildViewVulkan::CreatePipelineStateModel()
 {
+    bool status = true;
+
     std::shared_ptr<RgFactoryGraphics> graphics_factory = std::dynamic_pointer_cast<RgFactoryGraphics>(factory_);
 
     assert(graphics_factory != nullptr);
@@ -1288,33 +1297,42 @@ void RgBuildViewVulkan::CreatePipelineStateModel()
                         bool is_pipeline_state_initialized = false;
                         std::string error_string;
 
-                        RgPipelineState& currentPipelineState = vulkan_clone->pso_states[pipeline_state_index_];
-                        bool isStateFileExists = RgUtils::IsFileExists(currentPipelineState.pipeline_state_file_path);
-                        if (isStateFileExists)
+                        assert(pipeline_state_index_ < vulkan_clone->pso_states.size());
+                        if (pipeline_state_index_ < vulkan_clone->pso_states.size())
                         {
-                            // Load the state file from disk.
-                            is_pipeline_state_initialized =
-                                pipeline_state_model_->LoadPipelineStateFile(this, currentPipelineState.pipeline_state_file_path, vulkan_clone->pipeline.type, error_string);
+                            RgPipelineState& currentPipelineState = vulkan_clone->pso_states[pipeline_state_index_];
+                            bool             is_state_file_exists    = RgUtils::IsFileExists(currentPipelineState.pipeline_state_file_path);
+                            if (is_state_file_exists)
+                            {
+                                // Load the state file from disk.
+                                is_pipeline_state_initialized = pipeline_state_model_->LoadPipelineStateFile(
+                                    this, currentPipelineState.pipeline_state_file_path, vulkan_clone->pipeline.type, error_string);
 
-                            assert(is_pipeline_state_initialized);
+                                assert(is_pipeline_state_initialized);
+                                if (!is_pipeline_state_initialized)
+                                {
+                                    std::stringstream error_stream;
+                                    error_stream << kStrErrCannotLoadPipelineStateFile;
+                                    error_stream << " ";
+                                    error_stream << error_string;
+                                    emit SetStatusBarText(error_stream.str().c_str());
+                                }
+                            }
+
+                            // If the pipeline state file didn't exist, or failed to load, initialize the default configuration.
                             if (!is_pipeline_state_initialized)
                             {
-                                std::stringstream error_stream;
-                                error_stream << kStrErrCannotLoadPipelineStateFile;
-                                error_stream << " ";
-                                error_stream << error_string;
-                                emit SetStatusBarText(error_stream.str().c_str());
+                                // Initialize the pipeline state model based on the pipeline type.
+                                pipeline_state_model_->InitializeDefaultPipelineState(this, vulkan_clone->pipeline.type);
+
+                                // Save the new default pipeline state.
+                                is_pipeline_state_initialized =
+                                    pipeline_state_model_->SavePipelineStateFile(currentPipelineState.pipeline_state_file_path, error_string);
                             }
                         }
-
-                        // If the pipeline state file didn't exist, or failed to load, initialize the default configuration.
-                        if (!is_pipeline_state_initialized)
+                        else
                         {
-                            // Initialize the pipeline state model based on the pipeline type.
-                            pipeline_state_model_->InitializeDefaultPipelineState(this, vulkan_clone->pipeline.type);
-
-                            // Save the new default pipeline state.
-                            is_pipeline_state_initialized = pipeline_state_model_->SavePipelineStateFile(currentPipelineState.pipeline_state_file_path, error_string);
+                            status = false;
                         }
 
                         // Was the pipeline state file loaded or created successfully?
@@ -1331,6 +1349,8 @@ void RgBuildViewVulkan::CreatePipelineStateModel()
             }
         }
     }
+
+    return status;
 }
 
 void RgBuildViewVulkan::CreatePipelineStateView(QWidget* parent)

@@ -1,15 +1,11 @@
-Radeon™ GPU Analyzer 2.6.1 – Release Notes
+Radeonï¿½ GPU Analyzer 2.6.2 ï¿½ Release Notes
 ==========================================
 Highlights
 ==========
--	Added support for gfx1035 as a target in Vulkan, DX12, DXR, DX11, OpenCL and OpenGL modes.
--	DX12/DXR modes: 
-o	Updated the DXC compiler package that is bundled with the tool to the latest public version. 
-o	DX12/DXR offline modes now support up to gfx1035 (previously supported up to gfx1032).
--	You can now build the RGA with the Visual Studio 2022 compiler toolchain (v143). To generate a Visual Studio 2022 solution for the tool, run the prebuild script with --vs 2022 as an argument.
--	You can now change where RGA project files are saved by the GUI app. This can be used as a workaround on Windows systems where the path to the default project folder uses Unicode characters.
--	Shader analysis: fixed an issue which caused v_mad_mixlo_f16 and v_mad_mixhi_f16 instructions to be marked as <unknown> in live register analysis reports and CFG output files.
--	Fixed an issue that prevented the Close button in the GUI application’s About dialog from working.
+-	OpenGL mode is now an offline mode (-s opengl):
+    o Compile OpenGL shaders for any supported target, independently of the installed graphics card and driver.
+    o You can now generate static hardware resource usage information support for OpenGL shaders.
+-	Support for legacy targets (GFX8 and older) was removed.
 
 Note: on Ubuntu, the minimum required OS version is Ubuntu 20.04.
 
@@ -21,16 +17,12 @@ Vulkan Live Driver Mode
 -	Keyboard navigation is not supported from some views in the GUI application.
 -	The RGA layer is a beta feature. It fails to extract the shaders and pipeline state from certain Vulkan apps.
 -	Notifications about the fact that modified SPIR-V binary does not match the disassembly will not appear for loaded projects (in case that you changed the SPIR-V code, did not build and re-loaded the project).
--	Cycle estimate for certain VALU instructions appears as “Varies” instead of 4.
+-	Cycle estimate for certain VALU instructions appears as ï¿½Variesï¿½ instead of 4.
 
 Offline OpenCL Mode
 -------------------
 -	OpenCL C++ kernels are not yet supported by the Lightning Compiler.
--	Cycle estimate for certain VALU instructions appears as “Varies” instead of 4.
-
-OpenGL Mode
------------
-Resource usage statistics for OpenGL mode only displays usage of SGPRs and VGPRs. 
+-	Cycle estimate for certain VALU instructions appears as ï¿½Variesï¿½ instead of 4.
 
 DirectX 12 Mode
 ---------------
@@ -194,16 +186,17 @@ SPV_GOOGLE_user_type
 GUI Application
 ---------------
 -	VGPR Pressure feature: certain instructions (image_* in particular) may report more live registers than actually used.
--	“Correlation Disabled” notification in the source code editor is not being saved for projects after they were closed.
+-	ï¿½Correlation Disabledï¿½ notification in the source code editor is not being saved for projects after they were closed.
 -	Certain SALU instructions are being misclassified as VALU instructions. 
 -	Certain GDS instructions are being misclassified as SALU.
 -	Changing disassembly columns can be sluggish on certain systems in projects with multiple .cl files.
 -	On systems with default Unicode path for the RGA projects folder, the tool will not be able to save files. A workaround has been provided in version 2.6.1 (allowing the user to change the folder in which projects are saved).
+-	Cannot rename source files whose file name contains a whitespace character.
 
 Notes for OpenCL Mode Users 
 ===========================
 The Offline OpenCL mode uses the Lightning Compiler package that ships with RGA, which is based on clang. 
-As of version 2.0, RGA allows developers to replace the Lightning Compiler package that ships with the product with a user-provided LLVM-based package. For more information, see the Radeon GPU Analyzer GUI app's help manual, or run the command line tool with –s opencl –h as arguments (look for the “Alternative OpenCL Lightning Compiler” section).
+As of version 2.0, RGA allows developers to replace the Lightning Compiler package that ships with the product with a user-provided LLVM-based package. For more information, see the Radeon GPU Analyzer GUI app's help manual, or run the command line tool with ï¿½s opencl ï¿½h as arguments (look for the ï¿½Alternative OpenCL Lightning Compilerï¿½ section).
 
 Notes for DirectX 11 Mode Users
 ===============================
@@ -211,7 +204,7 @@ RGA's DirectX 11 (-s dx11) mode will use the driver that is associated with the 
 
 System Requirements
 ===================
-It is generally recommended to use RGA with the latest Radeon Software version. Specifically, to target the RDNA architecture, the latest Radeon Software version is required (except for all Vulkan® modes and the Offline OpenCL mode, which are independent of the driver).
+It is generally recommended to use RGA with the latest Radeon Software version. Specifically, to target the RDNA architecture, the latest Radeon Software version is required (except the Offline Vulkan, OpenGL and OpenCL modes, which are independent of the driver).
 
 Vulkan Mode
 -----------
@@ -223,6 +216,10 @@ Vulkan Offline Modes (vk-offline, vk-spv-offline, vk-spv-txt-offline)
 ---------------------------------------------------------------------
 All Vulkan offline modes (vk-offline, vk-spv-offline and vk-spv-txt-offline) are independent of the installed driver and graphics hardware and should work on any x86-based system. 
 
+OpenGL Offline Mode (opengl)
+----------------------------
+The new OpenGL mode (introduced in RGA 2.6.2) is independent of the installed driver and graphics hardware and should work on any x86-based system. 
+
 DirectX 12 and DirectX 11 Modes
 -------------------------------
 It is recommended to use the latest Adrenalin drivers for the best experience in DirectX 12 and DirectX 11 modes.
@@ -230,9 +227,4 @@ It is recommended to use the latest Adrenalin drivers for the best experience in
 Offline OpenCL Mode
 -------------------
 Offline OpenCL mode (-s opencl) is independent of the installed driver and graphics hardware and should work on any x86-based system. 
-
-OpenGL Mode
------------
-OpenGL mode requires the latest amdgpu-pro driver on Linux and latest Adrenalin Software on Windows.
-
 

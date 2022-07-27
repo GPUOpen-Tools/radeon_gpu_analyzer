@@ -76,22 +76,7 @@ static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* device_info, const VkOfflineO
     bool ret = false;
     gfx_ip_str.clear();
 
-    if (vulkan_options.target_device_name.compare(kDeviceNameKalindi) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGodavari) == 0)
-    {
-        // Special case #1: 7.x devices.
-        gfx_ip_str = "7.x";
-        ret = true;
-    }
-    else if (vulkan_options.target_device_name.compare(kDeviceNameStoney) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameAmur) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameNolan) == 0)
-    {
-        // Special case #2: 8.1 devices.
-        gfx_ip_str = "8";
-        ret = true;
-    }
-    else if (vulkan_options.target_device_name.compare(kDeviceNameGfx900) == 0 ||
+    if (vulkan_options.target_device_name.compare(kDeviceNameGfx900) == 0 ||
         vulkan_options.target_device_name.compare(kDeviceNameGfx902) == 0 ||
         vulkan_options.target_device_name.compare(kDeviceNameGfx906) == 0)
     {

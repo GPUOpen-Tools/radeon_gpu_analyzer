@@ -15,6 +15,8 @@
     #pragma warning(disable:4309)
 #endif
 #include "external/amdt_base_tools/Include/gtAssert.h"
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osFile.h"
 #ifdef _WIN32
     #pragma warning(pop)
 #endif
@@ -29,9 +31,78 @@
 // Constants.
 static const char* kStrErrorOpenglIsaParsingFailed = "Error: failed to parse ISA into CSV.";
 static const char* kStrErrorOpenglCannotExtractVersion = "Error: unable to extract the OpenGL version.";
+static const char* kStrErrTextFileWriteFailed = "Error: unable to write to statistics file.";
+static const char* kStrErrNoInputFile = "Error: no input file received.";
 
 // Unsupported devices.
 static const std::set<std::string> kUnsupportedDevicesOpengl = {"gfx908"};
+
+void KcCliCommanderOpenGL::GlcStatsToString(const beKA::AnalysisData& stats, std::stringstream& serialized_stats)
+{
+    serialized_stats << "Statistics:" << std::endl;
+    serialized_stats << "    - USED_VGPRs                              = " << stats.num_vgprs_used << std::endl;
+    serialized_stats << "    - USED_SGPRs                              = " << stats.num_sgprs_used << std::endl;
+    serialized_stats << "    - resourceUsage.ldsSizePerLocalWorkGroup  = 65536" << std::endl;
+    serialized_stats << "    - LDS_USED                                = " << stats.lds_size_used << std::endl;
+    serialized_stats << "    - SCRATCH_SIZE                            = " << stats.scratch_memory_used << std::endl;
+    serialized_stats << "    - AVAILABLE_VGPRs                         = 256" << std::endl;
+    serialized_stats << "    - AVAILABLE_SGPRs                         = 104" << std::endl;
+    serialized_stats << "    - ISA_SIZE                                = " << stats.isa_size << std::endl;
+}
+
+bool KcCliCommanderOpenGL::WriteTextFile(const gtString& filename, const std::string& content)
+{
+    bool          ret = false;
+    std::ofstream output;
+    output.open(filename.asASCIICharArray());
+
+    if (output.is_open())
+    {
+        output << content << std::endl;
+        output.close();
+        ret = true;
+    }
+    else
+    {
+        std::cerr << kStrErrTextFileWriteFailed << filename.asASCIICharArray() << std::endl;
+    }
+
+    return ret;
+}
+
+void KcCliCommanderOpenGL::CreateStatisticsFile(const gtString&         statistics_file,
+                                 const Config&           config,
+                                 const std::string&      device,
+                                 IStatisticsParser&      stats_parser,
+                                 LoggingCallbackFunction log_cb)
+{
+    // Parse the backend statistics.
+    beKA::AnalysisData statistics;
+    stats_parser.ParseStatistics(device, statistics_file, statistics);
+
+    // Delete the older statistics file.
+    DeleteFile(statistics_file);
+
+    // Create a new statistics file in the CLI format.
+    std::stringstream serialized_stats;
+    GlcStatsToString(statistics, serialized_stats);
+
+    // Write the stats to text file.
+    WriteTextFile(statistics_file, serialized_stats.str());
+}
+
+bool KcCliCommanderOpenGL::DeleteFile(const gtString& file_full_path)
+{
+    bool       ret = false;
+    osFilePath path(file_full_path);
+
+    if (path.exists())
+    {
+        osFile file(path);
+        ret = file.deleteFile();
+    }
+    return ret;
+}
 
 struct KcCliCommanderOpenGL::OpenglDeviceInfo
 {
@@ -182,8 +253,18 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
         log_msg << kStrErrorMemoryAllocationFailure << std::endl;
     }
 
+    // We must have a single input file at least.
+    bool is_input_present = is_comp_shader_present || is_vert_shader_present || is_tess_control_shader_present ||
+        is_tess_evaluation_shader_present || is_geom_shader_present || is_frag_shader_present;
+
+    if (!is_input_present)
+    {
+        std::cout << kStrErrNoInputFile << std::endl;
+        should_abort = true;
+    }
+
     // Cannot mix compute and non-compute shaders.
-    if (is_comp_shader_present && (is_vert_shader_present || is_tess_control_shader_present ||
+    if (!should_abort && is_comp_shader_present && (is_vert_shader_present || is_tess_control_shader_present ||
                                    is_tess_evaluation_shader_present || is_geom_shader_present || is_frag_shader_present))
     {
         log_msg << kStrErrorGraphicsComputeMix << std::endl;
@@ -305,13 +386,7 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                     device_gt_str << device.c_str();
 
                     // Set the target device info for the backend.
-                    bool is_device_gl_info_extracted = ogl_builder_->GetDeviceGLInfo(device, gl_options.chip_family, gl_options.chip_revision);
-                    if (!is_device_gl_info_extracted)
-                    {
-                        const char* const kStrErrorCannotGetDeviceInfo = "Error: cannot get device info for: ";
-                        log_msg << kStrErrorCannotGetDeviceInfo << device << std::endl;
-                        continue;
-                    }
+                    gl_options.device_name = device;
 
                     // Adjust the output file names to the device and shader type.
                     if (is_isa_required)
@@ -357,21 +432,15 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                         gl_options.is_stats_required = true;
                         std::string adjustedIsaFileName = KcUtils::AdjustBaseFileNameStats(config.analysis_file, device);
                         status &= GenerateRenderingPipelineOutputPaths(config, adjustedIsaFileName, kStrDefaultExtensionStats,
-                                                                       kStrDefaultExtensionCsv, device, gl_options.stats_output_files);
+                                                                       kStrDefaultExtensionText, device, gl_options.stats_output_files);
                     }
 
                     if (is_isa_binary)
                     {
-                        gl_options.is_amd_isa_binaries_required = true;
+                        gl_options.is_pipeline_binary_required  = true;
                         std::string adjustedIsaFileName = KcUtils::AdjustBaseFileNameBinary(config.binary_output_file, device);
                         KcUtils::ConstructOutputFileName(adjustedIsaFileName, "", kStrDefaultExtensionBin,
                                                          "", device, gl_options.program_binary_filename);
-                    }
-                    else
-                    {
-                        // If binary file name is not provided, create a temp file.
-                        gl_options.program_binary_filename = KcUtils::ConstructTempFileName(L"rgaTempFile", L"bin");
-                        GT_ASSERT_EX(gl_options.program_binary_filename != L"", L"Cannot create a temp file.");
                     }
 
                     if (!status)
@@ -385,8 +454,9 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                     bool should_cancel = false;
 
                     // Compile.
-                    gtString vc_output;
-                    beKA::beStatus buildStatus = ogl_builder_->Compile(gl_options, should_cancel, config.print_process_cmd_line, vc_output);
+                    gtString glc_output;
+                    gtString build_log;
+                    beKA::beStatus buildStatus = ogl_builder_->Compile(gl_options, should_cancel, config.print_process_cmd_line, glc_output, build_log);
                     if (buildStatus == kBeStatusSuccess)
                     {
                         log_msg << kStrInfoSuccess << std::endl;
@@ -430,32 +500,32 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                         {
                             if (is_vert_shader_present)
                             {
-                                KcUtils::ReplaceStatisticsFile(gl_options.stats_output_files.vertex_shader, config, device, stats_parser, callback);
+                                CreateStatisticsFile(gl_options.stats_output_files.vertex_shader, config, device, stats_parser, callback);
                             }
 
                             if (is_tess_control_shader_present)
                             {
-                                KcUtils::ReplaceStatisticsFile(gl_options.stats_output_files.tessellation_control_shader, config, device, stats_parser, callback);
+                                CreateStatisticsFile(gl_options.stats_output_files.tessellation_control_shader, config, device, stats_parser, callback);
                             }
 
                             if (is_tess_evaluation_shader_present)
                             {
-                                KcUtils::ReplaceStatisticsFile(gl_options.stats_output_files.tessellation_evaluation_shader, config, device, stats_parser, callback);
+                                CreateStatisticsFile(gl_options.stats_output_files.tessellation_evaluation_shader, config, device, stats_parser, callback);
                             }
 
                             if (is_geom_shader_present)
                             {
-                                KcUtils::ReplaceStatisticsFile(gl_options.stats_output_files.geometry_shader, config, device, stats_parser, callback);
+                                CreateStatisticsFile(gl_options.stats_output_files.geometry_shader, config, device, stats_parser, callback);
                             }
 
                             if (is_frag_shader_present)
                             {
-                                KcUtils::ReplaceStatisticsFile(gl_options.stats_output_files.fragment_shader, config, device, stats_parser, callback);
+                                CreateStatisticsFile(gl_options.stats_output_files.fragment_shader, config, device, stats_parser, callback);
                             }
 
                             if (is_comp_shader_present)
                             {
-                                KcUtils::ReplaceStatisticsFile(gl_options.stats_output_files.compute_shader, config, device, stats_parser, callback);
+                                CreateStatisticsFile(gl_options.stats_output_files.compute_shader, config, device, stats_parser, callback);
                             }
                         }
 
@@ -601,9 +671,9 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                     }
 
                     // Notify the user about build errors if any.
-                    if (!vc_output.isEmpty())
+                    if (!glc_output.isEmpty())
                     {
-                        log_msg << vc_output.asASCIICharArray() << std::endl;
+                        log_msg << glc_output.asASCIICharArray() << std::endl;
                     }
 
                     // Print the message for the current device.

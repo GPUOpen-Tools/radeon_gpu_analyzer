@@ -652,14 +652,14 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << "Examples:" << endl;
             cout << "  " << "Compile foo.cl for all supported devices; extract ISA, IL code and statistics:" << endl;
             cout << "    " << program_name << " -s cl --isa output/foo_isa.txt --il output/foo_il.txt -a output/stats.csv foo.cl" << endl;
-            cout << "  " << "Compile foo.cl for Fiji; extract ISA and perform live register analysis:" << endl;
-            cout << "    " << program_name << " -s cl -c Fiji --isa output/foo_isa.txt --livereg output/regs.txt foo.cl" << endl;
+            cout << "  " << "Compile foo.cl for gfx1010; extract ISA and perform live register analysis:" << endl;
+            cout << "    " << program_name << " -s cl -c gfx1010 --isa output/foo_isa.txt --livereg output/regs.txt foo.cl" << endl;
             cout << "  " << "Compile foo.cl for gfx906; extract binary and control flow graphs:" << endl;
             cout << "    " << program_name << " -s cl -c gfx906 --bin output/foo.bin --cfg output/cfg.dot foo.cl" << endl;
             cout << "  " << "List the kernels available in foo.cl:" << endl;
             cout << "    " << program_name << " -s cl --list-kernels foo.cl" << endl;
-            cout << "  " << "Compile foo.cl for Bonaire; extract the hardware resource usage statistics for myKernel.  Write the statistics to foo.csv:" << endl;
-            cout << "    " << program_name << " -s cl -c \"Bonaire\" --kernel myKernel -a foo.csv foo.cl" << endl;
+            cout << "  " << "Compile foo.cl for gfx1030; extract the hardware resource usage statistics for myKernel.  Write the statistics to foo.csv:" << endl;
+            cout << "    " << program_name << " -s cl -c \"gfx1030\" --kernel myKernel -a foo.csv foo.cl" << endl;
             cout << "  " << "List the ASICs supported by Legacy OpenCL mode:" << endl;
             cout << "    " << program_name << " -s cl --list-asics" << endl;
             cout << endl;
@@ -702,8 +702,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
                     "To add targets, simply list them in a new line in the file, and RGA would load them while running." << endl << endl;
 
             cout << "Examples:" << endl;
-            cout << "  " << "Compile test.cl for Vega Frontier and extract the binary:" << endl;
-            cout << "    " << program_name << " -s opencl -c \"vega frontier\" -b output/test.bin test.cl" << endl;
+            cout << "  " << "Compile test.cl for gfx1030 and extract the binary:" << endl;
+            cout << "    " << program_name << " -s opencl -c \"gfx1030\" -b output/test.bin test.cl" << endl;
             cout << "  " << "Compile and link src1.cl, src2.cl and src3.cl into an HSA Code Object for Vega (gfx900), and extract ISA disassembly:" << endl;
             cout << "    " << program_name << " -s opencl -c gfx900 --isa output/isa.txt src1.cl src2.cl src3.cl" << endl;
             cout << "  " << "Compile test.cl for all supported targets, extract ISA and perform live register analysis:" << endl;
@@ -731,10 +731,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << "    " << program_name << " -s dx11 -l" << endl;
             cout << "  Compile myShader.hlsl for all supported targets and extract the ISA disassembly:" << endl;
             cout << "    " << program_name << " -s dx11 -f VsMain -p vs_5_0 --isa output/myShader_isa.txt src/myShader.hlsl" << endl;
-            cout << "  Compile myShader.hlsl for Fiji; extract the ISA and perform live register analysis:" << endl;
-            cout << "    " << program_name << " -s dx11 -c Fiji -f VsMain -p vs_5_0 --isa output/myShader_isa.txt --livereg output/regs.txt myShader.hlsl" << endl;
-            cout << "  Compile myShader.hlsl for Radeon R9 390; perform static analysis and save the statistics to myShader.csv:" << endl;
-            cout << "    " << program_name << " -s dx11 -c r9-390 -f VsMain -p vs_5_0 -a output/myShader.csv shaders/myShader.hlsl" << endl;
+            cout << "  Compile myShader.hlsl for gfx1030; extract the ISA and perform live register analysis:" << endl;
+            cout << "    " << program_name << " -s dx11 -c gfx1030 -f VsMain -p vs_5_0 --isa output/myShader_isa.txt --livereg output/regs.txt myShader.hlsl" << endl;
+            cout << "  Compile myShader.hlsl for gfx1034; perform static analysis and save the statistics to myShader.csv:" << endl;
+            cout << "    " << program_name << " -s dx11 -c gfx1034 -f VsMain -p vs_5_0 -a output/myShader.csv shaders/myShader.hlsl" << endl;
         }
         else if ((config.requested_command == Config::kHelp) && (config.mode == kModeDx12))
         {
@@ -770,8 +770,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << "Examples:" << endl;
             cout << "  Generate ISA from AMDIL code for all supported targets:" << endl;
             cout << "    " << program_name << " -s amdil --isa output/isaFromAmdil.isa myAmdilCode.amdil" << endl;
-            cout << "  Generate ISA for Fiji from AMDIL code and extract statistics:" << endl;
-            cout << "    " << program_name << " -s amdil -c Fiji --isa output/isaFromAmdil.isa -a output/statsFromAmdil.csv myAmdilCode.amdil" << endl;
+            cout << "  Generate ISA for gfx1030 from AMDIL code and extract statistics:" << endl;
+            cout << "    " << program_name << " -s amdil -c gfx1030 --isa output/isaFromAmdil.isa -a output/statsFromAmdil.csv myAmdilCode.amdil" << endl;
             cout << "  Generate ISA for gfx900 from AMDIL code and perform live register analysis:" << endl;
             cout << "    " << program_name << " -s amdil -c gfx900 --isa output/myShader.isa --livereg output/regs.txt myAmdilCode.amdil" << endl;
         }
@@ -830,14 +830,14 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << "Examples:" << endl;
             cout << "  Compile vertex & fragment shaders for all supported devicesl; extract ISA, AMD IL and statistics:" << endl;
             cout << "    " << program_name << " -s " << rga_mode_name << " --isa output/isa.txt --il output/il.txt -a output/stats.csv --vert source/myVertexShader." << vert_ext << " --frag source/myFragmentShader." << frag_ext << endl;
-            cout << "  Compile vertex & fragment shaders for Iceland and Fiji; extract ISA, AMD IL and statistics:" << endl;
-            cout << "    " << program_name << " -s " << rga_mode_name << " -c Iceland -c Fiji --isa output/isa.txt --il output/il.amdil -a output/.csv --vert source/myVertexShader." << vert_ext << " --frag source/myFragmentShader." << frag_ext << endl;
-            cout << "  Compile vertex shader for Radeon R9 390; extract ISA and binaries:" << endl;
-            cout << "    " << program_name << " -s " << rga_mode_name << " -c \"R9 390\" --isa output/isa.txt -b output/binary.bin -a output/stats.csv --vert c:\\source\\myVertexShader." << vert_ext << endl;
+            cout << "  Compile vertex & fragment shaders for gfx1030; extract ISA, AMD IL and statistics:" << endl;
+            cout << "    " << program_name << " -s " << rga_mode_name << " -c gfx1030 --isa output/isa.txt --il output/il.amdil -a output/.csv --vert source/myVertexShader." << vert_ext << " --frag source/myFragmentShader." << frag_ext << endl;
+            cout << "  Compile vertex shader for Radeon gfx1034; extract ISA and binaries:" << endl;
+            cout << "    " << program_name << " -s " << rga_mode_name << " -c \"gfx1034\" --isa output/isa.txt -b output/binary.bin -a output/stats.csv --vert c:\\source\\myVertexShader." << vert_ext << endl;
             if (config.mode == RgaMode::kModeVkOfflineSpv || config.mode == RgaMode::kModeVkOfflineSpvTxt)
             {
-                cout << "  Extract ISA for a single SPIR-V file for Baffin, without specifying the pipeline stages:" << endl;
-                cout << "    " << program_name << " -s " << rga_mode_name << " -c Baffin --isa output/program_isa.txt source/program.spv" << endl;
+                cout << "  Extract ISA for a single SPIR-V file for gfx1034, without specifying the pipeline stages:" << endl;
+                cout << "    " << program_name << " -s " << rga_mode_name << " -c gfx1034 --isa output/program_isa.txt source/program.spv" << endl;
             }
         }
         else if ((config.requested_command == Config::kHelp) && (config.mode == RgaMode::kModeOpengl))
@@ -849,10 +849,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << il_dump_opt << endl;
             cout << pipelined_opt_live << endl;
             cout << "Examples:" << endl;
-            cout << "  Compile fragment shader for Baffin; extract ISA, binaries and statistics:" << endl;
-            cout << "    " << program_name << " -s opengl --isa output/opengl_isa.txt -b output/opengl_bin.bin -a output/opengl_stats.csv --frag source/myFragmentShader.frag" << endl;
-            cout << "  Compile vertex & fragment shaders for FirePro W7100; Extract ISA and control flow graph: " << endl;
-            cout << "    " << program_name << " -s opengl -c W7100 --isa output/opengl_isa.txt --cfg output/cfg.dot --vert myVertexShader.vert --frag cmyFragmentShader.frag" << endl;
+            cout << "  Compile fragment shader for gfx1034; extract ISA, binaries and statistics:" << endl;
+            cout << "    " << program_name << " -s opengl -c gfx1034 --isa output/opengl_isa.txt -b output/opengl_bin.bin -a output/opengl_stats.csv --frag source/myFragmentShader.frag" << endl;
+            cout << "  Compile vertex & fragment shaders for FirePro gfx1030; Extract ISA and control flow graph: " << endl;
+            cout << "    " << program_name << " -s opengl -c gfx1030 --isa output/opengl_isa.txt --cfg output/cfg.dot --vert myVertexShader.vert --frag cmyFragmentShader.frag" << endl;
             cout << "  Compile geometry shader for all supported devices; extract ISA and perform live register analysis:" << endl;
             cout << "    " << program_name << " -s opengl --isa output/opengl_isa.txt --livereg output/regs.txt --geom source/myVertexShader.geom" << endl;
         }

@@ -127,7 +127,7 @@ public:
     void GetUnsavedSourceFiles(QStringList& unsaved_source_files);
 
     // Initialize the RgBuildView user interface.
-    void InitializeView();
+    bool InitializeView();
 
     // Check if the RgBuildView has any source files open.
     bool HasSourceCodeEditors() const;
@@ -445,7 +445,10 @@ protected:
     // Initialize views specific to the current mode only.
     // Do nothing by default. Each mode-specific implementation is
     // responsible for initializing their own views.
-    virtual void InitializeModeSpecificViews() {}
+    virtual bool InitializeModeSpecificViews()
+    {
+        return true;
+    }
 
     // Check if the given source editor has line correlation enabled.
     virtual bool IsLineCorrelationEnabled(RgSourceCodeEditor* source_editor);

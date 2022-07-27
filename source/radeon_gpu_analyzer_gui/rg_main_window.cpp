@@ -257,8 +257,10 @@ void RgMainWindow::ConnectStartTabSignals()
     }
 }
 
-void RgMainWindow::AddBuildView()
+bool RgMainWindow::AddBuildView()
 {
+    bool status = false;
+
     assert(app_state_ != nullptr);
     if (app_state_ != nullptr)
     {
@@ -269,7 +271,7 @@ void RgMainWindow::AddBuildView()
         if (build_view != nullptr)
         {
             // Initialize the RgBuildView instance's interface.
-            build_view->InitializeView();
+            status = build_view->InitializeView();
 
             // Connect the menu signals to the RgBuildView and RgMainWindow.
             ConnectMenuSignals();
@@ -288,6 +290,8 @@ void RgMainWindow::AddBuildView()
 #endif
         }
     }
+
+    return status;
 }
 
 void RgMainWindow::ConnectBuildViewSignals()
@@ -799,39 +803,53 @@ bool RgMainWindow::OpenProjectFileAtPath(const std::string& project_file_path)
                 if (is_project_loaded)
                 {
                     // Insert the current mode's RgBuildView instance to the main window.
-                    AddBuildView();
+                    bool build_view_added = AddBuildView();
 
-                    // Populate the RgBuildView with the loaded project.
-                    bool is_populated = build_view->PopulateBuildView();
-                    if (is_populated)
+                    if (build_view_added)
                     {
-                        // Show the build view as the central widget.
-                        SwitchToView(MainWindowView::kBuildView);
-
-                        // Get the directory where the project file lives.
-                        std::string project_directory;
-                        bool is_ok = RgUtils::ExtractFileDirectory(project_file_path, project_directory);
-                        assert(is_ok);
-                        if (is_ok)
+                        // Populate the RgBuildView with the loaded project.
+                        bool is_populated = build_view->PopulateBuildView();
+                        if (is_populated)
                         {
-                            // Try to load existing build output within the project directory.
-                            bool is_build_output_loaded = build_view->LoadBuildOutput(project_directory);
-                            if (is_build_output_loaded)
-                            {
-                                // Previous build outputs were loaded correctly.
-                                // Emit the signal indicating a build has succeeded, which will re-populate the view.
-                                build_view->HandleProjectBuildSuccess();
+                            // Show the build view as the central widget.
+                            SwitchToView(MainWindowView::kBuildView);
 
-                                // Restore the RgBuildView to the last-used layout dimensions.
-                                build_view->RestoreViewLayout();
+                            // Get the directory where the project file lives.
+                            std::string project_directory;
+                            bool        is_ok = RgUtils::ExtractFileDirectory(project_file_path, project_directory);
+                            assert(is_ok);
+                            if (is_ok)
+                            {
+                                // Try to load existing build output within the project directory.
+                                bool is_build_output_loaded = build_view->LoadBuildOutput(project_directory);
+                                if (is_build_output_loaded)
+                                {
+                                    // Previous build outputs were loaded correctly.
+                                    // Emit the signal indicating a build has succeeded, which will re-populate the view.
+                                    build_view->HandleProjectBuildSuccess();
+
+                                    // Restore the RgBuildView to the last-used layout dimensions.
+                                    build_view->RestoreViewLayout();
+                                }
                             }
+                        }
+                        else
+                        {
+                            // The project wasn't loaded properly. Return to the home page.
+                            HandleBackToHomeEvent();
+                            is_project_loaded = false;
                         }
                     }
                     else
                     {
-                        // The project wasn't loaded properly. Return to the home page.
-                        HandleBackToHomeEvent();
-                        is_project_loaded = false;
+                        // Destroy the RgBuildView instance since the project is not being opened.
+                        DestroyBuildView();
+
+                         // Reset the window title.
+                        ResetWindowTitle();
+
+                        // Reset the status bar.
+                        this->statusBar()->showMessage("");
                     }
                 }
             }
@@ -1000,7 +1018,11 @@ void RgMainWindow::HandleOpenProjectFileEvent()
             {
                 std::string selected_file;
                 bool is_ok = RgUtils::OpenProjectDialog(this, selected_file);
-                if (is_ok && !selected_file.empty())
+
+                // Verify that the project name is valid.
+                std::string error_string;
+                bool is_valid_project_name = RgUtils::IsValidProjectName(selected_file, error_string);
+                if (is_valid_project_name && is_ok && !selected_file.empty())
                 {
                     // Destroy current BuildView if it has some project open.
                     assert(app_state_ != nullptr);
@@ -1028,6 +1050,16 @@ void RgMainWindow::HandleOpenProjectFileEvent()
                     {
                         HandleStatusBarTextChanged(kStrErrCannotLoadProjectFile, kStatusBarNotificationTimeoutMs);
                     }
+                }
+                if (!is_valid_project_name && !selected_file.empty())
+                {
+                    // Display error message box.
+                    std::stringstream msg;
+                    std::string filename;
+                    msg << error_string << " \"";
+                    RgUtils::ExtractFileName(selected_file, filename, false);
+                    msg << filename << "\".";
+                    RgUtils::ShowErrorMessageBox(msg.str().c_str(), this);
                 }
             }
         }
@@ -1242,28 +1274,46 @@ void RgMainWindow::dropEvent(QDropEvent *event)
     // call OpenProjectFileAtPath.
     if (file_urls.size() == 1 && file_urls.at(0).isLocalFile() && file_urls.at(0).toLocalFile().endsWith(kStrProjectFileExtension))
     {
-        bool is_load_successful = OpenProjectFileAtPath(file_urls.at(0).toLocalFile().toStdString());
-        assert(is_load_successful);
-        if (is_load_successful)
+        // Verify that the projcet file name is valid.
+        std::string error_message;
+        bool is_project_file_valid = RgUtils::IsValidProjectName(file_urls.at(0).toLocalFile().toStdString(), error_message);
+        if (is_project_file_valid)
         {
-            this->statusBar()->showMessage(kStrMainWindowProjectLoadSuccess);
+            bool is_load_successful = OpenProjectFileAtPath(file_urls.at(0).toLocalFile().toStdString());
+            assert(is_load_successful);
+            if (is_load_successful)
+            {
+                this->statusBar()->showMessage(kStrMainWindowProjectLoadSuccess);
+            }
+            else
+            {
+                this->statusBar()->showMessage(kStrErrCannotLoadProjectFile);
+            }
         }
         else
         {
-            this->statusBar()->showMessage(kStrErrCannotLoadProjectFile);
+            // Show the error message to the user.
+            std::stringstream error_stream;
+            error_stream << kStrErrIllegalProjectName;
+            error_stream << " ";
+            error_stream << error_message;
+            RgUtils::ShowErrorMessageBox(error_stream.str().c_str(), this);
         }
     }
     else
     {
         // Convert url list to a string list of local file paths.
         QStringList filename_strings;
+        bool is_file_valid = false;
         for (QUrl& file_url : file_urls)
         {
             if (file_url.isLocalFile())
             {
                 QString filename = file_url.toLocalFile();
+                std::string error_message;
+                is_file_valid = RgUtils::IsSourceFileTypeValid(filename.toStdString());
                 // Filter out all files that aren't valid source files.
-                if (RgUtils::IsSourceFileTypeValid(filename.toStdString()))
+                if (is_file_valid)
                 {
                     filename_strings.push_back(filename);
                 }
@@ -1274,7 +1324,10 @@ void RgMainWindow::dropEvent(QDropEvent *event)
         if (app_state_ != nullptr)
         {
             setAcceptDrops(false);
-            app_state_->OpenFilesInBuildView(filename_strings);
+            if (is_file_valid)
+            {
+                app_state_->OpenFilesInBuildView(filename_strings);
+            }
             setAcceptDrops(true);
         }
     }

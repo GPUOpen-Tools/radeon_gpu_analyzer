@@ -27,6 +27,22 @@ public:
     virtual void RunCompileCommands(const Config& config, LoggingCallbackFunction callback) override;
 
 private:
+    //  Convert glc stats to text string.
+    void GlcStatsToString(const beKA::AnalysisData& stats, std::stringstream& serialized_stats);
+
+    // Write glc stats to text output file.
+    bool WriteTextFile(const gtString& filename, const std::string& content);
+
+    // Create glc stats file.
+    void CreateStatisticsFile(const gtString&         statistics_file,
+                                     const Config&           config,
+                                     const std::string&      device,
+                                     IStatisticsParser&      stats_parser,
+                                     LoggingCallbackFunction log_cb);
+
+    // Delete the specified file.
+    bool DeleteFile(const gtString& file_full_path);
+
     // The builder.
     BeProgramBuilderOpengl* ogl_builder_;
 

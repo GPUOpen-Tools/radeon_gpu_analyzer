@@ -106,6 +106,7 @@ static const char* kStrErrCannotLoadSupportedGpusListForModeB = "' mode.";
 static const char* kStrErrCannotLoadDisassemblyCsvFile        = "Failed to load disassembly output file. ";
 static const char* kStrErrCannotLoadLiveVgprFile              = "Failed to load live VGPR output file. ";
 static const char* kStrErrIllegalProjectName                  = "Project name is not a legal file name or exceeds 50 characters: ";
+static const char* kStrErrIllegalStringProjectName            = "Error: project file name cannot contain the string ";
 static const char* kStrErrFailedToOpenFileBrowser             = "Failed to open the system's file explorer.";
 static const char* kStrErrCsvParsingFailedA                   = "Failed to parse ";
 static const char* kStrErrCsvParsingFailedB                   = " at line ";
