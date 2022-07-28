@@ -59,8 +59,8 @@ IF NOT [%QT_LIB_DIR%]==[] (
 
 rem Copy automation files/folders.
 IF DEFINED AUTOMATION (
-    XCopy /r /e /d /y "..\..\..\..\RGA-Internal\tests\data" "%OUTPUT_DIR%\data\"
-    XCopy /r /d /y "..\..\..\..\RGA-Internal\tests_gui\run.py" "%OUTPUT_DIR%\"
+    powershell expand-archive -Path "..\..\..\..\rga_internal_utils\tests\rga_gui_test_data.zip" -DestinationPath "%OUTPUT_DIR%\"
+    XCopy /r /d /y "..\..\..\..\rga_internal_utils\tests_gui\run.py" "%OUTPUT_DIR%\"
 )
 
 rem Copy the Radeon Tools Download Assistant.
