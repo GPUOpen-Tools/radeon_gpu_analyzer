@@ -126,7 +126,6 @@ RgSourceCodeEditor::RgSourceCodeEditor(QWidget* parent, RgSrcLanguage lang) : QP
         is_connected = connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(ShowContextMenu(const QPoint&)));
         assert(is_connected);
     }
-
 }
 
 int RgSourceCodeEditor::LineNumberAreaWidth() const

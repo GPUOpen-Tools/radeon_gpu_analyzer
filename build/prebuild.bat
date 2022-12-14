@@ -126,15 +126,15 @@ goto :shift_arg
 :run_clean
 if exist %SCRIPT_DIR%windows (
     echo INFO: Deleting %SCRIPT_DIR%\windows folder
-    del /s /f /q %SCRIPT_DIR%\windows
+    rmdir /s /q %SCRIPT_DIR%\windows
 )
 if exist %SCRIPT_DIR%..\output (
     echo INFO: Deleting %SCRIPT_DIR%..\output folder
-    del /s /f /q %SCRIPT_DIR%..\output
+    rmdir /s /q %SCRIPT_DIR%..\output
 )
 if exist %SCRIPT_DIR%..\output_test (
     echo INFO: Deleting %SCRIPT_DIR%..\output_test folder
-    del /s /f /q %SCRIPT_DIR%..\output_test
+    rmdir /s /q %SCRIPT_DIR%..\output_test
 )
 exit /b 0
 
@@ -220,3 +220,4 @@ if not !ERRORLEVEL!==0 (
 )
 cd %CURRENT_DIR%
 echo Done.
+

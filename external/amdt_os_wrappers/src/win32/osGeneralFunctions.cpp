@@ -40,7 +40,6 @@ void GetWinOSVersionNumberHelper(int& majorVersion, int& minorVersion);
 // Implementations notes:
 //  The MSDN documentation of the "OSVERSIONINFOEX Structure" contains a table
 //  that explains how to identify the windows version on which this program runs.
-//  The URL is: http://msdn.microsoft.com/en-us/library/ms724833(VS.85).aspx
 // ---------------------------------------------------------------------------
 
 bool osGetWindowsVersion(osWindowsVersion& windowsVersion)

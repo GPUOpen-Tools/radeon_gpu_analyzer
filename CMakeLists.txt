@@ -72,18 +72,18 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwi
     endif()
 
     # Output directories
-    set(BUILD_CONFIG "Release")
+    set(BUILD_CONFIG "release")
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(BUILD_CONFIG "Debug")
+        set(BUILD_CONFIG "debug")
     endif()
     if (GUI_AUTOMATION)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/${BUILD_CONFIG}/bin")
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/${BUILD_CONFIG}/lib")
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output_Test/${BUILD_CONFIG}/arch")
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output_test/${BUILD_CONFIG}/bin")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output_test/${BUILD_CONFIG}/lib")
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output_test/${BUILD_CONFIG}/arch")
     else()
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/${BUILD_CONFIG}/bin")
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/${BUILD_CONFIG}/lib")
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Output/${BUILD_CONFIG}/arch")
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/${BUILD_CONFIG}/bin")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/${BUILD_CONFIG}/lib")
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/output/${BUILD_CONFIG}/arch")
     endif()
 
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -93,13 +93,13 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 
     # Output directories - use Windows path separaters so xcopy commands work
     if (GUI_AUTOMATION)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output_Test\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\bin)
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output_Test\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\lib)
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output_Test\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\arch)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\output_test\\$<$<CONFIG:debug>:debug>$<$<CONFIG:release>:release>\\bin)
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\output_test\\$<$<CONFIG:debug>:debug>$<$<CONFIG:release>:release>\\lib)
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\output_test\\$<$<CONFIG:debug>:debug>$<$<CONFIG:release>:release>\\arch)
     else()
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\bin)
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\lib)
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\Output\\$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>\\arch)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\output\\$<$<CONFIG:debug>:debug>$<$<CONFIG:release>:release>\\bin)
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\output\\$<$<CONFIG:debug>:debug>$<$<CONFIG:release>:release>\\lib)
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}\\output\\$<$<CONFIG:debug>:debug>$<$<CONFIG:release>:release>\\arch)
     endif()
 
     # Use multiple cores to compile all projects.
@@ -147,5 +147,5 @@ endif()
 
 # Add Tests
 if(AMD_INTERNAL)
-    add_subdirectory (${PROJECT_SOURCE_DIR}/../RGA-Internal/tests ${CMAKE_CURRENT_BINARY_DIR}/tests)
+    add_subdirectory (${PROJECT_SOURCE_DIR}/../rga_internal_utils/tests ${CMAKE_CURRENT_BINARY_DIR}/tests)
 endif()

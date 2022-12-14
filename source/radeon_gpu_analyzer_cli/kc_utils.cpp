@@ -1674,6 +1674,13 @@ void KcUtils::CheckForUpdates()
     }
 }
 
+bool KcUtils::IsNavi3Target(const std::string& target_name)
+{
+	// Token to identify Navi3 targets.
+	static const char* kNavi3TargetToken = "gfx11";
+	return (target_name.find(kNavi3TargetToken) != std::string::npos);
+}
+
 bool KcUtils::IsNaviTarget(const std::string& target_name)
 {
     // Token to identify Navi targets.

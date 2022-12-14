@@ -71,14 +71,19 @@ static std::string GetShaeIsaCmd(const gtString& target)
     const gtString kShaeGfx8  = L"gfx8";
     const gtString kShaeGfx9  = L"gfx9";
     const gtString kShaeGfx10_1 = L"gfx10_1";
-    const gtString kShaeGfx10_3 = L"gfx10_3";
+	const gtString kShaeGfx10_3 = L"gfx10_3";
+	const gtString kShaeGfx11 = L"gfx11";
 
-    std::stringstream    shae_gfx_generation;
-    shae_gfx_generation << "--isa ";
-    if (KcUtils::IsNavi21AndBeyond(target.asASCIICharArray()))
-    {
-        shae_gfx_generation << kShaeGfx10_3.asASCIICharArray();
-    }
+	std::stringstream    shae_gfx_generation;
+	shae_gfx_generation << "--isa ";
+	if (KcUtils::IsNavi3Target(target.asASCIICharArray()))
+	{
+		shae_gfx_generation << kShaeGfx11.asASCIICharArray();
+	}
+	else if (KcUtils::IsNavi21AndBeyond(target.asASCIICharArray()))
+	{
+		shae_gfx_generation << kShaeGfx10_3.asASCIICharArray();
+	}
     else if (KcUtils::IsNaviTarget(target.asASCIICharArray()))
     {
         shae_gfx_generation << kShaeGfx10_1.asASCIICharArray();

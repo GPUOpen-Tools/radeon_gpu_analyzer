@@ -118,6 +118,14 @@ private:
     // Delete all temporary files created by RGA.
     void DeleteTempFiles() const;
 
+    // Dump IL file.
+    beStatus DumpIL(const Config&                   config,
+                    const OpenCLOptions&            user_options,
+                    const std::vector<std::string>& src_file_names,
+                    const std::string&              device,
+                    const std::string&              clang_device,
+                    std::string&                    error_text);
+
     // ---- DATA ----
 
     // Output Metadata

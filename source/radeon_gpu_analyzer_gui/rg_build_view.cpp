@@ -401,6 +401,14 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
         is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::SwitchDisassemblyContainerSize, this, &RgBuildView::HandleSwitchContainerSize);
         assert(is_connected);
 
+        // Connect the Ctrl+F4 hotkey pressed signal.
+        is_connected = connect(this, &RgBuildView::ShowMaximumVgprClickedSignal, disassembly_view_, &RgIsaDisassemblyView::ShowMaximumVgprClickedSignal);
+        assert(is_connected);
+
+        // Connect the enable show max VGPR options signal.
+        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::EnableShowMaxVgprOptionSignal, this, &RgBuildView::EnableShowMaxVgprOptionSignal);
+        assert(is_connected);
+
         // Connect API-specific RgBuildView signals to the disassembly view.
         ConnectDisassemblyViewApiSpecificSignals();
     }

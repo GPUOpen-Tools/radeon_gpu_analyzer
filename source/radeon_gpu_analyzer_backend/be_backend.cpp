@@ -1,6 +1,6 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//======================================================================
+// Copyright 2020-2022 Advanced Micro Devices, Inc. All rights reserved.
+//======================================================================
 
 // C++.
 #include <locale>
@@ -164,6 +164,12 @@ beStatus Backend::GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& table_entry
 
     switch (table_entry.m_asicType)
     {
+    case GDT_GFX11_0_0:
+        chip_family   = FAMILY_NV3;
+        chip_revision = PRID_NV3_NAVI31_00;
+        ret           = kBeStatusSuccess;
+        break;
+    
     case GDT_GFX10_3_5:
         chip_family   = FAMILY_RMB;
         chip_revision = REMBRANDT_A0;

@@ -20,6 +20,7 @@
 #include "radeon_gpu_analyzer_backend/be_static_isa_analyzer.h"
 #include "CElf.h"
 #include "DeviceInfoUtils.h"
+#include "common/rg_log.h"
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_dx11.h"
@@ -35,7 +36,7 @@ static const std::string kStrDx11NaValue = "N/A";
 static const char* kStrErrorShaderModelNotSupported = "Error: shader model 5.1 and above is not supported in DX11 mode. Please use DX12 mode (rga -s dx12 -h).";
 static const char* kStrErrorDx11CannotListAdapters = "Error: failed to get the list of display adapters installed on this system.";
 static const char* kStrErrorDx11AdapterSetFailed = "Error: failed to set display adapter with provided ID.";
-static const char* kStrErrorDx11IncorrectShaderModel = "Error: incorrect DX shader model provided.";
+static const char* kStrErrorDx11IncorrectShaderModel = "Error: Unsupported or incorrect DX target profile provided: ";
 static const char* kStrErrorDx11UnsupportedShaderModel1 = "Error: unsupported Shader Model detected: ";
 static const char* kStrErrorDx11UnsupportedShaderModel2 = "RGA supports Shader Model ";
 static const char* kStrErrorDx11UnsupportedShaderModel3 = "and below.";
@@ -225,8 +226,24 @@ void KcCliCommanderDX::ExtractIL(const std::string& device_name, const Config& c
         if (backend_rc == kBeStatusSuccess)
         {
             gtString il_output_filename;
-            KcUtils::ConstructOutputFileName(config.il_file, "", kStrDefaultExtensionAmdil,
-                config.function, device_name, il_output_filename);
+            if (config.donot_rename_il_files)
+            {
+                KcUtils::ConstructOutputFileName(config.il_file, 
+                    "",
+                    kStrDefaultExtensionAmdil, 
+                    "", 
+                    "", 
+                    il_output_filename);
+            }
+            else
+            {
+                KcUtils::ConstructOutputFileName(config.il_file, 
+                    "", 
+                    kStrDefaultExtensionAmdil, 
+                    config.function, 
+                    device_name, 
+                    il_output_filename);
+            }
             KcUtils::WriteTextFile(il_output_filename.asASCIICharArray(), il_buffer, log_callback_);
         }
 
@@ -448,10 +465,25 @@ void KcCliCommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
     }
 }
 
-bool KcCliCommanderDX::PrintAsicList(const Config&)
+static void LoggingCallback(const string& s)
 {
-    std::set<std::string> targets;
-    return KcUtils::PrintAsicList(targets, kUnsupportedDevicesDx11);
+    RgLog::stdOut << s.c_str() << std::flush;
+}
+
+bool KcCliCommanderDX::PrintAsicList(const Config& config)
+{
+    bool ret                = false;
+    bool is_init_successful = Init(config, LoggingCallback);
+    if (is_init_successful)
+    {
+        std::set<std::string> targets;
+        for (const auto& device : dx_default_asics_list_)
+        {
+            targets.insert(device.m_szCALName);
+        }
+        ret = KcUtils::PrintAsicList(targets, kUnsupportedDevicesDx11);
+    }
+    return ret;
 }
 
 bool KcCliCommanderDX::WriteAnalysisDataForDX(const Config& config, const std::vector<AnalysisData>& analysis_data,
@@ -540,9 +572,19 @@ bool KcCliCommanderDX::WriteAnalysisDataForDX(const Config& config, const std::v
 bool ParseProfileString(const std::string& profile, std::pair<int, int>& version)
 {
     bool result = false;
+    bool should_abort = false;
+
+	// On the new PAL-based stack, only VS, PS and CS are supported.
+	if (profile.find("hs") != std::string::npos ||
+		profile.find("ds") != std::string::npos ||
+		profile.find("gs") != std::string::npos)
+	{
+		std::cout << "Error: DX11 mode only supports VS, PS and CS target profiles." << std::endl;
+		should_abort = true;
+	}
 
     // Profile string format: XX_N_N.
-    if (!profile.empty())
+    if (!should_abort && !profile.empty())
     {
         size_t  minor, major = profile.find('_');
         if (major != std::string::npos)
@@ -572,7 +614,7 @@ bool KcCliCommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
     if (config.mode != RgaMode::kModeAmdil && !config.dxbc_input_dx11 &&
         !ParseProfileString(config.profile, version))
     {
-        log << kStrErrorDx11IncorrectShaderModel << std::endl;
+        log << kStrErrorDx11IncorrectShaderModel << config.profile << std::endl;
         ret = false;
     }
 
@@ -745,7 +787,7 @@ bool KcCliCommanderDX::Init(const Config& config, LoggingCallBackFuncP callback)
 
         if (should_continue)
         {
-            should_continue = (dx_builder.Initialize(dxxModulePath, config.dx_compiler_location) == beKA::kBeStatusSuccess);
+            should_continue = (dx_builder.Initialize(dxxModulePath, config.dx_compiler_location, config.print_process_cmd_line) == beKA::kBeStatusSuccess);
         }
         else
         {

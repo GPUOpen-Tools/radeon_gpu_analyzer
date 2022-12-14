@@ -216,6 +216,8 @@ void RgIsaDisassemblyTabView::SwitchToEntryPoint(const std::string& input_file_p
 
             // Show the disassembly table that we're switching to.
             table_view->show();
+
+            // Update the current table.
             current_table_ = table_view;
 
             // Use the current table view as the focus proxy for this view.
@@ -391,7 +393,27 @@ void RgIsaDisassemblyTabView::ConnectTableViewSignals(RgIsaDisassemblyTableView*
     // Connect the disassembly table's focus cli output window signal.
     is_connected = connect(table_view, &RgIsaDisassemblyTableView::FocusCliOutputWindow, this, &RgIsaDisassemblyTabView::FocusCliOutputWindow);
     assert(is_connected);
+}
 
+void RgIsaDisassemblyTabView::HandleShowNextMaxVgprSignal()
+{
+    if (current_table_ != nullptr)
+    {
+        current_table_->HandleShowNextMaxVgprSignal();
+    }
+}
+
+bool RgIsaDisassemblyTabView::IsShowCurrentMaxVgprEnabled()
+{
+    return current_table_->IsShowCurrentMaxVgprEnabled();
+}
+
+void RgIsaDisassemblyTabView::HandleShowPreviousMaxVgprSignal()
+    {
+    if (current_table_ != nullptr)
+    {
+        current_table_->HandleShowPreviousMaxVgprSignal();
+    }
 }
 
 std::string RgIsaDisassemblyTabView::GenerateEntrypointKey(const std::string& file_path, const std::string& entrypoint_name) const
@@ -449,4 +471,9 @@ void RgIsaDisassemblyTabView::RemoveEntrypointTable(RgIsaDisassemblyTableView* t
     {
         disassembly_table_view_to_entrypoint_.erase(table_iter);
     }
+}
+
+RgIsaDisassemblyTableView* RgIsaDisassemblyTabView::GetCurrentTableView() const
+{
+    return current_table_;
 }

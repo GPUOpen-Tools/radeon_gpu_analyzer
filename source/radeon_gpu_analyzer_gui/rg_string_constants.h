@@ -107,6 +107,7 @@ static const char* kStrErrCannotLoadDisassemblyCsvFile        = "Failed to load 
 static const char* kStrErrCannotLoadLiveVgprFile              = "Failed to load live VGPR output file. ";
 static const char* kStrErrIllegalProjectName                  = "Project name is not a legal file name or exceeds 50 characters: ";
 static const char* kStrErrIllegalStringProjectName            = "Error: project file name cannot contain the string ";
+static const char* kStrErrSpacesNotAllowed                    = "Spaces are not allowed.";
 static const char* kStrErrFailedToOpenFileBrowser             = "Failed to open the system's file explorer.";
 static const char* kStrErrCsvParsingFailedA                   = "Failed to parse ";
 static const char* kStrErrCsvParsingFailedB                   = " at line ";
@@ -171,6 +172,10 @@ static const char* kStrMenuBarEdit = "&Edit";
 // Go to line menu item.
 static const char* kStrMenuBarGoToLine        = "&Go to...";
 static const char* kStrMenuBarGoToLineTooltip = "Go to line (Ctrl+G).";
+
+// Show max VGPR lines menu item.
+static const char* kStrMenuShowMaxVgprLines        = "Go to &next maximum VGPR pressure line";
+static const char* kStrMenuShowMaxVgprLinesTooltip = "Jump to the next line with maximum VGPR pressure. (Ctrl+F4)";
 
 // Build menu items.
 static const char* kStrMenuBarBuild                = "&Build";
@@ -509,6 +514,7 @@ static const char* kStrDisassemblyTableContextMenuOpenInFileBrowser = "Show disa
 #else
 static const char* kStrDisassemblyTableContextMenuOpenInFileBrowser = "Show disassembly file in explorer";
 #endif
+static const char* kStrDisassemblyTableContextMenuGoToMaxVgpr = "Go to next maximum VGPR pressure line (Ctrl+F4)";
 
 // *** DISASSEMBLY VIEW STRINGS - END ***
 

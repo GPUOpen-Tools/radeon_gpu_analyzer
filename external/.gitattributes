@@ -22,7 +22,6 @@ dx10_asm/lib/VS2015/x64/Debug_Static/DX10ASMLib_s.lib filter=lfs diff=lfs merge=
 dx10_asm/lib/VS2015/x64/Debug/DX10ASMLib.lib filter=lfs diff=lfs merge=lfs -text
 dx10_asm/lib/VS2015/x64/Release/DX10ASMLib.lib filter=lfs diff=lfs merge=lfs -text
 dx10_asm/lib/VS2015/x64/Release/DX10ASMLib_s.lib filter=lfs diff=lfs merge=lfs -text
-lc/opencl/linux/bin/clang-14 filter=lfs diff=lfs merge=lfs -text
 yaml-cpp/lib/win32/Debug/libyaml-cppmdd.lib filter=lfs diff=lfs merge=lfs -text
 yaml-cpp/lib/win64/Debug/libyaml-cppmdd.lib filter=lfs diff=lfs merge=lfs -text
 boost/boost_1_59_0/lib/VC14/x86/libboost_regex-vc140-mt-s-1_59.lib filter=lfs diff=lfs merge=lfs -text
@@ -62,3 +61,7 @@ boost/boost_1_59_0/lib/VC14/x86_64/libboost_date_time-vc140-mt-gd-1_59.lib filte
 boost/boost_1_59_0/lib/VC14/x86/libboost_date_time-vc140-mt-sgd-1_59.lib filter=lfs diff=lfs merge=lfs -text
 opengl/glc/linux/glc filter=lfs diff=lfs merge=lfs -text
 opengl/glc/windows/glc.exe filter=lfs diff=lfs merge=lfs -text
+lc/opencl/linux/lib/bitcode/opencl.amdgcn.bc filter=lfs diff=lfs merge=lfs -text
+lc/opencl/windows/lib/bitcode/opencl.amdgcn.bc filter=lfs diff=lfs merge=lfs -text
+dx11/amdxx/amdxx64.dll filter=lfs diff=lfs merge=lfs -text
+lc/opencl/linux/bin/clang-16 filter=lfs diff=lfs merge=lfs -text

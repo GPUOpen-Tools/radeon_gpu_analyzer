@@ -283,6 +283,12 @@ signals:
     // Emit a signal to indicate change in splitter location.
     void SplitterMoved();
 
+    // A signal emitted when the user clicks on show maximum VGPRs menu item.
+    void ShowMaximumVgprClickedSignal();
+
+    // A signal to enable/disable the Edit->Go to next maximum live VGPR line option.
+    void EnableShowMaxVgprOptionSignal(bool is_enabled);
+
 public slots:
     // Handle switching focus to the next view in the RgViewManager.
     void HandleFocusNextView();

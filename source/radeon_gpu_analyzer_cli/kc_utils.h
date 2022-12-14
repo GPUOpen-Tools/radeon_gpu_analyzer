@@ -318,6 +318,9 @@ public:
     // Checks for available updates.
     static void CheckForUpdates();
 
+    // Returns true if the target is of the Navi3 generation and false otherwise.
+    static bool IsNavi3Target(const std::string& target_name);
+
     // Returns true if the target is of the Navi generation and false otherwise.
     static bool IsNaviTarget(const std::string& target_name);
 

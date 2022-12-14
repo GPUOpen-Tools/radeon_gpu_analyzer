@@ -84,6 +84,9 @@ public:
     // and store the results in the destination vector.
     static void SplitString(const std::string& str, char delim, std::vector<std::string>& dst);
 
+    // Trim leading and trailing whitespace characters.
+    static void TrimLeadingAndTrailingWhitespace(const std::string& text, std::string& trimmed_text);
+
     // Returns true if the given string represents a numeric value, and false otherwise.
     static bool IsNumericValue(const std::string& str);
 
@@ -104,6 +107,13 @@ public:
     // Returns true on success and false otherwise.
     static bool ExtractCodeObjectStatistics(const std::string& disassembly_whole,
         std::map<std::string, beKA::AnalysisData>& data);
+
+    // Returns true if the given shader stage name is a valid amdgpu-dis shader stage name and false otherwise.
+    static bool IsValidAmdgpuShaderStage(const std::string& shader_stage);
+
+    // Sets the output string to the amdgpu-dis shader stage that corresponds to the given pipeline stage.
+    // Returns true upon success, false otherwise.
+    static bool BePipelineStageToAmdgpudisStageName(BePipelineStage pipeline_stage, std::string& amdgpu_dis_stage);
 
 private:
     // No instances for this class, as this is a static utility class.

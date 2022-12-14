@@ -57,7 +57,7 @@ public:
 
     // Preprocess input file using the glslang compiler. The preprocessed text is returned in "output" string.
     static beStatus PreprocessSource(const Config& config, const std::string& glslang_bin_dir, const std::string& input_file,
-        bool is_hlsl, bool should_print_cmdprintCmd, std::string& output, std::string& error_msg);
+        bool is_hlsl, bool should_print_cmd, std::string& output, std::string& error_msg);
 
 private:
     // Invoke the glslang compiler executable.
@@ -66,10 +66,14 @@ private:
 
     // Invoke one of SPIR-V tools.
     static beStatus InvokeSpvTool(BeVulkanSpirvTool tool, const std::string& spv_tools_bin_dir, const std::string& cmd_line_options,
-        bool should_print_cmdprintCmd, std::string& out_msg, std::string& err_msg);
+        bool should_print_cmd, std::string& out_msg, std::string& err_msg);
 
     // Invoke the VulkanBackend executable.
-    static beStatus InvokeVulkanBackend(const std::string& cmd_line_options, bool should_print_cmdprintCmd,
+    static beStatus InvokeVulkanBackend(const std::string& cmd_line_options, bool should_print_cmd,
+        std::string& out_text, std::string& error_txt);
+
+    // Invoke the amdgpu-dis executable.
+    static beStatus InvokeAmdgpudis(const std::string& cmd_line_options, bool should_print_cmd,
         std::string& out_text, std::string& error_txt);
 };
 

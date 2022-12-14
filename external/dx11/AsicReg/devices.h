@@ -130,6 +130,11 @@ enum
     REMBRANDT_A0 = 1
 };
 
+enum
+{
+    PRID_NV3_NAVI31_00 = 0x00
+};
+
 #ifndef _ATIID_H
 #define _ATIID_H
 
@@ -155,8 +160,11 @@ enum
 
 #define FAMILY_NV                      143
 
+#define FAMILY_NV3                     145
+
 #define FAMILY_RMB                     146
 
 #define ATI_VENDOR_ID                   0x1002
 
 #endif  // _ATIID_H
+

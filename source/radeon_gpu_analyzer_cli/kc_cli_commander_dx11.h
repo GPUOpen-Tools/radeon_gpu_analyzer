@@ -19,7 +19,7 @@ public:
     /// List the adapters installed on the system.
     void ListAdapters(Config& config, LoggingCallbackFunction callback) override;
     void RunCompileCommands(const Config& config, LoggingCallbackFunction callback) override;
-    bool PrintAsicList(const Config&) override;
+    bool PrintAsicList(const Config& config) override;
 
 private:
     // Functions.

@@ -346,6 +346,10 @@ void RgMainWindow::ConnectBuildViewSignals()
             is_connected = connect(build_view, &RgBuildView::SetStatusBarText, this, &RgMainWindow::HandleStatusBarTextChanged);
             assert(is_connected);
 
+            // Connect the RgBuildView's enable show max VGPR option signal.
+            is_connected = connect(build_view, &RgBuildView::EnableShowMaxVgprOptionSignal, this, &RgMainWindow::HandleEnableShowMaxVgprOptionSignal);
+            assert(is_connected);
+
             // Connect the main window's Find event with the RgBuildView.
             is_connected = connect(this, &RgMainWindow::FindTriggered, build_view, &RgBuildView::HandleFindTriggered);
             assert(is_connected);
@@ -374,6 +378,11 @@ void RgMainWindow::ConnectBuildViewSignals()
             app_state_->ConnectBuildViewSignals(build_view);
         }
     }
+}
+
+void RgMainWindow::HandleEnableShowMaxVgprOptionSignal(bool is_enabled)
+{
+    show_max_vgprs_action_->setEnabled(is_enabled);
 }
 
 void RgMainWindow::HandleEnablePipelineMenuItem(bool is_enabled)
@@ -604,6 +613,7 @@ void RgMainWindow::CreateEditMenu()
     menu_bar_ = menuBar()->addMenu(tr(kStrMenuBarEdit));
     menu_bar_->addAction(go_to_line_action_);
     menu_bar_->addAction(find_action_);
+    menu_bar_->addAction(show_max_vgprs_action_);
 
     // Set the mouse cursor to pointing hand cursor.
     menu_bar_->setCursor(Qt::PointingHandCursor);
@@ -755,6 +765,15 @@ void RgMainWindow::CreateEditMenuActions()
     find_action_->setShortcut(QKeySequence(kActionHotkeyFind));
     find_action_->setStatusTip(tr(kStrMenuBarEditQuickFindTooltip));
     is_connected = connect(find_action_, &QAction::triggered, this, &RgMainWindow::FindTriggered);
+    assert(is_connected);
+
+    // Show maximum VGPRs.
+    show_max_vgprs_action_ = new QAction(tr(kStrMenuShowMaxVgprLines), this);
+    show_max_vgprs_action_->setShortcut(QKeySequence(kActionHotkeyShowMaxVgprs));
+    show_max_vgprs_action_->setStatusTip(tr(kStrMenuShowMaxVgprLinesTooltip));
+
+    // Connect the show maximum VGPR action.
+    is_connected = connect(show_max_vgprs_action_, &QAction::triggered, this, &RgMainWindow::HandleShowMaxVgprsEvent);
     assert(is_connected);
 }
 
@@ -1429,11 +1448,9 @@ void RgMainWindow::HandleBuildSettingsEvent()
         }
     }
 
-    // Disable the find functionality.
-    find_action_->setEnabled(false);
-
-    // Disable the Go-to-line functionality.
-    go_to_line_action_->setEnabled(false);
+    // Disable the items in the Edit menu.
+    EnableEditMenu(false);
+    HandleEnableShowMaxVgprOptionSignal(false);
 
     // Switch the file menu save file action to save build settings action.
     SwitchSaveShortcut(SaveActionType::kSaveSettings);
@@ -1506,11 +1523,8 @@ void RgMainWindow::HandleCancelBuildEvent()
 
 void RgMainWindow::HandleSelectedFileChanged(const std::string& old_file, const std::string& new_file)
 {
-    // Enable the find functionality.
-    find_action_->setEnabled(true);
-
-    // Enable the Go-to-line functionality.
-    go_to_line_action_->setEnabled(true);
+    // Enable the Edit menu functionality.
+    EnableEditMenu(true);
 }
 
 void RgMainWindow::HandleProjectCreated()
@@ -1843,6 +1857,12 @@ void RgMainWindow::SetCursor()
     menuBar()->setCursor(Qt::PointingHandCursor);
 }
 
+void RgMainWindow::HandleShowMaxVgprsEvent()
+{
+    // Emit the signal to show maximum VGPR lines.
+    emit ShowMaximumVgprClickedSignal();
+}
+
 void RgMainWindow::HandleGoToLineEvent()
 {
     assert(app_state_ != nullptr);
@@ -2022,6 +2042,9 @@ void RgMainWindow::HandleEditModeChanged(EditMode mode)
         // Disable the Go-to-line functionality.
         go_to_line_action_->setEnabled(false);
 
+        // Disable the Show max VGPRs functionality.
+        show_max_vgprs_action_->setEnabled(false);
+
         break;
     }
     default:
@@ -2100,6 +2123,10 @@ void RgMainWindow::EnableBuildViewActions()
 
         // Set container switch size action.
         bool is_connected = connect(this, &RgMainWindow::SwitchContainerSize, build_view, &RgBuildView::HandleSwitchContainerSize);
+        assert(is_connected);
+
+        // Process the Ctrl+F4 hotkey in disassembly view.
+        is_connected = connect(this, &RgMainWindow::ShowMaximumVgprClickedSignal, build_view, &RgBuildView::ShowMaximumVgprClickedSignal);
         assert(is_connected);
     }
 }
@@ -2230,4 +2257,3 @@ bool RgMainWindow::eventFilter(QObject* object, QEvent* event)
         return QObject::eventFilter(object, event);
     }
 }
-

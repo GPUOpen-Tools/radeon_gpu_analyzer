@@ -335,6 +335,8 @@ struct RgLiveregData
     int allocated;
     int max_vgprs;
     int unmatched_count;
+    std::vector<int> max_vgpr_line_numbers;
+    std::vector<bool> is_current_max_vgpr_line_number;
 };
 
 // A structure used to hold project path and api type for each RGA project.

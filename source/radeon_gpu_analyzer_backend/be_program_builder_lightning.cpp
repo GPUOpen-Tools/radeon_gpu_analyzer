@@ -32,7 +32,7 @@
 
 // Constants.
 static const gtString kLcOpenclIncludeFile = L"opencl-c.h";
-static const std::vector<gtString>  kLcOpenclLibFiles = { L"opencl.amdgcn.bc", L"ockl.amdgcn.bc", L"irif.amdgcn.bc", L"ocml.amdgcn.bc",
+static const std::vector<gtString>  kLcOpenclLibFiles = { L"opencl.amdgcn.bc", L"ockl.amdgcn.bc", L"ocml.amdgcn.bc",
                                                         L"oclc_correctly_rounded_sqrt_on.amdgcn.bc", L"oclc_correctly_rounded_sqrt_off.amdgcn.bc",
                                                         L"oclc_daz_opt_on.amdgcn.bc", L"oclc_daz_opt_off.amdgcn.bc",
                                                         L"oclc_unsafe_math_on.amdgcn.bc", L"oclc_unsafe_math_off.amdgcn.bc",
@@ -43,7 +43,7 @@ static const std::vector<gtString>  kLcOpenclLibFiles = { L"opencl.amdgcn.bc", L
                                                         L"oclc_isa_version_909.amdgcn.bc",
                                                         L"oclc_isa_version_1010.amdgcn.bc", L"oclc_isa_version_1011.amdgcn.bc", L"oclc_isa_version_1012.amdgcn.bc",
                                                         L"oclc_isa_version_1030.amdgcn.bc", L"oclc_isa_version_1031.amdgcn.bc", L"oclc_isa_version_1032.amdgcn.bc",
-                                                        L"oclc_isa_version_1034.amdgcn.bc" };
+                                                        L"oclc_isa_version_1034.amdgcn.bc", L"oclc_isa_version_1100.amdgcn.bc" };
 
 static const std::string  kStrLcOpenclStdOption = "-cl-std";
 static const std::string  kStrLcOpenclStdDefaultValue = "cl2.0";
@@ -73,8 +73,8 @@ static const std::string  kStrLcCompilerOpenclSwitchOptimizationLevel = "-O";
 
 // LLVM objdump switches.
 static const std::string  kStrLcObjDumpSwitchDevice = "--mcpu=";
-static const std::string  kStrLcObjDumpSwitchDisassemble = "--disassemble";
-static const std::string  kStrLcObjDumpSwitchDisassembleLineNumbers = "--disassemble --line-numbers --source";
+static const std::string  kStrLcObjDumpSwitchDisassemble = "--disassemble --symbolize-operands";
+static const std::string  kStrLcObjDumpSwitchDisassembleLineNumbers = "--disassemble --symbolize-operands --line-numbers --source";
 static const std::string  kStrLcObjDumpSwitchMetadata1 = "--amdgpu-code-object-metadata --lf-output-style=GNU --notes";
 static const std::string  kStrLcObjDumpSwitchMetadata2 = "--elf-output-style=GNU --notes";
 static const std::string  kStrLcObjDumpSwitchTriple = "--triple=amdgcn-amd-amdhsa";
@@ -166,12 +166,15 @@ beKA::beStatus BeProgramBuilderLightning::AddCompilerStandardOptions(RgaMode mod
     if (mode == RgaMode::kModeOpenclOffline)
     {
         // Add nogpulib and target triple.
-        options_stream << kStrLcCompilerOpenclSwitchNoGpuLib << " " << kStrLcCompilerOpenclSwitchTriple;
+        options_stream << " " << kStrLcCompilerOpenclSwitchNoGpuLib << " " << kStrLcCompilerOpenclSwitchTriple;
 
+// The following is necessary if the bitcode files are built on Windows with Visual Studio.
 #ifdef _WIN32
         // Short character flag required for bitcode built with MSVC.
         static const std::string  kStrLcCompilerOpenCLSwitchShortWcharWindows = "-fshort-wchar";
-        options_stream << " " << kStrLcCompilerOpenCLSwitchShortWcharWindows;
+        // static flag improves performance on Windows platforms.
+        static const std::string  kStrLcCompilerOpenclSwitchStatic = "-static";
+        options_stream << " " << kStrLcCompilerOpenclSwitchStatic << " " << kStrLcCompilerOpenCLSwitchShortWcharWindows;
 #endif
 
         // Add OpenCL include required by OpenCL compiler.

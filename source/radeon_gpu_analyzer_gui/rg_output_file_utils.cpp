@@ -38,10 +38,19 @@ bool RgOutputFileUtils::ParseLiveVgprsData(const std::string&                   
     // Now extract the architecture specific information.
     status = RgOutputFileUtils::GetArchInformation(livereg_data, vgpr_file_lines);
 
-    // Calculate the max live VGPR value and extract the live VGPR numbers.
+    // Calculate the max live VGPR values and extract the live VGPR numbers.
     if (status)
     {
-        livereg_data.max_vgprs = RgOutputFileUtils::CalculateMaxVgprs(vgpr_isa_lines);
+        int max_line_number = 0;
+
+        // Extract maximum VGPR lines.
+        livereg_data.max_vgprs = RgOutputFileUtils::CalculateMaxVgprs(vgpr_isa_lines, livereg_data.max_vgpr_line_numbers, disassembled_isa_lines);
+
+        // Allocate space for the vector.
+        livereg_data.is_current_max_vgpr_line_number.resize(livereg_data.max_vgpr_line_numbers.size());
+
+        // Set all booleans to false.
+        std::fill(livereg_data.is_current_max_vgpr_line_number.begin(), livereg_data.is_current_max_vgpr_line_number.end(), false);
 
         // Keep track of the line number.
         int line_number = 0;
@@ -99,15 +108,54 @@ bool RgOutputFileUtils::ParseLiveVgprsData(const std::string&                   
     return status;
 }
 
-int RgOutputFileUtils::CalculateMaxVgprs(const std::vector<std::shared_ptr<RgIsaLineInstruction>>& vgpr_isa_lines)
+int RgOutputFileUtils::CalculateMaxVgprs(const std::vector<std::shared_ptr<RgIsaLineInstruction>>& vgpr_isa_lines,
+                                         std::vector<int>& max_line_numbers,
+                                         std::vector<std::shared_ptr<RgIsaLine>>& disassembled_isa_lines)
 {
-    int max_vgprs_used = 0;
-    for (const auto& current_livereg_line : vgpr_isa_lines)
+    int max_vgprs_used    = 0;
+    int isa_line_number   = 0;
+    int vgpr_line_number  = 0;
+    while (isa_line_number < disassembled_isa_lines.size())
     {
-        QString value = QString::fromStdString(current_livereg_line->num_live_registers);
-        if (value.toInt() > max_vgprs_used)
+        const std::shared_ptr<RgIsaLineInstruction> current_vgpr_line = vgpr_isa_lines[vgpr_line_number];
+        QString                                     value             = QString::fromStdString(current_vgpr_line->num_live_registers);
+        std::shared_ptr<RgIsaLineInstruction>       disassembly_line  = std::static_pointer_cast<RgIsaLineInstruction>(disassembled_isa_lines[isa_line_number]);
+
+        if (disassembly_line->type == RgIsaLineType::kLabel)
         {
-            max_vgprs_used = value.toInt();
+            isa_line_number++;
+        }
+        else if ((disassembly_line->type == RgIsaLineType::kInstruction) && (disassembly_line->opcode == "s_nop"))
+        {
+            isa_line_number++;
+
+            // If the VGPR line has a matching s_nop, bump up that line number too.
+            if (current_vgpr_line->opcode == "s_nop")
+            {
+                vgpr_line_number++;
+            }
+        }
+        else if (disassembly_line->type == RgIsaLineType::kInstruction)
+        {
+            // Update the max VGPR values.
+            if (value.toInt() >= max_vgprs_used)
+            {
+                if (value.toInt() > max_vgprs_used)
+                {
+                    // Clear the values saved so far.
+                    max_line_numbers.clear();
+                }
+
+                // Save the max VGPR value.
+                max_vgprs_used = value.toInt();
+
+                // Save the line number here as well.
+                max_line_numbers.push_back(isa_line_number);
+            }
+
+            // Bump up the line numbers.
+            isa_line_number++;
+            vgpr_line_number++;
         }
     }
 

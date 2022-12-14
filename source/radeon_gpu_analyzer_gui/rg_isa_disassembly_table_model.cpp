@@ -224,6 +224,25 @@ bool RgIsaDisassemblyTableModel::IsIsaLineCorrelated(int line_index) const
     return ret;
 }
 
+bool RgIsaDisassemblyTableModel::IsCurrentMaxVgprLine(int line_index) const
+{
+    bool status = false;
+
+    // Check if the given line index exists in the current cache of max VGPR lines numbers.
+    auto line_iter = std::find(livereg_data_.max_vgpr_line_numbers.begin(), livereg_data_.max_vgpr_line_numbers.end(), line_index);
+    if (line_iter != livereg_data_.max_vgpr_line_numbers.end())
+    {
+        const int index = line_iter - livereg_data_.max_vgpr_line_numbers.begin();
+        if (livereg_data_.is_current_max_vgpr_line_number.at(index))
+        {
+            // If this is the current maximum VGPR line, set status to true.
+            status = true;
+        }
+    }
+
+    return status;
+}
+
 bool RgIsaDisassemblyTableModel::IsSourceLineCorrelated(int line_index) const
 {
     return (input_source_line_index_to_instruction_line_indices_.find(line_index) != input_source_line_index_to_instruction_line_indices_.end());
@@ -240,6 +259,12 @@ bool RgIsaDisassemblyTableModel::IsSourceLineInEntrypoint(int line_index) const
     }
 
     return ret;
+}
+
+std::vector<int> RgIsaDisassemblyTableModel::GetMaximumVgprLineNumbers() const
+{
+    //  Return the line numbers for the max VGPR values.
+    return livereg_data_.max_vgpr_line_numbers;
 }
 
 bool RgIsaDisassemblyTableModel::PopulateFromCsvFile(const std::string& csv_file_full_path)
@@ -492,7 +517,7 @@ bool RgIsaDisassemblyTableModel::ParseCsvIsaLine(const std::string& disassembled
 {
     bool ret = false;
 
-    // Some parsed CSV lines don't have an input sourcecode line number associated with them. In these cases, return -1.
+    // Some parsed CSV lines don't have an input source code line number associated with them. In these cases, return -1.
     input_source_line_index = kInvalidCorrelationLineIndex;
 
     std::vector<std::string> line_tokens;
@@ -819,4 +844,105 @@ void RgIsaDisassemblyTableModel::CreateTooltip(std::string& tooltip, const std::
             }
         }
     }
+}
+
+void RgIsaDisassemblyTableModel::HighlightCurrentMaxVgprLine()
+{
+    // Set all lines to be not current max VGPR lines.
+    std::fill(livereg_data_.is_current_max_vgpr_line_number.begin(), livereg_data_.is_current_max_vgpr_line_number.end(), false);
+
+    // Set the boolean for the current line to true so it'll be highlighted.
+    livereg_data_.is_current_max_vgpr_line_number.at(current_max_vgpr_index_) = true;
+}
+
+void RgIsaDisassemblyTableModel::UpdateCurrentMaxVgprLine()
+{
+    if (livereg_data_.is_current_max_vgpr_line_number.size() > 0)
+    {
+        // Update the current maximum VGPR line index.
+        if (current_max_vgpr_index_ < livereg_data_.is_current_max_vgpr_line_number.size() - 1)
+        {
+            current_max_vgpr_index_++;
+        }
+        else
+        {
+            current_max_vgpr_index_ = 0;
+        }
+    }
+}
+
+void RgIsaDisassemblyTableModel::ResetCurrentMaxVgprValues()
+{
+    // Reset the maximum VGPR values.
+    current_max_vgpr_index_ = 0;
+    is_show_current_max_vgpr_enabled_ = false;
+
+    // Set all lines to be not current max VGPR lines.
+    std::fill(livereg_data_.is_current_max_vgpr_line_number.begin(), livereg_data_.is_current_max_vgpr_line_number.end(), false);
+}
+
+bool RgIsaDisassemblyTableModel::IsShowCurrentMaxVgprEnabled()
+{
+    return is_show_current_max_vgpr_enabled_;
+}
+
+bool RgIsaDisassemblyTableModel::GetNextMaxVgprLineNumber(int& line_number)
+{
+    bool is_valid_line = false;
+
+    // Return a valid line number.
+    if (livereg_data_.max_vgpr_line_numbers.size() > 0)
+    {
+        if (is_show_current_max_vgpr_enabled_)
+        {
+            // Update the current maximum VGPR line index.
+            if (current_max_vgpr_index_ < livereg_data_.is_current_max_vgpr_line_number.size() - 1)
+            {
+                current_max_vgpr_index_++;
+            }
+            else
+            {
+                current_max_vgpr_index_ = 0;
+            }
+        }
+        else
+        {
+            is_show_current_max_vgpr_enabled_ = true;
+        }
+
+        line_number = livereg_data_.max_vgpr_line_numbers.at(current_max_vgpr_index_);
+        is_valid_line = true;
+    }
+
+    return is_valid_line;
+}
+
+bool RgIsaDisassemblyTableModel::GetPreviousMaxVgprLineNumber(int& line_number)
+{
+    bool is_valid_line = false;
+
+    if (is_show_current_max_vgpr_enabled_)
+    {
+        if (current_max_vgpr_index_ > 0)
+        {
+            current_max_vgpr_index_--;
+        }
+        else
+        {
+            current_max_vgpr_index_ = livereg_data_.max_vgpr_line_numbers.size() - 1;
+        }
+    }
+    else
+    {
+        is_show_current_max_vgpr_enabled_ = true;
+    }
+
+    // Return a valid line number.
+    if (livereg_data_.max_vgpr_line_numbers.size() > 0)
+    {
+        line_number   = livereg_data_.max_vgpr_line_numbers.at(current_max_vgpr_index_);
+        is_valid_line = true;
+    }
+
+    return is_valid_line;
 }

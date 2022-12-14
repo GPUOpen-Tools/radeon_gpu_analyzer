@@ -23,7 +23,9 @@ public:
                                    std::vector<QString>& vgpr_file_lines);
 
     // Calculate the maximum number of VGPRs for this shader.
-    static int CalculateMaxVgprs(const std::vector<std::shared_ptr<RgIsaLineInstruction>>& vgpr_isa_lines);
+    static int CalculateMaxVgprs(const std::vector<std::shared_ptr<RgIsaLineInstruction>>& vgpr_isa_lines,
+                                 std::vector<int>& max_line_number,
+                                 std::vector<std::shared_ptr<RgIsaLine>>& disassembled_isa_lines);
 
     // Find out if this is a valid line.
     static bool IsValidLine(const QString& livereg_line);

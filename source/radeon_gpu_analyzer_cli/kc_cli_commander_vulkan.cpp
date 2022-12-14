@@ -397,6 +397,15 @@ static bool ConstructVkOutputFileNames(const Config& config,
         }
     }
 
+    if (KcUtils::IsNavi3Target(device) && !isa_filenames.empty())
+    {
+        status = KcUtils::ConstructOutFileName(base_bin_filename,
+                                               "",
+                                               (!config.should_avoid_binary_device_prefix ? device : ""),
+                                               (config.should_avoid_binary_suffix ? "" : kStrVulkanBinaryFileExtension),
+                                               bin_filename);
+    }
+
     assert(status);
     return status;
 }
@@ -919,25 +928,30 @@ void KcCliCommanderVulkan::RunCompileCommands(const Config& config, LoggingCallb
                     // *****************************
                     // Post-process for all devices.
                     // *****************************
-
-                    // Convert ISA text to CSV if required.
-                    if (status && configPerDevice.is_parsed_isa_required)
+                    for (auto& device_md_node : output_metadata_)
                     {
-                        status = ParseIsaFilesToCSV(true);
-                    }
+                        bool                is_ok         = true;
+                        const std::string&  device_string = device_md_node.first;
+                        RgVkOutputMetadata& device_md     = device_md_node.second;
 
-                    // Analyze live registers if requested.
-                    if (status && !configPerDevice.livereg_analysis_file.empty())
-                    {
-                        status = PerformLiveRegAnalysis(config);
-                    }
+                        // Convert ISA text to CSV if required.
+                        if (is_ok && configPerDevice.is_parsed_isa_required)
+                        {
+                            is_ok = ParseIsaFilesToCSV(true, device_string, device_md);
+                        }
 
-                    // Generate CFG if requested.
-                    if (status && (!configPerDevice.block_cfg_file.empty() || !configPerDevice.inst_cfg_file.empty()))
-                    {
-                        status = ExtractCFG(config);
-                    }
+                        // Analyze live registers if requested.
+                        if (is_ok && !configPerDevice.livereg_analysis_file.empty())
+                        {
+                            is_ok = PerformLiveRegAnalysis(config, device_string, device_md);
+                        }
 
+                        // Generate CFG if requested.
+                        if (is_ok && (!configPerDevice.block_cfg_file.empty() || !configPerDevice.inst_cfg_file.empty()))
+                        {
+                            is_ok = ExtractCFG(config, device_string, device_md);
+                        }
+                    }
                 }
             }
         }
@@ -1417,6 +1431,11 @@ void KcCliCommanderVulkan::CompileSpvToIsaForDevice(const Config& config, const 
         {
             std::copy_if(isa_files.cbegin(), isa_files.cend(), std::back_inserter(temp_files_),
                 [&](const std::string& s) { return !s.empty(); });
+
+            if (KcUtils::IsNavi3Target(device))
+            {
+                temp_files_.push_back(bin_file_name);
+            }            
         }
     }
     else
@@ -1675,97 +1694,86 @@ bool KcCliCommanderVulkan::GenerateSessionMetadata(const Config& config) const
     return KcXmlWriter::GenerateVulkanSessionMetadataFile(config.session_metadata_file, output_metadata_);
 }
 
-bool KcCliCommanderVulkan::ParseIsaFilesToCSV(bool line_numbers)
+bool KcCliCommanderVulkan::ParseIsaFilesToCSV(bool line_numbers, const std::string& device_string, RgVkOutputMetadata& metadata)
 {
     bool ret = true;
 
     // Step through existing output items to determine which files to generate CSV ISA for.
-    for (auto& output_md_item : output_metadata_)
+    for (RgOutputFiles& output_file : metadata)
     {
-        const std::string& device_string = output_md_item.first;
-        RgVkOutputMetadata& metadata = output_md_item.second;
-
-        for (RgOutputFiles& output_file : metadata)
+        if (!output_file.input_file.empty())
         {
-            if (!output_file.input_file.empty())
-            {
-                std::string isa, parsed_isa, parsed_isa_filename;
-                bool status = KcUtils::ReadTextFile(output_file.isa_file, isa, nullptr);
+            std::string isa, parsed_isa, parsed_isa_filename;
+            bool        status = KcUtils::ReadTextFile(output_file.isa_file, isa, nullptr);
 
-                if (status)
+            if (status)
+            {
+                // Convert the ISA text to CSV format.
+                if ((status = GetParsedIsaCsvText(isa, device_string, line_numbers, parsed_isa)) == true)
                 {
-                    // Convert the ISA text to CSV format.
-                    if ((status = GetParsedIsaCsvText(isa, device_string, line_numbers, parsed_isa)) == true)
+                    status = (KcUtils::GetParsedISAFileName(output_file.isa_file, parsed_isa_filename) == beKA::kBeStatusSuccess);
+                    if (status)
                     {
-                        status = (KcUtils::GetParsedISAFileName(output_file.isa_file, parsed_isa_filename) == beKA::kBeStatusSuccess);
+                        // Attempt to write the ISA CSV to disk.
+                        status = (WriteIsaToFile(parsed_isa_filename, parsed_isa) == beKA::kBeStatusSuccess);
                         if (status)
                         {
-                            // Attempt to write the ISA CSV to disk.
-                            status = (WriteIsaToFile(parsed_isa_filename, parsed_isa) == beKA::kBeStatusSuccess);
-                            if (status)
-                            {
-                                // Update the session metadata output to include the path to the ISA CSV.
-                                output_file.isa_csv_file = parsed_isa_filename;
-                            }
+                            // Update the session metadata output to include the path to the ISA CSV.
+                            output_file.isa_csv_file = parsed_isa_filename;
                         }
                     }
-
-                    if (!status)
-                    {
-                        RgLog::stdOut << kStrErrorFailedToConvertToCsvFormat << output_file.isa_file << std::endl;
-                    }
                 }
-                ret &= status;
+
+                if (!status)
+                {
+                    RgLog::stdOut << kStrErrorFailedToConvertToCsvFormat << output_file.isa_file << std::endl;
+                }
             }
+            ret &= status;
         }
     }
 
     return ret;
 }
 
-bool KcCliCommanderVulkan::PerformLiveRegAnalysis(const Config& conf)
+bool KcCliCommanderVulkan::PerformLiveRegAnalysis(const Config& conf, const std::string& device, RgVkOutputMetadata& device_md)
 {
     bool  ret = true;
 
-    for (auto& device_md_node : output_metadata_)
+    const std::string& device_suffix = (conf.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
+    gtString           device_gtstr;
+    device_gtstr << device.c_str();
+
+    std::cout << kStrInfoPerformingLiveregAnalysis1 << device << "... " << std::endl;
+
+    for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
     {
-        const std::string&        device        = device_md_node.first;
-        const std::string&        device_suffix = (conf.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
-        RgVkOutputMetadata& device_md     = device_md_node.second;
-        gtString                  device_gtstr;
-        device_gtstr << device.c_str();
-
-        std::cout << kStrInfoPerformingLiveregAnalysis1 << device << "... " << std::endl;
-
-        for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
+        RgOutputFiles& stage_md = device_md[stage];
+        if (!stage_md.input_file.empty())
         {
-            RgOutputFiles& stage_md = device_md[stage];
-            if (!stage_md.input_file.empty())
+            std::string out_file_name;
+            gtString    out_filename_gtstr, isa_filename_gtstr;
+
+            // Construct a name for the livereg output file.
+            ret = KcUtils::ConstructOutFileName(conf.livereg_analysis_file,
+                                                kVulkanStageFileSuffixDefault[stage],
+                                                device_suffix,
+                                                kStrDefaultExtensionLivereg,
+                                                out_file_name,
+                                                !KcUtils::IsDirectory(conf.livereg_analysis_file));
+
+            if (ret && !out_file_name.empty())
             {
-                std::string out_file_name;
-                gtString    out_filename_gtstr, isa_filename_gtstr;
+                out_filename_gtstr << out_file_name.c_str();
+                isa_filename_gtstr << stage_md.isa_file.c_str();
 
-                // Construct a name for the livereg output file.
-                ret = KcUtils::ConstructOutFileName(conf.livereg_analysis_file,
-                                                    kVulkanStageFileSuffixDefault[stage],
-                                                    device_suffix,
-                                                    kStrDefaultExtensionLivereg,
-                                                    out_file_name,
-                                                    !KcUtils::IsDirectory(conf.livereg_analysis_file));
-
-                if (ret && !out_file_name.empty())
-                {
-                    out_filename_gtstr << out_file_name.c_str();
-                    isa_filename_gtstr << stage_md.isa_file.c_str();
-
-                    KcUtils::PerformLiveRegisterAnalysis(isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, conf.print_process_cmd_line);
-                    ret = BeUtils::IsFilePresent(out_file_name);
-                    stage_md.livereg_file = out_file_name;
-                }
-                else
-                {
-                    RgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
-                }
+                KcUtils::PerformLiveRegisterAnalysis(isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, conf.print_process_cmd_line);
+                ret                   = BeUtils::IsFilePresent(out_file_name);
+                stage_md.livereg_file = out_file_name;
+            }
+            else
+            {
+                RgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
             }
         }
     }
@@ -1775,51 +1783,46 @@ bool KcCliCommanderVulkan::PerformLiveRegAnalysis(const Config& conf)
     return ret;
 }
 
-bool KcCliCommanderVulkan::ExtractCFG(const Config& config) const
+bool KcCliCommanderVulkan::ExtractCFG(const Config& config, const std::string& device, const RgVkOutputMetadata& device_md) const
 {
     bool ret = true;
 
-    for (const auto& device_md_node : output_metadata_)
+    const std::string& device_suffix = (config.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
+    bool               per_inst_cfg  = (!config.inst_cfg_file.empty());
+    gtString           device_gtstr;
+    device_gtstr << device.c_str();
+
+    std::cout << (per_inst_cfg ? kStrInfoContructingPerInstructionCfg1 : kStrInfoContructingPerBlockCfg1) << device << "..." << std::endl;
+
+    for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
     {
-        const std::string&        device        = device_md_node.first;
-        const std::string&        device_suffix = (config.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
-        const RgVkOutputMetadata& device_md     = device_md_node.second;
-        bool                      per_inst_cfg  = (!config.inst_cfg_file.empty());
-        gtString                  device_gtstr;
-        device_gtstr << device.c_str();
-
-        std::cout << (per_inst_cfg ? kStrInfoContructingPerInstructionCfg1 : kStrInfoContructingPerBlockCfg1) << device << "..." << std::endl;
-
-        for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
+        const RgOutputFiles& stage_md = device_md[stage];
+        if (!stage_md.input_file.empty())
         {
-            const RgOutputFiles& stage_md = device_md[stage];
-            if (!stage_md.input_file.empty())
+            std::string out_filename;
+            gtString    out_filename_gtstr, isa_filename_gtstr;
+
+            // Construct a name for the CFG output file.
+            const std::string cfg_output_file = (per_inst_cfg ? config.inst_cfg_file : config.block_cfg_file);
+            ret                               = KcUtils::ConstructOutFileName(cfg_output_file,
+                                                kVulkanStageFileSuffixDefault[stage],
+                                                device_suffix,
+                                                kStrDefaultExtensionDot,
+                                                out_filename,
+                                                !KcUtils::IsDirectory(cfg_output_file));
+
+            if (ret && !out_filename.empty())
             {
-                std::string out_filename;
-                gtString    out_filename_gtstr, isa_filename_gtstr;
+                out_filename_gtstr << out_filename.c_str();
+                isa_filename_gtstr << stage_md.isa_file.c_str();
 
-                // Construct a name for the CFG output file.
-                const std::string cfg_output_file = (per_inst_cfg ? config.inst_cfg_file : config.block_cfg_file);
-                ret = KcUtils::ConstructOutFileName(cfg_output_file,
-                                                    kVulkanStageFileSuffixDefault[stage],
-                                                    device_suffix,
-                                                    kStrDefaultExtensionDot,
-                                                    out_filename,
-                                                    !KcUtils::IsDirectory(cfg_output_file));
-
-                if (ret && !out_filename.empty())
-                {
-                    out_filename_gtstr << out_filename.c_str();
-                    isa_filename_gtstr << stage_md.isa_file.c_str();
-
-                    KcUtils::GenerateControlFlowGraph(isa_filename_gtstr, device_gtstr, out_filename_gtstr,
-                        log_callback_, per_inst_cfg, config.print_process_cmd_line);
-                    ret = BeUtils::IsFilePresent(out_filename);
-                }
-                else
-                {
-                    RgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
-                }
+                KcUtils::GenerateControlFlowGraph(
+                    isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, per_inst_cfg, config.print_process_cmd_line);
+                ret = BeUtils::IsFilePresent(out_filename);
+            }
+            else
+            {
+                RgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
             }
         }
     }

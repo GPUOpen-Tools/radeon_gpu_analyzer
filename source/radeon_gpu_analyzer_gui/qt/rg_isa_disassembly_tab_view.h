@@ -54,6 +54,12 @@ public:
     // This function should be used when replacing a shader SPIR-V file with its disassembly version and vice versa.
     bool ReplaceInputFilePath(const std::string& old_file_path, const std::string& new_file_path);
 
+    // Get the current table view.
+    RgIsaDisassemblyTableView* GetCurrentTableView() const;
+
+    // Return the current show maximum VGPR boolean.
+    bool IsShowCurrentMaxVgprEnabled();
+
 signals:
     // A signal emitted containing the index of the correlated line in the high level source input file.
     void InputSourceHighlightedLineChanged(int line_number);
@@ -91,9 +97,18 @@ signals:
     // A signal to switch disassembly view size.
     void SwitchDisassemblyContainerSize();
 
+    // A signal to enable/disable the Edit->Go to next maximum live VGPR line option.
+    void EnableShowMaxVgprOptionSignal(bool is_enabled);
+
 public slots:
     // A handler invoked when the user changes the visible columns in the disassembly table.
     void HandleColumnVisibilityFilterStateChanged();
+
+    // A handler invoked when the user wants to highlight the next maximum VGPR line.
+    void HandleShowNextMaxVgprSignal();
+
+    // A handler invoked when the user wants to highlight the previous maximum VGPR line.
+    void HandleShowPreviousMaxVgprSignal();
 
 protected:
     // Connect signals for a new ISA table view instance.

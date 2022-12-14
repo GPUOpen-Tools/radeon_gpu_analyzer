@@ -690,6 +690,12 @@ void RgBuildViewOpencl::HandleSelectedFileChanged(const std::string& old_file_pa
                     // Hide the disassembly view when switching to a file that hasn't been disassembled.
                     ToggleDisassemblyViewVisibility(false);
                 }
+
+                // Disable/enable the Edit->Go to live VGPR option.
+                emit EnableShowMaxVgprOptionSignal(disassembly_view_->IsMaxVgprColumnVisible());
+
+                // Also enable/disable the context menu item.
+                disassembly_view_->EnableShowMaxVgprContextOption();
             }
         }
     }

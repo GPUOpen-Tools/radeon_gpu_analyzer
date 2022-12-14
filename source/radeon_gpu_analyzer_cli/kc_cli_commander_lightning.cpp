@@ -1,4 +1,3 @@
-
 // C++.
 #include <vector>
 #include <map>
@@ -56,7 +55,8 @@ kLcLlvmTargetsToDeviceInfoTargets = { {"gfx801", "carrizo"},
                                        {"gfx1031", "gfx1031"},
                                        {"gfx1032", "gfx1032"},
                                        {"gfx1034", "gfx1034"},
-                                       {"gfx1035", "gfx1035"}};
+                                       {"gfx1035", "gfx1035"},
+                                       {"gfx1100", "gfx1100"}};
 
 // For some devices, clang does not accept device names that RGA gets from DeviceInfo.
 // This table maps the DeviceInfo names to names accepted by clang for such devices.
@@ -154,7 +154,8 @@ static const std::map<std::string, DeviceProps> kRgaDeviceProps =
       {"gfx1031",   {104, 256, 65536, 16,  4}},
       {"gfx1032",   {104, 256, 65536, 16,  4}},   
       {"gfx1034",   {104, 256, 65536, 16,  4}},
-      {"gfx1035",   {104, 256, 65536, 16,  4}}};
+      {"gfx1035",   {104, 256, 65536, 16,  4}},
+      {"gfx1100",   {104, 256, 65536, 16,  4}} };
 
 static const size_t  kIsaInstruction64BitCodeTextSize   = 16;
 static const int     kIsaInstruction64BitBytes          = 8;
@@ -681,7 +682,6 @@ beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, const Open
         std::string  error_text;
         LogPreStep(kStrInfoCompiling, device);
         std::string  bin_filename;
-        gtString  il_filename;
 
         // Adjust the device name if necessary.
         std::string clang_device = device;
@@ -724,20 +724,7 @@ beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, const Open
             // If "dump IL" option is passed to the Lightning Compiler, it should dump the IL to stderr.
             if (ocl_options.should_dump_il)
             {
-                KcUtils::ConstructOutputFileName(config.il_file, "", kStrDefaultExtensionLlvmir, "", device, il_filename);
-
-                // Generate new options instructing to generate LLVM IR disassembly.
-                OpenCLOptions ocl_options_llvm_ir  = ocl_options;
-                ocl_options_llvm_ir.should_generate_llvm_ir_disassembly = true;
-
-                current_status = BeProgramBuilderLightning::CompileOpenCLToLlvmIr(
-                    compiler_paths_, ocl_options_llvm_ir, src_filenames, il_filename.asASCIICharArray(), clang_device, should_print_cmd_, error_text);
-                if (current_status != kBeStatusSuccess)
-                {
-                    std::stringstream msg;
-                    msg << kStrErrorOpenclOfflineLlvmIrDisassemblyFailure << std::endl;
-                    error_text.append(msg.str());
-                }
+                current_status = DumpIL(config, ocl_options, src_filenames, device, clang_device, error_text);
             }
             else if (config.is_warnings_required)
             {
@@ -1743,4 +1730,51 @@ void KcCLICommanderLightning::DeleteTempFiles() const
             KcUtils::DeleteFile(filename);
         }
     }
+}
+
+beStatus KcCLICommanderLightning::DumpIL(const Config&                   config,
+                                         const OpenCLOptions&            user_options,
+                                         const std::vector<std::string>& src_file_names,
+                                         const std::string&              device,
+                                         const std::string&              clang_device,
+                                         std::string&                    error_text)
+{
+    beStatus status = kBeStatusSuccess;
+
+    // Generate new options instructing to generate LLVM IR disassembly.
+    OpenCLOptions ocl_options_llvm_ir                       = user_options;
+    ocl_options_llvm_ir.should_generate_llvm_ir_disassembly = true;
+
+    for (const auto& src_file_name_with_ext : src_file_names)
+    {
+        // Convert the src kernel input file name to gtString.
+        gtString src_file_name_with_ext_as_gtstr;
+        src_file_name_with_ext_as_gtstr << src_file_name_with_ext.c_str();
+        osFilePath src_file_path(src_file_name_with_ext_as_gtstr);
+
+        // Extract the kernel's file name without directory and extension.
+        gtString src_file_name;
+        assert(!src_file_path.isDirectory());
+        src_file_path.getFileName(src_file_name);
+
+        gtString il_filename;
+        KcUtils::ConstructOutputFileName(config.il_file, "", kStrDefaultExtensionLlvmir, src_file_name.asASCIICharArray(), device, il_filename);
+
+        // Invoking clang with "-emit-llvm -S" for multiple .cl files is not supported.
+        // Clang should be invoked with one input file at a time.
+        status = BeProgramBuilderLightning::CompileOpenCLToLlvmIr(compiler_paths_,
+                                                                  ocl_options_llvm_ir,
+                                                                  std::vector<std::string>{src_file_name_with_ext},
+                                                                  il_filename.asASCIICharArray(),
+                                                                  clang_device,
+                                                                  should_print_cmd_,
+                                                                  error_text);
+        if (status != kBeStatusSuccess)
+        {
+            std::stringstream msg;
+            msg << kStrErrorOpenclOfflineLlvmIrDisassemblyFailure << std::endl;
+            error_text.append(msg.str());
+        }
+    }
+    return status;
 }

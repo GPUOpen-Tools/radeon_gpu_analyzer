@@ -342,6 +342,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("parse-isa", "Generate a CSV file with a breakdown of each ISA instruction into opcode, operands. etc.")
             ("csv-separator", po::value<string>(&config.csv_separator), "Override to default separator for analysis items.")
             ("retain", "Retain temporary output files.")
+            ("no-rename-il", "If specified, do not rename generated IL file.")
             ;
 
         // All options available from command line
@@ -376,6 +377,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         if (vm.count("retain"))
         {
             config.should_retain_temp_files = true;
+        }
+
+        if (vm.count("no-rename-il"))
+        {
+            config.donot_rename_il_files = true;
         }
 
         if (vm.count("list-asics"))
@@ -851,7 +857,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << "Examples:" << endl;
             cout << "  Compile fragment shader for gfx1034; extract ISA, binaries and statistics:" << endl;
             cout << "    " << program_name << " -s opengl -c gfx1034 --isa output/opengl_isa.txt -b output/opengl_bin.bin -a output/opengl_stats.csv --frag source/myFragmentShader.frag" << endl;
-            cout << "  Compile vertex & fragment shaders for FirePro gfx1030; Extract ISA and control flow graph: " << endl;
+            cout << "  Compile vertex & fragment shaders for gfx1030; Extract ISA and control flow graph: " << endl;
             cout << "    " << program_name << " -s opengl -c gfx1030 --isa output/opengl_isa.txt --cfg output/cfg.dot --vert myVertexShader.vert --frag cmyFragmentShader.frag" << endl;
             cout << "  Compile geometry shader for all supported devices; extract ISA and perform live register analysis:" << endl;
             cout << "    " << program_name << " -s opengl --isa output/opengl_isa.txt --livereg output/regs.txt --geom source/myVertexShader.geom" << endl;

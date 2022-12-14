@@ -74,6 +74,15 @@ public:
     // Initialize the model data.
     void InitializeModelData();
 
+    // Reset the current max VGPR line number.
+    void ResetCurrentMaxVgprIndex();
+
+    // Return the current show maximum VGPR boolean.
+    bool IsShowCurrentMaxVgprEnabled() const;
+
+    // Enable/disable the show max VGPR context menu option.
+    void EnableShowMaxVgprContextOption(bool is_enabled) const;
+
 protected:
     // Re-implement keyPressEvent.
     virtual void keyPressEvent(QKeyEvent* event) override;
@@ -118,6 +127,12 @@ signals:
 public slots:
     // A handler invoked when the user clicks a branch operand label link.
     void HandleBranchLinkClicked(const QString& link);
+
+    // Handler invoked when the user wants to see the next max VGPR line.
+    void HandleShowNextMaxVgprSignal();
+
+    // Handler invoked when the user wants to see the previous max VGPR line.
+    void HandleShowPreviousMaxVgprSignal();
 
 private slots:
     // Handler invoked when the copy item is clicked in the table's context menu.
@@ -189,6 +204,9 @@ protected:
 
     // The context menu item used to open the current disassembly table's data in the file browser.
     QAction* open_disassembly_in_file_browser_ = nullptr;
+
+    // The context menu item used to navigate to the maximum VGPR line.
+    QAction* show_maximum_vgpr_lines_ = nullptr;
 
     // The disassembly view's interface.
     Ui::RgIsaDisassemblyTableView ui_;

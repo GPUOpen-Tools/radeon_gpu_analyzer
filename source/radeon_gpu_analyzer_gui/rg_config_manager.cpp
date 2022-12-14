@@ -101,6 +101,7 @@ private:
         assert(version_info != nullptr);
         if (version_info != nullptr)
         {
+            const char* kTokenRdna3 = "RDNA3";
             const char* kTokenRdna2 = "RDNA2";
             const char* kTokenRdna  = "RDNA";
             const char* kTokenVega  = "Vega";
@@ -109,34 +110,42 @@ private:
             auto mode_architectures_iter = version_info->gpu_architectures.find(api_mode);
             if (mode_architectures_iter != version_info->gpu_architectures.end())
             {
-                // Search for the latest target. Start with RDNA2, if not look for RDNA and Vega. As a fall back
+                // Search for the latest target. Start with RDNA3, then RDNA2, then RDNA and Vega. As a fall back
                 // just take the first element.
                 const std::vector<RgGpuArchitecture>& mode_architectures = mode_architectures_iter->second;
                 auto last_architecture_iter = std::find_if(mode_architectures.begin(), mode_architectures.end(), [&](const RgGpuArchitecture& arch) {
-                    return arch.architecture_name.compare(kTokenRdna2) == 0;
+                    return arch.architecture_name.compare(kTokenRdna3) == 0;
                 });
 
                 if (last_architecture_iter == mode_architectures.end())
                 {
-                    // Search for the latest target. Start with RDNA, if not look for Vega. As a fall back
-                    // just take the first element.
-                    const std::vector<RgGpuArchitecture>& mode_architectures = mode_architectures_iter->second;
                     last_architecture_iter = std::find_if(mode_architectures.begin(), mode_architectures.end(), [&](const RgGpuArchitecture& arch) {
-                        return arch.architecture_name.compare(kTokenRdna) == 0;
+                        return arch.architecture_name.compare(kTokenRdna2) == 0;
                     });
 
                     if (last_architecture_iter == mode_architectures.end())
                     {
+                        // Search for the latest target. Start with RDNA, if not look for Vega. As a fall back
+                        // just take the first element.
+                        const std::vector<RgGpuArchitecture>& mode_architectures = mode_architectures_iter->second;
                         last_architecture_iter = std::find_if(mode_architectures.begin(), mode_architectures.end(), [&](const RgGpuArchitecture& arch) {
-                            return arch.architecture_name.compare(kTokenVega) == 0;
+                            return arch.architecture_name.compare(kTokenRdna) == 0;
                         });
+
                         if (last_architecture_iter == mode_architectures.end())
                         {
-                            // Take the first element.
-                            last_architecture_iter = mode_architectures.begin();
+                            last_architecture_iter = std::find_if(mode_architectures.begin(), mode_architectures.end(), [&](const RgGpuArchitecture& arch) {
+                                return arch.architecture_name.compare(kTokenVega) == 0;
+                            });
 
-                            // We shouldn't be getting here normally.
-                            assert(false);
+                            if (last_architecture_iter == mode_architectures.end())
+                            {
+                                // Take the first element.
+                                last_architecture_iter = mode_architectures.begin();
+
+                                // We shouldn't be getting here normally.
+                                assert(false);
+                            }
                         }
                     }
                 }

@@ -370,6 +370,28 @@ Each range is assigned a unique color starting with light green for the first ra
 
 .. image:: images/024_live_vgpr_range_colors.png
 
+You can cycle through all the lines which have maximum VGPR pressure by pressing the
+F4 function key, or from the application's Edit menu by selecting the
+"Go to next maximum VGPR pressure line" item, or by pressing the Ctrl+F4 shortcut.
+The lines will be highlighted as shown in the image below.
+
+.. image:: images/030_live_vgpr_show_max_vgpr.png
+
+Selecting the "Go to next maximum VGPR pressure line" option in the disassembly view's
+context menu also allows you to cycle through maximum live VGPR pressure lines. This option
+is shown in the image below.
+
+.. image:: images/031_live_vgpr_show_max_vgpr_context_menu.png
+
+Switching between kernels will reset the feature, and you will have to use one of the
+options mentioned above to see the maximum live VGPR pressure lines again.
+At this point the first maximum VGPR line for the current kernel will be highlighted.
+If the "VGPR pressure" column is currently hidden, pressing the F4 or Ctrl+F4 keys will
+have no effect, and the Edit menu item to show this feature will also be disabled.
+
+Pressing the Shift+F4 key combination shows the matches in the reverse order.
+
+
 OpenCL™ Offline Mode
 --------------------
 

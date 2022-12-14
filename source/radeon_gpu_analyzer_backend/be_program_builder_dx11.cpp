@@ -164,7 +164,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileAMDIL(const std::string& program_sou
     return kBeStatusSuccess;
 }
 
-BeProgramBuilderDx11::BeProgramBuilderDx11(void) : amd_dxx_module_(AMDDXXModule::s_DefaultModuleName),
+BeProgramBuilderDx11::BeProgramBuilderDx11(void) : amd_dxx_module_(),
     d3d_compile_module_(D3DCompileModule::s_DefaultModuleName), compiled_elf_()
 {
 }
@@ -174,7 +174,7 @@ BeProgramBuilderDx11::~BeProgramBuilderDx11(void)
     amd_dxx_module_.UnloadModule();
 }
 
-beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_name, const std::string& compiler_module_name)
+beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_name, const std::string& compiler_module_name, bool print_process_cmd_line)
 {
     beStatus be_rc = kBeStatusSuccess;
     std::string  compiler_dll_name = compiler_module_name;
@@ -184,9 +184,6 @@ beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_na
         // This solves the VS extension issue where devenv.exe looked for the D3D compiler
         // at its own directory, instead of looking for it at CodeXL's binaries directory.
         osFilePath default_compiler_file_path;
-
-        // Get CodeXL's binaries directory. Both the 32 and 64-bit versions of d3dcompiler are bundled with CodeXL.
-        // We use the 32-bit version by default
         bool is_ok = osGetCurrentApplicationDllsPath(default_compiler_file_path, OS_I386_ARCHITECTURE);
 
         if (is_ok)
@@ -211,7 +208,16 @@ beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_na
         amd_dxx_module_.LoadModule(dxx_module_name);
     }
 
-    if (!amd_dxx_module_.IsLoaded())
+    if (amd_dxx_module_.IsLoaded() && !amd_dxx_module_.GetModuleName().empty())
+    {
+        if (print_process_cmd_line)
+        {
+            stringstream ss;
+            ss << "Info: " << amd_dxx_module_.GetModuleName() << " module loaded.\n" << endl;
+            LogCallback(ss.str());
+        }
+    }
+    else
     {
         // Notice: This message receives an extra "\n", since later in the call chain, one is removed. We do want to remove them for
         // the rest of the messages, so we only remove it for initialization messages:

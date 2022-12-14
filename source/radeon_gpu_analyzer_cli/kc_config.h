@@ -68,12 +68,13 @@ public:
     std::vector<std::string> defines;                           ///< Macros to be added to compile.
     std::vector<std::string> include_path;                      ///< Additional Include paths
     bool                     should_avoid_binary_device_prefix; ///< If true then CLI will not add the asic name to the generated binary output file.
-    bool                     should_avoid_binary_suffix;        ///< If true, no extension would be added to the output binary file.
-    bool                     should_retain_temp_files;          ///< If true, temporary files will not be cleaned up.
+    bool                     should_avoid_binary_suffix = false;///< If true, no extension would be added to the output binary file.
+    bool                     should_retain_temp_files = false;  ///< If true, temporary files will not be cleaned up.
     std::string              version_info_file;                 ///< RGA CLI config file name.
     std::string              session_metadata_file;             ///< RGA CLI session metadata file name.
     std::string              log_file;                          ///< RGA CLI log file name (full path).
     int                      opt_level;                         ///< Optimization level.
+    bool                     donot_rename_il_files = false;     ///< If true, generated IL files will not have the ASIC and function name prefixed.  
 
     // DX11/GL.
     std::string              source_kind;                       ///< Kind of source HLSL or GLSL (maybe more later like ASM kinds).

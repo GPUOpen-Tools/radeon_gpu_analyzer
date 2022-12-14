@@ -1529,6 +1529,21 @@ static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* global_settings_node, s
     }
     if (ret)
     {
+        // Read the project file location.
+        elem = global_settings_node->FirstChildElement(kXmlNodeGlobalProjectFileLocation);
+        ret  = elem != nullptr;
+        ret  = ret && RgXMLUtils::ReadNodeTextString(elem, global_settings->project_file_location);
+
+        // If the saved project directory does not exist, fall back to using the default one.
+        if (!RgUtils::IsDirExists(global_settings->project_file_location))
+        {
+            std::string documents_dir;
+            RgConfigManager::GetDefaultDocumentsFolder(documents_dir);
+            global_settings->project_file_location = documents_dir;
+        }
+    }
+    if (ret)
+    {
         // Attempt to read the last selected directory. It might be empty, in which case the call returns false, and that's ok.
         elem = elem->NextSiblingElement(kXmlNodeGlobalLastSelectedDirectory);
         ret &= (elem != nullptr);

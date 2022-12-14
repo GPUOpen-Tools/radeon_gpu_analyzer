@@ -31,7 +31,7 @@
 // Constants.
 static const char* kStrErrorOpenglIsaParsingFailed = "Error: failed to parse ISA into CSV.";
 static const char* kStrErrorOpenglCannotExtractVersion = "Error: unable to extract the OpenGL version.";
-static const char* kStrErrTextFileWriteFailed = "Error: unable to write to statistics file.";
+static const char* kStrErrTextFileWriteFailed          = "Error: unable to write to statistics file.";
 static const char* kStrErrNoInputFile = "Error: no input file received.";
 
 // Unsupported devices.

@@ -1,10 +1,11 @@
 build/CMake
 build/windows
 build/linux
-Output
+output
 .vscode
-Output_Test
+output_test
 *.vs
+build_output
 BuildOutput
 documentation/build
 *.csproj.user
@@ -15,3 +16,4 @@ external/code_sanitizer
 *.msi
 RGA-Installer-cache
 source/common/vulkan_layer_launcher/RGALayerLauncher/bin
+

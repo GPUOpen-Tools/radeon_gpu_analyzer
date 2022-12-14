@@ -71,6 +71,9 @@ public:
     // Is the given ISA line correlated with a line in the input file?
     bool IsIsaLineCorrelated(int line_index) const;
 
+    // Is the given ISA line a current max VGPR line?
+    bool IsCurrentMaxVgprLine(int line_index) const;
+
     // Is the given source line correlated with some ISA line(s)?
     bool IsSourceLineCorrelated(int line_index) const;
 
@@ -88,6 +91,27 @@ public:
 
     // Initialize the model's data with the disassembled instruction lines.
     void InitializeModelData();
+
+    // Return the maximum VGPR line number.
+    std::vector<int> GetMaximumVgprLineNumbers() const;
+
+    // Advance to the next max VGPR line.
+    void UpdateCurrentMaxVgprLine();
+
+    // Reset the current max VGPR line index.
+    void ResetCurrentMaxVgprValues();
+
+    // Return the current max VGPR line number.
+    bool GetNextMaxVgprLineNumber(int& line_number);
+
+    // Return the previous max VGPR line number.
+    bool GetPreviousMaxVgprLineNumber(int& line_number);
+
+    // Highlight the current maximum VGPR line.
+    void HighlightCurrentMaxVgprLine();
+
+    // Return the current show maximum VGPR boolean.
+    bool IsShowCurrentMaxVgprEnabled();
 
 protected:
     // An enumeration specifying each column we expect to find in an ISA CSV file.
@@ -172,5 +196,11 @@ protected:
 
     // A vector for VGPR output file lines.
     std::vector<QString> vgpr_file_lines_;
+
+    // The current maximum VGPR line index.
+    int current_max_vgpr_index_ = 0;
+
+    // Boolean to indicate if the user already pressed F4.
+    bool is_show_current_max_vgpr_enabled_ = false;
 };
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_TABLE_MODEL_H_

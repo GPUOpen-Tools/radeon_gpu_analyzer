@@ -172,6 +172,20 @@ void RgIsaDisassemblyView::HandleSelectedEntrypointChanged(const std::string& ta
     {
         // Switch the table to show the disassembly for the given entrypoint.
         target_tab_view->SwitchToEntryPoint(input_file_path, selected_entrypoint_name);
+
+        // Reset the show maximum VGPR feature.
+        RgIsaDisassemblyTableView* current_table_view = target_tab_view->GetCurrentTableView();
+        if (current_table_view != nullptr)
+        {
+            // Reset the current max VGPR line number.
+            current_table_view->ResetCurrentMaxVgprIndex();
+
+            // Disable the Edit->Go to next maximum live VGPR line option.
+            emit EnableShowMaxVgprOptionSignal(IsMaxVgprColumnVisible());
+
+            // Disable the context menu item.
+            current_table_view->EnableShowMaxVgprContextOption(IsMaxVgprColumnVisible());
+        }
     }
 
     // Get a reference to the map of input file path to the entry point names map.
@@ -280,6 +294,54 @@ void RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(const QStri
 
     // Update the "All" checkbox text color to grey or black.
     UpdateAllCheckBoxText();
+
+    // If the user unchecked the "VGPR pressure" box, disable the show
+    // max VGPR feature.
+    if (text.compare(kStrDisassemblyTableLiveVgprHeaderPart) == 0)
+    {
+        // Get the current table view.
+        RgIsaDisassemblyTableView* current_table_view = current_tab_view_->GetCurrentTableView();
+
+        // Process the checked value.
+        if (checked)
+        {
+            // Enable the Edit->Go to next maximum live VGPR line option.
+            emit EnableShowMaxVgprOptionSignal(true);
+
+            // Enable the context menu item.
+            if (current_table_view != nullptr)
+            {
+                current_table_view->EnableShowMaxVgprContextOption(true);
+            }
+        }
+        else
+        {
+            // Reset the show maximum VGPR feature.
+            if (current_table_view != nullptr)
+            {
+                // Reset the current max VGPR line number.
+                current_table_view->ResetCurrentMaxVgprIndex();
+
+                // Disable the Edit->Go to next maximum live VGPR line option.
+                emit EnableShowMaxVgprOptionSignal(false);
+
+                // Disable the context menu item.
+                current_table_view->EnableShowMaxVgprContextOption(false);
+            }
+        }
+    }
+}
+
+void RgIsaDisassemblyView::EnableShowMaxVgprContextOption() const
+{
+    // Get the current table view.
+    RgIsaDisassemblyTableView* current_table_view = current_tab_view_->GetCurrentTableView();
+
+    // Enable/Disable the show max VGPR context menu item.
+    if (current_table_view != nullptr)
+    {
+        current_table_view->EnableShowMaxVgprContextOption(IsMaxVgprColumnVisible());
+    }
 }
 
 void RgIsaDisassemblyView::HandleColumnVisibilityFilterStateChanged(bool checked)
@@ -473,6 +535,10 @@ void RgIsaDisassemblyView::ConnectDisassemblyTabViewSignals(RgIsaDisassemblyTabV
     // Connect the disassembly view's update current sub widget signal.
     is_connected = connect(this, &RgIsaDisassemblyView::UpdateCurrentSubWidget, entry_view, &RgIsaDisassemblyTabView::UpdateCurrentSubWidget);
     assert(is_connected);
+
+    // Connect the enable show max VGPR options signal.
+    is_connected = connect(entry_view, &RgIsaDisassemblyTabView::EnableShowMaxVgprOptionSignal, this, &RgIsaDisassemblyView::EnableShowMaxVgprOptionSignal);
+    assert(is_connected);
 }
 
 void RgIsaDisassemblyView::ConnectSignals()
@@ -527,7 +593,32 @@ void RgIsaDisassemblyView::ConnectSignals()
     select_next_gpu_target_->setShortcut(QKeySequence(kDisassemblyViewHotkeyGpuSelection));
     addAction(select_next_gpu_target_);
 
+    // Connect the handler to process the hot key press.
     is_connected = connect(select_next_gpu_target_, &QAction::triggered, this, &RgIsaDisassemblyView::HandleSelectNextGPUTargetAction);
+    assert(is_connected);
+
+    // Select next max VGPR line.
+    select_next_max_vgpr_line_ = new QAction(this);
+    select_next_max_vgpr_line_->setShortcutContext(Qt::ApplicationShortcut);
+    select_next_max_vgpr_line_->setShortcut(QKeySequence(kDisassemblyViewHotKeyNextMaxVgprLine));
+    addAction(select_next_max_vgpr_line_);
+
+    // Connect the handler to process the hot key press.
+    is_connected = connect(select_next_max_vgpr_line_, &QAction::triggered, this, &RgIsaDisassemblyView::HandleSelectNextMaxVgprLineAction);
+    assert(is_connected);
+
+    // Connect the F4 hotkey pressed signal.
+    is_connected = connect(this, &RgIsaDisassemblyView::ShowMaximumVgprClickedSignal, this, &RgIsaDisassemblyView::HandleSelectNextMaxVgprLineAction);
+    assert(is_connected);
+
+    // Select previous max VGPR line.
+    select_previous_max_vgpr_line_ = new QAction(this);
+    select_previous_max_vgpr_line_->setShortcutContext(Qt::ApplicationShortcut);
+    select_previous_max_vgpr_line_->setShortcut(QKeySequence(kDisassemblyViewHotKeyPreviousMaxVgprLine));
+    addAction(select_previous_max_vgpr_line_);
+
+    // Connect the handler to process the hot key press.
+    is_connected = connect(select_previous_max_vgpr_line_, &QAction::triggered, this, &RgIsaDisassemblyView::HandleSelectPreviousMaxVgprLineAction);
     assert(is_connected);
 }
 
@@ -1272,4 +1363,38 @@ void RgIsaDisassemblyView::HandleSelectNextGPUTargetAction()
         current_row = 0;
     }
     target_gpus_list_widget_->setCurrentRow(current_row);
+}
+
+void RgIsaDisassemblyView::HandleSelectNextMaxVgprLineAction()
+{
+    // Check to make sure that the max VGPR column is currently visible
+    // before enabling this feature.
+    std::vector<bool> column_visibility = ListWidget::GetColumnVisibilityCheckboxes(disassembly_columns_list_widget_);
+    bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
+    if (is_visible)
+    {
+        // Show the max VGPR lines for the current tab view.
+        current_tab_view_->HandleShowNextMaxVgprSignal();
+    }
+}
+
+bool RgIsaDisassemblyView::IsMaxVgprColumnVisible() const
+{
+    std::vector<bool> column_visibility = ListWidget::GetColumnVisibilityCheckboxes(disassembly_columns_list_widget_);
+    bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
+
+    return is_visible;
+}
+
+void RgIsaDisassemblyView::HandleSelectPreviousMaxVgprLineAction()
+{
+    // Check to make sure that the max VGPR column is currently visible
+    // before enabling this feature.
+    std::vector<bool> column_visibility = ListWidget::GetColumnVisibilityCheckboxes(disassembly_columns_list_widget_);
+    bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
+    if (is_visible)
+    {
+        // Show the previous max VGPR lines for the current tab view.
+        current_tab_view_->HandleShowPreviousMaxVgprSignal();
+    }
 }

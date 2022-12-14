@@ -78,10 +78,10 @@ private:
     bool GenerateSessionMetadata(const Config& config) const;
 
     // Parse ISA files and generate separate files that contain parsed ISA in CSV format.
-    bool ParseIsaFilesToCSV(bool add_line_numbers);
+    bool ParseIsaFilesToCSV(bool add_line_numbers, const std::string& device_string, RgVkOutputMetadata& metadata);
 
     // Perform the live registers analysis.
-    bool PerformLiveRegAnalysis(const Config& config);
+    bool PerformLiveRegAnalysis(const Config& config, const std::string& device_string, RgVkOutputMetadata& metadata);
 
     // Predict shader performance.
     bool PredictShaderPerformance(const Config& config) const;
@@ -90,7 +90,7 @@ private:
     bool PerformStallAnalysis(const Config& config) const;
 
     // Generate the per-block or per-instruction Control Flow Graph.
-    bool ExtractCFG(const Config& config) const;
+    bool ExtractCFG(const Config& config, const std::string& device_string, const RgVkOutputMetadata& metadata) const;
 
     // Store input file names to the output metadata.
     void StoreInputFilesToOutputMD(const BeVkPipelineFiles& input_files);

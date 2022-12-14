@@ -7,8 +7,7 @@
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_DX11_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_DX11_H_
 
-// Infra.
-#include "DXXModule.h"
+
 
 // C++.
 #include <vector>
@@ -20,6 +19,7 @@
 
 // Local.
 #include "radeon_gpu_analyzer_backend/be_program_builder.h"
+#include "radeon_gpu_analyzer_backend\be_amddxxmodule_wrapper.h"
 
 using namespace beKA;
 class CElf;
@@ -158,11 +158,11 @@ public:
     // Returns the adapter name in "adapterName" and DXX lib path in "dxxModulePath".
     static bool GetDxxModulePathForAdapter(int adapter_id, bool should_print_cmd, std::string& adapter_name, std::string& dxx_module_path);
 
-    beKA::beStatus Initialize(const std::string& dxx_module_name, const std::string& compiler_module_name);
+    beKA::beStatus Initialize(const std::string& dxx_module_name, const std::string& compiler_module_name, bool print_process_cmd_line);
 
 private:
-    // Interface with atidxx{32,64}.dll
-    AMDDXXModule amd_dxx_module_;
+    // (Wrapper) Interface with atidxx{32,64}.dll
+    AMDDXXModuleWrapper amd_dxx_module_;
 
     // Interface with d3dcompiler_xx.dll
     D3DCompileModule d3d_compile_module_;

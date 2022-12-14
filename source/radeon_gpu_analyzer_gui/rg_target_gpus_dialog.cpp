@@ -496,14 +496,21 @@ void RgTargetGpusDialog::PopulateTableData(std::shared_ptr<RgCliVersionInfo> ver
                 }
                 else if (pos_graphics_1 == std::string::npos && pos_graphics_2 == std::string::npos)
                 {
+                    const char* RDNA3_TOKEN = "RDNA3";
                     const char* RDNA2_TOKEN = "RDNA2";
                     const char* RDNA_TOKEN = "RDNA";
+                    size_t rdna3_pos_1 = arch1.architecture_name.find(RDNA3_TOKEN);
+                    size_t rdna3_pos_2 = arch2.architecture_name.find(RDNA3_TOKEN);
                     size_t rdna2_pos_1 = arch1.architecture_name.find(RDNA2_TOKEN);
                     size_t rdna2_pos_2 = arch2.architecture_name.find(RDNA2_TOKEN);
                     size_t rdna_pos_1 = arch1.architecture_name.find(RDNA_TOKEN);
                     size_t rdna_pos_2 = arch2.architecture_name.find(RDNA_TOKEN);
 
-                    if (rdna2_pos_1 != std::string::npos && rdna2_pos_2 == std::string::npos)
+                    if (rdna3_pos_1 != std::string::npos && rdna3_pos_2 == std::string::npos)
+                    {
+                        is_1_less_than_2 = false;
+                    }
+                    else if (rdna2_pos_1 != std::string::npos && rdna2_pos_2 == std::string::npos)
                     {
                         is_1_less_than_2 = false;
                     }

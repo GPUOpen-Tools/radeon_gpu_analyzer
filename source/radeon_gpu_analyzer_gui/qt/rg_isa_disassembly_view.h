@@ -60,6 +60,12 @@ public:
     // 2. a source file is renamed (all modes).
     bool ReplaceInputFilePath(const std::string& old_file_path, const std::string& new_file_path);
 
+    // Indicate if the max VGPR column is currently visible.
+    bool IsMaxVgprColumnVisible() const;
+
+    // Enable/disable the show max VGPR context menu option.
+    void EnableShowMaxVgprContextOption() const;
+
 signals:
     // A signal emitted when the input source file's highlighted correlation line should be updated.
     void InputSourceHighlightedLineChanged(int line_number);
@@ -67,7 +73,7 @@ signals:
     // A signal emitted when the user has changed the disassembly table's column visibility.
     void DisassemblyColumnVisibilityUpdated();
 
-    // Handler invoked when the user changes the selected entry point for a given input file.
+    // A signal emitted when the user changes the selected entry point for a given input file.
     void SelectedEntrypointChanged(const std::string& input_file_path, const std::string& selected_entrypoint_name);
 
     // A signal emitted when the requested width of the disassembly table is changed.
@@ -108,6 +114,12 @@ signals:
 
     // A signal to switch disassembly view size.
     void SwitchDisassemblyContainerSize();
+
+    //  A signal to show/hide maximum VGPRs.
+    void ShowMaximumVgprClickedSignal();
+
+    // A signal to enable/disable the Edit->Go to next maximum live VGPR line option.
+    void EnableShowMaxVgprOptionSignal(bool is_enabled);
 
 public slots:
     // Handler invoked when the user changes the selected line in the input source file.
@@ -158,6 +170,12 @@ protected slots:
 
     // Handler to process select GPU target hot key.
     void HandleSelectNextGPUTargetAction();
+
+    // Handler to process select next max VGPR hot key.
+    void HandleSelectNextMaxVgprLineAction();
+
+    // Handler to process select previous max VGPR hot key.
+    void HandleSelectPreviousMaxVgprLineAction();
 
     // Handler to focus the target GPUs push button.
     void HandleFocusTargetGpuPushButton();
@@ -285,6 +303,12 @@ protected:
 
     // Select next GPU action.
     QAction* select_next_gpu_target_ = nullptr;
+
+    // Select the next max VGPR line.
+    QAction* select_next_max_vgpr_line_ = nullptr;
+
+    // Select the previous max VGPR line.
+    QAction* select_previous_max_vgpr_line_ = nullptr;
 
     // The tab key action.
     QAction* tab_key_action_ = nullptr;

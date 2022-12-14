@@ -1042,4 +1042,6 @@ bool RgGlobalSettingsView::IsInputFileBlank() const
 {
     return ui_.assocExtGlslLineEdit->text().isEmpty() || ui_.assocExtHlslLineEdit->text().isEmpty() || ui_.assocExtSpvasLineEdit->text().isEmpty() ||
            ui_.assocExtSpvBinaryLineEdit->text().isEmpty();
+
 }
+

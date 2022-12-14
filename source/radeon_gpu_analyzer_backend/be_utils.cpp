@@ -31,6 +31,14 @@
 // CLI.
 #include "source/radeon_gpu_analyzer_cli/kc_utils.h"
 
+// Local constants and definitions.
+static const char* kShaderStageVs = "vs";
+static const char* kShaderStageHs = "hs";
+static const char* kShaderStageDs = "ds";
+static const char* kShaderStageGs = "gs";
+static const char* kShaderStagePs = "ps";
+static const char* kShaderStageCs = "cs";
+
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - BEGIN ***
 
 // Converts string to its lower-case version.
@@ -68,7 +76,6 @@ bool BeUtils::GdtHwGenToNumericValue(GDT_HW_GENERATION hw_generation, size_t& gf
 
     switch (hw_generation)
     {
-
     case GDT_HW_GENERATION_GFX9:
         gfx_ip = kGfxIp9;
         break;
@@ -102,6 +109,7 @@ bool BeUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& card_list,
     AddGenerationDevices(GDT_HW_GENERATION_GFX9, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX10, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX103, card_list, public_device_unique_names, convert_to_lower);
+    AddGenerationDevices(GDT_HW_GENERATION_GFX11, card_list, public_device_unique_names, convert_to_lower);
 
     return (!card_list.empty() && !public_device_unique_names.empty());
 }
@@ -238,6 +246,28 @@ void BeUtils::SplitString(const std::string& str, char delim, std::vector<std::s
     {
         dst.push_back(substr);
     }
+}
+
+static void LeftTrim(const std::string& text, std::string& trimmed_text)
+{
+    trimmed_text    = text;
+    auto space_iter = std::find_if(trimmed_text.begin(), trimmed_text.end(), [](char ch) { return !std::isspace<char>(ch, std::locale::classic()); });
+    trimmed_text.erase(trimmed_text.begin(), space_iter);
+}
+
+static void RightTrim(const std::string& text, std::string& trimmed_text)
+{
+    trimmed_text    = text;
+    auto space_iter = std::find_if(trimmed_text.rbegin(), trimmed_text.rend(), [](char ch) { return !std::isspace<char>(ch, std::locale::classic()); });
+    trimmed_text.erase(space_iter.base(), trimmed_text.end());
+}
+
+void BeUtils::TrimLeadingAndTrailingWhitespace(const std::string& text, std::string& trimmed_text)
+{
+    // Trim the whitespace off the left and right sides of the incoming text.
+    std::string left_trimmed;
+    LeftTrim(text, left_trimmed);
+    RightTrim(left_trimmed, trimmed_text);
 }
 
 bool BeUtils::DeviceNameLessThan(const std::string& a, const std::string& b)
@@ -518,5 +548,45 @@ bool BeUtils::ExtractCodeObjectStatistics(const std::string& disassembly_whole,
     }
 
     ret = !data_map.empty();
+    return ret;
+}
+
+bool BeUtils::IsValidAmdgpuShaderStage(const std::string& shader_stage)
+{
+    bool ret = (shader_stage.compare(kShaderStageCs) == 0) || (shader_stage.compare(kShaderStagePs) == 0) || (shader_stage.compare(kShaderStageGs) == 0) ||
+               (shader_stage.compare(kShaderStageVs) == 0) || (shader_stage.compare(kShaderStageHs) == 0) || (shader_stage.compare(kShaderStageDs) == 0);
+    return ret;
+}
+
+bool BeUtils::BePipelineStageToAmdgpudisStageName(BePipelineStage pipeline_stage, std::string& amdgpu_dis_stage)
+{
+    bool ret = true;
+    switch (pipeline_stage)
+    {
+    case kVertex:
+        amdgpu_dis_stage = kShaderStageVs;
+        break;
+    case kTessellationControl:
+        amdgpu_dis_stage = kShaderStageHs;
+        break;
+    case kTessellationEvaluation:
+        amdgpu_dis_stage = kShaderStageDs;
+        break;
+    case kGeometry:
+        amdgpu_dis_stage = kShaderStageGs;
+        break;
+    case kFragment:
+        amdgpu_dis_stage = kShaderStagePs;
+        break;
+    case kCompute:
+        amdgpu_dis_stage = kShaderStageCs;
+        break;
+    case kCount:
+    default:
+        // We shouldn't get here.
+        ret = false;
+        assert(ret);
+        break;
+    }
     return ret;
 }

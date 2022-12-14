@@ -73,7 +73,7 @@ static const char* kStrCliDescAlternativeLightningCompilerBinFolder = "Path to a
 static const char* kStrCliDescAlternativeLightningCompilerIncFolder = "Path to alternative compiler's headers folder. The specified folder is expected"
                                                           " to contain opencl-c.h header file.";
 static const char* kStrCliDescAlternativeLightningCompilerLibFolder = "Path to alternative compiler's OpenCL libraries folder. The following bitcode files are expected to be in the specified folder: \n"
-                                                          "irif.amdgcn.bc, ockl.amdgcn.bc, oclc_correctly_rounded_sqrt_off.amdgcn.bc, \n"
+                                                          "ockl.amdgcn.bc, oclc_correctly_rounded_sqrt_off.amdgcn.bc, \n"
                                                           "oclc_correctly_rounded_sqrt_on.amdgcn.bc, oclc_daz_opt_off.amdgcn.bc, oclc_daz_opt_on.amdgcn.bc, \n"
                                                           "oclc_finite_only_off.amdgcn.bc, oclc_finite_only_on.amdgcn.bc, oclc_isa_version_1010.amdgcn.bc, \n"
                                                           "oclc_isa_version_1011.amdgcn.bc, oclc_isa_version_1012.amdgcn.bc, oclc_isa_version_1030.amdgcn.bc, \n"

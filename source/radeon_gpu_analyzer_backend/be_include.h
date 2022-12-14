@@ -106,6 +106,7 @@ enum beStatus
     kBeStatusVulkanGlslangLaunchFailed,
     kBeStatusVulkanFrontendCompileFailed,
     kBeStatusVulkanBackendLaunchFailed,
+    kBeStatusVulkanAmdgpudisLaunchFailed,
     kBeStatusVulkanBackendCompileFailed,
     kBeStatusVulkanSetEnvVarFailed,
     kBeStatusVulkanSpvToolLaunchFailed,

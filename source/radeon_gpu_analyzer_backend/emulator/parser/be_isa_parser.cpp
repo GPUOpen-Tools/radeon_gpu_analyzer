@@ -713,12 +713,36 @@ int ParserIsa::GetLabel(const std::string& isa_line)
     }
     else if ((offset = isa_line.find(kIsaLabelToken2)) == 0)
     {
-        // LC generated labels have format "BB1_23". We consider the number of this label to be 123.
         if ((offset = isa_line.find('_')) != std::string::npos)
         {
             stream << isa_line.substr(kIsaLabelToken2.size(), offset - kIsaLabelToken2.size()) <<
                       isa_line.substr(offset + 1, isa_line.size() - offset - 2);
             stream >> ret;
+        }
+    }
+    else
+    {
+        // Clang-15 LC generated labels have the format "L<number>:" or "_L<number>:".
+        size_t       labelNumLen     = 0;
+        const size_t kLabelStartSize = 1;
+        const size_t kLabelEndSize   = 1;
+        size_t       labelStartMatch = isa_line.find("_L");
+        if (labelStartMatch == std::string::npos)
+        {
+            labelStartMatch = isa_line.find("L");
+        }
+        const size_t kLabelEndMatch = isa_line.find(":");
+        if (labelStartMatch != std::string::npos)
+        {
+            if (labelStartMatch == 0 && kLabelEndMatch != std::string::npos)
+            {
+                labelNumLen = isa_line.size() - (kLabelStartSize + kLabelEndSize);
+            }
+            if (labelNumLen > 0)
+            {
+                stream << isa_line.substr(kLabelStartSize, labelNumLen);
+                stream >> ret;
+            }
         }
     }
 
@@ -748,6 +772,27 @@ int ParserIsa::GetGotoLabel(const std::string& sISALine)
                 stream << sISALine.substr(labelNumOffset, offset - labelNumOffset) <<
                           sISALine.substr(offset + 1, sISALine.find_first_of(' ', offset) - offset - 1);
                 stream >> ret;
+            }
+        }
+        else
+        {
+            // Clang-15 LC generated labels have the format "L<number>:".
+            size_t                    labelNumLen = 0;
+            const size_t              kLabelStartSize  = 1;
+            const size_t              kLabelEndSize    = 1;
+            const size_t              kLabelStartMatch = sISALine.find("L");
+            const size_t              kLabelEndMatch   = sISALine.find(":");
+            if (kLabelStartMatch != std::string::npos)
+            {
+                if (kLabelStartMatch == 0 && kLabelEndMatch != std::string::npos)
+                {
+                    labelNumLen = sISALine.size() - (kLabelStartSize + kLabelEndSize);
+                }
+                if (labelNumLen > 0)
+                {
+                    stream << sISALine.substr(kLabelStartSize, labelNumLen);
+                    stream >> ret;
+                }
             }
         }
     }

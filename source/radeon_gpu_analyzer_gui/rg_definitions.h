@@ -54,10 +54,11 @@ static const char* kActionHotkeyFileMenuActivateTab       = "Tab";
 static const char* kActionHotkeyFileMenuActivateShiftTab = "Shift+Tab";
 
 // Edit menu hotkey definitions.
-static const char* kActionHotkeyGoToLine      = "Ctrl+G";
-static const char* kActionHotkeyFind            = "Ctrl+F";
+static const char* kActionHotkeyGoToLine       = "Ctrl+G";
+static const char* kActionHotkeyFind           = "Ctrl+F";
 static const char* kActionHotkeyFindNext       = "F3";
 static const char* kActionHotkeyFindPrevious   = "Shift+F3";
+static const char* kActionHotkeyShowMaxVgprs   = "Ctrl+F4";
 
 // Build menu hotkey definitions.
 static const char* kActionHotkeyBuildProject   = "Ctrl+Shift+B";
@@ -73,6 +74,8 @@ static const char* kSourceEditorHotkeyContextMenuSelectAll = "Ctrl+A";
 
 // Disassembly view hot key definitions.
 static const char* kDisassemblyViewHotkeyGpuSelection = "Ctrl+T";
+static const char* kDisassemblyViewHotKeyNextMaxVgprLine = "F4";
+static const char* kDisassemblyViewHotKeyPreviousMaxVgprLine = "Shift+F4";
 
 // View container hot key definitions.
 static const char* kSwitchContainerSize = "Ctrl+R";

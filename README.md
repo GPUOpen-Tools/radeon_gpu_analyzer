@@ -26,7 +26,6 @@ The supported modes by the **command-line tool** are:
 * Vulkan Offline - using a static compiler, accepts GLSL/SPIR-V as input. Note: to ensure that the results that RGA provides are accurate and reflect the real-world case, please use the new Vulkan live driver mode (which is also supported in the GUI application).
 * OpenCL - AMD's LLVM-based Lightning Compiler for Offline OpenCL
 * OpenGL
-* AMDIL
 
 ## System Requirements ##
 
@@ -36,7 +35,10 @@ The supported modes by the **command-line tool** are:
 
 To run the tool, you would need to have the AMD Radeon Adrenalin Software (Windows) or amdgpu-pro driver (Linux) installed for all modes, except for the following "offline" modes, which are independent of the driver and hardware:
 * Vulkan offline mode
-* OpenCL offline mode
+* OpenCL mode
+* OpenGL mode
+* DX11 mode
+
 
 For the non-offline modes, it is strongly recommended to run with the latest drivers so that the latest compiler is used and the latest architectures can be targeted.
 
@@ -55,11 +57,9 @@ As a preliminary step, make sure that you have the following installed on your s
 
 cd to the build sub-folder, and run:
 
-```
 prebuild.bat --qt <path of Qt's msvc2017_64 folder> --vs 2017
-```
 
-Where `<path to Qt's msvc2017_64 folder>` is the path to the Qt msvc2017_64 folder, such as `C:\Qt\Qt5.15.2\msvc2017_64`.
+Where <path to Qt's msvc2017_64 folder> is the path to the Qt msvc2017_64 folder, such as C:\Qt\Qt5.15.2\msvc2017_64.
 
 Running the prebuild script will fetch all the dependencies and generate the solution file for Visual Studio.
 After successfully running the preuild script, open RGA.sln from build\windows\vs2019 (or vs2017), and build:
@@ -67,11 +67,11 @@ After successfully running the preuild script, open RGA.sln from build\windows\v
 * RadeonGPUAnalyzerGUI project for the GUI app
 
 Some useful options of the prebuild script:
-* `--vs <VS version>`: generate the solution files for a specific Visual Studio version. For example, to target VS 2019, add --vs 2019 to the command.
-* `--qt <path>`: full path to the folder from where you would like the Qt binaries to be retrieved. By default, CMake would try to auto-detect Qt on the system.
-* `--vk-include` and `--vk-lib`: full paths to where the Vulkan SDK include and Vulkan lib folders. By default, CMake would try to auto-detect the Vulkan SDK on the system.
-* `--cli-only`: only build the command line tool (do not build the GUI app)
-* `--no-fetch`: do not attempt to update the third-party repositories
+* --vs <VS version>: generate the solution files for a specific Visual Studio version. For example, to target VS 2019, add --vs 2019 to the command.
+* --qt <path>: full path to the folder from where you would like the Qt binaries to be retrieved. By default, CMake would try to auto-detect Qt on the system.
+* --vk-include and --vk-lib: full paths to where the Vulkan SDK include and Vulkan lib folders. By default, CMake would try to auto-detect the Vulkan SDK on the system.
+* --cli-only: only build the command line tool (do not build the GUI app)
+* --no-fetch: do not attempt to update the third-party repositories
 
 If you are intending to analyze DirectX 11 shaders using RGA, copy the x64 version of Microsoft's D3D compiler to a subdirectory
 named "utils" under the RGA executable's directory (for example, D3DCompiler_47.dll).
@@ -82,9 +82,7 @@ If for some reason you do not want to use the prebuild.bat script, you can also 
 Start by running the FetchDependencies.py script to fetch the solution's dependencies.
 To generate the solution file for VS 2017 in x64 configuration, use:
 
-```
-cmake.exe -G "Visual Studio 15 2017 Win64" <full path to the RGA repo directory>
-```
+  cmake.exe -G "Visual Studio 15 2017 Win64" <full path to the RGA repo directory>
 
 If you are intending to analyze DirectX shaders using RGA, copy the x64 version of Microsoft's D3D compiler to a subdirectory
 named "utils" under the RGA executable's directory (for example, D3DCompiler_47.dll).
@@ -92,43 +90,41 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
 ### Building on Ubuntu ###
 * One time setup:
   * Install the Vulkan SDK (version 1.1.97.0 or above). To download the Vulkan SDK, visit https://vulkan.lunarg.com/
-  * `sudo apt-get install libboost-all-dev`
-  * `sudo apt-get install gcc-multilib g++-multilib`
-  * `sudo apt-get install libglu1-mesa-dev mesa-common-dev libgtk2.0-dev`
-  * `sudo apt-get install zlib1g-dev libx11-dev:i386`
+  * sudo apt-get install libboost-all-dev
+  * sudo apt-get install gcc-multilib g++-multilib
+  * sudo apt-get install libglu1-mesa-dev mesa-common-dev libgtk2.0-dev
+  * sudo apt-get install zlib1g-dev libx11-dev:i386
   * Install CMake 3.10 or above. For auto-detecting the Vulkan SDK version 3.7 or above is required.
-  * Install Python 3.6 (or above)
+  * Install python 3.6 (or above)
   * To build the GUI app, you should also have Qt installed
 
 * Build:
 
-   `cd` to the Build sub-folder
+   cd to the build sub-folder
 
    On Linux, it is recommended to explicitly pass to CMake the location of the Vulkan SDK include and lib directories as well as the location of Qt. For example:
 
-```bash
-./prebuild.sh --qt ~/Qt-5.15.2/5.15.2/gcc_64 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
-```
+   ./prebuild.sh --qt ~/Qt-5.15.2/5.15.2/gcc_64 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
 
    This will fetch all the dependencies and generate the make files.
 
-   Then, `cd `to the auto-generated subfolder build/linux/make and run `make`.
+   Then, cd to the auto-generated subfolder build/linux/make and run make.
 
    -=-
 
-   If for some reason you do not want to use the `prebuild.sh` script, you can also manually fetch the dependencies and generate the makefiles:
+   If for some reason you do not want to use the prebuild.sh script, you can also manually fetch the dependencies and generate the makefiles:
 
-  * run: `python3 fetch_dependencies.py`
-  * run: `cmake –DCMAKE_BUILD_TYPE=Release` (or: `Debug`) `<full or relative path to the RGA repo directory>`
+  * run: python3 fetch_dependencies.py
+  * run: cmake –DCMAKE_BUILD_TYPE=Release (or: Debug) <full or relative path to the RGA repo directory>
 
     It is recommended to create a directory to hold all build files, and launch cmake from that directory.
 
     For example:
-    * `cd` to the RGA repo directory
-    * `mkdir _build`
-    * `cd _build`
-    * `cmake –DCMAKE_BUILD_TYPE=Release ../`
-  * run: `make`
+    * cd to the RGA repo directory
+    * mkdir _build
+    * cd _build
+    * cmake –DCMAKE_BUILD_TYPE=Release ../
+  * run: make
 
 ## Running ##
 ### GUI App ###
@@ -139,21 +135,20 @@ Run the RadeonGPUAnalyzerGUI executable. The app provides a quickstart guide and
 Run the rga executable.
 
 * Usage:
-  * General: `rga -h`
-  * DirectX 12: `rga -s dx12 -h`
-  * DirectX 11: `rga -s dx11 -h`
-  * DirectX Raytracing: `rga -s dxr -h`
+  * General: rga -h
+  * DirectX 12: rga -s dx12 -h
+  * DirectX 11: rga -s dx11 -h
+  * DirectX Raytracing: rga -s dxr -h
 
     Note: RGA's DX11 mode requires Microsoft's D3D Compiler DLL in runtime. If you copy the relevant D3D Compiler DLL to the utils
     subdirectory under the executable's directory, RGA will use that DLL in runtime. The default D3D compiler that RGA public releases ship with
     is d3dcompiler_47.dll.
-  * OpenGL:  `rga -s opengl -h`
-  * OpenCL offline:  `rga -s opencl -h`
-  * Vulkan live-driver:  `rga -s vulkan -h`
-  * Vulkan offline - GLSL:  `rga -s vk-offline -h`
-  * Vulkan offline - SPIR-V binary input:  `rga -s vk-offline-spv -h`
-  * Vulkan offline - SPIRV-V textual input:  `rga -s vk-offline-spv-txt -h`
-  * AMD IL: `rga -s amdil -h`
+  * OpenGL:  rga -s opengl -h
+  * OpenCL offline:  rga -s opencl -h
+  * Vulkan live-driver:  rga -s vulkan -h
+  * Vulkan offline - glsl:  rga -s vk-offline -h
+  * Vulkan offline - SPIR-V binary input:  rga -s vk-offline-spv -h
+  * Vulkan offline - SPIRV-V textual input:  rga -s vk-offline-spv-txt -h
 
 ## Support ##
 For support, please visit the RGA repository github page: https://github.com/GPUOpen-Tools/RGA

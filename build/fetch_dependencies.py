@@ -56,7 +56,7 @@ if git_url is None:
     print("Error: Unable to determine origin for RGA git project")
     exit(1)
 
-# Temporary for development during server migration.
+# Used for development using alternate github servers.
 gerrit_root = "git@github.amd.com:Developer-Solutions/"
 
 
@@ -268,7 +268,7 @@ def do_fetch_dependencies(arguments):
 
     # Strip everything after the last '/' from the URL to retrieve the root
     amd_github_root = (amd_github_url.rsplit('/', 1))[0] + '/'
-    
+
     # If cloning from github.com - use the master branch as the default branch - otherwise use amd-master
     git_branch = "amd-master"
     if "github.com" in amd_github_url:

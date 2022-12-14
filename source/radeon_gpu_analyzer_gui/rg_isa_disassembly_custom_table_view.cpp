@@ -30,6 +30,9 @@ static const QColor kVgprRangeFiveColor    = QColor(252, 115, 3);
 static const QColor kVgprRangeSixColor     = QColor(252, 74, 3);
 static const QColor kVgprRangeSevenColor   = QColor(252, 3, 3);
 
+// Color for the max VGPR line.
+static const QColor kMaxVgprlineColor = QColor(150, 215, 3);
+
 static const QColor kVgprRangeColors[] =
     {
         kVgprRangeZeroColor,
@@ -341,6 +344,9 @@ void RgIsaDisassemblyCustomTableView::drawRow(QPainter* painter, const QStyleOpt
 {
     if (model_ != nullptr)
     {
+        // Save the painter object.
+        painter->save();
+
         // Painting with this delegate can be completely disabled depending on the incoming index.
         bool is_paint_enabled = true;
 
@@ -362,12 +368,29 @@ void RgIsaDisassemblyCustomTableView::drawRow(QPainter* painter, const QStyleOpt
                 new_options.palette.setBrush(QPalette::Base, Qt::transparent);
             }
 
+            // If this line is the max VGPR line, go ahead and highlight it.
+            if (model_->IsCurrentMaxVgprLine(index.row()))
+            {
+                // Initialize painter variables.
+                QPen  pen  = painter->pen();
+                QRect rect = options.rect;
+
+                // Color the bounds of the current maximum VGPR line.
+                pen.setColor(Qt::GlobalColor::red);
+                pen.setWidth(2);
+                painter->setPen(pen);
+                painter->drawRect(rect);
+            }
+
             // If the index is a branch operand item, a separate label widget will render a clickable link instead.
             bool is_branch_operation = model_->IsBranchOperandItem(index);
             if (is_branch_operation)
             {
                 is_paint_enabled = false;
             }
+
+            // Restore the painter object.
+            painter->restore();
         }
 
         if (is_paint_enabled)

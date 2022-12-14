@@ -72,6 +72,12 @@ signals:
     // A signal to indicate change of view.
     void HotKeyPressedSignal();
 
+    // A signal emitted when the user clicks on "Highlight lines with maximum live VGPRs" menu item.
+    void ShowMaximumVgprClickedSignal();
+
+    // A signal to enable/disable the Edit->Go to next maximum live VGPR line option.
+    void EnableShowMaxVgprOptionSignal(bool is_enabled);
+
     // *** TEST SIGNALS - BEGIN ***
 
     // A signal emitted when a project is loaded.
@@ -90,6 +96,9 @@ public slots:
     // Returns true when the user selected Yes/No from the confirmation
     // dialog, returns false when the user selected Cancel.
     bool HandleSavePendingChanges();
+
+    // A handler to update the Edit->Go to next maximum live VGPR line option.
+    void HandleEnableShowMaxVgprOptionSignal(bool is_enable);
 
 protected:
     // The save action type.
@@ -200,6 +209,7 @@ protected:
     QAction* exit_action_ = nullptr;
     QAction* go_to_line_action_ = nullptr;
     QAction* find_action_ = nullptr;
+    QAction* show_max_vgprs_action_ = nullptr;
     QAction* cancel_build_action_ = nullptr;
     QAction* help_getting_started_guide_action_ = nullptr;
     QAction* help_manul_action_ = nullptr;
@@ -277,6 +287,9 @@ protected slots:
 
     // Handler for the Go To line button click.
     void HandleGoToLineEvent();
+
+    // Handler for the show max VGPRs event.
+    void HandleShowMaxVgprsEvent();
 
     // Handler for the main tab widget's tab change.
     void HandleMainTabWidgetTabChanged(int current_index);

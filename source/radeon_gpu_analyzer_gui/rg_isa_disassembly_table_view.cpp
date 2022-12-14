@@ -13,6 +13,7 @@
 
 // Infra.
 #include "QtCommon/Util/QtUtil.h"
+#include "QtCommon/Scaling/ScalingManager.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
@@ -21,6 +22,9 @@
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
+
+// The bottom margin of the disassembly table.
+static const int kTableBottomMargin = 5;
 
 // A class used to filter the ISA disassembly table columns.
 class RgIsaDisassemblyTableModelFilteringModel : public QSortFilterProxyModel
@@ -262,8 +266,8 @@ void RgIsaDisassemblyTableView::UpdateCorrelatedSourceFileLine(int line_number)
         if (!disassembly_line_indices.empty())
         {
             // Extract the first highlighted Isa row index, and scroll to it.
-            int firstHighlightedDisassemblyRowIndex = disassembly_line_indices[0];
-            ScrollToLine(firstHighlightedDisassemblyRowIndex);
+            int first_highlighted_disassembly_row_index = disassembly_line_indices[0];
+            ScrollToLine(first_highlighted_disassembly_row_index);
         }
     }
 
@@ -468,6 +472,10 @@ void RgIsaDisassemblyTableView::ConnectContextMenuSignals()
     is_connected = connect(open_disassembly_in_file_browser_, &QAction::triggered, this, &RgIsaDisassemblyTableView::HandleOpenDisassemblyInFileBrowserClicked);
     assert(is_connected);
 
+    // Connect the handler responsible for showing the max VGPR line.
+    is_connected = connect(show_maximum_vgpr_lines_, &QAction::triggered, this, &RgIsaDisassemblyTableView::HandleShowNextMaxVgprSignal);
+    assert(is_connected);
+
     // Use a custom context menu for the table.
     this->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -568,12 +576,21 @@ void RgIsaDisassemblyTableView::InitializeContextMenu()
     copy_selected_disassembly_ = new QAction(kStrDisassemblyTableContextMenuCopy, this);
     context_menu_->addAction(copy_selected_disassembly_);
 
+    // Create an item allowing the user to jump to highest VGPR pressure line.
+    show_maximum_vgpr_lines_ = new QAction(kStrDisassemblyTableContextMenuGoToMaxVgpr, this);
+    context_menu_->addAction(show_maximum_vgpr_lines_);
+
     // Create an item allowing the user to browse to the disassembly build output folder.
     open_disassembly_in_file_browser_ = new QAction(kStrDisassemblyTableContextMenuOpenInFileBrowser, this);
     context_menu_->addAction(open_disassembly_in_file_browser_);
 
     // Connect the context menu signals.
     ConnectContextMenuSignals();
+}
+
+void RgIsaDisassemblyTableView::EnableShowMaxVgprContextOption(bool is_enabled) const
+{
+    show_maximum_vgpr_lines_->setEnabled(is_enabled);
 }
 
 void RgIsaDisassemblyTableView::InitializeLabelRows()
@@ -688,10 +705,10 @@ void RgIsaDisassemblyTableView::ScrollToLine(int line_number)
 {
     // Find the row of the index at the top left of the table.
     int first_visible_row = 0;
-    const QModelIndex firstVisibleIndex = ui_.instructionsTreeView->indexAt(ui_.instructionsTreeView->rect().topLeft());
-    if (firstVisibleIndex.isValid())
+    const QModelIndex first_visible_index = ui_.instructionsTreeView->indexAt(ui_.instructionsTreeView->rect().topLeft());
+    if (first_visible_index.isValid())
     {
-        first_visible_row = firstVisibleIndex.row();
+        first_visible_row = first_visible_index.row();
     }
 
     // When the lastVisibleIndex is invalid, it means that the table is already fully visible.
@@ -706,7 +723,8 @@ void RgIsaDisassemblyTableView::ScrollToLine(int line_number)
     }
 
     // If the line we're scrolling to is already visible within view, don't scroll the view.
-    bool is_line_visible = (line_number >= first_visible_row) && (line_number <= last_visible_row);
+    const int adjust_visible_row          = kTableBottomMargin * ScalingManager::Get().GetScaleFactor();
+    bool      is_line_visible = (line_number >= first_visible_row) && (line_number <= last_visible_row - adjust_visible_row);
     if (!is_line_visible)
     {
         // Scroll the instruction table's vertical scrollbar to the given line.
@@ -722,4 +740,52 @@ void RgIsaDisassemblyTableView::keyPressEvent(QKeyEvent* event)
     {
         HandleCopyDisassemblyClicked();
     }
+}
+
+void RgIsaDisassemblyTableView::ResetCurrentMaxVgprIndex()
+{
+    isa_table_model_->ResetCurrentMaxVgprValues();
+}
+
+bool RgIsaDisassemblyTableView::IsShowCurrentMaxVgprEnabled() const
+{
+    return isa_table_model_->IsShowCurrentMaxVgprEnabled();
+}
+
+void RgIsaDisassemblyTableView::HandleShowNextMaxVgprSignal()
+{
+    // Need to scroll to the next line.
+    int  line_number   = 0;
+    bool is_valid_line = isa_table_model_->GetNextMaxVgprLineNumber(line_number);
+
+    // Scroll to the line if it is a valid line.
+    if (is_valid_line)
+    {
+        ScrollToLine(line_number);
+    }
+
+    // Set the current max vgpr line background color.
+    isa_table_model_->HighlightCurrentMaxVgprLine();
+
+    // Trigger an update of the treeview.
+    ui_.instructionsTreeView->update();
+}
+
+void RgIsaDisassemblyTableView::HandleShowPreviousMaxVgprSignal()
+{
+    // Need to scroll to the next line.
+    int  line_number   = 0;
+    bool is_valid_line = isa_table_model_->GetPreviousMaxVgprLineNumber(line_number);
+
+    // Scroll to the line if it is a valid line.
+    if (is_valid_line)
+    {
+        ScrollToLine(line_number);
+    }
+
+    // Set the current max vgpr line background color.
+    isa_table_model_->HighlightCurrentMaxVgprLine();
+
+    // Trigger an update of the treeview.
+    ui_.instructionsTreeView->update();
 }
