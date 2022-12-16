@@ -114,6 +114,18 @@ bool BeUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& card_list,
     return (!card_list.empty() && !public_device_unique_names.empty());
 }
 
+bool BeUtils::GetPreRdna3GraphicsCards(std::vector<GDT_GfxCardInfo>& card_list,
+                                   std::set<std::string>&        public_device_unique_names,
+                                   bool                          should_convert_to_lower /*= false*/)
+{
+    // Retrieve the list of devices for every relevant hardware generations.
+    AddGenerationDevices(GDT_HW_GENERATION_GFX9, card_list, public_device_unique_names, should_convert_to_lower);
+    AddGenerationDevices(GDT_HW_GENERATION_GFX10, card_list, public_device_unique_names, should_convert_to_lower);
+    AddGenerationDevices(GDT_HW_GENERATION_GFX103, card_list, public_device_unique_names, should_convert_to_lower);
+
+    return (!card_list.empty() && !public_device_unique_names.empty());
+}
+
 bool BeUtils::GetMarketingNameToCodenameMapping(std::map<std::string, std::set<std::string>>& cards_map)
 {
     std::vector<GDT_GfxCardInfo> card_list;

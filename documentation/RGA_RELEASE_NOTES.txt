@@ -11,6 +11,7 @@ Highlights
 -	OpenCL™ mode now uses an updated version of AMD’s LLVM-based Lightning Compiler.
 
 Notes: 
+-	Support for gfx1100 in DX11 mode (-s dx11) is not yet enabled.
 -	AMDIL input is no longer supported by the tool with the new DX11 mode.
 -	On Ubuntu, the minimum required OS version is Ubuntu 22.04.
 
@@ -43,6 +44,10 @@ DirectX 12 Mode
 ---------------
 -	Live register analysis & CFG generation require using the --isa option to generate ISA disassembly. 
 -	On Windows 11, Hull shader AMDIL disassembly contains a trail of a few garbage characters.
+
+DirectX 11 Mode
+---------------
+-	Support for gfx1100 in DX11 mode (-s dx11) is not yet enabled.
 
 Vulkan Offline Modes (vk-offline, vk-spv-offline, vk-spv-txt-offline)
 ---------------------------------------------------------------------

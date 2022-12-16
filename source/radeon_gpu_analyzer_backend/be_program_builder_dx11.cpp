@@ -328,7 +328,7 @@ beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_na
     if (be_rc == kBeStatusSuccess)
     {
         std::set<std::string> unique_names_of_published_devices;
-        is_initialized_ = BeUtils::GetAllGraphicsCards(dx_device_table_, unique_names_of_published_devices);
+        is_initialized_ = BeUtils::GetPreRdna3GraphicsCards(dx_device_table_, unique_names_of_published_devices);
         if (!is_initialized_)
         {
             be_rc = kBeStatusNoDeviceFound;

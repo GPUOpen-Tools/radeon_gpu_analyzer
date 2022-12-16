@@ -53,6 +53,13 @@ public:
                                     std::set<std::string>& public_device_unique_names,
                                     bool should_convert_to_lower = false);
 
+    // Gets all of the supported pre-RDNA3 graphics cards (gfx9 and gfx10).
+    // If "should_convert_to_lower" is true, the device names returned in "uniqueNamesOfPublishedDevices" will be
+    // converted to lower case.
+    static bool GetPreRdna3GraphicsCards(std::vector<GDT_GfxCardInfo>& card_list,
+                                    std::set<std::string>&        public_device_unique_names,
+                                    bool                          should_convert_to_lower = false);
+
     // Gets a mapping of the marketing names to the internal code names.
     static bool GetMarketingNameToCodenameMapping(std::map<std::string, std::set<std::string>>& cards_map);
 

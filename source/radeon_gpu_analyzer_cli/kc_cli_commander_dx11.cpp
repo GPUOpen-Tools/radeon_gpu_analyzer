@@ -52,7 +52,7 @@ static const char* kStrInfoDx11DxAsmCodeGenerationSuccess = "DX ASM code generat
 static const char* kStrInfoDx11DxAsmCodeGenerationFailure = "DX ASM code generation failed.";
 
 // Unsupported devices.
-static const std::set<std::string> kUnsupportedDevicesDx11 = {"gfx908"};
+static const std::set<std::string> kUnsupportedDevicesDx11 = {"gfx902", "gfx904", "gfx908"};
 
 KcCliCommanderDX::KcCliCommanderDX(void)
 {
@@ -98,7 +98,7 @@ void KcCliCommanderDX::InitRequestedAsicListDX(const Config& config)
         std::set<std::string> supported_devices;
         std::set<std::string> matched_targets;
 
-        if (BeUtils::GetAllGraphicsCards(dx_device_table, supported_devices))
+        if (BeUtils::GetPreRdna3GraphicsCards(dx_device_table, supported_devices))
         {
             if (InitRequestedAsicList(config.asics, config.mode, supported_devices, matched_targets, false))
             {
@@ -228,20 +228,20 @@ void KcCliCommanderDX::ExtractIL(const std::string& device_name, const Config& c
             gtString il_output_filename;
             if (config.donot_rename_il_files)
             {
-                KcUtils::ConstructOutputFileName(config.il_file, 
+                KcUtils::ConstructOutputFileName(config.il_file,
                     "",
-                    kStrDefaultExtensionAmdil, 
-                    "", 
-                    "", 
+                    kStrDefaultExtensionAmdil,
+                    "",
+                    "",
                     il_output_filename);
             }
             else
             {
-                KcUtils::ConstructOutputFileName(config.il_file, 
-                    "", 
-                    kStrDefaultExtensionAmdil, 
-                    config.function, 
-                    device_name, 
+                KcUtils::ConstructOutputFileName(config.il_file,
+                    "",
+                    kStrDefaultExtensionAmdil,
+                    config.function,
+                    device_name,
                     il_output_filename);
             }
             KcUtils::WriteTextFile(il_output_filename.asASCIICharArray(), il_buffer, log_callback_);
