@@ -15,9 +15,7 @@ download_mapping_linux = {
 github_root = "https://github.com/GPUOpen-Tools/"
 
 # repositories.
-git_mapping = {
-    "update_check_api"               : ["Common/Src/update_check_api",      "amd-2.1.0"]
-}
+git_mapping = {}
 
 github_mapping = {
  # Lib.
@@ -34,7 +32,8 @@ github_mapping = {
     "common_src_miniz"               : ["Common/Src/Miniz",                 "master"],
     "device_info"                    : ["Common/Src/DeviceInfo",            "5e6c83cc74e4588bdf44e1f3c74d419b46bb1a0c"],
     "dynamic_library_module"         : ["Common/Src/DynamicLibraryModule",  "amd-rga-v2.7"],
- # QtCommon.
+    "update_check_api"               : ["Common/Src/update_check_api",      "v2.1.0"],
+  # QtCommon.
     "qt_common"                      : ["QtCommon",                         "rga-2.5"],
 }
 
