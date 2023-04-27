@@ -146,6 +146,14 @@ static const std::string  kVulkanBackendOptLayersFile = "--layers-file";
 // VulkanBackend options: target GPU.
 static const std::string  kVulkanBackendOptTarget = "--target";
 
+// Amdgpudis dot tokens.
+static const char* kAmdgpuDisDotAmdgpuPalMetadataBeginToken = ".amdgpu_pal_metadata";
+static const char* kAmdgpuDisDotAmdgpuPalMetadataEndToken   = ".end_amdgpu_pal_metadata";
+static const char* kAmdgpuDisDotHardwareStagesToken         = ".hardware_stages:";
+static const char* kAmdgpuDisDotShadersToken                = ".shaders:";
+static const char* kAmdgpuDisDotHwMappingToken              = ".hardware_mapping:";
+
+
 // Copy the Vulkan Validation layers info from temp file ("tempInfoFile") to the Log file and user-provided validation info file ("outputFile").
 // Delete the temp info file after copying its content.
 static void CopyValidatioInfo(const std::string& temp_info_file, const std::string& output_file)
@@ -375,19 +383,43 @@ static bool VerifyOutputFiles(const BeVkPipelineFiles& spv_files,
     return result;
 }
 
-// Parses amdgpu-dis output and extracts a table with the amdgpu shader stage name being the key ("vs", "ps", etc.) and that shader stage's disassembly the value.
-static bool ParseAmdgpudisOutput(const std::string& amdgpu_dis_output, std::map<std::string, std::string>& shader_to_disassembly, std::string& error_msg)
+static void FilterRelocInstructions(std::string& shader_disassembly)
 {
-    bool ret = false;
+    // Find .reloc line.
+    const char* kAmdgpuDisShaderRelocToken = ".reloc";
+    size_t beg_of_line = shader_disassembly.find(kAmdgpuDisShaderRelocToken);
+    while (beg_of_line != std::string::npos)
+    {
+        size_t end_of_line = shader_disassembly.find("\n", beg_of_line);
+        if (end_of_line != std::string::npos)
+        {
+            // And erase .reloc line.
+            shader_disassembly.erase(beg_of_line, end_of_line - beg_of_line + 2);
+        }
+        else
+        {
+            assert(false); // never reach here.
+            break;
+        }
+        beg_of_line = shader_disassembly.find(kAmdgpuDisShaderRelocToken);
+    }
+}
+beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&                  amdgpu_dis_output,
+                                                      std::map<std::string, std::string>& shader_to_disassembly,
+                                                      std::string&                        error_msg)
+{
+    beStatus status = kBeStatusGeneralFailed;
     assert(!amdgpu_dis_output.empty());
     if (!amdgpu_dis_output.empty())
     {
-        const char* kStrErrorCannotParseDisassembly = "Error: failed to parse LLVM disassembly.";
-        const char* kAmdgpuDisDotTextToken          = ".text";
-        const char* kAmdgpuDisShaderEndToken        = "_symend:";
-        const char* kAmdgpuDisDotSizeToken          = ".size";
-        const char* kAmdgpuDisShaderNameStartToken  = "_amdgpu_";
-        const char* kAmdgpuDisShaderNameEndToken    = "_main";
+        const char* kStrErrorCannotParseDisassembly    = "Error: failed to parse LLVM disassembly.";
+        const char* kAmdgpuDisDotTextToken             = ".text";
+        const char* kAmdgpuDisShaderEndToken           = "_symend:";
+        const char* kAmdgpuDisDotSizeToken             = ".size";
+        const char* kAmdgpuDisShaderNameStartToken     = "_amdgpu_";
+        const char* kAmdgpuDisShaderNameEndToken       = "_main";
+        const char* kAmdgpuDisShaderNameFetchlessToken = "_fetchless";
+
 
         // Get to the .text section.
         size_t curr_pos = amdgpu_dis_output.find(kAmdgpuDisDotTextToken);
@@ -402,20 +434,29 @@ static bool ParseAmdgpudisOutput(const std::string& amdgpu_dis_output, std::map<
             size_t curr_pos = amdgpu_dis_output.find(kAmdgpuDisDotSizeToken);
             while (curr_pos != std::string::npos)
             {
-                curr_pos = amdgpu_dis_output.find("\n", curr_pos);
-                assert(curr_pos != std::string::npos);
-                if (curr_pos != std::string::npos)
+                size_t      end_of_line = amdgpu_dis_output.find("\n", curr_pos);
+                size_t      found       = amdgpu_dis_output.substr(curr_pos, end_of_line - curr_pos).find(kAmdgpuDisShaderNameStartToken);
+                if (found !=  std::string::npos)
+                {
+                    curr_pos = end_of_line;
+                }
+                else
+                {
+                    status = kBeStatusCannotParseDisassemblyShaderStage;
+                }
+                
+                bool success            = false;
+                bool is_graphics_shader = curr_pos != std::string::npos && status != kBeStatusCannotParseDisassemblyShaderStage;
+                if (is_graphics_shader)
                 {
                     // Find the shader stage name.
                     curr_pos = amdgpu_dis_output.find(kAmdgpuDisShaderNameStartToken, curr_pos);
-                    assert(curr_pos != std::string::npos);
                     if (curr_pos != std::string::npos)
                     {
                         const size_t stage_name_offset_end   = amdgpu_dis_output.find("_", curr_pos + strlen(kAmdgpuDisShaderNameStartToken));
                         const size_t stage_name_offset_begin = curr_pos + strlen(kAmdgpuDisShaderNameStartToken);
                         std::string  stage_name = amdgpu_dis_output.substr(stage_name_offset_begin, stage_name_offset_end - stage_name_offset_begin);
                         assert(!stage_name.empty());
-                        assert(BeUtils::IsValidAmdgpuShaderStage(stage_name));
                         if (BeUtils::IsValidAmdgpuShaderStage(stage_name))
                         {
                             // Construct the shader end token "_amdgpu_<stage_name>_main_symend:".
@@ -425,24 +466,33 @@ static bool ParseAmdgpudisOutput(const std::string& amdgpu_dis_output, std::map<
 
                             // Extract the shader disassembly.
                             shader_offset_begin            = amdgpu_dis_output.find("\n", curr_pos + strlen(kAmdgpuDisShaderNameStartToken));
+                            assert(shader_offset_begin != std::string::npos);
+
                             shader_offset_end              = amdgpu_dis_output.find(shader_token_end, shader_offset_begin);
+                            if (shader_offset_end == std::string::npos)
+                            {
+                                // Construct the shader end token "_amdgpu_<stage_name>_main_fetchless_symend:".
+                                std::stringstream shader_fetchless_end_token_stream;
+                                shader_fetchless_end_token_stream << kAmdgpuDisShaderNameStartToken << stage_name << kAmdgpuDisShaderNameEndToken
+                                                                  << kAmdgpuDisShaderNameFetchlessToken << kAmdgpuDisShaderEndToken;
+                                std::string shader_token_fetchless_end = shader_fetchless_end_token_stream.str();
+                                shader_offset_end                      = amdgpu_dis_output.find(shader_token_fetchless_end, shader_offset_begin);
+                                assert(shader_offset_end != std::string::npos);
+                            }
+
                             std::string shader_disassembly = amdgpu_dis_output.substr(curr_pos, shader_offset_end - curr_pos);
+                            FilterRelocInstructions(shader_disassembly);
                             BeUtils::TrimLeadingAndTrailingWhitespace(shader_disassembly, shader_disassembly);
                             shader_to_disassembly[stage_name] = shader_disassembly;
+                            success                           = true;
                         }
-                        else
-                        {
-                            error_msg = kStrErrorCannotParseDisassembly;
-                        }
-                    }
-                    else
-                    {
-                        error_msg = kStrErrorCannotParseDisassembly;
                     }
                 }
-                else
+
+                if (!success)
                 {
                     error_msg = kStrErrorCannotParseDisassembly;
+                    status    = kBeStatusCannotParseDisassemblyGeneral;
                 }
 
                 // Look for the next shader.
@@ -455,8 +505,11 @@ static bool ParseAmdgpudisOutput(const std::string& amdgpu_dis_output, std::map<
         }
     }
 
-    ret = !shader_to_disassembly.empty();
-    return ret;
+    if (!shader_to_disassembly.empty())
+    {
+        status = kBeStatusSuccess; 
+    }
+    return status;
 }
 
 beKA::beStatus beProgramBuilderVulkan::GetVulkanDriverTargetGPUs(const std::string& loader_debug, const std::string& icd_file, std::set<std::string>& target_gpus,
@@ -711,6 +764,222 @@ beKA::beStatus beProgramBuilderVulkan::InvokeAmdgpudis(const std::string& cmd_li
     return (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusVulkanAmdgpudisLaunchFailed);
 }
 
+bool beProgramBuilderVulkan::GetAmdgpuDisMetadataStr(const std::string& amdgpu_dis_output, std::string& amdgpu_dis_metadata)
+{
+    bool ret = false;
+    assert(!amdgpu_dis_output.empty());
+    if (!amdgpu_dis_output.empty())
+    {
+        // Get to the .amdgpu_pal_metadata section.
+        size_t beg_pos = amdgpu_dis_output.find(kAmdgpuDisDotAmdgpuPalMetadataBeginToken);
+        size_t end_pos = amdgpu_dis_output.find(kAmdgpuDisDotAmdgpuPalMetadataEndToken);
+
+        assert(beg_pos != std::string::npos && end_pos != std::string::npos);
+        if (beg_pos != std::string::npos && end_pos != std::string::npos)
+        {
+            amdgpu_dis_metadata = amdgpu_dis_output.substr(beg_pos + strlen(kAmdgpuDisDotAmdgpuPalMetadataBeginToken), end_pos);
+            assert(amdgpu_dis_metadata.find(kAmdgpuDisDotHardwareStagesToken) != std::string::npos);
+            assert(amdgpu_dis_metadata.find(kAmdgpuDisDotShadersToken) != std::string::npos);
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+bool beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(const std::string& amdgpu_dis_metadata,
+                                                              const std::string& api_shader_stage_name,
+                                                              std::string&       hw_mapping_str)
+{
+    bool ret = false;
+    auto shader_token_beg = amdgpu_dis_metadata.find(kAmdgpuDisDotShadersToken);
+    if (shader_token_beg != std::string::npos)
+    {
+        std::stringstream dot_shader_name_token;
+        dot_shader_name_token << "." << api_shader_stage_name << ":";
+        auto shader_name_token_beg = amdgpu_dis_metadata.find(dot_shader_name_token.str(), shader_token_beg);
+        if (shader_name_token_beg != std::string::npos)
+        {
+            auto hw_mapping_beg = amdgpu_dis_metadata.find(kAmdgpuDisDotHwMappingToken, shader_name_token_beg);
+            if (hw_mapping_beg != std::string::npos)
+            {
+                auto end_of_line = amdgpu_dis_metadata.find("\n", hw_mapping_beg);
+                if (end_of_line != std::string::npos)
+                {
+                    auto end_of_next_line = amdgpu_dis_metadata.find("\n", end_of_line+1);
+                    if (end_of_next_line != std::string::npos)
+                    {
+                        std::string next_line = amdgpu_dis_metadata.substr(end_of_line, end_of_next_line-end_of_line);
+                        auto        beg       = next_line.find(".");
+                        if (beg != std::string::npos)
+                        {
+                            hw_mapping_str = next_line.substr(beg+1);
+                            ret = true;
+                        }                        
+                    }
+                }
+            }
+        }
+    }
+    return ret;
+}
+
+bool WriteIsaFileWithHwMapping(uint32_t                            stage,
+                               const std::string&                  amdgpu_dis_md_str,
+                               std::map<std::string, std::string>& shader_to_disassembly,
+                               const BeVkPipelineFiles&            isa_files)
+{
+    bool        ret             = false;
+    const auto& dx12_stage_name = kStrDx12StageNames[stage];
+    std::string hw_mapping_name;
+    bool        valid_hw_mapping_found = beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdgpu_dis_md_str, dx12_stage_name, hw_mapping_name);
+    if (valid_hw_mapping_found && shader_to_disassembly.find(hw_mapping_name) != shader_to_disassembly.end())
+    {
+        bool is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly[hw_mapping_name], nullptr);
+        assert(is_file_written);
+        if (KcUtils::FileNotEmpty(isa_files[stage]))
+        {
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+void WriteIsaFileWithHardcodedMapping(uint32_t                            stage,
+                                      const std::string&                  amdgpu_dis_md_str,
+                                      std::map<std::string, std::string>& shader_to_disassembly,
+                                      const BeVkPipelineFiles&            isa_files,
+                                      std::string&                        error_msg)
+{
+    // Count the number of input shaders, since this changes the pipeline type and impacts merged shaders.
+    const bool is_input_hs = !isa_files[BePipelineStage::kTessellationControl].empty();
+
+    std::string amdgpu_stage_name;
+    bool        is_valid_stage = BeUtils::BePipelineStageToAmdgpudisStageName(static_cast<BePipelineStage>(stage), amdgpu_stage_name);
+    assert(is_valid_stage);
+    if (is_valid_stage)
+    {
+        if (shader_to_disassembly.find(amdgpu_stage_name) != shader_to_disassembly.end())
+        {
+            bool is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly[amdgpu_stage_name], nullptr);
+            assert(is_file_written);
+            if (!KcUtils::FileNotEmpty(isa_files[stage]))
+            {
+                const char* kErrCannotWriteDisassemblyFileA = "Error: failed to write shader disassembly for amdgpu stage ";
+                const char* kErrCannotWriteDisassemblyFileB = ", output file name ";
+                std::cout << kErrCannotWriteDisassemblyFileA << amdgpu_stage_name << kErrCannotWriteDisassemblyFileB << isa_files[stage] << std::endl;
+            }
+        }
+        else
+        {
+            bool is_file_written = false;
+
+            // Special case for merged shaders.
+            if (stage == BePipelineStage::kVertex)
+            {
+                if (is_input_hs && shader_to_disassembly.find("hs") != shader_to_disassembly.end())
+                {
+                    // Either VS-HS-DS-GS-PS or VS-HS-DS-PS: Use "hs" disassembly instead.
+                    is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly["hs"], nullptr);
+                }
+                else if (shader_to_disassembly.find("gs") != shader_to_disassembly.end())
+                {
+                    // VS-PS or VS-GS-PS: Use "gs" disassembly instead.
+                    is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly["gs"], nullptr);
+                }
+            }
+            else if (stage == BePipelineStage::kTessellationEvaluation)
+            {
+                if (shader_to_disassembly.find("gs") != shader_to_disassembly.end())
+                {
+                    // Use "gs" disassembly instead.
+                    is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly["gs"], nullptr);
+                }
+            }
+
+            assert(is_file_written);
+            if (!is_file_written)
+            {
+                const char*       kErrorCannotDetectMergedStage = "Error: unable to detect merged stage for ";
+                std::stringstream msg;
+                msg << kErrorCannotDetectMergedStage << amdgpu_stage_name << " shader." << std::endl;
+                error_msg = msg.str();
+            }
+        }
+    }
+}
+
+
+
+beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::string&                  bin_file,
+                                                                    const BeVkPipelineFiles&            isa_files,
+                                                                    bool                                should_print_cmd, 
+                                                                    std::string&                        amdgpu_dis_stdout,
+                                                                    std::map<std::string, std::string>& shader_to_disassembly,
+                                                                    std::string&                        error_msg)
+{
+    beStatus status = kBeStatusVulkanBackendLaunchFailed;
+    if (!bin_file.empty())
+    {
+        bool is_binary_exists = KcUtils::FileNotEmpty(bin_file);
+        assert(is_binary_exists);
+        if (is_binary_exists)
+        {
+            std::string amdgpu_dis_stderr;
+            std::stringstream bin_file_with_quotes;
+            bin_file_with_quotes << "\"" << bin_file << "\"";
+            status = InvokeAmdgpudis(bin_file_with_quotes.str(), should_print_cmd, amdgpu_dis_stdout, amdgpu_dis_stderr);
+            assert(status == beKA::kBeStatusSuccess);
+            if (status == beKA::kBeStatusSuccess)
+            {
+                // Parse amdgpu-dis output.
+                bool is_amdgpu_dis_output_parsed = ParseAmdgpudisOutput(amdgpu_dis_stdout, shader_to_disassembly, error_msg);
+                assert(is_amdgpu_dis_output_parsed);
+                assert(!shader_to_disassembly.empty());
+                if (is_amdgpu_dis_output_parsed && !shader_to_disassembly.empty())
+                {
+                    std::string amdgpu_dis_md_str;
+                    bool isOk = beProgramBuilderVulkan::GetAmdgpuDisMetadataStr(amdgpu_dis_stdout, amdgpu_dis_md_str);
+                    assert(!amdgpu_dis_md_str.empty() && isOk);
+                    if (!amdgpu_dis_md_str.empty() && isOk)
+                    {
+                        // Write the ISA disassembly files.
+                        for (uint32_t stage = BePipelineStage::kVertex; stage < BePipelineStage::kCount; stage++)
+                        {
+                            if (!isa_files[stage].empty())
+                            {
+                                bool is_file_written = WriteIsaFileWithHwMapping(stage, amdgpu_dis_md_str, shader_to_disassembly, isa_files);
+                                if (!is_file_written)
+                                {
+                                    std::string amdgpu_stage_name;
+                                    bool is_valid_stage = BeUtils::BePipelineStageToAmdgpudisStageName(static_cast<BePipelineStage>(stage), amdgpu_stage_name);
+                                    assert(is_valid_stage);
+                                    if (is_valid_stage)
+                                    {
+                                        const char* kWarnCannotWriteDisassemblyFileA = "Warning: failed to find hardware mapping for amdgpu stage ";
+                                        const char* kWarnCannotWriteDisassemblyFileB = ", falling back to hardcoded mapping for isa disassembly... ";
+                                        std::cout << kWarnCannotWriteDisassemblyFileA << amdgpu_stage_name << kWarnCannotWriteDisassemblyFileB << "\n";
+                                    }
+
+                                    WriteIsaFileWithHardcodedMapping(stage, amdgpu_dis_md_str, shader_to_disassembly, isa_files, error_msg);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                const char*       kErrFailedToDisassemble = "Error: failed to disassemble CodeObject ";
+                std::stringstream error_msg_stream;
+                error_msg_stream << kErrFailedToDisassemble << bin_file << std::endl;
+                error_msg = error_msg_stream.str();
+            }
+        }
+    }
+
+    return status;
+}
+
 beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string& loader_debug,
     const BeVkPipelineFiles& spirv_files,
     const BeVkPipelineFiles& isa_files,
@@ -762,101 +1031,9 @@ beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string& loader_de
         // For gfx11 targets we need to disassemble the binary CodeObject and extract the disassembly from there.
         if (KcUtils::IsNavi3Target(device) && !isa_files.empty())
         {
-            // Invoke amdgpu-dis on the binary file and parse the output into disassembly.
-            if (!bin_file.empty())
-            {
-                bool is_binary_exists = KcUtils::FileNotEmpty(bin_file);
-                assert(is_binary_exists);
-                if (is_binary_exists)
-                {
-                    std::string amdgpu_dis_stdout;
-                    std::string amdgpu_dis_stderr;
-                    status = InvokeAmdgpudis(bin_file, should_print_cmd, amdgpu_dis_stdout, amdgpu_dis_stderr);
-                    assert(status == beKA::kBeStatusSuccess);
-                    if (status == beKA::kBeStatusSuccess)
-                    {
-                        // Parse amdgpu-dis output.
-                        std::map<std::string, std::string> shader_to_disassembly;
-                        bool is_amdgpu_dis_output_parsed = ParseAmdgpudisOutput(amdgpu_dis_stdout, shader_to_disassembly, error_msg);
-                        assert(is_amdgpu_dis_output_parsed);
-                        assert(!shader_to_disassembly.empty());
-                        if(is_amdgpu_dis_output_parsed && !shader_to_disassembly.empty())
-                        {
-                            // Count the number of input shaders, since this changes the pipeline type and impacts merged shaders.
-                            const bool is_input_hs = !isa_files[BePipelineStage::kTessellationControl].empty();
-
-                            // Write the ISA disassembly files.
-                            for(uint32_t stage = BePipelineStage::kVertex; stage < BePipelineStage::kCount; stage++)
-                            {
-                                if(!isa_files[stage].empty())
-                                {
-                                    std::string amdgpu_stage_name;
-                                    bool is_valid_stage = BeUtils::BePipelineStageToAmdgpudisStageName(static_cast<BePipelineStage>(stage), amdgpu_stage_name);
-                                    assert(is_valid_stage);
-                                    if (is_valid_stage)
-                                    {
-                                        if (shader_to_disassembly.find(amdgpu_stage_name) != shader_to_disassembly.end())
-                                        {
-                                            bool is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly[amdgpu_stage_name], nullptr);
-                                            assert(is_file_written);
-                                            if (!KcUtils::FileNotEmpty(isa_files[stage]))
-                                            {
-                                                const char* kErrCannotWriteDisassemblyFileA = "Error: failed to write shader disassembly for amdgpu stage ";
-                                                const char* kErrCannotWriteDisassemblyFileB = ", output file name ";
-                                                std::cout << kErrCannotWriteDisassemblyFileA << amdgpu_stage_name << kErrCannotWriteDisassemblyFileB
-                                                          << isa_files[stage] << std::endl;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            bool is_file_written = false;
-
-                                            // Special case for merged shaders.
-                                            if(stage == BePipelineStage::kVertex)
-                                            {
-                                                if (is_input_hs && shader_to_disassembly.find("hs") != shader_to_disassembly.end())
-                                                {
-                                                    // Either VS-HS-DS-GS-PS or VS-HS-DS-PS: Use "hs" disassembly instead.
-                                                    is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly["hs"], nullptr);
-                                                }
-                                                else if (shader_to_disassembly.find("gs") != shader_to_disassembly.end())
-                                                {
-                                                    // VS-PS or VS-GS-PS: Use "gs" disassembly instead.
-                                                    is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly["gs"], nullptr);
-                                                }
-                                            }
-                                            else if (stage == BePipelineStage::kTessellationEvaluation)
-                                            {
-                                                if (shader_to_disassembly.find("gs") != shader_to_disassembly.end())
-                                                {
-                                                    // Use "gs" disassembly instead.
-                                                    is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly["gs"], nullptr);
-                                                }
-                                            }
-
-                                            assert(is_file_written);
-                                            if (!is_file_written)
-                                            {
-                                                const char*       kErrorCannotDetectMergedStage = "Error: unable to detect merged stage for ";
-                                                std::stringstream msg;
-                                                msg << kErrorCannotDetectMergedStage << amdgpu_stage_name << " shader." << std::endl;
-                                                error_msg = msg.str();
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        const char*       kErrFailedToDisassemble = "Error: failed to disassemble CodeObject ";
-                        std::stringstream error_msg_stream;
-                        error_msg_stream << kErrFailedToDisassemble << bin_file << std::endl;
-                        error_msg = error_msg_stream.str();
-                    }
-                }
-            }
+            std::string                        amdgpu_dis_stdout;
+            std::map<std::string, std::string> shader_to_disassembly;
+            status = AmdgpudisBinaryToDisassembly(bin_file, isa_files, should_print_cmd, amdgpu_dis_stdout, shader_to_disassembly, error_msg);
         }
 
     }

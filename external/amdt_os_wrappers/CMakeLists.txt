@@ -181,7 +181,7 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "D
 endif()
 
 # Set binary suffix
-set_target_properties(AMDTOSWrappers PROPERTIES DEBUG_POSTFIX -d CXX_STANDARD 11)
+set_target_properties(AMDTOSWrappers PROPERTIES DEBUG_POSTFIX -d CXX_STANDARD 17)
 
 # Link settings
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")

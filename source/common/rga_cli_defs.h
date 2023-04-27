@@ -76,6 +76,7 @@ static const char* kStrCliDescAlternativeLightningCompilerLibFolder = "Path to a
                                                           "ockl.amdgcn.bc, oclc_correctly_rounded_sqrt_off.amdgcn.bc, \n"
                                                           "oclc_correctly_rounded_sqrt_on.amdgcn.bc, oclc_daz_opt_off.amdgcn.bc, oclc_daz_opt_on.amdgcn.bc, \n"
                                                           "oclc_finite_only_off.amdgcn.bc, oclc_finite_only_on.amdgcn.bc, oclc_isa_version_1010.amdgcn.bc, \n"
+                                                          "oclc_isa_version_1100.amdgcn.bc, oclc_isa_version_1102.amdgcn.bc, \n"
                                                           "oclc_isa_version_1011.amdgcn.bc, oclc_isa_version_1012.amdgcn.bc, oclc_isa_version_1030.amdgcn.bc, \n"
                                                           "oclc_isa_version_1031.amdgcn.bc, oclc_isa_version_1032.amdgcn.bc, oclc_isa_version_900.amdgcn.bc, \n"
                                                           "oclc_isa_version_902.amdgcn.bc, oclc_isa_version_904.amdgcn.bc, oclc_isa_version_906.amdgcn.bc, \n"

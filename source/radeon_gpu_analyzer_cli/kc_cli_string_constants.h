@@ -19,6 +19,8 @@ static const char* kStrErrorGraphicsComputeMix = "Error: cannot mix compute and 
 static const char* kStrErrorCannotFindOutputDir = "Error: output directory does not exist: ";
 static const char* kStrErrorCannotInvokeCompiler = "Error: unable to invoke the compiler.";
 static const char* kStrErrorCannotReadFile = "Error: unable to read: ";
+static const char* kStrErrorCannotCopyFileA = "Error: unable to copy file: ";
+static const char* kStrErrorCannotCopyFileB = "to file: ";
 static const char* kStrErrorCannotOpenFileForWriteA = "Error: unable to open ";
 static const char* kStrErrorCannotOpenFileForWriteB = " for write.";
 static const char* kStrErrorLiveregWithoutIsa = "Error: cannot perform live register analysis without generating ISA disassembly (use --isa option).";
@@ -50,6 +52,11 @@ static const char* kStrWarningCfgNotSupported = "Warning: control-flow graph gen
 static const char* kStrWarningStallAnalysisNotSupported = "Warning: stall analysis is disabled in this mode ";
 static const char* kStrWarningSkipping = "- skipping.";
 static const char* kStrWarningStallAnalysisNotSupportedForRdna = "Warning: stall analysis is not supported for pre-RDNA targets - skipping for ";
+static const char* kStrWarningPso1 = "Warning: no pipeline state file provided. Compilation may fail or produce inaccurate results.";
+static const char* kStrWarningPso2 = " Use --pso option to provide full path to ";
+static const char* kStrWarningPsoGraphics = ".gpso (graphics)";
+static const char* kStrWarningPsoCompute = ".cpso (compute)";
+static const char* kStrWarningPso3 = " pipeline state input file.\n";
 
 // Info.
 static const char* kStrInfoVulkanUsingCustomIcdFile = "Info: forcing the Vulkan runtime to load a custom ICD: ";
@@ -67,7 +74,7 @@ static const char* kStrInfoSuccess = "succeeded.";
 static const char* kStrInfoFailed = "failed.";
 static const char* kStrInfoAborting = "Aborting.";
 static const char* kStrInfoCompiling = "Building for ";
-static const char* kStrInfolExtractingIsaForDevice = "Extracting ISA for ";
+static const char* kStrInfoExtractingIsaForDevice = "Extracting ISA for ";
 static const char* kStrInfoExtractingStats = "Extracting statistics";
 
 // Shaders and pipeline stages.

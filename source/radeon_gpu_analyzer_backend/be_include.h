@@ -97,9 +97,9 @@ enum beStatus
     kBeStatusOpenglVirtualContextLaunchFailed,
     kBeStatusOpenglBuildError,
     kBeStatusOpenglUnknownHwFamily,
-    kBeStatusVulkanAmdspvLaunchFailure,
+    kBeStatusVulkanAmdllpcLaunchFailure,
     kBeStatusGlcLaunchFailure,
-    kBeStatusVulkanAmdspvCompilationFailure,
+    kBeStatusVulkanAmdllpcCompilationFailure,
     kBeStatusGlcCompilationFailure,
     kBeStatusVulkanNoInputFile,
     kBeStatusVulkanEmptyInputFile,
@@ -153,7 +153,9 @@ enum beStatus
     kBeStatusConstructParsedIsaFileNameFailed,
     kBeStatusWriteParsedIsaFileFailed,
     kBeStatusDx12AlternativeDriverMissing,
-    kBeStatusGeneralFailed,
+    kBeStatusCannotParseDisassemblyShaderStage,
+    kBeStatusCannotParseDisassemblyGeneral,
+    kBeStatusGeneralFailed
 };
 
 // Options that make sense for any of OpenCL, DX, GL.

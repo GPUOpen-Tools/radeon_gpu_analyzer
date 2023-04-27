@@ -216,32 +216,32 @@ namespace rga
     bool RgDx12Utils::ParseGpsoFile(const std::string& filename, D3D12_GRAPHICS_PIPELINE_STATE_DESC& pso_desc)
     {
         // Error messages.
-        const char* kStrErrorUnknownSchemaVersion = "Error: unknown schema version: ";
-        const char* kStrErrorUnrecognizedInputClassification = "Error: unrecognized Input Classification ";
-        const char* kStrErrorZeroInputLayoutElementItems = "Error: number of input layout element items must be non-zero.";
-        const char* kStrErrorFailedToParseGpsoFile = "Error: failed to parse .gpso file.";
-        const char* kStrErrorInvalidNumInputLayoutValues1 = "Error: invalid number of input items between \"{}\" for line \"";
-        const char* kStrErrorInvalidNumInputLayoutValues2 = "\". Expected 7, found ";
-        const char* kStrErrorInvalidNumInputLayoutValues3 = ".";
+        const char* kStrErrorUnknownSchemaVersion               = "Error: unknown schema version: ";
+        const char* kStrErrorUnrecognizedInputClassification    = "Error: unrecognized Input Classification ";
+        const char* kStrErrorFailedToParseGpsoFile              = "Error: failed to parse .gpso file.";
+        const char* kStrErrorInvalidNumInputLayoutValues1       = "Error: invalid number of input items between \"{}\" for line \"";
+        const char* kStrErrorInvalidNumInputLayoutValues2       = "\". Expected 7, found ";
+        const char* kStrErrorInvalidNumInputLayoutValues3       = ".";
         const char* kStrErrorFailedToParseInputLayoutDefinition = "Error: unable to parse input layout definition: ";
-        const char* kStrErrorFailedToParseRtvFormatValues = "Error: failed to parse the RTV format values, line ";
+        const char* kStrErrorFailedToParseRtvFormatValues       = "Error: failed to parse the RTV format values, line ";
 
         // Warning messages.
-        const char* kStrWarningUnrecognizedDxgiFormat1 = "Warning: unrecognized DXGI Format \"";
-        const char* kStrWarningUnrecognizedDxgiFormat2 = "\", assuming DXGI_FORMAT_UNKNOWN.";
+        const char* kStrWarningZeroInputLayoutElementItems        = "Warning: number of input layout element items is zero.";
+        const char* kStrWarningUnrecognizedDxgiFormat1            = "Warning: unrecognized DXGI Format \"";
+        const char* kStrWarningUnrecognizedDxgiFormat2            = "\", assuming DXGI_FORMAT_UNKNOWN.";
         const char* kStrWarningUnrecognizedPrimitiveTopologyType1 = "Error: unrecognized primitive topology type: \"";
         const char* kStrWarningUnrecognizedPrimitiveTopologyType2 = "\", assuming D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED.";
-        const char* kStrWarningRenderTargetsMismatch = "Warning: mismatch between number of RTV format values and the NumRenderTargets.";
-        const char* kStrWarningNumRenderTargetsExceedsMax = "Warning: NumRenderTargets exceeds max of 8, assuming 8.";
+        const char* kStrWarningRenderTargetsMismatch              = "Warning: mismatch between number of RTV format values and the NumRenderTargets.";
+        const char* kStrWarningNumRenderTargetsExceedsMax         = "Warning: NumRenderTargets exceeds max of 8, assuming 8.";
 
         // Schema constants.
-        const char* kStrElemSchemaVersion = "schemaVersion";
-        const char* kStrElemSchemaVersion10 = "1.0";
-        const char* kStrElemSchemaInputLayoutNum = "InputLayoutNumElements";
-        const char* kStrElemSchemaInputLayout = "InputLayout";
+        const char* kStrElemSchemaVersion               = "schemaVersion";
+        const char* kStrElemSchemaVersion10             = "1.0";
+        const char* kStrElemSchemaInputLayoutNum        = "InputLayoutNumElements";
+        const char* kStrElemSchemaInputLayout           = "InputLayout";
         const char* kStrElemSchemaPrimitiveTopologyType = "PrimitiveTopologyType";
-        const char* kStrElemSchemaNumRenderTargets = "NumRenderTargets";
-        const char* kStrElemSchemaRtvFormats = "RTVFormats";
+        const char* kStrElemSchemaNumRenderTargets      = "NumRenderTargets";
+        const char* kStrElemSchemaRtvFormats            = "RTVFormats";
 
         // Container for input element descriptors.
         D3D12_INPUT_ELEMENT_DESC* elem = {};
@@ -326,155 +326,156 @@ namespace rga
                                 {
                                     std::string numElements = TrimWhitespace(line);
                                     num_input_layout_elems = std::stoi(numElements);
-                                    assert(num_input_layout_elems > 0);
                                     if (num_input_layout_elems == 0)
                                     {
-                                        std::cout << kStrErrorZeroInputLayoutElementItems << std::endl;
-                                        should_abort = true;
+                                        std::cout << kStrWarningZeroInputLayoutElementItems << std::endl;
+                                        should_abort = false;
                                     }
-                                    else
-                                    {
-                                        // We got the number of input layout descriptor elements.
-                                        is_input_layout_num_elements_checked = true;
-                                    }
+                                    is_input_layout_num_elements_checked = true;
                                     break;
                                 }
                             }
                         }
                         else if (!is_input_layout_checked && line.find(kStrElemSchemaInputLayout) != std::string::npos)
                         {
-                            // Allocate the array of InputLayout elements.
-                            elem = new D3D12_INPUT_ELEMENT_DESC[num_input_layout_elems]{};
-
-                            for (uint32_t i = 0; i < num_input_layout_elems; i++)
+                            if (num_input_layout_elems > 0)
                             {
-                                while (std::getline(f, line))
+                                // Allocate the array of InputLayout elements.
+                                elem = new D3D12_INPUT_ELEMENT_DESC[num_input_layout_elems]{0};
+
+                                for (uint32_t i = 0; i < num_input_layout_elems; i++)
                                 {
-                                    if (line.empty())
+                                    while (std::getline(f, line))
                                     {
-                                        // Skip empty lines.
-                                        continue;
-                                    }
-                                    else
-                                    {
-                                        std::vector<std::string> input_layout_values;
-                                        bool is_input_layout_parsed = ExtractCurlyBracketedValues(line, input_layout_values);
-                                        assert(is_input_layout_parsed);
-                                        if (is_input_layout_parsed)
+                                        if (line.empty())
                                         {
-                                            assert(input_layout_values.size() == 7);
-                                            if (input_layout_values.size() == 7)
+                                            // Skip empty lines.
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            std::vector<std::string> input_layout_values;
+                                            bool                     is_input_layout_parsed = ExtractCurlyBracketedValues(line, input_layout_values);
+                                            assert(is_input_layout_parsed);
+                                            if (is_input_layout_parsed)
                                             {
-                                                // SemanticName.
-                                                std::string semantic_name = TrimWhitespaceAndCommas(input_layout_values[0]);
-                                                char* semantic = new char[semantic_name.size() + 1]{ 0 };
-                                                std::copy(semantic_name.begin(), semantic_name.end(), semantic);
-                                                elem[i].SemanticName = semantic;
-
-                                                // SemanticIndex.
-                                                std::string semantic_index = TrimWhitespace(input_layout_values[1]);
-                                                int index = std::stoi(semantic_index);
-                                                elem[i].SemanticIndex = index;
-
-                                                // Format.
-                                                std::string format_str = TrimWhitespace(input_layout_values[2]);
-                                                DXGI_FORMAT dxgi_format;
-                                                bool is_format_found = StrToDxgiFormat(format_str, dxgi_format);
-                                                assert(is_format_found);
-
-                                                if (is_format_found)
+                                                assert(input_layout_values.size() == 7);
+                                                if (input_layout_values.size() == 7)
                                                 {
-                                                    elem[i].Format = dxgi_format;
+                                                    // SemanticName.
+                                                    std::string semantic_name = TrimWhitespaceAndCommas(input_layout_values[0]);
+                                                    char*       semantic      = new char[semantic_name.size() + 1]{0};
+                                                    std::copy(semantic_name.begin(), semantic_name.end(), semantic);
+                                                    elem[i].SemanticName = semantic;
 
-                                                    // InputSlot.
-                                                    std::string input_slot_str = TrimWhitespace(input_layout_values[3]);
-                                                    int input_slot = std::stoi(input_slot_str);
-                                                    elem[i].InputSlot = input_slot;
+                                                    // SemanticIndex.
+                                                    std::string semantic_index = TrimWhitespace(input_layout_values[1]);
+                                                    int         index          = std::stoi(semantic_index);
+                                                    elem[i].SemanticIndex      = index;
 
-                                                    // AlignedByteOffset.
-                                                    std::string aligned_Byte_offset_str = TrimWhitespace(input_layout_values[4]);
-                                                    int aligned_byte_offset = 0;
-                                                    try
+                                                    // Format.
+                                                    std::string format_str = TrimWhitespace(input_layout_values[2]);
+                                                    DXGI_FORMAT dxgi_format;
+                                                    bool        is_format_found = StrToDxgiFormat(format_str, dxgi_format);
+                                                    assert(is_format_found);
+
+                                                    if (is_format_found)
                                                     {
-                                                        aligned_byte_offset = std::stoi(aligned_Byte_offset_str);
-                                                        elem[i].AlignedByteOffset = aligned_byte_offset;
-                                                    }
-                                                    catch (const std::exception& e)
-                                                    {
-                                                        // Handle known special cases.
-                                                        if (aligned_Byte_offset_str.compare("D3D12_APPEND_ALIGNED_ELEMENT") == 0)
+                                                        elem[i].Format = dxgi_format;
+
+                                                        // InputSlot.
+                                                        std::string input_slot_str = TrimWhitespace(input_layout_values[3]);
+                                                        int         input_slot     = std::stoi(input_slot_str);
+                                                        elem[i].InputSlot          = input_slot;
+
+                                                        // AlignedByteOffset.
+                                                        std::string aligned_Byte_offset_str = TrimWhitespace(input_layout_values[4]);
+                                                        int         aligned_byte_offset     = 0;
+                                                        try
                                                         {
-                                                            aligned_byte_offset = 0xffffffff;
+                                                            aligned_byte_offset       = std::stoi(aligned_Byte_offset_str);
+                                                            elem[i].AlignedByteOffset = aligned_byte_offset;
+                                                        }
+                                                        catch (const std::exception& e)
+                                                        {
+                                                            // Handle known special cases.
+                                                            if (aligned_Byte_offset_str.compare("D3D12_APPEND_ALIGNED_ELEMENT") == 0)
+                                                            {
+                                                                aligned_byte_offset = 0xffffffff;
+                                                            }
+                                                            else
+                                                            {
+                                                                // No special case found - parsing error.
+                                                                throw e;
+                                                            }
+                                                        }
+
+                                                        // Input slot classification.
+                                                        std::string                input_classification_str = TrimWhitespace(input_layout_values[5]);
+                                                        D3D12_INPUT_CLASSIFICATION input_classification;
+                                                        bool                       input_classification_found =
+                                                            StrToInputClassification(input_classification_str, input_classification);
+                                                        assert(input_classification_found);
+
+                                                        if (input_classification_found)
+                                                        {
+                                                            elem[i].InputSlotClass = input_classification;
+
+                                                            // InstanceDataStepRate.
+                                                            std::string instance_data_step_rate_str = TrimWhitespace(input_layout_values[6]);
+                                                            int         instance_data_step_rate     = std::stoi(instance_data_step_rate_str);
+                                                            elem[i].InstanceDataStepRate            = instance_data_step_rate;
                                                         }
                                                         else
                                                         {
-                                                            // No special case found - parsing error.
-                                                            throw e;
+                                                            std::cout << kStrErrorUnrecognizedInputClassification << input_layout_values[5] << std::endl;
                                                         }
-                                                    }
-
-                                                    // Input slot classification.
-                                                    std::string input_classification_str = TrimWhitespace(input_layout_values[5]);
-                                                    D3D12_INPUT_CLASSIFICATION input_classification;
-                                                    bool input_classification_found = StrToInputClassification(input_classification_str, input_classification);
-                                                    assert(input_classification_found);
-
-                                                    if (input_classification_found)
-                                                    {
-                                                        elem[i].InputSlotClass = input_classification;
-
-                                                        // InstanceDataStepRate.
-                                                        std::string instance_data_step_rate_str = TrimWhitespace(input_layout_values[6]);
-                                                        int instance_data_step_rate = std::stoi(instance_data_step_rate_str);
-                                                        elem[i].InstanceDataStepRate = instance_data_step_rate;
                                                     }
                                                     else
                                                     {
-                                                        std::cout << kStrErrorUnrecognizedInputClassification << input_layout_values[5] << std::endl;
+                                                        std::cout << kStrWarningUnrecognizedDxgiFormat1 << input_layout_values[2]
+                                                                  << kStrWarningUnrecognizedDxgiFormat2 << std::endl;
                                                     }
                                                 }
                                                 else
                                                 {
-                                                    std::cout << kStrWarningUnrecognizedDxgiFormat1 << input_layout_values[2] <<
-                                                        kStrWarningUnrecognizedDxgiFormat2 << std::endl;
+                                                    std::cout << kStrErrorInvalidNumInputLayoutValues1 << line << kStrErrorInvalidNumInputLayoutValues2
+                                                              << input_layout_values.size() << kStrErrorInvalidNumInputLayoutValues3 << std::endl;
+
+                                                    // Abort.
+                                                    should_abort = true;
                                                 }
                                             }
                                             else
                                             {
-                                                std::cout << kStrErrorInvalidNumInputLayoutValues1 <<
-                                                    line << kStrErrorInvalidNumInputLayoutValues2 <<
-                                                    input_layout_values.size() << kStrErrorInvalidNumInputLayoutValues3 << std::endl;
+                                                std::cout << kStrErrorFailedToParseInputLayoutDefinition << line << std::endl;
 
                                                 // Abort.
                                                 should_abort = true;
+                                                break;
                                             }
-                                        }
-                                        else
-                                        {
-                                            std::cout << kStrErrorFailedToParseInputLayoutDefinition << line << std::endl;
 
-                                            // Abort.
-                                            should_abort = true;
-                                            break;
+                                            // Assuming success if we did not have to abort due to an error.
+                                            is_input_layout_checked = !should_abort;
                                         }
 
-                                        // Assuming success if we did not have to abort due to an error.
-                                        is_input_layout_checked = !should_abort;
+                                        // Continue to the next element.
+                                        break;
                                     }
+                                }
 
-                                    // Continue to the next element.
-                                    break;
+                                if (!should_abort)
+                                {
+                                    // Set the input layout descriptors.
+                                    pso_desc.InputLayout = {elem, num_input_layout_elems};
                                 }
                             }
-
-                            if (!should_abort)
+                            else
                             {
-                                // Set the input layout descriptors.
-                                pso_desc.InputLayout = { elem, num_input_layout_elems };
+                                is_input_layout_checked = true;
                             }
                         }
-                        else if (!is_primitive_toplogy_type_checked &&
-                            line.find(kStrElemSchemaPrimitiveTopologyType) != std::string::npos)
+                        else if (!is_primitive_toplogy_type_checked && line.find(kStrElemSchemaPrimitiveTopologyType) != std::string::npos)
                         {
                             while (std::getline(f, line))
                             {
@@ -528,65 +529,74 @@ namespace rga
                         }
                         else if (!is_rtv_formats_checked && line.find(kStrElemSchemaRtvFormats) != std::string::npos)
                         {
-
-                            if (pso_desc.NumRenderTargets > 8)
+                            if (pso_desc.NumRenderTargets > 0)
                             {
-                                std::cout << kStrWarningNumRenderTargetsExceedsMax << std::endl;
-
-                                // Do not exceed the maximum.
-                                pso_desc.NumRenderTargets = 8;
-                                is_num_render_targets_checked = true;
-                            }
-
-                            while (std::getline(f, line))
-                            {
-                                if (line.empty())
+                                if (pso_desc.NumRenderTargets > 8)
                                 {
-                                    // Skip empty lines.
-                                    continue;
+                                    std::cout << kStrWarningNumRenderTargetsExceedsMax << std::endl;
+
+                                    // Do not exceed the maximum.
+                                    pso_desc.NumRenderTargets     = 8;
+                                    is_num_render_targets_checked = true;
                                 }
-                                else
+
+                                while (std::getline(f, line))
                                 {
-                                    // Extract the RTV format values.
-                                    std::vector<std::string> rtv_format_values;
-                                    bool rtv_format_parsed = ExtractCurlyBracketedValues(line, rtv_format_values);
-
-                                    if (rtv_format_parsed)
+                                    if (line.empty())
                                     {
-                                        assert(rtv_format_values.size() == pso_desc.NumRenderTargets);
-                                        if (rtv_format_values.size() != pso_desc.NumRenderTargets)
-                                        {
-                                            std::cout << kStrWarningRenderTargetsMismatch << std::endl;
-                                        }
-
-                                        for (uint32_t i = 0; i < pso_desc.NumRenderTargets; i++)
-                                        {
-                                            DXGI_FORMAT format_value = DXGI_FORMAT_UNKNOWN;
-                                            ret = RgDx12Utils::StrToDxgiFormat(rtv_format_values[i], format_value);
-                                            assert(ret);
-                                            if (ret)
-                                            {
-                                                pso_desc.RTVFormats[i] = format_value;
-                                            }
-                                            else
-                                            {
-                                                std::cout << kStrWarningUnrecognizedDxgiFormat1 << rtv_format_values[i] <<
-                                                    kStrWarningUnrecognizedDxgiFormat2 << std::endl;
-                                            }
-
-                                            // Continue to the next element.
-                                            break;
-                                        }
-
-                                        // Assume success as long as we did not have to abort.
-                                        is_rtv_formats_checked = !should_abort;
+                                        // Skip empty lines.
+                                        continue;
                                     }
                                     else
                                     {
-                                        std::cout << kStrErrorFailedToParseRtvFormatValues << line << std::endl;
-                                        should_abort = true;
+                                        // Extract the RTV format values.
+                                        std::vector<std::string> rtv_format_values;
+                                        bool                     rtv_format_parsed = ExtractCurlyBracketedValues(line, rtv_format_values);
+
+                                        if (rtv_format_parsed)
+                                        {
+                                            assert(rtv_format_values.size() == pso_desc.NumRenderTargets);
+                                            if (rtv_format_values.size() != pso_desc.NumRenderTargets)
+                                            {
+                                                std::cout << kStrWarningRenderTargetsMismatch << std::endl;
+                                            }
+
+                                            for (uint32_t i = 0; i < pso_desc.NumRenderTargets; i++)
+                                            {
+                                                DXGI_FORMAT format_value = DXGI_FORMAT_UNKNOWN;
+                                                ret                      = RgDx12Utils::StrToDxgiFormat(rtv_format_values[i], format_value);
+                                                assert(ret);
+                                                if (ret)
+                                                {
+                                                    pso_desc.RTVFormats[i] = format_value;
+                                                }
+                                                else
+                                                {
+                                                    std::cout << kStrWarningUnrecognizedDxgiFormat1 << rtv_format_values[i]
+                                                              << kStrWarningUnrecognizedDxgiFormat2 << std::endl;
+                                                }
+
+                                                // Continue to the next element.
+                                                break;
+                                            }
+
+                                            // Assume success as long as we did not have to abort.
+                                            is_rtv_formats_checked = !should_abort;
+                                        }
+                                        else
+                                        {
+                                            std::cout << kStrErrorFailedToParseRtvFormatValues << line << std::endl;
+                                            should_abort = true;
+                                        }
                                     }
                                 }
+                            }
+                            else
+                            {
+                                // No RTV formats, must set RTVFormat 0 to DXGI_FORMAT_UNKNOWN.
+                                pso_desc.NumRenderTargets = 0;
+                                pso_desc.RTVFormats[0]    = DXGI_FORMAT_UNKNOWN;
+                                is_rtv_formats_checked = true;
                             }
                         }
                     }

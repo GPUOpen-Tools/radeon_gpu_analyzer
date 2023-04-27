@@ -548,7 +548,7 @@ bool BeUtils::ExtractCodeObjectStatistics(const std::string& disassembly_whole,
                 // Add fixed values.
                 data.lds_size_available = 65536;
                 data.num_vgprs_available = 256;
-                data.num_sgprs_available = 104;
+                data.num_sgprs_available = 106;
 
                 // Add the kernel's stats to the map.
                 data_map[kernel_name] = data;

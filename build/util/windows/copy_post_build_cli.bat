@@ -58,6 +58,7 @@ XCopy /r /e /d /y "..\..\..\external\vulkan\tools\windows\bin\*.exe" "%OUTPUT_DI
 XCopy /r /e /d /y "..\..\..\external\dxc\*" "%OUTPUT_DIR%\utils\dx12\dxc\"
 XCopy /r /e /d /y "..\..\..\external\dx12\withdll.exe" "%OUTPUT_DIR%\utils\dx12\"
 XCopy /r /e /d /y "..\..\..\external\dx12\umdrepoint.dll" "%OUTPUT_DIR%\utils\dx12\"
+XCopy /r /e /d /y "..\..\..\external\dx12\agility_sdk\D3D12Core.dll" "%OUTPUT_DIR%\utils\dx12\agility_sdk\"
 XCopy /r /e /d /y "..\..\..\external\dx11\amdxx\atidxx64.dll" "%OUTPUT_DIR%\utils\dx11\"
 XCopy /r /d /y "..\..\..\License.txt" "%OUTPUT_DIR%\License.txt*"
 XCopy /r /d /y "..\..\..\RGA_NOTICES.txt" "%OUTPUT_DIR%\RGA_NOTICES.txt*"
@@ -65,4 +66,4 @@ XCopy /r /d /y "..\..\..\README.md" "%OUTPUT_DIR%\README.md*"
 XCopy /r /d /y "..\..\..\documentation\RGA_RELEASE_NOTES.txt" "%OUTPUT_DIR%\RGA_RELEASE_NOTES.txt*"
 XCopy /r /d /y "..\..\..\..\Common\Src\update_check_api\rtda\windows\rtda.exe" "%OUTPUT_DIR%\rtda.exe*"
 
-XCopy /r /d /y "..\..\..\external\vulkan_offline\windows\amdspv.exe" "%OUTPUT_DIR%\utils\"
+XCopy /r /d /y "..\..\..\external\vulkan_offline\windows\amdllpc.exe" "%OUTPUT_DIR%\utils\"

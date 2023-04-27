@@ -30,10 +30,10 @@ github_mapping = {
     "adl_util"                       : ["Common/Src/ADLUtil",               "master"],
     "tsingleton"                     : ["Common/Src/TSingleton",            "master"],
     "common_src_miniz"               : ["Common/Src/Miniz",                 "master"],
-    "device_info"                    : ["Common/Src/DeviceInfo",            "5e6c83cc74e4588bdf44e1f3c74d419b46bb1a0c"],
+    "device_info"                    : ["Common/Src/DeviceInfo",            "7f814f15a0896659af005498d9008fd627446ba0"],
     "dynamic_library_module"         : ["Common/Src/DynamicLibraryModule",  "amd-rga-v2.7"],
     "update_check_api"               : ["Common/Src/update_check_api",      "v2.1.0"],
-  # QtCommon.
+ # QtCommon.
     "qt_common"                      : ["QtCommon",                         "rga-2.5"],
 }
 

@@ -43,7 +43,11 @@ static const std::vector<gtString>  kLcOpenclLibFiles = { L"opencl.amdgcn.bc", L
                                                         L"oclc_isa_version_909.amdgcn.bc",
                                                         L"oclc_isa_version_1010.amdgcn.bc", L"oclc_isa_version_1011.amdgcn.bc", L"oclc_isa_version_1012.amdgcn.bc",
                                                         L"oclc_isa_version_1030.amdgcn.bc", L"oclc_isa_version_1031.amdgcn.bc", L"oclc_isa_version_1032.amdgcn.bc",
-                                                        L"oclc_isa_version_1034.amdgcn.bc", L"oclc_isa_version_1100.amdgcn.bc" };
+                                                        L"oclc_isa_version_1034.amdgcn.bc", L"oclc_isa_version_1100.amdgcn.bc", L"oclc_isa_version_1102.amdgcn.bc" };
+
+static const gtString kLcOpenclLibFile_abi_v400            = L"oclc_abi_version_400.bc";
+static const gtString kLcOpenclLibFile_wavefrontsize64_on  = L"oclc_wavefrontsize64_on.amdgcn.bc";
+static const gtString kLcOpenclLibFile_wavefrontsize64_off = L"oclc_wavefrontsize64_off.amdgcn.bc";
 
 static const std::string  kStrLcOpenclStdOption = "-cl-std";
 static const std::string  kStrLcOpenclStdDefaultValue = "cl2.0";
@@ -118,6 +122,12 @@ static const wchar_t* kLcOpenclLlvmReadobjExecutable = L"llvm-readobj";
 // *** INTERNALLY LINKED SYMBOLS - END ***
 // ***************************************
 
+void AddLcCompilerOpenclSwitchLib(const gtString& lib_file, osFilePath& lib_file_path, std::stringstream& options_stream)
+{
+    lib_file_path.setFileName(lib_file);
+    options_stream << " " << kStrLcCompilerOpenclSwitchLib << KcUtils::Quote(lib_file_path.asString().asASCIICharArray());
+}
+
 static bool GetIsaSize(const string& isa_as_text, const std::string& kernel_name, size_t& size_in_bytes);
 static beKA::beStatus  ParseCodeProps(const std::string & md_text, CodePropsMap& code_props);
 
@@ -158,7 +168,10 @@ beKA::beStatus BeProgramBuilderLightning::GetCompilerVersion(RgaMode mode, const
     return status;
 }
 
-beKA::beStatus BeProgramBuilderLightning::AddCompilerStandardOptions(RgaMode mode, const CmpilerPaths& compiler_paths, std::string& options)
+beKA::beStatus BeProgramBuilderLightning::AddCompilerStandardOptions(RgaMode             mode,
+                                                                     const CmpilerPaths& compiler_paths,
+                                                                     const std::string&  device,
+                                                                     std::string&        options)
 {
     std::stringstream options_stream;
     beKA::beStatus status = beKA::kBeStatusSuccess;
@@ -214,8 +227,17 @@ beKA::beStatus BeProgramBuilderLightning::AddCompilerStandardOptions(RgaMode mod
 
         for (const gtString & lib_file : kLcOpenclLibFiles)
         {
-            lib_file_path.setFileName(lib_file);
-            options_stream << " " << kStrLcCompilerOpenclSwitchLib << KcUtils::Quote(lib_file_path.asString().asASCIICharArray());
+            AddLcCompilerOpenclSwitchLib(lib_file, lib_file_path, options_stream);
+        }
+
+        AddLcCompilerOpenclSwitchLib(kLcOpenclLibFile_abi_v400, lib_file_path, options_stream);
+        if (KcUtils::IsNaviTarget(device))
+        {
+            AddLcCompilerOpenclSwitchLib(kLcOpenclLibFile_wavefrontsize64_off, lib_file_path, options_stream);
+        }
+        else
+        {
+            AddLcCompilerOpenclSwitchLib(kLcOpenclLibFile_wavefrontsize64_on, lib_file_path, options_stream);
         }
     }
     else
@@ -236,7 +258,7 @@ beKA::beStatus BeProgramBuilderLightning::ConstructOpenCLCompilerOptions(const C
 {
     beKA::beStatus status;
     std::string  standard_options = "";
-    status = AddCompilerStandardOptions(RgaMode::kModeOpenclOffline, compiler_paths, standard_options);
+    status = AddCompilerStandardOptions(RgaMode::kModeOpenclOffline, compiler_paths, device, standard_options);
     if (status == beKA::kBeStatusSuccess)
     {
         std::stringstream options;

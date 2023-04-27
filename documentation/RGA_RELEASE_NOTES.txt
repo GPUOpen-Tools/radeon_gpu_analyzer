@@ -1,33 +1,28 @@
-Radeon GPU Analyzer 2.7 Release Notes
-=====================================
+Radeon GPU Analyzer 2.7.1 Release Notes
+=======================================
 Highlights
 ==========
--	Compile and analyze shaders and kernels for the RDNA3™ architecture (gfx1100), even without a physical RDNA3™ card installed on your system.
--	Jump to areas in your shaders and kernels which have maximum VGPR pressure using the RGA GUI application. After successfully compiling your shader, use:
-    o	Edit->Go to next maximum VGPR pressure line (Ctrl+F4), or:
-    o	Right-click on any ISA disassembly line -> Go to next maximum VGPR pressure line (Ctrl+F4).
--	DirectX®11 mode (-s dx11) is now an offline mode and works regardless of the installed driver. Support in this mode was limited to VS, PS and CS.
--	Updates to Vulkan and OpenGL® backend components.
--	OpenCL™ mode now uses an updated version of AMD’s LLVM-based Lightning Compiler.
+-	Compile and analyze shaders and kernels for the AMD Radeon RX 7600 and 7700 series (gfx1102 architecture), even without a physical RDNA3™ card installed on your system.
+-	DX12 mode: use the latest Shader Model features on any system with Agility SDK.
+-	Relaxed DX12 .gpso input file content verification to permit empty InputLayout and RTVFormat elements.
+-	Vulkan: New offline compiler, using AMD’s LLVM-based pipeline compiler.
+-	Vulkan: updated the disassembler, fixing issue where certain 16-bit instructions were seen as “Unknown”.
+-	OpenCL: fixed an issue that prevented Code Object binaries from being loaded by the runtime.
 
-Notes: 
--	Support for gfx1100 in DX11 mode (-s dx11) is not yet enabled.
--	AMDIL input is no longer supported by the tool with the new DX11 mode.
--	On Ubuntu, the minimum required OS version is Ubuntu 22.04.
+Notes:
+In Vulkan Offline mode, --il and –pipe options are no longer supported as of version 2.7.1.
 
 
 Known Issues
 ============
 Vulkan Live Driver Mode
 -----------------------
--	Certain 16-bit instruction may appear as “Unknown” in the disassembly.
--	Source to disassembly correlation is not supported by AMD's shader compiler and is therefore not supported in the UI.
+-	Source to disassembly correlation is not supported by AMD’s shader compiler and is therefore not supported in the UI.
 -	Keyboard navigation is not supported from some views in the GUI application.
 -	The RGA layer is a beta feature. It fails to extract the shaders and pipeline state from certain Vulkan apps.
--	Notifications about the fact that modified SPIR-V binary does not match the disassembly will not appear for loaded projects (in case that you changed the SPIR-V code, did not build and re-loaded the project).
--	Cycle estimate for certain VALU instructions appears as “Varies” instead of 4.
--	Linux only: attempt to compile shaders with invalid pipeline state may result in very long compilation time. This is going to be addressed by an upcoming driver release.
--	Linux only: if no amdgpu-pro driver is installed on the system, the bundled driver will only support targets up to RDNA2.
+-	Notifications about the fact that modified SPIR-V binary does not match the disassembly will not appear for loaded projects (in case where the user changed the SPIR-V code, did not build, and re-loaded the project).
+-	The driver may generate empty shaders in case the user gives an invalid pipeline state or does not provide a pipeline state at all. This is expected to be fixed in an upcoming driver build and does not require modifications of the tool.
+
 
 Offline OpenCL Mode
 -------------------
@@ -47,7 +42,7 @@ DirectX 12 Mode
 
 DirectX 11 Mode
 ---------------
--	Support for gfx1100 in DX11 mode (-s dx11) is not yet enabled.
+-	Support for gfx1100 and beyond is not yet enabled in DX11 mode (-s dx11).
 
 Vulkan Offline Modes (vk-offline, vk-spv-offline, vk-spv-txt-offline)
 ---------------------------------------------------------------------

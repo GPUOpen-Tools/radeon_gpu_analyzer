@@ -114,7 +114,7 @@ public:
 
 protected:
     // Adds standard options required to compile source language with LC compiler to the "options" string.
-    static beStatus AddCompilerStandardOptions(RgaMode mode, const CmpilerPaths& compiler_paths, std::string& options);
+    static beStatus AddCompilerStandardOptions(RgaMode mode, const CmpilerPaths& compiler_paths, const std::string& device, std::string& options);
 
     // Builds a string containing all necessary options for OpenCL compiler.
     // Writes constructed options string to "options".

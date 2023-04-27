@@ -1002,6 +1002,38 @@ bool GetRGATempDir(osDirectory & dir)
     return ret;
 }
 
+bool KcUtils::CopyTextFile(const std::string& filename_from, const std::string& filename_to, LoggingCallbackFunction callback)
+{
+    bool ret = false;
+    if (!filename_from.empty() && !filename_to.empty())
+    {
+        std::string content;
+        bool        is_file_read = KcUtils::ReadTextFile(filename_from, content, nullptr);
+        assert(is_file_read);
+        if (is_file_read && !content.empty())
+        {
+            bool is_file_written = KcUtils::WriteTextFile(filename_to, content, nullptr);
+            assert(is_file_written);
+            if (KcUtils::FileNotEmpty(filename_to))
+            {
+                ret = true;
+            }
+        }
+    }
+
+    if (!ret)
+    {
+        std::stringstream log;
+        log << kStrErrorCannotCopyFileA << filename_from << kStrErrorCannotCopyFileB << filename_to << std::endl;
+        if (callback != nullptr)
+        {
+            callback(log.str());
+        }
+    }
+
+    return ret;
+}
+
 bool KcUtils::PrintAsicList(const std::set<std::string>& required_devices, const std::set<std::string>& disabled_devices)
 {
     // We do not want to display names that contain these strings.
@@ -1123,7 +1155,21 @@ const std::vector<std::string> KcUtils::GetRgaDisabledDevices()
 
 void KcUtils::PrintRgaVersion()
 {
-    std::cout << kStrRgaProductName << " " << kStrRgaVersionPrefix << kStrRgaVersion << "." << kStrRgaBuildNum << std::endl;
+    bool status = false;
+    // Add the RGA CLI build date.
+    // First, reformat the Windows date string provided in format "Day dd/mm/yyyy" to format "yyyy-mm-dd".
+    std::string date_string = kStrRgaBuildDate;
+
+#ifdef WIN32
+    status = RgaSharedUtils::ConvertDateString(date_string);
+#endif
+
+    std::cout << kStrRgaProductName << " " << kStrRgaVersionPrefix << kStrRgaVersion << "." << kStrRgaBuildNum;
+    if (status)
+    {
+        std::cout << " (" << date_string << ")";
+    }
+    std::cout << std::endl;
 }
 
 #ifdef _WIN32
@@ -1608,8 +1654,10 @@ void KcUtils::CheckForUpdates()
         rga_cli_version.major = RGA_VERSION_MAJOR;
         rga_cli_version.minor = RGA_VERSION_MINOR;
         rga_cli_version.patch = RGA_VERSION_UPDATE;
-        rga_cli_version.build = 0;
+        rga_cli_version.build = RGA_BUILD_NUMBER;
     }
+
+    KcUtils::PrintRgaVersion();
 
     UpdateCheck::UpdateInfo update_info;
     string error_message;

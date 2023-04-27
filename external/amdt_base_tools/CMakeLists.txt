@@ -25,4 +25,4 @@ include_directories("${PROJECT_SOURCE_DIR}/../../")
 add_library(AMDTBaseTools STATIC src/gtAssert.cpp src/gtList.cpp src/gtString.cpp src/gtVector.cpp src/gtErrorString.cpp src/gtIAssertionFailureHandler.cpp src/gtASCIIString.cpp src/gtASCIIStringTokenizer.cpp src/gtStringTokenizer.cpp )
 
 # Set binary suffix
-set_target_properties(AMDTBaseTools PROPERTIES DEBUG_POSTFIX -d CXX_STANDARD 11)
+set_target_properties(AMDTBaseTools PROPERTIES DEBUG_POSTFIX -d CXX_STANDARD 17)

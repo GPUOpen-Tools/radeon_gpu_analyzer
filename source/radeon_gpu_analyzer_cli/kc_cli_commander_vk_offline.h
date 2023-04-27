@@ -36,10 +36,25 @@ private:
     // Caches the supported devices.
     bool GetSupportedDevices();
 
+    // Store output file names to the output metadata.
+    void StoreOutputFilesToOutputMD(const std::string&       device,
+                                    const BeVkPipelineFiles& spv_files,
+                                    const BeVkPipelineFiles& isa_files,
+                                    const BeVkPipelineFiles& stats_files);
+
+    // Extract Resource Usage (statistics) data.
+    void ExtractStatistics(const Config&                             config,
+                           const std::string&                        device,
+                           const std::string&                        amdgpu_dis_output,
+                           const std::map<std::string, std::string>& shader_to_disassembly);
+
     // The builder.
     BeProgramBuilderVkOffline* vulkan_builder_;
 
     // Unique collections of the device names.
     std::set<std::string> supported_devices_cache_;
+
+    // Per-device output metadata.
+    std::map<std::string, RgVkOutputMetadata> output_metadata_;
 };
 #endif // RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_VK_OFFLINE_H_

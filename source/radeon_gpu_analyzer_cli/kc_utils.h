@@ -250,6 +250,12 @@ public:
     // \param[in]  callback  callback for logging
     static bool WriteTextFile(const std::string& filename, const std::string& content, LoggingCallbackFunction callback);
 
+    // Copy a text file.
+    // \param[in]  filename_from   the name of the file to copy
+    // \param[in]  filename_to     the name of the file to be created
+    // \param[in]  callback        callback for logging
+    static bool CopyTextFile(const std::string& filename_from, const std::string& filename_to, LoggingCallbackFunction callback);
+
     // Prints the list of required devices, or the names of the devices that appear
     // in the given set in case that the required devices set is empty.
     // Does not print the devices that are present in the "disabledDevices" set.

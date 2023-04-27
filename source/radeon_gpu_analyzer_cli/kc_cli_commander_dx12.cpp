@@ -4,6 +4,8 @@
 
 #ifdef _WIN32
 
+#define _HAS_STD_BYTE 0
+
 // C++.
 #include <cassert>
 
@@ -60,6 +62,7 @@ static const char* kStrErrorNoIsaNoStatsOption = "Error: one of --isa or -a/--an
 static const char* kStrErrorFailedToConstructLiveregOutputFilename = "Error: failed to construct live register analysis output file name.";
 static const char* kStrErrorFailedToConstructCfgOutputFilename = "Error: failed to construct control-flow graph output file name.";
 static const char* kStrErrorInvalidDxcOptionArgument = "Error: argument to --dxc option should be path to the folder where DXC is located, not a full path to a file.";
+static const char* kStrErrorGpsoFileWriteFailed = "Error: failed to write template .gpso file to: ";
 
 // DXR-specific error messages.
 static const char* kStrErrorDxrIsaNotGeneratedB = " export.";
@@ -1346,6 +1349,10 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
             if (is_file_written)
             {
                 std::cout << kStrInfoTemplateGpsoFileGenerated << std::endl;
+            }
+            else
+            {
+                std::cout << kStrErrorGpsoFileWriteFailed << config.pso_dx12_template << std::endl;
             }
         }
     }

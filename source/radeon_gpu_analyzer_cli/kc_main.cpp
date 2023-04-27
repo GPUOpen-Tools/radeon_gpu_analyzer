@@ -2,6 +2,8 @@
 // Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
+#define _HAS_STD_BYTE 0
+
 // C++.
 #include <memory>
 #include <map>

@@ -2,6 +2,8 @@
 // Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
+#define _HAS_AUTO_PTR_ETC 1
+
 // C++.
 #include <iostream>
 #include <string>
@@ -130,9 +132,6 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         // OpenGL is Vulkan minus .pipe option.
         po::options_description pipelined_opt_live = pipelined_opt_offline;
 
-        // Add .pipe option for Vulkan offline.
-        pipelined_opt_offline.add_options()("pipe", po::value<string>(&config.pipe_file), "Full path to .pipe input file.");
-
 #ifdef RGA_ENABLE_VULKAN
         // Prepare the --glslang-opt description.
         std::string glslang_opt_description = kStrCliOptGlslangOptDescriptionA;
@@ -163,7 +162,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         po::options_description vulkan_input_type_opt;
         for (const std::string& stage : { "vert", "tesc", "tese", "frag", "geom", "comp" })
         {
-            for (const std::string& file_type : { "glsl", "spvas" })
+            for (const std::string& file_type : { "glsl", "spvasm" })
             {
                 vulkan_input_type_opt.add_options()
                     ((stage + "-" + file_type).c_str(), po::value<string>(), "");
@@ -588,7 +587,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             std::vector<std::map<std::string, RgVulkanInputType>> type_pairs_map = {
                 std::map<std::string, RgVulkanInputType>{{"glsl", RgVulkanInputType::kGlsl}},
-                std::map<std::string, RgVulkanInputType>{{"spvas", RgVulkanInputType::kSpirvTxt}}};
+                std::map<std::string, RgVulkanInputType>{{"spvasm", RgVulkanInputType::kSpirvTxt}}};
             for (const auto& stage : std::map<std::string, std::pair<std::string*, RgVulkanInputType*>>
                     { {"vert", {&config.vertex_shader, &config.vert_shader_file_type}},         {"tesc", {&config.tess_control_shader, &config.tesc_shader_file_type}},
                       {"tese", {&config.tess_evaluation_shader, &config.tese_shader_file_type}}, {"frag", {&config.fragment_shader, &config.frag_shader_file_type}},
@@ -834,10 +833,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             cout << opt_level_opt1 << endl;
             cout << pipelined_opt_offline << endl;
             cout << "Examples:" << endl;
-            cout << "  Compile vertex & fragment shaders for all supported devicesl; extract ISA, AMD IL and statistics:" << endl;
-            cout << "    " << program_name << " -s " << rga_mode_name << " --isa output/isa.txt --il output/il.txt -a output/stats.csv --vert source/myVertexShader." << vert_ext << " --frag source/myFragmentShader." << frag_ext << endl;
-            cout << "  Compile vertex & fragment shaders for gfx1030; extract ISA, AMD IL and statistics:" << endl;
-            cout << "    " << program_name << " -s " << rga_mode_name << " -c gfx1030 --isa output/isa.txt --il output/il.amdil -a output/.csv --vert source/myVertexShader." << vert_ext << " --frag source/myFragmentShader." << frag_ext << endl;
+            cout << "  Compile vertex & fragment shaders for all supported devicesl; extract ISA and statistics:" << endl;
+            cout << "    " << program_name << " -s " << rga_mode_name << " --isa output/isa.txt -a output/stats.csv --vert source/myVertexShader." << vert_ext << " --frag source/myFragmentShader." << frag_ext << endl;
+            cout << "  Compile vertex & fragment shaders for gfx1030; extract ISA and statistics:" << endl;
+            cout << "    " << program_name << " -s " << rga_mode_name << " -c gfx1030 --isa output/isa.txt -a output/.csv --vert source/myVertexShader." << vert_ext << " --frag source/myFragmentShader." << frag_ext << endl;
             cout << "  Compile vertex shader for Radeon gfx1034; extract ISA and binaries:" << endl;
             cout << "    " << program_name << " -s " << rga_mode_name << " -c \"gfx1034\" --isa output/isa.txt -b output/binary.bin -a output/stats.csv --vert c:\\source\\myVertexShader." << vert_ext << endl;
             if (config.mode == RgaMode::kModeVkOfflineSpv || config.mode == RgaMode::kModeVkOfflineSpvTxt)

@@ -407,7 +407,7 @@ void RgConfigManager::ResetToFactoryDefaults(RgGlobalSettings& global_settings)
 
     global_settings.input_file_ext_glsl    = kStrGlobalSettingsFileExtGlsl;
     global_settings.input_file_ext_hlsl    = kStrGlobalSettingsFileExtHlsl;
-    global_settings.input_file_ext_spv_txt = kStrGlobalSettingsFileExtSpvas;
+    global_settings.input_file_ext_spv_txt = kStrGlobalSettingsFileExtSpvasm;
     global_settings.input_file_ext_spv_bin = kStrGlobalSettingsFileExtSpv;
 
     global_settings.default_lang = RgSrcLanguage::kGLSL;
@@ -1204,7 +1204,12 @@ std::string RgConfigManager::GenerateProjectFilepath(const std::string& project_
     // Generate the project's filename.
     std::stringstream project_filename;
     project_filename << project_name;
-    project_filename << kStrProjectFileExtension;
+
+    // Check if the filename already has the .rga extension.
+    if (!QString::fromStdString(project_name).endsWith(kStrProjectFileExtension))
+    {
+        project_filename << kStrProjectFileExtension;
+    }
 
     // Generate the full path to the project file.
     std::string file_project_path;

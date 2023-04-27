@@ -4,6 +4,8 @@
 
 #ifdef _WIN32
 
+#define _HAS_STD_BYTE 0
+
 // C++.
 #include <string>
 #include <sstream>

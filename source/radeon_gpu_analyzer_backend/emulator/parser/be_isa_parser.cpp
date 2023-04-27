@@ -1,6 +1,7 @@
 //=================================================================
 // Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
+#define _HAS_AUTO_PTR_ETC 1
 
 // C++.
 #include <fstream>
@@ -69,16 +70,14 @@ static bool ExtractRuntimeChangedNumOfGprs(const std::string& isa_line, unsigned
 // Trim from the start.
 static std::string& trimStart(std::string& str_to_trim)
 {
-    str_to_trim.erase(str_to_trim.begin(), std::find_if(str_to_trim.begin(),
-        str_to_trim.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    str_to_trim.erase(str_to_trim.begin(), std::find_if(str_to_trim.begin(), str_to_trim.end(), [](int c) { return !std::isspace(c); }));
     return str_to_trim;
 }
 
 // Trim from the end.
 static std::string& trimEnd(std::string& str_to_trim)
 {
-    str_to_trim.erase(std::find_if(str_to_trim.rbegin(), str_to_trim.rend(),
-        std::not1(std::ptr_fun<int, int>(std::isspace))).base(), str_to_trim.end());
+    str_to_trim.erase(std::find_if(str_to_trim.rbegin(), str_to_trim.rend(), [](int c) { return !std::isspace(c); }).base(), str_to_trim.end());
     return str_to_trim;
 }
 

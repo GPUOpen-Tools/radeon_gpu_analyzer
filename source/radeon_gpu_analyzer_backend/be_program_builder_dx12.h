@@ -25,16 +25,6 @@
 using namespace beKA;
 using namespace rga;
 
-static const std::array<std::string, BePipelineStage::kCount> kStrDx12StageNames =
-{
-    "vertex",
-    "hull",
-    "domain",
-    "geometry",
-    "pixel",
-    "compute"
-};
-
 class BeProgramBuilderDx12
 {
 public:

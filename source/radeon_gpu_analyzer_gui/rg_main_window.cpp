@@ -782,6 +782,7 @@ void RgMainWindow::EnableEditMenu(bool is_enabled)
     // Toggle the actions associated with the Edit menu items.
     go_to_line_action_->setEnabled(is_enabled);
     find_action_->setEnabled(is_enabled);
+    show_max_vgprs_action_->setEnabled(is_enabled);
 }
 
 bool RgMainWindow::OpenProjectFileAtPath(const std::string& project_file_path)
@@ -951,7 +952,8 @@ void RgMainWindow::HandleProjectFileCountChanged(bool is_project_empty)
     }
 
     // Toggle the availability of the Edit menu.
-    EnableEditMenu(!is_project_empty);
+    go_to_line_action_->setEnabled(!is_project_empty);
+    find_action_->setEnabled(!is_project_empty);
 }
 
 void RgMainWindow::SwitchToView(MainWindowView tab)
@@ -1293,7 +1295,7 @@ void RgMainWindow::dropEvent(QDropEvent *event)
     // call OpenProjectFileAtPath.
     if (file_urls.size() == 1 && file_urls.at(0).isLocalFile() && file_urls.at(0).toLocalFile().endsWith(kStrProjectFileExtension))
     {
-        // Verify that the projcet file name is valid.
+        // Verify that the project file name is valid.
         std::string error_message;
         bool is_project_file_valid = RgUtils::IsValidProjectName(file_urls.at(0).toLocalFile().toStdString(), error_message);
         if (is_project_file_valid)
@@ -1524,7 +1526,8 @@ void RgMainWindow::HandleCancelBuildEvent()
 void RgMainWindow::HandleSelectedFileChanged(const std::string& old_file, const std::string& new_file)
 {
     // Enable the Edit menu functionality.
-    EnableEditMenu(true);
+    go_to_line_action_->setEnabled(true);
+    find_action_->setEnabled(true);
 }
 
 void RgMainWindow::HandleProjectCreated()

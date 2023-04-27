@@ -7,23 +7,12 @@
 #include <cassert>
 
 // Infra.
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning(disable:4309)
-#endif
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
 #include "external/amdt_os_wrappers/Include/osProcess.h"
-#include "external/amdt_os_wrappers/Include/osFilePath.h"
-#ifdef _WIN32
-#pragma warning(pop)
-#endif
 
 // Local.
 #include "radeon_gpu_analyzer_backend/be_program_builder_vk_offline.h"
-#include "radeon_gpu_analyzer_backend/be_include.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
-#include "radeon_gpu_analyzer_backend/be_string_constants.h"
-#include "source/radeon_gpu_analyzer_cli/kc_utils.h"
 
 // Device info.
 #include "DeviceInfoUtils.h"
@@ -32,148 +21,67 @@
 // *** INTERNALLY LINKED SYMBOLS - START ***
 // *****************************************
 
-static const std::string  kStrVkOfflineSpirvOutputFilenameVertex = "vert.spv";
-static const std::string  kStrVkOfflineSpirvOutputFilenameTessellationControl = "tesc.spv";
-static const std::string  kStrVkOfflineSpirvOutputFilenameTessellationEvaluation = "tese.spv";
-static const std::string  kStrVkOfflineSpirvOutputFilenameGeometry = "geom.spv";
-static const std::string  kStrVkOfflineSpirvOutputFilenameFragment = "frag.spv";
-static const std::string  kStrVkOfflineSpirvOutputFilenameCompute = "comp.spv";
+// Targets of Amdllpc gfxip and corresponding DeviceInfo names.
+static const std::map<std::string, std::string> kVkAmdllpcTargetsToDeviceInfoTargets = {{"gfx900", "9.0.0"},
+                                                                                        {"gfx902", "9.0.2"},
+                                                                                        {"gfx904", "9.0.4"},
+                                                                                        {"gfx906", "9.0.6"},
+                                                                                        {"gfx90c", "9.0.12"},
+                                                                                        {"gfx1010", "10.1.0"},
+                                                                                        {"gfx1011", "10.1.1"},
+                                                                                        {"gfx1012", "10.1.2"},
+                                                                                        {"gfx1030", "10.3.0"},
+                                                                                        {"gfx1031", "10.3.1"},
+                                                                                        {"gfx1032", "10.3.2"},
+                                                                                        {"gfx1034", "10.3.4"},
+                                                                                        {"gfx1035", "10.3.5"},
+                                                                                        {"gfx1100", "11.0.0"},
+                                                                                        {"gfx1102", "11.0.0"}};  
+// gfx1102 is not supported by amdllpc as of 01/03/2023.
 
-static const std::string  kStrPalIlOutputFilenameVert = "vert.palIl";
-static const std::string  kStrPalIlOutputFilenameTessellationControl = "tesc.palIl";
-static const std::string  kStrPalIlOutputFilenameTessellationEvaluation = "tese.palIl";
-static const std::string  kStrPalIlOutputFilenameGeometry = "geom.palIl";
-static const std::string  kStrPalIlOutputFilenameFragment = "frag.palIl";
-static const std::string  kStrPalIlOutputFilenameCompute = "comp.palIl";
-
-static const std::string  kAmdspvDeviceGfx900 = "900";
-static const std::string  kAmdspvDeviceGfx902 = "902";
-static const std::string  kAmdspvDeviceGfx906 = "906";
-
-static const std::string  kAmdspvDeviceGfx1010 = "1010";
-static const std::string  kAmdspvDeviceGfx1011 = "1011";
-static const std::string  kAmdspvDeviceGfx1012 = "1012";
-static const std::string  kAmdspvDeviceGfx1030 = "1030";
-static const std::string  kAmdspvDeviceGfx1031 = "1031";
-static const std::string  kAmdspvDeviceGfx1032 = "1032";
-static const std::string  kAmdspvDeviceGfx1034 = "1034";
-static const std::string  kAmdspvDeviceGfx1035 = "1035";
-static const std::string  kAmdspvDeviceGfx1100 = "1100";
-
-static bool GetAmdspvPath(std::string& amdspv_path)
+static bool GetAmdllpcPath(std::string& amdllpc_path)
 {
 #ifdef __linux
-    amdspv_path = "amdspv";
+    amdllpc_path = "amdllpc";
 #elif _WIN64
-    amdspv_path = "utils\\amdspv.exe";
+    amdllpc_path = "utils\\amdllpc.exe";
 #elif _WIN32
-    amdspv_path = "x86\\amdspv.exe";
+    amdllpc_path = "x86\\amdllpc.exe";
 #endif
     return true;
 }
 
-static bool GetGfxIpForVulkan(AMDTDeviceInfoUtils* device_info, const VkOfflineOptions& vulkan_options, std::string& gfx_ip_str)
+static bool GetAmdllpcGfxIpForVulkan(const VkOfflineOptions& vulkan_options, std::string& gfx_ip_str)
 {
     bool ret = false;
     gfx_ip_str.clear();
-
-    if (vulkan_options.target_device_name.compare(kDeviceNameGfx900) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx902) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx906) == 0)
+    auto itr = kVkAmdllpcTargetsToDeviceInfoTargets.find(vulkan_options.target_device_name);
+    if (itr != kVkAmdllpcTargetsToDeviceInfoTargets.end())
     {
-        // Special case #3: gfx9 devices.
-        gfx_ip_str =
-            vulkan_options.target_device_name == kDeviceNameGfx900 ? kAmdspvDeviceGfx900 :
-            vulkan_options.target_device_name == kDeviceNameGfx902 ? kAmdspvDeviceGfx902 :
-            vulkan_options.target_device_name == kDeviceNameGfx906 ? kAmdspvDeviceGfx906 :
-            "";
-        ret = !gfx_ip_str.empty();
-    }
-    else if (vulkan_options.target_device_name.compare(kDeviceNameGfx1010) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx1011) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx1012) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx1030) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx1031) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx1032) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx1034) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx1035) == 0 ||
-        vulkan_options.target_device_name.compare(kDeviceNameGfx1100) == 0)
-    {
-        // Special case #4: gfx10 devices.
-        gfx_ip_str =
-            vulkan_options.target_device_name == kDeviceNameGfx1010 ? kAmdspvDeviceGfx1010 :
-            vulkan_options.target_device_name == kDeviceNameGfx1011 ? kAmdspvDeviceGfx1011 :
-            vulkan_options.target_device_name == kDeviceNameGfx1012 ? kAmdspvDeviceGfx1012 :
-            vulkan_options.target_device_name == kDeviceNameGfx1030 ? kAmdspvDeviceGfx1030 :
-            vulkan_options.target_device_name == kDeviceNameGfx1031 ? kAmdspvDeviceGfx1031 :
-            vulkan_options.target_device_name == kDeviceNameGfx1032 ? kAmdspvDeviceGfx1032 :
-            vulkan_options.target_device_name == kDeviceNameGfx1034 ? kAmdspvDeviceGfx1034 :
-            vulkan_options.target_device_name == kDeviceNameGfx1035 ? kAmdspvDeviceGfx1035 :
-            vulkan_options.target_device_name == kDeviceNameGfx1100 ? kAmdspvDeviceGfx1100 :
-            "";
-        ret = !gfx_ip_str.empty();
-    }
-    else
-    {
-        // The standard case.
-        size_t device_gfx_ip = 0;
-        GDT_HW_GENERATION hw_generation;
-        bool is_device_hw_generation_extracted = device_info->GetHardwareGeneration(vulkan_options.target_device_name.c_str(), hw_generation) &&
-            BeUtils::GdtHwGenToNumericValue(hw_generation, device_gfx_ip);
-
-        if (is_device_hw_generation_extracted && device_gfx_ip > 0)
-        {
-            gfx_ip_str = std::to_string(device_gfx_ip);
-            ret = true;
-        }
-    }
-
-    return ret;
-}
-
-// An internal auxiliary function that returns the correct input prefix for the backend invocation,
-// according to the input type. If the input type is GLSL, it simply returns the given GLSL prefix.
-// Otherwise, it returns the relevant, fixed, prefix.
-static std::string GetInputPrefix(const VkOfflineOptions& vulkan_options, const std::string& glsl_prefix)
-{
-    const char* kSpirvBinaryInputPrefix = "in.spv=\"";
-    const char* kSpirvTextualInputPrefix = "in.spvText=\"";
-
-    std::string ret;
-    if (vulkan_options.mode == beKA::RgaMode::kModeVkOffline)
-    {
-        ret = glsl_prefix;
-    }
-    else if (vulkan_options.mode == beKA::RgaMode::kModeVkOfflineSpv)
-    {
-        ret = kSpirvBinaryInputPrefix;
-    }
-    else if (vulkan_options.mode == beKA::RgaMode::kModeVkOfflineSpvTxt)
-    {
-        ret = kSpirvTextualInputPrefix;
+        gfx_ip_str = itr->second;
+        ret        = true;
     }
     return ret;
 }
 
-static beKA::beStatus  AddInputFileNames(const VkOfflineOptions& options, std::stringstream& cmd)
+static beKA::beStatus AddAmdllpcInputFileNames(const VkOfflineOptions& options, std::stringstream& cmd)
 {
-    beKA::beStatus  status = beKA::kBeStatusSuccess;
+    beKA::beStatus status = beKA::kBeStatusSuccess;
 
     // If .pipe input, we don't need to add any other file.
     bool is_pipe_input = !options.pipe_file.empty();
 
     // Indicates that a stage-less input file name was provided.
-    bool  is_non_stage_input = false;
+    bool is_non_stage_input = false;
 
     // Indicates that some of stage-specific file names was provided (--frag, --vert, etc.).
     bool is_stage_input = false;
 
-    if (options.mode == beKA::kModeVkOfflineSpv ||
-        options.mode == beKA::kModeVkOfflineSpvTxt)
+    if (options.mode == beKA::kModeVkOfflineSpv || options.mode == beKA::kModeVkOfflineSpvTxt)
     {
         if (!options.stageless_input_file.empty())
         {
-            cmd << GetInputPrefix(options, "") << options.stageless_input_file << "\" ";
+            cmd << "\"" << options.stageless_input_file << "\" ";
             is_non_stage_input = true;
         }
     }
@@ -185,42 +93,42 @@ static beKA::beStatus  AddInputFileNames(const VkOfflineOptions& options, std::s
         // Vertex shader.
         if (!options.pipeline_shaders.vertex_shader.isEmpty())
         {
-            cmd << GetInputPrefix(options, "in.vert.glsl=\"") << options.pipeline_shaders.vertex_shader.asASCIICharArray() << "\" ";
+            cmd << "\"" << options.pipeline_shaders.vertex_shader.asASCIICharArray() << "\" ";
             is_stage_input = true;
         }
 
         // Tessellation control shader.
         if (!options.pipeline_shaders.tessellation_control_shader.isEmpty())
         {
-            cmd << GetInputPrefix(options, "in.tesc.glsl=\"") << options.pipeline_shaders.tessellation_control_shader.asASCIICharArray() << "\" ";
+            cmd << "\"" << options.pipeline_shaders.tessellation_control_shader.asASCIICharArray() << "\" ";
             is_stage_input = true;
         }
 
         // Tessellation evaluation shader.
         if (!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty())
         {
-            cmd << GetInputPrefix(options, "in.tese.glsl=\"") << options.pipeline_shaders.tessellation_evaluation_shader.asASCIICharArray() << "\" ";
+            cmd << "\"" << options.pipeline_shaders.tessellation_evaluation_shader.asASCIICharArray() << "\" ";
             is_stage_input = true;
         }
 
         // Geometry shader.
         if (!options.pipeline_shaders.geometry_shader.isEmpty())
         {
-            cmd << GetInputPrefix(options, "in.geom.glsl=\"") << options.pipeline_shaders.geometry_shader.asASCIICharArray() << "\" ";
+            cmd << "\"" << options.pipeline_shaders.geometry_shader.asASCIICharArray() << "\" ";
             is_stage_input = true;
         }
 
         // Fragment shader.
         if (!options.pipeline_shaders.fragment_shader.isEmpty())
         {
-            cmd << GetInputPrefix(options, "in.frag.glsl=\"") << options.pipeline_shaders.fragment_shader.asASCIICharArray() << "\" ";
+            cmd << "\"" << options.pipeline_shaders.fragment_shader.asASCIICharArray() << "\" ";
             is_stage_input = true;
         }
     }
     else
     {
         // Compute shader.
-        cmd << GetInputPrefix(options, "in.comp.glsl=\"") << options.pipeline_shaders.compute_shader.asASCIICharArray() << "\" ";
+        cmd << "\"" << options.pipeline_shaders.compute_shader.asASCIICharArray() << "\" ";
         is_stage_input = true;
     }
 
@@ -239,194 +147,24 @@ static beKA::beStatus  AddInputFileNames(const VkOfflineOptions& options, std::s
     return status;
 }
 
-static void AddOutputFileNames(const VkOfflineOptions& options, std::stringstream& cmd)
+static void AddAmdllpcOutputFileNames(const VkOfflineOptions& options, std::stringstream& cmd)
 {
-    bool is_spirv = (options.mode == beKA::kModeVkOfflineSpv ||
-        options.mode == beKA::kModeVkOfflineSpvTxt);
+    bool is_spirv = (options.mode == beKA::kModeVkOfflineSpv || options.mode == beKA::kModeVkOfflineSpvTxt);
 
     bool is_pipe_file = !is_spirv && !options.pipe_file.empty();
 
-    auto add_output_file = [&](bool flag, const std::string& option, const std::string& fileName)
-    {
+    auto add_output_file = [&](bool flag, const std::string& option, const std::string& fileName) {
         if (flag || is_spirv || is_pipe_file)
         {
-            cmd << option << "\"" << fileName << "\"" << " ";
+            cmd << option << "\"" << fileName << "\""
+                << " ";
         }
     };
-
-    // SPIR-V binaries generation.
-    if (options.is_spirv_binaries_required)
-    {
-        // Compute.
-        add_output_file(!options.pipeline_shaders.compute_shader.isEmpty(), "out.comp.spv=", kStrVkOfflineSpirvOutputFilenameCompute);
-
-        if (options.pipeline_shaders.compute_shader.isEmpty() || is_spirv || is_pipe_file)
-        {
-            // Vertex.
-            add_output_file(!options.pipeline_shaders.vertex_shader.isEmpty(), "out.vert.spv=", kStrVkOfflineSpirvOutputFilenameVertex);
-            // Tessellation control.
-            add_output_file(!options.pipeline_shaders.tessellation_control_shader.isEmpty(), "out.tesc.spv=", kStrVkOfflineSpirvOutputFilenameTessellationControl);
-            // Tessellation evaluation.
-            add_output_file(!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty(), "out.tese.spv=", kStrVkOfflineSpirvOutputFilenameTessellationEvaluation);
-            // Geometry.
-            add_output_file(!options.pipeline_shaders.geometry_shader.isEmpty(), "out.geom.spv=", kStrVkOfflineSpirvOutputFilenameGeometry);
-            // Fragment.
-            add_output_file(!options.pipeline_shaders.fragment_shader.isEmpty(), "out.frag.spv=", kStrVkOfflineSpirvOutputFilenameFragment);
-        }
-    }
-
-    // AMD IL Binaries generation (for now we only support PAL IL).
-    if (options.is_amd_pal_il_binaries_required)
-    {
-        // Compute.
-        add_output_file(!options.pipeline_shaders.compute_shader.isEmpty(), "out.comp.palIl=", kStrPalIlOutputFilenameCompute);
-
-        if (options.pipeline_shaders.compute_shader.isEmpty() || is_spirv)
-        {
-            // Vertex.
-            add_output_file(!options.pipeline_shaders.vertex_shader.isEmpty(), "out.vert.palIl=", kStrPalIlOutputFilenameVert);
-            // Tessellation control.
-            add_output_file(!options.pipeline_shaders.tessellation_control_shader.isEmpty(), "out.tesc.palIl=", kStrPalIlOutputFilenameTessellationControl);
-            // Tessellation evaluation.
-            add_output_file(!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty(), "out.tese.palIl=", kStrPalIlOutputFilenameTessellationEvaluation);
-            // Geometry.
-            add_output_file(!options.pipeline_shaders.geometry_shader.isEmpty(), "out.geom.palIl=", kStrPalIlOutputFilenameGeometry);
-            // Fragment.
-            add_output_file(!options.pipeline_shaders.fragment_shader.isEmpty(), "out.frag.palIl=", kStrPalIlOutputFilenameFragment);
-        }
-    }
-
-    // AMD IL disassembly generation (for now we only support PAL IL).
-    if (options.is_amd_pal_disassembly_required)
-    {
-        // Compute.
-        add_output_file(!options.pipeline_shaders.compute_shader.isEmpty(), "out.comp.palIlText=", options.pal_il_disassembly_output_files.compute_shader.asASCIICharArray());
-
-        if (options.pipeline_shaders.compute_shader.isEmpty() || is_spirv || is_pipe_file)
-        {
-            // Vertex.
-            add_output_file(!options.pipeline_shaders.vertex_shader.isEmpty(), "out.vert.palIlText=", options.pal_il_disassembly_output_files.vertex_shader.asASCIICharArray());
-            // Tessellation control.
-            add_output_file(!options.pipeline_shaders.tessellation_control_shader.isEmpty(), "out.tesc.palIlText=", options.pal_il_disassembly_output_files.tessellation_control_shader.asASCIICharArray());
-            // Tessellation evaluation.
-            add_output_file(!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty(), "out.tese.palIlText=", options.pal_il_disassembly_output_files.tessellation_evaluation_shader.asASCIICharArray());
-            // Geometry.
-            add_output_file(!options.pipeline_shaders.geometry_shader.isEmpty(), "out.geom.palIlText=", options.pal_il_disassembly_output_files.geometry_shader.asASCIICharArray());
-            // Fragment.
-            add_output_file(!options.pipeline_shaders.fragment_shader.isEmpty(), "out.frag.palIlText=", options.pal_il_disassembly_output_files.fragment_shader.asASCIICharArray());
-        }
-    }
-
-    // AMD ISA binary generation.
-    if (options.is_amd_isa_binaries_required)
-    {
-        // Compute.
-        add_output_file(!options.pipeline_shaders.compute_shader.isEmpty(), "out.comp.isa=", options.isa_binary_output_files.compute_shader.asASCIICharArray());
-
-        if (options.pipeline_shaders.compute_shader.isEmpty() || is_spirv || is_pipe_file)
-        {
-            // Vertex.
-            add_output_file(!options.pipeline_shaders.vertex_shader.isEmpty(), "out.vert.isa=", options.isa_binary_output_files.vertex_shader.asASCIICharArray());
-            // Tessellation control.
-            add_output_file(!options.pipeline_shaders.tessellation_control_shader.isEmpty(), "out.tesc.isa=", options.isa_binary_output_files.tessellation_control_shader.asASCIICharArray());
-            // Tessellation evaluation.
-            add_output_file(!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty(), "out.tese.isa=", options.isa_binary_output_files.tessellation_evaluation_shader.asASCIICharArray());
-            // Geometry.
-            add_output_file(!options.pipeline_shaders.geometry_shader.isEmpty(), "out.geom.isa=", options.isa_binary_output_files.geometry_shader.asASCIICharArray());
-            // Fragment.
-            add_output_file(!options.pipeline_shaders.fragment_shader.isEmpty(), "out.frag.isa=", options.isa_binary_output_files.fragment_shader.asASCIICharArray());
-        }
-    }
 
     // Pipeline ELF binary generation.
     if (options.is_pipeline_binary_required)
     {
-        add_output_file(!options.pipeline_binary.empty(), "out.pipeBin=", options.pipeline_binary);
-    }
-
-    // AMD ISA disassembly generation.
-    if (options.is_amd_isa_disassembly_required)
-    {
-        // Compute.
-        add_output_file(!options.pipeline_shaders.compute_shader.isEmpty(), "out.comp.isaText=", options.isa_disassembly_output_files.compute_shader.asASCIICharArray());
-
-        if (options.pipeline_shaders.compute_shader.isEmpty() || is_spirv || is_pipe_file)
-        {
-            // Vertex.
-            add_output_file(!options.pipeline_shaders.vertex_shader.isEmpty(), "out.vert.isaText=", options.isa_disassembly_output_files.vertex_shader.asASCIICharArray());
-            // Tessellation control.
-            add_output_file(!options.pipeline_shaders.tessellation_control_shader.isEmpty(), "out.tesc.isaText=", options.isa_disassembly_output_files.tessellation_control_shader.asASCIICharArray());
-            // Tessellation evaluation.
-            add_output_file(!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty(), "out.tese.isaText=", options.isa_disassembly_output_files.tessellation_evaluation_shader.asASCIICharArray());
-            // Geometry.
-            add_output_file(!options.pipeline_shaders.geometry_shader.isEmpty(), "out.geom.isaText=", options.isa_disassembly_output_files.geometry_shader.asASCIICharArray());
-            // Fragment.
-            add_output_file(!options.pipeline_shaders.fragment_shader.isEmpty(), "out.frag.isaText=", options.isa_disassembly_output_files.fragment_shader.asASCIICharArray());
-        }
-    }
-
-    // Shader compiler statistics disassembly generation.
-    if (options.is_stats_required)
-    {
-        // Compute.
-        add_output_file(!options.pipeline_shaders.compute_shader.isEmpty(), "out.comp.isaInfo=", options.stats_output_files.compute_shader.asASCIICharArray());
-
-        if (options.pipeline_shaders.compute_shader.isEmpty() || is_spirv || is_pipe_file)
-        {
-            // Vertex.
-            add_output_file(!options.pipeline_shaders.vertex_shader.isEmpty(), "out.vert.isaInfo=", options.stats_output_files.vertex_shader.asASCIICharArray());
-            // Tessellation control.
-            add_output_file(!options.pipeline_shaders.tessellation_control_shader.isEmpty(), "out.tesc.isaInfo=", options.stats_output_files.tessellation_control_shader.asASCIICharArray());
-            // Tessellation evaluation.
-            add_output_file(!options.pipeline_shaders.tessellation_evaluation_shader.isEmpty(), "out.tese.isaInfo=", options.stats_output_files.tessellation_evaluation_shader.asASCIICharArray());
-            // Geometry.
-            add_output_file(!options.pipeline_shaders.geometry_shader.isEmpty(), "out.geom.isaInfo=", options.stats_output_files.geometry_shader.asASCIICharArray());
-            // Fragment.
-            add_output_file(!options.pipeline_shaders.fragment_shader.isEmpty(), "out.frag.isaInfo=", options.stats_output_files.fragment_shader.asASCIICharArray());
-        }
-    }
-}
-
-static void MergeShaderOutput(const VkOfflineOptions& options, const gtString& disassembly_file_from, const gtString& disassembly_file_to,
-    const gtString& stats_file_from, const gtString& stats_file_to, const gtString& binary_file_from, const gtString& binary_file_to)
-{
-    // Disassembly.
-    if (options.is_amd_isa_disassembly_required)
-    {
-        std::string txt;
-        bool is_disassembly_file_read = KcUtils::ReadTextFile(disassembly_file_from.asASCIICharArray(), txt, nullptr);
-        assert(is_disassembly_file_read);
-        assert(!disassembly_file_to.isEmpty());
-        if (is_disassembly_file_read && !disassembly_file_to.isEmpty())
-        {
-            KcUtils::WriteTextFile(disassembly_file_to.asASCIICharArray(), txt, nullptr);
-        }
-    }
-
-    // Statistics.
-    if (options.is_stats_required)
-    {
-        std::string txt_stats;
-        bool is_stats_file_read = KcUtils::ReadTextFile(stats_file_from.asASCIICharArray(), txt_stats, nullptr);
-        assert(is_stats_file_read);
-        assert(!stats_file_to.isEmpty());
-        if (is_stats_file_read && !stats_file_to.isEmpty())
-        {
-            KcUtils::WriteTextFile(stats_file_to.asASCIICharArray(), txt_stats, nullptr);
-        }
-    }
-
-    // Binaries.
-    if (options.is_amd_isa_binaries_required)
-    {
-        std::vector<char> binary_content;
-        bool is_bin_file_read = BeUtils::ReadBinaryFile(binary_file_from.asASCIICharArray(), binary_content);
-        assert(is_bin_file_read);
-        assert(!binary_file_to.isEmpty());
-        if (is_bin_file_read && !binary_file_to.isEmpty())
-        {
-            KcUtils::WriteBinaryFile(binary_file_to.asASCIICharArray(), binary_content, nullptr);
-        }
+        add_output_file(!options.pipeline_binary.empty(), " -o=", options.pipeline_binary);
     }
 }
 
@@ -473,237 +211,110 @@ beKA::beStatus BeProgramBuilderVkOffline::GetDeviceTable(std::vector<GDT_GfxCard
     return beKA::kBeStatusInvalid;
 }
 
-// Checks if the required output files are generated by the amdspv.
-// Only verifies the files requested in the "options.m_pipelineShaders" name list.
-static bool VerifyAmdspvOutput(const VkOfflineOptions& options, const std::string& amdspv_gfx_ip)
-{
-    bool  ret = true;
-
-    // For now, only perform input validation for pre Vega targets.
-    // This should be updated to take into consideration shader merging
-    // which may happen in Vega subsequent generations.
-    if (!amdspv_gfx_ip.empty() && amdspv_gfx_ip[0] != '1' && amdspv_gfx_ip[0] != '9')
-    {
-        if (options.is_amd_isa_disassembly_required)
-        {
-            ret &= (options.pipeline_shaders.compute_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_disassembly_output_files.compute_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.fragment_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_disassembly_output_files.fragment_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.geometry_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_disassembly_output_files.geometry_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.tessellation_control_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_disassembly_output_files.tessellation_control_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.tessellation_evaluation_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_disassembly_output_files.tessellation_evaluation_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.vertex_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_disassembly_output_files.vertex_shader.asASCIICharArray()));
-        }
-        if (ret && options.is_amd_isa_binaries_required)
-        {
-            ret &= (options.pipeline_shaders.compute_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_binary_output_files.compute_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.fragment_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_binary_output_files.fragment_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.geometry_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_binary_output_files.geometry_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.tessellation_control_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_binary_output_files.tessellation_control_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.tessellation_evaluation_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_binary_output_files.tessellation_evaluation_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.vertex_shader.isEmpty() || BeUtils::IsFilePresent(options.isa_binary_output_files.vertex_shader.asASCIICharArray()));
-        }
-        if (ret && options.is_spirv_binaries_required)
-        {
-            ret &= (options.pipeline_shaders.compute_shader.isEmpty() || BeUtils::IsFilePresent(kStrVkOfflineSpirvOutputFilenameCompute));
-            ret &= (options.pipeline_shaders.fragment_shader.isEmpty() || BeUtils::IsFilePresent(kStrVkOfflineSpirvOutputFilenameFragment));
-            ret &= (options.pipeline_shaders.geometry_shader.isEmpty() || BeUtils::IsFilePresent(kStrVkOfflineSpirvOutputFilenameGeometry));
-            ret &= (options.pipeline_shaders.tessellation_control_shader.isEmpty() || BeUtils::IsFilePresent(kStrVkOfflineSpirvOutputFilenameTessellationControl));
-            ret &= (options.pipeline_shaders.tessellation_evaluation_shader.isEmpty() || BeUtils::IsFilePresent(kStrVkOfflineSpirvOutputFilenameTessellationEvaluation));
-            ret &= (options.pipeline_shaders.vertex_shader.isEmpty() || BeUtils::IsFilePresent(kStrVkOfflineSpirvOutputFilenameVertex));
-        }
-        if (ret && options.is_amd_pal_il_binaries_required)
-        {
-            ret &= (options.pipeline_shaders.compute_shader.isEmpty() || BeUtils::IsFilePresent(kStrPalIlOutputFilenameCompute));
-            ret &= (options.pipeline_shaders.fragment_shader.isEmpty() || BeUtils::IsFilePresent(kStrPalIlOutputFilenameFragment));
-            ret &= (options.pipeline_shaders.geometry_shader.isEmpty() || BeUtils::IsFilePresent(kStrPalIlOutputFilenameGeometry));
-            ret &= (options.pipeline_shaders.tessellation_control_shader.isEmpty() || BeUtils::IsFilePresent(kStrPalIlOutputFilenameTessellationControl));
-            ret &= (options.pipeline_shaders.tessellation_evaluation_shader.isEmpty() || BeUtils::IsFilePresent(kStrPalIlOutputFilenameTessellationEvaluation));
-            ret &= (options.pipeline_shaders.vertex_shader.isEmpty() || BeUtils::IsFilePresent(kStrPalIlOutputFilenameVert));
-        }
-        if (ret && options.is_amd_pal_disassembly_required)
-        {
-            ret &= (options.pipeline_shaders.compute_shader.isEmpty() || BeUtils::IsFilePresent(options.pal_il_disassembly_output_files.compute_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.fragment_shader.isEmpty() || BeUtils::IsFilePresent(options.pal_il_disassembly_output_files.fragment_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.geometry_shader.isEmpty() || BeUtils::IsFilePresent(options.pal_il_disassembly_output_files.geometry_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.tessellation_control_shader.isEmpty() || BeUtils::IsFilePresent(options.pal_il_disassembly_output_files.tessellation_control_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.tessellation_evaluation_shader.isEmpty() || BeUtils::IsFilePresent(options.pal_il_disassembly_output_files.tessellation_evaluation_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.vertex_shader.isEmpty() || BeUtils::IsFilePresent(options.pal_il_disassembly_output_files.vertex_shader.asASCIICharArray()));
-        }
-        if (ret && options.is_stats_required)
-        {
-            ret &= (options.pipeline_shaders.compute_shader.isEmpty() || BeUtils::IsFilePresent(options.stats_output_files.compute_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.fragment_shader.isEmpty() || BeUtils::IsFilePresent(options.stats_output_files.fragment_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.geometry_shader.isEmpty() || BeUtils::IsFilePresent(options.stats_output_files.geometry_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.tessellation_control_shader.isEmpty() || BeUtils::IsFilePresent(options.stats_output_files.tessellation_control_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.tessellation_evaluation_shader.isEmpty() || BeUtils::IsFilePresent(options.stats_output_files.tessellation_evaluation_shader.asASCIICharArray()));
-            ret &= (options.pipeline_shaders.vertex_shader.isEmpty() || BeUtils::IsFilePresent(options.stats_output_files.vertex_shader.asASCIICharArray()));
-        }
-    }
-    else
-    {
-        if (!options.pipeline_shaders.geometry_shader.isEmpty() && options.pipeline_shaders.tessellation_evaluation_shader.isEmpty() &&
-            !BeUtils::IsFilePresent(options.isa_disassembly_output_files.geometry_shader.asASCIICharArray()))
-        {
-            // Geometry is present, but tessellation control is not present - geometry merged with vertex.
-            MergeShaderOutput(options,
-                options.isa_disassembly_output_files.vertex_shader,
-                options.isa_disassembly_output_files.geometry_shader,
-                options.stats_output_files.vertex_shader,
-                options.stats_output_files.geometry_shader,
-                options.isa_binary_output_files.vertex_shader,
-                options.isa_binary_output_files.geometry_shader);
-            std::cout << kStrInfoVulkanMergedShadersGeometryVertex << std::endl;
-        }
-        else if (!options.pipeline_shaders.geometry_shader.isEmpty() && !options.pipeline_shaders.tessellation_evaluation_shader.isEmpty())
-        {
-            // Geometry and tessellation evaluation both present - geometry merged with tessellation evaluation.
-            MergeShaderOutput(options,
-                options.isa_disassembly_output_files.tessellation_evaluation_shader,
-                options.isa_disassembly_output_files.geometry_shader,
-                options.stats_output_files.tessellation_evaluation_shader,
-                options.stats_output_files.geometry_shader,
-                options.isa_binary_output_files.tessellation_evaluation_shader,
-                options.isa_binary_output_files.geometry_shader);
-            std::cout << kStrInfoVulkanMergedShadersGeometryTessellationEvaluation << std::endl;
-        }
-
-        if (!options.pipeline_shaders.tessellation_control_shader.isEmpty() && !options.pipeline_shaders.vertex_shader.isEmpty())
-        {
-            // Tessellation control is present - tessellation control merged with vertex.
-            MergeShaderOutput(options,
-                options.isa_disassembly_output_files.vertex_shader,
-                options.isa_disassembly_output_files.tessellation_control_shader,
-                options.stats_output_files.vertex_shader,
-                options.stats_output_files.tessellation_control_shader,
-                options.isa_binary_output_files.vertex_shader,
-                options.isa_binary_output_files.tessellation_control_shader);
-            std::cout << kStrInfoVulkanMergedShadersTessellationControlVertex << std::endl;
-        }
-    }
-
-    return ret;
-}
-
-beKA::beStatus BeProgramBuilderVkOffline::Compile(const VkOfflineOptions& vulkan_options, bool& cancel_signal, bool sshould_print_cmd, gtString& build_log)
+beKA::beStatus BeProgramBuilderVkOffline::CompileWithAmdllpc(const VkOfflineOptions& vulkan_options,
+                                                             bool&                   cancel_signal,
+                                                             bool                    should_print_cmd,
+                                                             gtString&               build_log)
 {
     GT_UNREFERENCED_PARAMETER(cancel_signal);
     beKA::beStatus ret = beKA::kBeStatusGeneralFailed;
     build_log.makeEmpty();
 
-    // Get amdspv's path.
-    std::string amdspv_path;
-    GetAmdspvPath(amdspv_path);
+    // Get amdllpc's path.
+    std::string amdllpc_path;
+    GetAmdllpcPath(amdllpc_path);
 
-    AMDTDeviceInfoUtils* device_info = AMDTDeviceInfoUtils::Instance();
-    if (device_info != nullptr)
+    std::string device_gfx_ip;
+    bool is_device_valid = GetAmdllpcGfxIpForVulkan(vulkan_options, device_gfx_ip);
+    if (is_device_valid && !device_gfx_ip.empty())
     {
-        // Numerical representation of the HW generation.
-        std::string device_gfx_ip;
+        // Build the command for invoking amdspv.
+        std::stringstream cmd;
+        cmd << amdllpc_path;
 
-        // Convert the HW generation to the amdspv string.
-        bool is_device_hw_gen_extracted = GetGfxIpForVulkan(device_info, vulkan_options, device_gfx_ip);
-        if (is_device_hw_gen_extracted && !device_gfx_ip.empty())
+        // amdllpc.exe -v --gfxip=11 C:\vkoffline\bloom\bloom1_vert.spv --log-file-outs=log.txt -o out.bin 
+        cmd << " -v";
+        
+        cmd << " --include-llvm-ir";
+
+        cmd << " --auto-layout-desc";
+
+        // Redirect build log to a temporary file.
+        const gtString kAmdllpcTmpOutputFile = L"amdllpcTempFile.txt";
+        osFilePath     tmp_file_path(osFilePath::OS_TEMP_DIRECTORY);
+        tmp_file_path.setFileName(kAmdllpcTmpOutputFile);
+
+        // Delete the log file if it already exists.
+        if (tmp_file_path.exists())
         {
-            // Build the command for invoking amdspv.
-            std::stringstream cmd;
-            cmd << amdspv_path;
+            osFile tmp_log_file(tmp_file_path);
+            tmp_log_file.deleteFile();
+        }
 
-            if (vulkan_options.optimization_level != -1)
+        cmd << " --log-file-outs=\"" << tmp_file_path.asString().asASCIICharArray() << "\" ";
+
+        AddAmdllpcOutputFileNames(vulkan_options, cmd);
+
+        cmd << "--gfxip=" << device_gfx_ip << " ";
+
+        if ((ret = AddAmdllpcInputFileNames(vulkan_options, cmd)) == beKA::kBeStatusSuccess)
+        {        
+
+            if (!vulkan_options.pipe_file.empty())
             {
-                cmd << " -O" << std::to_string(vulkan_options.optimization_level) << " ";
+                // Append the .pipe file name (no command line option is needed since the extension is .pipe).
+                cmd << "\"" << vulkan_options.pipe_file << "\" ";
             }
 
-            cmd << " -Dall -l -gfxip " << device_gfx_ip << " -set ";
-
-            if ((ret = AddInputFileNames(vulkan_options, cmd)) == beKA::kBeStatusSuccess)
+            // Launch amdllpc.
+            gtString amdllpc_output;
+            std::string cmdStr = cmd.str();
+            BeUtils::PrintCmdLine(cmdStr, should_print_cmd);
+            bool is_launch_success = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, amdllpc_output);
+            if (is_launch_success)
             {
-                AddOutputFileNames(vulkan_options, cmd);
+                // This is how amdspv signals success.
+                const gtString kAmdllpcTokenSuccess = L"AMDLLPC SUCCESS";
 
-                // Redirect build log to a temporary file.
-                const gtString kAmdspvTmpOutputFile = L"amdspvTempFile.txt";
-                osFilePath tmp_file_path(osFilePath::OS_TEMP_DIRECTORY);
-                tmp_file_path.setFileName(kAmdspvTmpOutputFile);
-
-                // Delete the log file if it already exists.
-                if (tmp_file_path.exists())
+                // Check if the output files were generated and amdllpc returned "success".
+                if (amdllpc_output.find(kAmdllpcTokenSuccess) == std::string::npos)
                 {
-                    osFile tmp_log_file(tmp_file_path);
-                    tmp_log_file.deleteFile();
-                }
+                    ret = beKA::kBeStatusVulkanAmdllpcCompilationFailure;
 
-                cmd << "out.glslLog=\"" << tmp_file_path.asString().asASCIICharArray() << "\" ";
-
-                // No default output (only generate the output files that we explicitly specified).
-                cmd << "defaultOutput=0";
-
-                // Disable validate.
-                cmd << " -set val=0 ";
-
-                if (!vulkan_options.pipe_file.empty())
-                {
-                    // Append the .pipe file name (no command line option is needed since the extension is .pipe).
-                    cmd << "\"" << vulkan_options.pipe_file << "\" ";
-                }
-
-                // Launch amdspv.
-                gtString amdspv_output;
-                BeUtils::PrintCmdLine(cmd.str(), sshould_print_cmd);
-                bool is_launch_success = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, amdspv_output);
-                if (is_launch_success)
-                {
-                    // This is how amdspv signals success.
-                    const gtString kAmdspvTokenSuccess = L"SUCCESS!";
-
-                    // Check if the output files were generated and amdspv returned "success".
-                    if (amdspv_output.find(kAmdspvTokenSuccess) == std::string::npos)
+                    // Read the build log.
+                    if (tmp_file_path.exists())
                     {
-                        ret = beKA::kBeStatusVulkanAmdspvCompilationFailure;
-
                         // Read the build log.
-                        if (tmp_file_path.exists())
-                        {
-                            // Read the build log.
-                            gtString compiler_output;
-                            std::ifstream file(tmp_file_path.asString().asASCIICharArray());
-                            std::string tmp_cmd_output((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-                            build_log << tmp_cmd_output.c_str();
+                        gtString      compiler_output;
+                        std::ifstream file(tmp_file_path.asString().asASCIICharArray());
+                        std::string   tmp_cmd_output((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+                        build_log << tmp_cmd_output.c_str();
 
-                            // Delete the temporary file.
-                            osFile file_to_delete(tmp_file_path);
-                            file_to_delete.deleteFile();
-                        }
-
-                        // Let's end the build log with the error that was provided by the backend.
-                        if (!amdspv_output.isEmpty())
-                        {
-                            build_log << "Error: " << amdspv_output << L"\n";
-                        }
+                        // Delete the temporary file.
+                        osFile file_to_delete(tmp_file_path);
+                        file_to_delete.deleteFile();
                     }
-                    else if (!VerifyAmdspvOutput(vulkan_options, device_gfx_ip))
-                    {
-                        ret = beKA::kBeStatusFailedOutputVerification;
-                    }
-                    else
-                    {
-                        ret = beKA::kBeStatusSuccess;
 
-                        // Delete the ISA binaries if they are not required.
-                        if (!vulkan_options.is_amd_isa_binaries_required)
-                        {
-                            BeUtils::DeleteOutputFiles(vulkan_options.isa_binary_output_files);
-                        }
+                    // Let's end the build log with the error that was provided by the backend.
+                    if (!amdllpc_output.isEmpty())
+                    {
+                        build_log << "Error: " << amdllpc_output << L"\n";
                     }
                 }
                 else
                 {
-                    ret = beKA::kBeStatusVulkanAmdspvLaunchFailure;
+                    ret = beKA::kBeStatusSuccess;
                 }
             }
+            else
+            {
+                ret = beKA::kBeStatusVulkanAmdllpcLaunchFailure;
+            }
         }
-        else
-        {
-            ret = beKA::kBeStatusOpenglUnknownHwFamily;
-        }
+    }
+    else
+    {
+        ret = beKA::kBeStatusOpenglUnknownHwFamily;
     }
 
     return ret;

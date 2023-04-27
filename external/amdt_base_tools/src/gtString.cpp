@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <cwctype>
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>

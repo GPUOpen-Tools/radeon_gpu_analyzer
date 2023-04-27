@@ -118,7 +118,7 @@ bool KcVulkanStatisticsParser::ParseStatistics(const std::string& device, const 
     statistics.num_sgprs_used = 0;
     statistics.num_vgprs_used = 0;
     statistics.num_vgprs_available = 256;
-    statistics.num_sgprs_available = 104;
+    statistics.num_sgprs_available = 106;
     statistics.lds_size_available = 65536;
 
     // Special cases.

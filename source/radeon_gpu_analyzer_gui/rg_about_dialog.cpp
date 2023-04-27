@@ -90,9 +90,19 @@ void RgAboutDialog::HandleCheckForUpdatesClicked()
     // Don't allow checking for updates if there is already one in progress.
     if (check_for_updates_thread_ == nullptr)
     {
-        // Create the check for updates thread
-        check_for_updates_thread_ = new UpdateCheck::ThreadController(this, RGA_VERSION_MAJOR, RGA_VERSION_MINOR, RGA_BUILD_NUMBER, RGA_VERSION_UPDATE);
-
+        std::string build_date_string(kStrRgaBuildDate);
+        if (build_date_string == kStrRgaBuildDateDev)
+        {
+            // Pretend a dev build has no version so that
+            // all public versions are reported as being newer.
+            check_for_updates_thread_ = new UpdateCheck::ThreadController(this, 0, 0, 0, 0);
+        }
+        else
+        {
+            // Create the check for updates thread
+            check_for_updates_thread_ = new UpdateCheck::ThreadController(this, RGA_VERSION_MAJOR, RGA_VERSION_MINOR, RGA_BUILD_NUMBER, RGA_VERSION_UPDATE);
+        }
+        
         // Build dialog to display and allow user to cancel the check if desired.
         if (check_for_updates_dialog_ == nullptr)
         {

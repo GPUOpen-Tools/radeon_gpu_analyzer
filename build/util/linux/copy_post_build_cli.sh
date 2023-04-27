@@ -18,7 +18,7 @@ if [ ! -d "$X64_DIR" ]; then
   mkdir -p $X64_DIR
 fi
 cp ../../../external/vulkan_offline/linux/* $X64_DIR/
-chmod +x $X64_DIR/amdspv
+chmod +x $X64_DIR/amdllpc
 
 # Copy the OpenGL backend.
 cp ../../../external/opengl/glc/linux/glc $X64_DIR/

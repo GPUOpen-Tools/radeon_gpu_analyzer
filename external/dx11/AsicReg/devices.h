@@ -132,7 +132,8 @@ enum
 
 enum
 {
-    PRID_NV3_NAVI31_00 = 0x00
+    PRID_NV3_NAVI31_00 = 0x00,
+    PRID_NV3_NAVI33_00 = 0x00
 };
 
 #ifndef _ATIID_H

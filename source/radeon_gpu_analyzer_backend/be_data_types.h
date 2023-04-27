@@ -67,6 +67,17 @@ enum BePipelineStage : char
 // An array containing per-stage file names.
 typedef std::array<std::string, BePipelineStage::kCount>  BeVkPipelineFiles;
 
+// Dx12 Stage Name strings.
+static const std::array<std::string, BePipelineStage::kCount> kStrDx12StageNames =
+{
+    "vertex",
+    "hull",
+    "domain",
+    "geometry",
+    "pixel",
+    "compute"
+};
+
 // Physical adapter data.
 struct BeVkPhysAdapterInfo
 {

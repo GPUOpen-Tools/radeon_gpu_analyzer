@@ -63,7 +63,7 @@ static const char* kStrTruncatedStringDelimeter = "...";
 
 // Default extensions for different Vulkan input files.
 static const char  kStrVkFileExtDelimiter = ';';
-static const char* kStrVkFileExtSpirvTxt  = "spvas";
+static const char* kStrVkFileExtSpirvTxt  = "spvasm";
 static const char* kStrVkFileExtSpirvBin  = "spv";
 static const char* kStrVkFileExtGlsl      = "vert;frag;tesc;tese;geom;comp";
 static const char* kStrVkFileExtHlsl      = "hlsl";
@@ -415,10 +415,10 @@ static const char* kStrGlobalSettingsSpvExtensionsTooltip =
     "File dialog, RGA would dynamically use these file filters.";
 
 // Default input file extensions.
-static const char* kStrGlobalSettingsFileExtGlsl  = "vert;tesc;tese;frag;geom;comp;glsl";
-static const char* kStrGlobalSettingsFileExtHlsl  = "hlsl;fx;hs;ds;ps";
-static const char* kStrGlobalSettingsFileExtSpvas = "spvas";
-static const char* kStrGlobalSettingsFileExtSpv   = "spv";
+static const char* kStrGlobalSettingsFileExtGlsl   = "vert;tesc;tese;frag;geom;comp;glsl";
+static const char* kStrGlobalSettingsFileExtHlsl   = "hlsl;fx;hs;ds;ps";
+static const char* kStrGlobalSettingsFileExtSpvasm = "spvasm";
+static const char* kStrGlobalSettingsFileExtSpv    = "spv";
 
 // Default binary output file name.
 static const char* kStrGlobalSettingsOutputBinaryFileName = "codeobj.bin";

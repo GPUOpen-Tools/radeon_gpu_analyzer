@@ -46,7 +46,7 @@ void KcCliCommanderOpenGL::GlcStatsToString(const beKA::AnalysisData& stats, std
     serialized_stats << "    - LDS_USED                                = " << stats.lds_size_used << std::endl;
     serialized_stats << "    - SCRATCH_SIZE                            = " << stats.scratch_memory_used << std::endl;
     serialized_stats << "    - AVAILABLE_VGPRs                         = 256" << std::endl;
-    serialized_stats << "    - AVAILABLE_SGPRs                         = 104" << std::endl;
+    serialized_stats << "    - AVAILABLE_SGPRs                         = 106" << std::endl;
     serialized_stats << "    - ISA_SIZE                                = " << stats.isa_size << std::endl;
 }
 

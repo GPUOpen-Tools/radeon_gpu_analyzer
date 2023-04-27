@@ -1131,16 +1131,6 @@ bool RgUtils::IsValidProjectName(const std::string& file_full_path, std::string&
     QFileInfo file_info             = QFileInfo(QString::fromStdString(file_full_path));
     QString   file_name             = file_info.fileName();
 
-    // If the file name does not end with the project file extension, add it.
-    // When creating a new project, no project file extension is present at this point,
-    // but when opening an existing project, there is a project file extension present.
-    // Adding the missing project file extension here makes the code below work for both
-    // scenarios.
-    if (!file_name.endsWith(kStrProjectFileExtension))
-    {
-        file_name = file_name + kStrProjectFileExtension;
-    }
-
     // Check for valid file name.
     bool is_valid = IsValidFileName(file_name.toStdString()) && !file_name.isEmpty() && file_name.size() <= kMaxProjectNameLength;
 
@@ -1148,16 +1138,28 @@ bool RgUtils::IsValidProjectName(const std::string& file_full_path, std::string&
     {
         error_message = kStrErrIllegalProjectName;
     }
-
-    // Check for two or more dots in the name.
-    // If found, return a failure.
-    const QRegularExpression reg("(\\.{2,})");
-    QRegularExpressionMatch match = reg.match(file_name);
-
-    if (match.hasMatch())
+    else
     {
-        is_valid = false;
-        error_message = kStrErrIllegalStringProjectName + std::string("\"") + match.captured(0).toStdString() + std::string("\":");
+        // If the file name does not end with the project file extension, add it.
+        // When creating a new project, no project file extension is present at this point,
+        // but when opening an existing project, there is a project file extension present.
+        // Adding the missing project file extension here makes the code below work for both
+        // scenarios.
+        if (!file_name.endsWith(kStrProjectFileExtension))
+        {
+            file_name = file_name + kStrProjectFileExtension;
+        }
+
+        // Check for two or more dots in the name.
+        // If found, return a failure.
+        const QRegularExpression reg("(\\.{2,})");
+        QRegularExpressionMatch  match = reg.match(file_name);
+
+        if (match.hasMatch())
+        {
+            is_valid      = false;
+            error_message = kStrErrIllegalStringProjectName + std::string("\"") + match.captured(0).toStdString() + std::string("\":");
+        }
     }
 
     return is_valid;

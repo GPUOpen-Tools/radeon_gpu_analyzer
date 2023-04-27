@@ -45,7 +45,7 @@ set CURRENT_DIR=%CD%
 
 rem Default values
 set CMAKE_PATH=cmake
-set VS_VER=2017
+set VS_VER=2022
 set QT_ROOT=
 set VK_INCLUDE=
 set VK_LIB=

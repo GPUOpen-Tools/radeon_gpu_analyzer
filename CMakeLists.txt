@@ -1,6 +1,9 @@
 cmake_minimum_required (VERSION 3.10)
 project (RGA)
 
+# Define C++ standard for RGA
+set(CMAKE_CXX_STANDARD 17)
+
 # Boolean option for enabling AMD Internal build mode
 option(AMD_INTERNAL "Add -DAMD_INTERNAL=ON for AMD Internal build mode." OFF)
 
@@ -54,7 +57,7 @@ endif()
 # Linux specific configurations
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     # Compiler & linker configuration
-    add_definitions(-std=c++11 -fmessage-length=0 -Wno-unknown-pragmas -pthread)
+    add_definitions(-fmessage-length=0 -Wno-unknown-pragmas -pthread)
     set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc ${CMAKE_EXE_LINKER_FLAGS}")
 
     # Disable PIE (position-independent executable) to avoid link errors (gcc 6+ generates PIE by default).

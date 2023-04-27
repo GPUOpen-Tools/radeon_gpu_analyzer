@@ -45,6 +45,7 @@ kLcLlvmTargetsToDeviceInfoTargets = { {"gfx801", "carrizo"},
                                        {"gfx803", "gfx804"},
                                        {"gfx900", "gfx900"},
                                        {"gfx902", "gfx902"},
+                                       {"gfx904", "gfx904"},
                                        {"gfx906", "gfx906"},
                                        {"gfx908", "gfx908"},
                                        {"gfx90c", "gfx90c"},
@@ -56,7 +57,8 @@ kLcLlvmTargetsToDeviceInfoTargets = { {"gfx801", "carrizo"},
                                        {"gfx1032", "gfx1032"},
                                        {"gfx1034", "gfx1034"},
                                        {"gfx1035", "gfx1035"},
-                                       {"gfx1100", "gfx1100"}};
+                                       {"gfx1100", "gfx1100"},
+                                       {"gfx1102", "gfx1102"}};
 
 // For some devices, clang does not accept device names that RGA gets from DeviceInfo.
 // This table maps the DeviceInfo names to names accepted by clang for such devices.
@@ -144,18 +146,20 @@ static const std::map<std::string, DeviceProps> kRgaDeviceProps =
       {"gfx804",    {102, 256, 65536, 16,  4}},
       {"gfx900",    {102, 256, 65536, 16,  4}},
       {"gfx902",    {102, 256, 65536, 16,  4}},
+      {"gfx904",    {102, 256, 65536, 16,  4}},
       {"gfx906",    {102, 256, 65536, 16,  4}},
       {"gfx908",    {102, 256, 65536, 16,  4}},
       {"gfx90c",    {102, 256, 65536, 16,  4}},
-      {"gfx1010",   {104, 256, 65536, 16,  4}},
-      {"gfx1011",   {104, 256, 65536, 16,  4}},
-      {"gfx1012",   {104, 256, 65536, 16,  4}},
-      {"gfx1030",   {104, 256, 65536, 16,  4}},
-      {"gfx1031",   {104, 256, 65536, 16,  4}},
-      {"gfx1032",   {104, 256, 65536, 16,  4}},   
-      {"gfx1034",   {104, 256, 65536, 16,  4}},
-      {"gfx1035",   {104, 256, 65536, 16,  4}},
-      {"gfx1100",   {104, 256, 65536, 16,  4}} };
+      {"gfx1010",   {106, 256, 65536, 16,  4}},
+      {"gfx1011",   {106, 256, 65536, 16,  4}},
+      {"gfx1012",   {106, 256, 65536, 16,  4}},
+      {"gfx1030",   {106, 256, 65536, 16,  4}},
+      {"gfx1031",   {106, 256, 65536, 16,  4}},
+      {"gfx1032",   {106, 256, 65536, 16,  4}},   
+      {"gfx1034",   {106, 256, 65536, 16,  4}},
+      {"gfx1035",   {106, 256, 65536, 16,  4}},
+      {"gfx1100",   {106, 256, 65536, 16,  4}},
+      {"gfx1102",   {106, 256, 65536, 16,  4}} };
 
 static const size_t  kIsaInstruction64BitCodeTextSize   = 16;
 static const int     kIsaInstruction64BitBytes          = 8;
@@ -736,7 +740,7 @@ beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, const Open
             if (!config.isa_file.empty() || !config.analysis_file.empty() ||
                 !config.livereg_analysis_file.empty() || !config.block_cfg_file.empty() || !config.inst_cfg_file.empty())
             {
-                LogPreStep(kStrInfolExtractingIsaForDevice, device);
+                LogPreStep(kStrInfoExtractingIsaForDevice, device);
                 current_status = DisassembleBinary(bin_filename, config.isa_file, clang_device, device, config.function, config.is_line_numbers_required, error_text);
                 LogResult(current_status == kBeStatusSuccess);
 

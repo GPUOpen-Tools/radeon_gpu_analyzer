@@ -49,14 +49,13 @@ private:
     bool CompileSourceToSpv(const Config& conf, const BeVkPipelineFiles& glsl_files,
                             const BeVkPipelineFiles& hlsl_files, BeVkPipelineFiles& out_spv_files);
 
-    // Compile a SPIR-V binary file to ISA disassembly file(s) and shader statistics file(s).
-    // (This function invokes VulkanBackend executable).
-    void CompileSpvToIsa(const Config& conf, const BeVkPipelineFiles& spvFiles);
-
     // Compile a SPIR-V binary file to ISA disassembly file(s) and shader statistics file(s) for specified device.
     // (This function invokes VulkanBackend executable).
-    void CompileSpvToIsaForDevice(const Config& config, const BeVkPipelineFiles& spv_files,
-                                  const std::string& device, bool is_physical_adapter = false);
+    // is_vk_offline is set to true, if compilation fell back to vk-spv-offline mode.
+    void CompileSpvToIsaForDevice(const Config&            config, 
+                                  const BeVkPipelineFiles& spv_files,
+                                  const std::string&       device,
+                                  bool                     is_physical_adapter = false);
 
     // Assemble a SPIR-V text file to SPIR-V binary file.
     // (This function invokes spv-as from SPIR-V Tools.)
@@ -74,23 +73,11 @@ private:
     // (This function invokes SPIR-V Tools assembler).
     bool AssembleSpvTxtInputFiles(const Config& config, const BeVkPipelineFiles& spv_txt_files, BeVkPipelineFiles& out_spv_files);
 
-    // Generate RGA CLI session metadata file.
-    bool GenerateSessionMetadata(const Config& config) const;
-
-    // Parse ISA files and generate separate files that contain parsed ISA in CSV format.
-    bool ParseIsaFilesToCSV(bool add_line_numbers, const std::string& device_string, RgVkOutputMetadata& metadata);
-
-    // Perform the live registers analysis.
-    bool PerformLiveRegAnalysis(const Config& config, const std::string& device_string, RgVkOutputMetadata& metadata);
-
     // Predict shader performance.
     bool PredictShaderPerformance(const Config& config) const;
 
     // Perform stall analysis.
     bool PerformStallAnalysis(const Config& config) const;
-
-    // Generate the per-block or per-instruction Control Flow Graph.
-    bool ExtractCFG(const Config& config, const std::string& device_string, const RgVkOutputMetadata& metadata) const;
 
     // Store input file names to the output metadata.
     void StoreInputFilesToOutputMD(const BeVkPipelineFiles& input_files);
@@ -98,9 +85,6 @@ private:
     // Store output file names to the output metadata.
     void StoreOutputFilesToOutputMD(const std::string& device, const BeVkPipelineFiles& spv_files,
                                     const BeVkPipelineFiles& isa_files, const BeVkPipelineFiles& stats_files);
-
-    // Delete temporary files.
-    void DeleteTempFiles();
 
     // ---- Data ----
 

@@ -202,13 +202,13 @@ void KcCliCommanderDX::ExtractISA(const string& device_name, const Config& confi
         if (backend_rc == kBeStatusSuccess)
         {
             std::stringstream log;
-            log << kStrInfolExtractingIsaForDevice << device_name << "... " << kStrInfoSuccess << std::endl;
+            log << kStrInfoExtractingIsaForDevice << device_name << "... " << kStrInfoSuccess << std::endl;
             LogCallback(log.str());
         }
         else
         {
             std::stringstream log;
-            log << kStrInfolExtractingIsaForDevice << device_name << "... " << kStrInfoFailed << std::endl;
+            log << kStrInfoExtractingIsaForDevice << device_name << "... " << kStrInfoFailed << std::endl;
             LogCallback(log.str());
         }
     }

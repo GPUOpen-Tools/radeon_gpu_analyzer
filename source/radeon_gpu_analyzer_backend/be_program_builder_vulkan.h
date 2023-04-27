@@ -59,6 +59,31 @@ public:
     static beStatus PreprocessSource(const Config& config, const std::string& glslang_bin_dir, const std::string& input_file,
         bool is_hlsl, bool should_print_cmd, std::string& output, std::string& error_msg);
 
+   // Invoke the amdgpu-dis executable.
+    static beStatus InvokeAmdgpudis(const std::string& cmd_line_options, bool should_print_cmd,
+        std::string& out_text, std::string& error_txt);
+
+    // Parses amdgpu-dis output and extracts a table with the amdgpu shader stage name being the key ("vs", "ps", etc.) 
+    // and that shader stage's disassembly the value.
+    static beStatus ParseAmdgpudisOutput(const std::string& amdgpu_dis_output, 
+        std::map<std::string, std::string>& shader_to_disassembly, std::string& error_msg);
+
+    // Invoke amdgpu-dis on the binary file and parse the output into disassembly.
+    static beStatus AmdgpudisBinaryToDisassembly(const std::string&                  bin_file,
+                                                 const BeVkPipelineFiles&            isa_files,
+                                                 bool                                should_print_cmd,
+                                                 std::string&                        amdgpu_dis_stdout,
+                                                 std::map<std::string, std::string>& shader_to_disassembly,
+                                                 std::string&                        error_msg);
+
+    // Helper function to Extract AmdgpuDis Metadata String From AmdgpuDis Output String.
+    static bool GetAmdgpuDisMetadataStr(const std::string& amdgpu_dis_output, std::string& amdgpu_dis_metadata);
+
+    // Helper function to Extract from AmdgpuDis Metadata String Hardware Maapping for a given api shader stage.
+    static bool GetAmdgpuDisApiShaderToHwMapping(const std::string& amdgpu_dis_metadata, 
+                                                 const std::string& api_shader_stage_name, 
+                                                 std::string&       hw_mapping_str);
+
 private:
     // Invoke the glslang compiler executable.
     static beStatus InvokeGlslang(const std::string& glsl_bin_path, const std::string& cmd_line_options,
@@ -71,10 +96,7 @@ private:
     // Invoke the VulkanBackend executable.
     static beStatus InvokeVulkanBackend(const std::string& cmd_line_options, bool should_print_cmd,
         std::string& out_text, std::string& error_txt);
-
-    // Invoke the amdgpu-dis executable.
-    static beStatus InvokeAmdgpudis(const std::string& cmd_line_options, bool should_print_cmd,
-        std::string& out_text, std::string& error_txt);
+ 
 };
 
 #endif // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_VULKAN_H_
