@@ -1,4 +1,4 @@
-@echo off
+@echo on
 :: prebuild.bat --vs 2019 --qt <path_to_qt>
 
 SETLOCAL enabledelayedexpansion
@@ -50,6 +50,7 @@ set QT_ROOT=
 set VK_INCLUDE=
 set VK_LIB=
 set CPPCHECK=
+set NO_FETCH=FALSE
 
 :begin
 if [%1]==[] goto :start_cmake
@@ -199,8 +200,7 @@ if not exist %OUTPUT_FOLDER% (
 )
 
 rem clone or download dependencies
-if not "%NO_FETCH%"=="TRUE" (
-    echo:
+if "!NO_FETCH!" == "FALSE" (
     echo Updating Common...
     call python %SCRIPT_DIR%\fetch_dependencies.py
     if not !ERRORLEVEL!==0 (
@@ -213,7 +213,7 @@ rem Invoke cmake with required arguments.
 echo:
 echo Running cmake to generate a VisualStudio solution...
 cd %OUTPUT_FOLDER%
-%CMAKE_PATH% -G %CMAKE_VS% %CMAKE_VSARCH% %CMAKE_QT% %CMAKE_VK_INCLUDE% %CMAKE_VK_LIB% %CLI_ONLY% %GUI_ONLY% %NO_VULKAN% %AUTOMATION% %AMD_INTERNAL% %CPPCHECK% ..\..\..
+%CMAKE_PATH% -G %CMAKE_VS% %CMAKE_VSARCH% !CMAKE_QT! !CMAKE_VK_INCLUDE! !CMAKE_VK_LIB! %CLI_ONLY% %GUI_ONLY% %NO_VULKAN% %AUTOMATION% %AMD_INTERNAL% %CPPCHECK% ..\..\..
 if not !ERRORLEVEL!==0 (
     echo "ERROR: cmake failed. Aborting..."
     exit /b 1
