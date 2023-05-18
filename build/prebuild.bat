@@ -1,4 +1,4 @@
-@echo on
+@echo off
 :: prebuild.bat --vs 2019 --qt <path_to_qt>
 
 SETLOCAL enabledelayedexpansion
