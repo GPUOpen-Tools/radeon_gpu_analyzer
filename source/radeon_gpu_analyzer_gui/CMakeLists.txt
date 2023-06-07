@@ -61,7 +61,7 @@ include_directories("${PROJECT_SOURCE_DIR}/../../")
 include_directories("${PROJECT_SOURCE_DIR}/../common")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/third-party")
 include_directories(${UPDATECHECKAPI_INC_DIRS})
-if (RGA_GUI_AUTOMATION)
+if (GUI_AUTOMATION)
     include_directories("${PROJECT_SOURCE_DIR}/../../external/rga_internal_utils/tests_gui/include")
 endif()
 
