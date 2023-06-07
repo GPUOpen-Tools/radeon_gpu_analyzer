@@ -62,7 +62,7 @@ include_directories("${PROJECT_SOURCE_DIR}/../common")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/third-party")
 include_directories(${UPDATECHECKAPI_INC_DIRS})
 if (GUI_AUTOMATION)
-    include_directories("${PROJECT_SOURCE_DIR}/../../../rga_internal_utils/tests_gui/include")
+    include_directories("${PROJECT_SOURCE_DIR}/../../external/rga_internal_utils/tests_gui/include")
 endif()
 
 add_subdirectory(../../../QtCommon/Scaling QtCommon/Scaling)
@@ -113,15 +113,15 @@ file(GLOB  WINDOWS_INC
 # Add source files for GUI automated tests.
 if (GUI_AUTOMATION)
     file(GLOB  TESTS_GUI_CPP_INC
-         "../../../rga_internal_utils/tests_gui/include/*.h"
+         "../../external/rga_internal_utils/tests_gui/include/*.h"
     )
     set(CPP_INC ${CPP_INC} ${TESTS_GUI_CPP_INC})
     file(GLOB  TESTS_GUI_CPP_SRC
-         "../../../rga_internal_utils/tests_gui/src/*.cpp"
+         "../../external/rga_internal_utils/tests_gui/src/*.cpp"
     )
     set(CPP_SRC ${CPP_SRC} ${TESTS_GUI_CPP_SRC})
     file(GLOB  TESTS_GUI_MOC_INC
-         "../../../rga_internal_utils/tests_gui/include/qt/*.h"
+         "../../external/rga_internal_utils/tests_gui/include/qt/*.h"
     )
     set(MOC_INC ${MOC_INC} ${TESTS_GUI_MOC_INC})
 
