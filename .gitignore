@@ -17,4 +17,5 @@ external/code_sanitizer
 *.msi
 RGA-Installer-cache
 source/common/vulkan_layer_launcher/RGALayerLauncher/bin
+external/rga_internal_utils
 

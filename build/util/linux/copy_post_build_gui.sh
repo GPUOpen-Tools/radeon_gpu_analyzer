@@ -37,10 +37,10 @@ chmod +x $OUTPUT_DIR/RadeonGPUAnalyzer
 
 # Copy the automation files/folders.
 if [ "$AUTOMATION" = "-automation" ]; then
-  if [ -f ../../../../rga_internal_utils/tests/rga_gui_test_data.zip ]; then
-    unzip -o -d $OUTPUT_DIR/ ../../../../rga_internal_utils/tests/rga_gui_test_data.zip
+  if [ -f ../../../external/rga_internal_utils/tests/rga_gui_test_data.zip ]; then
+    unzip -o -d $OUTPUT_DIR/ ../../../external/rga_internal_utils/tests/rga_gui_test_data.zip
   fi
-  cp ../../../../rga_internal_utils/tests_gui/run.py $OUTPUT_DIR/
+  cp ../../../external/rga_internal_utils/tests_gui/run.py $OUTPUT_DIR/
   chmod +x $OUTPUT_DIR/run.py
 fi
 
