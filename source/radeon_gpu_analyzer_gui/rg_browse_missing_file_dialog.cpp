@@ -141,6 +141,8 @@ void RgBrowseMissingFileDialog::BrowseFilePathForRow(int row_index)
 
 void RgBrowseMissingFileDialog::HandleSelectedFilePathChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
+    Q_UNUSED(deselected);
+
     // Toggle the enabledness of the Browse button if necessary.
     bool enable_browse = false;
     if (!selected.empty())
@@ -174,6 +176,8 @@ void RgBrowseMissingFileDialog::HandleRejected()
 
 void RgMissingFileItemDelegate::drawDisplay(QPainter* painter, const QStyleOptionViewItem& option, const QRect &rect, const QString& text) const
 {
+    Q_UNUSED(option);
+
     bool is_painter_valid = (painter != nullptr);
     assert(is_painter_valid);
 

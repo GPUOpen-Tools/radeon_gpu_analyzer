@@ -1,6 +1,6 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//======================================================================
+// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
+//======================================================================
 
 // Local.
 #include "be_parser_si.h"
@@ -14,7 +14,7 @@ ParserSi::InstructionEncoding ParserSi::GetInstructionEncoding(Instruction::Inst
     // kInstructionEncodingMask9bit
     instruction_encoding = (hex_instruction & kInstructionEncodingMask9bit);
 
-    switch (instruction_encoding)
+    switch (static_cast<InstructionEncoding>(instruction_encoding))
     {
         case kInstructionEncodingSop1:
         case kInstructionEncodingSopp:
@@ -28,7 +28,7 @@ ParserSi::InstructionEncoding ParserSi::GetInstructionEncoding(Instruction::Inst
     // kInstructionEncodingMask7bit
     instruction_encoding = (hex_instruction & kInstructionEncodingMask7bit);
 
-    switch (instruction_encoding)
+    switch (static_cast<InstructionEncoding>(instruction_encoding))
     {
         case kInstructionEncodingVop1:
         case kInstructionEncodingVopc:
@@ -41,7 +41,7 @@ ParserSi::InstructionEncoding ParserSi::GetInstructionEncoding(Instruction::Inst
     // kInstructionEncodingMask6bit
     instruction_encoding = (hex_instruction & kInstructionEncodingMask6bit);
 
-    switch (instruction_encoding)
+    switch (static_cast<InstructionEncoding>(instruction_encoding))
     {
         case kInstructionEncodingVop3:
         case InstructionEncodingExp:
@@ -62,7 +62,7 @@ ParserSi::InstructionEncoding ParserSi::GetInstructionEncoding(Instruction::Inst
     // kInstructionEncodingMask5bit
     instruction_encoding = (hex_instruction & kInstructionEncodingMask5bit);
 
-    switch (instruction_encoding)
+    switch (static_cast<InstructionEncoding>(instruction_encoding))
     {
         case kInstructionEncodingSmrd:
             return static_cast<InstructionEncoding>(instruction_encoding);
@@ -74,7 +74,7 @@ ParserSi::InstructionEncoding ParserSi::GetInstructionEncoding(Instruction::Inst
     // kInstructionEncodingMask4bit
     instruction_encoding = (hex_instruction & kInstructionEncodingMask4bit);
 
-    switch (instruction_encoding)
+    switch (static_cast<InstructionEncoding>(instruction_encoding))
     {
         case kInstructionEncodingSopk:
             return static_cast<InstructionEncoding>(instruction_encoding);
@@ -86,7 +86,7 @@ ParserSi::InstructionEncoding ParserSi::GetInstructionEncoding(Instruction::Inst
     // kInstructionEncodingMask2bit
     instruction_encoding = (hex_instruction & kInstructionEncodingMask2bit);
 
-    switch (instruction_encoding)
+    switch (static_cast<InstructionEncoding>(instruction_encoding))
     {
         case kInstructionEncodingSop2:
             return static_cast<InstructionEncoding>(instruction_encoding);
@@ -98,7 +98,7 @@ ParserSi::InstructionEncoding ParserSi::GetInstructionEncoding(Instruction::Inst
     // kInstructionEncodingMask1bit
     instruction_encoding = (hex_instruction & kInstructionEncodingMask1bit);
 
-    switch (instruction_encoding)
+    switch (static_cast<InstructionEncoding>(instruction_encoding))
     {
         case kInstructionEncodingVop2:
             return static_cast<InstructionEncoding>(instruction_encoding);

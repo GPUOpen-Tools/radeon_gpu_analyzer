@@ -321,6 +321,8 @@ void RgMenuOpencl::HandleBuildEnded()
 
 void RgMenuOpencl::SelectFocusItem(FileMenuActionType action_type)
 {
+    Q_UNUSED(action_type);
+
     assert(build_settings_menu_item_ != nullptr);
     if (build_settings_menu_item_ != nullptr)
     {
@@ -508,6 +510,8 @@ void RgMenuOpencl::HandleBuildSettingsButtonClicked(bool /*checked*/)
 
 void RgMenuOpencl::HandleSelectedEntrypointChanged(const std::string& target_gpu, const std::string& input_file_path, const std::string& selected_entrypoint_name)
 {
+    Q_UNUSED(target_gpu);
+
     // Find the given input file and select the incoming entry point name.
     for (RgMenuFileItem* file_item : menu_items_)
     {
@@ -632,6 +636,7 @@ void RgMenuOpencl::SetButtonsNoFocus()
 
 void RgMenuOpencl::SelectTabFocusItem(bool shift_tab_focus)
 {
+    Q_UNUSED(shift_tab_focus);
 }
 
 void RgMenuOpencl::HandleTabFocusPressed()

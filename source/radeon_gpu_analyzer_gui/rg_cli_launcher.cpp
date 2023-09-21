@@ -235,6 +235,8 @@ bool RgCliLauncher::BuildProjectCloneOpencl(std::shared_ptr<RgProject> project, 
 bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, int clone_index, const std::string& output_path, const std::string& binary_name,
     std::function<void(const std::string&)> cli_output_handling_callback, std::vector<std::string>& gpus_built, bool& cancel_signal)
 {
+    Q_UNUSED(binary_name);
+
     bool ret = false;
     if (project != nullptr)
     {

@@ -32,33 +32,28 @@ configure_file (
 # Include directories
 include_directories("${PROJECT_SOURCE_DIR}/../")
 include_directories("${PROJECT_SOURCE_DIR}/../../")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/")
 include_directories("${PROJECT_SOURCE_DIR}/../../external")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/dx11")
 include_directories("${PROJECT_SOURCE_DIR}/emulator/parser")
 include_directories("${PROJECT_SOURCE_DIR}")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/celf/Include")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/DeviceInfo")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/DynamicLibraryModule")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/TSingleton")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/AMD/DX10ASM")
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/AMD/APPSDK/3-0/include")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/device_info")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/dynamic_library_module")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/tsingleton")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/DX10ASM")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/APPSDK/3-0/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/yaml-cpp/include")
 include_directories("${PROJECT_SOURCE_DIR}/../common")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/third-party")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/third_party")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/dx11/GSA")
-
 if (NOT IsDebian)
-include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Lib/Ext/Boost/boost_1_59_0")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/third_party/Boost/boost_1_59_0")
 endif()
 
 # Windows-specific include files
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     include_directories("${PROJECT_SOURCE_DIR}/../../external/dx10_asm/include")
-    include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/ShaderUtils")
-    include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/ShaderUtils/DX10")
-    include_directories("${PROJECT_SOURCE_DIR}/../../../Common/Src/ShaderUtils/DX11")
     include_directories("${PROJECT_SOURCE_DIR}/../utils/dx12/backend")
 endif()
 
@@ -83,7 +78,7 @@ file(GLOB COMMON_SRC
     "emulator/parser/be_parser_si_sopp.cpp"
     "emulator/parser/be_parser_si_vintrp.cpp"
     "emulator/parser/be_parser_si_vop.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/DynamicLibraryModule/DynamicLibraryModule.cpp"
+    "${PROJECT_SOURCE_DIR}/../../external/dynamic_library_module/DynamicLibraryModule.cpp"
     "${PROJECT_SOURCE_DIR}/../../external/celf/Src/CElf.cpp"
     "${PROJECT_SOURCE_DIR}/../../external/celf/Src/CElfSection.cpp"
     "${PROJECT_SOURCE_DIR}/../../external/celf/Src/CElfStringTable.cpp"
@@ -92,12 +87,7 @@ file(GLOB COMMON_SRC
 
 # Windows-specific source files
 file(GLOB WINDOWS_SRC
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/DynamicLibraryModule/DXXModule.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/ShaderUtils/DX10/D3D10ShaderObject.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/ShaderUtils/DX10/D3D10ShaderUtils.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/ShaderUtils/DX10/DXBCChecksum.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/ShaderUtils/DX10/IBlob.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/ShaderUtils/StringUtils.cpp"
+    "${PROJECT_SOURCE_DIR}/../../external/dynamic_library_module/DXXModule.cpp"
     "${PROJECT_SOURCE_DIR}/../utils/dx12/backend/rg_dxr_state_desc_reader.cpp"
     "${PROJECT_SOURCE_DIR}/../utils/dx12/backend/rg_dxr_output_metadata.cpp"
     "${PROJECT_SOURCE_DIR}/../utils/dx12/backend/rg_dx12_utils.cpp"
@@ -105,13 +95,13 @@ file(GLOB WINDOWS_SRC
 
 # Device Info lib sources
 file(GLOB  DEVICE_INFO_SRC
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/DeviceInfo/DeviceInfoUtils.cpp"
-    "${PROJECT_SOURCE_DIR}/../../../Common/Src/DeviceInfo/DeviceInfo.cpp"
+    "${PROJECT_SOURCE_DIR}/../../external/device_info/DeviceInfoUtils.cpp"
+    "${PROJECT_SOURCE_DIR}/../../external/device_info/DeviceInfo.cpp"
 )
 
 if(AMD_INTERNAL)
     file(GLOB  DEVICE_INFO_SRC
-         "${PROJECT_SOURCE_DIR}/../../../Common/Src/DeviceInfo-Internal/DeviceInfoInternal.cpp"
+         "${PROJECT_SOURCE_DIR}/../../external/device_info_internal/DeviceInfoInternal.cpp"
          ${DEVICE_INFO_SRC}
     )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAMD_INTERNAL -DAMDT_INTERNAL")
@@ -135,6 +125,11 @@ endif()
 
 # set binary suffix
 set_target_properties(radeon_gpu_analyzer_backend PROPERTIES DEBUG_POSTFIX -d)
+
+# Set Visual C++ warning level to 4
+if(MSVC)
+  target_compile_options(radeon_gpu_analyzer_backend PRIVATE /W4)
+endif()
 
 # Link settings
 if (CMAKE_64BIT_TARGET)

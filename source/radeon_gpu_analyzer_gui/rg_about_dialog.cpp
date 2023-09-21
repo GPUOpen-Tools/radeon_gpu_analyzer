@@ -102,7 +102,7 @@ void RgAboutDialog::HandleCheckForUpdatesClicked()
             // Create the check for updates thread
             check_for_updates_thread_ = new UpdateCheck::ThreadController(this, RGA_VERSION_MAJOR, RGA_VERSION_MINOR, RGA_BUILD_NUMBER, RGA_VERSION_UPDATE);
         }
-        
+
         // Build dialog to display and allow user to cancel the check if desired.
         if (check_for_updates_dialog_ == nullptr)
         {
@@ -133,7 +133,7 @@ void RgAboutDialog::HandleCheckForUpdatesClicked()
             assert(is_rejected_connected);
 
             bool is_ok_connected = connect(check_for_updates_dialog_button_box_, &QDialogButtonBox::accepted, check_for_updates_dialog_, &QDialog::accept);
-            assert(is_rejected_connected);
+            assert(is_ok_connected);
         }
         else
         {

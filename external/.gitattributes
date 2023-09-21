@@ -5,7 +5,6 @@ vulkan_offline/windows/spvgen.dll filter=lfs diff=lfs merge=lfs -text
 dxc/dxcompiler.dll filter=lfs diff=lfs merge=lfs -text
 lc/disassembler/linux/amdgpu-dis filter=lfs diff=lfs merge=lfs -text
 lc/disassembler/windows/amdgpu-dis.exe filter=lfs diff=lfs merge=lfs -text
-lc/opencl/linux/bin/clang-13 filter=lfs diff=lfs merge=lfs -text
 lc/opencl/linux/bin/lld filter=lfs diff=lfs merge=lfs -text
 lc/opencl/linux/bin/llvm-objdump filter=lfs diff=lfs merge=lfs -text
 lc/opencl/linux/bin/llvm-readobj filter=lfs diff=lfs merge=lfs -text
@@ -59,11 +58,11 @@ boost/boost_1_59_0/lib/VC14/x86_64/libboost_date_time-vc140-mt-gd-1_59.lib filte
 boost/boost_1_59_0/lib/VC14/x86/libboost_date_time-vc140-mt-sgd-1_59.lib filter=lfs diff=lfs merge=lfs -text
 opengl/glc/linux/glc filter=lfs diff=lfs merge=lfs -text
 opengl/glc/windows/glc.exe filter=lfs diff=lfs merge=lfs -text
-lc/opencl/linux/lib/bitcode/opencl.amdgcn.bc filter=lfs diff=lfs merge=lfs -text
-lc/opencl/windows/lib/bitcode/opencl.amdgcn.bc filter=lfs diff=lfs merge=lfs -text
-lc/opencl/linux/bin/clang-16 filter=lfs diff=lfs merge=lfs -text
 dx11/amdxx/atidxx64.dll filter=lfs diff=lfs merge=lfs -text
 dx12/agility_sdk/D3D12Core.dll filter=lfs diff=lfs merge=lfs -text
-dx12/agility_sdk/d3d12SDKLayers.dll filter=lfs diff=lfs merge=lfs -text
 vulkan_offline/linux/amdllpc filter=lfs diff=lfs merge=lfs -text
 vulkan_offline/windows/amdllpc.exe filter=lfs diff=lfs merge=lfs -text
+dx12/agility_sdk/d3d12SDKLayers.dll filter=lfs diff=lfs merge=lfs -text
+lc/opencl/windows/lib/bitcode/opencl.bc filter=lfs diff=lfs merge=lfs -text
+lc/opencl/linux/lib/bitcode/opencl.bc filter=lfs diff=lfs merge=lfs -text
+lc/opencl/linux/bin/clang-18 filter=lfs diff=lfs merge=lfs -text

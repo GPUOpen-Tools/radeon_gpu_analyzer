@@ -636,6 +636,8 @@ bool RgBuildViewOpencl::GetEntrypointNameForLineNumber(const std::string& file_p
 
 void RgBuildViewOpencl::HandleSelectedFileChanged(const std::string& old_file_path, const std::string& new_file_path)
 {
+    Q_UNUSED(old_file_path);
+
     // Get a pointer to the editor responsible for displaying the new file.
     RgSourceCodeEditor* editor = GetEditorForFilepath(new_file_path, RgSrcLanguage::kOpenCL);
     assert(editor != nullptr);

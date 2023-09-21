@@ -198,11 +198,15 @@ void RgPipelineStateView::ConnectSignals()
 
 void RgPipelineStateView::focusInEvent(QFocusEvent* event)
 {
+    Q_UNUSED(event);
+
     emit PipelineStateTreeFocusIn();
 }
 
 void RgPipelineStateView::focusOutEvent(QFocusEvent* event)
 {
+    Q_UNUSED(event);
+
     emit PipelineStateTreeFocusOut();
 }
 

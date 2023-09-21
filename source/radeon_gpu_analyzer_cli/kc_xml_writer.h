@@ -17,7 +17,7 @@ public:
     static bool AddVersionInfoHeader(const std::string& filename);
 
     // Writes the given list of supported target GPUs to the version info file specified by the "fileName" argument.
-    static bool AddVersionInfoGPUList(RgaMode mode, const std::set<std::string>& targets, const std::string& filename);
+    static bool AddVersionInfoGPUList(beKA::RgaMode mode, const std::set<std::string>& targets, const std::string& filename);
 
     // Writes the system level version info to the version info file specified by the "fileName" argument.
     static bool AddVersionInfoSystemData(const std::vector<BeVkPhysAdapterInfo>& info, const std::string& filename);

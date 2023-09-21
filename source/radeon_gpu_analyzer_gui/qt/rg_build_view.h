@@ -446,7 +446,10 @@ protected:
 
     // Handle API-specific RgBuildView mode switching.
     // Do nothing by default, as RgBuildView does not require mode-specific behavior.
-    virtual void HandleModeSpecificEditMode(EditMode new_mode) {}
+    virtual void HandleModeSpecificEditMode(EditMode new_mode)
+    {
+        Q_UNUSED(new_mode);
+    }
 
     // Initialize views specific to the current mode only.
     // Do nothing by default. Each mode-specific implementation is

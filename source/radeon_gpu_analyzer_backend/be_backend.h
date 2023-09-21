@@ -32,9 +32,6 @@ class beProgramBuilderGL;
 class BeProgramBuilderDx11;
 #endif
 
-using namespace std;
-using namespace beKA;
-
 class Backend : public TSingleton<Backend>
 {
     // TSingleton needs to be able to use our constructor.
@@ -44,13 +41,13 @@ public:
     ~Backend();
 
     // Initialize the backend.
-    beStatus Initialize(BuiltProgramKind program_kind, LoggingCallBackFuncP callback);
+    beKA::beStatus Initialize(beKA::BuiltProgramKind program_kind, LoggingCallBackFuncP callback);
 
     // Retrieve device information.
     static beKA::beStatus GetDeviceInfo(const std::string& device_name, GDT_DeviceInfo& gdt_device_info);
     static beKA::beStatus GetDeviceInfo(const std::string& device_name, const std::vector<GDT_GfxCardInfo>** info);
     static beKA::beStatus GetDeviceInfo(size_t device_id, GDT_GfxCardInfo& info);
-    static beStatus GetDeviceInfo(const std::string& device_name, GDT_GfxCardInfo& info);
+    static beKA::beStatus GetDeviceInfo(const std::string& device_name, GDT_GfxCardInfo& info);
 
     // Get device marketing name.
     static beKA::beStatus GetDeviceInfoMarketingName(const std::string& device_name, std::vector<GDT_GfxCardInfo>& info);

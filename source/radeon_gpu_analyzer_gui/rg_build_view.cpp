@@ -3195,6 +3195,9 @@ void RgBuildView::HandleDisassemblyViewSizeRestore()
 
 void RgBuildView::HandleSplitterMoved(int pos, int index)
 {
+    Q_UNUSED(pos);
+    Q_UNUSED(index);
+
     // Update the splitter dimensions in the config file.
     SetConfigSplitterPositions();
 }

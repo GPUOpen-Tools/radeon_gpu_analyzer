@@ -1388,7 +1388,7 @@ void RgMainWindow::HandleAboutEvent()
 void RgMainWindow::HandleGettingStartedGuideEvent()
 {
     // Build the path to the quickstart guide document.
-    static const char* QUICKSTART_GUIDE_RELATIVE_PATH = "/docs/help/rga/html/quickstart.html";
+    static const char* QUICKSTART_GUIDE_RELATIVE_PATH = "/help/rga/quickstart.html";
     QString quickstart_file_path = "file:///";
     QString app_dir_path = qApp->applicationDirPath();
     quickstart_file_path.append(app_dir_path);
@@ -1399,7 +1399,7 @@ void RgMainWindow::HandleGettingStartedGuideEvent()
 void RgMainWindow::HandleHelpManual()
 {
     // Build the path to the help manual document.
-    static const char* HELP_MANUAL_RELATIVE_PATH = "/docs/help/rga/html/help_manual.html";
+    static const char* HELP_MANUAL_RELATIVE_PATH = "/help/rga/help_manual.html";
     QString help_manual_file_path = "file:///";
     QString app_dir_path = qApp->applicationDirPath();
     help_manual_file_path.append(app_dir_path);
@@ -1525,6 +1525,9 @@ void RgMainWindow::HandleCancelBuildEvent()
 
 void RgMainWindow::HandleSelectedFileChanged(const std::string& old_file, const std::string& new_file)
 {
+    Q_UNUSED(old_file);
+    Q_UNUSED(new_file);
+
     // Enable the Edit menu functionality.
     go_to_line_action_->setEnabled(true);
     find_action_->setEnabled(true);

@@ -212,6 +212,9 @@ void RgPipelineStateEditorWidgetEnum::GetTooltipString(std::string& tooltip_text
 
 void RgPipelineStateEditorWidgetEnum::HandleUpdateEnumButtonText(const QString& text, bool checked)
 {
+    Q_UNUSED(text);
+    Q_UNUSED(checked);
+
     std::string tooltip_text;
     GetTooltipString(tooltip_text);
 

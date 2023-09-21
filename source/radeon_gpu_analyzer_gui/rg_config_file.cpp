@@ -575,6 +575,8 @@ bool RgXmlGraphicsConfigFileReaderImpl::ReadPipeline(tinyxml2::XMLDocument& doc,
                                                      bool                   is_backup_spv,
                                                      RgPipelineShaders&     pipeline) const
 {
+    Q_UNUSED(doc);
+
     bool ret = false;
 
     assert(parent_clone != nullptr);
@@ -640,6 +642,8 @@ bool RgXmlGraphicsConfigFileReaderImpl::ReadPipelineState(std::shared_ptr<RgGrap
                                                           tinyxml2::XMLDocument&                  doc,
                                                           tinyxml2::XMLNode*                      pipeline_state_element) const
 {
+    Q_UNUSED(doc);
+
     bool ret = false;
 
     // Find the project clone's pipeline state root element.

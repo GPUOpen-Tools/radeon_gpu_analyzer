@@ -28,10 +28,13 @@ RgMenuEntryPointTree::RgMenuEntryPointTree(QWidget* parent) :
 
 void RgMenuEntryPointTree::mouseMoveEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event);
 }
 
 void RgMenuEntryPointTree::mousePressEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event);
+
     assert(event != nullptr);
     if (event != nullptr)
     {

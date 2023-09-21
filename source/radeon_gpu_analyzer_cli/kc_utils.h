@@ -366,6 +366,9 @@ public:
     // Adjust base file name for cfg output file.
     static std::string AdjustBaseFileNameCfg(const std::string& user_input_filename, const std::string& device);
 
+    // Returns true if the compute bit is set for given entry_type.
+    static bool IsComputeBitSet(RgEntryType rga_entry_type);
+
 private:
     // This is a static class (no instances).
     KcUtils(const KcUtils& other);

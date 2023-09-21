@@ -13,8 +13,6 @@
 #include "radeon_gpu_analyzer_cli/kc_config.h"
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
 
-using namespace std;
-
 class KcCliCommander
 {
 public:
@@ -56,12 +54,14 @@ protected:
     // "supportedDevices" is the list of supported devices for the given mode. Only targets from this list will be considered.
     // The matched devices are returned in "matchedDevices" set.
     // If "allowUnknownDevice" is true, no error message will be printed if no matched devices are found.
-    static bool InitRequestedAsicList(const std::vector<std::string>& devices, RgaMode mode,
-                                      const std::set<std::string>& supported_devices,
-                                      std::set<std::string>& matched_devices, bool allow_unknown_device);
+    static bool InitRequestedAsicList(const std::vector<std::string>& devices,
+                                      beKA::RgaMode                   mode,
+                                      const std::set<std::string>&    supported_devices,
+                                      std::set<std::string>&          matched_devices, 
+                                      bool                            allow_unknown_device);
 
     // Store ISA text in the file.
-    beStatus WriteIsaToFile(const std::string& file_name, const std::string& isa_text);
+    beKA::beStatus WriteIsaToFile(const std::string& file_name, const std::string& isa_text);
 
     // Logging callback type.
     bool LogCallback(const std::string& str) const;

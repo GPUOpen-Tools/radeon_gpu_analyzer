@@ -183,6 +183,11 @@ endif()
 # Set binary suffix
 set_target_properties(AMDTOSWrappers PROPERTIES DEBUG_POSTFIX -d CXX_STANDARD 17)
 
+# Set Visual C++ warning level to 4
+if(MSVC)
+  target_compile_options(vulkan_backend PRIVATE /W4)
+endif()
+
 # Link settings
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     target_link_libraries (AMDTOSWrappers rt ${CMAKE_DL_LIBS} -pthread)

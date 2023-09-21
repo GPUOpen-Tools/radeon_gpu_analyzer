@@ -194,7 +194,9 @@ protected:
 
     // Overridden double click event for the line number gutter area.
     virtual void mouseDoubleClickEvent(QMouseEvent* event) override
-    {}
+    {
+        Q_UNUSED(event);
+    }
 
 private:
     // The editor where line numbers will be painted.

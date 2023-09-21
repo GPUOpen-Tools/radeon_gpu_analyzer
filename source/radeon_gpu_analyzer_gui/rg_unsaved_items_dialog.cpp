@@ -87,6 +87,8 @@ void RgUnsavedItemsDialog::AddFiles(QStringList filenames)
 
 void RgUnsavedFileItemDelegate::drawDisplay(QPainter* painter, const QStyleOptionViewItem& option, const QRect &rect, const QString& text) const
 {
+    Q_UNUSED(option);
+
     bool is_painter_valid = (painter != nullptr);
     assert(is_painter_valid);
 

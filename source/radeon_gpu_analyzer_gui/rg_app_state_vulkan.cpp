@@ -350,4 +350,5 @@ std::string RgAppStateVulkan::GetBuildSettingsViewStylesheet() const
 
 void RgAppStateVulkan::OpenFilesInBuildView(const QStringList& file_paths)
 {
+    Q_UNUSED(file_paths);
 }

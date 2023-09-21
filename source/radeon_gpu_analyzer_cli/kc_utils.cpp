@@ -34,6 +34,7 @@
 #include "common/rga_shared_utils.h"
 #include "common/rg_log.h"
 #include "common/rga_version_info.h"
+#include "radeon_gpu_analyzer_cli/kc_statistics_device_props.h"
 
 #ifndef _WIN32
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -255,45 +256,45 @@ std::string KcUtils::DeviceStatisticsToCsvString(const Config& config, const std
     output << device << csv_separator;
 
     // Scratch registers.
-    output << statistics.scratch_memory_used << csv_separator;
+    output << na_or(statistics.scratch_memory_used) << csv_separator;
 
     // Work-items per work-group.
-    output << statistics.num_threads_per_group_total << csv_separator;
+    output << na_or(statistics.num_threads_per_group_total) << csv_separator;
 
     // Wavefront size.
-    output << statistics.wavefront_size << csv_separator;
+    output << na_or(statistics.wavefront_size) << csv_separator;
 
     // LDS available bytes.
-    output << statistics.lds_size_available << csv_separator;
+    output << na_or(statistics.lds_size_available) << csv_separator;
 
     // LDS actual bytes.
-    output << statistics.lds_size_used << csv_separator;
+    output << na_or(statistics.lds_size_used) << csv_separator;
 
     // Available SGPRs.
-    output << statistics.num_sgprs_available << csv_separator;
+    output << na_or(statistics.num_sgprs_available) << csv_separator;
 
     // Used SGPRs.
-    output << statistics.num_sgprs_used << csv_separator;
+    output << na_or(statistics.num_sgprs_used) << csv_separator;
 
     // Spills of SGPRs.
-    output << statistics.num_sgpr_spills << csv_separator;
+    output << na_or(statistics.num_sgpr_spills) << csv_separator;
 
     // Available VGPRs.
-    output << statistics.num_vgprs_available << csv_separator;
+    output << na_or(statistics.num_vgprs_available) << csv_separator;
 
     // Used VGPRs.
-    output << statistics.num_vgprs_used << csv_separator;
+    output << na_or(statistics.num_vgprs_used) << csv_separator;
 
     // Spills of VGPRs.
-    output << statistics.num_vgpr_spills << csv_separator;
+    output << na_or(statistics.num_vgpr_spills) << csv_separator;
 
     // CL Work-group dimensions (for a unified format, to be revisited).
-    output << statistics.num_threads_per_group_x << csv_separator;
-    output << statistics.num_threads_per_group_y << csv_separator;
-    output << statistics.num_threads_per_group_z << csv_separator;
+    output << na_or(statistics.num_threads_per_group_x) << csv_separator;
+    output << na_or(statistics.num_threads_per_group_y) << csv_separator;
+    output << na_or(statistics.num_threads_per_group_z) << csv_separator;
 
     // ISA size.
-    output << statistics.isa_size;
+    output << na_or(statistics.isa_size);
 
     output << std::endl;
 
@@ -1342,7 +1343,7 @@ bool KcUtils::FileNotEmpty(const std::string filename)
     return ret;
 }
 
-bool KcUtils::ReadProgramSource(const string& input_file, string& program_source)
+bool KcUtils::ReadProgramSource(const std::string& input_file, std::string& program_source)
 {
     std::ifstream input;
 
@@ -1362,7 +1363,7 @@ bool KcUtils::ReadProgramSource(const string& input_file, string& program_source
 
     // Open (at e)nd of file.  We want the length below.
     // Open binary because it's faster & other bits of code deal OK with CRLF, LF etc.
-    input.open(input_file.c_str(), ios::ate | ios::binary);
+    input.open(input_file.c_str(), std::ios::ate | std::ios::binary);
 
     if (!input)
     {
@@ -1377,7 +1378,7 @@ bool KcUtils::ReadProgramSource(const string& input_file, string& program_source
         return false;
     }
 
-    input.seekg(0, ios::beg);
+    input.seekg(0, std::ios::beg);
 
     program_source.resize(size_t(file_size));
     input.read(&program_source[0], file_size);
@@ -1390,7 +1391,7 @@ bool KcUtils::WriteBinaryFile(const std::string& filename, const std::vector<cha
 {
     bool ret = false;
     std::ofstream output;
-    output.open(filename.c_str(), ios::binary);
+    output.open(filename.c_str(), std::ios::binary);
 
     if (output.is_open() && !content.empty())
     {
@@ -1413,7 +1414,7 @@ bool KcUtils::WriteBinaryFile(const std::string& filename, const std::vector<cha
 bool KcUtils::ReadTextFile(const std::string& filename, std::string& content, LoggingCallbackFunction callback)
 {
     bool ret = false;
-    ifstream input;
+    std::ifstream input;
     input.open(filename.c_str());
 
     if (input.is_open())
@@ -1660,30 +1661,31 @@ void KcUtils::CheckForUpdates()
     KcUtils::PrintRgaVersion();
 
     UpdateCheck::UpdateInfo update_info;
-    string error_message;
+    std::string             error_message;
 
     std::cout << "Checking for update... ";
 
     bool checked_for_update = UpdateCheck::CheckForUpdates(rga_cli_version, kStrRgaUpdatecheckUrl, kStrRgaUpdatecheckAssetName, update_info, error_message);
     if (!checked_for_update)
     {
-        std::cout << "Unable to find update: " << error_message << endl;
+        std::cout << "Unable to find update: " << error_message << std::endl;
     }
     else
     {
         if (!update_info.is_update_available)
         {
-            std::cout << "No new updates available." << endl;
+            std::cout << "No new updates available." << std::endl;
         }
         else
         {
-            std::cout << "New version available!" << endl;
+            std::cout << "New version available!" << std::endl;
 
             for (std::vector<UpdateCheck::ReleaseInfo>::const_iterator release_iter = update_info.releases.cbegin(); release_iter != update_info.releases.cend(); ++release_iter)
             {
-                std::cout << "Description: " << release_iter->title << endl;
-                std::cout << "Version: " << release_iter->version.ToString() << " (" << UpdateCheck::ReleaseTypeToString(release_iter->type) << ")" << endl;
-                std::cout << "Released: " << release_iter->date << endl;
+                std::cout << "Description: " << release_iter->title << std::endl;
+                std::cout << "Version: " << release_iter->version.ToString() << " (" << UpdateCheck::ReleaseTypeToString(release_iter->type) << ")"
+                          << std::endl;
+                std::cout << "Released: " << release_iter->date << std::endl;
 
                 if (!release_iter->tags.empty())
                 {
@@ -1692,31 +1694,31 @@ void KcUtils::CheckForUpdates()
                     {
                         std::cout << ", " << release_iter->tags[i];
                     }
-                    std::cout << endl;
+                    std::cout << std::endl;
                 }
 
                 if (release_iter->download_links.size() > 0)
                 {
-                    std::cout << "Download a package from:" << endl;
+                    std::cout << "Download a package from:" << std::endl;
 
                     for (size_t package_index = 0; package_index < release_iter->download_links.size(); ++package_index)
                     {
-                        std::cout << "   " << release_iter->download_links[package_index].url << endl;
+                        std::cout << "   " << release_iter->download_links[package_index].url << std::endl;
                     }
                 }
 
                 if (release_iter->info_links.size() > 0)
                 {
-                    std::cout << "For more information, visit:" << endl;
+                    std::cout << "For more information, visit:" << std::endl;
 
                     for (size_t infoLinkIndex = 0; infoLinkIndex < release_iter->info_links.size(); ++infoLinkIndex)
                     {
-                        std::cout << "   " << release_iter->info_links[infoLinkIndex].url << endl;
+                        std::cout << "   " << release_iter->info_links[infoLinkIndex].url << std::endl;
                     }
                 }
 
                 // Add an extra line at the end in case there are multiple versions available.
-                std::cout << endl;
+                std::cout << std::endl;
             }
         }
     }
@@ -1809,4 +1811,20 @@ std::string KcUtils::AdjustBaseFileNameLivereg(const std::string& user_input_fil
 std::string KcUtils::AdjustBaseFileNameCfg(const std::string& user_input_filename, const std::string& device)
 {
     return AdjustBaseFileName(user_input_filename, device, KC_STR_DEFAULT_CFG_SUFFIX);
+}
+
+bool KcUtils::IsComputeBitSet(RgEntryType rga_entry_type)
+{
+    bool ret = false;
+    switch (rga_entry_type)
+    {
+    case RgEntryType::kDxCompute:
+    case RgEntryType::kGlCompute:
+        ret = true;
+        break;
+    default:
+        ret = false;
+        break;
+    }
+    return ret;
 }

@@ -41,8 +41,6 @@ bool RgOutputFileUtils::ParseLiveVgprsData(const std::string&                   
     // Calculate the max live VGPR values and extract the live VGPR numbers.
     if (status)
     {
-        int max_line_number = 0;
-
         // Extract maximum VGPR lines.
         livereg_data.max_vgprs = RgOutputFileUtils::CalculateMaxVgprs(vgpr_isa_lines, livereg_data.max_vgpr_line_numbers, disassembled_isa_lines);
 
@@ -66,7 +64,7 @@ bool RgOutputFileUtils::ParseLiveVgprsData(const std::string&                   
             {
                 // If there is a matching s_nop line in livereg output, break out of here.
                 // Not all livereg output has a matching s_nop line.
-                if (vgpr_line->opcode.compare("s_nop") == 0)
+                if ((vgpr_line->opcode.compare("s_nop") == 0) && (disassembly_line->type == RgIsaLineType::kInstruction))
                 {
                     break;
                 }
@@ -79,21 +77,25 @@ bool RgOutputFileUtils::ParseLiveVgprsData(const std::string&                   
                 disassembly_line = std::static_pointer_cast<RgIsaLineInstruction>(disassembled_isa_lines[line_number]);
             }
 
-            // If the opcode has a trailing "_e32", "_e64", "_sdwa" or "_dpp", it is still a match.
-            if ((vgpr_line->opcode.compare(disassembly_line->opcode) == 0) ||
-                (disassembly_line->opcode.compare(vgpr_line->opcode + "_e32") == 0) ||
-                (disassembly_line->opcode.compare(vgpr_line->opcode + "_e64") == 0) ||
-                (disassembly_line->opcode.compare(vgpr_line->opcode + "_sdwa") == 0) ||
-                (disassembly_line->opcode.compare(vgpr_line->opcode + "_dpp") == 0))
+            assert(disassembly_line->type == RgIsaLineType::kInstruction);
+            if (disassembly_line->type == RgIsaLineType::kInstruction)
             {
-                // Save both the number of live VGPRs and the block granularity.
-                disassembly_line->num_live_registers = vgpr_line->num_live_registers + "," + std::to_string(livereg_data.vgprs_granularity);
-            }
-            else
-            {
-                // If the instructions did not match, display "N/A".
-                disassembly_line->num_live_registers = "N/A";
-                livereg_data.unmatched_count++;
+                // If the opcode has a trailing "_e32", "_e64", "_sdwa" or "_dpp", it is still a match.
+                if ((vgpr_line->opcode.compare(disassembly_line->opcode) == 0) 
+                    || (disassembly_line->opcode.compare(vgpr_line->opcode + "_e32") == 0) 
+                    || (disassembly_line->opcode.compare(vgpr_line->opcode + "_e64") == 0) 
+                    || (disassembly_line->opcode.compare(vgpr_line->opcode + "_sdwa") == 0) 
+                    || (disassembly_line->opcode.compare(vgpr_line->opcode + "_dpp") == 0))
+                {
+                    // Save both the number of live VGPRs and the block granularity.
+                    disassembly_line->num_live_registers = vgpr_line->num_live_registers + "," + std::to_string(livereg_data.vgprs_granularity);
+                }
+                else
+                {
+                    // If the instructions did not match, display "N/A".
+                    disassembly_line->num_live_registers = "N/A";
+                    livereg_data.unmatched_count++;
+                }
             }
             line_number++;
 

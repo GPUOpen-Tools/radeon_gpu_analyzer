@@ -10,13 +10,15 @@
 
 // Backend.
 #include "radeon_gpu_analyzer_backend/emulator/parser/be_isa_parser.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
+#include "radeon_gpu_analyzer_backend/be_utils.h"
 
 // Local.
 #include "source/radeon_gpu_analyzer_cli/kc_cli_commander_vulkan_util.h"
 #include "source/radeon_gpu_analyzer_cli/kc_data_types.h"
 #include "source/radeon_gpu_analyzer_cli/kc_utils.h"
 #include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
-#include "radeon_gpu_analyzer_backend/be_utils.h"
+#include "source/radeon_gpu_analyzer_cli/kc_statistics_device_props.h"
 
 // Vulkan statistics tags.
 static const std::string kStrVulkanStatsTitle                = "Statistics:";
@@ -27,6 +29,14 @@ static const std::string kStrVulkanStatsTagNumAvailableSgprs = "numAvailableSgpr
 static const std::string kStrVulkanStatsTagLdsSize           = "resourceUsage.ldsSizePerLocalWorkGroup";
 static const std::string kStrVulkanStatsTagLdsUsage          = "resourceUsage.ldsUsageSizeInBytes";
 static const std::string kStrVulkanStatsTagScratchMem        = "resourceUsage.scratchMemUsageInBytes";
+
+// Extract Statistics from Amdgpu_dis_output.
+static const char* kAmdgpuDisDotLdsSizeToken           = ".lds_size:";
+static const char* kAmdgpuDisDotScratchMemorySizeToken = ".scratch_memory_size:";
+static const char* kAmdgpuDisDotSgprCountToken         = ".sgpr_count:";
+static const char* kAmdgpuDisDotSgprLimitToken         = ".sgpr_limit:";
+static const char* kAmdgpuDisDotVgprCountToken         = ".vgpr_count:";
+static const char* kAmdgpuDisDotVgprLimitToken         = ".vgpr_limit:";
 
 bool KcCLICommanderVulkanUtil::ParseIsaFilesToCSV(bool line_numbers, const std::string& device_string, RgVkOutputMetadata& metadata) const
 {
@@ -279,15 +289,15 @@ static bool ParseVulkanStats(const std::string isa_text, const std::string& stat
     assert(result);
     return result;
 }
-
-beStatus KcCLICommanderVulkanUtil::ConvertStats(const BeVkPipelineFiles& isaFiles,
-                                                const BeVkPipelineFiles& stats_files,
-                                                const Config&            config,
-                                                const std::string&       device)
+beKA::beStatus 
+KcCLICommanderVulkanUtil::ConvertStats(const BeVkPipelineFiles& isaFiles,
+                                       const BeVkPipelineFiles& stats_files,
+                                       const Config&            config,
+                                       const std::string&       device)
 {
-    beStatus status = kBeStatusSuccess;
+    beKA::beStatus status = beKA::beStatus::kBeStatusSuccess;
 
-    for (int stage = 0; stage < BePipelineStage::kCount && status == kBeStatusSuccess; stage++)
+    for (int stage = 0; stage < BePipelineStage::kCount && status == beKA::beStatus::kBeStatusSuccess; stage++)
     {
         if (!stats_files[stage].empty())
         {
@@ -307,7 +317,7 @@ beStatus KcCLICommanderVulkanUtil::ConvertStats(const BeVkPipelineFiles& isaFile
                     result = (KcUtils::FileNotEmpty(stats_files[stage]));
                 }
             }
-            status = (result ? kBeStatusSuccess : kBeStatusVulkanParseStatsFailed);
+            status = (result ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusVulkanParseStatsFailed);
         }
     }
 
@@ -316,9 +326,9 @@ beStatus KcCLICommanderVulkanUtil::ConvertStats(const BeVkPipelineFiles& isaFile
 
 beKA::beStatus KcCLICommanderVulkanUtil::WriteIsaToFile(const std::string& file_name, const std::string& isa_text, LoggingCallbackFunction log_callback)
 {
-    beStatus ret = beStatus::kBeStatusInvalid;
-    ret          = KcUtils::WriteTextFile(file_name, isa_text, log_callback) ? beKA::kBeStatusSuccess : beKA::kBeStatusWriteToFileFailed;
-    if (ret != beKA::kBeStatusSuccess)
+    beKA::beStatus ret = beKA::beStatus::kBeStatusInvalid;
+    ret = KcUtils::WriteTextFile(file_name, isa_text, log_callback) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusWriteToFileFailed;
+    if (ret != beKA::beStatus::kBeStatusSuccess)
     {
         RgLog::stdErr << kStrErrorFailedToWriteIsaFile << file_name << std::endl;
     }
@@ -338,4 +348,248 @@ bool KcCLICommanderVulkanUtil::GetParsedIsaCsvText(const std::string& isaText, c
         ret      = true;
     }
     return ret;
+}
+
+
+static uint64_t ParseHardwareStageProp(size_t search_start_index, const std::string& haystack, const std::string& needle)
+{
+    uint64_t property = -1;
+    size_t   curr_pos = haystack.find(needle, search_start_index);
+    if (curr_pos != std::string::npos)
+    {
+        property = strtoul(haystack.substr(curr_pos + needle.length()).c_str(), nullptr, 16);
+    }
+    return property;
+}
+
+static std::string GetHardwareStageDotTokenStr(const std::string& hardware_stage_suffix)
+{
+    std::stringstream hardwareStageDotToken;
+    hardwareStageDotToken << "." << hardware_stage_suffix;
+    return hardwareStageDotToken.str();
+}
+
+std::string KcCLICommanderVulkanUtil::BuildStatisticsStr(const beKA::AnalysisData& stats, std::size_t stage, bool is_compute_bit_set)
+{
+    std::stringstream statistics_stream;
+
+    statistics_stream << "Statistics:" << std::endl;
+    statistics_stream << "    - shaderStageMask                           = " << stage << std::endl;
+    statistics_stream << "    - resourceUsage.numUsedVgprs                = " << stats.num_vgprs_used << std::endl;
+    statistics_stream << "    - resourceUsage.numUsedSgprs                = " << stats.num_sgprs_used << std::endl;
+    statistics_stream << "    - resourceUsage.ldsSizePerLocalWorkGroup    = " << stats.lds_size_available << std::endl;
+    statistics_stream << "    - resourceUsage.ldsUsageSizeInBytes         = " << stats.lds_size_used << std::endl;
+    statistics_stream << "    - resourceUsage.scratchMemUsageInBytes      = " << stats.scratch_memory_used << std::endl;
+    statistics_stream << "    - numPhysicalVgprs                          = " << 1536 << std::endl;
+    statistics_stream << "    - numPhysicalSgprs                          = " << 2048 << std::endl;
+    statistics_stream << "    - numAvailableVgprs                         = " << stats.num_vgprs_available << std::endl;
+    statistics_stream << "    - numAvailableSgprs                         = " << stats.num_sgprs_available << std::endl;
+
+    if (is_compute_bit_set)
+    {
+        statistics_stream << "    - computeWorkGroupSize" << 0 << " = " << stats.num_threads_per_group_x << std::endl;
+        statistics_stream << "    - computeWorkGroupSize" << 1 << " = " << stats.num_threads_per_group_y << std::endl;
+        statistics_stream << "    - computeWorkGroupSize" << 2 << " = " << stats.num_threads_per_group_z << std::endl;
+    }
+
+    return statistics_stream.str();
+}
+
+beKA::AnalysisData KcCLICommanderVulkanUtil::PopulateAnalysisData(size_t              pos,
+                                                                  const std::string&  amdgpu_dis_md_str,
+                                                                  const std::string&  current_device)
+{
+    beKA::AnalysisData stats;
+    stats.lds_size_used       = ParseHardwareStageProp(pos, amdgpu_dis_md_str, kAmdgpuDisDotLdsSizeToken);
+    stats.scratch_memory_used = ParseHardwareStageProp(pos, amdgpu_dis_md_str, kAmdgpuDisDotScratchMemorySizeToken);
+    stats.num_sgprs_used      = ParseHardwareStageProp(pos, amdgpu_dis_md_str, kAmdgpuDisDotSgprCountToken);
+    stats.num_sgprs_available = ParseHardwareStageProp(pos, amdgpu_dis_md_str, kAmdgpuDisDotSgprLimitToken);
+    stats.num_vgprs_used      = ParseHardwareStageProp(pos, amdgpu_dis_md_str, kAmdgpuDisDotVgprCountToken);
+    stats.num_vgprs_available = ParseHardwareStageProp(pos, amdgpu_dis_md_str, kAmdgpuDisDotVgprLimitToken);
+    if (kRgaDeviceProps.count(current_device))
+    {
+        // Lambda returning hardcoded value if value = -1 or the value itself otherwise.
+        auto               hardcoded_or = [](uint64_t val, uint64_t hc_val) { return (val == (int64_t)-1 ? hc_val : val); };
+        const DeviceProps& deviceProps  = kRgaDeviceProps.at(current_device);
+        stats.lds_size_available        = deviceProps.available_lds_bytes;
+        stats.num_sgprs_available       = hardcoded_or(stats.num_sgprs_available, deviceProps.available_sgprs);
+        stats.num_vgprs_available       = hardcoded_or(stats.num_vgprs_available, deviceProps.available_vgprs);
+    }
+    return stats;
+}
+
+bool WriteStatsFile(const std::string&        amdgpu_dis_md_str,
+                    const std::string&        hw_stage,
+                    uint32_t                  stage,
+                    const RgVkOutputMetadata& device_md,
+                    LoggingCallbackFunction   callback,
+                    BeVkPipelineFiles&        isa_files,
+                    BeVkPipelineFiles&        stats_files)
+{
+    bool is_file_written = false;
+    if (!hw_stage.empty() && stage < BePipelineStage::kCount)
+    {
+        size_t curr_pos = amdgpu_dis_md_str.find(GetHardwareStageDotTokenStr(hw_stage));
+        if (curr_pos != std::string::npos)
+        {
+            beKA::AnalysisData stats{KcCLICommanderVulkanUtil::PopulateAnalysisData(curr_pos, amdgpu_dis_md_str, device_md[stage].device)};
+            bool               is_compute_bit_set = KcUtils::IsComputeBitSet(device_md[stage].entry_type);
+            std::string        stats_str          = KcCLICommanderVulkanUtil::BuildStatisticsStr(stats, stage, is_compute_bit_set);
+
+            is_file_written = KcUtils::WriteTextFile(device_md[stage].stats_file, stats_str, callback);
+            if (is_file_written)
+            {
+                isa_files[stage]   = device_md[stage].isa_file;
+                stats_files[stage] = device_md[stage].stats_file;
+            }
+        }
+    }
+    return is_file_written;
+}
+
+bool WriteStatsFileWithHwMapping(uint32_t                                  stage,
+                                 const std::string&                        amdgpu_dis_md_str,
+                                 const std::map<std::string, std::string>& shader_to_disassembly,
+                                 const RgVkOutputMetadata&                 device_md,
+                                 BeVkPipelineFiles&                        isa_files,
+                                 BeVkPipelineFiles&                        stats_files,
+                                 LoggingCallbackFunction                   callback)
+{
+    bool        ret             = false;
+    const auto& dx12_stage_name = kStrDx12StageNames[stage];
+    std::string hw_mapping_name;
+    bool        valid_hw_mapping_found = beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdgpu_dis_md_str, dx12_stage_name, hw_mapping_name);
+    if (valid_hw_mapping_found && shader_to_disassembly.find(hw_mapping_name) != shader_to_disassembly.end())
+    {
+        bool is_file_written = WriteStatsFile(amdgpu_dis_md_str, hw_mapping_name, stage, device_md, callback, isa_files, stats_files);
+        assert(is_file_written);
+        if (KcUtils::FileNotEmpty(stats_files[stage]))
+        {
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+void WriteIsaFileWithHardcodedMapping(uint32_t                                  stage,
+                                      const std::string&                        amdgpu_dis_md_str,
+                                      const std::map<std::string, std::string>& shader_to_disassembly,
+                                      const RgVkOutputMetadata&                 device_md,
+                                      BeVkPipelineFiles&                        isa_files,
+                                      BeVkPipelineFiles&                        stats_files,
+                                      LoggingCallbackFunction                   callback)
+{
+    // Count the number of input shaders, since this changes the pipeline type and impacts merged shaders.
+    const bool is_input_hs = !device_md[BePipelineStage::kTessellationControl].stats_file.empty();
+
+    std::string amdgpu_stage_name;
+    bool        is_valid_stage = BeUtils::BePipelineStageToAmdgpudisStageName(static_cast<BePipelineStage>(stage), amdgpu_stage_name);
+    assert(is_valid_stage);
+    if (is_valid_stage)
+    {
+        if (shader_to_disassembly.find(amdgpu_stage_name) != shader_to_disassembly.end())
+        {
+            bool is_file_written = WriteStatsFile(amdgpu_dis_md_str, amdgpu_stage_name, stage, device_md, callback, isa_files, stats_files);
+            assert(is_file_written);
+            if (!KcUtils::FileNotEmpty(stats_files[stage]))
+            {
+                const char* kErrCannotWriteStatsFileA = "Error: failed to write shader statistics for amdgpu stage ";
+                const char* kErrCannotWriteStatsFileB = ", output file name ";
+                std::cout << kErrCannotWriteStatsFileA << amdgpu_stage_name << kErrCannotWriteStatsFileB << device_md[stage].stats_file << std::endl;
+            }
+        }
+        else
+        {
+            bool is_file_written = false;
+
+            // Special case for merged shaders.
+            if (stage == BePipelineStage::kVertex)
+            {
+                if (is_input_hs && shader_to_disassembly.find("hs") != shader_to_disassembly.end())
+                {
+                    // Either VS-HS-DS-GS-PS or VS-HS-DS-PS: Use "hs" disassembly instead.
+                    is_file_written = WriteStatsFile(amdgpu_dis_md_str, "hs", stage, device_md, callback, isa_files, stats_files);
+                }
+                else if (shader_to_disassembly.find("gs") != shader_to_disassembly.end())
+                {
+                    // VS-PS or VS-GS-PS: Use "gs" disassembly instead.
+                    is_file_written = WriteStatsFile(amdgpu_dis_md_str, "gs", stage, device_md, callback, isa_files, stats_files);
+                }
+            }
+            else if (stage == BePipelineStage::kTessellationEvaluation)
+            {
+                if (shader_to_disassembly.find("gs") != shader_to_disassembly.end())
+                {
+                    // Use "gs" disassembly instead.
+                    is_file_written = WriteStatsFile(amdgpu_dis_md_str, "gs", stage, device_md, callback, isa_files, stats_files);
+                }
+            }
+
+            assert(is_file_written);
+            if (!is_file_written)
+            {
+                const char*       kErrorCannotDetectMergedStage = "Error: unable to detect merged stage for ";
+                std::stringstream msg;
+                msg << kErrorCannotDetectMergedStage << amdgpu_stage_name << " shader." << std::endl;
+                std::cout << msg.str() << std::endl;
+            }
+        }
+    }
+}
+
+void KcCLICommanderVulkanUtil::ExtractStatistics(const Config&                            config,
+                                                const std::string&                        device,
+                                                const std::string&                        amdgpu_dis_output,
+                                                const std::map<std::string, std::string>& shader_to_disassembly)
+{
+    bool ret = true;
+
+    std::string base_stats_filename = config.analysis_file;
+    beStatus    status              = kBeStatusSuccess;
+
+    std::string amdgpu_dis_md_str;
+    bool        isOk = beProgramBuilderVulkan::GetAmdgpuDisMetadataStr(amdgpu_dis_output, amdgpu_dis_md_str);
+    assert(!amdgpu_dis_md_str.empty() && isOk);
+    if (!amdgpu_dis_md_str.empty() && isOk)
+    {
+        auto itr = output_metadata_.find(device);
+        if (itr != output_metadata_.end())
+        {
+            // device md exists.
+            bool               is_ok         = true;
+            const std::string& device_string = itr->first;
+            auto&              device_md     = itr->second;
+            BeVkPipelineFiles  isa_files, stats_files;
+
+            // Parse amdgpu-dis output.
+            if (!shader_to_disassembly.empty())
+            {
+                // Write the Stats files.
+                for (uint32_t stage = BePipelineStage::kVertex; stage < BePipelineStage::kCount; stage++)
+                {
+                    if (!device_md[stage].stats_file.empty())
+                    {
+                        bool is_file_written =
+                            WriteStatsFileWithHwMapping(stage, amdgpu_dis_md_str, shader_to_disassembly, device_md, isa_files, stats_files, log_callback_);
+                        if (!is_file_written)
+                        {
+                            std::string amdgpu_stage_name;
+                            bool        is_valid_stage = BeUtils::BePipelineStageToAmdgpudisStageName(static_cast<BePipelineStage>(stage), amdgpu_stage_name);
+                            assert(is_valid_stage);
+                            if (is_valid_stage)
+                            {
+                                const char* kWarnCannotWriteStatsFileA = "Warning: failed to find hardware mapping for amdgpu stage ";
+                                const char* kWarnCannotWriteStatsFileB = ", falling back to hardcoded mapping for shader statistics... ";
+                                std::cout << kWarnCannotWriteStatsFileA << amdgpu_stage_name << kWarnCannotWriteStatsFileB << "\n";
+                            }
+
+                            WriteIsaFileWithHardcodedMapping(stage, amdgpu_dis_md_str, shader_to_disassembly, device_md, isa_files, stats_files, log_callback_);
+                        }
+                    }
+                }
+            }
+
+            status = KcCLICommanderVulkanUtil::ConvertStats(isa_files, stats_files, config, device_string);
+        }
+    }
 }

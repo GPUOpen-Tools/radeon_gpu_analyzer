@@ -167,9 +167,11 @@ bool KcCliCommander::GetParsedIsaCsvText(const std::string& isaText, const std::
     return ret;
 }
 
-bool KcCliCommander::InitRequestedAsicList(const std::vector<std::string>& devices, RgaMode mode,
-    const std::set<std::string>& supported_devices,
-    std::set<std::string>& matched_devices, bool allow_unknown_devices)
+bool KcCliCommander::InitRequestedAsicList(const std::vector<std::string>& devices,
+                                           beKA::RgaMode                   mode,
+                                           const std::set<std::string>&    supported_devices,
+                                           std::set<std::string>&          matched_devices, 
+                                           bool                            allow_unknown_devices)
 {
     if (!devices.empty())
     {
@@ -224,7 +226,7 @@ bool KcCliCommander::InitRequestedAsicList(const std::vector<std::string>& devic
 
 beKA::beStatus KcCliCommander::WriteIsaToFile(const std::string& fileName, const std::string& isaText)
 {
-    beStatus ret = beStatus::kBeStatusInvalid;
+    beKA::beStatus ret = beKA::beStatus::kBeStatusInvalid;
     ret = KcUtils::WriteTextFile(fileName, isaText, log_callback_) ?
         beKA::kBeStatusSuccess : beKA::kBeStatusWriteToFileFailed;
     if (ret != beKA::kBeStatusSuccess)

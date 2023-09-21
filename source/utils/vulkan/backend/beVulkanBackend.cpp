@@ -7,6 +7,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include <limits>
 
 // Infra.
 #include <cxxopts/include/cxxopts.hpp>

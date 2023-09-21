@@ -179,6 +179,8 @@ RgMenuFileItemOpencl::RgMenuFileItemOpencl(const std::string& file_full_path, Rg
 
 void RgMenuFileItemOpencl::enterEvent(QEvent* event)
 {
+    Q_UNUSED(event);
+
     ui_.closeButton->show();
 
     // Change the item color.
@@ -187,6 +189,8 @@ void RgMenuFileItemOpencl::enterEvent(QEvent* event)
 
 void RgMenuFileItemOpencl::leaveEvent(QEvent* event)
 {
+    Q_UNUSED(event);
+
     ui_.closeButton->hide();
 
     // Change the item color.
@@ -195,22 +199,30 @@ void RgMenuFileItemOpencl::leaveEvent(QEvent* event)
 
 void RgMenuFileItemOpencl::mouseDoubleClickEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event);
+
     // On double-click, allow the user to re-name the item's filename.
     ShowRenameControls(true);
 }
 
 void RgMenuFileItemOpencl::mousePressEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event);
+
     emit MenuItemSelected(this);
 }
 
 void RgMenuFileItemOpencl::resizeEvent(QResizeEvent *event)
 {
+    Q_UNUSED(event);
+
     UpdateFilenameLabelText();
 }
 
 void RgMenuFileItemOpencl::showEvent(QShowEvent *event)
 {
+    Q_UNUSED(event);
+
     UpdateFilenameLabelText();
 }
 

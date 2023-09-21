@@ -523,6 +523,8 @@ void RgGlobalSettingsView::HandleProjectFileLocationBrowseButtonClick(bool /* ch
 
 void RgGlobalSettingsView::HandleIncludeFilesViewerBrowseButtonClick(bool checked)
 {
+    Q_UNUSED(checked);
+
     // Get the current viewer.
     QString current_viewer = QString::fromStdString(initial_settings_.log_file_location);
 
@@ -792,6 +794,8 @@ void RgGlobalSettingsView::CreateColumnVisibilityControls()
 
 void RgGlobalSettingsView::HandleProjectNameCheckboxStateChanged(int checked)
 {
+    Q_UNUSED(checked);
+
     // Signal to any listeners that the values in the UI have changed.
     HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
@@ -902,6 +906,8 @@ void RgGlobalSettingsView::HandleProjectFileEditBoxChanged(const QString& text)
 
 void RgGlobalSettingsView::HandleTextBoxChanged(const QString& text)
 {
+    Q_UNUSED(text);
+
     // Figure out the sender and process appropriately.
     QObject* sender = QObject::sender();
     assert(sender != nullptr);
@@ -912,8 +918,8 @@ void RgGlobalSettingsView::HandleTextBoxChanged(const QString& text)
     // Signal whether the text box is empty or not.
     if (line_edit != nullptr)
     {
-        QString text = line_edit->text();
-        if (text.isEmpty())
+        QString text_value = line_edit->text();
+        if (text_value.isEmpty())
         {
             emit InputFileNameBlankSignal(true);
         }
@@ -929,6 +935,8 @@ void RgGlobalSettingsView::HandleTextBoxChanged(const QString& text)
 
 void RgGlobalSettingsView::HandleComboBoxChanged(int index)
 {
+    Q_UNUSED(index);
+
     // Signal to any listeners that the values in the UI have changed.
     HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
@@ -1005,6 +1013,8 @@ std::string RgGlobalSettingsView::GetTitleString()
 
 void RgGlobalSettingsView::HandleFontFamilyChanged(const QFont& font)
 {
+    Q_UNUSED(font);
+
     // Signal to any listeners that the values in the UI have changed.
     HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
@@ -1042,6 +1052,5 @@ bool RgGlobalSettingsView::IsInputFileBlank() const
 {
     return ui_.assocExtGlslLineEdit->text().isEmpty() || ui_.assocExtHlslLineEdit->text().isEmpty() || ui_.assocExtSpvasLineEdit->text().isEmpty() ||
            ui_.assocExtSpvBinaryLineEdit->text().isEmpty();
-
 }
 

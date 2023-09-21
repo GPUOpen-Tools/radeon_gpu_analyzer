@@ -1,14 +1,9 @@
 //======================================================================
-// Copyright 2020-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
 //======================================================================
-
-#define _HAS_STD_BYTE 0
 
 // C++.
 #include <locale>
-#ifdef _WIN32
-    #include <codecvt>
-#endif
 #include <string>
 #include <cassert>
 
@@ -54,12 +49,12 @@ bool Backend::LogCallBack(const std::string& msg)
     return ret;
 }
 
-beKA::beStatus Backend::Initialize(BuiltProgramKind program_kind, LoggingCallBackFuncP callback)
+beKA::beStatus Backend::Initialize(beKA::BuiltProgramKind program_kind, LoggingCallBackFuncP callback)
 {
-    beKA::beStatus ret = kBeStatusGeneralFailed;
+    beKA::beStatus ret = beKA::beStatus::kBeStatusGeneralFailed;
     log_callback_ = callback;
 
-    if (builder_opencl_ == nullptr && program_kind == kProgramTypeOpencl)
+    if (builder_opencl_ == nullptr && program_kind == beKA::BuiltProgramKind::kProgramTypeOpencl)
     {
         builder_opencl_ = new BeProgramBuilderOpencl();
     }
@@ -70,14 +65,14 @@ beKA::beStatus Backend::Initialize(BuiltProgramKind program_kind, LoggingCallBac
 
         ret = builder_opencl_->Initialize();
 
-        if (supported_public_devices_.empty() && ret == kBeStatusSuccess)
+        if (supported_public_devices_.empty() && ret == beKA::beStatus::kBeStatusSuccess)
         {
             builder_opencl_->GetSupportedPublicDevices(supported_public_devices_);
         }
     }
 
 #ifdef _WIN32
-    if (program_kind == kProgramTypeDx11)
+    if (program_kind == beKA::BuiltProgramKind::kProgramTypeDx11)
     {
         // Initialize the DX backend.
         // Release the old DX driver since we can initialize each run with a different dx dll.
@@ -111,10 +106,10 @@ Backend::~Backend()
 beKA::beStatus Backend::GetDeviceInfo(const std::string& device_name, GDT_DeviceInfo& gdt_device_info)
 {
     bool ret = AMDTDeviceInfoUtils::Instance()->GetDeviceInfo(device_name.c_str(), gdt_device_info);
-    return ret ? kBeStatusSuccess : kBeStatusNoDeviceFound;
+    return ret ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusNoDeviceFound;
 }
 
-beStatus Backend::GetDeviceInfo(const std::string& device_name, const std::vector<GDT_GfxCardInfo>** info)
+beKA::beStatus Backend::GetDeviceInfo(const std::string& device_name, const std::vector<GDT_GfxCardInfo>** info)
 {
     std::vector<GDT_GfxCardInfo> device_info;
     bool ret = AMDTDeviceInfoUtils::Instance()->GetDeviceInfo(device_name.c_str(), device_info);
@@ -124,7 +119,7 @@ beStatus Backend::GetDeviceInfo(const std::string& device_name, const std::vecto
         *info = ret ? &device_info : nullptr;
     }
 
-    return ret ? kBeStatusSuccess : kBeStatusNoDeviceFound;
+    return ret ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusNoDeviceFound;
 }
 
 // This is a temporary implementation until the following function:
@@ -132,35 +127,35 @@ beStatus Backend::GetDeviceInfo(const std::string& device_name, const std::vecto
 // is being fixed to accept GDT_GfxCardInfo& instead of the meaningless std::vector that it currently accepts.
 // In the end we should have only a single implementation of that function, accepting a GDT_GfxCardInfo&, but
 // without the copy which is being made in this implementation.
-beStatus Backend::GetDeviceInfo(const std::string& device_name, GDT_GfxCardInfo& info)
+beKA::beStatus Backend::GetDeviceInfo(const std::string& device_name, GDT_GfxCardInfo& info)
 {
-    beStatus ret = kBeStatusNoDeviceFound;
+    beKA::beStatus               ret = beKA::beStatus::kBeStatusNoDeviceFound;
     std::vector<GDT_GfxCardInfo> temp_device_info;
     bool rc = AMDTDeviceInfoUtils::Instance()->GetDeviceInfo(device_name.c_str(), temp_device_info);
 
     if (rc && (temp_device_info.empty() == false))
     {
         info = temp_device_info[0];
-        ret = kBeStatusSuccess;
+        ret  = beKA::beStatus::kBeStatusSuccess;
     }
 
     return ret;
 }
 
-beStatus Backend::GetDeviceInfo(size_t device_id, GDT_GfxCardInfo& info)
+beKA::beStatus Backend::GetDeviceInfo(size_t device_id, GDT_GfxCardInfo& info)
 {
-    return AMDTDeviceInfoUtils::Instance()->GetDeviceInfo(device_id, 0, info) ? kBeStatusSuccess : kBeStatusNoDeviceFound;
+    return AMDTDeviceInfoUtils::Instance()->GetDeviceInfo(device_id, 0, info) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusNoDeviceFound;
 }
 
-beStatus Backend::GetDeviceInfoMarketingName(const std::string& device_name, std::vector<GDT_GfxCardInfo>& info)
+beKA::beStatus Backend::GetDeviceInfoMarketingName(const std::string& device_name, std::vector<GDT_GfxCardInfo>& info)
 {
     bool ret = AMDTDeviceInfoUtils::Instance()->GetDeviceInfoMarketingName(device_name.c_str(), info);
-    return ret ? kBeStatusSuccess : kBeStatusNoDeviceFound;
+    return ret ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusNoDeviceFound;
 }
 
-beStatus Backend::GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& table_entry, unsigned int& chip_family, unsigned int& chip_revision)
+beKA::beStatus Backend::GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& table_entry, unsigned int& chip_family, unsigned int& chip_revision)
 {
-    beStatus ret = kBeStatusSuccess;
+    beKA::beStatus ret = beKA::beStatus::kBeStatusSuccess;
     chip_family = (unsigned int)-1;
     chip_revision = (unsigned int)-1;
 
@@ -169,67 +164,67 @@ beStatus Backend::GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& table_entry
     case GDT_GFX11_0_2:
         chip_family   = FAMILY_NV3;
         chip_revision = PRID_NV3_NAVI33_00;
-        ret           = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX11_0_0:
         chip_family   = FAMILY_NV3;
         chip_revision = PRID_NV3_NAVI31_00;
-        ret           = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX10_3_5:
         chip_family   = FAMILY_RMB;
         chip_revision = REMBRANDT_A0;
-        ret           = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX10_3_4:
         chip_family   = FAMILY_NV;
         chip_revision = NV_NAVI24_P_A0;
-        ret           = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX10_3_2:
         chip_family = FAMILY_NV;
         chip_revision = NV_NAVI23_P_A0;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX10_3_1:
         chip_family = FAMILY_NV;
         chip_revision = NV_NAVI22_P_A0;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX10_3_0:
         chip_family = FAMILY_NV;
         chip_revision = NV_NAVI21_P_A0;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX10_1_2:
         chip_family = FAMILY_NV;
         chip_revision = NV_NAVI14_M_A0;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX10_1_1:
         chip_family = FAMILY_NV;
         chip_revision = NV_NAVI12_P_A0;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX10_1_0:
         chip_family = FAMILY_NV;
         chip_revision = NV_NAVI10_P_A0;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX9_0_6:
         chip_family = FAMILY_AI;
         chip_revision = AI_VEGA20_P_A0;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_GFX9_0_0:
@@ -238,40 +233,40 @@ beStatus Backend::GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& table_entry
     case GDT_GFX9_0_C:
         chip_family = FAMILY_AI;
         chip_revision = AI_GD_P0;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_TAHITI_PRO:
     case GDT_TAHITI_XT:
         chip_family = FAMILY_SI;
         chip_revision = SI_TAHITI_P_B1;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_PITCAIRN_PRO:
     case GDT_PITCAIRN_XT:
         chip_family = FAMILY_SI;
         chip_revision = SI_PITCAIRN_PM_A1;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_CAPEVERDE_PRO:
     case GDT_CAPEVERDE_XT:
         chip_family = FAMILY_SI;
         chip_revision = SI_CAPEVERDE_M_A1;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_OLAND:
         chip_family = FAMILY_SI;
         chip_revision = SI_OLAND_M_A0;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_HAINAN:
         chip_family = FAMILY_SI;
         chip_revision = SI_HAINAN_V_A0;
-        ret = kBeStatusSuccess;
+        ret           = beKA::beStatus::kBeStatusSuccess;
         break;
 
     case GDT_BONAIRE:
@@ -346,7 +341,7 @@ beStatus Backend::GetDeviceChipFamilyRevision(const GDT_GfxCardInfo& table_entry
     default:
         // The 600's EG, and NI are no longer supported by OpenCL.
         // For GSA the earliest DX/GL support is SI.
-        ret = kBeStatusNoDeviceFound;
+        ret = beKA::beStatus::kBeStatusNoDeviceFound;
         assert(false);
         break;
     }
@@ -377,7 +372,7 @@ bool Backend::GetSupportedPublicDevices(std::set<std::string>& devices)
 
         beKA::beStatus rc = builder_opencl_->Initialize();
 
-        if (rc == kBeStatusSuccess)
+        if (rc == beKA::beStatus::kBeStatusSuccess)
         {
             // Retrieve the supported public devices from the OpenCL runtime.
             builder_opencl_->GetSupportedPublicDevices(devices);

@@ -38,6 +38,8 @@ protected:
     // A column-filtering predicate.
     virtual bool filterAcceptsColumn(int source_column, const QModelIndex &source_parent) const override
     {
+        Q_UNUSED(source_parent);
+
         // Ask the model if the given column index should be displayed.
         return source_model_->IsColumnVisible(source_column);
     }
@@ -402,6 +404,8 @@ void RgIsaDisassemblyTableView::HandleOpenDisassemblyInFileBrowserClicked()
 
 void RgIsaDisassemblyTableView::HandleCurrentSelectionChanged(const QItemSelection& selected, const QItemSelection& /*deselected*/)
 {
+    Q_UNUSED(selected);
+
     // Use the model's current selection to check what needs to be highlighted.
     QItemSelectionModel* selection_model = ui_.instructionsTreeView->selectionModel();
     assert(selection_model != nullptr);

@@ -346,7 +346,7 @@ void KcCliCommanderCL::Analysis(const Config& config)
                         continue;
                     }
 
-                    AnalysisData analysis;
+                    beKA::AnalysisData analysis;
                     (void)memset(&analysis, 0, sizeof(analysis));
                     beStatus status = be_->theOpenCLBuilder()->GetStatistics(required_target, kernel_name, analysis);
                     if (status != kBeStatusSuccess)

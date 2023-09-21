@@ -219,6 +219,8 @@ void RgMenuPipelineStateItem::dropEvent(QDropEvent* event)
 
 void RgMenuPipelineStateItem::dragLeaveEvent(QDragLeaveEvent* event)
 {
+    Q_UNUSED(event);
+
     // Change the item's background color.
     SetCurrent(false);
 }

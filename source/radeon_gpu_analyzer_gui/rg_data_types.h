@@ -639,3 +639,4 @@ struct RgIsaLineLabel : RgIsaLine
 };
 
 #endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DATA_TYPES_H_
+

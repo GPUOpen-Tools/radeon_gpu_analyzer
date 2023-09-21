@@ -1,5 +1,5 @@
 //=====================================================================
-// Copyright 2016-2020 (c), Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2016-2023 (c), Advanced Micro Devices, Inc. All rights reserved.
 //
 /// \author AMD Developer Tools Team
 /// \file gtASCIIString.cpp
@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <limits.h>
+#include <limits>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>

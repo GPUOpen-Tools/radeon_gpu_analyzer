@@ -6,9 +6,9 @@
                 "Major" : 2,
                 "Minor" : 7,
                 "Patch" : 0,
-                "Build" : 115
+                "Build" : 129
             },
-            "ReleaseDate": "2022-12-14",
+            "ReleaseDate": "2023-01-05",
             "ReleaseTitle": "Radeon GPU Analyzer 2.7",
             "ReleasePlatforms": [ "Windows" ],
             "ReleaseType" : "GA",
@@ -25,9 +25,14 @@
             ],
           "DownloadLinks": [
             {
-              "URL": "https://gpuopen.com/download/radeon-developer-tool-suite/RadeonDeveloperToolSuite-2022-12-12-1037.zip",
+              "URL": "https://gpuopen.com/rdts-windows/",
               "PackageType": "ZIP",
               "PackageName": "RDTS-ZIP"
+            },
+            {
+              "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.7/rga-windows-2.7.msi",
+              "PackageType": "MSI",
+              "PackageName": "RGA-MSI"
             },
             {
               "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.7/rga-windows-x64-2.7.zip",
@@ -43,7 +48,7 @@
                 "Patch" : 0,
                 "Build" : 116
             },
-            "ReleaseDate": "2022-12-14",
+            "ReleaseDate": "2023-01-05",
             "ReleaseTitle": "Radeon GPU Analyzer 2.7",
             "ReleasePlatforms": [ "Ubuntu" ],
             "ReleaseType" : "GA",
@@ -60,7 +65,7 @@
             ],
           "DownloadLinks": [
             {
-              "URL": "https://gpuopen.com/download/radeon-developer-tool-suite/RadeonDeveloperToolSuite-2022-12-12-1037.tgz",
+              "URL": "https://gpuopen.com/rdts-linux/",
               "PackageType": "TAR",
               "PackageName": "RDTS-TAR"
             },

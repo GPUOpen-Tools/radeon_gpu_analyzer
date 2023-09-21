@@ -41,12 +41,12 @@ public:
         return module_name_;
     };
 
-	using AMDDXXModule::AmdDxGsaCompileShader;
-
-	using AMDDXXModule::AmdDxGsaFreeCompiledShader;
-
-	using AMDDXXModule::UnloadModule;
-
-	using AMDDXXModule::IsLoaded;
+    using AMDDXXModule::AmdDxGsaCompileShader;
+    
+    using AMDDXXModule::AmdDxGsaFreeCompiledShader;
+	
+    using AMDDXXModule::UnloadModule;
+    
+    using AMDDXXModule::IsLoaded;
 
 };

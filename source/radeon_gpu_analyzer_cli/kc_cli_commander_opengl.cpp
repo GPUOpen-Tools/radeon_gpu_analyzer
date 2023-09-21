@@ -134,12 +134,12 @@ void KcCliCommanderOpenGL::Version(Config& config, LoggingCallbackFunction callb
 
     KcCliCommander::Version(config, callback);
 
-    if (ogl_builder_ != nullptr)
-    {
-        gtString gl_version;
-        bool rc = ogl_builder_->GetOpenGLVersion(config.print_process_cmd_line, gl_version);
-        callback(((rc && !gl_version.isEmpty()) ? std::string(gl_version.asASCIICharArray()) : kStrErrorOpenglCannotExtractVersion) + "\n");
-    }
+    //if (ogl_builder_ != nullptr)
+    //{
+    //    gtString gl_version;
+    //    bool rc = ogl_builder_->GetOpenGLVersion(config.print_process_cmd_line, gl_version);
+    //    callback(((rc && !gl_version.isEmpty()) ? std::string(gl_version.asASCIICharArray()) : kStrErrorOpenglCannotExtractVersion) + "\n");
+    //}
 }
 
 bool KcCliCommanderOpenGL::PrintAsicList(const Config&)
@@ -457,7 +457,7 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                     gtString glc_output;
                     gtString build_log;
                     beKA::beStatus buildStatus = ogl_builder_->Compile(gl_options, should_cancel, config.print_process_cmd_line, glc_output, build_log);
-                    if (buildStatus == kBeStatusSuccess)
+                    if (buildStatus == beKA::beStatus::kBeStatusSuccess)
                     {
                         log_msg << kStrInfoSuccess << std::endl;
 
@@ -478,7 +478,7 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                                 {
                                     if ((status = KcUtils::ReadTextFile(isa_filename.asASCIICharArray(), isa_text, log_callback_)) == true)
                                     {
-                                        status = (BeProgramBuilder::ParseIsaToCsv(isa_text, device, parsed_isa_text) == beStatus::kBeStatusSuccess);
+                                        status = (BeProgramBuilder::ParseIsaToCsv(isa_text, device, parsed_isa_text) == beKA::beStatus::kBeStatusSuccess);
                                         if (status)
                                         {
                                             status = KcUtils::GetParsedISAFileName(isa_filename.asASCIICharArray(), parsed_isa_file_name);

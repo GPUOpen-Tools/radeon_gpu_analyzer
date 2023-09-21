@@ -1,6 +1,6 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//======================================================================
+// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
+//======================================================================
 
 // C++.
 #include <sstream>
@@ -36,8 +36,11 @@ static const std::map<std::string, std::string> kVkAmdllpcTargetsToDeviceInfoTar
                                                                                         {"gfx1034", "10.3.4"},
                                                                                         {"gfx1035", "10.3.5"},
                                                                                         {"gfx1100", "11.0.0"},
-                                                                                        {"gfx1102", "11.0.0"}};  
-// gfx1102 is not supported by amdllpc as of 01/03/2023.
+                                                                                        {"gfx1101", "11.0.1"},
+                                                                                        {"gfx1102", "11.0.2"},
+                                                                                        {"gfx1103", "11.0.3"}};  
+// gfx110x is not supported by amdllpc as of 07/11/2023.
+
 
 static bool GetAmdllpcPath(std::string& amdllpc_path)
 {
@@ -55,6 +58,7 @@ static bool GetAmdllpcGfxIpForVulkan(const VkOfflineOptions& vulkan_options, std
 {
     bool ret = false;
     gfx_ip_str.clear();
+
     auto itr = kVkAmdllpcTargetsToDeviceInfoTargets.find(vulkan_options.target_device_name);
     if (itr != kVkAmdllpcTargetsToDeviceInfoTargets.end())
     {

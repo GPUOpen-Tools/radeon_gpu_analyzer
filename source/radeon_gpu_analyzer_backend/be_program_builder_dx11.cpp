@@ -35,8 +35,6 @@
 // CLI.
 #include "source/radeon_gpu_analyzer_cli/kc_utils.h"
 
-using namespace std;
-
 #define D3D_COMPILE_STANDARD_FILE_INCLUDE ((ID3DInclude*)(UINT_PTR)1)
 
 // *****************************************
@@ -66,7 +64,7 @@ static const char* STR_ERROR_D3D_COMPILER_EXCEPTION = "Error: exception occurred
 // This function returns true if the given device is
 // affected by the HW issue which forces an allocation of
 // a fixed number of SGPRs.
-static bool IsFixedSgprAlloc(const string& deviceName)
+static bool IsFixedSgprAlloc(const std::string& deviceName)
 {
     // DX only: due to a HW bug, SGPR allocation for
     // Tonga and Iceland devices should be fixed (94 prior to
@@ -125,8 +123,8 @@ beKA::beStatus BeProgramBuilderDx11::CompileAMDIL(const std::string& program_sou
 
     if (result != S_OK)
     {
-        stringstream ss;
-        ss << AMDDXXModule::s_DefaultModuleName << " AmdDxGsaCompileShader failed." << endl;
+        std::stringstream ss;
+        ss << AMDDXXModule::s_DefaultModuleName << " AmdDxGsaCompileShader failed." << std::endl;
         LogCallback(ss.str());
 
         if (shader_output.pShaderBinary != NULL)
@@ -138,7 +136,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileAMDIL(const std::string& program_sou
     }
 
     // Open the binaries as CElf objects.
-    vector<char> elfBinary((char*)shader_output.pShaderBinary, (char*)shader_output.pShaderBinary + shader_output.shaderBinarySize);
+    std::vector<char> elfBinary((char*)shader_output.pShaderBinary, (char*)shader_output.pShaderBinary + shader_output.shaderBinarySize);
     CElf* curr_elf = new CElf(elfBinary);
 
     if (curr_elf->good())
@@ -148,7 +146,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileAMDIL(const std::string& program_sou
     else
     {
         // Report about the failure.
-        stringstream ss;
+        std::stringstream ss;
         ss << "Unable to parse ELF binary.\n";
         LogCallback(ss.str());
 
@@ -212,8 +210,8 @@ beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_na
     {
         if (print_process_cmd_line)
         {
-            stringstream ss;
-            ss << "Info: " << amd_dxx_module_.GetModuleName() << " module loaded.\n" << endl;
+            std::stringstream ss;
+            ss << "Info: " << amd_dxx_module_.GetModuleName() << " module loaded.\n" << std::endl;
             LogCallback(ss.str());
         }
     }
@@ -221,8 +219,8 @@ beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_na
     {
         // Notice: This message receives an extra "\n", since later in the call chain, one is removed. We do want to remove them for
         // the rest of the messages, so we only remove it for initialization messages:
-        stringstream ss;
-        ss << "Error: " << AMDDXXModule::s_DefaultModuleName << " module not loaded.\n\n" << endl;
+        std::stringstream ss;
+        ss << "Error: " << AMDDXXModule::s_DefaultModuleName << " module not loaded.\n\n" << std::endl;
         LogCallback(ss.str());
         be_rc = kBeStatusAmdxxModuleNotLoaded;
     }
@@ -257,7 +255,7 @@ beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_na
         {
             // Check if the additional search paths should be searched.
             bool should_search_additional_paths = !is_dll_load &&
-                                               (fixed_ms_d3d_module_name.find(D3DCompileModule::s_DefaultModuleName) != string::npos);
+                                               (fixed_ms_d3d_module_name.find(D3DCompileModule::s_DefaultModuleName) != std::string::npos);
 
             if (should_search_additional_paths)
             {
@@ -265,7 +263,7 @@ beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_na
                 module_name_as_gtstr << D3DCompileModule::s_DefaultModuleName;
 
                 // Try searching in the additional directories (if any).
-                for (const string& path : loader_search_directories_)
+                for (const std::string& path : loader_search_directories_)
                 {
                     // Build the full path to the module.
                     gtString path_as_gtstr;
@@ -305,7 +303,7 @@ beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_na
 #endif // !_WIN64
 
                 // Generate the error message.
-                stringstream ss;
+                std::stringstream ss;
                 if (is_64_from_32_error)
                 {
                     ss << "Error: " << module_name << " is a 64-bit module, which cannot be loaded during a 32-bit build." << std::endl;
@@ -346,8 +344,8 @@ beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_na
 bool static WriteBinaryFile(const std::string& filename, const std::vector<char>& content)
 {
     bool ret = false;
-    ofstream output;
-    output.open(filename.c_str(), ios::binary);
+    std::ofstream output;
+    output.open(filename.c_str(), std::ios::binary);
 
     if (output.is_open() && !content.empty())
     {
@@ -391,7 +389,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
         if (!dx_options.defines.empty())
         {
             int i = 0;
-            for (vector<pair<string, string> >::const_iterator it = dx_options.defines.begin();
+            for (std::vector<std::pair<std::string, std::string> >::const_iterator it = dx_options.defines.begin();
                 it != dx_options.defines.end();
                 ++it, i++)
             {
@@ -452,8 +450,8 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
         {
             char* error_string = (char*)error_messages->GetBufferPointer();
             size_t error_size = error_messages->GetBufferSize();
-            stringstream ss;
-            ss << string(error_string, error_size);
+            std::stringstream ss;
+            ss << std::string(error_string, error_size);
             LogCallback(ss.str());
             error_messages->Release();
         }
@@ -493,7 +491,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
 
     if (shader_bytes != nullptr && shader_byte_count != 0)
     {
-        string sShader(shader_bytes, shader_byte_count);
+        std::string sShader(shader_bytes, shader_byte_count);
 
         // If requested by the user, disassemble D3D offline compiler's output.
         if (dx_options.should_dump_ms_intermediate && ms_intermediate_text_.empty())
@@ -506,7 +504,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
             {
                 shader_bytes = (char*)disassembly->GetBufferPointer();
                 shader_byte_count = disassembly->GetBufferSize();
-                ms_intermediate_text_ = string(shader_bytes, shader_byte_count);
+                ms_intermediate_text_ = std::string(shader_bytes, shader_byte_count);
             }
             else
             {
@@ -625,7 +623,7 @@ static bool ExtractShaderCode(const std::string& program_source, uint32_t& code_
     return ret;
 }
 
-beKA::beStatus BeProgramBuilderDx11::CompileDXAsm(const string& program_source, const Dx11Options& dx_options)
+beKA::beStatus BeProgramBuilderDx11::CompileDXAsm(const std::string& program_source, const Dx11Options& dx_options)
 {
     uint32_t shader_code_size = 0;
     const char* shader_code = nullptr;
@@ -677,8 +675,8 @@ beKA::beStatus BeProgramBuilderDx11::CompileDXAsm(const string& program_source, 
 
     if (result != S_OK)
     {
-        stringstream ss;
-        ss << AMDDXXModule::s_DefaultModuleName << " AmdDxGsaCompileShader failed." << endl;
+        std::stringstream ss;
+        ss << AMDDXXModule::s_DefaultModuleName << " AmdDxGsaCompileShader failed." << std::endl;
         LogCallback(ss.str());
 
         if (shader_output.pShaderBinary != NULL)
@@ -690,7 +688,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileDXAsm(const string& program_source, 
     }
 
     // Open the binaries as CElf objects.
-    vector<char> elf_binary((char*)shader_output.pShaderBinary, (char*)shader_output.pShaderBinary + shader_output.shaderBinarySize);
+    std::vector<char> elf_binary((char*)shader_output.pShaderBinary, (char*)shader_output.pShaderBinary + shader_output.shaderBinarySize);
     CElf* curr_elf = new CElf(elf_binary);
 
     if (curr_elf->good())
@@ -700,7 +698,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileDXAsm(const string& program_source, 
     else
     {
         // Report about the failure.
-        stringstream ss;
+        std::stringstream ss;
         ss << "Unable to parse ELF binary.\n";
         LogCallback(ss.str());
 
@@ -721,7 +719,7 @@ beKA::beStatus BeProgramBuilderDx11::Compile(RgaMode mode, const std::string& pr
 {
     if (!is_initialized_)
     {
-        stringstream ss;
+        std::stringstream ss;
         ss << "DX Module not initialized";
         LogCallback(ss.str());
         return kBeStatusD3dCompilerModuleNotLoaded;
@@ -739,7 +737,7 @@ beKA::beStatus BeProgramBuilderDx11::Compile(RgaMode mode, const std::string& pr
     }
     else
     {
-        stringstream ss;
+        std::stringstream ss;
         ss << "Source language not supported";
         LogCallback(ss.str());
     }
@@ -747,7 +745,7 @@ beKA::beStatus BeProgramBuilderDx11::Compile(RgaMode mode, const std::string& pr
     return be_ret;
 }
 
-beKA::beStatus BeProgramBuilderDx11::GetISABinary(const string& device, vector<char>& binary)
+beKA::beStatus BeProgramBuilderDx11::GetISABinary(const std::string& device, std::vector<char>& binary)
 {
     const CElfSection* text_section = GetISATextSection(device);
     beStatus result = kBeStatusInvalid;
@@ -762,7 +760,7 @@ beKA::beStatus BeProgramBuilderDx11::GetISABinary(const string& device, vector<c
 
 }
 
-beKA::beStatus BeProgramBuilderDx11::GetKernelIlText(const string& device, const string& kernel, string& il)
+beKA::beStatus BeProgramBuilderDx11::GetKernelIlText(const std::string& device, const std::string& kernel, std::string& il)
 {
     // For DX shaders, we currently cannot disassemble the IL binary section.
     // For now, we extract D3D ASM code.
@@ -773,7 +771,7 @@ beKA::beStatus BeProgramBuilderDx11::GetKernelIlText(const string& device, const
     return be_ret;
 }
 
-beKA::beStatus BeProgramBuilderDx11::GetKernelIsaText(const string& device, const string& shader_name, string& isa)
+beKA::beStatus BeProgramBuilderDx11::GetKernelIsaText(const std::string& device, const std::string& shader_name, std::string& isa)
 {
     // Not implemented: see BeProgramBuilderDx11::GetDxShaderD3DASM.
     // The current inheritance architecture where BeProgramBuilderDx11 and
@@ -786,7 +784,7 @@ beKA::beStatus BeProgramBuilderDx11::GetKernelIsaText(const string& device, cons
     return kBeStatusInvalid;
 }
 
-beKA::beStatus BeProgramBuilderDx11::GetStatistics(const string& device, const string& kernel, beKA::AnalysisData& analysis)
+beKA::beStatus BeProgramBuilderDx11::GetStatistics(const std::string& device, const std::string& kernel, beKA::AnalysisData& analysis)
 {
     GT_UNREFERENCED_PARAMETER(kernel);
 
@@ -868,7 +866,7 @@ void BeProgramBuilderDx11::ReleaseProgram()
     ClearFormerBuildOutputs();
 }
 
-beKA::beStatus BeProgramBuilderDx11::GetDeviceTable(vector<GDT_GfxCardInfo>& table)
+beKA::beStatus BeProgramBuilderDx11::GetDeviceTable(std::vector<GDT_GfxCardInfo>& table)
 {
     table = dx_device_table_;
     return kBeStatusSuccess;
@@ -1005,18 +1003,18 @@ beKA::beStatus BeProgramBuilderDx11::CompileDXAsmT(const string& program_source,
 }
 #endif DXASM_T_ENABLED
 
-beKA::beStatus BeProgramBuilderDx11::GetIntermediateMsBlob(string& intermediate_ms_blob)
+beKA::beStatus BeProgramBuilderDx11::GetIntermediateMsBlob(std::string& intermediate_ms_blob)
 {
     intermediate_ms_blob = ms_intermediate_text_;
     return kBeStatusSuccess;
 }
 
-void BeProgramBuilderDx11::SetIntermediateMsBlob(const string& intermediate_ms_code)
+void BeProgramBuilderDx11::SetIntermediateMsBlob(const std::string& intermediate_ms_code)
 {
     ms_intermediate_text_ = intermediate_ms_code;
 }
 
-void BeProgramBuilderDx11::AddDxSearchDir(const string& dir)
+void BeProgramBuilderDx11::AddDxSearchDir(const std::string& dir)
 {
     if (find(loader_search_directories_.begin(),
              loader_search_directories_.end(), dir) == loader_search_directories_.end())
@@ -1025,7 +1023,7 @@ void BeProgramBuilderDx11::AddDxSearchDir(const string& dir)
     }
 }
 
-const CElfSection* BeProgramBuilderDx11::GetISATextSection(const string& device_name) const
+const CElfSection* BeProgramBuilderDx11::GetISATextSection(const std::string& device_name) const
 {
     // Get the relevant ELF section for the required device.
     const CElfSection* result = nullptr;
@@ -1033,7 +1031,7 @@ const CElfSection* BeProgramBuilderDx11::GetISATextSection(const string& device_
     if (elf != nullptr)
     {
         // There is no symbol table. We just need the .text section.
-        const string CODE_SECTION_NAME(".text");
+        const std::string CODE_SECTION_NAME(".text");
         result = elf->GetSection(CODE_SECTION_NAME);
     }
 
@@ -1105,12 +1103,12 @@ void BeProgramBuilderDx11::ExtractTextFromElfSection(const CElfSection* section,
     if (section != nullptr)
     {
         // This is the disassembly section (ASCII representation).
-        const vector<char>& section_data = section->GetData();
+        const std::vector<char>& section_data = section->GetData();
         content = std::string(section_data.begin(), section_data.end());
     }
 }
 
-bool BeProgramBuilderDx11::GetIsaSize(const string& isa_as_text, size_t& size_in_bytes) const
+bool BeProgramBuilderDx11::GetIsaSize(const std::string& isa_as_text, size_t& size_in_bytes) const
 {
     // The length in characters of a 32-bit instruction in text format.
     const size_t kInstruction32Length = 8;
@@ -1124,7 +1122,7 @@ bool BeProgramBuilderDx11::GetIsaSize(const string& isa_as_text, size_t& size_in
     size_in_bytes = 0;
 
     size_t pos_begin = isa_as_text.rfind("//");
-    if (pos_begin != string::npos)
+    if (pos_begin != std::string::npos)
     {
         size_t pos_first_32_bit_end = isa_as_text.find(':', pos_begin);
 
@@ -1133,17 +1131,17 @@ bool BeProgramBuilderDx11::GetIsaSize(const string& isa_as_text, size_t& size_in
 
         // Determine the length of the PC string.
         size_t pc_length = (pos_first_32_bit_end - pos_begin);
-        if (pos_first_32_bit_end != string::npos &&  pc_length > 0)
+        if (pos_first_32_bit_end != std::string::npos && pc_length > 0)
         {
             GT_IF_WITH_ASSERT(pos_begin + pc_length < isa_as_text.size())
             {
                 // Get the first 32 bit of the final instruction.
-                const string& instruction_first_32_bit = isa_as_text.substr(pos_begin, pc_length);
+                const std::string& instruction_first_32_bit = isa_as_text.substr(pos_begin, pc_length);
 
                 // Convert the PC of the final instruction. This will indicate
                 // how many bytes we used until the final instruction (excluding
                 // the final instruction).
-                size_in_bytes = stoul(instruction_first_32_bit, nullptr, 16);
+                size_in_bytes = std::stoul(instruction_first_32_bit, nullptr, 16);
 
                 // Get past the prefix.
                 pos_first_32_bit_end += 2;
@@ -1151,10 +1149,10 @@ bool BeProgramBuilderDx11::GetIsaSize(const string& isa_as_text, size_t& size_in
                 // Find the end of the final instruction line.
                 size_t pos_end = isa_as_text.find("\n", pos_begin);
 
-                if (pos_end != string::npos && pos_first_32_bit_end < pos_end)
+                if (pos_end != std::string::npos && pos_first_32_bit_end < pos_end)
                 {
                     // Extract the final instruction as text.
-                    const string& instructionAsText = isa_as_text.substr(pos_first_32_bit_end, pos_end - pos_first_32_bit_end);
+                    const std::string& instructionAsText = isa_as_text.substr(pos_first_32_bit_end, pos_end - pos_first_32_bit_end);
                     const size_t instruction_character_count = instructionAsText.size();
                     if (instruction_character_count == kInstruction32Length)
                     {
@@ -1181,7 +1179,7 @@ bool BeProgramBuilderDx11::GetIsaSize(const string& isa_as_text, size_t& size_in
     return ret;
 }
 
-bool BeProgramBuilderDx11::GetWavefrontSize(const string& device_name, size_t& wavefront_size) const
+bool BeProgramBuilderDx11::GetWavefrontSize(const std::string& device_name, size_t& wavefront_size) const
 {
     bool ret = false;
     wavefront_size = 0;
@@ -1205,19 +1203,19 @@ bool BeProgramBuilderDx11::GetWavefrontSize(const string& device_name, size_t& w
     return ret;
 }
 
-string BeProgramBuilderDx11::ToLower(const string& str) const
+std::string BeProgramBuilderDx11::ToLower(const std::string& str) const
 {
-    string result;
+    std::string result;
     std::transform(str.begin(), str.end(), inserter(result, result.begin()), ::tolower);
     return result;
 }
 
-void BeProgramBuilderDx11::SetDeviceElf(const string& device_name, const AmdDxGsaCompileShaderOutput& shader_output)
+void BeProgramBuilderDx11::SetDeviceElf(const std::string& device_name, const AmdDxGsaCompileShaderOutput& shader_output)
 {
     if (!device_name.empty())
     {
         // First, convert the device name to lower case.
-        string device_name_lower_case = ToLower(device_name);
+        std::string device_name_lower_case = ToLower(device_name);
 
         // Update the container.
         CelfBinaryPair& elf_pair = compiled_elf_[device_name_lower_case];
@@ -1228,13 +1226,13 @@ void BeProgramBuilderDx11::SetDeviceElf(const string& device_name, const AmdDxGs
     }
 }
 
-bool BeProgramBuilderDx11::GetDeviceElfBinPair(const string& device_name, CelfBinaryPair& elf_bin_pair) const
+bool BeProgramBuilderDx11::GetDeviceElfBinPair(const std::string& device_name, CelfBinaryPair& elf_bin_pair) const
 {
     bool result =  false;
     if (!device_name.empty())
     {
         // First, convert the device name to lower case.
-        string device_name_lower_case = ToLower(device_name);
+        std::string device_name_lower_case = ToLower(device_name);
 
         // Look for the relevant element.
         auto iter = compiled_elf_.find(device_name_lower_case);
@@ -1272,7 +1270,7 @@ static beKA::beStatus  InvokeDx11Backend(const std::string& args, bool should_pr
     return status;
 }
 
-CElf* BeProgramBuilderDx11::GetDeviceElf(const string& device_name) const
+CElf* BeProgramBuilderDx11::GetDeviceElf(const std::string& device_name) const
 {
     CElf* ret = nullptr;
     CelfBinaryPair elf_bin_pair;
@@ -1285,7 +1283,7 @@ CElf* BeProgramBuilderDx11::GetDeviceElf(const string& device_name) const
     return ret;
 }
 
-std::vector<char> BeProgramBuilderDx11::GetDeviceBinaryElf(const string& device_name) const
+std::vector<char> BeProgramBuilderDx11::GetDeviceBinaryElf(const std::string& device_name) const
 {
     std::vector<char> result;
     CelfBinaryPair elf_bin_pair;

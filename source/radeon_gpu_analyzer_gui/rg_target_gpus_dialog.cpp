@@ -352,6 +352,8 @@ void RgTargetGpusDialog::InitializeCheckedRows(std::vector<std::string> compute_
 
 bool RgTargetGpusDialog::IsRowVisible(int row_index, const QModelIndex& source_parent, const QRegExp& search_filter)
 {
+    Q_UNUSED(source_parent);
+
     bool is_filtered = false;
 
     // Determine the group index for the given row.
@@ -704,7 +706,6 @@ void RgTargetGpusDialog::ToggleRowChecked(const QModelIndex& source_model_index)
                         {
                             // Determine the current check state for the row's checkbox item.
                             int group_index = group_index_iter->second;
-                            CapabilityGroup& group = capability_groups_[group_index];
                             bool check_state = (clicked_item->checkState() == Qt::Checked) ? true : false;
 
                             // Toggle the checkbox for the entire group of products.

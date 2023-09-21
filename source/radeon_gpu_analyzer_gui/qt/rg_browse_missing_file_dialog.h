@@ -29,7 +29,12 @@ public:
     virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
     // Empty implementation here because we don't want to draw the focus indication.
-    virtual void drawFocus(QPainter* painter, const QStyleOptionViewItem& option, const QRect& rect) const override {}
+    virtual void drawFocus(QPainter* painter, const QStyleOptionViewItem& option, const QRect& rect) const override
+    {
+        Q_UNUSED(painter);
+        Q_UNUSED(option);
+        Q_UNUSED(rect);
+    }
 };
 
 class RgBrowseMissingFileDialog : public QDialog

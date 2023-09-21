@@ -19,6 +19,8 @@ RgTreeWidget::RgTreeWidget(QWidget* parent) :
 
 void RgTreeWidget::focusOutEvent(QFocusEvent *event)
 {
+    Q_UNUSED(event);
+
     hide();
 }
 
@@ -58,6 +60,8 @@ void RgTreeWidget::mouseMoveEvent(QMouseEvent* event)
 
 void RgTreeWidget::leaveEvent(QEvent* event)
 {
+    Q_UNUSED(event);
+
     // Remove highlight from all of the items.
     // Set background color for all items to transparent.
     QTreeWidgetItemIterator it(this);

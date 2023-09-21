@@ -26,3 +26,8 @@ add_library(AMDTBaseTools STATIC src/gtAssert.cpp src/gtList.cpp src/gtString.cp
 
 # Set binary suffix
 set_target_properties(AMDTBaseTools PROPERTIES DEBUG_POSTFIX -d CXX_STANDARD 17)
+
+# Set Visual C++ warning level to 4
+if(MSVC)
+  target_compile_options(AMDTBaseTools PRIVATE /W4)
+endif()

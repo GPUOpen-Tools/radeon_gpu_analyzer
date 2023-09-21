@@ -1,5 +1,5 @@
 //======================================================================
-// Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
 //======================================================================
 
 #ifdef _WIN32
@@ -67,7 +67,7 @@ KcCliCommanderDX::~KcCliCommanderDX(void)
 void KcCliCommanderDX::ListAdapters(Config & config, LoggingCallbackFunction callback)
 {
     std::vector<std::string> adapter_names;
-    stringstream msg;
+    std::stringstream        msg;
 
     if (BeProgramBuilderDx11::GetSupportedDisplayAdapterNames(config.print_process_cmd_line, adapter_names))
     {
@@ -88,7 +88,7 @@ void KcCliCommanderDX::ListAdapters(Config & config, LoggingCallbackFunction cal
 
 void KcCliCommanderDX::InitRequestedAsicListDX(const Config& config)
 {
-    stringstream log;
+    std::stringstream log;
 
     // Get the default device list.
     if (!config.asics.empty())
@@ -118,15 +118,19 @@ void KcCliCommanderDX::InitRequestedAsicListDX(const Config& config)
     }
 }
 
-void KcCliCommanderDX::ExtractISA(const string& device_name, const Config& config, size_t& isa_size_in_bytes,
-    string isa_buffer, bool& is_isa_size_detected, bool& should_detect_isa_size)
+void KcCliCommanderDX::ExtractISA(const std::string& device_name,
+                                  const Config&      config,
+                                  size_t&            isa_size_in_bytes,
+                                  std::string        isa_buffer,
+                                  bool&              is_isa_size_detected,
+                                  bool&              should_detect_isa_size)
 {
     BeProgramBuilderDx11* program_builder_dx = backend_handler_ != nullptr ? backend_handler_->theOpenDXBuilder() : nullptr;
     beStatus backend_rc = kBeStatusInvalid;
     GT_IF_WITH_ASSERT(program_builder_dx != nullptr)
     {
         backend_rc = program_builder_dx->GetDxShaderIsaText(device_name, isa_buffer);
-        string filename = config.isa_file;
+        std::string filename = config.isa_file;
 
         if (backend_rc == kBeStatusSuccess)
         {
@@ -262,10 +266,16 @@ void KcCliCommanderDX::ExtractIL(const std::string& device_name, const Config& c
     }
 }
 
-bool KcCliCommanderDX::ExtractStats(const string& device_name, const Config& config, bool should_detect_isa_size, string isaBuffer, bool is_isa_size_detected,
-    size_t isa_size_in_bytes, std::vector<AnalysisData>& analysis_data, std::vector<string>& device_analysis_data)
+bool KcCliCommanderDX::ExtractStats(const std::string&         device_name,
+                                    const Config&              config,
+                                    bool                       should_detect_isa_size,
+                                    std::string                isaBuffer,
+                                    bool                       is_isa_size_detected,
+                                    size_t                     isa_size_in_bytes,
+                                    std::vector<beKA::AnalysisData>& analysis_data,
+                                    std::vector<std::string>&  device_analysis_data)
 {
-    AnalysisData analysis;
+    beKA::AnalysisData analysis;
     beStatus backend_rc = backend_handler_->theOpenDXBuilder()->GetStatistics(device_name, config.function, analysis);
     if (backend_rc == kBeStatusSuccess)
     {
@@ -348,7 +358,7 @@ void KcCliCommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         const bool is_binary_required = !config.binary_output_file.empty();
         const bool is_livereg_required = !config.livereg_analysis_file.empty();
         const bool is_cfg_required = (!config.inst_cfg_file.empty() || !config.block_cfg_file.empty());
-        std::vector <AnalysisData> analysis_data;
+        std::vector<beKA::AnalysisData> analysis_data;
         std::vector <std::string> device_analysis_data;
 
         // Check flags first.
@@ -443,7 +453,7 @@ void KcCliCommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         if ((config.dump_ms_intermediate.size() > 0) && is_compile_success)
         {
             std::string ms_intermediate;
-            beStatus backend_rc = backend_handler_->theOpenDXBuilder()->GetIntermediateMsBlob(ms_intermediate);
+            beKA::beStatus backend_rc = backend_handler_->theOpenDXBuilder()->GetIntermediateMsBlob(ms_intermediate);
             if (backend_rc == kBeStatusSuccess)
             {
                 std::stringstream ss;
@@ -465,7 +475,7 @@ void KcCliCommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
     }
 }
 
-static void LoggingCallback(const string& s)
+static void LoggingCallback(const std::string& s)
 {
     RgLog::stdOut << s.c_str() << std::flush;
 }
@@ -486,8 +496,11 @@ bool KcCliCommanderDX::PrintAsicList(const Config& config)
     return ret;
 }
 
-bool KcCliCommanderDX::WriteAnalysisDataForDX(const Config& config, const std::vector<AnalysisData>& analysis_data,
-    const std::vector<string>& device_analysis_data, const std::string& analysis_file, std::stringstream& log)
+bool KcCliCommanderDX::WriteAnalysisDataForDX(const Config&                          config,
+                                              const std::vector<beKA::AnalysisData>& analysis_data,
+                                              const std::vector<std::string>&        device_analysis_data,
+                                              const std::string&                     analysis_file,
+                                              std::stringstream&                     log)
 {
     // Get the separator for CSV list items.
     char csv_separator = KcUtils::GetCsvSeparator(config);
@@ -508,7 +521,7 @@ bool KcCliCommanderDX::WriteAnalysisDataForDX(const Config& config, const std::v
         if (!analysis_data.empty())
         {
             std::vector<std::string>::const_iterator iter = device_analysis_data.begin();
-            std::vector<AnalysisData>::const_iterator iter_ad = analysis_data.begin();
+            std::vector<beKA::AnalysisData>::const_iterator iter_ad = analysis_data.begin();
 
             for (; iter < device_analysis_data.end(); ++iter, ++iter_ad)
             {
@@ -516,7 +529,7 @@ bool KcCliCommanderDX::WriteAnalysisDataForDX(const Config& config, const std::v
                 output << *iter << csv_separator;
 
                 // Get the Analysis item.
-                const AnalysisData& ad = *iter_ad;
+                const beKA::AnalysisData& ad = *iter_ad;
 
                 // Scratch registers.
                 output << ad.scratch_memory_used << csv_separator;
@@ -559,7 +572,7 @@ bool KcCliCommanderDX::WriteAnalysisDataForDX(const Config& config, const std::v
                 // ISA size.
                 output << ad.isa_size;
 
-                output << endl;
+                output << std::endl;
             }
         }
 
@@ -709,7 +722,7 @@ bool KcCliCommanderDX::Compile(const Config& config, const GDT_GfxCardInfo& gfxC
             beStatus backend_rc = backend_handler_->GetDeviceChipFamilyRevision(gfxCardInfo, dx_options.chip_family, dx_options.chip_revision);
             if (backend_rc != kBeStatusSuccess)
             {
-                log << "Error: could not find device named: " << sDevicenametoLog << ". Run \'-s dx11 -l to view available devices." << endl;
+                log << "Error: could not find device named: " << sDevicenametoLog << ". Run \'-s dx11 -l to view available devices." << std::endl;
                 ret = false;
             }
             else
@@ -766,7 +779,7 @@ bool KcCliCommanderDX::Init(const Config& config, LoggingCallBackFuncP callback)
     // Initialize backend.
     backend_handler_ = Backend::Instance();
 
-    if (!backend_handler_->Initialize(kProgramTypeDx11, callback))
+    if (!backend_handler_->Initialize(beKA::BuiltProgramKind::kProgramTypeDx11, callback))
     {
         should_continue = false;
     }
@@ -809,7 +822,7 @@ bool KcCliCommanderDX::Init(const Config& config, LoggingCallBackFuncP callback)
         if (backend_rc == kBeStatusSuccess)
         {
             std::string cal_name;
-            for (vector<GDT_GfxCardInfo>::const_iterator it = dx_device_table.begin(); it != dx_device_table.end(); ++it)
+            for (std::vector<GDT_GfxCardInfo>::const_iterator it = dx_device_table.begin(); it != dx_device_table.end(); ++it)
             {
                 if (cal_name != std::string(it->m_szCALName) && !is_disabled(it->m_szCALName))
                 {

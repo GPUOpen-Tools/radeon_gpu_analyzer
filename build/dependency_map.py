@@ -1,17 +1,26 @@
 #!python
+# Copyright (c) 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
+#
 # RGA git project names and revisions
 #
+import sys
+
+# prevent generation of .pyc file
+sys.dont_write_bytecode = True
+
+####### Git Dependencies #######
 
 # key = GitHub release link
-# value = location
-download_mapping_windows = {
-    "https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp" : "../../Common/Lib/Ext/json/json-3.2.0/single_include/nlohmann"
+# value = target location
+url_mapping_win = {
+    "https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp" : "../external/json/json-3.2.0/single_include/nlohmann"
 }
-download_mapping_linux = {
-    "https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp" : "../../Common/Lib/Ext/json/json-3.2.0/single_include/nlohmann"
+url_mapping_linux = {
+    "https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp" : "../external/json/json-3.2.0/single_include/nlohmann"
 }
 
-# Some repos are only hosted on github - these are defined with an absolute URL based here
+# To allow for future updates where we may have cloned the project, store the root of
+# the repo in a variable. In future, we can automatically calculate this based on the git config
 github_root = "https://github.com/GPUOpen-Tools/"
 
 # repositories.
@@ -19,21 +28,20 @@ git_mapping = {}
 
 github_mapping = {
  # Lib.
-    "adl"                            : ["Common/Lib/AMD/ADL",               "master"],
-    "appsdk"                         : ["Common/Lib/AMD/APPSDK",            "master"],
-    "common_lib_ext_boost_1.59"      : ["Common/Lib/Ext/Boost",             "master"],
-    "windows_kits"                   : ["Common/Lib/Ext/Windows-Kits",      "master"],
-    "common_lib_ext_tinyxml2_5.0.1"  : ["Common/Lib/Ext/tinyxml2",          "master"],
-    "cxxopts"                        : ["Common/Lib/Ext/cxxopts",           "master"],
-    "volk"                           : ["Common/Lib/Ext/volk",              "master"],
+    "adl"                            : ["../external/adl",                      "master"],
+    "appsdk"                         : ["../external/appsdk",                   "master"],
+    "common_lib_ext_boost_1.59"      : ["../external/third_party/Boost",        "master"],
+    "windows_kits"                   : ["../external/third_party/Windows-Kits", "master"],
+    "common_lib_ext_tinyxml2_5.0.1"  : ["../external/third_party/tinyxml2",     "master"],
+    "cxxopts"                        : ["../external/third_party/cxxopts",      "master"],
+    "volk"                           : ["../external/third_party/volk",         "master"],
  # Src.
-    "adl_util"                       : ["Common/Src/ADLUtil",               "master"],
-    "tsingleton"                     : ["Common/Src/TSingleton",            "master"],
-    "common_src_miniz"               : ["Common/Src/Miniz",                 "master"],
-    "device_info"                    : ["Common/Src/DeviceInfo",            "7f814f15a0896659af005498d9008fd627446ba0"],
-    "dynamic_library_module"         : ["Common/Src/DynamicLibraryModule",  "amd-rga-v2.7"],
-    "update_check_api"               : ["Common/Src/update_check_api",      "v2.1.0"],
- # QtCommon.
-    "qt_common"                      : ["QtCommon",                         "rga-2.5"],
+    "adl_util"                       : ["../external/adlutil",                  "master"],
+    "tsingleton"                     : ["../external/tsingleton",               "master"],
+    "common_src_miniz"               : ["../external/miniz",                    "master"],
+    "dynamic_library_module"         : ["../external/dynamic_library_module",   "amd-rga-v2.7"],
+    "device_info"                    : ["../external/device_info",              "8c2adcc8136dab662a58e93ead3027ee68e318c6"],
+    "update_check_api"               : ["../external/update_check_api",         "v2.1.0"],
+  # QtCommon.
+    "qt_common"                      : ["../external/QtCommon",                 "rga-2.5"],
 }
-

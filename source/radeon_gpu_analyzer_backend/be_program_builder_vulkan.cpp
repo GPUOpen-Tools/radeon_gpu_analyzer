@@ -70,7 +70,7 @@ static const char* kStrGlslangOptDebugInfoBegin = "*** Loader debug info - BEGIN
 static const char* kStrGlslangOptDebugInfoEnd = "*** Loader debug info - END ***";
 
 // A container for all valid glslang extensions for GLSL automatic stage detection.
-static const vector<std::string> kValidGlslangGlslExtensions =
+static const std::vector<std::string> kValidGlslangGlslExtensions =
 {
     kStrGlslangOptStageVert,
     kStrGlslangOptStageTessellationControl,
@@ -221,7 +221,9 @@ static std::string ConstructVulkanBackendOptions(const std::string& loader_debug
     }
 
     // Output binary file name.
-    if (!bin_file.empty())
+    // Needed if the target is gfx11 or above since ISA disassembly has to be extracted from CodeObject.
+    // For older architectures this is only needed when explicitly requested by the user.
+    if (!bin_file.empty() || (KcUtils::IsNavi3Target(device) && !isa_files.empty()))
     {
         opts << " " << kVulkanBackendOptBinFile << " " << KcUtils::Quote(bin_file);
     }
@@ -252,6 +254,14 @@ static std::string ConstructVulkanBackendOptions(const std::string& loader_debug
     }
 
     return opts.str();
+}
+
+// Construct command line options for amdgpu-dis.
+static std::string ConstructAmdgpudis(const std::string& isa_file, const std::string& output_filename)
+{
+    std::stringstream cmd;
+    cmd << isa_file << " " << output_filename;
+    return cmd.str();
 }
 
 // Construct command line options for SPIR-V disassembler.
@@ -420,7 +430,6 @@ beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&        
         const char* kAmdgpuDisShaderNameEndToken       = "_main";
         const char* kAmdgpuDisShaderNameFetchlessToken = "_fetchless";
 
-
         // Get to the .text section.
         size_t curr_pos = amdgpu_dis_output.find(kAmdgpuDisDotTextToken);
         assert(curr_pos != std::string::npos);
@@ -457,6 +466,7 @@ beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&        
                         const size_t stage_name_offset_begin = curr_pos + strlen(kAmdgpuDisShaderNameStartToken);
                         std::string  stage_name = amdgpu_dis_output.substr(stage_name_offset_begin, stage_name_offset_end - stage_name_offset_begin);
                         assert(!stage_name.empty());
+                        assert(BeUtils::IsValidAmdgpuShaderStage(stage_name));
                         if (BeUtils::IsValidAmdgpuShaderStage(stage_name))
                         {
                             // Construct the shader end token "_amdgpu_<stage_name>_main_symend:".

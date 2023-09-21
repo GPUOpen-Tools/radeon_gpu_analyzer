@@ -20,12 +20,12 @@
 static const char* kStrErrorKernelSymbolNotFound = "Error: failed to locate kernel symbol in ELF container for device: ";
 static const char* kStrErrorFailedToExtractCodeObjectStats = "Error: failed to extract statistics from Code Object for ";
 
-beKA::beStatus BeProgramBuilderOpencl::Initialize(const string& dll_module /* = ""*/)
+beKA::beStatus BeProgramBuilderOpencl::Initialize(const std::string& dll_module /* = ""*/)
 {
     (void)(dll_module);
 
     // Populate the sorted device (card) info table.
-    std::set<string> unique_published_devices_names;
+    std::set<std::string> unique_published_devices_names;
     BeUtils::GetAllGraphicsCards(opencl_device_table_, unique_published_devices_names);
 
     return beKA::kBeStatusSuccess;
@@ -33,65 +33,65 @@ beKA::beStatus BeProgramBuilderOpencl::Initialize(const string& dll_module /* = 
 
 beKA::beStatus BeProgramBuilderOpencl::GetKernels(const std::string& device, std::vector<std::string>& kernels)
 {
-    return beStatus::kBeStatusInvalid;
+    return beKA::beStatus::kBeStatusInvalid;
 }
 
 beKA::beStatus BeProgramBuilderOpencl::GetBinary(const std::string& device, const beKA::BinaryOptions& binopts, std::vector<char>& binary)
 {
-    return beStatus::kBeStatusInvalid;
+    return beKA::beStatus::kBeStatusInvalid;
 }
 
 beKA::beStatus BeProgramBuilderOpencl::GetBinaryFromFile(const std::string& path_to_binary, const beKA::BinaryOptions& binopts, std::vector<char>& output_path)
 {
-    return beStatus::kBeStatusInvalid;
+    return beKA::beStatus::kBeStatusInvalid;
 }
 
 beKA::beStatus BeProgramBuilderOpencl::GetStatistics(const std::string& device, const std::string& kernel, beKA::AnalysisData& analysis)
 {
-    return beStatus::kBeStatusInvalid;
+    return beKA::beStatus::kBeStatusInvalid;
 }
 
 beKA::beStatus BeProgramBuilderOpencl::GetKernelMetaDataText(const std::string& device, const std::string& kernel, std::string& metadata)
 {
-    return beStatus::kBeStatusInvalid;
+    return beKA::beStatus::kBeStatusInvalid;
 }
 
 beKA::beStatus BeProgramBuilderOpencl::GetKernelIlText(const std::string& device, const std::string& kernel_name, std::string& kernel_text)
 {
-    return beStatus::kBeStatusInvalid;
+    return beKA::beStatus::kBeStatusInvalid;
 }
 
 beKA::beStatus BeProgramBuilderOpencl::GetKernelSectionText(const std::string& device, const std::string& kernel_name, std::string& kernel_text)
 {
-    return beStatus::kBeStatusInvalid;
+    return beKA::beStatus::kBeStatusInvalid;
 }
 
 beKA::beStatus BeProgramBuilderOpencl::GetKernelIsaText(const std::string& device, const std::string& kernel, std::string& isa)
 {
-    return beStatus::kBeStatusInvalid;
+    return beKA::beStatus::kBeStatusInvalid;
 }
 
 beKA::beStatus BeProgramBuilderOpencl::Compile(const std::string& program_source, const OpenCLOptions& opencl_options,
     const std::string& source_code_full_path, const std::vector<std::string>* source_path, int& successful_builds_count)
 {
-    return beStatus::kBeStatusInvalid;
+    return beKA::beStatus::kBeStatusInvalid;
 }
 
-beKA::beStatus BeProgramBuilderOpencl::GetDevices(std::set<string>& devices)
+beKA::beStatus BeProgramBuilderOpencl::GetDevices(std::set<std::string>& devices)
 {
-    beKA::beStatus retVal = kBeStatusBackendNotInitialized;
+    beKA::beStatus retVal = beKA::beStatus::kBeStatusBackendNotInitialized;
     if (is_initialized_)
     {
         devices = device_names_;
-        retVal = kBeStatusSuccess;
+        retVal  = beKA::beStatus::kBeStatusSuccess;
     }
     return retVal;
 }
 
-beStatus BeProgramBuilderOpencl::GetDeviceTable(std::vector<GDT_GfxCardInfo>& table)
+beKA::beStatus BeProgramBuilderOpencl::GetDeviceTable(std::vector<GDT_GfxCardInfo>& table)
 {
     table = opencl_device_table_;
-    return kBeStatusSuccess;
+    return beKA::beStatus::kBeStatusSuccess;
 }
 
 BeProgramBuilderOpencl::~BeProgramBuilderOpencl()
@@ -119,11 +119,11 @@ double BeProgramBuilderOpencl::GetOpenCLPlatformVersion()
     return 0.0;
 }
 
-void BeProgramBuilderOpencl::RemoveNamesOfUnpublishedDevices(const std::set<string>& unique_published_device_names)
+void BeProgramBuilderOpencl::RemoveNamesOfUnpublishedDevices(const std::set<std::string>& unique_published_device_names)
 {
     // Take advantage of the fact that the m_OpenCLDeviceTable collection contains only published devices,
     // so we look for each name that the OpenCL driver provided in the table, and remove it if it is not found
-    for (std::set<string>::iterator iter = device_names_.begin(); iter != device_names_.end();)
+    for (std::set<std::string>::iterator iter = device_names_.begin(); iter != device_names_.end();)
     {
         bool is_device_published = false;
         const std::string& kDeviceName = *iter;

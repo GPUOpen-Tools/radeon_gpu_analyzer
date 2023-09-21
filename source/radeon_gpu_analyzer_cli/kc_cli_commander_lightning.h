@@ -16,8 +16,6 @@
 // Backend.
 #include "source/radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
 
-using namespace std;
-
 // Commander interface for compiling with the Lightning Compiler (LC).
 class KcCLICommanderLightning : public KcCliCommander
 {
@@ -37,7 +35,7 @@ public:
 
     // Actual implementation of "ListEntries" virtual function.
     // This function is also used by legacy cl mode.
-    static bool ListEntriesOpenclOffline(const Config& config, LoggingCallbackFunction callback);
+    bool ListEntriesOpenclOffline(const Config& config, LoggingCallbackFunction callback);
 
     // Perform compilation steps.
     void RunCompileCommands(const Config& config, LoggingCallbackFunction callback) override;
@@ -46,7 +44,7 @@ public:
     bool RunPostCompileSteps(const Config& config) override;
 
     // Initialize the Commander object.
-    beStatus  Init(const Config& config, LoggingCallbackFunction log_callback);
+    beKA::beStatus Init(const Config& config, LoggingCallbackFunction log_callback);
 
     // Generates OpenCL-Offline "version info" data and writes it to the file specified by "fileName".
     // The data will be appended to the existing content of the file.
@@ -66,19 +64,22 @@ private:
     bool  Compile(const Config& config);
 
     // Perform OpenCL compilation.
-    beStatus  CompileOpenCL(const Config& config, const OpenCLOptions& ocl_options);
+    beKA::beStatus CompileOpenCL(const Config& config, const OpenCLOptions& ocl_options);
 
     // Disassemble binary file.
     // The disassembled ISA text are be divided into per-kernel parts and stored in separate files.
     // The names of ISA files are generated based on provided user ISA file name.
-    beStatus DisassembleBinary(const std::string& bin_filename, const std::string& user_isa_filename, const std::string& clang_device, const std::string& rga_device,
+    beKA::beStatus DisassembleBinary(const std::string& bin_filename,
+                                     const std::string& user_isa_filename,
+                                     const std::string& clang_device,
+                                     const std::string& rga_device,
                                 const std::string& kernel, bool line_numbers, std::string& error_text);
 
     // Parse ISA files and generate separate files that contain parsed ISA in CSV format.
     bool  ParseIsaFilesToCSV(bool add_line_numbers);
 
     // Add the device name to the output file name provided in "outFileName" string.
-    beStatus  AdjustBinaryFileName(const Config&       config,
+    beKA::beStatus AdjustBinaryFileName(const Config& config,
                                    const std::string & device,
                                    std::string&        bin_filename);
 
@@ -89,10 +90,10 @@ private:
     bool  ExtractCFG(const Config& config);
 
     // Get the AMD GPU metadata from the binary.
-    beStatus  ExtractMetadata(const std::string& metadata_filename) const;
+    beKA::beStatus ExtractMetadata(const std::string& metadata_filename) const;
 
     // Extract Resource Usage (statistics) data.
-    beStatus  ExtractStatistics(const Config& config);
+    beKA::beStatus ExtractStatistics(const Config& config);
 
     // Split ISA text into separate per-kernel ISA fragments and store them into separate files.
     // Puts the names of generated ISA files into output metadata (kcCLICommander::m_outputMetadata).
@@ -113,13 +114,16 @@ private:
     bool  GenerateSessionMetadata(const Config& config) const;
 
     // Extract the list of entry points from the source file specified by "fileName".
-    static bool  ExtractEntries(const std::string& filename, const Config& config, RgEntryData& entry_data);
+    static bool ExtractEntries(const std::string&  filename, 
+                               const Config&       config, 
+                               const CmpilerPaths& compiler_paths, 
+                               RgEntryData&        entry_data);
 
     // Delete all temporary files created by RGA.
     void DeleteTempFiles() const;
 
     // Dump IL file.
-    beStatus DumpIL(const Config&                   config,
+    beKA::beStatus DumpIL(const Config&                   config,
                     const OpenCLOptions&            user_options,
                     const std::vector<std::string>& src_file_names,
                     const std::string&              device,

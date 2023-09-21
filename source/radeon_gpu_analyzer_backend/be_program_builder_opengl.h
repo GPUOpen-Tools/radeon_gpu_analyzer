@@ -100,9 +100,6 @@ public:
     /// Extracts the OpenGL version of the installed runtime.
     bool GetOpenGLVersion(bool printCmd, gtString& glVersion) const;
 
-    /// Retrieve the device ID and Revision ID from the OpenGL backend.
-    bool GetDeviceGLInfo(const std::string& deviceName, size_t& deviceFamilyId, size_t& deviceRevision) const;
-
     // Retrieve the device name as recognized by the OpenGl backend.
     bool GetDeviceGLName(const std::string& device_name, std::string& valid_device_name) const;
 

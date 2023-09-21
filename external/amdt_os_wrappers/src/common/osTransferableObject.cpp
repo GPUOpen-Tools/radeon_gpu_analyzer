@@ -1,5 +1,5 @@
 //=====================================================================
-// Copyright 2016 (c), Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2016-2023 (c), Advanced Micro Devices, Inc. All rights reserved.
 //
 /// \author AMD Developer Tools Team
 /// \file osTransferableObject.cpp
@@ -9,7 +9,7 @@
 //------------------------------ osTransferableObject.cpp ------------------------------
 
 // Standard C:
-#include <limits.h>
+#include <limits>
 
 // Infra:
 #include <amdt_base_tools/Include/gtAssert.h>

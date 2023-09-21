@@ -177,12 +177,16 @@ void RgFindTextWidget::HandleReturnPressedOnSearch()
 
 void RgFindTextWidget::HandleOptionButtonCheckChanged(bool checked)
 {
+    Q_UNUSED(checked);
+
     // Update the search option flags in the search context.
     UpdateSearchOptions();
 }
 
 void RgFindTextWidget::HandleSearchTextChanged(const QString& updated_text)
 {
+    Q_UNUSED(updated_text);
+
     HandleReturnPressedOnSearch();
 }
 

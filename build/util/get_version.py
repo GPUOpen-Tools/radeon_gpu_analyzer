@@ -11,6 +11,10 @@
 #
 import os
 import argparse
+import sys
+
+# prevent generation of .pyc file
+sys.dont_write_bytecode = True
 
 # Get full path to script to support run from anywhere.
 SCRIPTROOT = os.path.dirname(os.path.realpath(__file__))

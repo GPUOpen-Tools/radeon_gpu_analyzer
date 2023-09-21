@@ -19,9 +19,6 @@
     #pragma warning(disable : 4251)
 #endif
 
-using namespace std;
-using namespace beKA;
-
 class CElf;
 
 class BeProgramBuilderOpencl : public BeProgramBuilder
@@ -66,7 +63,7 @@ public:
                            const std::vector<std::string>* source_path, int& num_of_successful_builds);
 
     // Get a set of available devices.
-    virtual beKA::beStatus GetDevices(std::set<string>& devices);
+    virtual beKA::beStatus GetDevices(std::set<std::string>& devices);
 
     // Get a sorted table of devices.
     // The entries are arranged by Hardware Generation, CAL Name, Marketing Name and Device ID.
@@ -89,7 +86,7 @@ public:
 
 protected:
 
-    beKA::beStatus Initialize(const string& dll_module = "");
+    beKA::beStatus Initialize(const std::string& dll_module = "");
 
 private:
     friend class Backend;
@@ -102,7 +99,7 @@ private:
 
     // Iterate through the device names that the OpenCL driver reported, and remove the names of devices that have not been published yet.
     // This is done only in the CodeXL public version. In CodeXL NDA and INTERNAL versions this function is no-op.
-    void RemoveNamesOfUnpublishedDevices(const set<string>& unique_name_published_devices);
+    void RemoveNamesOfUnpublishedDevices(const std::set<std::string>& unique_name_published_devices);
 
     // The number of OpenCL devices.
     size_t opencl_device_count_ = 0;
@@ -111,13 +108,13 @@ private:
     std::vector<GDT_GfxCardInfo> opencl_device_table_;
 
     // The device names.
-    std::set<string> device_names_;
+    std::set<std::string> device_names_;
 
     // Map from device name to ISA Code Object disassembly.
-    std::map<string, std::string> device_to_code_object_disassembly_isa_;
+    std::map<std::string, std::string> device_to_code_object_disassembly_isa_;
 
     // Map from device name to whole Code Object disassembly.
-    std::map<string, std::string> device_to_code_object_disassembly_whole_;
+    std::map<std::string, std::string> device_to_code_object_disassembly_whole_;
 
     // Flag set to true if the object is initialized, otherwise false.
     bool is_initialized_ = false;

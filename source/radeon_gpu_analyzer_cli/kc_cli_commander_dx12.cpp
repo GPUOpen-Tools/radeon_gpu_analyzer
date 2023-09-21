@@ -1,10 +1,7 @@
 //======================================================================
-// Copyright 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
 //======================================================================
-
 #ifdef _WIN32
-
-#define _HAS_STD_BYTE 0
 
 // C++.
 #include <cassert>

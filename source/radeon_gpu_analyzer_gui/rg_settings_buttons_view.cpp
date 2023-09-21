@@ -109,5 +109,7 @@ void RgSettingsButtonsView::HideRestoreDefaultSettingsButton(bool is_hidden)
 
 void RgSettingsButtonsView::mousePressEvent(QMouseEvent *event)
 {
+    Q_UNUSED(event);
+
     emit SettingsButtonsViewClickedSignal();
 }

@@ -1,6 +1,6 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//======================================================================
+// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
+//======================================================================
 
 // Infra.
 #ifdef _WIN32
@@ -32,22 +32,6 @@
 
 // Constants.
 static const gtString kLcOpenclIncludeFile = L"opencl-c.h";
-static const std::vector<gtString>  kLcOpenclLibFiles = { L"opencl.amdgcn.bc", L"ockl.amdgcn.bc", L"ocml.amdgcn.bc",
-                                                        L"oclc_correctly_rounded_sqrt_on.amdgcn.bc", L"oclc_correctly_rounded_sqrt_off.amdgcn.bc",
-                                                        L"oclc_daz_opt_on.amdgcn.bc", L"oclc_daz_opt_off.amdgcn.bc",
-                                                        L"oclc_unsafe_math_on.amdgcn.bc", L"oclc_unsafe_math_off.amdgcn.bc",
-                                                        L"oclc_finite_only_on.amdgcn.bc", L"oclc_finite_only_off.amdgcn.bc",
-                                                        L"oclc_isa_version_900.amdgcn.bc", L"oclc_isa_version_90a.amdgcn.bc", L"oclc_isa_version_90c.amdgcn.bc",
-                                                        L"oclc_isa_version_902.amdgcn.bc",
-                                                        L"oclc_isa_version_904.amdgcn.bc", L"oclc_isa_version_906.amdgcn.bc", L"oclc_isa_version_908.amdgcn.bc",
-                                                        L"oclc_isa_version_909.amdgcn.bc",
-                                                        L"oclc_isa_version_1010.amdgcn.bc", L"oclc_isa_version_1011.amdgcn.bc", L"oclc_isa_version_1012.amdgcn.bc",
-                                                        L"oclc_isa_version_1030.amdgcn.bc", L"oclc_isa_version_1031.amdgcn.bc", L"oclc_isa_version_1032.amdgcn.bc",
-                                                        L"oclc_isa_version_1034.amdgcn.bc", L"oclc_isa_version_1100.amdgcn.bc", L"oclc_isa_version_1102.amdgcn.bc" };
-
-static const gtString kLcOpenclLibFile_abi_v400            = L"oclc_abi_version_400.bc";
-static const gtString kLcOpenclLibFile_wavefrontsize64_on  = L"oclc_wavefrontsize64_on.amdgcn.bc";
-static const gtString kLcOpenclLibFile_wavefrontsize64_off = L"oclc_wavefrontsize64_off.amdgcn.bc";
 
 static const std::string  kStrLcOpenclStdOption = "-cl-std";
 static const std::string  kStrLcOpenclStdDefaultValue = "cl2.0";
@@ -63,11 +47,11 @@ static const std::string  kStrLcCodeObjectMetadataTokenEnd = "\n...";
 static const std::string  kStrLcObjDumpMetdataOptionToken = "-amdgpu-code-object-metadata";
 static const std::string  kStrLcCompilerOpenclSwitchTriple = "--target=amdgcn-amd-amdhsa";
 static const std::string  kStrLcCompilerOpenclSwitchInclude = "-include ";
-static const std::string  kStrLcCompilerOpenclSwitchLib = "-Xclang -mlink-bitcode-file -Xclang ";
 static const std::string  kStrLcCompilerOpenclSwitchDevice = "-mcpu=";
+static const std::string  kStrLcCompilerOpenclDefaultDevice = "gfx1100";
 static const std::string  kStrLcCompilerOpenclSwitchVersion = "--version";
-static const std::string  kStrLcCompilerOpenclSwitchNoGpuLib = "-nogpulib";
 static const std::string  kStrLcCompilerOpenclSwitchPreprocessor = "-E";
+static const std::string  kStrLcCompilerOpenclSwitchRcomLibPath  = "--rocm-device-lib-path=";
 
 // This flag is set to dump LLVM IR for 1st pass only instead of all passes.
 // This is used to prevent compilation hanging for real world kernels.
@@ -122,13 +106,7 @@ static const wchar_t* kLcOpenclLlvmReadobjExecutable = L"llvm-readobj";
 // *** INTERNALLY LINKED SYMBOLS - END ***
 // ***************************************
 
-void AddLcCompilerOpenclSwitchLib(const gtString& lib_file, osFilePath& lib_file_path, std::stringstream& options_stream)
-{
-    lib_file_path.setFileName(lib_file);
-    options_stream << " " << kStrLcCompilerOpenclSwitchLib << KcUtils::Quote(lib_file_path.asString().asASCIICharArray());
-}
-
-static bool GetIsaSize(const string& isa_as_text, const std::string& kernel_name, size_t& size_in_bytes);
+static bool GetIsaSize(const std::string& isa_as_text, const std::string& kernel_name, size_t& size_in_bytes);
 static beKA::beStatus  ParseCodeProps(const std::string & md_text, CodePropsMap& code_props);
 
 beKA::beStatus BeProgramBuilderLightning::GetKernelIlText(const std::string & device, const std::string & kernel, std::string & il)
@@ -161,25 +139,27 @@ beKA::beStatus BeProgramBuilderLightning::GetDeviceTable(std::vector<GDT_GfxCard
     return beKA::beStatus();
 }
 
-beKA::beStatus BeProgramBuilderLightning::GetCompilerVersion(RgaMode mode, const std::string& user_bin_folder, bool should_print_cmd, std::string& out_text)
+beKA::beStatus BeProgramBuilderLightning::GetCompilerVersion(beKA::RgaMode      mode,
+                                                             const std::string& user_bin_folder,
+                                                             bool               should_print_cmd,
+                                                             std::string&       out_text)
 {
     std::string error_text;
     beKA::beStatus  status = InvokeCompiler(mode, user_bin_folder, kStrLcCompilerOpenclSwitchVersion, should_print_cmd, out_text, error_text);
     return status;
 }
 
-beKA::beStatus BeProgramBuilderLightning::AddCompilerStandardOptions(RgaMode             mode,
+beKA::beStatus BeProgramBuilderLightning::AddCompilerStandardOptions(beKA::RgaMode       mode,
                                                                      const CmpilerPaths& compiler_paths,
-                                                                     const std::string&  device,
                                                                      std::string&        options)
 {
     std::stringstream options_stream;
     beKA::beStatus status = beKA::kBeStatusSuccess;
 
-    if (mode == RgaMode::kModeOpenclOffline)
+    if (mode == beKA::RgaMode::kModeOpenclOffline)
     {
         // Add nogpulib and target triple.
-        options_stream << " " << kStrLcCompilerOpenclSwitchNoGpuLib << " " << kStrLcCompilerOpenclSwitchTriple;
+        options_stream << " " << kStrLcCompilerOpenclSwitchTriple;
 
 // The following is necessary if the bitcode files are built on Windows with Visual Studio.
 #ifdef _WIN32
@@ -223,22 +203,11 @@ beKA::beStatus BeProgramBuilderLightning::AddCompilerStandardOptions(RgaMode    
             lib_file_path.clearFileExtension();
             lib_file_path.appendSubDirectory(kLcOpenclRootDir);
             lib_file_path.appendSubDirectory(kLcOpenclLibDir);
+            lib_file_path.clearFileName();
         }
+        
+        options_stream << " " << kStrLcCompilerOpenclSwitchRcomLibPath << KcUtils::Quote(lib_file_path.asString().asASCIICharArray());
 
-        for (const gtString & lib_file : kLcOpenclLibFiles)
-        {
-            AddLcCompilerOpenclSwitchLib(lib_file, lib_file_path, options_stream);
-        }
-
-        AddLcCompilerOpenclSwitchLib(kLcOpenclLibFile_abi_v400, lib_file_path, options_stream);
-        if (KcUtils::IsNaviTarget(device))
-        {
-            AddLcCompilerOpenclSwitchLib(kLcOpenclLibFile_wavefrontsize64_off, lib_file_path, options_stream);
-        }
-        else
-        {
-            AddLcCompilerOpenclSwitchLib(kLcOpenclLibFile_wavefrontsize64_on, lib_file_path, options_stream);
-        }
     }
     else
     {
@@ -258,7 +227,7 @@ beKA::beStatus BeProgramBuilderLightning::ConstructOpenCLCompilerOptions(const C
 {
     beKA::beStatus status;
     std::string  standard_options = "";
-    status = AddCompilerStandardOptions(RgaMode::kModeOpenclOffline, compiler_paths, device, standard_options);
+    status                          = AddCompilerStandardOptions(beKA::RgaMode::kModeOpenclOffline, compiler_paths, standard_options);
     if (status == beKA::kBeStatusSuccess)
     {
         std::stringstream options;
@@ -348,7 +317,7 @@ beKA::beStatus BeProgramBuilderLightning::CompileOpenCLToBinary(const CmpilerPat
     if (status == beKA::kBeStatusSuccess)
     {
         // Run LC compiler.
-        status = InvokeCompiler(RgaMode::kModeOpenclOffline, compiler_paths.bin, options, should_print_cmd, output_text, error_text);
+        status = InvokeCompiler(beKA::RgaMode::kModeOpenclOffline, compiler_paths.bin, options, should_print_cmd, output_text, error_text);
     }
 
     if (status == beKA::kBeStatusSuccess)
@@ -376,7 +345,7 @@ beKA::beStatus BeProgramBuilderLightning::CompileOpenCLToLlvmIr(const CmpilerPat
     if (status == beKA::kBeStatusSuccess)
     {
         // Run LC compiler.
-        status = InvokeCompiler(RgaMode::kModeOpenclOffline, compiler_paths.bin, options, should_print_cmd, output_text, error_text);
+        status = InvokeCompiler(beKA::RgaMode::kModeOpenclOffline, compiler_paths.bin, options, should_print_cmd, output_text, error_text);
     }
 
     if (status == beKA::kBeStatusSuccess)
@@ -387,7 +356,7 @@ beKA::beStatus BeProgramBuilderLightning::CompileOpenCLToLlvmIr(const CmpilerPat
     return status;
 }
 
-beKA::beStatus BeProgramBuilderLightning::InvokeCompiler(RgaMode mode,
+beKA::beStatus BeProgramBuilderLightning::InvokeCompiler(beKA::RgaMode      mode,
     const std::string& user_bin_folder,
     const std::string& cmd_line_options,
     bool should_print_cmd,
@@ -416,7 +385,7 @@ beKA::beStatus BeProgramBuilderLightning::InvokeCompiler(RgaMode mode,
     }
     else
     {
-        if (mode == RgaMode::kModeOpenclOffline)
+        if (mode == beKA::RgaMode::kModeOpenclOffline)
         {
             osGetCurrentApplicationPath(lc_compiler_exec, false);
             lc_compiler_exec.appendSubDirectory(kLcOpenclRootDir);
@@ -452,9 +421,9 @@ beKA::beStatus BeProgramBuilderLightning::InvokeCompiler(RgaMode mode,
     }
 
     // Check the process exit status.
-    if (status == kBeStatusSuccess)
+    if (status == beKA::beStatus::kBeStatusSuccess)
     {
-        status = (exit_code == 0L ? beKA::kBeStatusSuccess : beKA::kBeStatusLightningCompilerGeneratedError);
+        status = (exit_code == 0L ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusLightningCompilerGeneratedError);
     }
 
     return status;
@@ -465,41 +434,54 @@ beKA::beStatus BeProgramBuilderLightning::VerifyCompilerOutput(const std::string
     gtString out_filename_gtstr;
     out_filename_gtstr.fromASCIIString(out_filename.c_str());
     osFilePath out_file_path(out_filename_gtstr);
-    beStatus  status = kBeStatusSuccess;
+    beKA::beStatus status = beKA::beStatus::kBeStatusSuccess;
 
     if (out_filename.empty() || !out_file_path.exists())
     {
-        status = error_text.find(kStrLcCompilerErrorToken) != std::string::npos ?
-                     kBeStatusLightningCompilerGeneratedError : (out_filename.empty() ? kBeStatusSuccess : kBeStatusNoOutputFileGenerated);
+        status = error_text.find(kStrLcCompilerErrorToken) != std::string::npos ? beKA::beStatus::kBeStatusLightningCompilerGeneratedError
+                     : (out_filename.empty() ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusNoOutputFileGenerated);
     }
 
     return status;
 }
 
-beStatus BeProgramBuilderLightning::PreprocessOpencl(const std::string& user_bin_dir, const std::string& input_file,
-                                                     const std::string& args, bool should_print_cmd, std::string& output)
+beKA::beStatus BeProgramBuilderLightning::PreprocessOpencl(const CmpilerPaths& compiler_paths,
+                                                           const std::string&  input_file,
+                                                           const std::string&  args,
+                                                           bool                should_print_cmd,
+                                                           std::string&        output)
 {
-    std::stringstream compiler_args;
-    compiler_args << kStrLcCompilerOpenclSwitchPreprocessor << " " << args << " " << KcUtils::Quote(input_file);
-    compiler_args << " " << kStrLcOpenclStdOption << "=" << kStrLcOpenclStdDefaultValue;
-    compiler_args << " " << kStrLcOpenclDefs;
-    std::string  std_out, std_err;
-
-    beStatus  status = InvokeCompiler(RgaMode::kModeOpenclOffline, user_bin_dir, compiler_args.str(),
-                                      should_print_cmd, std_out, std_err, kLcPreprocessingTimeoutMs);
-
-    if (status == kBeStatusSuccess)
+    std::string     standard_options = "";
+     beKA::beStatus status           = AddCompilerStandardOptions(beKA::RgaMode::kModeOpenclOffline, compiler_paths, standard_options);
+    if (status == beKA::beStatus::kBeStatusSuccess)
     {
-        status = VerifyCompilerOutput("", std_err);
-    }
+        std::stringstream compiler_args;
+        compiler_args << standard_options;
+        compiler_args << " " << kStrLcCompilerOpenclSwitchPreprocessor << " " << args << " " << KcUtils::Quote(input_file);
+        compiler_args << " " << kStrLcOpenclStdOption << "=" << kStrLcOpenclStdDefaultValue;
+        compiler_args << " " << kStrLcOpenclDefs;
 
-    if (status == kBeStatusSuccess)
-    {
-        output = std_out;
-    }
-    else
-    {
-        output = std_err;
+        // Add a default device selection option.
+        // (as of v2.8 we need to specify *some* default device needed for clang-18 in RGA).
+        compiler_args << " " << kStrLcCompilerOpenclSwitchDevice << kStrLcCompilerOpenclDefaultDevice;
+        
+        std::string std_out, std_err;
+
+        beKA::beStatus status = InvokeCompiler(beKA::RgaMode::kModeOpenclOffline, compiler_paths.bin, compiler_args.str(), should_print_cmd, std_out, std_err, kLcPreprocessingTimeoutMs);
+
+        if (status == beKA::beStatus::kBeStatusSuccess)
+        {
+            status = VerifyCompilerOutput("", std_err);
+        }
+
+        if (status == beKA::beStatus::kBeStatusSuccess)
+        {
+            output = std_out;
+        }
+        else
+        {
+            output = std_err;
+        }
     }
 
     return status;
@@ -570,12 +552,13 @@ beKA::beStatus BeProgramBuilderLightning::ExtractMetadata(const std::string& use
     return status;
 }
 
-beStatus BeProgramBuilderLightning::ExtractKernelCodeProps(const std::string& user_bin_dir, const std::string& bin_filename,
+beKA::beStatus BeProgramBuilderLightning::ExtractKernelCodeProps(const std::string& user_bin_dir,
+                                                                 const std::string& bin_filename,
                                                            bool should_print_cmd, CodePropsMap& code_props)
 {
     beKA::beStatus  status = beKA::kBeStatusLightningExtractCodePropsFailed;
     std::string  metadata_text;
-    if ((status = ExtractMetadata(user_bin_dir, bin_filename, should_print_cmd, metadata_text)) == kBeStatusSuccess)
+    if ((status = ExtractMetadata(user_bin_dir, bin_filename, should_print_cmd, metadata_text)) == beKA::beStatus::kBeStatusSuccess)
     {
         status = ParseCodeProps(metadata_text, code_props);
     }
@@ -664,7 +647,7 @@ int BeProgramBuilderLightning::GetIsaSize(const std::string & isa_text)
 int BeProgramBuilderLightning::GetKernelCodeSize(const std::string & user_bin_dir, const std::string & bin_file,
                                                  const std::string & kernel_name, bool should_print_cmd)
 {
-    beKA::beStatus  status = kBeStatusLightningGetKernelCodeSizeFailed;
+    beKA::beStatus status = beKA::beStatus::kBeStatusLightningGetKernelCodeSizeFailed;
     std::string symbols, options, error_text;
     int ret = -1, symSize;
     size_t offset, name_offset, name_end_offset, size_offset;
@@ -672,12 +655,12 @@ int BeProgramBuilderLightning::GetKernelCodeSize(const std::string & user_bin_di
     // Launch the LC ReadObj.
     status = ConstructObjDumpOptions(ObjDumpOp::kGetKernelCodeSize, user_bin_dir, bin_file, "", should_print_cmd, options);
 
-    if (status == kBeStatusSuccess)
+    if (status == beKA::beStatus::kBeStatusSuccess)
     {
         status = InvokeObjDump(ObjDumpOp::kGetKernelCodeSize, user_bin_dir, options, should_print_cmd, symbols, error_text);
     }
 
-    if (status == kBeStatusSuccess)
+    if (status == beKA::beStatus::kBeStatusSuccess)
     {
         // Parse the readobj output.
         // readobj uses its own format, so we have to parse it manually.
@@ -704,7 +687,7 @@ int BeProgramBuilderLightning::GetKernelCodeSize(const std::string & user_bin_di
         //      ...
         //    ]
 
-        if (status == kBeStatusSuccess)
+        if (status == beKA::beStatus::kBeStatusSuccess)
         {
             if ((offset = symbols.find(kStrReadObjKeySymbols)) != std::string::npos)
             {
@@ -860,7 +843,7 @@ bool BeProgramBuilderLightning::DoesReadobjSupportMetadata(const std::string& us
     std::string  out, err;
     bool ret = false;
 
-    if (InvokeObjDump(ObjDumpOp::kGetMetadata, user_bin_dir, kStrLcObjDumpSwitchHelp, should_print_cmd, out, err) == kBeStatusSuccess)
+    if (InvokeObjDump(ObjDumpOp::kGetMetadata, user_bin_dir, kStrLcObjDumpSwitchHelp, should_print_cmd, out, err) == beKA::beStatus::kBeStatusSuccess)
     {
         ret = (out.find(kStrLcObjDumpMetdataOptionToken) != std::string::npos);
     }
@@ -911,7 +894,7 @@ static bool GetIsaSize(const std::string& isa_text, const std::string& kernel_na
     }
 
     // Find the beginning and the end of the first instruction address.
-    if (status && address_begin != string::npos)
+    if (status && address_begin != std::string::npos)
     {
         address_begin += kAddressCommentPrefix.size();
         status = (address_end = kernel_isa_text.find(kAddressCodeDelimiter, address_begin)) != std::string::npos;
@@ -1010,9 +993,9 @@ static bool ParseKernelCodeProps(const YAML::Node& kernel_metadata, KernelCodePr
 }
 
 // Parse the provided CodeObj metadata and extract CodeProps data for all kernels.
-static beStatus ParseCodeProps(const std::string & metadata_text, CodePropsMap& code_props)
+static beKA::beStatus ParseCodeProps(const std::string& metadata_text, CodePropsMap& code_props)
 {
-    beStatus status = kBeStatusSuccess;
+    beKA::beStatus status = beKA::beStatus::kBeStatusSuccess;
     size_t start_offset, end_offset;
     YAML::Node codeobj_metadata_node, kernels_metadata_map, kernel_name;
     start_offset = metadata_text.find(kStrLcCodeObjectMetadataTokenStart);
@@ -1027,7 +1010,7 @@ static beStatus ParseCodeProps(const std::string & metadata_text, CodePropsMap& 
         }
         catch (YAML::ParserException&)
         {
-            status = kBeStatusLightningParseCodeObjMDFailed;
+            status = beKA::beStatus::kBeStatusLightningParseCodeObjMDFailed;
             break;
         }
 
@@ -1037,7 +1020,7 @@ static beStatus ParseCodeProps(const std::string & metadata_text, CodePropsMap& 
             for (const YAML::Node& kernel_metadata : kernels_metadata_map)
             {
                 KernelCodeProperties kernel_code_props;
-                if (status == kBeStatusSuccess &&
+                if (status == beKA::beStatus::kBeStatusSuccess &&
                     (kernel_name = kernel_metadata[kStrCodeObjectMetadataKeyKernelName]).IsDefined() &&
                     ParseKernelCodeProps(kernel_metadata, kernel_code_props))
                 {
@@ -1045,7 +1028,7 @@ static beStatus ParseCodeProps(const std::string & metadata_text, CodePropsMap& 
                 }
                 else
                 {
-                    status = kBeStatusLightningParseCodeObjMDFailed;
+                    status = beKA::beStatus::kBeStatusLightningParseCodeObjMDFailed;
                     break;
                 }
             }

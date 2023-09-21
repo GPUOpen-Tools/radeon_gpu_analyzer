@@ -729,6 +729,11 @@ void RgBuildViewVulkan::SaveCurrentFile(EditMode mode)
         // Save the PSO editor state.
         HandlePipelineStateFileSaved();
     }
+    else if (mode == EditMode::kBuildSettings)
+    {
+        // Don't need to do anything here.
+        // Any changes will be saved by another part of the code.
+    }
     else
     {
         // Shouldn't get here.
@@ -896,6 +901,8 @@ void RgBuildViewVulkan::HandleFileRenamed(const std::string& old_file_path, cons
 
 void RgBuildViewVulkan::HandleSelectedFileChanged(const std::string& old_file_path, const std::string& new_file_path)
 {
+    Q_UNUSED(old_file_path);
+
     // Get a pointer to the editor responsible for displaying the new file.
     RgSourceCodeEditor* editor = GetEditorForFilepath(new_file_path);
     assert(editor != nullptr);
@@ -938,6 +945,8 @@ void RgBuildViewVulkan::HandleSelectedFileChanged(const std::string& old_file_pa
 
 void RgBuildViewVulkan::HandleSourceFileSelectedLineChanged(RgSourceCodeEditor* editor, int line_number)
 {
+    Q_UNUSED(line_number);
+
     // Handle updating source correlation only when the project isn't currently being built.
     if (!is_build_in_progress_)
     {
@@ -1438,6 +1447,8 @@ void RgBuildViewVulkan::ConnectDisassemblyViewApiSpecificSignals()
 
 bool RgBuildViewVulkan::IsLineCorrelationEnabled(RgSourceCodeEditor* source_editor)
 {
+    Q_UNUSED(source_editor);
+
     // Source line correlation with disassembly is not available in Vulkan mode.
     return false;
 }

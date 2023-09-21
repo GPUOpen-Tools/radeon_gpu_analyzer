@@ -133,6 +133,8 @@ bool RgConfigFileReaderOpencl::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
 
 bool RgConfigFileReaderOpencl::ReadApiBuildSettings(tinyxml2::XMLNode* node, std::shared_ptr<RgBuildSettings> build_settings, const std::string& version)
 {
+    Q_UNUSED(version);
+
     bool ret = false;
 
     const std::shared_ptr<RgBuildSettingsOpencl> build_settings_opencl = std::dynamic_pointer_cast<RgBuildSettingsOpencl>(build_settings);

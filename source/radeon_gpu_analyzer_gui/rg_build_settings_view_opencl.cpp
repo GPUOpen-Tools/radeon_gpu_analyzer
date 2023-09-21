@@ -461,6 +461,8 @@ void RgBuildSettingsViewOpencl::HandleTextEditChanged()
 
 void RgBuildSettingsViewOpencl::HandleComboboxIndexChanged(int index)
 {
+    Q_UNUSED(index);
+
     // Determine which control's text has been updated.
     QComboBox *combo_box = static_cast<QComboBox*>(QObject::sender());
     assert(combo_box != nullptr);
@@ -801,6 +803,8 @@ void RgBuildSettingsViewOpencl::HandleCompilerFolderBrowseButtonClick(CompilerFo
 
 void RgBuildSettingsViewOpencl::HandleCompilerFolderEditChanged(CompilerFolderType folder_type)
 {
+    Q_UNUSED(folder_type);
+
     auto pTextEdit = qobject_cast<QLineEdit*>(QObject::sender());
     assert(pTextEdit != nullptr);
     if (pTextEdit != nullptr)

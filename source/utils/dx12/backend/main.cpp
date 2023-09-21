@@ -19,7 +19,7 @@ using namespace Microsoft::WRL;
 #ifdef _WIN32
 // Agility SDK exports.
 extern "C" {
-__declspec(dllexport) extern const UINT D3D12SDKVersion = 608;
+__declspec(dllexport) extern const UINT D3D12SDKVersion = 610;
 }
 
 extern "C" {

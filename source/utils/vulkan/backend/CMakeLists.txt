@@ -24,18 +24,19 @@ file(GLOB  SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/*.cpp"
     "${PROJECT_SOURCE_DIR}/../../../common/vulkan/*.cpp"
 # volk.
-    "${PROJECT_SOURCE_DIR}/../../../../../Common/Lib/Ext/volk/volk.c"
+    "${PROJECT_SOURCE_DIR}/../../../../external/third_party/volk/volk.c"
 )
 
 file(GLOB  INCLUDES
     "${PROJECT_SOURCE_DIR}/*.h"
     "${PROJECT_SOURCE_DIR}/../../../common/vulkan/*.h"
 # volk.
-    "${PROJECT_SOURCE_DIR}/../../../../../Common/Lib/Ext/volk/volk.h"
+    "${PROJECT_SOURCE_DIR}/../../../../external/third_party/volk/volk.h"
 )
 
 include_directories("${PROJECT_SOURCE_DIR}/")
-include_directories("${PROJECT_SOURCE_DIR}/../../../../../Common/Lib/Ext/")
+include_directories("${PROJECT_SOURCE_DIR}/../../../../external/")
+include_directories("${PROJECT_SOURCE_DIR}/../../../../external/third_party")
 include_directories("${PROJECT_SOURCE_DIR}/../../../../")
 include_directories(${Vulkan_INCLUDE_DIRS})
 
@@ -43,7 +44,7 @@ include_directories(${Vulkan_INCLUDE_DIRS})
 # Linux specific configurations
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     # Compiler & linker configuration
-    add_definitions(-std=c++11)
+    add_definitions(-std=c++17)
 endif()
 
 # Windows specific configuration
@@ -53,12 +54,16 @@ endif()
 
 add_executable(vulkan_backend ${SOURCE_FILES} ${INCLUDES})
 
-# Set output folder and executable name.
-set_target_properties(vulkan_backend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/utils/vulkan")
-set_target_properties(vulkan_backend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/utils/vulkan")
-
 # Set link properties
+# Set output folder and executable name.
 set_target_properties(vulkan_backend PROPERTIES OUTPUT_NAME vulkan_backend)
+set_target_properties(vulkan_backend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG   "$<TARGET_FILE_DIR:radeon_gpu_analyzer_cli>/utils/vulkan")
+set_target_properties(vulkan_backend PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "$<TARGET_FILE_DIR:radeon_gpu_analyzer_cli>/utils/vulkan")
+
+# Set Visual C++ warning level to 4
+if(MSVC)
+  target_compile_options(vulkan_backend PRIVATE /W4)
+endif()
 
 #Set link libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")

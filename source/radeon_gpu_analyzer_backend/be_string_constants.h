@@ -18,6 +18,10 @@ static const char* kDeviceNameGfx1032 = "gfx1032";
 static const char* kDeviceNameGfx1034 = "gfx1034";
 static const char* kDeviceNameGfx1035 = "gfx1035";
 static const char* kDeviceNameGfx1100 = "gfx1100";
+static const char* kDeviceNameGfx1101 = "gfx1101";
+static const char* kDeviceNameGfx1102 = "gfx1102";
+static const char* kDeviceNameGfx1103 = "gfx1103";
+
 
 // LLVM Lightning Compiler.
 #if defined(_WIN64) || defined(__linux)

@@ -42,12 +42,6 @@ private:
                                     const BeVkPipelineFiles& isa_files,
                                     const BeVkPipelineFiles& stats_files);
 
-    // Extract Resource Usage (statistics) data.
-    void ExtractStatistics(const Config&                             config,
-                           const std::string&                        device,
-                           const std::string&                        amdgpu_dis_output,
-                           const std::map<std::string, std::string>& shader_to_disassembly);
-
     // The builder.
     BeProgramBuilderVkOffline* vulkan_builder_;
 

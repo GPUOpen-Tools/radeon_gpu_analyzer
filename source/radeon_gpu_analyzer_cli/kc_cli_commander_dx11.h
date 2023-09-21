@@ -26,13 +26,19 @@ private:
     bool Init(const Config& config, LoggingCallbackFunction callback);
     void InitRequestedAsicListDX(const Config& config);
     bool Compile(const Config& config, const GDT_GfxCardInfo& gfx_card_info, const std::string& device_name_to_log);
-    bool WriteAnalysisDataForDX(const Config& config, const std::vector<AnalysisData>& analysis_data, const std::vector<string>& device_analysis_data,
-                                const std::string& analysis_file, std::stringstream& log);
+    bool WriteAnalysisDataForDX(const Config&                          config,
+                                const std::vector<beKA::AnalysisData>& analysis_data,
+                                const std::vector<std::string>&        device_analysis_data,
+                                const std::string&                     analysis_file, 
+                                std::stringstream&                     log);
     void ExtractISA(const std::string& device_name, const Config& config, size_t& isa_size_in_bytes,
                     std::string isa_buffer, bool& is_isa_size_detected, bool& should_detect_isa_size);
     void ExtractIL(const std::string& device_name, const Config& config);
     bool ExtractStats(const  std::string& device_name, const Config& config, bool should_detect_isa_size, std::string isa_buffer,
-                      bool is_isa_size_detected, size_t isa_size_in_bytes, std::vector<AnalysisData>& analysis_data, std::vector<string>& device_analysis_data);
+                      bool                             is_isa_size_detected,
+                      size_t                           isa_size_in_bytes,
+                      std::vector<beKA::AnalysisData>& analysis_data,
+                      std::vector<std::string>&        device_analysis_data);
     void ExtractBinary(const std::string& device_name, const Config& config);
 
 private:

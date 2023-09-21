@@ -36,16 +36,31 @@ public:
     static void DeleteTempFiles(std::vector<std::string>& temp_files);
 
     // Convert statistics file from Vulkan mode into normal RGA stats format.
-    static beStatus ConvertStats(const BeVkPipelineFiles& isaFiles, 
-                                 const BeVkPipelineFiles& stats_files, 
-                                 const Config& config, 
-                                 const std::string& device);
+    static beKA::beStatus ConvertStats(const BeVkPipelineFiles& isaFiles, 
+                                       const BeVkPipelineFiles& stats_files, 
+                                       const Config&            config, 
+                                       const std::string&       device);
 
     // Convert ISA text to CSV form with additional data.
     static bool GetParsedIsaCsvText(const std::string& isaText, const std::string& device, bool add_line_numbers, std::string& csvText);
 
     // Store ISA text in the file.
     static beKA::beStatus WriteIsaToFile(const std::string& file_name, const std::string& isa_text, LoggingCallbackFunction log_callback);
+
+    
+    // Extract Resource Usage (statistics) data.
+    void ExtractStatistics(const Config&                             config,
+                           const std::string&                        device,
+                           const std::string&                        amdgpu_dis_output,
+                           const std::map<std::string, std::string>& shader_to_disassembly);
+
+    // Utility for extracting statistics.
+    static std::string BuildStatisticsStr(const beKA::AnalysisData& stats, std::size_t stage, bool is_compute_bit_set);
+
+    // Utility for populating statistics Analysis data from amdgpu metadata.
+    static beKA::AnalysisData PopulateAnalysisData(size_t pos,
+                                                   const std::string&  amdgpu_dis_md_str,
+                                                   const std::string&  current_device);
 
  private:
 

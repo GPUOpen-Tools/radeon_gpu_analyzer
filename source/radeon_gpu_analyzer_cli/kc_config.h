@@ -86,7 +86,7 @@ public:
     std::string              dump_ms_intermediate;              /// the location where to save the ms blob as text
     bool                     enable_shader_intrinsics;          /// true to enable DX shader intrinsics.
     bool                     dxbc_input_dx11;                   /// true if input file should be treated as a DXBC binary.
-    bool                     amdil_input;                       /// true when the input language is AMDIL rather than HLSL.
+    bool                     amdil_input = false;               /// true when the input language is AMDIL rather than HLSL.
     int                      uav_slot;                          /// User-defined UAV slot for shader intrinsics.
 
     // DX12.

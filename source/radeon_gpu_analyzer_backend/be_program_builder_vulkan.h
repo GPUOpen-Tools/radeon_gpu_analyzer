@@ -1,6 +1,6 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//======================================================================
+// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
+//======================================================================
 
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_VULKAN_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_VULKAN_H_

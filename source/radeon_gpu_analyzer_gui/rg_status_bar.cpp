@@ -552,6 +552,8 @@ bool RgStatusBar::eventFilter(QObject* object, QEvent* event)
 
 void RgStatusBar::HandleTreeWidgetItemEntered(QTreeWidgetItem* item, const int column)
 {
+    Q_UNUSED(column);
+
     // Set background color for all items to transparent.
     QTreeWidgetItemIterator it(api_mode_tree_widget_);
     while (*it)

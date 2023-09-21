@@ -9,8 +9,6 @@
 #include "radeon_gpu_analyzer_cli/kc_config.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 
-using namespace std;
-
 std::string Config::source_kind_dx11                    = "DX11";
 std::string Config::source_kind_dx12                    = "DX12";
 std::string Config::source_kind_dxr                     = "DXR";
@@ -23,7 +21,7 @@ std::string Config::source_kind_spirv_txt_offline       = "VK-SPV-TXT-OFFLINE";
 std::string Config::source_kind_vulkan                  = "VULKAN";
 
 Config::Config() :
-    mode(kModeNone),
+    mode(beKA::RgaMode::kModeNone),
     requested_command(kNone),
     analysis_file(),
     il_file(),

@@ -1,17 +1,12 @@
-Radeon GPU Analyzer 2.7.1 Release Notes
+
+Radeon GPU Analyzer 2.8 Release Notes
 =======================================
 Highlights
 ==========
--	Compile and analyze shaders and kernels for the AMD Radeon RX 7600 and 7700 series (gfx1102 architecture), even without a physical RDNA3™ card installed on your system.
--	DX12 mode: use the latest Shader Model features on any system with Agility SDK.
--	Relaxed DX12 .gpso input file content verification to permit empty InputLayout and RTVFormat elements.
--	Vulkan: New offline compiler, using AMD’s LLVM-based pipeline compiler.
--	Vulkan: updated the disassembler, fixing issue where certain 16-bit instructions were seen as “Unknown”.
--	OpenCL: fixed an issue that prevented Code Object binaries from being loaded by the runtime.
-
-Notes:
-In Vulkan Offline mode, --il and –pipe options are no longer supported as of version 2.7.1.
-
+-	Compile and analyze shaders and kernels for the gfx1101 (AMD Radeon RX 7800 XT and RX 7700 XT) and gfx1103 (AMD Radeon 740M, 760M and 780M) architectures.
+- 	Updates to the Vulkan, OpenGL and OpenCL offline compilers.
+-   Consolidated Linux and Windows build scripts to use a unified python script. 
+    Please refer to the build instructions in the RGA README.md file for more information about how to build the tool.
 
 Known Issues
 ============
@@ -21,12 +16,12 @@ Vulkan Live Driver Mode
 -	Keyboard navigation is not supported from some views in the GUI application.
 -	The RGA layer is a beta feature. It fails to extract the shaders and pipeline state from certain Vulkan apps.
 -	Notifications about the fact that modified SPIR-V binary does not match the disassembly will not appear for loaded projects (in case where the user changed the SPIR-V code, did not build, and re-loaded the project).
--	The driver may generate empty shaders in case the user gives an invalid pipeline state or does not provide a pipeline state at all. This is expected to be fixed in an upcoming driver build and does not require modifications of the tool.
-
 
 Offline OpenCL Mode
 -------------------
 -	OpenCL C++ kernels are not yet supported by the Lightning Compiler.
+-   The OpenCL Lightning Compiler has a known issue with unresolved __printf_alloc symbols, when using -mlink-builtin-bitcode to link against the device libraries
+    (i.e. linking in the device libraries using the ----rocm-device-lib-path option), which can cause link failures in .cl code containing printf references.
 -	Cycle estimate for certain VALU instructions appears as “Varies” instead of 4.
 
 OpenGL Mode
@@ -55,6 +50,20 @@ CapabilityTessellation
 CapabilityFloat16
 CapabilityFloat64
 CapabilityInt64
+CapabilityMeshShadingEXT
+CapabilityFragmentShaderSampleInterlockEXT
+CapabilityFragmentFullyCoveredEXT
+CapabilityFragmentShaderShadingRateInterlockEXT
+CapabilityInputAttachmentArrayNonUniformIndexingEXT
+CapabilityAtomicStorageOps
+CapabilityFragmentShaderPixelInterlockEXT
+CapabilityDotProductKHR
+CapabilityDotProductInputAllKHR
+CapabilityDotProductInput4x8BitKHR
+CapabilityDotProductInput4x8BitPackedKHR
+CapabilityWorkgroupMemoryExplicitLayoutKHR
+CapabilityWorkgroupMemoryExplicitLayout8BitAccessKHR
+CapabilityWorkgroupMemoryExplicitLayout16BitAccessKHR
 CapabilityInt64Atomics
 CapabilityGroups
 CapabilityAtomicStorage
@@ -92,9 +101,6 @@ CapabilityGeometryStreams
 CapabilityStorageImageReadWithoutFormat
 CapabilityStorageImageWriteWithoutFormat
 CapabilityMultiViewport
-CapabilitySubgroupDispatch
-CapabilityNamedBarrier
-CapabilityPipeStorage
 CapabilityGroupNonUniform
 CapabilityGroupNonUniformVote
 CapabilityGroupNonUniformArithmetic
@@ -153,6 +159,15 @@ CapabilityPhysicalStorageBufferAddressesEXT
 CapabilityDemoteToHelperInvocationEXT
 CapabilityAtomicFloat32MinMaxEXT
 CapabilityAtomicFloat64MinMaxEXT
+CapabilityRayTracingNV
+CapabilityRayQueryKHR
+CapabilityRayTracingKHR
+CapabilityRayCullMaskKHR
+CapabilityRayTracingProvisionalKHR
+CapabilityRayQueryProvisionalKHR
+CapabilityRayTraversalPrimitiveCullingProvisionalKHR
+CapabilityRayTracingPositionFetchKHR
+CapabilityRayQueryPositionFetchKHR
 
 
 b. The Vulkan Offline modes currently only support the following extensions:  
@@ -174,6 +189,7 @@ SPV_KHR_physical_storage_buffer
 SPV_KHR_terminate_invocation
 SPV_KHR_FRAGMENT_SHADING_RATE
 SPV_KHR_workgroup_memory_explicit_layout
+SPV_KHR_fragment_shader_barycentric
 SPV_EXT_nonuniform_qualifier
 SPV_EXT_shader_stencil_export
 SPV_EXT_shader_viewport_index_layer
@@ -189,14 +205,16 @@ SPV_AMD_texture_gather_bias_lod
 SPV_AMD_gpu_shader_int16
 SPV_AMD_shader_fragment_mask
 SPV_AMD_shader_image_load_store_lod
-SPV_AMD_shader_texel_buffer_explicit_format
-SPV_AMD_property_id_attachment
-SPV_AMD_anisotropic_lod_compensation
+SPV_AMD_gpu_shader_half_float_fetch
+SPV_AMD_shader_early_and_late_fragment_tests
 SPV_ARB_shader_ballot
 SPV_GOOGLE_decorate_string
 SPV_GOOGLE_hlsl_functionality1
 SPV_GOOGLE_user_type
-SPV_NV_cooperative_matrix SPV_GOOGLE_user_type
+SPV_KHR_ray_tracing_position_fetch
+SPV_KHR_ray_tracing
+SPV_KHR_ray_query
+SPV_NV_shader_atomic_float
 
 
 GUI Application
@@ -229,7 +247,8 @@ All Vulkan offline modes (vk-offline, vk-spv-offline and vk-spv-txt-offline) are
 
 DirectX 12
 ----------
-It is recommended to use the latest Adrenalin drivers for the best experience in DirectX 12 and DirectX 11 modes.
+-	It is recommended to use the latest Adrenalin drivers for the best experience in DirectX 12 and DirectX 11 modes.
+-	Please note that to enable the D3D12 debug layer (--debug-layer option), your Windows system must have the Graphics Tools feature installed (on Windows, go to Settings -> Apps -> Apps & features/Optional features). This is a D3D12 requirement which is unrelated to RGA.    
 
 DirectX 11
 ----------

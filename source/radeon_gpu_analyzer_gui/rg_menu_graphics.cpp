@@ -101,6 +101,8 @@ void RgMenuGraphics::SelectButton(size_t index)
 
 void RgMenuGraphics::SelectTabFocusItem(bool shift_tab_focus)
 {
+    Q_UNUSED(shift_tab_focus);
+
     assert(pipeline_state_item_ != nullptr);
     assert(build_settings_menu_item_ != nullptr);
     if (pipeline_state_item_ != nullptr && build_settings_menu_item_ != nullptr)
@@ -1094,6 +1096,8 @@ void RgMenuGraphics::RemoveFileMenuButtonFocus()
 
 void RgMenuGraphics::mousePressEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event);
+
     emit MenuClicked();
     emit FileMenuFocusInEvent();
 }

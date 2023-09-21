@@ -97,10 +97,6 @@ static void DrawVgprWidget(QPainter* painter, const QStyleOptionViewItem& option
         font = painter->font();
         font.setBold(false);
 
-        // Get and set the global font size.
-        std::shared_ptr<RgGlobalSettings> global_config = RgConfigManager::Instance().GetGlobalConfig();
-        font.setPointSize(global_config->font_size);
-
         // Set pen and font values.
         QPen pen = painter->pen();
         pen.setColor(Qt::GlobalColor::gray);
@@ -443,11 +439,15 @@ void RgIsaDisassemblyCustomTableView::mousePressEvent(QMouseEvent* event)
 
 void RgIsaDisassemblyCustomTableView::focusOutEvent(QFocusEvent* event)
 {
+    Q_UNUSED(event);
+
     emit FrameFocusOutSignal();
 }
 
 void RgIsaDisassemblyCustomTableView::focusInEvent(QFocusEvent* event)
 {
+    Q_UNUSED(event);
+
     emit FrameFocusInSignal();
 }
 
@@ -508,6 +508,9 @@ void RgIsaDisassemblyCustomTableView::HandleUpdateCurrentSubWidget(DisassemblyVi
 
 bool RgIsaDisassemblyCustomTableView::eventFilter(QObject* object, QEvent* event)
 {
+    Q_UNUSED(object);
+    Q_UNUSED(event);
+
     bool is_filtered = false;
 
     if (event->type() == QEvent::KeyPress)

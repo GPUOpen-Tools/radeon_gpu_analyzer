@@ -1,6 +1,6 @@
-//=================================================================
-// Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//======================================================================
+// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
+//======================================================================
 
 // C++.
 #include <cassert>
@@ -349,7 +349,7 @@ private:
 };
 
 // Callback for printing to stdout.
-static void LoggingCallback(const string& s)
+static void LoggingCallback(const std::string& s)
 {
     RgLog::stdOut << s.c_str() << std::flush;
 }
@@ -373,6 +373,14 @@ static bool ConstructVkOutputFileNames(const Config& config,
     {
         status = KcUtils::ConstructOutFileName(base_bin_filename, "", (!config.should_avoid_binary_device_prefix ? device : ""),
             (config.should_avoid_binary_suffix ? "" : kStrVulkanBinaryFileExtension), bin_filename);
+    }
+    else if (KcUtils::IsNavi3Target(device) && !base_isa_filename.empty())
+    {
+        status = KcUtils::ConstructOutFileName(kStrDefaultFilenameOutputBinaryFileName,
+                                               "",
+                                               (!config.should_avoid_binary_device_prefix ? device : ""),
+                                               (config.should_avoid_binary_suffix ? "" : kStrVulkanBinaryFileExtension),
+                                               bin_filename);
     }
 
     for (int stage = 0; stage < BePipelineStage::kCount && status; stage++)
@@ -1554,6 +1562,149 @@ bool KcCliCommanderVulkan::AssembleSpvTxtInputFiles(const Config& config, const 
     }
 
     return result;
+}
+
+bool KcCliCommanderVulkan::GenerateSessionMetadata(const Config& config) const
+{
+    return KcXmlWriter::GenerateVulkanSessionMetadataFile(config.session_metadata_file, output_metadata_);
+}
+
+bool KcCliCommanderVulkan::ParseIsaFilesToCSV(bool line_numbers, const std::string& device_string, RgVkOutputMetadata& metadata)
+{
+    bool ret = true;
+
+    // Step through existing output items to determine which files to generate CSV ISA for.
+    for (RgOutputFiles& output_file : metadata)
+    {
+        if (!output_file.input_file.empty())
+        {
+            std::string isa, parsed_isa, parsed_isa_filename;
+            bool        status = KcUtils::ReadTextFile(output_file.isa_file, isa, nullptr);
+
+            if (status)
+            {
+                // Convert the ISA text to CSV format.
+                if ((status = GetParsedIsaCsvText(isa, device_string, line_numbers, parsed_isa)) == true)
+                {
+                    status = (KcUtils::GetParsedISAFileName(output_file.isa_file, parsed_isa_filename) == beKA::kBeStatusSuccess);
+                    if (status)
+                    {
+                        // Attempt to write the ISA CSV to disk.
+                        status = (WriteIsaToFile(parsed_isa_filename, parsed_isa) == beKA::kBeStatusSuccess);
+                        if (status)
+                        {
+                            // Update the session metadata output to include the path to the ISA CSV.
+                            output_file.isa_csv_file = parsed_isa_filename;
+                        }
+                    }
+                }
+
+                if (!status)
+                {
+                    RgLog::stdOut << kStrErrorFailedToConvertToCsvFormat << output_file.isa_file << std::endl;
+                }
+            }
+            ret &= status;
+        }
+    }
+
+    return ret;
+}
+
+bool KcCliCommanderVulkan::PerformLiveRegAnalysis(const Config& conf, const std::string& device, RgVkOutputMetadata& device_md)
+{
+    bool  ret = true;
+
+    const std::string& device_suffix = (conf.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
+    gtString           device_gtstr;
+    device_gtstr << device.c_str();
+
+    std::cout << kStrInfoPerformingLiveregAnalysis1 << device << "... " << std::endl;
+
+    for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
+    {
+        RgOutputFiles& stage_md = device_md[stage];
+        if (!stage_md.input_file.empty())
+        {
+            std::string out_file_name;
+            gtString    out_filename_gtstr, isa_filename_gtstr;
+
+            // Construct a name for the livereg output file.
+            ret = KcUtils::ConstructOutFileName(conf.livereg_analysis_file,
+                                                kVulkanStageFileSuffixDefault[stage],
+                                                device_suffix,
+                                                kStrDefaultExtensionLivereg,
+                                                out_file_name,
+                                                !KcUtils::IsDirectory(conf.livereg_analysis_file));
+
+            if (ret && !out_file_name.empty())
+            {
+                out_filename_gtstr << out_file_name.c_str();
+                isa_filename_gtstr << stage_md.isa_file.c_str();
+
+                KcUtils::PerformLiveRegisterAnalysis(isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, conf.print_process_cmd_line);
+                ret                   = BeUtils::IsFilePresent(out_file_name);
+                stage_md.livereg_file = out_file_name;
+            }
+            else
+            {
+                RgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
+            }
+        }
+    }
+
+    LogResult(ret);
+
+    return ret;
+}
+
+bool KcCliCommanderVulkan::ExtractCFG(const Config& config, const std::string& device, const RgVkOutputMetadata& device_md) const
+{
+    bool ret = true;
+
+    const std::string& device_suffix = (config.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
+    bool               per_inst_cfg  = (!config.inst_cfg_file.empty());
+    gtString           device_gtstr;
+    device_gtstr << device.c_str();
+
+    std::cout << (per_inst_cfg ? kStrInfoContructingPerInstructionCfg1 : kStrInfoContructingPerBlockCfg1) << device << "..." << std::endl;
+
+    for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
+    {
+        const RgOutputFiles& stage_md = device_md[stage];
+        if (!stage_md.input_file.empty())
+        {
+            std::string out_filename;
+            gtString    out_filename_gtstr, isa_filename_gtstr;
+
+            // Construct a name for the CFG output file.
+            const std::string cfg_output_file = (per_inst_cfg ? config.inst_cfg_file : config.block_cfg_file);
+            ret                               = KcUtils::ConstructOutFileName(cfg_output_file,
+                                                kVulkanStageFileSuffixDefault[stage],
+                                                device_suffix,
+                                                kStrDefaultExtensionDot,
+                                                out_filename,
+                                                !KcUtils::IsDirectory(cfg_output_file));
+
+            if (ret && !out_filename.empty())
+            {
+                out_filename_gtstr << out_filename.c_str();
+                isa_filename_gtstr << stage_md.isa_file.c_str();
+
+                KcUtils::GenerateControlFlowGraph(
+                    isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, per_inst_cfg, config.print_process_cmd_line);
+                ret = BeUtils::IsFilePresent(out_filename);
+            }
+            else
+            {
+                RgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
+            }
+        }
+    }
+
+    LogResult(ret);
+
+    return ret;
 }
 
 void KcCliCommanderVulkan::StoreInputFilesToOutputMD(const BeVkPipelineFiles& input_files)

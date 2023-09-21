@@ -276,6 +276,8 @@ QLabel* RgMenuFileItemGraphics::GetItemLabel()
 
 void RgMenuFileItemGraphics::enterEvent(QEvent* event)
 {
+    Q_UNUSED(event);
+
     if (!full_file_path_.empty())
     {
         ui_.removeFilePushButton->show();
@@ -287,6 +289,8 @@ void RgMenuFileItemGraphics::enterEvent(QEvent* event)
 
 void RgMenuFileItemGraphics::leaveEvent(QEvent* event)
 {
+    Q_UNUSED(event);
+
     if (!full_file_path_.empty())
     {
         ui_.removeFilePushButton->hide();
@@ -298,6 +302,8 @@ void RgMenuFileItemGraphics::leaveEvent(QEvent* event)
 
 void RgMenuFileItemGraphics::mouseDoubleClickEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event);
+
     // Don't allow renaming a pipeline stage item that's empty.
     if (!full_file_path_.empty())
     {
@@ -308,6 +314,8 @@ void RgMenuFileItemGraphics::mouseDoubleClickEvent(QMouseEvent* event)
 
 void RgMenuFileItemGraphics::mousePressEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event);
+
     // Don't process a pipeline stage click if the stage is empty.
     if (!full_file_path_.empty())
     {
@@ -323,11 +331,15 @@ void RgMenuFileItemGraphics::mousePressEvent(QMouseEvent* event)
 
 void RgMenuFileItemGraphics::resizeEvent(QResizeEvent *event)
 {
+    Q_UNUSED(event);
+
     UpdateFilenameLabelText();
 }
 
 void RgMenuFileItemGraphics::showEvent(QShowEvent *event)
 {
+    Q_UNUSED(event);
+
     UpdateFilenameLabelText();
 }
 
@@ -446,6 +458,8 @@ void RgMenuFileItemGraphics::dragEnterEvent(QDragEnterEvent* event)
 
 void RgMenuFileItemGraphics::dragLeaveEvent(QDragLeaveEvent* event)
 {
+    Q_UNUSED(event);
+
     // Change the item's background color.
     SetHovered(false);
     SetCurrent(false);

@@ -275,8 +275,6 @@ std::string RgUtils::GenerateTemplateCode(RgProjectAPI api_name, const std::stri
 
 std::string RgUtils::GenerateDefaultProjectName()
 {
-    RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
-
     // Generate a timestamp to append to the base filename.
     QDateTime         right_now  = QDateTime::currentDateTime();
     QString           local_time = right_now.toString("yyMMdd-HHmmss");
@@ -1525,6 +1523,8 @@ std::string RgUtils::GetPlainText(const std::string& text)
 
 bool RgUtils::IsInList(const std::string& list, const std::string& token, char delim)
 {
+    Q_UNUSED(delim);
+
     size_t start = 0, end = 0;
     bool   stop = false, ret = false;
     while (!stop)
@@ -1561,6 +1561,8 @@ void RgUtils::FindSearchResultIndices(const QString& text, const QString& text_t
 
 bool RgUtils::IsSpvasTextFile(const std::string& stage_input_file, std::string& stage_abbreviation)
 {
+    Q_UNUSED(stage_abbreviation);
+
     static const std::string DEFAULT_TEXT_FILE_EXTENSION = "txt";
     bool                     result                      = false;
 

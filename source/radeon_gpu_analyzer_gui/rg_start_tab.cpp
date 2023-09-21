@@ -300,7 +300,7 @@ void RgStartTab::PopulateRecentProjectsList()
                         recent_project_widget->setContextMenuPolicy(Qt::CustomContextMenu);
 
                         // Connect signal/slot for the context menu.
-                        bool is_connected = connect(recent_project_widget, &RgRecentProjectWidget::customContextMenuRequested, this, &RgStartTab::HandleContextMenuRequest);
+                        is_connected = connect(recent_project_widget, &RgRecentProjectWidget::customContextMenuRequested, this, &RgStartTab::HandleContextMenuRequest);
                         assert(is_connected);
 
                         // Add the recent project button to the group.
@@ -339,6 +339,8 @@ QPushButton* RgStartTab::GetCreateNewFileButton()
 
 void RgStartTab::HandleContextMenuRequest(const QPoint& pos)
 {
+    Q_UNUSED(pos);
+
     // Set context menu mouse cursor
     menu_.setCursor(Qt::PointingHandCursor);
 

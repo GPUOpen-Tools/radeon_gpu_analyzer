@@ -187,6 +187,8 @@ void RgSourceCodeEditor::setText(const QString& txt)
 
 void RgSourceCodeEditor::clearText(const QString& txt)
 {
+    Q_UNUSED(txt);
+
     QTextDocument* doc = this->document();
     if (doc != nullptr && !doc->isEmpty())
     {
@@ -313,9 +315,10 @@ bool RgSourceCodeEditor::IsIncludeDirectiveLine(const QString& line_text)
 
 void RgSourceCodeEditor::ShowContextMenu(const QPoint& pt)
 {
+    Q_UNUSED(pt);
+
     // Is the open header file action relevant.
     QString line_text;
-    bool is_valid = GetCurrentLineText(line_text);
 
     // Set the open header action to enabled
     // only when the line is an include directive.
@@ -467,6 +470,8 @@ void RgSourceCodeEditor::resizeEvent(QResizeEvent* event)
 
 void RgSourceCodeEditor::hideEvent(QHideEvent* event)
 {
+    Q_UNUSED(event);
+
     emit EditorHidden();
 }
 
@@ -579,6 +584,8 @@ void RgSourceCodeEditor::mousePressEvent(QMouseEvent* event)
 
 void RgSourceCodeEditor::mouseDoubleClickEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event);
+
     static const QColor kHighlightGreenColor = QColor::fromRgb(124, 252, 0);
     static const QColor kHighlightDarkGreenColor = QColor::fromRgb(0, 102, 51);
 

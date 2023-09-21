@@ -27,7 +27,6 @@ void RgSettingsTab::Initialize()
 {
     // Create the global settings view and add it to the Settings Tab.
     RgConfigManager& config_manager = RgConfigManager::Instance();
-    RgProjectAPI current_api = config_manager.GetCurrentAPI();
     std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
 
     // Set various properties for the scroll area.

@@ -105,5 +105,6 @@ static const char* kStrDefaultFilenameLivereg = "livereg";
 static const char* kStrDefaultFilenameIl = "il";
 static const char* kStrDefaultFilenameIsa = "isa";
 static const char* kStrDefaultFilenamePreprocessedIsa = "preprocessed_isa";
+static const char* kStrDefaultFilenameOutputBinaryFileName = "codeobj.bin";
 
 #endif // RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_STRING_CONSTANTS_H_

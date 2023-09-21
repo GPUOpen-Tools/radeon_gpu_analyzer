@@ -6,8 +6,6 @@
 #include "radeon_gpu_analyzer_backend/be_program_builder.h"
 #include "emulator/parser/be_isa_parser.h"
 
-using namespace std;
-
 bool BeProgramBuilder::LogCallback(const std::string& str)
 {
     bool ret = false;

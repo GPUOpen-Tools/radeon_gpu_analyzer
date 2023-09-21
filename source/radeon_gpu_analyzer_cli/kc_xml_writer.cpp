@@ -177,18 +177,18 @@ static bool WriteXMLDocToFile(tinyxml2::XMLDocument& doc, const std::string& fil
     return result;
 }
 
-bool KcXmlWriter::AddVersionInfoGPUList(RgaMode mode, const std::set<std::string>& targets, const std::string& filename)
+bool KcXmlWriter::AddVersionInfoGPUList(beKA::RgaMode mode, const std::set<std::string>& targets, const std::string& filename)
 {
     std::string  mode_str;
     bool  ret = false;
 
     switch (mode)
     {
-    case RgaMode::kModeOpenclOffline:
+    case beKA::RgaMode::kModeOpenclOffline:
         mode_str = kStrXmlNodeOpenclOffline;
         ret      = true;
         break;
-    case RgaMode::kModeVulkan:
+    case beKA::RgaMode::kModeVulkan:
         mode_str = kStrXmlNodeVulkan;
         ret      = true;
         break;

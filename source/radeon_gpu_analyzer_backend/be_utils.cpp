@@ -410,7 +410,7 @@ bool BeUtils::DisassembleCodeObject(const std::string& code_object_filename, boo
         }
     }
 
-    return (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusdx12BackendLaunchFailure);
+    return (status == KcUtils::ProcessStatus::kSuccess ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusdx12BackendLaunchFailure);
 }
 
 static bool ExtractAttributeValue(const std::string &disassembly_whole, size_t kd_pos, const std::string& attribute_name, uint32_t& value)
@@ -537,7 +537,7 @@ bool BeUtils::ExtractCodeObjectStatistics(const std::string& disassembly_whole,
                 assert(is_ok);
 
                 // Add values which were extracted from the Code Object meta data.
-                AnalysisData data;
+                beKA::AnalysisData data;
                 data.lds_size_used = lds_usage;
                 data.num_sgprs_used = sgpr_count;
                 data.num_sgpr_spills = sgpr_spill_count;

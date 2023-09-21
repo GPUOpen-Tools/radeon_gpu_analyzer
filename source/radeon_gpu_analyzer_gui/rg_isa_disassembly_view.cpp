@@ -297,7 +297,7 @@ void RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(const QStri
 
     // If the user unchecked the "VGPR pressure" box, disable the show
     // max VGPR feature.
-    if (text.compare(kStrDisassemblyTableLiveVgprHeaderPart) == 0)
+    if (text.compare(kStrDisassemblyTableLiveVgprHeaderPart) == 0 && current_tab_view_ != nullptr)
     {
         // Get the current table view.
         RgIsaDisassemblyTableView* current_table_view = current_tab_view_->GetCurrentTableView();
@@ -334,13 +334,16 @@ void RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(const QStri
 
 void RgIsaDisassemblyView::EnableShowMaxVgprContextOption() const
 {
-    // Get the current table view.
-    RgIsaDisassemblyTableView* current_table_view = current_tab_view_->GetCurrentTableView();
-
-    // Enable/Disable the show max VGPR context menu item.
-    if (current_table_view != nullptr)
+    if (current_tab_view_ != nullptr)
     {
-        current_table_view->EnableShowMaxVgprContextOption(IsMaxVgprColumnVisible());
+        // Get the current table view.
+        RgIsaDisassemblyTableView* current_table_view = current_tab_view_->GetCurrentTableView();
+
+        // Enable/Disable the show max VGPR context menu item.
+        if (current_table_view != nullptr)
+        {
+            current_table_view->EnableShowMaxVgprContextOption(IsMaxVgprColumnVisible());
+        }
     }
 }
 
@@ -1259,6 +1262,8 @@ void RgIsaDisassemblyView::HandleResourceUsageViewFocusOutEvent()
 
 void RgIsaDisassemblyView::HandleTitlebarClickedEvent(QMouseEvent* event)
 {
+    Q_UNUSED(event);
+
     // Emit a signal to indicate that disassembly view was clicked.
     emit DisassemblyViewClicked();
 
@@ -1371,7 +1376,7 @@ void RgIsaDisassemblyView::HandleSelectNextMaxVgprLineAction()
     // before enabling this feature.
     std::vector<bool> column_visibility = ListWidget::GetColumnVisibilityCheckboxes(disassembly_columns_list_widget_);
     bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
-    if (is_visible)
+    if (is_visible && current_tab_view_ != nullptr)
     {
         // Show the max VGPR lines for the current tab view.
         current_tab_view_->HandleShowNextMaxVgprSignal();
@@ -1392,7 +1397,7 @@ void RgIsaDisassemblyView::HandleSelectPreviousMaxVgprLineAction()
     // before enabling this feature.
     std::vector<bool> column_visibility = ListWidget::GetColumnVisibilityCheckboxes(disassembly_columns_list_widget_);
     bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
-    if (is_visible)
+    if (is_visible && current_tab_view_ != nullptr)
     {
         // Show the previous max VGPR lines for the current tab view.
         current_tab_view_->HandleShowPreviousMaxVgprSignal();

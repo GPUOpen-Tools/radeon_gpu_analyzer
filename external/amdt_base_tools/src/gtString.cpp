@@ -1,19 +1,19 @@
-//=====================================================================
-// Copyright 2016 (c), Advanced Micro Devices, Inc. All rights reserved.
+//===========================================================================
+// Copyright 2016-2023 (c), Advanced Micro Devices, Inc. All rights reserved.
 //
 /// \author AMD Developer Tools Team
 /// \file gtString.cpp
 ///
-//=====================================================================
+//===========================================================================
 
-//------------------------------ gtString.cpp ------------------------------
+//------------------------------ gtString.cpp -------------------------------
 
 // C:
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include <cwctype>
-#include <limits.h>
+#include <limits>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>

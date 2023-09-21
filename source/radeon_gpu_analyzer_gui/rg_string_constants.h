@@ -420,9 +420,6 @@ static const char* kStrGlobalSettingsFileExtHlsl   = "hlsl;fx;hs;ds;ps";
 static const char* kStrGlobalSettingsFileExtSpvasm = "spvasm";
 static const char* kStrGlobalSettingsFileExtSpv    = "spv";
 
-// Default binary output file name.
-static const char* kStrGlobalSettingsOutputBinaryFileName = "codeobj.bin";
-
 // *** GLOBAL SETTINGS STRINGS - END ***
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -658,3 +655,4 @@ static const char* kStrUpdatesResultsWindowTitle = "Available updates";
 
 // *** CHECK FOR UPDATES  DIALOG STRINGS - END ***
 #endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_STRING_CONSTANTS_H_
+

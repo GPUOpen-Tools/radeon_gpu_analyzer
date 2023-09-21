@@ -191,6 +191,8 @@ QSize RgViewContainer::minimumSizeHint() const
 
 void RgViewContainer::enterEvent(QEvent* event)
 {
+    Q_UNUSED(event);
+
     setProperty(kStrHoveredStatePropertyName, true);
 
     if (title_bar_widget_ != nullptr)
@@ -201,6 +203,8 @@ void RgViewContainer::enterEvent(QEvent* event)
 
 void RgViewContainer::leaveEvent(QEvent* event)
 {
+    Q_UNUSED(event);
+
     setProperty(kStrHoveredStatePropertyName, false);
 
     if (title_bar_widget_ != nullptr)

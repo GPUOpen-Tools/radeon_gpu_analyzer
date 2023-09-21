@@ -12,8 +12,6 @@
 #include "radeon_gpu_analyzer_cli/kc_cli_commander.h"
 #include "radeon_gpu_analyzer_cli/kc_data_types.h"
 
-using namespace std;
-
 class KcCliCommanderCL: public KcCliCommander
 {
 public:
@@ -52,7 +50,7 @@ private:
         const std::string& device_name, const beKA::AnalysisData& analysis);
 
 private:
-    std::set<string>             external_devices_;
+    std::set<std::string>        external_devices_;
     std::vector<GDT_GfxCardInfo> table_;
     std::set<std::string>        asics_;
     std::vector<std::string>     asics_sorted_;

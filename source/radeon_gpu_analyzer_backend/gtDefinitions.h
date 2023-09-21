@@ -1,5 +1,5 @@
 //=====================================================================
-// Copyright 2016 (c), Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2016-2023 (c), Advanced Micro Devices, Inc. All rights reserved.
 //
 /// \author AMD Developer Tools Team
 /// \file gtDefinitions.h
@@ -91,7 +91,7 @@ typedef size_t gtSizeType;
     #include <stdint.h>
     #include <stdlib.h>
     #include <string.h>
-    #include <limits.h>
+    #include <limits>
 
     #if __WORDSIZE == 32
         #define GR_ADDRESS_SPACE_TYPE GR_32_BIT_ADDRESS_SPACE

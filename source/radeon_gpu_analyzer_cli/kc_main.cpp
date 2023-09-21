@@ -2,8 +2,6 @@
 // Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 
-#define _HAS_STD_BYTE 0
-
 // C++.
 #include <memory>
 #include <map>
@@ -50,7 +48,7 @@ static const char* kStrRgaCliLogsEnd = "RGA CLI process finished.";
 static const wchar_t* kStrOpenclEnvVarGpuForce64BitPtrName = L"GPU_FORCE_64BIT_PTR";
 static const wchar_t* kStrOpenclEnvVarGpuForce64BitPtrValue = L"1";
 
-static void LoggingCallback(const string& s)
+static void LoggingCallback(const std::string& s)
 {
     RgLog::stdOut << s.c_str() << std::flush;
 }
