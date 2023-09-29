@@ -57,8 +57,6 @@ As a preliminary step, make sure that you have the following installed on your s
 
 cd to the build sub-folder, and run:
 
-  `--qt QT`               specify the version of QT to be used with the script``
-
 ```
 python pre_build.py --qt <version of QT> --vs 2019
 ```
