@@ -67,6 +67,8 @@ static const char* kStrInfoFrontEndCompilationWithDxcDxr = " HLSL file through D
 static const char* kStrInfoFrontEndCompilationSuccess = "Front-end compilation success.";
 static const char* kStrInfoDxcOutputPrologue = "*** Output from DXC - START ***";
 static const char* kStrInfoDxcOutputEpilogue = "*** Output from DXC - END ***";
+static const char* kStrInfoDebuglayerOutputPrologue = "*** Output from D3D12 Debug Layer - START ***";
+static const char* kStrInfoDebuglayerOutputEpilogue = "*** Output from D3D12 Debug Layer - END ***";
 static const char* kStrInfoDxcUsingDxcFromUserPath = "Using DXC from user-provided path: ";
 static const char* kStrInfoDxcReadingOptionsFromFile = "Info: reading additional DXC options from file: ";
 static const char* kStrInfoDxcOptionsFileReadSuccess = "Info: DXC options file read successfully. Passing DXC the following options: ";
@@ -79,18 +81,6 @@ static const char* kStrWarningDxcOptionsFileMissing = "Warning: DXC options file
 
 // Tokens.
 const char* kStrDx12TokenBackendErrorToken = "Error";
-
-// Suffixes for stage-specific output files.
-static const std::array<std::string, BePipelineStage::kCount>
-STR_DX12_STAGE_SUFFIX =
-{
-    "vert",
-    "hull",
-    "domain",
-    "geom",
-    "pixel",
-    "comp"
-};
 
 // Other constants.
 static const char* FILE_NAME_TOKEN_DXR = "*";
@@ -405,7 +395,7 @@ static bool CompileHlslWithDxc(const Config& config, const std::string& hlsl_fil
     const std::string& entry_point, std::string& dxil_output_file)
 {
     bool ret = false;
-    bool should_abort = !KcUtils::ConstructOutFileName("", STR_DX12_STAGE_SUFFIX[stage],
+    bool should_abort = !KcUtils::ConstructOutFileName("", kStrDx12StageSuffix[stage],
         STR_DXIL_FILE_NAME, STR_DXIL_FILE_SUFFIX, dxil_output_file);
     assert(!should_abort);
     if (!should_abort)
@@ -537,8 +527,12 @@ bool BeUtils::IsNumericValue(const std::string& str)
         str.end(), [](char c) { return !std::isdigit(c); }) == str.end();
 }
 
-static beStatus InvokeDx12Backend(const Config& config, const std::string& cmd_line_options, bool should_print_cmd,
-    std::string& out_text, std::string& error_msg)
+static beStatus InvokeDx12Backend(const Config&      config, 
+                                  const std::string& cmd_line_options, 
+                                  bool               should_print_cmd,
+                                  bool               should_print_dbg, 
+                                  std::string&       out_text, 
+                                  std::string&       error_msg)
 {
     beStatus ret = beStatus::kBeStatusSuccess;
 
@@ -614,6 +608,11 @@ static beStatus InvokeDx12Backend(const Config& config, const std::string& cmd_l
         {
             std::cout << "Info: in an offline session." << std::endl;
 
+            if (config.dx12_debug_layer_enabled)
+            {
+                std::cout << "Warning: in an offline session debug output will not be captured by rga." << std::endl;
+            }
+
             // Use kmtmuxer.
             cmd_update_stream << " /d:\"" << dx12_kmtmuxer.asString().asASCIICharArray() << "\" ";
 
@@ -638,8 +637,26 @@ static beStatus InvokeDx12Backend(const Config& config, const std::string& cmd_l
         const osFilePath&      backend_exe = (config.dx12_offline_session ? dx12_offline_exe : dx12_backend_exe);
         std::stringstream      backend_exe_fixed;
         backend_exe_fixed << "\"" << backend_exe.asString().asASCIICharArray() << "\"";
-        KcUtils::ProcessStatus status = KcUtils::LaunchProcess(backend_exe_fixed.str().c_str(), cmd_line_updated,
-            "", kProcessWaitInfinite, should_print_cmd, out_text, error_msg, exit_code);
+        KcUtils::ProcessStatus status = KcUtils::ProcessStatus::kLaunchFailed;
+        if (config.dx12_debug_layer_enabled && !config.dx12_no_debug_output && !config.dx12_offline_session)
+        {
+            status = KcUtils::LaunchProcess(backend_exe_fixed.str().c_str(),
+                                            cmd_line_updated,
+                                            "",
+                                            kProcessWaitInfinite,
+                                            should_print_cmd,
+                                            should_print_dbg,
+                                            kStrInfoDebuglayerOutputPrologue,
+                                            kStrInfoDebuglayerOutputEpilogue,
+                                            out_text,
+                                            error_msg,
+                                            exit_code);
+        }
+        else
+        {
+            status = KcUtils::LaunchProcess(
+                backend_exe_fixed.str().c_str(), cmd_line_updated, "", kProcessWaitInfinite, should_print_cmd, out_text, error_msg, exit_code);
+        }
         assert(status == KcUtils::ProcessStatus::kSuccess);
         ret = (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusdx12BackendLaunchFailure);
 
@@ -684,7 +701,7 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
     BOOL rc = SetEnvironmentVariable(kStrEnvVarNameAmdVirtualGpuId, L"0");
     assert(rc == TRUE);
 
-    beStatus ret = InvokeDx12Backend(config, "-l", config.print_process_cmd_line, supported_gpus, errors);
+    beStatus ret = InvokeDx12Backend(config, "-l", config.print_process_cmd_line, false, supported_gpus, errors);
     assert(ret = beStatus::kBeStatusSuccess);
     assert(!supported_gpus.empty());
     if ((ret == beStatus::kBeStatusSuccess) && !supported_gpus.empty())
@@ -1167,11 +1184,12 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
                     if (!config.isa_file.empty())
                     {
                         bool isFileNameConstructed = KcUtils::ConstructOutFileName(config.isa_file,
-                            STR_DX12_STAGE_SUFFIX[stage], target_device_lower, "isa", generated_isa_files[stage]);
+                            kStrDx12StageSuffix[stage], target_device_lower, "isa", generated_isa_files[stage]);
                         assert(isFileNameConstructed);
                         if (isFileNameConstructed && !generated_isa_files[stage].empty())
                         {
-                            cmd << " --" << STR_DX12_STAGE_SUFFIX[stage] << "-isa " << "\"" << generated_isa_files[stage] << "\" ";
+                            cmd << " --" << kStrDx12StageSuffix[stage] << "-isa "
+                                << "\"" << generated_isa_files[stage] << "\" ";
 
                             // Delete that file if it already exists.
                             if (BeUtils::IsFilePresent(generated_isa_files[stage]))
@@ -1185,11 +1203,12 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
                     if (!config.il_file.empty())
                     {
                         bool isFileNameConstructed = KcUtils::ConstructOutFileName(config.il_file,
-                            STR_DX12_STAGE_SUFFIX[stage], target_device_lower, "amdil", generated_amdil_files[stage]);
+                            kStrDx12StageSuffix[stage], target_device_lower, "amdil", generated_amdil_files[stage]);
                         assert(isFileNameConstructed);
                         if (isFileNameConstructed && !generated_amdil_files[stage].empty())
                         {
-                            cmd << " --" << STR_DX12_STAGE_SUFFIX[stage] << "-amdil " << "\"" << generated_amdil_files[stage] << "\" ";
+                            cmd << " --" << kStrDx12StageSuffix[stage] << "-amdil "
+                                << "\"" << generated_amdil_files[stage] << "\" ";
 
                             // Delete that file if it already exists.
                             if (BeUtils::IsFilePresent(generated_amdil_files[stage]))
@@ -1203,12 +1222,13 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
                     if (!config.analysis_file.empty())
                     {
                         bool is_filename_constructed = KcUtils::ConstructOutFileName(config.analysis_file,
-                            STR_DX12_STAGE_SUFFIX[stage], target_device_lower,
+                            kStrDx12StageSuffix[stage], target_device_lower,
                             kStrDefaultExtensionStats, generated_stats_files[stage]);
                         assert(is_filename_constructed);
                         if (is_filename_constructed && !generated_stats_files[stage].empty())
                         {
-                            cmd << " --" << STR_DX12_STAGE_SUFFIX[stage] << "-stats " << "\"" << generated_stats_files[stage] << "\" ";
+                            cmd << " --" << kStrDx12StageSuffix[stage] << "-stats "
+                                << "\"" << generated_stats_files[stage] << "\" ";
                         }
 
                         // Delete that file if it already exists.
@@ -1286,7 +1306,7 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
             AddDebugLayerCommand(config, cmd);
 
             // Invoke the backend to perform the actual build.
-            ret = InvokeDx12Backend(config, cmd.str().c_str(), config.print_process_cmd_line, out_text, error_msg);
+            ret = InvokeDx12Backend(config, cmd.str().c_str(), config.print_process_cmd_line, config.dx12_debug_layer_enabled, out_text, error_msg);
             assert(ret == kBeStatusSuccess);
             if (ret == kBeStatusSuccess)
             {
@@ -1545,7 +1565,7 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
             AddDebugLayerCommand(config, cmd);
 
             // Invoke the backend to perform the actual build.
-            ret = InvokeDx12Backend(config, cmd.str().c_str(), config.print_process_cmd_line, out_text, error_msg);
+            ret = InvokeDx12Backend(config, cmd.str().c_str(), config.print_process_cmd_line, config.dx12_debug_layer_enabled, out_text, error_msg);
             assert(ret == kBeStatusSuccess);
             if (ret == kBeStatusSuccess)
             {

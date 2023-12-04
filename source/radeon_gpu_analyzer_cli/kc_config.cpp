@@ -19,6 +19,7 @@ std::string Config::source_kind_glsl_vulkan_offline     = "VK-OFFLINE";
 std::string Config::source_kind_spirv_bin_offline       = "VK-SPV-OFFLINE";
 std::string Config::source_kind_spirv_txt_offline       = "VK-SPV-TXT-OFFLINE";
 std::string Config::source_kind_vulkan                  = "VULKAN";
+std::string Config::source_kind_binary                  = "BIN";
 
 Config::Config() :
     mode(beKA::RgaMode::kModeNone),
@@ -26,7 +27,8 @@ Config::Config() :
     analysis_file(),
     il_file(),
     isa_file(),
-    livereg_analysis_file(),
+    livereg_analysis_file(), 
+    sgpr_livereg_analysis_file(),
     binary_output_file(),
     function(),
     csv_separator(),

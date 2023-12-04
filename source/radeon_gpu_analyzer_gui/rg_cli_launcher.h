@@ -37,6 +37,21 @@ public:
     static bool BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, int clone_index, const std::string& output_path, const std::string& binary_name,
         std::function<void(const std::string&)> cli_output_handling_callback, std::vector<std::string>& gpus_built, bool& cancel_signal);
 
+    // Runs RGA CLI to compile the given Binary pipeline project clone.
+    // project is the project containing the clone to be built.
+    // clone_index is the index of the clone to be built.
+    // outputPath is where the output files will be generated.
+    // cliOutputHandlingCallback is a callback used to send CLI output text to the GUI.
+    // cancelSignal can be used to terminate the operation.
+    // Returns true for success, false otherwise.
+    static bool BuildProjectCloneBinary(std::shared_ptr<RgProject>              project,
+                                        int                                     clone_index,
+                                        const std::string&                      output_path,
+                                        const std::string&                      binary_name,
+                                        std::function<void(const std::string&)> cli_output_handling_callback,
+                                        std::vector<std::string>&               gpus_built,
+                                        bool&                                   cancel_signal);
+
     // Runs RGA CLI to disassemble the given SPIR-V binary into text.
     // compilerBinFolder is the folder contaning alternative compiler binaries. If empty, the default spirv-dis tool will be used.
     // spvFullFilePath is the input file path to the SPIR-V binary to disassemble.

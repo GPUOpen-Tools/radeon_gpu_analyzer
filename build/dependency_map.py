@@ -40,7 +40,7 @@ github_mapping = {
     "tsingleton"                     : ["../external/tsingleton",               "master"],
     "common_src_miniz"               : ["../external/miniz",                    "master"],
     "dynamic_library_module"         : ["../external/dynamic_library_module",   "amd-rga-v2.7"],
-    "device_info"                    : ["../external/device_info",              "8c2adcc8136dab662a58e93ead3027ee68e318c6"],
+    "device_info"                    : ["../external/device_info",              "190ec95f2ce1d715231f2ee5e17a65217fc59f6c"],
     "update_check_api"               : ["../external/update_check_api",         "v2.1.0"],
   # QtCommon.
     "qt_common"                      : ["../external/QtCommon",                 "rga-2.5"],

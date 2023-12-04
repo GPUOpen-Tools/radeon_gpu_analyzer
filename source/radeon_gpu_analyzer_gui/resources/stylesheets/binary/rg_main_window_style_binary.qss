@@ -1,0 +1,46 @@
+/********************************************************************/
+/* Main Window Tabs
+/********************************************************************/
+
+/* Tab basic styling */
+#mainTabWidget QTabBar::tab
+{
+    background: rgb(51,51,51);
+    bottom: 1px;
+    padding: 4px 8px;
+}
+
+/* Unselected tab */
+#mainTabWidget QTabBar::tab:!selected
+{
+    border-bottom: 4px solid transparent;
+    color: rgb(159, 159, 159);
+}
+
+/* Hovered tab */
+#mainTabWidget QTabBar::tab:hover
+{
+    border-bottom: 4px solid rgb(128, 0, 128);
+    color: rgb(153, 153, 153);
+}
+
+/* Selected tab */
+#mainTabWidget QTabBar::tab:selected
+{
+    border-bottom: 4px solid rgb(192, 0, 192);
+    color: white;
+}
+
+/********************************************************************/
+/* Rename Project Dialog
+/********************************************************************/
+
+rgRenameProjectDialog #lineEditProjectName:focus
+{
+    border: 1px solid rgb(128, 0, 128);
+}
+
+rgRenameProjectDialog #lineEditProjectName:hover
+{
+    border: 1px solid rgb(128, 0, 128);
+}

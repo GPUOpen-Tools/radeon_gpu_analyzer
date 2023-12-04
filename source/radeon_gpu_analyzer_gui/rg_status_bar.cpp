@@ -21,10 +21,12 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_tree_widget.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types_binary.h"
+#include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "QtCommon/Util/QtUtil.h"
 
 static const int kWidgetMinimumHeight = 25;
-static const int kModeButtonMinimumWidth = 110;
+static const int kModeButtonMinimumWidth = 150;
 static const int kPushButtonFontSize = 11;
 static const int kTreeWidgetItemHeight = 20;
 static const int kModeButtonIconHeight = 15;
@@ -64,10 +66,10 @@ public:
             // Get the current API.
             RgConfigManager& config_manager = RgConfigManager::Instance();
             RgProjectAPI current_api = config_manager.GetCurrentAPI();
-
+            
             // Create the API string.
             std::string api_string = "";
-            RgUtils::ProjectAPIToString(current_api, api_string);
+            RgUtils::ProjectAPIToString(current_api, api_string, false);      
 
             // Set painter options.
             QFont font = painter->font();
@@ -79,7 +81,7 @@ public:
             painter->setFont(font);
 
             // Get the text height.
-            QRect text_bounding_rect = painter->boundingRect(QRect(0, 0, 0, 0), Qt::AlignLeft, QString::fromStdString(api_string));
+            QRect     text_bounding_rect = painter->boundingRect(QRect(0, 0, 0, 0), Qt::AlignLeft, QString::fromStdString(api_string));
             const int text_height = text_bounding_rect.height();
             const int text_width = text_bounding_rect.width();
 
@@ -147,6 +149,33 @@ RgStatusBar::RgStatusBar(QStatusBar* status_bar, QWidget* parent) :
     api_mode_tree_widget_->setItemDelegateForRow(0, item_delegate);
 }
 
+bool RgStatusBar::ConstructStatusMessageString(StatusType type, std::string& status_msg_str) const
+{
+    bool ret = true;
+    switch (type)
+    {
+    case StatusType::kStarted:
+        status_msg_str = std::string{kStrStatusBarBuild} + std::string{kStrStatusBarStarted};
+        break;
+    case StatusType::kFailed:
+        status_msg_str = std::string{kStrStatusBarBuild} + std::string{kStrStatusBarFailed};
+        break;
+    case StatusType::kCanceled:
+        status_msg_str = std::string{kStrStatusBarBuild} + std::string{kStrStatusBarCanceled};
+        break;
+    case StatusType::kSucceeded:
+        status_msg_str = std::string{kStrStatusBarBuild} + std::string{kStrStatusBarSucceeded};
+        break;
+    case StatusType::kUnknown:
+    default:
+        // We shouldn't get here.
+        ret = false;
+        assert(ret);
+        break;
+    }
+    return ret;
+}
+
 void RgStatusBar::CreateModeButton()
 {
     // Get the startup API.
@@ -155,7 +184,7 @@ void RgStatusBar::CreateModeButton()
 
     // Create the string for the mode button.
     std::string api_string = "";
-    RgUtils::ProjectAPIToString(current_api, api_string);
+    RgUtils::ProjectAPIToString(current_api, api_string, false);
     QString mode_push_button_string = QString(kStrMode) + QString::fromStdString(api_string);
 
     // Create the mode button.
@@ -184,18 +213,19 @@ void RgStatusBar::CreateApiTreeWidget()
     assert(api_mode_tree_widget_ != nullptr);
     if (api_mode_tree_widget_ != nullptr)
     {
-        for (const std::string& api : supported_apis)
+        for (const std::string& api_string : supported_apis)
         {
+            RgProjectAPI api = RgUtils::ProjectAPIToEnum(api_string);
+            std::string  display_string;
+            RgUtils::ProjectAPIToString(api, display_string, false);
+
             QTreeWidgetItem* item = new QTreeWidgetItem();
 
             // If this item is current, disable it so the user cannot select it.
-            RgProjectAPI current_api = config_manager.GetCurrentAPI();
-            std::string current_api_string = "";
-            RgUtils::ProjectAPIToString(current_api, current_api_string);
-            if (api.compare(current_api_string) == 0)
+            if (api == config_manager.GetCurrentAPI())
             {
                 // Set the item text.
-                item->setText(kTreeWidgetApiColumnId, QString::fromStdString(api));
+                item->setText(kTreeWidgetApiColumnId, QString::fromStdString(display_string));
 
                 // Add the check box icon in the first column of this item.
                 AddCheckBoxIcon(item);
@@ -206,11 +236,11 @@ void RgStatusBar::CreateApiTreeWidget()
             }
             else
             {
-                item->setText(kTreeWidgetApiColumnId, QString::fromStdString(api));
+                item->setText(kTreeWidgetApiColumnId, QString::fromStdString(display_string));
                 api_mode_tree_widget_->addTopLevelItem(item);
 
                 // Set the tooltip.
-                QString toolTip = kStrApiButtonTooltipA + QString::fromStdString(api) + kStrApiButtonTooltipB;
+                QString toolTip = kStrApiButtonTooltipA + QString::fromStdString(display_string) + kStrApiButtonTooltipB;
                 item->setToolTip(kTreeWidgetIconColumnId, toolTip);
                 item->setToolTip(kTreeWidgetApiColumnId, toolTip);
                 item->setBackgroundColor(kTreeWidgetIconColumnId, kApiModeTreeWidgetFirstColumnBackgroundColor);
@@ -450,7 +480,7 @@ void RgStatusBar::HandleTreeWidgetItemClicked(QTreeWidgetItem* item, const int c
                 // Emit a signal to indicate API change.
                 if (is_not_cancelled)
                 {
-                    emit ChangeAPIModeSignal(RgUtils::ProjectAPIToEnum((text.toStdString())));
+                    emit ChangeAPIModeSignal(RgUtils::ProjectAPIToEnum(text.toStdString()));
 
                     // Disable the selected item so the user cannot select it next time around.
                     item->setFlags(item->flags() & ~Qt::ItemIsSelectable);

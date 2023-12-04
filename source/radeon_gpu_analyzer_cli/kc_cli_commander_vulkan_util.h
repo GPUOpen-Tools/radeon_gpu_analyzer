@@ -7,10 +7,49 @@
 // Shared.
 #include "common/rg_log.h"
 
+// Backend.
+#include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
+
 // Local.
 #include "source/radeon_gpu_analyzer_cli/kc_data_types.h"
 #include "source/radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 #include "radeon_gpu_analyzer_cli/kc_config.h"
+
+// Extensions of different input/output file types.
+static const std::string kStrVulkanSpirvFileExtension          = "spv";
+static const std::string kStrVulkanSpirvTextFileExtension      = "spvasm";
+static const std::string kStrVulkanBinaryFileExtension         = "bin";
+static const std::string kStrVulkanIsaFileExtension            = "isa";
+static const std::string kStrVulkanStatsFileExtension          = "csv";
+static const std::string kStrVulkanValidationInfoFileExtension = "txt";
+static const std::string kStrVulkanHlslFileExtension           = "hlsl";
+
+// An array containing per-stage RgEntryType(s).
+typedef std::array<RgEntryType, BePipelineStage::kCount> BeVkPipelineEntries;
+
+// Output metadata entry types for Vulkan pipeline stages.
+static const BeVkPipelineEntries 
+kVulkanStageEntryTypes = 
+{
+    RgEntryType::kVkVertex,
+    RgEntryType::kVkTessControl,
+    RgEntryType::kVkTessEval,
+    RgEntryType::kVkGeometry,
+    RgEntryType::kVkFragment,
+    RgEntryType::kVkCompute
+};
+
+// Output metadata entry types for Vulkan pipeline stages.
+static const BeVkPipelineEntries 
+kOpenGLStageEntryTypes = 
+{
+    RgEntryType::kGlVertex,
+    RgEntryType::kGlTessControl,
+    RgEntryType::kGlTessEval,
+    RgEntryType::kGlGeometry,
+    RgEntryType::kGlFragment,
+    RgEntryType::kGlCompute
+};
 
 // Class for Vulkan mode utility functions for ISA Dissassembly and post-processing.
 class KcCLICommanderVulkanUtil
@@ -41,6 +80,12 @@ public:
                                        const Config&            config, 
                                        const std::string&       device);
 
+    // Util to convert stats.
+    static beKA::beStatus ConvertStats(const std::string& is_file,
+                                       const std::string& stats_file,
+                                       const Config&      config,
+                                       const std::string& device);
+
     // Convert ISA text to CSV form with additional data.
     static bool GetParsedIsaCsvText(const std::string& isaText, const std::string& device, bool add_line_numbers, std::string& csvText);
 
@@ -51,16 +96,15 @@ public:
     // Extract Resource Usage (statistics) data.
     void ExtractStatistics(const Config&                             config,
                            const std::string&                        device,
-                           const std::string&                        amdgpu_dis_output,
+                           const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md,
                            const std::map<std::string, std::string>& shader_to_disassembly);
 
     // Utility for extracting statistics.
     static std::string BuildStatisticsStr(const beKA::AnalysisData& stats, std::size_t stage, bool is_compute_bit_set);
 
     // Utility for populating statistics Analysis data from amdgpu metadata.
-    static beKA::AnalysisData PopulateAnalysisData(size_t pos,
-                                                   const std::string&  amdgpu_dis_md_str,
-                                                   const std::string&  current_device);
+    static beKA::AnalysisData PopulateAnalysisData(const beKA::AnalysisData& stats,
+                                                   const std::string&        current_device);
 
  private:
 
@@ -70,7 +114,10 @@ public:
     bool ParseIsaFilesToCSV(bool add_line_numbers, const std::string& device_string, RgVkOutputMetadata& metadata) const;
 
     // Perform the live registers analysis.
-    bool PerformLiveRegAnalysis(const Config& config, const std::string& device_string, RgVkOutputMetadata& metadata) const;
+    bool PerformLiveVgprAnalysis(const Config& config, const std::string& device_string, RgVkOutputMetadata& metadata) const;
+
+    // Perform the live registers analysis.
+    bool PerformLiveSgprAnalysis(const Config& config, const std::string& device_string, RgVkOutputMetadata& metadata) const;
 
     // Generate the per-block or per-instruction Control Flow Graph.
     bool ExtractCFG(const Config& config, const std::string& device_string, const RgVkOutputMetadata& metadata) const;

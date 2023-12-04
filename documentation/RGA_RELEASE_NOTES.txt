@@ -1,12 +1,13 @@
-
-Radeon GPU Analyzer 2.8 Release Notes
+Radeon GPU Analyzer 2.9 Release Notes
 =======================================
 Highlights
 ==========
--	Compile and analyze shaders and kernels for the gfx1101 (AMD Radeon RX 7800 XT and RX 7700 XT) and gfx1103 (AMD Radeon 740M, 760M and 780M) architectures.
-- 	Updates to the Vulkan, OpenGL and OpenCL offline compilers.
--   Consolidated Linux and Windows build scripts to use a unified python script. 
-    Please refer to the build instructions in the RGA README.md file for more information about how to build the tool.
+-    New Binary Analysis mode for analyzing pre-compiled AMD GPU Code Object binaries in both the command line tool and the GUI application.
+     Inspect the ISA disassembly of pre-compiled binaries and analyze VGPR pressure and static hardware resource allocation. 
+-	 Added support for MI-200 (gfx90a) as a target in OpenCL mode.
+-	 Added live SGPR analysis support in command line tool (add --livereg-sgpr option to command).
+-    DX12: RGA command line tool now captures the debug output when the D3D Debug Layer is enabled (--debug-layer).
+-	 Updates to the OpenGL offline compiler.
 
 Known Issues
 ============
@@ -34,6 +35,7 @@ DirectX 12 Mode
 ---------------
 -	Live register analysis & CFG generation require using the --isa option to generate ISA disassembly. 
 -	On Windows 11, Hull shader AMDIL disassembly contains a trail of a few garbage characters.
+-	In offline mode, when the D3D debug layer is enabled (--debug-layer) debug output is not captured by the command line tool.
 
 DirectX 11 Mode
 ---------------

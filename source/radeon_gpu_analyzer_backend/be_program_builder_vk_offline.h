@@ -42,6 +42,9 @@ struct VkOfflineOptions : public beKA::CompileOptions
     // Register liveness analysis output file names.
     BeProgramPipeline livereg_output_files;
 
+    // Register liveness sgpr analysis output file names.
+    BeProgramPipeline livereg_sgpr_output_files;
+
     // Stall analysis output file names.
     BeProgramPipeline stall_output_files;
 
@@ -80,6 +83,9 @@ struct VkOfflineOptions : public beKA::CompileOptions
 
     // True to perform live register analysis.
     bool is_livereg_required = false;
+
+    // True to perform live register analysis.
+    bool is_livereg_sgpr_required = false;
 
     // True to generate shader compiler statistics.
     bool is_stats_required = false;

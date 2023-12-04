@@ -40,6 +40,12 @@ static const char kStrCliOptGlslangToken = '@';
 
 // *** Vulkan-specific - END ***
 
+// *** Binary-specific - BEGIN ***
+
+static const char* kStrTargetGPUDetected = "Target GPU detected:\n\n";
+
+// *** Binary-specific - END ***
+
 // *** CLI GENERIC COMMANDS - BEGIN ***
 
 static const char* kStrCliOptLog = "--log";
@@ -49,6 +55,7 @@ static const char* kStrCliOptSessionMetadata = "--session-metadata";
 static const char* kStrCliOptIsa = "--isa";
 static const char* kStrCliOptParseIsa = "--parse-isa";
 static const char* kStrCliOptLivereg  = "--livereg";
+static const char* kStrCliOptLiveregSgpr = "--livereg-sgpr";
 static const char* kStrCliOptLineNumbers = "--line-numbers";
 static const char* kStrCliOptStatistics = "--analysis";
 static const char* kStrCliOptBinary = "-b";
@@ -63,6 +70,7 @@ static const char* kStrCliOptCompilerIncDir = "--compiler-inc";
 static const char* kStrCliOptCompilerLibDir = "--compiler-lib";
 static const char* kStrCliNoBinaryFileExtensionSwitch = "--no-suffix-bin";
 static const char* kStrCliOptSpvasTextFile = "-spvas";
+static const char* kStrCliOptBinaryCodeObj = "--co";
 
 // *** CLI COMMANDS - END ***
 
@@ -130,7 +138,7 @@ static const char* kStrCliDescAlternativeVkBinFolder = "Path to alternative comp
 // *** HW FUNCTIONAL UNIT NAMES - END ***
 
 // Vulkan adapter list tags.
-static const std::string kStrCliVkBackendStrAdapter         = "Adapter ";
+static const std::string kStrCliVkBackendStrAdapter        = "Adapter ";
 static const std::string kStrCliVkBackendStrAdapterOffset  = "    ";
 static const std::string kStrCliVkBackendStrAdapterName    = "Name: ";
 static const std::string kStrCliVkBackendStrAdapterDriver  = "Vulkan driver version: ";

@@ -602,3 +602,19 @@ bool BeUtils::BePipelineStageToAmdgpudisStageName(BePipelineStage pipeline_stage
     }
     return ret;
 }
+
+bool BeUtils::BeAmdgpudisStageNameToBeRayTracingStage(const std::string& amdgpu_dis_stage, std::size_t& ray_tracing_stage)
+{
+    bool ret = false;
+    uint32_t stage{};
+    for (stage = BeRtxPipelineStage::kRayGeneration; stage < BeRtxPipelineStage::kCountRtx; stage++)
+    {
+        if (kStrRtxStageNames[stage] == amdgpu_dis_stage)
+        {
+            ray_tracing_stage = stage;
+            ret               = true;
+            break;
+        }
+    }
+    return ret;
+}

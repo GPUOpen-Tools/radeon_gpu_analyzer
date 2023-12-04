@@ -16,7 +16,8 @@ static const std::string kRgaDataModel2_0 = "2.0";
 static const std::string kRgaDataModel2_1 = "2.1";
 static const std::string kRgaDataModel2_2 = "2.2";
 static const std::string kRgaDataModel2_3 = "2.3";
-static const std::string kRgaDataModel    = kRgaDataModel2_3;
+static const std::string kRgaDataModel2_4 = "2.4";
+static const std::string kRgaDataModel    = kRgaDataModel2_4;
 
 // The XML declaration string.
 static const char* kRgaXmlDeclaration = "xml version = \"1.0\" encoding = \"UTF-8\"";
@@ -70,6 +71,9 @@ static const char* kXmlNodeUseGeneratedProjectNames = "UseGeneratedProjectNames"
 static const char* kXmlNodeAlternativeCompilerBinDir = "AlternativeCompilerBin";
 static const char* kXmlNodeAlternativeCompilerIncDir = "AlternativeCompilerInc";
 static const char* kXmlNodeAlternativeCompilerLibDir = "AlternativeCompilerLib";
+
+// Binary input file.
+static const char* kXmlNodeGlobalBinaryInputFileName = "BinaryInputFileName";
 
 // *******************************
 // *** OPENCL-SPECIFIC - BEGIN ***

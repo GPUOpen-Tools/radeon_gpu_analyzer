@@ -16,6 +16,7 @@
 // Forward declarations.
 class QSplitter;
 class QWidget;
+class QFileInfo;
 class RgCliOutputView;
 class RgFactory;
 class RgMenu;
@@ -160,7 +161,7 @@ public:
     bool RequestRemoveAllFiles();
 
     // Sets the contents of the given file as the text in the RgSourceCodeEditor.
-    void SetSourceCodeText(const std::string& file_full_path);
+    virtual void SetSourceCodeText(const std::string& file_full_path);
 
     // Toggle the visibility of the disassembly view.
     void ToggleDisassemblyViewVisibility(bool is_visible);
@@ -184,7 +185,7 @@ public:
     void ConnectSourcecodeEditorSignals(RgSourceCodeEditor* editor);
 
     // Open the build settings interface.
-    void OpenBuildSettings();
+    virtual void OpenBuildSettings();
 
     // Populate the RgBuildView with the current project.
     bool PopulateBuildView();
@@ -268,8 +269,14 @@ signals:
     // A signal emitted when a project clone's build was canceled.
     void ProjectBuildCanceled();
 
+    // A signal emitted to programatically trigger a project build.
+    void BuildProjectEvent();
+
     // Signal emitted when the user changes the selected entry point index for a given file.
     void SelectedEntrypointChanged(const std::string& target_gpu, const std::string& input_file_path, const std::string& selected_entrypoint_name);
+
+    // Signal emitted when the user changes the selected entry point index for a given file.
+    void SelectedExtremelyLongKernelNameChanged(bool showKernelNameLabel, const std::string& selected_kernel_name);
 
     // Set the text in the main window's status bar.
     void SetStatusBarText(const std::string& status_bar_text, int timeout_milliseconds = 0);
@@ -513,6 +520,9 @@ protected:
     // Update the application notification message.
     virtual void UpdateApplicationNotificationMessage() = 0;
 
+    // Remove the given input file from the RgBuildView.
+    void RemoveInputFile(const std::string& input_file_full_path);
+
 private:
     // Is the user currently allowed to change the RgBuildView's EditMode?
     bool CanSwitchEditMode();
@@ -544,9 +554,6 @@ private:
     // Update the project name.
     void RenameProject(const std::string& full_path);
 
-    // Remove the given input file from the RgBuildView.
-    void RemoveInputFile(const std::string& input_file_full_path);
-
     // Show the ISA disassembly view table.
     bool LoadDisassemblyFromBuildOutput();
 
@@ -559,8 +566,11 @@ private:
     // Update the FindWidget's search context using the current source code editor.
     void UpdateSourceEditorSearchContext();
 
-    // Check if the currently open source file has been modified externally and handle reloading the file.
+    // Check if the currently open source file has been modified externally.
     void CheckExternalFileModification();
+
+    // Handle reloading the file after external file modification.
+    virtual void HandleExternalFileModification(const QFileInfo& file_info);
 
     // Create a project clone.
     void CreateProjectClone();

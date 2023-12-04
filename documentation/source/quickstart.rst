@@ -113,7 +113,7 @@ After the pipeline state matches our shaders, let's build the project:
 
 .. image:: images/2_1/build_project_vulkan.png
 
-The compiler output can be viewed at the Build output pane at the bottom:
+The compiler output can be viewed at the Build Output pane at the bottom:
 
 .. image:: images/2_1/build_project_output_vulkan.png
 
@@ -132,7 +132,7 @@ The Home Page
 Creating a Project
 ^^^^^^^^^^^^^^^^^^
 RGA Project is a vehicle that can contain any number of OpenCL™ source files (.cl), together with a set of build settings.
-When you build the project, the OpenCL™ source files are being compiled and linked together into a single HSA Code Object binary.
+When you build the project, the OpenCL™ source files are being compiled and linked together into a single Code Object binary.
 
 RGA will automatically create for you the project when you add or create a file in the Home Page.
 
@@ -160,7 +160,7 @@ Alternatively, you can use the Build -> Build project menu item:
 .. image:: images/003_build_project.png
 
 When a build is triggered, the rga command line tool will be invoked.
-The "Build output" window at the bottom will display the invocation command for the RGA command line tool, as well its output.
+The "Build Output" window at the bottom will display the invocation command for the RGA command line tool, as well its output.
 
 In case of a build success, the list of kernels in each file would be shown underneath each entry in the file menu on the left side.
 
@@ -198,3 +198,50 @@ The possible hazards are:
 	* LDS usage exceeds the recommended limit (based on the target GPU's HW features)
 	* Scratch memory usage is non-zero
 	* The size of the code is larger than the instruction cache
+
+
+Binary Analysis Mode
+--------------------
+
+The Home Page
+^^^^^^^^^^^^^
+
+Loading a Code Object Binary
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In binary analysis mode, an RGA Project is a vehicle that constains a single Code Object binary.
+
+RGA will automatically create for you the project when you load a Code Object binary file in the Home Page.
+
+To load an existing Code Object binary, use Ctrl+O or click on "Load Code Object Binary" under the Start section:
+
+.. image:: images/035_load_code_object_button.png
+
+You can also do this by clicking on File -> "Load Code Object Binary":
+
+.. image:: images/036_file_load_code_object.png
+
+RGA will use a yymmdd-hhmmss date-time string as a default name for the project.
+
+Disassembly View
+^^^^^^^^^^^^^^^^
+
+When a Code Object is loaded, the rga command line tool will be invoked.
+The "Build Output" window at the bottom will display the invocation command for the RGA command line tool, as well its output.
+
+In case of a binary analysis success, the list of kernels or pipeline stages in each Code Object binary would be shown underneath each entry in the file menu on the left side.
+
+Use that list to control which kernel is in focus (highlighted in yellow):
+
+.. image:: images/032_project_file_menu.png
+
+The disassembly for the relevant kernel will be displayed in the disassembly view on the right:
+
+.. image:: images/033_disassembly_view_binary_analysis.png
+
+Similar to OpenCL™ Offline Mode or Vulkan® Mode, in the Binary Analysis Mode:
+
+* Memory instructions are colored in red to help you identify spots with high memory pressure
+* The drop-down on the top left corner displays the target GPU device for which the current Code Object was compiled
+* The Columns drop-down menu at the top can be used to customize the presented columns
+* The resource usage line shows the GPU resources that are consumed by the presented code
+* The disassembly view also shows the VGPR pressure throughout the shader's instructions.

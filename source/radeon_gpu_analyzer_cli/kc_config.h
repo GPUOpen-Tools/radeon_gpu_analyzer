@@ -26,6 +26,7 @@ public:
     static std::string source_kind_spirv_bin_offline;
     static std::string source_kind_spirv_txt_offline;
     static std::string source_kind_vulkan;
+    static std::string source_kind_binary;
 
     enum ConfigCommand
     {
@@ -50,7 +51,8 @@ public:
     std::string              analysis_file;                     ///< Output analysis file.
     std::string              il_file;                           ///< Output IL Text file template.
     std::string              isa_file;                          ///< Output ISA Text file template.
-    std::string              livereg_analysis_file;             ///< Live register analysis output file.
+    std::string              livereg_analysis_file;             ///< VGPR Live register analysis output file.
+    std::string              sgpr_livereg_analysis_file;        ///< SGPR Live register analysis output file.
     std::string              block_cfg_file;                    ///< Output file for per-block control flow graph.
     std::string              inst_cfg_file;                     ///< Output file for per-instruction control flow graph.
     std::string              inference_analysis_file;           ///< Output file for SPP inference (text).
@@ -59,6 +61,7 @@ public:
     std::string              inference_model_confidence;        ///< The prediction model's level of confidence.
     std::string              inference_engine_path;             ///< Alternative path to the inference engine to be used for SPP.
     std::string              binary_output_file;                ///< Output binary file template.
+    std::string              binary_codeobj_file;               ///< Input binary file template - used primarily in binary mode.
     std::string              function;                          ///< Kernel/Function of interest in analysis.
     std::string              csv_separator;                     ///< Override for CSV list separator.
     std::string              metadata_file;                     ///< Output .metadata Text file template.
@@ -146,7 +149,8 @@ public:
     std::vector<std::string> dxr_exports;                       ///< DXR exports to retrieve disassembly for. In pipeline mode this should be one or more a raygeneration shaders.
 
     // DX12: debug layer.
-    bool dx12_debug_layer_enabled = false;                      ///< True to enable D3D12 debug layer.
+    bool dx12_debug_layer_enabled  = false;                     ///< True to enable D3D12 debug layer.
+    bool dx12_no_debug_output      = false;                     ///< False to capture debug output for D3D12 debug layer.
 
     // DX12: offline session.
     bool dx12_offline_session = false;                          ///< True to trigger DX12 offline mode.

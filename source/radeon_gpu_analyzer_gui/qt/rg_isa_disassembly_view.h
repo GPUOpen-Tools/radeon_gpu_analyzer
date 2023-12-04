@@ -128,6 +128,9 @@ public slots:
     // Handler invoked when the user changes the selected entry point for a given input file.
     void HandleSelectedEntrypointChanged(const std::string& target_gpu, const std::string& input_file_path, const std::string& selected_entrypoint_name);
 
+    // Show/hide Kernel Name Label.
+    void HandleSetKernelNameLabel(bool show, const std::string& setTextLabel = "");
+
     // Handler invoked when the user clicks on the tab view.
     void HandleDisassemblyTabViewClicked();
 
@@ -214,6 +217,9 @@ protected:
     // Connect the signals for the disassembly view.
     void ConnectSignals();
 
+    // Create the lable responsible for displaying full kernel name in the disassembly table.
+    void CreateKernelNameLabel();
+
     // Create the controls responsible for picking the visible columns in the disassembly table.
     void CreateColumnVisibilityControls();
 
@@ -267,6 +273,12 @@ protected:
 
     // Set the current target GPU to display disassembly for.
     void SetTargetGpu(const std::string& target_gpu);
+
+    // Set the current target GPU text to target GPU button.
+    void SetTargetGpuButtonText(const std::string& target_gpu);
+
+    // Get the current target GPU text from target GPU button.
+    std::string GetTargetGpuButtonText() const;
 
     // Update the "All" checkbox text color to grey or black.
     void UpdateAllCheckBoxText();

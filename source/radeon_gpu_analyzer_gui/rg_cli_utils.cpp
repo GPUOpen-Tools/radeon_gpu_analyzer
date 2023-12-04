@@ -7,6 +7,7 @@
 #include "radeon_gpu_analyzer_gui/rg_data_types.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_opencl.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_vulkan.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types_binary.h"
 
 // Common between CLI and GUI.
 #include "source/common/rga_cli_defs.h"
@@ -207,6 +208,48 @@ bool RgCliUtils::GenerateVulkanBuildSettingsString(const RgBuildSettingsVulkan& 
     if (!vulkan_specific_options.str().empty())
     {
         cmd << kStrCliOptVulkanOption << " \"" << vulkan_specific_options.str() << "\" ";
+    }
+
+    str = cmd.str();
+    ret = true;
+
+    return ret;
+}
+
+bool RgCliUtils::GenerateBinaryBuildSettingsString(const RgBuildSettingsBinary& build_settings, std::string& str, bool additional_options)
+{
+    bool              ret = false;
+    std::stringstream cmd;
+
+    // Include paths.
+    for (std::string include_path : build_settings.additional_include_directories)
+    {
+        // Remove trailing slash symbols.
+        if (!include_path.empty() && (include_path[include_path.size() - 1] == '\\' || include_path[include_path.size() - 1] == '/'))
+        {
+            include_path.erase(include_path.size() - 1, 1);
+        }
+        cmd << kStrCliOptAdditionalIncludePath << " \"" << include_path << "\" ";
+    }
+
+    // Preprocessor directives.
+    for (const std::string& curr_directive : build_settings.predefined_macros)
+    {
+        cmd << kStrCliOptPreprocessorDirective << " " << curr_directive << " ";
+    }
+
+    // Add the alternative compiler paths.
+    if (!std::get<CompilerFolderType::kBin>(build_settings.compiler_paths).empty())
+    {
+        cmd << kStrCliOptCompilerBinDir << " \"" << std::get<CompilerFolderType::kBin>(build_settings.compiler_paths) << "\" ";
+    }
+    if (!std::get<CompilerFolderType::kInclude>(build_settings.compiler_paths).empty())
+    {
+        cmd << kStrCliOptCompilerIncDir << " \"" << std::get<CompilerFolderType::kInclude>(build_settings.compiler_paths) << "\" ";
+    }
+    if (!std::get<CompilerFolderType::kLib>(build_settings.compiler_paths).empty())
+    {
+        cmd << kStrCliOptCompilerLibDir << " \"" << std::get<CompilerFolderType::kLib>(build_settings.compiler_paths) << "\" ";
     }
 
     str = cmd.str();

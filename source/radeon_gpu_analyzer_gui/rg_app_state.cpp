@@ -44,10 +44,21 @@ bool RgAppState::IsGraphics() const
     return is_graphics_;
 }
 
+bool RgAppState::IsAnalysis() const
+{
+    return is_analysis_;
+}
+
 RgAppStateGraphics::RgAppStateGraphics()
 {
     // Set the graphics flag to true.
     is_graphics_ = true;
+}
+
+RgAppStateAnalysis::RgAppStateAnalysis()
+{
+    // Set the analysis flag to true.
+    is_analysis_ = true;
 }
 
 bool RgAppState::IsInputFileNameBlank() const

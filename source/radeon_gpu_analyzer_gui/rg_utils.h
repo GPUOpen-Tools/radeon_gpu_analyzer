@@ -36,7 +36,7 @@ public:
     static std::string GetEntrypointsNameString(RgProjectAPI api);
 
     // Translates the project API enum value to a string.
-    static bool ProjectAPIToString(RgProjectAPI api, std::string& str);
+    static bool ProjectAPIToString(RgProjectAPI api, std::string& str, bool is_abbreviation = true);
 
     // Translates the project API string to an enum.
     static RgProjectAPI ProjectAPIToEnum(const std::string& str);

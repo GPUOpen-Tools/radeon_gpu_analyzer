@@ -16,6 +16,7 @@
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_opencl.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_vulkan.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types_binary.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 
@@ -221,6 +222,12 @@ void RgStartTab::SetProjectAPIIcon(RgProjectAPI api, RgRecentProjectWidget* rece
     {
         recent_project_widget->SetIcon(QIcon(":/icons/api_logos/vulkan_icon.png"));
         recent_project_widget->SetIconProjectType(kStrApiNameVulkan);
+    }
+    break;
+    case RgProjectAPI::kBinary:
+    {
+        recent_project_widget->SetIcon(QIcon(":/icons/api_logos/binary_icon_wide.png"));
+        recent_project_widget->SetIconProjectType(kStrApiAbbreviationBinary);
     }
     break;
     case RgProjectAPI::kUnknown:

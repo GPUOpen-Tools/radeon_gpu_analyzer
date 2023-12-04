@@ -554,13 +554,13 @@ static bool IsDxrNullPipeline(const std::string& pipeline_name)
     return (pipeline_name.empty() || pipeline_name.compare(kStrDxrNullPipelineName) == 0);
 }
 
-static bool PerformLiveRegisterAnalysisDxr(const Config& config_updated, const std::string& isa_file, const std::string& target,
+static bool PerformLiveVgprAnalysisDxr(const Config& config_updated, const std::string& isa_file, const std::string& target,
     const std::string& output_filename, const std::string& stage_name, const RgDxrShaderResults& shader_results)
 {
     bool is_ok = false;
     if (!isa_file.empty())
     {
-        std::cout << kStrInfoPerformingLiveregAnalysis1;
+        std::cout << kStrInfoPerformingLiveregAnalysisVgpr;
         std::cout << kStrInfoDxrOutputShader << shader_results.export_name << kStrInfoDxrPerformingPostProcessing << std::endl;
 
         // Delete the file if it already exists.
@@ -589,7 +589,45 @@ static bool PerformLiveRegisterAnalysisDxr(const Config& config_updated, const s
     return is_ok;
 }
 
-static void PerformLiveRegisterAnalysis(const std::string& isa_file,
+static bool PerformLiveSgprAnalysisDxr(const Config&             config_updated,
+                                       const std::string&        isa_file,
+                                       const std::string&        target,
+                                       const std::string&        output_filename,
+                                       const std::string&        stage_name,
+                                       const RgDxrShaderResults& shader_results)
+{
+    bool is_ok = false;
+    if (!isa_file.empty())
+    {
+        std::cout << kStrInfoPerformingLiveregAnalysisSgpr;
+        std::cout << kStrInfoDxrOutputShader << shader_results.export_name << kStrInfoDxrPerformingPostProcessing << std::endl;
+
+        // Delete the file if it already exists.
+        if (BeUtils::IsFilePresent(output_filename))
+        {
+            KcUtils::DeleteFile(output_filename.c_str());
+        }
+
+        is_ok = KcUtils::PerformLiveRegisterAnalysis(isa_file, target, output_filename, NULL, config_updated.print_process_cmd_line, true);
+
+        if (is_ok)
+        {
+            if (KcUtils::FileNotEmpty(output_filename))
+            {
+                std::cout << kStrInfoSuccess << std::endl;
+            }
+            else
+            {
+                std::cout << kStrInfoFailed << std::endl;
+                KcUtils::DeleteFile(output_filename);
+            }
+        }
+    }
+
+    return is_ok;
+}
+
+static void PerformLiveVgprAnalysis(const std::string& isa_file,
     const std::string& stage_name,
     const std::string& target,
     const Config& config_updated,
@@ -597,7 +635,7 @@ static void PerformLiveRegisterAnalysis(const std::string& isa_file,
 {
     if (!isa_file.empty())
     {
-        std::cout << kStrInfoPerformingLiveregAnalysis1;
+        std::cout << kStrInfoPerformingLiveregAnalysisVgpr;
         std::cout << stage_name << kStrInfoPerformingAnalysis2 << std::endl;
 
         // Construct a name for the output file.
@@ -639,6 +677,58 @@ static void PerformLiveRegisterAnalysis(const std::string& isa_file,
         }
     }
 }
+
+static void PerformLiveSgprAnalysis(const std::string& isa_file,
+                                    const std::string& stage_name,
+                                    const std::string& target,
+                                    const Config&      config_updated,
+                                    bool&              is_ok)
+{
+    if (!isa_file.empty())
+    {
+        std::cout << kStrInfoPerformingLiveregAnalysisSgpr;
+        std::cout << stage_name << kStrInfoPerformingAnalysis2 << std::endl;
+
+        // Construct a name for the output file.
+        std::string output_filename;
+        std::string file_suffix = stage_name;
+
+        is_ok = KcUtils::ConstructOutFileName(config_updated.sgpr_livereg_analysis_file,
+                                              file_suffix,
+                                              target,
+                                              kStrDefaultExtensionLiveregSgpr,
+                                              output_filename,
+                                              !KcUtils::IsDirectory(config_updated.sgpr_livereg_analysis_file));
+
+        if (is_ok)
+        {
+            // Delete that file if it already exists.
+            if (BeUtils::IsFilePresent(output_filename))
+            {
+                KcUtils::DeleteFile(output_filename.c_str());
+            }
+
+            is_ok = KcUtils::PerformLiveRegisterAnalysis(isa_file, target, output_filename, NULL, config_updated.print_process_cmd_line, true);
+            if (is_ok)
+            {
+                if (KcUtils::FileNotEmpty(output_filename))
+                {
+                    std::cout << kStrInfoSuccess << std::endl;
+                }
+                else
+                {
+                    std::cout << kStrInfoFailed << std::endl;
+                    KcUtils::DeleteFile(output_filename);
+                }
+            }
+        }
+        else
+        {
+            std::cout << kStrErrorFailedToConstructLiveregOutputFilename << std::endl;
+        }
+    }
+}
+
 
 static bool GeneratePerBlockCfgDxr(const Config& config_updated, const std::string& isa_file, const std::string& target,
     const std::string& output_filename, const std::string& stage_name, const RgDxrShaderResults& shader_results)
@@ -890,6 +980,11 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
             std::cout << kStrErrorLiveregWithoutIsa << std::endl;
             should_abort = true;
         }
+        else if (!config.sgpr_livereg_analysis_file.empty())
+        {
+            std::cout << kStrErrorLiveregSgprWithoutIsa << std::endl;
+            should_abort = true;
+        }
         else if (!config.block_cfg_file.empty() ||
             !config.inst_cfg_file.empty())
         {
@@ -1074,7 +1169,8 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                     {
                                         const bool is_shader_mode = IsDxrShaderMode(config_updated);
                                         std::cout << kStrInfoSuccess << std::endl;
-                                        if (!config_updated.livereg_analysis_file.empty() ||
+                                        if (!config_updated.livereg_analysis_file.empty() || 
+                                            !config_updated.sgpr_livereg_analysis_file.empty() ||
                                             !config_updated.inference_analysis_file.empty() ||
                                             !config_updated.inst_cfg_file.empty() ||
                                             !config_updated.block_cfg_file.empty())
@@ -1091,7 +1187,7 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                                     if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name))
                                                     {
                                                         // Announce the pipeline name in pipeline mode.
-                                                        std::cout << kStrInfoPerformingLiveregAnalysis1 <<
+                                                        std::cout << kStrInfoPerformingLiveregAnalysisVgpr <<
                                                             (curr_pipeline_results.isUnified ? kStrInfoDxrOutputPipelineName : kStrInfoDxrOutputPipelineNumber) <<
                                                             curr_pipeline_results.pipeline_name << "..." << std::endl;
                                                     }
@@ -1119,8 +1215,58 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                                         KcUtils::ConstructOutFileName(config.livereg_analysis_file, filename_suffix,
                                                             target, kStrDefaultExtensionLivereg, output_filename, should_append_suffix);
 
-                                                        PerformLiveRegisterAnalysisDxr(config_updated, curr_shader_results.isa_disassembly, target,
+                                                        PerformLiveVgprAnalysisDxr(config_updated, curr_shader_results.isa_disassembly, target,
                                                             output_filename, filename_suffix, curr_shader_results);
+                                                    }
+                                                }
+                                            }
+
+                                            // Live register analysis files (Sgpr).
+                                            if (!config_updated.sgpr_livereg_analysis_file.empty())
+                                            {
+                                                for (const RgDxrPipelineResults& curr_pipeline_results : output_mapping)
+                                                {
+                                                    if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name))
+                                                    {
+                                                        // Announce the pipeline name in pipeline mode.
+                                                        std::cout << kStrInfoPerformingLiveregAnalysisSgpr
+                                                                  << (curr_pipeline_results.isUnified ? kStrInfoDxrOutputPipelineName
+                                                                                                      : kStrInfoDxrOutputPipelineNumber)
+                                                                  << curr_pipeline_results.pipeline_name << "..." << std::endl;
+                                                    }
+
+                                                    for (const RgDxrShaderResults& curr_shader_results : curr_pipeline_results.results)
+                                                    {
+                                                        std::stringstream filename_suffix_stream;
+                                                        if (!IsDxrNullPipeline(curr_pipeline_results.pipeline_name) && !curr_pipeline_results.isUnified)
+                                                        {
+                                                            filename_suffix_stream << curr_pipeline_results.pipeline_name << "_";
+                                                        }
+                                                        filename_suffix_stream << curr_shader_results.export_name;
+                                                        if (!is_shader_mode && curr_pipeline_results.isUnified)
+                                                        {
+                                                            filename_suffix_stream << kStrDxrUnifiedSuffix;
+                                                        }
+                                                        std::string filename_suffix = filename_suffix_stream.str();
+
+                                                        // Do not append a suffix in case that the file name is empty,
+                                                        // to prevent a situation where we have the shader name appearing twice.
+                                                        bool should_append_suffix = !KcUtils::IsDirectory(config.sgpr_livereg_analysis_file);
+
+                                                        std::string output_filename;
+                                                        KcUtils::ConstructOutFileName(config.sgpr_livereg_analysis_file,
+                                                                                      filename_suffix,
+                                                                                      target,
+                                                                                      kStrDefaultExtensionLiveregSgpr,
+                                                                                      output_filename,
+                                                                                      should_append_suffix);
+
+                                                        PerformLiveSgprAnalysisDxr(config_updated,
+                                                                                   curr_shader_results.isa_disassembly,
+                                                                                   target,
+                                                                                   output_filename,
+                                                                                   filename_suffix,
+                                                                                   curr_shader_results);
                                                     }
                                                 }
                                             }
@@ -1277,8 +1423,11 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                         if (is_success)
                                         {
                                             std::cout << kStrInfoSuccess << std::endl;
-                                            if (!config_updated.livereg_analysis_file.empty() || !config_updated.inst_cfg_file.empty() ||
-                                                !config_updated.block_cfg_file.empty() || !config_updated.inference_analysis_file.empty())
+                                            if (!config_updated.livereg_analysis_file.empty() 
+                                                || !config_updated.sgpr_livereg_analysis_file.empty()
+                                                || !config_updated.inst_cfg_file.empty() 
+                                                || !config_updated.block_cfg_file.empty() 
+                                                || !config_updated.inference_analysis_file.empty())
                                             {
                                                 // Post-processing.
                                                 std::cout << kStrInfoDx12PostProcessingSeparator << std::endl;
@@ -1289,7 +1438,16 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                                     // Live register analysis files.
                                                     for (int stage = 0; stage < BePipelineStage::kCount; stage++)
                                                     {
-                                                        PerformLiveRegisterAnalysis(isa_files[stage], kStrDx12StageNames[stage], target, config_updated, is_ok);
+                                                        PerformLiveVgprAnalysis(isa_files[stage], kStrDx12StageNames[stage], target, config_updated, is_ok);
+                                                    }
+                                                }
+
+                                                if (!config_updated.sgpr_livereg_analysis_file.empty())
+                                                {
+                                                    // Live register analysis files.
+                                                    for (int stage = 0; stage < BePipelineStage::kCount; stage++)
+                                                    {
+                                                        PerformLiveSgprAnalysis(isa_files[stage], kStrDx12StageNames[stage], target, config_updated, is_ok);
                                                     }
                                                 }
 

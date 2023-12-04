@@ -17,8 +17,10 @@ The RGA package contains both a GUI app and a command-line executable.
 The supported modes by the **GUI app** are:
 * Vulkan - GLSL/SPIR-V as input, together with the Vulkan pipeline state; compiled through AMD's Vulkan driver
 * OpenCL - AMD's LLVM-based Lightning Compiler for OpenCL
+* Binary Analysis - Analyze pre-compiled binary Code Object files
 
 The supported modes by the **command-line tool** are:
+* Binary Analysis - analyze pre-compiled binary Code Object files
 * DX12 (see https://gpuopen.com/radeon-gpu-analyzer-2-2-direct3d12-compute/ and https://gpuopen.com/radeon-gpu-analyzer-2-3-direct3d-12-graphics/ for more details)
 * DX11
 * DXR
@@ -38,6 +40,7 @@ To run the tool, you would need to have the AMD Radeon Adrenalin Software (Windo
 * OpenCL mode
 * OpenGL mode
 * DX11 mode
+* Binary Analysis mode
 
 
 For the non-offline modes, it is strongly recommended to run with the latest drivers so that the latest compiler is used and the latest architectures can be targeted.
@@ -157,6 +160,7 @@ The RGA package contains both a GUI app and a command-line executable.
 The supported modes by the **GUI app** are:
 * Vulkan - GLSL/SPIR-V as input, together with the Vulkan pipeline state; compiled through AMD's Vulkan driver
 * OpenCL - AMD's LLVM-based Lightning Compiler for OpenCL
+* Binary Analysis - Analyze pre-compiled binary Code Object files
 
 The supported modes by the **command-line tool** are:
 * DX12 (see https://gpuopen.com/radeon-gpu-analyzer-2-2-direct3d12-compute/ and https://gpuopen.com/radeon-gpu-analyzer-2-3-direct3d-12-graphics/ for more details)
@@ -179,6 +183,7 @@ To run the tool, you would need to have the AMD Radeon Adrenalin Software (Windo
 * OpenCL offline mode
 * Dx11
 * OpenGL
+* Binary Anslysis mode
 
 For the non-offline modes, it is strongly recommended to run with the latest drivers so that the latest compiler is used and the latest architectures can be targeted.
 
@@ -280,7 +285,8 @@ Run the RadeonGPUAnalyzerGUI executable. The app provides a quickstart guide and
 Run the rga executable.
 
 * Usage:
-  * General: `rga -h`
+  * General: `rga -h`  
+  * Binary Analysis: `rga -s bin -h`
   * DirectX 12: `rga -s dx12 -h`
   * DirectX 11: `rga -s dx11 -h`
   * DirectX Raytracing: `rga -s dxr -h`

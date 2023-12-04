@@ -9,6 +9,7 @@
 #include <string>
 #include <algorithm>
 #include <cctype>
+#include <limits>
 
 // cxxopts.
 #include "cxxopts/include/cxxopts.hpp"
@@ -42,7 +43,7 @@ static const char* kStrDxAdaptersHelpCommonText = "This is only relevant if you 
 "a non-primary display adapter.By default RGA will use the driver that is associated with the primary display adapter.";
 static const char* kStrInfoLegacyOpenclNoLongerSupported = "Legacy OpenCL mode (-s cl) is no longer supported.";
 
-// Options Strings
+// Options Types Strings
 static const char* generic_opt = "Generic";
 static const char* dx_opt = "DirectX 11 mode";
 static const char* macro_and_include_opt = "Macro and Include paths";
@@ -55,6 +56,7 @@ static const char* dxc_options = "DXC";
 static const char* dx12_other_options = "Other DX12";
 static const char* dx12_opt = "DirectX 12 mode";
 static const char* dxr_opt = "DXR mode";
+static const char* binary_opt = "Binary Analysis mode";
 static const char* legacy_cl_opt = "Legacy CL";
 static const char* il_dump_opt = "Il Dump";
 static const char* line_numbers_opt = "Line Numbers";
@@ -64,6 +66,42 @@ static const char* opt_level_opt2 = "Optimization Levels 2";
 static const char* opencl_offline_compiler_paths_opt = "Alternative OpenCL Lightning Compiler";
 static const char* compiler_paths_opt = "Alternative glslang compiler and SPIR-V tools.\nRGA uses the glslang package that it ships with as the default front-end compiler for Vulkan.\nUse this option to provide a custom glslang package";
 static const char* hidden_opt = "Options that we don't show with --help.";
+
+// Options and descriptions strings.
+static const char* kStrOptionListAsic      = "l,list-asics";
+static const char* kStrDescriptionListAsic = "List the known GPU codenames, architecture names and variant names. To target a specific GPU, use its codename as the argument to the \"-c\" command line switch.";
+static const char* kStrOptionAsic          = "c,asic";
+static const char* kStrDescriptionAsic     = "Which ASIC to target.  Repeatable.";
+static const char* kStrOptionVersion       = "version";
+static const char* kStrDescriptionVersion  = "Print version string.";
+static const char* kStrOptionHelp          = "h,help";
+static const char* kStrDescriptionHelp     = "Produce this help message.";
+static const char* kStrOptionAnalysis      = "a,analysis";
+static const char* kStrDescriptionAnalysis = "Path to output analysis file.";
+static const char* kStrOptionBinary        = "b,binary";
+static const char* kStrDescriptionBinary   = "Path to ELF binary output file.";
+static const char* kStrOptionIsa           = "isa";
+static const char* kStrDescriptionIsa      = "Path to output ISA disassembly file(s).";
+static const char* kStrOptionLivereg       = "livereg";
+static const char* kStrDescriptionLivereg  = "Path to live register analysis output file(s).";
+static const char* kStrOptionSgpr          = "livereg-sgpr";
+static const char* kStrDescriptionSgpr     = "Path to live register sgpr analysis output file(s).";
+static const char* kStrOptionCfg           = "cfg";
+static const char* kStrDescriptionCfg      = "Path to per-block control flow graph output file(s).";
+static const char* kStrOptionCfgI          = "cfg-i";
+static const char* kStrDescriptionCfgI     = "Path to per-instruction control flow graph output file(s).";
+static const char* kStrOptionSourceKind    = "s,source-kind";
+static const char* kStrDescriptionSourceKind =
+    "Source platform: dx12 for DirectX 12, dxr for DXR, dx11 for DirectX 11, vulkan for Vulkan, opengl for OpenGL, "
+    "opencl for OpenCL offline mode and amdil for AMDIL.";
+static const char* kStrOptionUpdates       = "u,updates";
+static const char* kStrDescriptionUpdates  = "Check for available updates.";
+static const char* kStrOptionVerbose       = "v,verbose";
+static const char* kStrDescriptionVerbose  = "Print command line strings that RGA uses to launch external processes.";
+static const char* kStrOptionCO            = "co";
+static const char* kStrDescriptionCO       = "Full path to the code object input file.";
+static const char* kStrOptionIl            = "il";
+
 
 bool ParseCmdLine(int argc, char* argv[], Config& config)
 {
@@ -85,21 +123,20 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
         opts.add_options(generic_opt)
             // The next two options here can be repeated, so they are vectors.
-            ("l,list-asics", "List the known GPU codenames, architecture names and variant names. To target a specific GPU, use its codename as the argument to the \"-c\" command line switch.")
-            ("c,asic", "Which ASIC to target.  Repeatable.", po::value<std::vector<std::string>>(config.asics))
-            ("version", "Print version string.")
-            ("h,help", "Produce this help message.")
-            ("a,analysis", "Path to output analysis file.", po::value<std::string>(config.analysis_file))
-            ("b,binary", "Path to ELF binary output file.", po::value<std::string>(config.binary_output_file))
-            ("isa", "Path to output ISA disassembly file(s).", po::value<std::string>(config.isa_file))
-            ("livereg", "Path to live register analysis output file(s).", po::value<std::string>(config.livereg_analysis_file))
-            ("cfg", "Path to per-block control flow graph output file(s).", po::value<std::string>(config.block_cfg_file))
-            ("cfg-i", "Path to per-instruction control flow graph output file(s).", po::value<std::string>(config.inst_cfg_file))
-            ("s,source-kind", "Source platform: dx12 for DirectX 12, dxr for DXR, dx11 for DirectX 11, vulkan for Vulkan, opengl for OpenGL, "
-                "opencl for OpenCL offline mode and amdil for AMDIL.",
-                po::value<std::string>(config.source_kind))
-            ("u,updates", "Check for available updates.")
-            ("v,verbose", "Print command line strings that RGA uses to launch external processes.")
+            (kStrOptionListAsic, kStrDescriptionListAsic)
+            (kStrOptionAsic, kStrDescriptionAsic, po::value<std::vector<std::string>>(config.asics))
+            (kStrOptionVersion, kStrDescriptionVersion)
+            (kStrOptionHelp, kStrDescriptionHelp)
+            (kStrOptionAnalysis, kStrDescriptionAnalysis, po::value<std::string>(config.analysis_file))
+            (kStrOptionBinary, kStrDescriptionBinary, po::value<std::string>(config.binary_output_file))
+            (kStrOptionIsa, kStrDescriptionIsa, po::value<std::string>(config.isa_file))
+            (kStrOptionLivereg, kStrDescriptionLivereg, po::value<std::string>(config.livereg_analysis_file))
+            (kStrOptionSgpr, kStrDescriptionSgpr, po::value<std::string>(config.sgpr_livereg_analysis_file))
+            (kStrOptionCfg, kStrDescriptionCfg, po::value<std::string>(config.block_cfg_file))
+            (kStrOptionCfgI, kStrDescriptionCfgI, po::value<std::string>(config.inst_cfg_file))
+            (kStrOptionSourceKind, kStrDescriptionSourceKind, po::value<std::string>(config.source_kind))
+            (kStrOptionUpdates, kStrDescriptionUpdates)
+            (kStrOptionVerbose, kStrDescriptionVerbose)
             ;
 
         // DX Options
@@ -218,6 +255,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         // D3D12 debug layer.
         opts.add_options(dx12_other_options)
             ("debug-layer", "Enable the D3D12 debug layer.")
+            ("no-debug-output", "If enabled RGA will not intercept the debug output for --debug-layer.")
         // DX12 offline mode.
             ("offline", "Assume no AMD display adapter is installed.")
             ("amdxc", "Path to a an alternative amdxc64.dll to be loaded in offline mode (must be used together with --offline). "
@@ -328,6 +366,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
                 po::value<std::string>(config.dxr_shader_model))
             ;
 
+        // Binary Analysis mode.
+        opts.add_options(binary_opt)
+            (kStrOptionCO, kStrDescriptionCO, po::value<std::string>(config.binary_codeobj_file))
+            ;
+
 #ifdef _LEGACY_OPENCL_ENABLED
         // Legacy OpenCL options.
         opts.add_options(legacy_cl_opt)
@@ -339,7 +382,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
         // IL dump.
         opts.add_options(il_dump_opt)
-            ("il", "Path to output IL (intermediate language) disassembly file(s).", po::value<std::string>(config.il_file))
+            (kStrOptionIl, "Path to output IL (intermediate language) disassembly file(s).", po::value<std::string>(config.il_file))
             ;
 
         // Line numbers.
@@ -376,8 +419,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("session-metadata", "Generate session metadata file with the list of output files generated by RGA.", po::value<std::string>(config.session_metadata_file))
             ("log",  "Path to the CLI log file", po::value<std::string>(config.log_file))
             ("no-suffix-bin", "If specified, do not add a suffix to names of generated binary files.")
-            ("no-prefix-device-bin", "If specified, do not add a device prefix to names of generated binary files.")(
-            "state-desc", "Full path to the DXR state description file.", po::value<std::string>(config.dxr_state_desc))
+            ("no-prefix-device-bin", "If specified, do not add a device prefix to names of generated binary files.")
+			("state-desc", "Full path to the DXR state description file.", po::value<std::string>(config.dxr_state_desc))
             ("parse-isa", "Generate a CSV file with a breakdown of each ISA instruction into opcode, operands. etc.")
             ("csv-separator", "Override to default separator for analysis items.", po::value<std::string>(config.csv_separator))
             ("retain", "Retain temporary output files.")
@@ -391,7 +434,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         auto result = opts.parse(argc, argv);
 
 
-        if (result.count("help") || result.count("?") || result.arguments().empty() == 0)
+        if (result.count("help") || result.arguments().empty() == 0)
         {
             config.requested_command = Config::kHelp;
         }
@@ -459,6 +502,19 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.dx12_debug_layer_enabled = true;
         }
 
+        if (result.count("no-debug-output"))
+        {
+            if (!config.dx12_debug_layer_enabled)
+            {
+                std::cout << "Error: \'no-debug-output\' option is only valid when used with --debug-layer." << std::endl;
+                do_work = false;
+            }
+            else
+            {
+                config.dx12_no_debug_output = true;
+            }
+        }
+
         if (result.count("offline") || !config.alternative_amdxc.empty())
         {
             config.dx12_offline_session = true;
@@ -489,10 +545,16 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         }
 
         // Set the default livereg output file name if not provided by a user.
-        if (result.count("--livereg") && config.livereg_analysis_file.empty())
+        if (result.count("livereg") && config.livereg_analysis_file.empty())
         {
             config.livereg_analysis_file = kStrDefaultFilenameLivereg;
         }
+
+        // Set the default sgpr livereg output file name if not provided by a user.
+        if (result.count("livereg-sgpr") && config.sgpr_livereg_analysis_file.empty())
+        {
+            config.sgpr_livereg_analysis_file = kStrDefaultFilenameLiveregSgpr;
+        }        
 
         if (result.count("no-suffix-bin") > 0)
         {
@@ -517,11 +579,19 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.requested_command = Config::kUpdate;
         }
-        else if (!config.analysis_file.empty() || !config.il_file.empty() || !config.isa_file.empty() ||
-                 !config.livereg_analysis_file.empty() || !config.binary_output_file.empty() ||
-                 !config.metadata_file.empty() || !config.block_cfg_file.empty() ||
-                 !config.inst_cfg_file.empty() || !config.spv_txt.empty() || !config.spv_bin.empty() ||
-                 !config.parsed_spv.empty())
+        else if (!config.analysis_file.empty() || 
+                 !config.il_file.empty() || 
+                 !config.isa_file.empty() ||
+                 !config.livereg_analysis_file.empty() || 
+                 !config.sgpr_livereg_analysis_file.empty() || 
+                 !config.binary_output_file.empty() ||
+                 !config.metadata_file.empty() || 
+                 !config.block_cfg_file.empty() ||
+                 !config.inst_cfg_file.empty() || 
+                 !config.spv_txt.empty() || 
+                 !config.spv_bin.empty() ||
+                 !config.parsed_spv.empty() ||
+                 !config.binary_codeobj_file.empty())
         {
             config.requested_command = Config::kCompile;
         }
@@ -598,6 +668,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.mode = beKA::RgaMode::kModeOpenclOffline;
         }
+        else if (src_kind == Config::source_kind_binary)
+        {
+            config.mode = beKA::RgaMode::kModeBinary;
+        }
         else
         {
             config.mode = beKA::RgaMode::kModeInvalid;
@@ -637,6 +711,26 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         }
 #endif
 
+         // Binary Analysis mode does not support the asic,c and binary,b and --il CLI option.
+        if (config.mode == beKA::RgaMode::kModeBinary)
+        {
+            if (result.count("asic"))
+            {
+                std::cout << "unrecognized option \'" << kStrOptionAsic << "\'" << std::endl;
+                do_work = false;
+            }
+            if (result.count("binary"))
+            {
+                std::cout << "unrecognized option \'" << kStrOptionBinary << "\'" << std::endl;
+                do_work = false;
+            }
+            if (result.count(kStrOptionIl))
+            {
+                std::cout << "unrecognized option \'" << kStrOptionIl << "\'" << std::endl;
+                do_work = false;
+            }
+        }
+
         std::cout << std::endl;
         if ((config.requested_command == Config::kHelp) && (!is_source_specified))
         {
@@ -661,6 +755,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 #endif
             std::cout << "To view help for OpenGL mode: -h -s opengl" << std::endl;
             std::cout << "To view help for OpenCL Offline mode: -h -s opencl" << std::endl;
+            std::cout << "To view help for Binary Analysis mode: -h -s bin" << std::endl;
 #ifdef _LEGACY_OPENCL_ENABLED
             std::cout << "To view help for legacy OpenCL mode: -h -s cl" << std::endl;
 #endif // !_LEGACY_OPENCL_ENABLED
@@ -948,6 +1043,46 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             std::cout << compiler_opts.help({ "" }) << std::endl;
         }
 #endif
+        else if (config.requested_command == Config::kHelp && config.mode == beKA::RgaMode::kModeBinary)
+        {
+            std::cout << "*** Binary Analysis mode options ***" << std::endl;
+            std::cout << "===========================" << std::endl;
+            // Duplicate generic options only for help doc., as binary analysis mode does not support the asic,c and binary,b cli option.
+            po::Options binary_opts(program_name);
+            binary_opts.positional_help("");
+            binary_opts.custom_help("[options]");
+            binary_opts.add_options(generic_opt)
+                (kStrOptionListAsic, kStrDescriptionListAsic)
+                (kStrOptionVersion, kStrDescriptionVersion)
+                (kStrOptionHelp, kStrDescriptionHelp)
+                (kStrOptionAnalysis, kStrDescriptionAnalysis, po::value<std::string>())
+                (kStrOptionIsa, kStrDescriptionIsa, po::value<std::string>())
+                (kStrOptionLivereg, kStrDescriptionLivereg, po::value<std::string>())
+                (kStrOptionSgpr, kStrDescriptionSgpr, po::value<std::string>())
+                (kStrOptionCfg, kStrDescriptionCfg, po::value<std::string>())
+                (kStrOptionCfgI, kStrDescriptionCfgI, po::value<std::string>())
+                (kStrOptionSourceKind, kStrDescriptionSourceKind, po::value<std::string>())
+                (kStrOptionUpdates, kStrDescriptionUpdates)
+                (kStrOptionVerbose, kStrDescriptionVerbose)
+                ;
+            binary_opts.add_options(binary_opt)
+                (kStrOptionCO, kStrDescriptionCO, po::value<std::string>())
+                ;
+            std::cout << binary_opts.help({
+                         generic_opt,
+                         binary_opt }) << std::endl;
+            std::cout << "Examples:" << std::endl;
+            std::cout << "  Extract ISA, and statistics for:" << std::endl;
+            std::cout << "    " << program_name
+                 << " -s bin --isa output/binary_isa.txt -a output/binary_stats.csv --co source/myBinaryCodeObject.bin"
+                 << std::endl;
+            std::cout << " Extract ISA and control flow graph for: " << std::endl;
+            std::cout << "    " << program_name
+                 << " -s bin --isa output/binary_isa.txt --cfg output/cfg.dot --co source/myBinaryCodeObject.bin" << std::endl;
+            std::cout << "  Extract ISA and perform live register analysis:" << std::endl;
+            std::cout << "    " << program_name << " -s bin --isa output/binary_isa.txt --livereg output/regs.txt --co source/myBinaryCodeObject.bin" << std::endl;
+
+        }
         else if ((config.requested_command == Config::kUpdate))
         {
             KcUtils::CheckForUpdates();

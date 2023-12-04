@@ -32,12 +32,13 @@
 using namespace beKA;
 
 // Static constants.
-static const std::string kShaeOptLivereg = "analyse-liveness --arch-info";
-static const std::string kShaeOptLiveregWave64 = "analyse-liveness --arch-info --wave-size 64";
-static const std::string kShaeOptLiveregWave32     = "analyse-liveness --arch-info --wave-size 32";
+static const std::string kShaeOptLivereg       = "analyse-liveness --arch-info";
+static const std::string kShaeOptLiveregWave64 = "--wave-size 64";
+static const std::string kShaeOptLiveregWave32 = "--wave-size 32";
+static const std::string kShaeOptLiveregSgpr   = "--reg-type sgpr";
+
 static const std::string kShaeOptCfgPerBlock = "dump-bb-cfg";
 static const std::string kShaeOptCfgPerInstruciton = "dump-pi-cfg";
-static const std::string kShaeOptStallAnalysis = "stall-cycles";
 
 static bool GetLiveRegAnalyzerPath(std::string& analyzer_path)
 {
@@ -70,6 +71,7 @@ static std::string GetShaeIsaCmd(const gtString& target)
 {
     const gtString kShaeGfx8  = L"gfx8";
     const gtString kShaeGfx9  = L"gfx9";
+    const gtString kShaeGfx90a  = L"gfx90a";
     const gtString kShaeGfx10_1 = L"gfx10_1";
 	const gtString kShaeGfx10_3 = L"gfx10_3";
 	const gtString kShaeGfx11 = L"gfx11";
@@ -90,7 +92,14 @@ static std::string GetShaeIsaCmd(const gtString& target)
     }
     else if (KcUtils::IsVegaTarget(target.asASCIICharArray()))
     {
-        shae_gfx_generation << kShaeGfx9.asASCIICharArray();
+        if (KcUtils::IsMITarget(target.asASCIICharArray()))
+        {
+            shae_gfx_generation << kShaeGfx90a.asASCIICharArray();
+        }
+        else
+        {
+            shae_gfx_generation << kShaeGfx9.asASCIICharArray();
+        }
     }
     else
     {
@@ -184,22 +193,39 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::PreprocessIsaFile(const std::string& i
 }
 
 beKA::beStatus beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& target,
-    const gtString& output_filename, beWaveSize wave_size, bool should_print_cmd)
+                                                                      const gtString& output_filename,
+                                                                      beWaveSize      wave_size,
+                                                                      bool            should_print_cmd,
+                                                                      bool            is_reg_type_sgpr)
 {
-    std::string        shae_option;
+    std::stringstream shae_option;
     switch (wave_size)
     {
     case kUnknown:
         // Let Shae deduce the wave size from the disassembly.
-        shae_option = kShaeOptLivereg;
+        shae_option << kShaeOptLivereg;
+        if (is_reg_type_sgpr)
+        {
+            shae_option << " " << kShaeOptLiveregSgpr;
+        }
         break;
     case kWave32:
         // Force wave32.
-        shae_option = kShaeOptLiveregWave32;
+        shae_option << kShaeOptLivereg;
+        if (is_reg_type_sgpr)
+        {
+            shae_option << " " << kShaeOptLiveregSgpr;
+        }
+        shae_option  << " " << kShaeOptLiveregWave32;
         break;
     case kWave64:
         // Force wave64.
-        shae_option = kShaeOptLiveregWave64;
+        shae_option << kShaeOptLivereg;
+        if (is_reg_type_sgpr)
+        {
+            shae_option << " " << kShaeOptLiveregSgpr;
+        }
+        shae_option << " " << kShaeOptLiveregWave64;
         break;
     default:
         // We shouldn't get here.
@@ -207,13 +233,7 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtSt
         break;
     }
 
-    return PerformAnalysis(isa_filename, target, output_filename, shae_option, should_print_cmd);
-}
-
-beKA::beStatus BeStaticIsaAnalyzer::PerformStallAnalysis(const gtString& isa_filename, const gtString& target, const gtString& output_filename,
-    bool should_print_cmd)
-{
-    return PerformAnalysis(isa_filename, target, output_filename, kShaeOptStallAnalysis, should_print_cmd);
+    return PerformAnalysis(isa_filename, target, output_filename, shae_option.str(), should_print_cmd);
 }
 
 beKA::beStatus beKA::BeStaticIsaAnalyzer::GenerateControlFlowGraph(const gtString& isa_filename, const gtString& target, const gtString& output_filename,

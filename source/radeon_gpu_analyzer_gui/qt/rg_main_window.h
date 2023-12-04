@@ -59,6 +59,9 @@ public:
     // Use an event filter to hide the API mode buttons.
     virtual bool eventFilter(QObject* obj, QEvent* event) override;
 
+    // Method to load a binary code object file, directly via the command line.
+    bool LoadBinaryCodeObject(const QString filename);
+
 signals:
     // Signal emitted when the user triggers the Edit menu's Find action.
     void FindTriggered();

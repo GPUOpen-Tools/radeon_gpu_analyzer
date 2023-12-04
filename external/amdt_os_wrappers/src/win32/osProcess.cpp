@@ -1607,7 +1607,7 @@ OS_API bool osExecAndGrabOutput(const char* cmd, const bool& cancelSignal, gtStr
 {
     bool ret = false;
     SECURITY_ATTRIBUTES sa;
-    sa.nLength = sizeof(sa);
+    sa.nLength              = sizeof(SECURITY_ATTRIBUTES);
     sa.lpSecurityDescriptor = NULL;
     sa.bInheritHandle = TRUE;
 
@@ -1706,7 +1706,7 @@ OS_API bool osExecAndGrabOutput(const char* cmd, const bool& cancelSignal, gtStr
         else
         {
             unsigned int errorNum = GetLastError();
-            gtString errMsg = L"Failed to launch the command. Error = ";
+            gtString errMsg = L"Failed to launch the command. Error: ";
             errMsg << errorNum;
             OS_OUTPUT_DEBUG_LOG(errMsg.asCharArray(), OS_DEBUG_LOG_ERROR);
         }
@@ -1738,7 +1738,7 @@ OS_API bool osExecAndGrabOutputAndError(const char* cmd, const bool& cancelSigna
 {
     bool ret = false;
     SECURITY_ATTRIBUTES sa;
-    sa.nLength = sizeof(sa);
+    sa.nLength              = sizeof(SECURITY_ATTRIBUTES);
     sa.lpSecurityDescriptor = NULL;
     sa.bInheritHandle = TRUE;
 
@@ -1888,9 +1888,247 @@ OS_API bool osExecAndGrabOutputAndError(const char* cmd, const bool& cancelSigna
         else
         {
             unsigned int errorNum = GetLastError();
-            gtString errMsg = L"Failed to launch the command. Error = ";
+            gtString errMsg = L"Failed to launch the command. Error: ";
             errMsg << errorNum;
             OS_OUTPUT_DEBUG_LOG(errMsg.asCharArray(), OS_DEBUG_LOG_ERROR);
+        }
+    }
+
+    return ret;
+}
+
+// ---------------------------------------------------------------------------
+// Name:        osExecAndGrabOutputAndErrorDebug
+// Description: Executes the given command in a different process and captures its output
+//              from both stderr and stdour in addition to debug output.
+//              This routine blocks, but, using the cancelSignal flag, it allows
+//              the caller to terminate the command's execution.
+// Arguments:   cmd - The command to be executed.
+//              cancelSignal - A reference to the cancel flag. Upon calling this
+//              routine, the cancelSignal flag should be set to false. In case that
+//              the caller wants to terminate the commands' execution, this flag
+//              should be set to true.
+//              workingDir - the working directory to set for the launched process.
+//              cmdDebugOutput - an output parameter to hold the command's debug output.
+//              cmdErrOutput - an output parameter to hold the command's stderr output.
+//              cmdOutput - an output parameter to hold the command's stdout output.
+// Return Val:  bool - Success / failure.
+// Author:      AMD Developer Tools Team
+// Date:        10/26/2023
+// ---------------------------------------------------------------------------
+OS_API bool osExecAndGrabOutputAndErrorDebug(const char*     cmd,
+                                             const bool&     cancel_signal,
+                                             const gtString& working_dir,
+                                             gtString&       cmd_output,
+                                             gtString&       cmd_err_output,
+                                             gtString&       cmd_debug_output)
+{
+    bool                ret = false;
+    SECURITY_ATTRIBUTES sa;
+    sa.nLength              = sizeof(SECURITY_ATTRIBUTES);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle       = TRUE;
+
+    // Clear the output string.
+    cmd_output.makeEmpty();
+
+    // Generate a unique file name for the temp file - stdout.
+    gtString temp_file_name_out = L"osTempFile_stdout";
+    temp_file_name_out.appendFormattedString(L"%llu", __rdtsc());
+    const gtString kTmpOutputFileExt = L"txt";
+    osFilePath     tmp_file_path_out(osFilePath::OS_TEMP_DIRECTORY);
+
+    // Generate a unique file name for the temp file - stderr.
+    gtString temp_file_name_err = L"osTempFile_stderr";
+    temp_file_name_err.appendFormattedString(L"%llu", __rdtsc());
+    osFilePath tmp_file_path_err(osFilePath::OS_TEMP_DIRECTORY);
+
+    if (cmd != NULL)
+    {
+        // Prepare the file name.
+        tmp_file_path_out.setFileName(temp_file_name_out);
+        tmp_file_path_out.setFileExtension(kTmpOutputFileExt);
+
+        tmp_file_path_err.setFileName(temp_file_name_err);
+        tmp_file_path_err.setFileExtension(kTmpOutputFileExt);
+
+        // Create the file to which stdout is going to be redirected.
+        HANDLE h_out = CreateFile(
+            tmp_file_path_out.asString().asCharArray(),
+                              FILE_APPEND_DATA,
+                              FILE_SHARE_WRITE | FILE_SHARE_READ,
+                              &sa,
+                              CREATE_ALWAYS,
+                              FILE_ATTRIBUTE_NORMAL,
+                              NULL);
+
+        // Create the file to which stderr is going to be redirected.
+        HANDLE h_err = CreateFile(tmp_file_path_err.asString().asCharArray(),
+            FILE_APPEND_DATA,
+            FILE_SHARE_WRITE | FILE_SHARE_READ,
+            &sa,
+            CREATE_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL,
+            NULL);
+
+        PROCESS_INFORMATION pi;
+        STARTUPINFO         si;
+        BOOL                rc    = FALSE;
+        DWORD               flags = CREATE_NO_WINDOW | DEBUG_PROCESS;
+
+        ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+        ZeroMemory(&si, sizeof(STARTUPINFO));
+        si.cb = sizeof(STARTUPINFO);
+        si.dwFlags |= STARTF_USESTDHANDLES;
+        si.hStdInput  = NULL;
+        si.hStdError  = h_err;
+        si.hStdOutput = h_out;
+
+        // Fix the command line to handle white spaces in the CLI's path
+        // by wrapping it with quote characters at the beginning and the end.
+        gtString tmp_cmd_line;
+        tmp_cmd_line << cmd;
+
+        // Log the launch command to the CodeXL log file
+        OS_OUTPUT_FORMAT_DEBUG_LOG(OS_DEBUG_LOG_DEBUG, L"Launching command: %ls", tmp_cmd_line.asCharArray());
+
+        // Command line.
+        const wchar_t* p_cmd  = tmp_cmd_line.asCharArray();
+        wchar_t*       _p_cmd = const_cast<wchar_t*>(p_cmd);
+
+        // Working directory.
+        const wchar_t* p_working_dir  = working_dir.asCharArray();
+        wchar_t*       _p_working_dir  = const_cast<wchar_t*>(p_working_dir);
+
+        // Create the process.
+        rc = CreateProcess(NULL, _p_cmd, NULL, NULL, TRUE, flags, NULL, _p_working_dir, &si, &pi);
+
+        if (rc)
+        {
+            DEBUG_EVENT debug_event;
+            bool        is_running = true;
+            std::vector<char> debug_buffer;
+            while (is_running)
+            {
+                ZeroMemory(&debug_event, sizeof(debug_event));
+                // Must be on the same thread as CreateProcess.
+                BOOL ok = WaitForDebugEventEx(&debug_event, INFINITE);  
+                assert(ok);
+                DWORD continue_status = DBG_CONTINUE;
+                switch (debug_event.dwDebugEventCode)
+                {
+                case EXCEPTION_DEBUG_EVENT:
+                    if (debug_event.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT)
+                        continue_status = DBG_EXCEPTION_NOT_HANDLED;
+                    break;
+                case CREATE_PROCESS_DEBUG_EVENT:
+                    CloseHandle(debug_event.u.CreateProcessInfo.hFile);
+                    break;
+                case EXIT_PROCESS_DEBUG_EVENT:
+                    if (debug_event.dwProcessId == pi.dwProcessId)
+                        is_running = false;
+                    break;
+                case OUTPUT_DEBUG_STRING_EVENT:
+                    if (debug_event.u.DebugString.nDebugStringLength > 0)
+                    {
+                        WORD len = debug_event.u.DebugString.nDebugStringLength;
+                        debug_buffer.resize(len);
+                        size_t bytes_read = 0;
+                        ok               = ReadProcessMemory(pi.hProcess, debug_event.u.DebugString.lpDebugStringData, debug_buffer.data(), len, &bytes_read);
+                        assert(ok && bytes_read == len);
+                        if (debug_event.u.DebugString.fUnicode)
+                        {
+                            cmd_debug_output << reinterpret_cast<const wchar_t*>(debug_buffer.data());
+                        }
+                        else
+                        {
+                            cmd_debug_output << debug_buffer.data();
+                        }
+                        debug_buffer.clear();
+                    }
+                    break;
+                }
+                ok = ContinueDebugEvent(debug_event.dwProcessId, debug_event.dwThreadId, continue_status);
+                assert(ok);
+                if (cancel_signal)
+                {
+                    is_running = false;
+                }
+            }
+
+            while (WAIT_TIMEOUT == WaitForSingleObject(pi.hProcess, 100))
+            {
+                if (cancel_signal)
+                {
+                    CloseHandle(pi.hProcess);
+                    CloseHandle(pi.hThread);
+                    CloseHandle(h_out);
+                    CloseHandle(h_err);
+                }
+            }
+
+            if (!cancel_signal)
+            {
+                CloseHandle(pi.hProcess);
+                CloseHandle(pi.hThread);
+                CloseHandle(h_out);
+                CloseHandle(h_err);
+            }
+
+            // Read the temp file - stdout.
+            if (tmp_file_path_out.exists())
+            {
+                // Read the command's output.
+                osFile tmp_file(tmp_file_path_out);
+                bool   rc1 = tmp_file.open(osChannel::OS_ASCII_TEXT_CHANNEL, osFile::OS_OPEN_TO_READ);
+
+                if (rc1)
+                {
+                    gtASCIIString cmd_output_ASCII;
+                    rc1 = tmp_file.readIntoString(cmd_output_ASCII);
+                    tmp_file.close();
+
+                    if (rc1)
+                    {
+                        cmd_output.fromASCIIString(cmd_output_ASCII.asCharArray());
+                    }
+                }
+
+                // Delete the temporary file.
+                tmp_file.deleteFile();
+            }
+
+            // Read the temp file - stderr.
+            if (tmp_file_path_err.exists())
+            {
+                // Read the command's output.
+                osFile tmp_file(tmp_file_path_err);
+                bool   rc1 = tmp_file.open(osChannel::OS_ASCII_TEXT_CHANNEL, osFile::OS_OPEN_TO_READ);
+
+                if (rc1)
+                {
+                    gtASCIIString cmd_output_ASCII;
+                    rc1 = tmp_file.readIntoString(cmd_output_ASCII);
+                    tmp_file.close();
+
+                    if (rc1)
+                    {
+                        cmd_err_output.fromASCIIString(cmd_output_ASCII.asCharArray());
+                    }
+                }
+
+                // Delete the temporary file.
+                tmp_file.deleteFile();
+            }
+
+            ret = true;
+        }
+        else
+        {
+            unsigned int error_num = GetLastError();
+            gtString     err_msg   = L"Failed to launch the command. Error: ";
+            err_msg << error_num;
+            OS_OUTPUT_DEBUG_LOG(err_msg.asCharArray(), OS_DEBUG_LOG_ERROR);
         }
     }
 

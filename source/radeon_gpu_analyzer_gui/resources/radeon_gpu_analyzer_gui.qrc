@@ -43,5 +43,9 @@
         <file>icons/notification_icon.svg</file>
         <file>icons/max_vgpr_warning_icon.svg</file>
         <file>icons/max_vgpr_no_isa_match_icon.svg</file>
+        <file>stylesheets/binary/rg_application_style_binary.qss</file>
+        <file>stylesheets/binary/rg_file_menu_style_binary.qss</file>
+        <file>stylesheets/binary/rg_main_window_style_binary.qss</file>
+        <file>icons/api_logos/binary_icon_wide.png</file>
     </qresource>
 </RCC>

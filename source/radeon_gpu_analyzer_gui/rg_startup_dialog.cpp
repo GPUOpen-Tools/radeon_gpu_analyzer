@@ -7,6 +7,7 @@
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types_binary.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_opencl.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_vulkan.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
@@ -14,14 +15,19 @@
 #include "ui_rg_startup_dialog.h"
 
 static const int kHorizontalLayoutSpacing = 15;
-static const int kLeftAndRightMargin     = 23;
+static const int kLeftAndRightMargin      = 23;
 static const int kSpacingAfterLabel       = 10;
-static const std::vector<const char*> kDescription = { kStrStartupDialogOpenclDescription,
-                                                                kStrStartupDialogVulkanDescription };
+static const std::vector<const char*> kDescription = 
+{
+    kStrStartupDialogBinaryDescription,
+    kStrStartupDialogOpenclDescription,
+    kStrStartupDialogVulkanDescription    
+};
+int maxDescriptionWidth = 0;
 
 RgStartupDialog::RgStartupDialog(QWidget* parent) :
     QDialog(parent),
-    selected_api_(RgProjectAPI::kVulkan),
+    selected_api_(static_cast<RgProjectAPI>(static_cast<int>(RgProjectAPI::kApiCount) - 1)),
     should_not_ask_again_(false)
 {
     ui_.setupUi(this);
@@ -42,12 +48,12 @@ RgStartupDialog::RgStartupDialog(QWidget* parent) :
     ConnectSignals();
 
     // Populate the API list widget. (Starting with Vulkan, and going backwards).
-    for (int api_index = static_cast<int>(RgProjectAPI::kVulkan); api_index > 0; --api_index)
+    for (int api_index = static_cast<int>(RgProjectAPI::kApiCount) - 1; api_index > static_cast<int>(RgProjectAPI::kUnknown); --api_index)
     {
         RgProjectAPI current_api = static_cast<RgProjectAPI>(api_index);
-        std::string api_string;
-        RgUtils::ProjectAPIToString(current_api, api_string);
-        ui_.apiListWidget->addItem(QString::fromStdString(api_string));
+        std::string  api_string;
+        RgUtils::ProjectAPIToString(current_api, api_string, false);
+        ui_.apiListWidget->addItem(QString::fromStdString(api_string));     
     }
 
     // Select Vulkan selection in the list widget by default.
@@ -152,6 +158,13 @@ void RgStartupDialog::HandleListWidgetItemClicked(QListWidgetItem* item)
         // Also update the description.
         ui_.descriptionLabel->setText(kStrStartupDialogVulkanDescription);
     }
+    else if (item->text().compare(kStrApiNameBinary) == 0)
+    {
+        selected_api_ = RgProjectAPI::kBinary;
+
+        // Also update the description.
+        ui_.descriptionLabel->setText(kStrStartupDialogBinaryDescription);
+    }    
     else
     {
         // Should not get here.
@@ -182,6 +195,16 @@ void RgStartupDialog::HandleListWidgetItemDoubleClicked(QListWidgetItem* item)
         // Start RGA.
         HandleStartRGAButtonClicked(false);
     }
+    else if (item->text().compare(kStrApiNameBinary) == 0)
+    {
+        selected_api_ = RgProjectAPI::kBinary;
+
+        // Also update the description.
+        ui_.descriptionLabel->setText(kStrStartupDialogBinaryDescription);
+
+        // Start RGA.
+        HandleStartRGAButtonClicked(false);
+    }
     else
     {
         // Should not get here.
@@ -198,20 +221,18 @@ void RgStartupDialog::HandleListWidgetItemSelected(int current_row)
 
 void RgStartupDialog::SetDescriptionLength()
 {
-    int max_width = 0;
-
     for (const char* text : kDescription)
     {
         const QFont font = ui_.descriptionLabel->font();
         QFontMetrics fm(font);
         const int text_width = fm.width(text);
 
-        if (text_width > max_width)
+        if (text_width > maxDescriptionWidth)
         {
-            max_width = text_width;
+            maxDescriptionWidth = text_width;
         }
     }
-    ui_.descriptionLabel->setMinimumWidth(max_width);
+    ui_.descriptionLabel->setMinimumWidth(maxDescriptionWidth);
 }
 
 void RgStartupDialog::ScaleDialog()
@@ -256,10 +277,7 @@ void RgStartupDialog::ScaleDialog()
     ui_.startRGAPushButton->setFixedWidth(ui_.startRGAPushButton->width() * scale_factor);
 
     // Recalculate and set the width.
-    QFontMetrics font_metrics(ui_.descriptionLabel->font());
-    QRect bounding_rect = font_metrics.boundingRect(ui_.descriptionLabel->text());
-    const int width = bounding_rect.width();
-    setFixedWidth(width + ui_.apiListWidget->width()
+    setFixedWidth(maxDescriptionWidth + ui_.apiListWidget->width()
                   + kHorizontalLayoutSpacing * ScalingManager::Get().GetScaleFactor()
                   + kLeftAndRightMargin * ScalingManager::Get().GetScaleFactor()
                   + kSpacingAfterLabel * ScalingManager::Get().GetScaleFactor()

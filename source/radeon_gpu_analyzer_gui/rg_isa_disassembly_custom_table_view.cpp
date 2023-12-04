@@ -244,6 +244,37 @@ public:
     }
 };
 
+class RgTreeviewSelectionDelegateBinary : public QItemDelegate
+{
+public:
+    RgTreeviewSelectionDelegateBinary(QObject* parent = nullptr)
+        : QItemDelegate(parent)
+    {
+    }
+
+    virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& model_index) const
+    {
+        // If this is the VGPR pressure column, go ahead and draw the register information.
+        QString column_header = model_index.model()->headerData(model_index.column(), Qt::Orientation::Horizontal).toString();
+        if (column_header.contains(kStrDisassemblyTableLiveVgprHeaderPart))
+        {
+            DrawVgprWidget(painter, option, model_index);
+        }
+        else
+        {
+            QStyleOptionViewItem view_option(option);
+
+            QColor item_foreground_color = model_index.data(Qt::ForegroundRole).value<QColor>();
+
+            view_option.palette.setColor(QPalette::HighlightedText, item_foreground_color);
+            QColor background_color(kCorrelationHighlightColor);
+            view_option.palette.setColor(QPalette::Highlight, background_color);
+
+            QItemDelegate::paint(painter, view_option, model_index);
+        }
+    }
+};
+
 RgIsaDisassemblyCustomTableView::RgIsaDisassemblyCustomTableView(QWidget* parent) :
     QTreeView(parent)
 {
@@ -269,6 +300,10 @@ RgIsaDisassemblyCustomTableView::RgIsaDisassemblyCustomTableView(QWidget* parent
     else if (current_api == RgProjectAPI::kOpenCL)
     {
         setItemDelegate(new RgTreeviewSelectionDelegateOpencl(this));
+    }
+    else if (current_api == RgProjectAPI::kBinary)
+    {
+        setItemDelegate(new RgTreeviewSelectionDelegateBinary(this));
     }
     else
     {

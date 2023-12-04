@@ -27,6 +27,7 @@ void RgSettingsTab::Initialize()
 {
     // Create the global settings view and add it to the Settings Tab.
     RgConfigManager& config_manager = RgConfigManager::Instance();
+    RgProjectAPI     current_api    = config_manager.GetCurrentAPI();
     std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
 
     // Set various properties for the scroll area.
@@ -51,7 +52,7 @@ void RgSettingsTab::Initialize()
 
     // Create the API-specific build settings view and add it to the Settings Tab.
     build_settings_view_ = CreateApiBuildSettingsView();
-    assert(build_settings_view_ != nullptr);
+    assert(build_settings_view_ != nullptr || (current_api == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
     if (build_settings_view_ != nullptr)
     {
         AddSettingsView(build_settings_view_);
@@ -107,12 +108,15 @@ void RgSettingsTab::Initialize()
 
 RgBuildSettingsView* RgSettingsTab::CreateApiBuildSettingsView()
 {
+    auto current_api = GetApiType();
+
     // Create an API-specific factory to create an API-specific RgBuildSettingsView.
-    std::shared_ptr<RgFactory> factory = RgFactory::CreateFactory(GetApiType());
+    std::shared_ptr<RgFactory> factory = RgFactory::CreateFactory(current_api);
     assert(factory != nullptr);
 
+    
     // Get the API-specific build settings from the RgConfigManager.
-    std::shared_ptr<RgBuildSettings> build_settings = RgConfigManager::Instance().GetUserGlobalBuildSettings(GetApiType());
+    std::shared_ptr<RgBuildSettings> build_settings = RgConfigManager::Instance().GetUserGlobalBuildSettings(current_api);
     assert(build_settings != nullptr);
 
     // If the factory and build settings are valid, then create an API-specific RgBuildSettingsView
@@ -160,16 +164,22 @@ void RgSettingsTab::ConnectSignals()
     assert(is_connected);
 
     // Connect the default API's settings view's handler for pending changes.
-    is_connected = connect(static_cast<RgBuildSettingsView*>(build_settings_view_), &RgBuildSettingsView::PendingChangesStateChanged, this, &RgSettingsTab::HandleBuildSettingsPendingChangesStateChanged);
-    assert(is_connected);
+    if (build_settings_view_ != nullptr)
+    {
+        is_connected = connect(static_cast<RgBuildSettingsView*>(build_settings_view_), &RgBuildSettingsView::PendingChangesStateChanged, this, &RgSettingsTab::HandleBuildSettingsPendingChangesStateChanged);
+        assert(is_connected);
+    }
 
     // Connect the settings list widget to detect clicks.
     is_connected = connect(ui_.settingsListWidget, &QListWidget::currentRowChanged, this, &RgSettingsTab::HandleSettingsListWidgetClick);
     assert(is_connected);
 
     // Connect the settings command line update.
-    is_connected = connect(this, &RgSettingsTab::UpdateCommandLineTextSignal, build_settings_view_, &RgBuildSettingsView::UpdateCommandLineText);
-    assert(is_connected);
+    if (build_settings_view_ != nullptr)
+    {
+        is_connected = connect(this, &RgSettingsTab::UpdateCommandLineTextSignal, build_settings_view_, &RgBuildSettingsView::UpdateCommandLineText);
+        assert(is_connected);
+    }
 }
 
 void RgSettingsTab::HandleInputFileNameBlank(bool is_blank)
@@ -273,7 +283,7 @@ void RgSettingsTab::SaveSettings()
         global_settings_view_->SaveSettings();
     }
 
-    assert(build_settings_view_ != nullptr);
+    assert(build_settings_view_ != nullptr || (GetApiType() == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
     if (build_settings_view_ != nullptr && build_settings_view_->GetHasPendingChanges())
     {
         // Save default build settings.
@@ -332,7 +342,7 @@ void RgSettingsTab::HandleRestoreDefaultsSettingsClicked()
 void RgSettingsTab::UpdateBuildSettingsTitle(bool has_pending_changes)
 {
     QListWidgetItem* item = ui_.settingsListWidget->item(static_cast<int>(SettingsListWidgetEntries::kApi));
-    assert(item != nullptr);
+    assert(item != nullptr || (GetApiType() == RgProjectAPI::kBinary && item == nullptr));
     if (item != nullptr)
     {
         std::string settings_title;
@@ -462,7 +472,7 @@ void RgSettingsTab::SetGlobalSettingsStylesheet(const std::string& stylesheet)
 
 void RgSettingsTab::SetBuildSettingsStylesheet(const std::string& stylesheet)
 {
-    assert(build_settings_view_ != nullptr);
+    assert(build_settings_view_ != nullptr || (GetApiType() == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
     if (build_settings_view_ != nullptr)
     {
         build_settings_view_->setStyleSheet(stylesheet.c_str());
@@ -471,7 +481,7 @@ void RgSettingsTab::SetBuildSettingsStylesheet(const std::string& stylesheet)
 
 void RgSettingsTab::HandleSettingsListWidgetClick(int index)
 {
-    assert(build_settings_view_ != nullptr);
+    assert(build_settings_view_ != nullptr || (GetApiType() == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
     assert(global_settings_view_ != nullptr);
 
     bool is_saved_enabled = false;

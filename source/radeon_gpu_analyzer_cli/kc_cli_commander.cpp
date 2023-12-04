@@ -14,18 +14,20 @@
 #include "radeon_gpu_analyzer_cli/kc_cli_commander.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_lightning.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vulkan.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_commander_bin.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 
 // Shared.
 #include "common/rg_log.h"
 
 // Constants.
-static const char* kStrErrorTargetNotSupported = " compilation for the detected target GPU is not supported: ";
-static const char* kStrErrorFailedToGenerateVersionInfoFile = "Error: failed to generate the Version Info file.";
-static const char* kStrErrorFailedToGenerateVersionInfoHeader = "Error: failed to generate version info header.";
-static const char* kStrErrorFailedToGenerateVersionInfoRocmcl = "Error: failed to generate version info for Offline OpenCL mode.";
+static const char* kStrErrorTargetNotSupported                          = " compilation for the detected target GPU is not supported: ";
+static const char* kStrErrorFailedToGenerateVersionInfoFile             = "Error: failed to generate the version info file.";
+static const char* kStrErrorFailedToGenerateVersionInfoHeader           = "Error: failed to generate version info header.";
+static const char* kStrErrorFailedToGenerateVersionInfoRocmcl           = "Error: failed to generate version info for Offline OpenCL mode.";
 static const char* kStrErrorFailedToGenerateVersionInfoFileVulkanSystem = "Error: failed to generate system version info for Vulkan live-driver mode.";
-static const char* kStrErrorFailedToGenerateVersionInfoFileVulkan = "Error: failed to generate version info for Vulkan live-driver mode.";
+static const char* kStrErrorFailedToGenerateVersionInfoFileVulkan       = "Error: failed to generate version info for Vulkan live-driver mode.";
+static const char* kStrErrorFailedToGenerateVersionInfoBinaryAnalysis   = "Error: failed to generate version info for Binary Analysis mode.";
 
 void KcCliCommander::Version(Config& config, LoggingCallbackFunction callback)
 {
@@ -37,24 +39,23 @@ std::string  GetInputlLanguageString(beKA::RgaMode mode)
     switch (mode)
     {
     case beKA::RgaMode::kModeOpenclOffline:
-        return "OpenCL";
+        return kStrRgaModeOpenclOffline;
     case beKA::RgaMode::kModeOpengl:
-        return "OpenGL";
+        return kStrRgaModeOpengl;
     case beKA::RgaMode::kModeVulkan:
-        return "Vulkan";
+        return kStrRgaModeVulkan;
     case beKA::RgaMode::kModeVkOffline:
     case beKA::RgaMode::kModeVkOfflineSpv:
     case beKA::RgaMode::kModeVkOfflineSpvTxt:
-        return "Vulkan Offline";
+        return kStrRgaModeVkOffline;
     case beKA::RgaMode::kModeDx11:
-        return "DX11";
+        return kStrRgaModeDx11;
     case beKA::RgaMode::kModeDx12:
-        return "DX12";
+        return kStrRgaModeDx12;
     case beKA::RgaMode::kModeDxr:
-        return "DXR";
+        return kStrRgaModeDxr;
     default:
-        const char* const kStrErrorUnknownMode = "Unknown mode.";
-        assert(false && kStrErrorUnknownMode);
+        assert(false && kStrRgaModeErrorUnknownMode);
         return "";
     }
 }
@@ -99,6 +100,14 @@ bool KcCliCommander::GenerateVersionInfoFile(const Config& config)
 
     if (status)
     {
+        // Try generating the version info file for Binary Analysis mode.
+        bool is_binary_analysis_version_info_generated = KcCliCommanderBin::GenerateBinaryAnalysisVersionInfo(filename);
+        assert(is_binary_analysis_version_info_generated);
+        if (!is_binary_analysis_version_info_generated)
+        {
+            RgLog::stdErr << kStrErrorFailedToGenerateVersionInfoBinaryAnalysis << std::endl;
+        }
+
         // Try generating the version info file for OpenCL-Offline mode.
         bool is_opencl_offline_version_info_generated =
             KcCLICommanderLightning::GenerateOpenclOfflineVersionInfo(filename);
@@ -130,7 +139,7 @@ bool KcCliCommander::GenerateVersionInfoFile(const Config& config)
         }
 
         // We are good if at least one of the modes managed to generate the version info.
-        status = is_opencl_offline_version_info_generated || is_vulkan_version_info_generated;
+        status = is_binary_analysis_version_info_generated || is_opencl_offline_version_info_generated || is_vulkan_version_info_generated;
         assert(status);
     }
     else
@@ -152,22 +161,7 @@ bool KcCliCommander::ListEntries(const Config & config, LoggingCallbackFunction 
     return false;
 }
 
-bool KcCliCommander::GetParsedIsaCsvText(const std::string& isaText, const std::string& device, bool add_line_numbers, std::string& csv_text)
-{
-    static const char* kStrCsvParsedIsaHeader = "Address, Opcode, Operands, Functional Unit, Cycles, Binary Encoding\n";
-    static const char* kStrCsvParsedIsaHeaderLineNumbers = "Address, Source Line Number, Opcode, Operands, Functional Unit, Cycles, Binary Encoding\n";
-
-    bool ret = false;
-    std::string  parsed_isa;
-    if (BeProgramBuilder::ParseIsaToCsv(isaText, device, parsed_isa, add_line_numbers, true) == beKA::kBeStatusSuccess)
-    {
-        csv_text = (add_line_numbers ? kStrCsvParsedIsaHeaderLineNumbers : kStrCsvParsedIsaHeader) + parsed_isa;
-        ret = true;
-    }
-    return ret;
-}
-
-bool KcCliCommander::InitRequestedAsicList(const std::vector<std::string>& devices,
+bool KcCliCommander::InitRequestedAsicList(const std::vector<std::string>& devices, 
                                            beKA::RgaMode                   mode,
                                            const std::set<std::string>&    supported_devices,
                                            std::set<std::string>&          matched_devices, 
@@ -221,18 +215,6 @@ bool KcCliCommander::InitRequestedAsicList(const std::vector<std::string>& devic
     }
 
     bool ret = (matched_devices.size() != 0);
-    return ret;
-}
-
-beKA::beStatus KcCliCommander::WriteIsaToFile(const std::string& fileName, const std::string& isaText)
-{
-    beKA::beStatus ret = beKA::beStatus::kBeStatusInvalid;
-    ret = KcUtils::WriteTextFile(fileName, isaText, log_callback_) ?
-        beKA::kBeStatusSuccess : beKA::kBeStatusWriteToFileFailed;
-    if (ret != beKA::kBeStatusSuccess)
-    {
-        RgLog::stdErr << kStrErrorFailedToWriteIsaFile << fileName << std::endl;
-    }
     return ret;
 }
 

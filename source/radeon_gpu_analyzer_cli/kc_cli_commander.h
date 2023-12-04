@@ -47,9 +47,6 @@ public:
 protected:
     // -- Functions --
 
-    // Convert ISA text to CSV form with additional data.
-    bool GetParsedIsaCsvText(const std::string& isaText, const std::string& device, bool add_line_numbers, std::string& csvText);
-
     // Initialize the list of GPU targets based on device(s) specified in "devices".
     // "supportedDevices" is the list of supported devices for the given mode. Only targets from this list will be considered.
     // The matched devices are returned in "matchedDevices" set.
@@ -59,9 +56,6 @@ protected:
                                       const std::set<std::string>&    supported_devices,
                                       std::set<std::string>&          matched_devices, 
                                       bool                            allow_unknown_device);
-
-    // Store ISA text in the file.
-    beKA::beStatus WriteIsaToFile(const std::string& file_name, const std::string& isa_text);
 
     // Logging callback type.
     bool LogCallback(const std::string& str) const;

@@ -43,6 +43,7 @@
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_opencl.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_vulkan.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types_binary.h"
 
 // Static constants
 
@@ -129,6 +130,16 @@ static QString ConstructVulkanOpenFileFilter()
     }
 
     return filter;
+}
+
+// Build the file filter for Open File dialog in BInary Analysis mode.
+static QString ConstructBinaryAnalysisOpenFileFilter()
+{
+    return QString(kStrFileDialogFilterBinary) + 
+        "(" + " *" + kStrSourceFileExtensionBin 
+            + " *" + kStrSourceFileExtensionElf 
+            + " *" + kStrSourceFileExtensionCO + ")" 
+            + ";;" + kStrFileDialogFilterAll;
 }
 
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - END ***
@@ -290,6 +301,7 @@ const char* RgUtils::GenerateProjectName(RgProjectAPI api_name)
     {
     case RgProjectAPI::kOpenCL:
     case RgProjectAPI::kVulkan:
+    case RgProjectAPI::kBinary:
         ret = kStrFileMenuProjectName;
         break;
     default:
@@ -345,15 +357,16 @@ bool RgUtils::GetComputeCapabilityToArchMapping(std::map<std::string, std::strin
     bool ret = false;
 
     // Get the current app mode.
-    const std::string& current_mode = RgConfigManager::Instance().GetCurrentModeString();
+    RgProjectAPI       current_mode     = RgConfigManager::Instance().GetCurrentAPI();
+    const std::string& current_mode_str = RgConfigManager::Instance().GetCurrentModeString();
 
     // Get the version info.
     std::shared_ptr<RgCliVersionInfo> version_info = RgConfigManager::Instance().GetVersionInfo();
 
     // Find the architecture node for our current mode.
-    auto current_mode_architectures_iter = version_info->gpu_architectures.find(current_mode);
+    auto current_mode_architectures_iter = version_info->gpu_architectures.find(current_mode_str);
     bool is_mode_found                   = (current_mode_architectures_iter != version_info->gpu_architectures.end());
-    assert(is_mode_found);
+    assert(is_mode_found || (current_mode == RgProjectAPI::kBinary && is_mode_found == false));
     if (is_mode_found)
     {
         // Step through each GPU hardware architecture.
@@ -507,7 +520,7 @@ std::string RgUtils::GetEntrypointsNameString(RgProjectAPI api)
     return result_string;
 }
 
-bool RgUtils::ProjectAPIToString(RgProjectAPI api, std::string& str)
+bool RgUtils::ProjectAPIToString(RgProjectAPI api, std::string& str, bool is_abbreviation)
 {
     bool ret = true;
     switch (api)
@@ -517,6 +530,9 @@ bool RgUtils::ProjectAPIToString(RgProjectAPI api, std::string& str)
         break;
     case RgProjectAPI::kVulkan:
         str = kStrApiNameVulkan;
+        break;
+    case RgProjectAPI::kBinary:
+        str = is_abbreviation ? kStrApiAbbreviationBinary : kStrApiNameBinary;
         break;
     case RgProjectAPI::kUnknown:
     default:
@@ -540,6 +556,10 @@ RgProjectAPI RgUtils::ProjectAPIToEnum(const std::string& str)
     {
         project_api = RgProjectAPI::kVulkan;
     }
+    else if (str.compare(kStrApiAbbreviationBinary) == 0 || str.compare(kStrApiNameBinary) == 0)
+    {
+        project_api = RgProjectAPI::kBinary;
+    }
 
     return project_api;
 }
@@ -554,6 +574,9 @@ bool RgUtils::ProjectAPIToSourceFileExtension(RgProjectAPI api, std::string& ext
         break;
     case RgProjectAPI::kVulkan:
         extension = kStrSourceFileExtensionVulkanGlsl;
+        break;
+    case RgProjectAPI::kBinary:
+        extension = kStrSourceFileExtensionBin;
         break;
     case RgProjectAPI::kUnknown:
     default:
@@ -613,8 +636,37 @@ bool RgUtils::IsSourceFileTypeValid(const std::string& str)
     // Convert to QString for convenience (QString has "endsWith" functionality).
     QString qtString = str.c_str();
 
-    // Check file headers.
-    if (qtString.endsWith(kStrSourceFileExtensionCl) || qtString.endsWith(kStrProjectFileExtension))
+    RgConfigManager& config_manager = RgConfigManager::Instance();
+    RgProjectAPI     current_api    = config_manager.GetCurrentAPI();
+    switch (current_api)
+    {
+    case RgProjectAPI::kBinary:
+    {
+        if (qtString.endsWith(kStrSourceFileExtensionBin) 
+            || qtString.endsWith(kStrSourceFileExtensionElf)
+            || qtString.endsWith(kStrSourceFileExtensionCO))
+        {
+            ret = true;
+        }
+        break;
+    }
+    case RgProjectAPI::kOpenCL:
+    {
+        if (qtString.endsWith(kStrSourceFileExtensionCl))
+        {
+            ret = true;
+        }
+        break;
+    }
+    case RgProjectAPI::kUnknown:
+    default:
+        // We shouldn't get here.
+        assert(false);
+        break;
+    }
+
+    // Check project file headers.
+    if (qtString.endsWith(kStrProjectFileExtension))
     {
         ret = true;
     }
@@ -742,6 +794,12 @@ bool RgUtils::OpenFileDialog(QWidget* parent, RgProjectAPI api, std::string& sel
     case RgProjectAPI::kVulkan:
     {
         QString filter = ConstructVulkanOpenFileFilter();
+        ret            = OpenFileDialogHelper(parent, kStrFileDialogCaption, RgConfigManager::Instance().GetLastSelectedFolder(), filter, selected_file_path);
+        break;
+    }
+    case RgProjectAPI::kBinary:
+    {
+        QString filter = ConstructBinaryAnalysisOpenFileFilter();
         ret            = OpenFileDialogHelper(parent, kStrFileDialogCaption, RgConfigManager::Instance().GetLastSelectedFolder(), filter, selected_file_path);
         break;
     }

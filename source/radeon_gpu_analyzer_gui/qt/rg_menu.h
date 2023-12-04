@@ -32,6 +32,7 @@ class RgMenuFileItem;
 class RgMenuTitlebar;
 class RgMenuBuildSettingsItem;
 class RgAddCreateMenuItem;
+class RgLinkSourceMenuItem;
 class RgBuildView;
 struct RgCliBuildOutput;
 
@@ -114,7 +115,7 @@ public:
     bool IsEmpty() const;
 
     // Remove an item from the menu.
-    void RemoveItem(const std::string& full_filename);
+    virtual void RemoveItem(const std::string& full_filename);
 
     // Deselect the currently selected file item.
     void DeselectCurrentFile();

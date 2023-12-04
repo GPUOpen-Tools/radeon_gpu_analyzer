@@ -21,6 +21,9 @@
 #include "radeon_gpu_analyzer_gui/rg_data_types_vulkan.h"
 #include "radeon_gpu_analyzer_gui/rg_utils_vulkan.h"
 
+// Binary mode includes.
+#include "radeon_gpu_analyzer_gui/rg_data_types_binary.h"
+
 // Common between the CLI and the GUI.
 #include "source/common/rg_log.h"
 #include "source/common/rga_cli_defs.h"
@@ -44,7 +47,7 @@ void BuildCompileProjectCommandString(std::stringstream& command_stream, const s
     // ISA disassembly in text and CSV formats.
     command_stream << kStrCliOptIsa << " \"" << output_path << "disassem.txt\" " << kStrCliOptParseIsa << " ";
 
-    // Livereg analysis.
+    // Livereg vgpr analysis.
     command_stream << kStrCliOptLivereg << " \"" << output_path << "livereg.txt\" ";
 
     // Include line numbers in the CSV file.
@@ -55,7 +58,10 @@ void BuildCompileProjectCommandString(std::stringstream& command_stream, const s
 
     // Output binary file.
     const RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
-    command_stream << kStrCliOptBinary << " \"" << output_path << binary_name << "\" ";
+    if (current_api != RgProjectAPI::kBinary)
+    {
+        command_stream << kStrCliOptBinary << " \"" << output_path << binary_name << "\" ";
+    }
     if (current_api == RgProjectAPI::kVulkan)
     {
         if (binary_name.compare(kStrBuildSettingsOutputBinaryFileName) != 0)
@@ -94,7 +100,11 @@ void BuildOutputViewCommandHeader(std::shared_ptr<RgProject> project, const std:
     text_stream << kStrOutputWindowBuildingProjectHeaderB;
     text_stream << project->project_name;
     text_stream << kStrOutputWindowBuildingProjectHeaderC;
-    text_stream << target_gpu;
+    if (!target_gpu.empty())
+    {
+        text_stream << kStrOutputWindowBuildingProjectHeaderD;
+        text_stream << target_gpu;
+    }
 
     // Insert a separator line above and below the build output line.
     std::string build_header_string = text_stream.str();
@@ -428,6 +438,150 @@ bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, 
                             }
                         }
                     }
+                }
+            }
+        }
+        else
+        {
+            // Invoke the callback used to send new CLI output to the GUI.
+            if (cli_output_handling_callback != nullptr)
+            {
+                std::stringstream error_stream;
+                error_stream << kStrOutputWindowBuildingProjectFailedText;
+                error_stream << kStrOutputWindowBuildingProjectFailedInvalidClone;
+                cli_output_handling_callback(error_stream.str());
+            }
+        }
+    }
+
+    return ret;
+}
+
+std::string ExtractTargetGpuDetected(const std::string& full_cli_output_str)
+{
+    size_t curr_pos = full_cli_output_str.find(kStrTargetGPUDetected);
+    assert(curr_pos != std::string::npos);
+    if (curr_pos != std::string::npos)
+    {
+        size_t      beg           = curr_pos + strlen(kStrTargetGPUDetected);
+        size_t      end           = full_cli_output_str.find("\n", beg);
+        std::string full_gpu_name = full_cli_output_str.substr(beg, end - beg);
+        curr_pos      = full_gpu_name.find(" ");
+        if (curr_pos != std::string::npos)
+        {
+            std::string target_gpu = full_gpu_name.substr(0, curr_pos);
+            return target_gpu;
+        }       
+    }
+    return "";
+}
+
+bool RgCliLauncher::BuildProjectCloneBinary(std::shared_ptr<RgProject>              project,
+                                            int                                     clone_index,
+                                            const std::string&                      output_path,
+                                            const std::string&                      binary_name,
+                                            std::function<void(const std::string&)> cli_output_handling_callback,
+                                            std::vector<std::string>&               gpu_built,
+                                            bool&                                   cancel_signal)
+{
+    bool ret = false;
+    if (project != nullptr)
+    {
+        RgLog::file << kStrLogBuildingProjectClone1 << project->project_name << kStrLogBuildingProjectClone2 << clone_index << std::endl;
+
+        // A stream of all text collected from CLI invocation.
+        std::stringstream full_cli_output;
+
+        // Verify that the clone index is valid for the given project.
+        int  num_clones           = static_cast<int>(project->clones.size());
+        bool is_clone_index_valid = (clone_index >= 0 && clone_index < num_clones);
+        assert(is_clone_index_valid);
+        if (is_clone_index_valid)
+        {
+            std::shared_ptr<RgProjectClone> target_clone = project->clones[clone_index];
+
+            // Generate the command line invocation command.
+            std::stringstream cmd;
+
+            // Build the compile project command string.
+            BuildCompileProjectCommandString(cmd, output_path, binary_name);
+
+            // Build settings.
+            std::string                            build_settings;
+            auto bin_build_settings = std::static_pointer_cast<RgBuildSettingsBinary>(target_clone->build_settings);
+            assert(bin_build_settings != nullptr);
+            ret = RgCliUtils::GenerateBinaryBuildSettingsString(*bin_build_settings, build_settings);
+            assert(ret);
+            if (!build_settings.empty())
+            {
+                cmd << build_settings << " ";
+            }
+
+            if (!cancel_signal)
+            {
+                // Print the command string that's about to be used to invoke the RGA CLI build process.
+                std::string cli_invocation_command_string;
+                BuildOutputViewCommandHeader(project, "", cli_invocation_command_string);
+
+                // Append the command string header text to the output string.
+                std::stringstream cmd_line_output_stream;
+                cmd_line_output_stream << cli_invocation_command_string;
+
+                // Construct the full CLI command string including the current target GPU.
+                std::stringstream full_cmd_with_gpu;
+                full_cmd_with_gpu << cmd.str();
+
+                // Specify the Metadata file path.
+                static const std::string kSTR_TEMP_GPU = "rga-temp-gpu";
+                std::stringstream        metadata_temp_filename_ss;
+                metadata_temp_filename_ss << output_path << kSTR_TEMP_GPU << "_" << kStrSessionMetadataFilename;
+                std::string metadata_temp_filename{metadata_temp_filename_ss.str()};
+                full_cmd_with_gpu << kStrCliOptSessionMetadata << " \"" << metadata_temp_filename << "\" ";
+                
+                // Surround the path to the input file with quotes to prevent breaking the CLI parser.
+                full_cmd_with_gpu << kStrCliOptBinaryCodeObj;
+                full_cmd_with_gpu << " \"";
+                full_cmd_with_gpu << binary_name;
+                full_cmd_with_gpu << "\" ";
+
+                // Add the full CLI execution string to the output window's log.
+                cmd_line_output_stream << full_cmd_with_gpu.str();
+
+                // Send the new output text to the output window.
+                if (cli_output_handling_callback != nullptr)
+                {
+                    cli_output_handling_callback(cmd_line_output_stream.str());
+                }
+
+                // Execute the command and grab the output.
+                RgLog::file << kStrLogLaunchingCli << RgLog::noflush << std::endl << full_cmd_with_gpu.str() << std::endl << RgLog::flush;
+
+                gtString cmd_line_output_as_gt_str;
+                ret = osExecAndGrabOutput(full_cmd_with_gpu.str().c_str(), cancel_signal, cmd_line_output_as_gt_str);
+
+                // Append the CLI's output to the string containing the entire execution output.
+                full_cli_output << cmd_line_output_as_gt_str.asASCIICharArray();
+
+                // Extract target gpu.
+                std::string target_gpu = ExtractTargetGpuDetected(full_cli_output.str());
+                assert(ret && !target_gpu.empty());
+                if (ret && !target_gpu.empty())
+                {
+                    // Add the GPU to the output list if it was built successfully.
+                    gpu_built.push_back(target_gpu);
+
+                   if (RgUtils::IsFileExists(metadata_temp_filename))
+                   {
+                       std::stringstream new_metadata_filename;
+                       new_metadata_filename << output_path << target_gpu << "_" << kStrSessionMetadataFilename;
+                       RgUtils::RenameFile(metadata_temp_filename, new_metadata_filename.str());
+                   }
+                }
+
+                // Invoke the callback used to send new CLI output to the GUI.
+                if (cli_output_handling_callback != nullptr)
+                {
+                    cli_output_handling_callback(cmd_line_output_as_gt_str.asASCIICharArray());
                 }
             }
         }

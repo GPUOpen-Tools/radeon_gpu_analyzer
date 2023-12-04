@@ -29,6 +29,7 @@
 #include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
 #include "radeon_gpu_analyzer_backend/be_string_constants.h"
+#include "radeon_gpu_analyzer_backend/be_data_types.h"
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vulkan.h"
@@ -43,15 +44,6 @@ using namespace beKA;
 
 // Magic number for SPIR-V binary files (SPIR-V Spec, par. 3.1)
 static const uint32_t  SPV_BINARY_MAGIC_NUMBER = spv::MagicNumber;
-
-// Extensions of different input/output file types.
-static const std::string  kStrVulkanSpirvFileExtension          = "spv";
-static const std::string  kStrVulkanSpirvTextFileExtension      = "spvasm";
-static const std::string  kStrVulkanBinaryFileExtension         = "bin";
-static const std::string  kStrVulkanIsaFileExtension            = "isa";
-static const std::string  kStrVulkanStatsFileExtension          = "csv";
-static const std::string  kStrVulkanValidationInfoFileExtension = "txt";
-static const std::string  kStrVulkanHlslFileExtension           = "hlsl";
 
 // Default name for temporary files.
 static const std::string  kStrVulkanTempValidationInfoFilename  = "rga-vk-validation-info";
@@ -145,7 +137,7 @@ kVulkanStageFileSuffixDefault =
 
 // File extensions for GLSL source files - default.
 static const std::array<std::string, BePipelineStage::kCount>
-kStrGlslFileExtensions = kVulkanStageFileSuffixDefault;
+kStrGlslFileExtensions = kVulkanStageFileSuffix;
 
 // File extensions for GLSL source files - additional.
 static const std::vector<std::string>
@@ -153,19 +145,7 @@ kStrGlslFileExtensionsAdditional = kVulkanStageFileSuffix1;
 
 // Pipeline stage names for parsed SPIR-V info.
 static const std::array<std::string, BePipelineStage::kCount>
-kStrPipelineStageNames = kVulkanStageFileSuffixDefault;
-
-// Output metadata entry types for OpenGL pipeline stages.
-static const std::array<RgEntryType, BePipelineStage::kCount> 
-kVulkanOglStageEntryTypes = 
-{
-    RgEntryType::kGlVertex,
-    RgEntryType::kGlTessControl,
-    RgEntryType::kGlTessEval,
-    RgEntryType::kGlGeometry,
-    RgEntryType::kGlFragment,
-    RgEntryType::kGlCompute
-};
+kStrPipelineStageNames = kVulkanStageFileSuffix;
 
 // Pipeline stage full names used in text messages.
 static const std::array<std::string, BePipelineStage::kCount>
@@ -387,10 +367,10 @@ static bool ConstructVkOutputFileNames(const Config& config,
     {
         if (!spv_filenames[stage].empty() && status)
         {
-            status = status && KcUtils::ConstructOutFileName(base_isa_filename, kVulkanStageFileSuffixDefault[stage], device,
+            status = status && KcUtils::ConstructOutFileName(base_isa_filename, kVulkanStageFileSuffix[stage], device,
                 kStrVulkanIsaFileExtension, isa_filenames[stage]);
 
-            status = status && KcUtils::ConstructOutFileName(base_stats_filename, kVulkanStageFileSuffixDefault[stage], device,
+            status = status && KcUtils::ConstructOutFileName(base_stats_filename, kVulkanStageFileSuffix[stage], device,
                 kStrVulkanStatsFileExtension, stats_filenames[stage]);
         }
     }
@@ -839,7 +819,7 @@ void KcCliCommanderVulkan::RunCompileCommands(const Config& config, LoggingCallb
                         }
                     }
 
-                     KcCLICommanderVulkanUtil util(output_metadata_, physical_adapter_name_, log_callback_, kVulkanStageFileSuffixDefault);
+                     KcCLICommanderVulkanUtil util(output_metadata_, physical_adapter_name_, log_callback_, kVulkanStageFileSuffix);
                      util.RunPostProcessingSteps(configPerDevice);
                 }
             }
@@ -851,7 +831,7 @@ bool KcCliCommanderVulkan::RunPostCompileSteps(const Config& config)
 {
     bool ret = false;
 
-    KcCLICommanderVulkanUtil util(output_metadata_, physical_adapter_name_, log_callback_, kVulkanStageFileSuffixDefault);
+    KcCLICommanderVulkanUtil util(output_metadata_, physical_adapter_name_, log_callback_, kVulkanStageFileSuffix);
 
     if (!config.session_metadata_file.empty())
     {
@@ -1087,7 +1067,7 @@ bool KcCliCommanderVulkan::CompileSourceToSpv(const Config& conf, const BeVkPipe
 
             // Construct a name for temporary spv file.
             beStatus status = kBeStatusSuccess;
-            if (KcUtils::ConstructOutFileName("", kVulkanStageFileSuffixDefault[stage], kStrVulkanFileSuffixAllDevices,
+            if (KcUtils::ConstructOutFileName("", kVulkanStageFileSuffix[stage], kStrVulkanFileSuffixAllDevices,
                 kStrVulkanSpirvFileExtension, out_spv_files[stage]))
             {
                 temp_files_.push_back(out_spv_files[stage]);
@@ -1526,7 +1506,7 @@ bool KcCliCommanderVulkan::AssembleSpvTxtInputFiles(const Config& config, const 
             LogPreStep(kStrInfoVulkanPrecompiling1 + kStrPipelineStageNames[stage] + kStrInfoVulkanPrecompiling2);
 
             // Construct a name for temporary spv file.
-            result = KcUtils::ConstructOutFileName("", kVulkanStageFileSuffixDefault[stage], "", kStrVulkanSpirvFileExtension, out_spv_files[stage]);
+            result = KcUtils::ConstructOutFileName("", kVulkanStageFileSuffix[stage], "", kStrVulkanSpirvFileExtension, out_spv_files[stage]);
 
             if (result)
             {
@@ -1564,149 +1544,6 @@ bool KcCliCommanderVulkan::AssembleSpvTxtInputFiles(const Config& config, const 
     return result;
 }
 
-bool KcCliCommanderVulkan::GenerateSessionMetadata(const Config& config) const
-{
-    return KcXmlWriter::GenerateVulkanSessionMetadataFile(config.session_metadata_file, output_metadata_);
-}
-
-bool KcCliCommanderVulkan::ParseIsaFilesToCSV(bool line_numbers, const std::string& device_string, RgVkOutputMetadata& metadata)
-{
-    bool ret = true;
-
-    // Step through existing output items to determine which files to generate CSV ISA for.
-    for (RgOutputFiles& output_file : metadata)
-    {
-        if (!output_file.input_file.empty())
-        {
-            std::string isa, parsed_isa, parsed_isa_filename;
-            bool        status = KcUtils::ReadTextFile(output_file.isa_file, isa, nullptr);
-
-            if (status)
-            {
-                // Convert the ISA text to CSV format.
-                if ((status = GetParsedIsaCsvText(isa, device_string, line_numbers, parsed_isa)) == true)
-                {
-                    status = (KcUtils::GetParsedISAFileName(output_file.isa_file, parsed_isa_filename) == beKA::kBeStatusSuccess);
-                    if (status)
-                    {
-                        // Attempt to write the ISA CSV to disk.
-                        status = (WriteIsaToFile(parsed_isa_filename, parsed_isa) == beKA::kBeStatusSuccess);
-                        if (status)
-                        {
-                            // Update the session metadata output to include the path to the ISA CSV.
-                            output_file.isa_csv_file = parsed_isa_filename;
-                        }
-                    }
-                }
-
-                if (!status)
-                {
-                    RgLog::stdOut << kStrErrorFailedToConvertToCsvFormat << output_file.isa_file << std::endl;
-                }
-            }
-            ret &= status;
-        }
-    }
-
-    return ret;
-}
-
-bool KcCliCommanderVulkan::PerformLiveRegAnalysis(const Config& conf, const std::string& device, RgVkOutputMetadata& device_md)
-{
-    bool  ret = true;
-
-    const std::string& device_suffix = (conf.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
-    gtString           device_gtstr;
-    device_gtstr << device.c_str();
-
-    std::cout << kStrInfoPerformingLiveregAnalysis1 << device << "... " << std::endl;
-
-    for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
-    {
-        RgOutputFiles& stage_md = device_md[stage];
-        if (!stage_md.input_file.empty())
-        {
-            std::string out_file_name;
-            gtString    out_filename_gtstr, isa_filename_gtstr;
-
-            // Construct a name for the livereg output file.
-            ret = KcUtils::ConstructOutFileName(conf.livereg_analysis_file,
-                                                kVulkanStageFileSuffixDefault[stage],
-                                                device_suffix,
-                                                kStrDefaultExtensionLivereg,
-                                                out_file_name,
-                                                !KcUtils::IsDirectory(conf.livereg_analysis_file));
-
-            if (ret && !out_file_name.empty())
-            {
-                out_filename_gtstr << out_file_name.c_str();
-                isa_filename_gtstr << stage_md.isa_file.c_str();
-
-                KcUtils::PerformLiveRegisterAnalysis(isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, conf.print_process_cmd_line);
-                ret                   = BeUtils::IsFilePresent(out_file_name);
-                stage_md.livereg_file = out_file_name;
-            }
-            else
-            {
-                RgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
-            }
-        }
-    }
-
-    LogResult(ret);
-
-    return ret;
-}
-
-bool KcCliCommanderVulkan::ExtractCFG(const Config& config, const std::string& device, const RgVkOutputMetadata& device_md) const
-{
-    bool ret = true;
-
-    const std::string& device_suffix = (config.asics.empty() && !physical_adapter_name_.empty() ? "" : device);
-    bool               per_inst_cfg  = (!config.inst_cfg_file.empty());
-    gtString           device_gtstr;
-    device_gtstr << device.c_str();
-
-    std::cout << (per_inst_cfg ? kStrInfoContructingPerInstructionCfg1 : kStrInfoContructingPerBlockCfg1) << device << "..." << std::endl;
-
-    for (int stage = 0; stage < BePipelineStage::kCount && ret; stage++)
-    {
-        const RgOutputFiles& stage_md = device_md[stage];
-        if (!stage_md.input_file.empty())
-        {
-            std::string out_filename;
-            gtString    out_filename_gtstr, isa_filename_gtstr;
-
-            // Construct a name for the CFG output file.
-            const std::string cfg_output_file = (per_inst_cfg ? config.inst_cfg_file : config.block_cfg_file);
-            ret                               = KcUtils::ConstructOutFileName(cfg_output_file,
-                                                kVulkanStageFileSuffixDefault[stage],
-                                                device_suffix,
-                                                kStrDefaultExtensionDot,
-                                                out_filename,
-                                                !KcUtils::IsDirectory(cfg_output_file));
-
-            if (ret && !out_filename.empty())
-            {
-                out_filename_gtstr << out_filename.c_str();
-                isa_filename_gtstr << stage_md.isa_file.c_str();
-
-                KcUtils::GenerateControlFlowGraph(
-                    isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, per_inst_cfg, config.print_process_cmd_line);
-                ret = BeUtils::IsFilePresent(out_filename);
-            }
-            else
-            {
-                RgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
-            }
-        }
-    }
-
-    LogResult(ret);
-
-    return ret;
-}
-
 void KcCliCommanderVulkan::StoreInputFilesToOutputMD(const BeVkPipelineFiles& input_files)
 {
     for (const std::string& device : asics_)
@@ -1720,7 +1557,7 @@ void KcCliCommanderVulkan::StoreInputFilesToOutputMD(const BeVkPipelineFiles& in
             {
                 RgOutputFiles out_files;
                 out_files.device = device;
-                out_files.entry_type = kVulkanOglStageEntryTypes[stage];
+                out_files.entry_type = kVulkanStageEntryTypes[stage];
                 out_files.input_file = input_files[stage];
                 out_md[stage] = out_files;
             }
@@ -1769,7 +1606,7 @@ void KcCliCommanderVulkan::StoreOutputFilesToOutputMD(const std::string& device,
             if (stage_md.input_file.empty())
             {
                 stage_md.input_file = spvFiles[stage];
-                stage_md.entry_type = kVulkanOglStageEntryTypes[stage];
+                stage_md.entry_type = kVulkanStageEntryTypes[stage];
                 stage_md.device = device;
             }
             stage_md.isa_file = isaFiles[stage];

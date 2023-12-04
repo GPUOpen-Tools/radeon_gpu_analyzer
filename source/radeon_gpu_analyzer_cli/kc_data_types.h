@@ -31,12 +31,25 @@ enum class RgEntryType
 {
     kUnknown,
     kOpenclKernel,
+    kDxrRayGeneration,
+    kDxrIntersection,
+    kDxrAnyHit,
+    kDxrClosestHit,
+    kDxrMiss,
+    kDxrCallable,
+    kDxrTraversal, 
     kDxVertex,
     kDxHull,
     kDxDomain,
     kDxGeometry,
     kDxPixel,
     kDxCompute,
+    kVkVertex,
+    kVkTessControl,
+    kVkTessEval,
+    kVkGeometry,
+    kVkFragment,
+    kVkCompute,
     kGlVertex,
     kGlTessControl,
     kGlTessEval,
@@ -56,7 +69,9 @@ struct RgOutputFiles
     std::string  isa_csv_file;
     std::string  stats_file;
     std::string  livereg_file;
+    std::string  livereg_sgpr_file;
     std::string  cfg_file;
+    std::string  entry_abbreviation;
     bool         is_bin_file_temp = false;
     bool         is_isa_file_temp = false;
     bool         status = true;
@@ -76,7 +91,6 @@ struct RgOutputFiles
                   const std::string& isa_csv_file        = "",
                   const std::string& stat_file           = "",
                   const std::string& livereg_file        = "",
-                  const std::string& stall_analysis_file = "",
                   const std::string& cfg_file            = "")
         : isa_file(isa_file)
         , bin_file(bin_file)

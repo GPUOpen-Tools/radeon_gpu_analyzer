@@ -1,6 +1,9 @@
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DEFINITIONS_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DEFINITIONS_H_
 
+// The mode string used for Binary mode.
+static const char* kStrModeStringBinary = "bin";  
+
 // The mode string used for OpenCL mode.
 static const char* kStrModeStringOpencl = "opencl";
 

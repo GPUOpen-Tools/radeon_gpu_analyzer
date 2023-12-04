@@ -33,7 +33,7 @@ RgMenuOpencl::RgMenuOpencl(QWidget* parent)
 void RgMenuOpencl::InitializeDefaultMenuItems(const std::shared_ptr<RgProjectClone>)
 {
     // Insert the "Build Settings" item into the top of the menu.
-    build_settings_menu_item_ = new RgMenuBuildSettingsItem();
+    build_settings_menu_item_ = new RgMenuBuildSettingsItem(nullptr, kStrMenuBarBuildSettingsTooltip);
     layout_->insertWidget(0, build_settings_menu_item_);
 
     // Insert the "Add/Create" menu item to the top of the menu.
@@ -258,11 +258,9 @@ void RgMenuOpencl::UpdateBuildOutput(const RgBuildOutputsMap& build_outputs)
     bool is_output_valid = RgUtils::GetFirstValidOutputGpu(build_outputs, gpu_with_outputs, gpu_outputs);
     if (is_output_valid && (gpu_outputs != nullptr))
     {
-        std::shared_ptr<RgCliBuildOutputOpencl> gpu_outputs_opencl =
-            std::dynamic_pointer_cast<RgCliBuildOutputOpencl>(gpu_outputs);
 
-        assert(gpu_outputs_opencl != nullptr);
-        if (gpu_outputs_opencl != nullptr)
+        assert(gpu_outputs != nullptr);
+        if (gpu_outputs != nullptr)
         {
             // Step through each file item in the menu.
             for (RgMenuFileItem* file_item : menu_items_)
@@ -271,8 +269,8 @@ void RgMenuOpencl::UpdateBuildOutput(const RgBuildOutputsMap& build_outputs)
 
                 // Find the build output with the current item's filename.
                 const std::string& item_filename = file_item->GetFilename();
-                auto output_iter = gpu_outputs_opencl->per_file_output.find(item_filename);
-                if (output_iter != gpu_outputs_opencl->per_file_output.end())
+                auto output_iter = gpu_outputs->per_file_output.find(item_filename);
+                if (output_iter != gpu_outputs->per_file_output.end())
                 {
                     // Update the menu item with the outputs for the matching input file.
                     RgFileOutputs& file_outputs = output_iter->second;

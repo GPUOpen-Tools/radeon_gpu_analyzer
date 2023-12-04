@@ -25,6 +25,9 @@ enum class RgProjectAPI : char
     // Unknown.
     kUnknown,
 
+    // Binary.
+    kBinary,
+
     // OpenCL.
     kOpenCL,
 
@@ -417,7 +420,7 @@ struct RgGlobalSettings
 
     // If true, RGA will always use the auto-generated project name,
     // without prompting the user for renaming when creating a new project.
-    bool use_default_project_name = false;
+    bool use_default_project_name = true;
 
     // When RGA starts, should it prompt the user to select the API mode?
     // This can be modified by the user using the "Do not ask me again" option in the startup dialog.
@@ -495,6 +498,9 @@ struct RgEntryOutput
 
     // The type of kernel that was compiled.
     std::string kernel_type;
+
+    // The extremely long name of kernel that was compiled (HIP).
+    std::string extremely_long_kernel_name;
 
     // A list of outputs generated for the entry.
     std::vector<RgOutputItem> outputs;

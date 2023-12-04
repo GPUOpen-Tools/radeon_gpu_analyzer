@@ -51,6 +51,9 @@ public:
     // Add the given source file path to the provided project.
     void AddSourceFileToProject(const std::string& source_file_path, std::shared_ptr<RgProject> program, int clone_index) const;
 
+     // Add the given code obj file path to the provided project.
+    bool AddCodeObjFileToProject(const std::string& bin_file_path, std::shared_ptr<RgProject> program, int clone_index) const;
+
     // Add the given source file to a project's pipeline for the specified shader stage.
     void AddShaderStage(RgPipelineStage stage, const std::string& source_file_path, std::shared_ptr<RgProject> project, int clone_index) const;
 
@@ -84,8 +87,11 @@ public:
     // Retrieve a source file path from a program by clone index.
     void GetProjectSourceFilePaths(std::shared_ptr<RgProject> program, int clone_index, std::vector<std::string>& source_file_paths) const;
 
+    // Retrieve a code object file path from a program by clone index.
+    std::string GetProjectBinaryFilePath(std::shared_ptr<RgProject> program, int clone_index) const;
+
     // Update the file path to a file that has already been added to a program clone.
-    static void UpdateSourceFilepath(const std::string& old_file_path, const std::string& new_file_path, std::shared_ptr<RgProject> program, int clone_index);
+    void UpdateSourceFilepath(const std::string& old_file_path, const std::string& new_file_path, std::shared_ptr<RgProject> program, int clone_index);
 
     // Update the file path for a shader stage source file that has been renamed.
     static void UpdateShaderStageFilePath(const std::string&               old_file_path,

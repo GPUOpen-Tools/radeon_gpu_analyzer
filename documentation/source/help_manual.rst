@@ -97,9 +97,9 @@ Settings Tab
 ````````````
 From the Settings tab, you can control the global settings:
 
-Application settings
+Application Settings
 """"""""""""""""""""
-The Application settings view is used to configure global application settings that aren't associated with a single API mode:
+The Application Settings view is used to configure global application settings that aren't associated with a single API mode:
 
 .. image:: images/2_1/app_settings_vulkan.png
 
@@ -408,7 +408,7 @@ From the Start tab, you can create a new project or load an existing project.
 Creating a Project
 """"""""""""""""""
 RGA Project is a vehicle that can contain any number of OpenCL™ source files (.cl), together with a set of build settings.
-When you build the project, the OpenCL™ source files are being compiled and linked together into a single HSA Code Object binary.
+When you build the project, the OpenCL™ source files are being compiled and linked together into a single Code Object binary.
 
 RGA will automatically create for you the project when you add or create a file in the Home Page.
 
@@ -442,9 +442,9 @@ Settings Tab
 ````````````
 From the Settings tab, you can control the global settings:
 
-Application settings
+Application Settings
 """"""""""""""""""""
-The Application settings view is used to configure global application settings that aren't associated with a single API mode:
+The Application Settings view is used to configure global application settings that aren't associated with a single API mode:
 
 .. image:: images/010_home_page_b_settings_app.png
 
@@ -675,6 +675,150 @@ Resource hazards that may require the developer's attention are defined as:
 	* Scratch memory hazard: scratch memory is used.
 	* Instruction cache hazard: code size is larger than the instruction cache.
 
+
+Binary Analysis Mode
+--------------------
+
+The Home Page
+^^^^^^^^^^^^^
+At the top of the home page, you will find two tabs:
+
+.. image:: images/034_home_page_bin.png
+
+Start Tab
+`````````
+From the Start tab, you can load a Code Object binary or load an existing RGA project.
+
+Loading a Code Object Binary
+""""""""""""""""""""""""""""
+In binary analysis mode, an RGA Project is a vehicle that constains a single Code Object binary.
+
+RGA will automatically create for you the project when you load a Code Object binary file in the Home Page.
+
+To load an existing Code Object file, use Ctrl+O or click on "Load Code Object Binary" under the Start section:
+
+.. image:: images/035_load_code_object_button.png
+
+You can also do this by clicking on File -> "Load Code Object Binary":
+
+.. image:: images/036_file_load_code_object.png
+
+Additionally, In Binary Analysis mode you can also Drag and drop an existing Code Object onto the RGA window on start page.
+
+.. image:: images/044_drag_drop_load_code_object.png
+
+RGA will use a yymmdd-hhmmss date-time string as a default name for the project.
+
+Loading a Project
+"""""""""""""""""
+You can load an existing project (.rga file) using the Ctrl+Alt+O shortcut or by clicking on an item on the Recent menu in the home page:
+
+.. image:: images/037_home_page_b_recent.png
+
+It is also possible to load a project from the File -> "Open existing RGA project..." menu item:
+
+.. image:: images/038_home_page_b_open_project.png
+
+Settings Tab
+````````````
+From the Settings tab, you can only control the global settings:
+
+Application Settings
+""""""""""""""""""""
+The Application Settings view is used to configure global application settings that aren't associated with a single API mode:
+
+.. image:: images/039_home_page_b_settings_app.png
+
+* **General**
+
+	* Log file location: The folder in which RGA would generate log files. Upon startup RGA will clean up the log files that are older than 3 days.
+
+	* Project file location: The folder in which RGA would generate project files.
+
+	* Always use auto-generated project names: If checked, RGA will always use the auto-generated project name, without prompting for a rename when creating a new project.
+
+	* Default API on startup: RGA will always enter the selected API Mode upon startup.
+
+* **Disassembly View**
+
+	* Disassembly view columns: The set of disassembly view columns which will be visible by default.
+
+The Build View
+^^^^^^^^^^^^^^
+
+After you load an exiting Code Object binary, RGA will create a project for you and switch to the Build View.
+To learn how to load an existing project, please visit RGA's Quickstart documentation.
+
+The build view consists of 3 views:
+- File Menu
+- Disassembly View
+- Build Output View
+
+File Menu
+`````````
+
+Clicking on another kernel name or pipeline stage within the Code Object item will switch focus to that kernel or stage,
+and display their contents in the Disassembly View (if any content is available for that file). The current item is highlighted in yellow.
+
+.. image:: images/032_project_file_menu.png
+
+The user can remove an existing file within the project by hovering on the item and clicking on the remove button.
+
+.. image:: images/040_remove_code_object.png
+
+Once the project is empty, another existing Code Object binary can be loaded into the project, by clicking on the "Load Code Object Binary" button in the File Menu.
+Alternately, You can also do this by clicking on File -> “Load Code Object Binary”
+
+.. image:: images/042_load_code_object_file_menu.png
+
+Build Output View
+`````````````````
+When a Code Object binary is loaded a binary analysis is triggered automatically and the RGA command line app is being launched to execute the build. 
+Its output would be streamed into the Build Output View.
+
+.. image:: images/041_build_view_build_output_binary.png
+
+Double-clicking on the top black title bar (or clicking on the resize button at its right corner) would maximize/minimize the Build Output View.
+
+The Clear button at the top right corner will clear the text from the view.
+
+Disassembly View
+````````````````
+The disassembly for the relevant kernel or pipeline stage will be displayed in the disassembly view on the right:
+
+.. image:: images/033_disassembly_view_binary_analysis.png
+
+Similar to OpenCL™ Offline Mode or Vulkan® Mode, in the Binary Analysis Mode:
+
+* Memory instructions are colored in red to help you identify spots with high memory pressure
+* The drop-down on the top left corner displays the target GPU device for which the current Code Object was compiled
+* The Columns drop-down menu at the top can be used to customize the presented columns
+* The resource usage line shows the GPU resources that are consumed by the presented code
+* The disassembly view also shows the VGPR pressure throughout the shader's instructions.
+
+Similarly, the resource usage section under the disassembly table shows the GPU resources that are consumed by the ISA. The information found in the view is displayed as follows:
+
+	* VGPR consumption: <used>/<available>
+	* SGPR consumption: <used>/<available>
+	* VGPR spills (if occurred, otherwise - not shown)
+	* SGPR spills (if occurred, otherwise - not shown)
+	* LDS consumption: <used>/<available>
+	* Scratch memory usage
+	* Instruction cache usage
+
+.. image:: images/resource_usage_view_opencl.png
+
+And in cases where performance hazards are detected due to the usage of a GPU resource, RGA will display a warning icon and highlight the relevant resources in yellow:
+
+.. image:: images/015_build_view_disassembly_resource_usage_hazard.png
+
+Resource hazards that may require the developer's attention are defined as:
+
+	* VGPR/SGPR hazard: there were register spills, or, <used> == <available>.
+	* LDS hazard: <used> == <available> in LDS.
+	* Scratch memory hazard: scratch memory is used.
+	* Instruction cache hazard: code size is larger than the instruction cache.
+
 How To...
 ---------
 See App Version Info & Check for Updates
@@ -694,7 +838,7 @@ To update RGA, click on "Check for updates" button and follow the instructions t
 Switch the API Mode
 ^^^^^^^^^^^^^^^^^^^
 
-The API mode switch is used to toggle the GUI between operating in OpenCL™ and Vulkan® mode. The current mode is displayed within the RGA title bar and is also indicated by the color scheme of the application views and status bar (Green = OpenCL™ mode & Red = Vulkan® mode).
+The API mode switch is used to toggle the GUI between operating in OpenCL™ Offline, Vulkan® and Binary Analysis mode. The current mode is displayed within the RGA title bar and is also indicated by the color scheme of the application views and status bar (Green = OpenCL™ mode, Red = Vulkan® mode, Purple = Binary Analsis mode).
 
 .. image:: images/2_1/display_current_mode.png
 
@@ -920,4 +1064,6 @@ Create new Vulkan® graphics pipeline       Ctrl+Alt+G
 **OpenCL™ mode**
 Create new .cl file                        Ctrl+N
 Open existing .cl file                     Ctrl+O
+**Binary Analysis mode**
+Load existing Code Object binary           Ctrl+O
 ========================================   =========================

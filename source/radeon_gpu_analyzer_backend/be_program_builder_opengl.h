@@ -18,7 +18,7 @@ struct OpenglOptions : public beKA::CompileOptions
 {
     OpenglOptions() : chip_family(0), chip_revision(0), is_amd_isa_binaries_required(false),
         is_amd_isa_disassembly_required(false), is_il_disassembly_required(false), is_stats_required(false),
-        is_cfg_required(false), is_livereg_required(false), is_stalls_required(false)
+        is_cfg_required(false), is_livereg_required(false), is_livereg_sgpr_required(false), is_stalls_required(false)
     {
         CompileOptions::mode = beKA::RgaMode::kModeOpengl;
     }
@@ -41,8 +41,11 @@ struct OpenglOptions : public beKA::CompileOptions
     // AMDIL disassembly output file names.
     BeProgramPipeline il_disassembly_output_files;
 
-    // Register liveness analysis output file names.
+    // Register liveness analysis (vgpr) output file names.
     BeProgramPipeline livereg_output_files;
+
+    // Register liveness analysis (sgpr) output file names.
+    BeProgramPipeline livereg_sgpr_output_files;
 
     // Stall analysis output file names.
     BeProgramPipeline stall_analysis_output_files;
@@ -67,6 +70,9 @@ struct OpenglOptions : public beKA::CompileOptions
 
     // True to perform live register analysis.
     bool is_livereg_required = false;
+
+    // True to perform live register analysis.
+    bool is_livereg_sgpr_required = false;
 
     // True to perform stall analysis.
     bool is_stalls_required = false;

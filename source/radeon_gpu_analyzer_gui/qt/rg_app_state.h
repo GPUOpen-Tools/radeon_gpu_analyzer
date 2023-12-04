@@ -78,6 +78,9 @@ public:
     // Returns true if the app state is of a graphics API type, false otherwise.
     bool IsGraphics() const;
 
+    // Returns true if the app state is of a analysis type, false otherwise.
+    bool IsAnalysis() const;
+
     // Check to see if the input file names in global build settings are blank.
     bool IsInputFileNameBlank() const;
 
@@ -109,6 +112,9 @@ protected:
 
     // A flag indicating whether the state is graphics or not.
     bool is_graphics_ = false;
+
+    // A flag indicating whether the project is analysis or build.
+    bool is_analysis_ = false;
 };
 
 // The RgGraphicsAppState object allows a graphics project to interface with the main window.
@@ -123,4 +129,15 @@ public:
     // Handle switching to the pipeline state editor.
     virtual void HandlePipelineStateEvent() = 0;
 };
+
+// The RgAnalysisAppState object allows a analysis project to interface with the main window.
+class RgAppStateAnalysis : public RgAppState
+{
+    Q_OBJECT
+
+public:
+    RgAppStateAnalysis();
+    virtual ~RgAppStateAnalysis() = default;
+};
+
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_H_

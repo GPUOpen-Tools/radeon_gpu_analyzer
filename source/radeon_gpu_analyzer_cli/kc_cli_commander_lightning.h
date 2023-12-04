@@ -75,25 +75,10 @@ private:
                                      const std::string& rga_device,
                                 const std::string& kernel, bool line_numbers, std::string& error_text);
 
-    // Parse ISA files and generate separate files that contain parsed ISA in CSV format.
-    bool  ParseIsaFilesToCSV(bool add_line_numbers);
-
     // Add the device name to the output file name provided in "outFileName" string.
     beKA::beStatus AdjustBinaryFileName(const Config& config,
                                    const std::string & device,
                                    std::string&        bin_filename);
-
-    // Perform live VGPR analysis.
-    bool  PerformLiveRegAnalysis(const Config& config);
-
-    // Extract program Control Flow Graph.
-    bool  ExtractCFG(const Config& config);
-
-    // Get the AMD GPU metadata from the binary.
-    beKA::beStatus ExtractMetadata(const std::string& metadata_filename) const;
-
-    // Extract Resource Usage (statistics) data.
-    beKA::beStatus ExtractStatistics(const Config& config);
 
     // Split ISA text into separate per-kernel ISA fragments and store them into separate files.
     // Puts the names of generated ISA files into output metadata (kcCLICommander::m_outputMetadata).
@@ -109,18 +94,6 @@ private:
 
     // Remove unused code from the ISA disassembly.
     bool  ReduceISA(const std::string& bin_file, IsaMap& kernel_isa_texts);
-
-    // Generate RGA CLI session metadata file.
-    bool  GenerateSessionMetadata(const Config& config) const;
-
-    // Extract the list of entry points from the source file specified by "fileName".
-    static bool ExtractEntries(const std::string&  filename, 
-                               const Config&       config, 
-                               const CmpilerPaths& compiler_paths, 
-                               RgEntryData&        entry_data);
-
-    // Delete all temporary files created by RGA.
-    void DeleteTempFiles() const;
 
     // Dump IL file.
     beKA::beStatus DumpIL(const Config&                   config,

@@ -18,8 +18,9 @@ bool RgConfigFileReaderOpencl::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
     bool is_version_compatible =
         (kRgaDataModel2_0.compare(file_data_model_version) == 0) ||
         (kRgaDataModel2_1.compare(file_data_model_version) == 0) ||
-        (kRgaDataModel2_2.compare(file_data_model_version) == 0) ||
-        (kRgaDataModel2_3.compare(file_data_model_version) == 0);
+        (kRgaDataModel2_2.compare(file_data_model_version) == 0) || 
+        (kRgaDataModel2_3.compare(file_data_model_version) == 0) ||
+        (kRgaDataModel2_4.compare(file_data_model_version) == 0);
 
     assert(is_version_compatible);
 

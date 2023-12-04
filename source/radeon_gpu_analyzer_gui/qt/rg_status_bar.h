@@ -38,6 +38,19 @@ public:
     // Get the api list tree widget.
     QTreeWidget* GetApiListTreeWidget();
 
+    // Status Bar Status - BEGIN.
+    enum class StatusType
+    {
+        kUnknown,
+        kStarted,
+        kFailed,
+        kCanceled,
+        kSucceeded
+    };
+
+    // Returns status message string.
+    virtual bool ConstructStatusMessageString(StatusType type, std::string& status_msg_str) const;
+
 signals:
     // Signal to indicate API change.
     void ChangeAPIModeSignal(RgProjectAPI api);

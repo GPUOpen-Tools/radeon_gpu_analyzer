@@ -52,6 +52,7 @@ enum RgaMode
     kModeDx12,              // DirectX 12 mode.
     kModeDxr,               // DXR mode.
     kModeAmdil,             // AMDIL mode. Supports AMDIL input files.
+    kModeBinary             // Binary mode. Supports Code objects as input files.
 };
 
 enum BuiltProgramKind
@@ -72,6 +73,7 @@ enum beStatus
     kBeStatusD3dCompilerModuleNotLoaded,
     kBeStatusD3dCompileFailed,
     kBeStatusNoBinaryForDevice,
+    kBeStatusUnknownDevice,
     kBeStatusNoDeviceFound,
     kBeStatusNoIlForDevice,
     kBeStatusNoIsaForDevice,
@@ -117,6 +119,10 @@ enum beStatus
     kBeStatusVulkanFailedExtractValidationInfo,
     kBeStatusVulkanPreprocessFailed,
     KBeStatusVulkanMixedInputFiles,
+    kBeStatusVulkanCodeObjMdParsingFailed,
+    kBeStatusVulkanComputeCodeObjMetaDataSuccess,
+    kBeStatusVulkanGraphicsCodeObjMetaDataSuccess,
+    kBeStatusVulkanRayTracingCodeObjMetaDataSuccess,
     kBeStatusLightningCompilerLaunchFailed,
     kBeStatusLightningCompilerTimeOut,
     kBeStatusLightningCompilerGeneratedError,
@@ -133,6 +139,7 @@ enum beStatus
     kBeStatusLightningSplitIsaFailed,
     kBeStatusLightningExtractKernelNamesFailed,
     kBeStatusLightningGetKernelCodeSizeFailed,
+    kBeStatusBinaryInvalidInput,
     kBeStatusWriteToFileFailed,
     kBeStatusFailedOutputVerification,
     kBeStatusShaeCannotLocateAnalyzer,
@@ -243,6 +250,13 @@ struct AnalysisData
     uint64_t num_instructions_control_flow;    // DX: Number of control flow instructions in the shader
     uint64_t num_instructions_fetch;           // DX: Number of HW TFETCHinstructions / Tx Units used
     uint64_t isa_size;                         // Size of ISA
+
+public:
+    // Lambda returning "N/A" string if value = -1 or string representation of value itself otherwise.
+    static std::string na_or(uint64_t val)
+    {
+        return (val == static_cast<uint64_t>(-1) ? "N/A" : std::to_string(val));
+    }
 };
 
 } // namespace beKA

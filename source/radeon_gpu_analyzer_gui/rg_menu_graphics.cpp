@@ -209,7 +209,7 @@ void RgMenuGraphics::InitializeDefaultMenuItems(const std::shared_ptr<RgProjectC
         layout_->insertLayout(last_stage + 3, horizontal_line_layout);
 
         // Insert the "Build Settings" item into the top of the menu.
-        build_settings_menu_item_ = new RgMenuBuildSettingsItem();
+        build_settings_menu_item_ = new RgMenuBuildSettingsItem(nullptr, kStrMenuBarBuildSettingsTooltip);
         layout_->insertWidget(last_stage + 4, build_settings_menu_item_);
 
         // Connect signals for each individual shader stage item in the menu.

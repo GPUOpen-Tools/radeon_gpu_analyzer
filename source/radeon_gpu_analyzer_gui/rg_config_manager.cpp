@@ -20,13 +20,14 @@
 #include "radeon_gpu_analyzer_gui/rg_data_types.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_opencl.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_vulkan.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types_binary.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_xml_cli_version_info.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
 // The initial API that the application starts in.
-static const RgProjectAPI kInitialApiType = RgProjectAPI::kOpenCL;
+static const RgProjectAPI kInitialApiType = static_cast<RgProjectAPI>(static_cast<int>(RgProjectAPI::kApiCount) - 1);
 
 // The maximum number of recent files that the application is aware of.
 static const int kMaxRecentFiles = 10;
@@ -79,6 +80,9 @@ public:
             break;
         case RgProjectAPI::kVulkan:
             ret = CreateDefaultBuildSettingsVulkan();
+            break;
+        case RgProjectAPI::kBinary:
+            ret = CreateDefaultBuildSettingsBinary();
             break;
         case RgProjectAPI::kUnknown:
         default:
@@ -195,6 +199,20 @@ private:
 
         return ret;
     }
+
+        // Creates the default Vulkan build settings.
+    static std::shared_ptr<RgBuildSettingsBinary> CreateDefaultBuildSettingsBinary()
+    {
+        std::shared_ptr<RgBuildSettingsBinary> ret = std::make_shared<RgBuildSettingsBinary>();
+
+        assert(ret != nullptr);
+        if (ret != nullptr)
+        {
+            // 
+        }
+
+        return ret;
+    }
 };
 
 // Generates the name of the config file.
@@ -293,7 +311,7 @@ bool RgConfigManager::Init()
                 }
 
                 // Loop through each supported API and create + store the default build settings for that API.
-                for (int api_index = static_cast<int>(RgProjectAPI::kOpenCL); api_index < static_cast<int>(RgProjectAPI::kApiCount); ++api_index)
+                for (int api_index = static_cast<int>(RgProjectAPI::kUnknown)+1; api_index < static_cast<int>(RgProjectAPI::kApiCount); ++api_index)
                 {
                     RgProjectAPI current_api = static_cast<RgProjectAPI>(api_index);
 
@@ -387,7 +405,7 @@ void RgConfigManager::ResetToFactoryDefaults(RgGlobalSettings& global_settings)
     };
 
     // Default to always asking the user for a name when creating a new project.
-    global_settings.use_default_project_name = false;
+    global_settings.use_default_project_name = true;
 
     // Default to always asking the user at startup which API to work in.
     global_settings.should_prompt_for_api = true;
@@ -444,6 +462,35 @@ void RgConfigManager::AddSourceFileToProject(const std::string& source_file_path
         }
     }
 }
+
+bool RgConfigManager::AddCodeObjFileToProject(const std::string& bin_file_path, std::shared_ptr<RgProject> project, int clone_index) const
+{
+    bool ret = false;
+    assert(project != nullptr);
+    if (project != nullptr)
+    {
+        // Ensure that the incoming clone index is valid for the current project.
+        bool is_valid_range = (clone_index >= 0 && clone_index < project->clones.size());
+        assert(is_valid_range);
+
+        if (is_valid_range)
+        {
+            bool is_path_empty = bin_file_path.empty();
+            assert(!is_path_empty);
+            if (!is_path_empty)
+            {
+                auto clone = project->clones[clone_index];
+                if (clone != nullptr && clone->build_settings != nullptr)
+                {
+                    clone->build_settings->binary_file_name = bin_file_path;
+                    ret                                     = true;
+                }
+            }
+        }
+    }
+    return ret;
+}
+
 
 void RgConfigManager::AddShaderStage(RgPipelineStage stage, const std::string& source_file_path, std::shared_ptr<RgProject> project, int clone_index) const
 {
@@ -530,6 +577,9 @@ std::string RgConfigManager::GetCurrentModeString() const
     case RgProjectAPI::kVulkan:
         mode_string = kStrModeStringVulkan;
         break;
+    case RgProjectAPI::kBinary:
+        mode_string = kStrModeStringBinary;
+        break;
     default:
         assert(false);
         break;
@@ -608,16 +658,29 @@ void RgConfigManager::RemoveSourceFilePath(std::shared_ptr<RgProject> project, i
             assert(!is_path_empty);
             if (!is_path_empty)
             {
-                // Search the list of source files in the clone to obtain an iterator to it.
-                RgSourceFilePathSearcher source_file_searcher(source_file_path);
-                auto                     sourceFileIter = std::find_if(clone->source_files.begin(), clone->source_files.end(), source_file_searcher);
-                bool                     isFileInList   = (sourceFileIter != clone->source_files.end());
-                assert(isFileInList);
-
-                // If the path was found in the clone's source files, erase it.
-                if (isFileInList)
+                if (current_api_ == RgProjectAPI::kBinary)
                 {
-                    clone->source_files.erase(sourceFileIter);
+                    bool file_path_found = (clone->build_settings != nullptr && clone->build_settings->binary_file_name == source_file_path);
+                    assert(file_path_found);
+                    // If the old binary file path exists in the clone, update it.
+                    if (file_path_found)
+                    {
+                        clone->build_settings->binary_file_name.clear();
+                    }
+                }
+                else
+                {
+                    // Search the list of source files in the clone to obtain an iterator to it.
+                    RgSourceFilePathSearcher source_file_searcher(source_file_path);
+                    auto                     sourceFileIter = std::find_if(clone->source_files.begin(), clone->source_files.end(), source_file_searcher);
+                    bool                     isFileInList   = (sourceFileIter != clone->source_files.end());
+                    assert(isFileInList);
+
+                    // If the path was found in the clone's source files, erase it.
+                    if (isFileInList)
+                    {
+                        clone->source_files.erase(sourceFileIter);
+                    }
                 }
             }
         }
@@ -644,6 +707,28 @@ void RgConfigManager::GetProjectSourceFilePaths(std::shared_ptr<RgProject> proje
     }
 }
 
+std::string RgConfigManager::GetProjectBinaryFilePath(std::shared_ptr<RgProject> project, int clone_index) const
+{
+    std::string result;
+    assert(project != nullptr);
+    if (project != nullptr)
+    {
+        // Ensure that the incoming clone index is valid for the current project.
+        bool is_valid_range = (clone_index >= 0 && clone_index < project->clones.size());
+        assert(is_valid_range);
+
+        if (is_valid_range)
+        {
+            auto clone = project->clones[clone_index];
+            if (clone != nullptr && clone->build_settings)
+            {
+                result = clone->build_settings->binary_file_name;
+            }
+        }
+    }
+    return result;
+}
+
 void RgConfigManager::UpdateSourceFilepath(const std::string&         old_file_path,
                                            const std::string&         new_file_path,
                                            std::shared_ptr<RgProject> project,
@@ -658,24 +743,37 @@ void RgConfigManager::UpdateSourceFilepath(const std::string&         old_file_p
         std::shared_ptr<RgProjectClone> clone = project->clones[clone_index];
         assert(clone);
 
-        // Attempt to find the old file path referenced within the clone.
-        RgSourceFilePathSearcher source_file_searcher(old_file_path);
-        auto                     file_iter = std::find_if(clone->source_files.begin(), clone->source_files.end(), source_file_searcher);
-
-        // Verify that the old file path is referenced within the clone.
-        bool old_file_path_found = file_iter != clone->source_files.end();
-        assert(old_file_path_found);
-
-        // If the old file path exists in the clone, remove it.
-        if (old_file_path_found)
+        if (current_api_ == RgProjectAPI::kBinary)
         {
-            clone->source_files.erase(file_iter);
+            bool old_file_path_found = (clone->build_settings != nullptr && clone->build_settings->binary_file_name == old_file_path);
+            assert(old_file_path_found);
+            // If the old binary file path exists in the clone, update it.
+            if (old_file_path_found)
+            {
+                clone->build_settings->binary_file_name = new_file_path;
+            }
         }
+        else
+        {
+            // Attempt to find the old file path referenced within the clone.
+            RgSourceFilePathSearcher source_file_searcher(old_file_path);
+            auto                     file_iter = std::find_if(clone->source_files.begin(), clone->source_files.end(), source_file_searcher);
 
-        // Add the updated file path to the list of source files for the clone.
-        RgSourceFileInfo updated_file_path = {};
-        updated_file_path.file_path        = new_file_path;
-        clone->source_files.push_back(updated_file_path);
+            // Verify that the old file path is referenced within the clone.
+            bool old_file_path_found = file_iter != clone->source_files.end();
+            assert(old_file_path_found);
+
+            // If the old file path exists in the clone, remove it.
+            if (old_file_path_found)
+            {
+                clone->source_files.erase(file_iter);
+            }
+
+            // Add the updated file path to the list of source files for the clone.
+            RgSourceFileInfo updated_file_path = {};
+            updated_file_path.file_path        = new_file_path;
+            clone->source_files.push_back(updated_file_path);
+        }
     }
 }
 

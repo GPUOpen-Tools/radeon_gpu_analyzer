@@ -102,6 +102,13 @@ OS_API bool osExecAndGrabOutput(const char* cmd, const bool& cancelSignal, gtStr
 #ifdef _WIN32
 OS_API bool osExecAndGrabOutputAndError(const char* cmd, const bool& cancelSignal,
     const gtString& workingDir, gtString& cmdOutput, gtString& cmdErrOutput);
+
+OS_API bool osExecAndGrabOutputAndErrorDebug(const char*     cmd, 
+                                             const bool&     cancel_signal,
+                                             const gtString& working_dir,
+                                             gtString&       cmd_output,
+                                             gtString&       cmd_er_output,
+                                             gtString&       cmd_debug_output);
 #endif
 
 OS_API bool osGetMemoryUsage(const unsigned int processID,

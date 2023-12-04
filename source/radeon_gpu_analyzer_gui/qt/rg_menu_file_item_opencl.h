@@ -12,6 +12,14 @@ class QStandardItemModel;
 class RgEntrypointItemStyleDelegate;
 struct RgEntryOutput;
 
+/// @brief Extend user roles to store extra info for copying kernel names
+/// in the copy from context menu.
+enum RgMenuUserRoles
+{
+    kCopyNameRole = Qt::UserRole + 1,
+    kUserRolesCount
+};
+
 // A model responsible for managing a file item's entry point list.
 // Must be declared here to allow a Qt interface to be generated for it.
 class RgMenuItemEntryListModel : public QObject
@@ -26,7 +34,7 @@ public:
     QStandardItemModel* GetEntryItemModel() const;
 
     // Add a new entry point to the file's entry point list.
-    void AddEntry(const std::string& entrypoint_name);
+    void AddEntry(const RgEntryOutput& entrypoint);
 
     // Clear all entries from the list model.
     void ClearEntries();
@@ -45,6 +53,9 @@ public:
 
     // Get the entry point name from the display name.
     std::string GetEntryPointName(const std::string& display_entrypoint_name) const;
+
+    // Gets the extremely long name of selected entry point name, if it exists.
+    bool GetSelectedEntrypointExtremelyLongName(const std::string& entrypoint_name, std::string& extremely_long_name) const;
 
 signals:
     // A signal emitted when the user changes the selected entry point in the entry point list.
@@ -65,6 +76,9 @@ private:
 
     //Keep track of the display name.
     std::vector<std::string> display_names_;
+
+    //Keep track of the extremely long kernel names.
+    std::unordered_map<std::string, std::string> extremely_long_kernel_names_map;
 };
 
 // An object used to represent a single shader file within the file menu.
@@ -106,6 +120,9 @@ public:
     // Get the name of the currently selected entrypoint, if there is one.
     // Returns "false" if no entry is currently selected or the selected one is not valid any more.
     bool GetSelectedEntrypointName(std::string& entrypoint_name) const;
+
+    // Gets the extremely long name of selected entry point name, if it exists.
+    bool GetSelectedEntrypointExtremelyLongName(const std::string& entrypoint_name, std::string& extremely_long_name) const;
 
     // Alter the visual style of the item if it is hovered or not.
     virtual void SetHovered(bool is_hovered) override;

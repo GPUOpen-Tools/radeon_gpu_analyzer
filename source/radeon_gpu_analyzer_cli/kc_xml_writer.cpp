@@ -192,6 +192,10 @@ bool KcXmlWriter::AddVersionInfoGPUList(beKA::RgaMode mode, const std::set<std::
         mode_str = kStrXmlNodeVulkan;
         ret      = true;
         break;
+    case beKA::RgaMode::kModeBinary:
+        mode_str = kStrXmlNodeBinaryAnalysis;
+        ret      = true;
+        break;
     }
 
     if (ret)
@@ -349,6 +353,27 @@ static bool AddEntryType(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* pEntr
         case RgEntryType::kOpenclKernel:
             entry_type_str = kStrXmlNodeOpencl;
             break;
+        case RgEntryType::kDxrRayGeneration:
+            entry_type_str = kStrXmlNodeDxrRayGeneration;
+            break;
+        case RgEntryType::kDxrIntersection:
+            entry_type_str = kStrXmlNodeDxrIntersection;
+            break;
+        case RgEntryType::kDxrAnyHit:
+            entry_type_str = kStrXmlNodeDxrAnyHit;
+            break;
+        case RgEntryType::kDxrClosestHit:
+            entry_type_str = kStrXmlNodeDxrClosestHit;
+            break;
+        case RgEntryType::kDxrMiss:
+            entry_type_str = kStrXmlNodeDxrMiss;
+            break;
+        case RgEntryType::kDxrCallable:
+            entry_type_str = kStrXmlNodeDxrCallable;
+            break;
+        case RgEntryType::kDxrTraversal:
+            entry_type_str = kStrXmlNodeDxrTraversal;
+            break;
         case RgEntryType::kDxVertex:
             entry_type_str = kStrXmlNodeDxVertex;
             break;
@@ -385,6 +410,24 @@ static bool AddEntryType(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* pEntr
         case RgEntryType::kGlCompute:
             entry_type_str = kStrXmlNodeGlCompute;
             break;
+        case RgEntryType::kVkVertex:
+            entry_type_str = kStrXmlNodeVkVertex;
+            break;
+        case RgEntryType::kVkTessControl:
+            entry_type_str = kStrXmlNodeVkTessCtrl;
+            break;
+        case RgEntryType::kVkTessEval:
+            entry_type_str = kStrXmlNodeVkTessEval;
+            break;
+        case RgEntryType::kVkGeometry:
+            entry_type_str = kStrXmlNodeVkGeometry;
+            break;
+        case RgEntryType::kVkFragment:
+            entry_type_str = kStrXmlNodeVkFragment;
+            break;
+        case RgEntryType::kVkCompute:
+            entry_type_str = kStrXmlNodeVkCompute;
+            break;
         case RgEntryType::kUnknown:
             entry_type_str = kStrXmlNodeUnknown;
             break;
@@ -397,6 +440,23 @@ static bool AddEntryType(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* pEntr
         {
             entry_type->SetText(entry_type_str.c_str());
         }
+    }
+
+    return ret;
+}
+
+static bool AddExtremelyLongEntryName(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* pEntry, const std::string& extremely_long_kernel_name)
+{
+    bool                  ret = (pEntry != nullptr);
+    tinyxml2::XMLElement* entry_name;
+    if (ret)
+    {
+        entry_name = doc.NewElement(kStrXmlNodeExtremelyLongName);
+        ret        = ret && (entry_name != nullptr && pEntry->LinkEndChild(entry_name) != nullptr);
+    }
+    if (ret)
+    {
+        entry_name->SetText(extremely_long_kernel_name.c_str());
     }
 
     return ret;
@@ -424,13 +484,16 @@ static bool AddOutputFiles(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* ent
         ret = ret && AddOutputFile(doc, *output, out_files.isa_csv_file, kStrXmlNodeCsvIsa);
         ret = ret && AddOutputFile(doc, *output, out_files.stats_file, kStrXmlNodeResUsage);
         ret = ret && AddOutputFile(doc, *output, out_files.livereg_file, kStrXmlNodeLivereg);
+        ret = ret && AddOutputFile(doc, *output, out_files.livereg_sgpr_file, kStrXmlNodeLiveregSgpr);
         ret = ret && AddOutputFile(doc, *output, out_files.cfg_file, kStrXmlNodeCfg);
     }
     return ret;
 }
 
-bool KcXmlWriter::GenerateClSessionMetadataFile(const std::string& filename, const RgFileEntryData& file_entry_data,
-    const RgClOutputMetadata& out_files)
+bool KcXmlWriter::GenerateClSessionMetadataFile(const std::string&        filename, 
+                                                const std::string&        binary_input_filename,
+                                                const RgFileEntryData&    file_entry_data,
+                                                const RgClOutputMetadata& out_files)
 {
     tinyxml2::XMLDocument  doc;
     std::string  current_device = "";
@@ -484,7 +547,21 @@ bool KcXmlWriter::GenerateClSessionMetadataFile(const std::string& filename, con
                 [&](RgFileEntryData::const_reference entry_info)
             { for (auto entry : entry_info.second) { if (std::get<0>(entry) == entry_name) return true; } return false; });
 
-            src_file_name = (input_file_info == file_entry_data.end() ? kStrXmlNodeSourceFile : input_file_info->first);
+            if (input_file_info == file_entry_data.end())
+            {
+                if (!binary_input_filename.empty())
+                {
+                    src_file_name = binary_input_filename;
+                }
+                else
+                {
+                    src_file_name = kStrXmlNodeSourceFile;
+                }
+            }
+            else
+            {
+                src_file_name = input_file_info->first;
+            }
             metadata_table[src_file_name].insert(out_file_item);
         }
 
@@ -513,9 +590,19 @@ bool KcXmlWriter::GenerateClSessionMetadataFile(const std::string& filename, con
                         ret = ret && (name_elem != nullptr && entry->LinkEndChild(name_elem) != nullptr);
                         if (ret && entry_data.second.size() > 0)
                         {
-                            name_elem->SetText(entry_data.first.c_str());
-                            RgOutputFiles  outFileData = entry_data.second[0].second;
+                            RgOutputFiles outFileData  = entry_data.second[0].second;
+                            std::string   entry_name   = entry_data.first;
+                            bool          abbreviation = !outFileData.entry_abbreviation.empty();
+                            if (abbreviation)
+                            {
+                                entry_name = outFileData.entry_abbreviation;
+                            }
+                            name_elem->SetText(entry_name.c_str());
                             ret = ret && AddEntryType(doc, entry, outFileData.entry_type);
+                            if (abbreviation)
+                            {
+                                ret = ret && AddExtremelyLongEntryName(doc, entry, entry_data.first);
+                            }
                         }
                         // Add "Output" nodes.
                         for (const std::pair<std::string, RgOutputFiles>& deviceAndOutFiles : entry_data.second)
@@ -608,7 +695,7 @@ bool KcXmlWriter::GenerateVulkanSessionMetadataFile(const std::string& filename,
                 tinyxml2::XMLElement* pipeline_type = doc.NewElement(kStrXmlNodeType);
                 if ((ret = (pipeline_type != nullptr && pipeline->LinkEndChild(pipeline_type))) == true)
                 {
-                    bool is_compute = out_files_for_device[0].entry_type == RgEntryType::kGlCompute;
+                    bool is_compute = KcUtils::IsComputeBitSet(out_files_for_device[0].entry_type);
                     pipeline_type->SetText(is_compute ? kStrXmlNodePipelineTypeCompute : kStrXmlNodePipelineTypeGraphics);
                 }
             }

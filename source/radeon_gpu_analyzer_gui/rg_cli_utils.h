@@ -9,6 +9,7 @@
 struct RgBuildSettings;
 struct RgBuildSettingsOpencl;
 struct RgBuildSettingsVulkan;
+struct RgBuildSettingsBinary;
 
 class RgCliUtils
 {
@@ -19,6 +20,10 @@ public:
 
     // Generate the build settings string that should be passed to the CLI for RgVulkanBuildSettings.
     static bool GenerateVulkanBuildSettingsString(const RgBuildSettingsVulkan& build_settings, std::string& str, bool additional_options = true);
+
+    // Generate the build settings string that should be passed to the CLI for RgCLBuildSettings.
+    // "additionalOptions" flag specifies whether the text from "Additional compiler options" box should be added or not.
+    static bool GenerateBinaryBuildSettingsString(const RgBuildSettingsBinary& build_settings, std::string& str, bool additional_options = true);
 
 private:
     RgCliUtils() = delete;

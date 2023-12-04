@@ -8,8 +8,6 @@
 #include <string>
 #include <map>
 
-static const std::string kStrNaValue = "N/A";
-
 // The device properties necessary for generating statistics.
 struct DeviceProps
 {
@@ -35,6 +33,7 @@ static const std::map<std::string, DeviceProps> kRgaDeviceProps =
       {"gfx904",    {102, 256, 65536, 16,  4}},
       {"gfx906",    {102, 256, 65536, 16,  4}},
       {"gfx908",    {102, 256, 65536, 16,  4}},
+      {"gfx90a",    {102, 256, 65536, 16,  4}},
       {"gfx90c",    {102, 256, 65536, 16,  4}},
       {"gfx1010",   {106, 256, 65536, 16,  4}},
       {"gfx1011",   {106, 256, 65536, 16,  4}},
@@ -48,10 +47,4 @@ static const std::map<std::string, DeviceProps> kRgaDeviceProps =
       {"gfx1101",   {106, 256, 65536, 16,  4}},
       {"gfx1102",   {106, 256, 65536, 16,  4}},
       {"gfx1103",   {106, 256, 65536, 16,  4}} 
-};
-
-// Lambda returning "N/A" string if value = -1 or string representation of value itself otherwise.
-auto na_or = [](uint64_t val) 
-{ 
-    return (val == (int64_t)-1 ? kStrNaValue : std::to_string(val)); 
 };

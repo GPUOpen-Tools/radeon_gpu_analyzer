@@ -52,7 +52,7 @@ static const char* kStrInfoDx11DxAsmCodeGenerationSuccess = "DX ASM code generat
 static const char* kStrInfoDx11DxAsmCodeGenerationFailure = "DX ASM code generation failed.";
 
 // Unsupported devices.
-static const std::set<std::string> kUnsupportedDevicesDx11 = {"gfx902", "gfx904", "gfx908"};
+static const std::set<std::string> kUnsupportedDevicesDx11 = {"gfx902", "gfx904", "gfx908", "gfx90a"};
 
 KcCliCommanderDX::KcCliCommanderDX(void)
 {
@@ -183,6 +183,25 @@ void KcCliCommanderDX::ExtractISA(const std::string& device_name,
                 // Call the kcUtils routine to analyze <generatedFileName> and write the analysis file.
                 KcUtils::PerformLiveRegisterAnalysis(isa_output_filename.asASCIICharArray(), device_name, liveRegAnalysisOutputFileName.asASCIICharArray(),
                     log_callback_, config.print_process_cmd_line);
+            }
+
+            if (!config.sgpr_livereg_analysis_file.empty())
+            {
+                // Perform the live register analysis.
+                gtString liveRegAnalysisOutputFileName;
+                KcUtils::ConstructOutputFileName(config.sgpr_livereg_analysis_file,
+                                                 kStrDefaultExtensionLiveregSgpr,
+                                                 kStrDefaultExtensionText,
+                                                 config.function,
+                                                 device_name,
+                                                 liveRegAnalysisOutputFileName);
+
+                // Call the kcUtils routine to analyze <generatedFileName> and write the analysis file.
+                KcUtils::PerformLiveRegisterAnalysis(isa_output_filename.asASCIICharArray(),
+                                                     device_name,
+                                                     liveRegAnalysisOutputFileName.asASCIICharArray(),
+                                                     log_callback_,
+                                                     config.print_process_cmd_line, true);
             }
 
             if (!config.inst_cfg_file.empty() || !config.block_cfg_file.empty())
@@ -357,6 +376,7 @@ void KcCliCommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         const bool is_statistics_required = !config.analysis_file.empty();
         const bool is_binary_required = !config.binary_output_file.empty();
         const bool is_livereg_required = !config.livereg_analysis_file.empty();
+        const bool is_livereg_sgpr_required = !config.sgpr_livereg_analysis_file.empty();
         const bool is_cfg_required = (!config.inst_cfg_file.empty() || !config.block_cfg_file.empty());
         std::vector<beKA::AnalysisData> analysis_data;
         std::vector <std::string> device_analysis_data;
@@ -418,7 +438,7 @@ void KcCliCommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
                     bool   is_isa_size_detected   = false;
                     bool   should_detect_isa_size = true;
                     size_t isa_size_bytes(0);
-                    if (is_isa_required || is_statistics_required || is_livereg_required || is_cfg_required)
+                    if (is_isa_required || is_statistics_required || is_livereg_required || is_livereg_sgpr_required || is_cfg_required)
                     {
                         ExtractISA(device_name, config, isa_size_bytes, isa_buffer, is_isa_size_detected, should_detect_isa_size);
                     }

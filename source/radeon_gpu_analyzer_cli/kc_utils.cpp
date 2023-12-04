@@ -22,6 +22,9 @@
     #pragma warning(pop)
 #endif
 
+// Common.
+#include "source/common/rga_cli_defs.h"
+
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_static_isa_analyzer.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
@@ -52,7 +55,6 @@ static const gtString  kRgaCliTempStdoutFileExt     = L"txt";
 static const gtString  kRgaCliTempStderrFilename    = L"rga_stderr";
 static const gtString  kRgaCliTempStderrFileExt     = L"txt";
 static const char*     kStrFopenModeAppend          = "a";
-static const char*     STR_TARGET_DETECTED          = "Target GPU detected:";
 
 // Constants: error messages.
 static const char* kStrErrorCannotLocateLiveregAnalyzer     = "Error: cannot locate the live register analyzer.";
@@ -247,6 +249,7 @@ bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_out
     return status;
 }
 
+
 std::string KcUtils::DeviceStatisticsToCsvString(const Config& config, const std::string& device, const beKA::AnalysisData& statistics)
 {
     std::stringstream output;
@@ -255,46 +258,46 @@ std::string KcUtils::DeviceStatisticsToCsvString(const Config& config, const std
     char csv_separator = GetCsvSeparator(config);
     output << device << csv_separator;
 
-    // Scratch registers.
-    output << na_or(statistics.scratch_memory_used) << csv_separator;
+     // Scratch registers.
+    output << beKA::AnalysisData::na_or(statistics.scratch_memory_used) << csv_separator;
 
     // Work-items per work-group.
-    output << na_or(statistics.num_threads_per_group_total) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.num_threads_per_group_total) << csv_separator;
 
     // Wavefront size.
-    output << na_or(statistics.wavefront_size) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.wavefront_size) << csv_separator;
 
     // LDS available bytes.
-    output << na_or(statistics.lds_size_available) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.lds_size_available) << csv_separator;
 
     // LDS actual bytes.
-    output << na_or(statistics.lds_size_used) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.lds_size_used) << csv_separator;
 
     // Available SGPRs.
-    output << na_or(statistics.num_sgprs_available) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.num_sgprs_available) << csv_separator;
 
     // Used SGPRs.
-    output << na_or(statistics.num_sgprs_used) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.num_sgprs_used) << csv_separator;
 
     // Spills of SGPRs.
-    output << na_or(statistics.num_sgpr_spills) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.num_sgpr_spills) << csv_separator;
 
     // Available VGPRs.
-    output << na_or(statistics.num_vgprs_available) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.num_vgprs_available) << csv_separator;
 
     // Used VGPRs.
-    output << na_or(statistics.num_vgprs_used) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.num_vgprs_used) << csv_separator;
 
     // Spills of VGPRs.
-    output << na_or(statistics.num_vgpr_spills) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.num_vgpr_spills) << csv_separator;
 
     // CL Work-group dimensions (for a unified format, to be revisited).
-    output << na_or(statistics.num_threads_per_group_x) << csv_separator;
-    output << na_or(statistics.num_threads_per_group_y) << csv_separator;
-    output << na_or(statistics.num_threads_per_group_z) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.num_threads_per_group_x) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.num_threads_per_group_y) << csv_separator;
+    output << beKA::AnalysisData::na_or(statistics.num_threads_per_group_z) << csv_separator;
 
     // ISA size.
-    output << na_or(statistics.isa_size);
+    output << beKA::AnalysisData::na_or(statistics.isa_size);
 
     output << std::endl;
 
@@ -525,20 +528,26 @@ static bool EvaluateAnalysisResult(beStatus rc, LoggingCallbackFunction callback
     return (rc == kBeStatusSuccess);
 }
 
-bool KcUtils::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& target,
-                                          const gtString&          output_filename,
-                                          LoggingCallbackFunction  callback,
-                                          bool print_cmd,
-                                          beWaveSize wave_size)
+bool KcUtils::PerformLiveRegisterAnalysis(const gtString&         isa_filename, 
+                                          const gtString&         target,
+                                          const gtString&         output_filename,
+                                          LoggingCallbackFunction callback,
+                                          bool                    print_cmd,
+                                          bool                    is_reg_type_sgpr,
+                                          beWaveSize              wave_size)
 {
     // Call the backend.
-    beStatus rc = BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isa_filename, target, output_filename, wave_size, print_cmd);
+    beStatus rc = BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isa_filename, target, output_filename, wave_size, print_cmd, is_reg_type_sgpr);
 
     return EvaluateAnalysisResult(rc, callback);
 }
 
-bool KcUtils::PerformLiveRegisterAnalysis(const std::string& isa_filename, const std::string& target,
-    const std::string& output_filename, LoggingCallbackFunction callback, bool print_cmd)
+bool KcUtils::PerformLiveRegisterAnalysis(const std::string&      isa_filename, 
+                                          const std::string&      target,
+                                          const std::string&      output_filename,
+                                          LoggingCallbackFunction callback,
+                                          bool                    print_cmd,
+                                          bool                    is_reg_type_sgpr)
 {
     // Convert the arguments to gtString.
     gtString isa_name_gtstr;
@@ -549,29 +558,7 @@ bool KcUtils::PerformLiveRegisterAnalysis(const std::string& isa_filename, const
     target_gtstr << target.c_str();
 
     // Invoke the routine.
-    return PerformLiveRegisterAnalysis(isa_name_gtstr, target_gtstr, output_filename_gtstr, callback, print_cmd);
-}
-
-bool KcUtils::PerformStallAnalysis(const std::string& isa_filename,const std::string& target, const std::string& output_filename, LoggingCallbackFunction callback, bool print_cmd)
-{
-    // Convert the arguments to gtString.
-    gtString isa_name_gtstr;
-    isa_name_gtstr << isa_filename.c_str();
-    gtString output_filename_gtstr;
-    output_filename_gtstr << output_filename.c_str();
-    gtString target_gtstr;
-    target_gtstr << target.c_str();
-
-    // Invoke the routine.
-    return PerformStallAnalysis(isa_name_gtstr, target_gtstr, output_filename_gtstr, callback, print_cmd);
-}
-
-bool KcUtils::PerformStallAnalysis(const gtString& isa_filename, const gtString& target, const gtString& output_filename, LoggingCallbackFunction callback, bool print_cmd)
-{
-    // Call the backend.
-    beStatus rc = BeStaticIsaAnalyzer::PerformStallAnalysis(isa_filename, target, output_filename, print_cmd);
-
-    return EvaluateAnalysisResult(rc, callback);
+    return PerformLiveRegisterAnalysis(isa_name_gtstr, target_gtstr, output_filename_gtstr, callback, print_cmd, is_reg_type_sgpr);
 }
 
 bool KcUtils::GenerateControlFlowGraph(const gtString& isa_file_name, const gtString& target, const gtString& output_filename,
@@ -752,6 +739,21 @@ bool KcUtils::ConstructOutFileName(const std::string& base_filename, const std::
     return status;
 }
 
+bool KcUtils::IsFileNameTooLong(const std::string& file_path)
+{
+    size_t   kLongestFilePathLength = 256;
+    bool     ret = false;
+    gtString gtstr_file_path;
+    gtstr_file_path << file_path.c_str();
+    osFilePath os_file_path(gtstr_file_path);
+    os_file_path.resolveToAbsolutePath();
+    if (std::string{os_file_path.asString().asASCIICharArray()}.size() > kLongestFilePathLength)
+    {
+        ret = true;
+    }
+    return ret;
+}
+
 void KcUtils::AppendSuffix(std::string& filename, const std::string& suffix)
 {
     if (!suffix.empty())
@@ -872,7 +874,7 @@ static bool ResolveMatchedDevices(const KcUtils::DeviceNameMap& matched_devices,
         // Found exactly one GPU architecture. Success.
         if (print_info)
         {
-            out_msg << STR_TARGET_DETECTED << std::endl << std::endl;
+            out_msg << kStrTargetGPUDetected;
             print_arch_and_devices(*(matched_devices.begin()), out_msg);
             out_msg << std::endl;
         }
@@ -1212,13 +1214,13 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, cons
     bool should_cancel = false;
     gtString working_dir = work_dir.asString();
     gtString cmd_output;
-    gtString cmdOutputErr;
+    gtString cmd_output_err;
     bool is_launch_success = osExecAndGrabOutputAndError(cmd.str().c_str(), should_cancel,
-        working_dir, cmd_output, cmdOutputErr);
+        working_dir, cmd_output, cmd_output_err);
 
     // Read stdout and stderr.
     std_out = cmd_output.asASCIICharArray();
-    std_err = cmdOutputErr.asASCIICharArray();
+    std_err = cmd_output_err.asASCIICharArray();
 
     if (!is_launch_success)
     {
@@ -1227,6 +1229,83 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, cons
 
     return status;
 }
+
+KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path,
+                                              const std::string& args,
+                                              const std::string& dir,
+                                              unsigned long      time_out,
+                                              bool               print_cmd,
+                                              bool               print_dbg,
+                                              std::string_view   dbg_prologue,
+                                              std::string_view   dbg_epilogue, 
+                                              std::string&       std_out,
+                                              std::string&       std_err,
+                                              long&              exit_code)
+{
+    ProcessStatus status = ProcessStatus::kSuccess;
+    exit_code            = 0;
+
+    // Set working directory, executable and arguments.
+    osFilePath work_dir;
+    if (dir == "")
+    {
+        work_dir.setPath(osFilePath::OS_CURRENT_DIRECTORY);
+    }
+    else
+    {
+        gtString dir_gtstr;
+        dir_gtstr << dir.c_str();
+        work_dir.setFileDirectory(dir_gtstr);
+    }
+
+    // Log the invocation event.
+    std::stringstream msg;
+    msg << kStrLaunchingExternalProcess << exec_path.c_str() << " " << args.c_str();
+
+    RgLog::file << msg.str() << std::endl;
+    if (print_cmd)
+    {
+        RgLog::stdOut << msg.str() << std::endl;
+    }
+
+    // Construct the invocation command.
+    std::stringstream cmd;
+    cmd << exec_path.c_str() << " " << args.c_str();
+
+    // Launch the process.
+    bool     should_cancel = false;
+    gtString working_dir   = work_dir.asString();
+    gtString cmd_output;
+    gtString cmd_output_err;
+    gtString cmd_output_debug;
+    bool     is_launch_success = false;
+    if (print_dbg)
+    {
+        is_launch_success = osExecAndGrabOutputAndErrorDebug(cmd.str().c_str(), should_cancel, working_dir, cmd_output, cmd_output_err, cmd_output_debug);
+        if (!cmd_output_debug.isEmpty())
+        {
+            std::cout << std::endl << dbg_prologue << std::endl << std::endl;
+            std::cout << cmd_output_debug.asASCIICharArray() << std::endl;
+            std::cout << std::endl << dbg_epilogue << std::endl << std::endl;
+        }
+    }
+    else
+    {
+        is_launch_success = osExecAndGrabOutputAndError(cmd.str().c_str(), should_cancel, working_dir, cmd_output, cmd_output_err);
+    }
+
+    // Read stdout and stderr.
+    std_out   = cmd_output.asASCIICharArray();
+    std_err   = cmd_output_err.asASCIICharArray();
+
+    if (!is_launch_success)
+    {
+        status = ProcessStatus::kLaunchFailed;
+    }
+
+    return status;
+}
+
 #else
 KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, const std::string& args, const std::string& dir,
     unsigned long time_out, bool print_cmd, std::string& std_out, std::string& std_err, long& exit_code)
@@ -1748,6 +1827,11 @@ bool KcUtils::IsNavi21(const std::string& target_name)
     return target_name == "gfx1030";
 }
 
+bool KcUtils::IsMITarget(const std::string& target_name)
+{
+    return target_name == "gfx90a";
+}
+
 bool KcUtils::IsVegaTarget(const std::string& target_name)
 {
     // Token to identify Vega targets.
@@ -1806,6 +1890,11 @@ std::string KcUtils::AdjustBaseFileNameStats(const std::string& user_input_filen
 std::string KcUtils::AdjustBaseFileNameLivereg(const std::string& user_input_filename, const std::string& device)
 {
     return AdjustBaseFileName(user_input_filename, device, kStrDefaultExtensionLivereg);
+}
+
+std::string KcUtils::AdjustBaseFileNameLiveregSgpr(const std::string& user_input_filename, const std::string& device)
+{
+    return AdjustBaseFileName(user_input_filename, device, kStrDefaultExtensionLiveregSgpr);
 }
 
 std::string KcUtils::AdjustBaseFileNameCfg(const std::string& user_input_filename, const std::string& device)

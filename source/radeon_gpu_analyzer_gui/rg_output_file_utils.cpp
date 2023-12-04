@@ -117,7 +117,15 @@ int RgOutputFileUtils::CalculateMaxVgprs(const std::vector<std::shared_ptr<RgIsa
     int max_vgprs_used    = 0;
     int isa_line_number   = 0;
     int vgpr_line_number  = 0;
-    while (isa_line_number < disassembled_isa_lines.size())
+
+    auto evaluate = [&vgpr_isa_lines, &disassembled_isa_lines, &vgpr_line_number, &isa_line_number]() {
+        if (vgpr_isa_lines.size() < disassembled_isa_lines.size())
+            return vgpr_line_number < vgpr_isa_lines.size();
+        else
+            return isa_line_number < disassembled_isa_lines.size();
+    };
+
+    while (evaluate())
     {
         const std::shared_ptr<RgIsaLineInstruction> current_vgpr_line = vgpr_isa_lines[vgpr_line_number];
         QString                                     value             = QString::fromStdString(current_vgpr_line->num_live_registers);

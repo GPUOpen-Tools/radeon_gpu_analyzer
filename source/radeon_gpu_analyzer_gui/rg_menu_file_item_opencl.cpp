@@ -18,8 +18,36 @@
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 
+#include "common/rga_xml_constants.h"
+
+static const std::vector<std::string> 
+kStrXmlNodeRtxVec =
+{
+    kStrXmlNodeDxrRayGeneration,
+    kStrXmlNodeDxrIntersection,
+    kStrXmlNodeDxrAnyHit,
+    kStrXmlNodeDxrClosestHit,
+    kStrXmlNodeDxrMiss,
+    kStrXmlNodeDxrCallable,
+    kStrXmlNodeDxrTraversal
+};
+
 static const char* kStrFileMenuItemColor = "#itemBackground[current = true] {background-color: rgb(253, 255, 215); border-style: solid; border-width: 1px; border-color: rgb(18, 152, 0);}";
 static const int s_FILE_MENU_KERNEL_ITEM_HEIGHT = 20;
+static const int s_FILE_MENU_DXR_KERNEL_ITEM_HEIGHT = s_FILE_MENU_KERNEL_ITEM_HEIGHT * 2;
+
+bool IsKernelTypeDxr(const std::string& kernel_type)
+{
+    return std::find(std::begin(kStrXmlNodeRtxVec), std::end(kStrXmlNodeRtxVec), kernel_type) != std::end(kStrXmlNodeRtxVec);
+}
+
+std::pair<std::string, std::string> SeparateKernelAndKernelSubtype(const std::string& combined_name)
+{
+    size_t             offset = combined_name.find('_');
+    const std::string& ext    = (offset != std::string::npos && offset < combined_name.size()) ? combined_name.substr(0, offset) : "";
+    const std::string& kernel = (offset != std::string::npos && ++offset < combined_name.size()) ? combined_name.substr(offset) : "";
+    return {kernel, ext};
+}
 
 // A delegate used to style a file item's entry point list.
 class RgEntrypointItemStyleDelegate : public QStyledItemDelegate
@@ -62,19 +90,43 @@ QStandardItemModel* RgMenuItemEntryListModel::GetEntryItemModel() const
     return entry_point_item_model_;
 }
 
-void RgMenuItemEntryListModel::AddEntry(const std::string& entrypoint_name)
+void RgMenuItemEntryListModel::AddEntry(const RgEntryOutput& entrypoint)
 {
+    const auto& entrypoint_name            = entrypoint.entrypoint_name;
+    bool        is_dxr_entrypoint          = IsKernelTypeDxr(entrypoint.kernel_type);
+    const auto& extremely_long_kernel_name = entrypoint.extremely_long_kernel_name;
+    bool        has_extremely_long_name    = !entrypoint.extremely_long_kernel_name.empty();
+
+
     std::string display_text;
 
     int current_row_count = entry_point_item_model_->rowCount();
     int new_row_count = current_row_count + 1;
 
-    // Truncate long entry point names.
-    RgUtils::GetDisplayText(entrypoint_name, display_text, entry_point_widget_width_, entry_point_tree_, kTextTruncateLengthBackOpencl);
+    if (is_dxr_entrypoint)
+    {
+        const auto&        p              = SeparateKernelAndKernelSubtype(entrypoint_name);
+        const std::string& kernel_name    = p.first;
+        const std::string& kernel_subtype = p.second;
+        // Truncate long entry point names.
+        RgUtils::GetDisplayText(kernel_name, display_text, entry_point_widget_width_, entry_point_tree_, kTextTruncateLengthBackOpencl);
+        std::stringstream ss;
+        ss << kernel_subtype << ":\n" << "    " << display_text;
+        display_text = ss.str();
+    }
+    else
+    {
+        // Truncate long entry point names.
+        RgUtils::GetDisplayText(entrypoint_name, display_text, entry_point_widget_width_, entry_point_tree_, kTextTruncateLengthBackOpencl);
+    }
 
     // Save the entry point name and the possibly truncated display name.
     entry_point_names_.push_back(entrypoint_name);
     display_names_.push_back(display_text);
+    if (has_extremely_long_name)
+    {
+        extremely_long_kernel_names_map[entrypoint_name] = extremely_long_kernel_name;
+    }
 
     // Update the number of row items in the model.
     entry_point_item_model_->setRowCount(new_row_count);
@@ -83,17 +135,39 @@ void RgMenuItemEntryListModel::AddEntry(const std::string& entrypoint_name)
     QModelIndex model_index = entry_point_item_model_->index(current_row_count, 0);
     entry_point_item_model_->setData(model_index, QString(display_text.c_str()));
     entry_point_item_model_->setData(model_index, Qt::AlignLeft, Qt::TextAlignmentRole);
+    if (!has_extremely_long_name)
+    {
+        entry_point_item_model_->setData(model_index, QString(entrypoint_name.c_str()), RgMenuUserRoles::kCopyNameRole);
+    }
+    else
+    {
+        entry_point_item_model_->setData(model_index, QString(extremely_long_kernel_name.c_str()), RgMenuUserRoles::kCopyNameRole);
+    }
     entry_point_item_model_->dataChanged(model_index, model_index);
 
     // Set the tooltip for the new entry point item.
     std::stringstream tooltip_text;
     tooltip_text << kStrMenuItemEntrypointTooltipText;
-    tooltip_text << entrypoint_name;
+    if (!has_extremely_long_name)
+    {
+        tooltip_text << entrypoint_name;
+    }
+    else
+    {
+        tooltip_text << extremely_long_kernel_name;
+    }
     entry_point_item_model_->setData(model_index, tooltip_text.str().c_str(), Qt::ToolTipRole);
 
     // Set the scaled height for size hint.
     QSize size = entry_point_item_model_->data(model_index, Qt::SizeHintRole).toSize();
-    size.setHeight(ScalingManager::Get().Scaled(s_FILE_MENU_KERNEL_ITEM_HEIGHT));
+    if (is_dxr_entrypoint)
+    {
+        size.setHeight(ScalingManager::Get().Scaled(s_FILE_MENU_DXR_KERNEL_ITEM_HEIGHT));
+    }
+    else
+    {
+        size.setHeight(ScalingManager::Get().Scaled(s_FILE_MENU_KERNEL_ITEM_HEIGHT));
+    }
     entry_point_item_model_->setData(model_index, size, Qt::SizeHintRole);
 }
 
@@ -106,6 +180,7 @@ void RgMenuItemEntryListModel::ClearEntries()
     // Clear the entry point names as well.
     entry_point_names_.clear();
     display_names_.clear();
+    extremely_long_kernel_names_map.clear();
 }
 
 void RgMenuItemEntryListModel::SetEntryPointWidgetWidth(const int width)
@@ -142,6 +217,18 @@ std::string RgMenuItemEntryListModel::GetEntryPointName(const std::string& displ
         }
     }
     return value;
+}
+
+bool RgMenuItemEntryListModel::GetSelectedEntrypointExtremelyLongName(const std::string& entrypoint_name, std::string& extremely_long_name) const
+{
+    bool ret   = false;
+    auto found = extremely_long_kernel_names_map.find(entrypoint_name);
+    if (found != extremely_long_kernel_names_map.end())
+    {
+        extremely_long_name = found->second;
+        ret                 = true;
+    }
+    return ret;
 }
 
 RgMenuFileItemOpencl::RgMenuFileItemOpencl(const std::string& file_full_path, RgMenu* parent) :
@@ -269,8 +356,7 @@ bool RgMenuFileItemOpencl::GetSelectedEntrypointName(std::string& entrypoint_nam
         if (selected_entrypoint_index.isValid())
         {
             // Extract and return the entry point name from the list.
-            QVariant entrypoint_name_data = entry_list_model_->GetEntryItemModel()->data(selected_entrypoint_index);
-            entrypoint_name = entrypoint_name_data.toString().toStdString();
+            entrypoint_name               = entry_list_model_->GetEntryPointName(selected_entrypoint_index.row());
             got_entrypoint_name = true;
         }
         else
@@ -285,6 +371,11 @@ bool RgMenuFileItemOpencl::GetSelectedEntrypointName(std::string& entrypoint_nam
     }
 
     return got_entrypoint_name;
+}
+
+bool RgMenuFileItemOpencl::GetSelectedEntrypointExtremelyLongName(const std::string& entrypoint_name, std::string& extremely_long_name) const
+{
+    return entry_list_model_->GetSelectedEntrypointExtremelyLongName(entrypoint_name, extremely_long_name);
 }
 
 void RgMenuFileItemOpencl::SetHovered(bool is_hovered)
@@ -481,7 +572,7 @@ void RgMenuFileItemOpencl::UpdateBuildOutputs(const std::vector<RgEntryOutput>& 
             // Add a new item in the list for each build output entry.
             for (const RgEntryOutput& entry_output : entry_outputs)
             {
-                entry_list_model_->AddEntry(entry_output.entrypoint_name);
+                entry_list_model_->AddEntry(entry_output);
             }
 
             // Update the entry point table view height.

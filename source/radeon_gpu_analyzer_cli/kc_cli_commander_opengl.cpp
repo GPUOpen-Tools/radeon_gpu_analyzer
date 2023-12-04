@@ -35,7 +35,7 @@ static const char* kStrErrTextFileWriteFailed          = "Error: unable to write
 static const char* kStrErrNoInputFile = "Error: no input file received.";
 
 // Unsupported devices.
-static const std::set<std::string> kUnsupportedDevicesOpengl = {"gfx908"};
+static const std::set<std::string> kUnsupportedDevicesOpengl = {"gfx900", "gfx902", "gfx904", "gfx906", "gfx908", "gfx90a", "gfx90c"};
 
 void KcCliCommanderOpenGL::GlcStatsToString(const beKA::AnalysisData& stats, std::stringstream& serialized_stats)
 {
@@ -237,10 +237,15 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
     bool is_geom_shader_present = (!config.geometry_shader.empty());
     bool is_frag_shader_present = (!config.fragment_shader.empty());
     bool is_comp_shader_present = (!config.compute_shader.empty());
-    bool is_isa_required = (!config.isa_file.empty() || !config.livereg_analysis_file.empty() ||
-        !config.block_cfg_file.empty() || !config.inst_cfg_file.empty() || !config.analysis_file.empty());
+    bool is_isa_required = (!config.isa_file.empty() || 
+        !config.livereg_analysis_file.empty() || 
+        !config.sgpr_livereg_analysis_file.empty() ||
+        !config.block_cfg_file.empty() || 
+        !config.inst_cfg_file.empty() || 
+        !config.analysis_file.empty());
     bool is_il_required = !config.il_file.empty();
     bool is_livereg_analysis_required = (!config.livereg_analysis_file.empty());
+    bool is_livereg_sgpr_analysis_required = (!config.sgpr_livereg_analysis_file.empty());
     bool is_block_cfg_required = (!config.block_cfg_file.empty());
     bool is_inst_cfg_required = (!config.inst_cfg_file.empty());
     bool is_isa_binary = (!config.binary_output_file.empty());
@@ -327,6 +332,11 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
         should_abort = !KcUtils::ValidateShaderOutputDir(config.livereg_analysis_file, log_msg);
     }
 
+    if (!should_abort && is_livereg_sgpr_analysis_required)
+    {
+        should_abort = !KcUtils::ValidateShaderOutputDir(config.sgpr_livereg_analysis_file, log_msg);
+    }
+
     if (!should_abort && is_block_cfg_required)
     {
         should_abort = !KcUtils::ValidateShaderOutputDir(config.block_cfg_file, log_msg);
@@ -409,6 +419,14 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                         std::string adjustedIsaFileName = KcUtils::AdjustBaseFileNameLivereg(config.livereg_analysis_file, device);
                         status &= GenerateRenderingPipelineOutputPaths(config, adjustedIsaFileName, kStrDefaultExtensionLivereg,
                             kStrDefaultExtensionText, device, gl_options.livereg_output_files);
+                    }
+
+                    if (is_livereg_sgpr_analysis_required)
+                    {
+                        gl_options.is_livereg_sgpr_required  = true;
+                        std::string adjustedIsaFileName     = KcUtils::AdjustBaseFileNameLiveregSgpr(config.sgpr_livereg_analysis_file, device);
+                        status &= GenerateRenderingPipelineOutputPaths(
+                            config, adjustedIsaFileName, kStrDefaultExtensionLiveregSgpr, kStrDefaultExtensionText, device, gl_options.livereg_sgpr_output_files);
                     }
 
                     if (is_block_cfg_required)
@@ -584,6 +602,64 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                                                                      gl_options.livereg_output_files.compute_shader,
                                                                      callback,
                                                                      config.print_process_cmd_line);
+                            }
+                        }
+
+                        // Perform live register analysis (sgpr) if required.
+                        if (is_livereg_sgpr_analysis_required)
+                        {
+                            if (is_vert_shader_present)
+                            {
+                                KcUtils::PerformLiveRegisterAnalysis(gl_options.isa_disassembly_output_files.vertex_shader,
+                                                                     device_gt_str,
+                                                                     gl_options.livereg_sgpr_output_files.vertex_shader,
+                                                                     callback,
+                                                                     config.print_process_cmd_line, true);
+                            }
+
+                            if (is_tess_control_shader_present)
+                            {
+                                KcUtils::PerformLiveRegisterAnalysis(gl_options.isa_disassembly_output_files.tessellation_control_shader,
+                                                                     device_gt_str,
+                                                                     gl_options.livereg_sgpr_output_files.tessellation_control_shader,
+                                                                     callback,
+                                                                     config.print_process_cmd_line, true);
+                            }
+
+                            if (is_tess_evaluation_shader_present)
+                            {
+                                KcUtils::PerformLiveRegisterAnalysis(gl_options.isa_disassembly_output_files.tessellation_evaluation_shader,
+                                                                     device_gt_str,
+                                                                     gl_options.livereg_sgpr_output_files.tessellation_evaluation_shader,
+                                                                     callback,
+                                                                     config.print_process_cmd_line, true);
+                            }
+
+                            if (is_geom_shader_present)
+                            {
+                                KcUtils::PerformLiveRegisterAnalysis(gl_options.isa_disassembly_output_files.geometry_shader,
+                                                                     device_gt_str,
+                                                                     gl_options.livereg_sgpr_output_files.geometry_shader,
+                                                                     callback,
+                                                                     config.print_process_cmd_line, true);
+                            }
+
+                            if (is_frag_shader_present)
+                            {
+                                KcUtils::PerformLiveRegisterAnalysis(gl_options.isa_disassembly_output_files.fragment_shader,
+                                                                     device_gt_str,
+                                                                     gl_options.livereg_sgpr_output_files.fragment_shader,
+                                                                     callback,
+                                                                     config.print_process_cmd_line, true);
+                            }
+
+                            if (is_comp_shader_present)
+                            {
+                                KcUtils::PerformLiveRegisterAnalysis(gl_options.isa_disassembly_output_files.compute_shader,
+                                                                     device_gt_str,
+                                                                     gl_options.livereg_sgpr_output_files.compute_shader,
+                                                                     callback,
+                                                                     config.print_process_cmd_line, true);
                             }
                         }
 

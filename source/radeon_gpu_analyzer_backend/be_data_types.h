@@ -67,8 +67,40 @@ enum BePipelineStage : char
 // An array containing per-stage file names.
 typedef std::array<std::string, BePipelineStage::kCount>  BeVkPipelineFiles;
 
+// The type of stage used for a shader module.
+enum BeRtxPipelineStage : char
+{
+    kRayGeneration,
+    kIntersection,
+    kAnyHit,
+    kClosestHit,
+    kMiss,
+    kCallable,
+    kTraversal, 
+
+    kCountRtx
+};
+
+// An array containing per-stage file names.
+typedef std::array<std::string, BeRtxPipelineStage::kCountRtx> BeRtxPipelineFiles;
+
+// Ray Tracing Stage Name strings.
+static const BeRtxPipelineFiles kStrRtxStageNames =
+{
+    "RayGeneration",
+    "Intersection",
+    "AnyHit",
+    "ClosestHit",
+    "Miss",
+    "Callable",  
+    "Traversal"
+};
+
+// Rtx Suffixes for stage-specific output files.
+static const BeRtxPipelineFiles kStrRtxStageSuffix = kStrRtxStageNames;
+
 // Dx12 Stage Name strings.
-static const std::array<std::string, BePipelineStage::kCount> kStrDx12StageNames =
+static const BeVkPipelineFiles kStrDx12StageNames =
 {
     "vertex",
     "hull",
@@ -76,6 +108,28 @@ static const std::array<std::string, BePipelineStage::kCount> kStrDx12StageNames
     "geometry",
     "pixel",
     "compute"
+};
+
+// DX12 Suffixes for stage-specific output files.
+static const BeVkPipelineFiles kStrDx12StageSuffix =
+{
+    "vert",
+    "hull",
+    "domain",
+    "geom",
+    "pixel",
+    "comp"
+};
+
+// Vulkan Suffixes for stage-specific output files.
+static const BeVkPipelineFiles kVulkanStageFileSuffix = 
+{
+    "vert", 
+    "tesc", 
+    "tese", 
+    "geom", 
+    "frag", 
+    "comp"
 };
 
 // Physical adapter data.

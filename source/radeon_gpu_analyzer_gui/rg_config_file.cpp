@@ -9,6 +9,7 @@
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_config_file_opencl.h"
 #include "radeon_gpu_analyzer_gui/rg_config_file_vulkan.h"
+#include "radeon_gpu_analyzer_gui/rg_config_file_binary.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_opencl.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_vulkan.h"
 #include "radeon_gpu_analyzer_gui/rg_factory.h"
@@ -42,6 +43,9 @@ static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* global_settings_node, s
 
 // Read v2.3 of the GlobalSettings XML node from the config file.
 static bool ExtractGlobalSettings_2_3(tinyxml2::XMLNode* global_settings_node, std::shared_ptr<RgGlobalSettings>& global_settings);
+
+// Read v2.4 of the GlobalSettings XML node from the config file.
+static bool ExtractGlobalSettings_2_4(tinyxml2::XMLNode* global_settings_node, std::shared_ptr<RgGlobalSettings>& global_settings);
 
 // Takes the comma-separated target devices list from the GUI, and returns the list of GPUs in it.
 static void ExtractTargetGpus(const std::string& target_devices, std::vector<std::string>& gpu_list)
@@ -423,6 +427,10 @@ public:
         {
             ret = std::make_shared<RgConfigFileReaderVulkan>();
         }
+        else if (api_name.compare(kStrApiAbbreviationBinary) == 0)
+        {
+            ret = std::make_shared<RgConfigFileReaderBinary>();
+        }
         return ret;
     }
 };
@@ -496,8 +504,11 @@ bool RgXmlConfigFile::ReadProjectConfigFile(const std::string& config_file_path,
 
                     // All v2.0 and v2.1 project files have the same format
                     // for the initial <Program> and <ProgramAPI> tags.
-                    if (kRgaDataModel2_0.compare(data_model_version) == 0 || kRgaDataModel2_1.compare(data_model_version) == 0 ||
-                        kRgaDataModel2_2.compare(data_model_version) == 0 || kRgaDataModel2_3.compare(data_model_version) == 0)
+                    if (kRgaDataModel2_0.compare(data_model_version) == 0 || 
+                        kRgaDataModel2_1.compare(data_model_version) == 0 ||
+                        kRgaDataModel2_2.compare(data_model_version) == 0 || 
+                        kRgaDataModel2_3.compare(data_model_version) == 0 ||
+                        kRgaDataModel2_4.compare(data_model_version) == 0)
                     {
                         // Skip to the <Program> node.
                         node = node->NextSibling();
@@ -803,6 +814,9 @@ public:
         case RgProjectAPI::kVulkan:
             ret = std::make_shared<RgConfigFileWriterVulkan>();
             break;
+        case RgProjectAPI::kBinary:
+            ret = std::make_shared<RgConfigFileWriterBinary>();
+            break;  
         case RgProjectAPI::kUnknown:
         default:
             // If we got here, there's a problem because the API type is unrecognized.
@@ -885,6 +899,12 @@ bool RgXmlConfigFile::ReadGlobalSettings(const std::string& global_config_file_p
                             // Get Next sibling, which should be the GlobalSettings element.
                             tinyxml2::XMLNode* global_settings_node = node->NextSibling();
                             ret                                     = ExtractGlobalSettings_2_3(global_settings_node, global_settings);
+                        }
+                        else if (kRgaDataModel2_4.compare(data_model_version) == 0)
+                        {
+                            // Get Next sibling, which should be the GlobalSettings element.
+                            tinyxml2::XMLNode* global_settings_node = node->NextSibling();
+                            ret                                     = ExtractGlobalSettings_2_4(global_settings_node, global_settings);
                         }
                         else
                         {
@@ -1083,7 +1103,7 @@ bool RgXmlConfigFile::WriteGlobalSettings(std::shared_ptr<RgGlobalSettings> glob
             if (default_build_settings != nullptr)
             {
                 // Loop through each API type, and use an API-specific rgConfigFileWriter to write the default settings.
-                for (int api_index = static_cast<int>(RgProjectAPI::kOpenCL); api_index < static_cast<int>(RgProjectAPI::kApiCount); ++api_index)
+                for (int api_index = static_cast<int>(RgProjectAPI::kUnknown)+1; api_index < static_cast<int>(RgProjectAPI::kApiCount); ++api_index)
                 {
                     RgProjectAPI current_api = static_cast<RgProjectAPI>(api_index);
 
@@ -1217,7 +1237,7 @@ static bool ExtractDefaultBuildSettings_2_1(tinyxml2::XMLNode* default_build_set
         tinyxml2::XMLNode* api_settings_node = default_build_settings_node->FirstChildElement();
 
         // Loop through each possible API type and read each API's default build settings.
-        for (int api_index = static_cast<int>(RgProjectAPI::kOpenCL); api_index < static_cast<int>(RgProjectAPI::kApiCount); ++api_index)
+        for (int api_index = static_cast<int>(RgProjectAPI::kUnknown)+1; api_index < static_cast<int>(RgProjectAPI::kApiCount); ++api_index)
         {
             if (api_settings_node == nullptr)
             {
@@ -1856,4 +1876,9 @@ static bool ExtractGlobalSettings_2_3(tinyxml2::XMLNode* global_settings_node, s
     }
 
     return ret;
+}
+
+static bool ExtractGlobalSettings_2_4(tinyxml2::XMLNode* global_settings_node, std::shared_ptr<RgGlobalSettings>& global_settings)
+{
+    return ExtractGlobalSettings_2_3(global_settings_node, global_settings);
 }

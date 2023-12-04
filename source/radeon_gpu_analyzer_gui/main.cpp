@@ -63,43 +63,51 @@ int main(int argc, char *argv[])
     // Start the Qt application.
     QApplication application_instance(argc, argv);
 
-    if (global_settings != nullptr)
+    bool enable_feature_interop = QCoreApplication::arguments().count() == 2;
+    if (enable_feature_interop)
     {
-        RgProjectAPI selected_api = global_settings->default_api;
-        if (global_settings->should_prompt_for_api || selected_api == RgProjectAPI::kUnknown)
+        RgConfigManager::Instance().SetCurrentAPI(RgProjectAPI::kBinary);
+    }
+    else
+    {
+        if (global_settings != nullptr)
         {
-            RgStartupDialog startup_dialog;
+            RgProjectAPI selected_api = global_settings->default_api;
+            if (global_settings->should_prompt_for_api || selected_api == RgProjectAPI::kUnknown)
+            {
+                RgStartupDialog startup_dialog;
 
 #ifdef RGA_GUI_AUTOMATION
-            tester.StartupDlgCreated(&startup_dialog);
+                tester.StartupDlgCreated(&startup_dialog);
 #endif
-            int result = startup_dialog.exec();
+                int result = startup_dialog.exec();
 
-            if (result == QDialog::Rejected)
-            {
-                // exit RGA.
-                exit(0);
-            }
-            else
-            {
-                // Use the API that the user selected.
-                selected_api = startup_dialog.SelectedApi();
-
-                // If the user doesn't want to be asked again, then set NOT to prompt at startup.
-                RgConfigManager::Instance().SetPromptForAPIAtStartup(!startup_dialog.ShouldNotAskAgain());
-
-                if (startup_dialog.ShouldNotAskAgain())
+                if (result == QDialog::Rejected)
                 {
-                    // Save the selected API as the new default.
-                    RgConfigManager::Instance().SetDefaultAPI(selected_api);
+                    // exit RGA.
+                    exit(0);
+                }
+                else
+                {
+                    // Use the API that the user selected.
+                    selected_api = startup_dialog.SelectedApi();
 
-                    // Save the fact that they don't want to be prompted again.
-                    RgConfigManager::Instance().SaveGlobalConfigFile();
+                    // If the user doesn't want to be asked again, then set NOT to prompt at startup.
+                    RgConfigManager::Instance().SetPromptForAPIAtStartup(!startup_dialog.ShouldNotAskAgain());
+
+                    if (startup_dialog.ShouldNotAskAgain())
+                    {
+                        // Save the selected API as the new default.
+                        RgConfigManager::Instance().SetDefaultAPI(selected_api);
+
+                        // Save the fact that they don't want to be prompted again.
+                        RgConfigManager::Instance().SaveGlobalConfigFile();
+                    }
                 }
             }
-        }
 
-        RgConfigManager::Instance().SetCurrentAPI(selected_api);
+            RgConfigManager::Instance().SetCurrentAPI(selected_api);
+        }
     }
 
     // Get the window geometry from config manager.
@@ -154,6 +162,17 @@ int main(int argc, char *argv[])
         RgUtils::ShowErrorMessageBox(fatal_error_msg.c_str());
         RgLog::file << fatal_error_msg << std::endl;
         exit(-1);
+    }
+
+    if (enable_feature_interop)
+    {
+        if (!main_window.LoadBinaryCodeObject(QCoreApplication::arguments().at(1)))
+        {
+            // Display the fatal error to the user and exit after the user confirms.
+            RgUtils::ShowErrorMessageBox(kStrLogCannotLoadBinaryCodeObject);
+            RgLog::file << kStrLogCannotLoadBinaryCodeObject << std::endl;
+            exit(-1);
+        }
     }
 
     result = application_instance.exec();

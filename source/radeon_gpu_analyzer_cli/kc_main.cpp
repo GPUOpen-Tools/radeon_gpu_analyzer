@@ -29,6 +29,7 @@
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_opengl.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vk_offline.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vulkan.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_commander_bin.h"
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_lightning.h"
 #ifdef _WIN32
@@ -111,6 +112,9 @@ int main(int argc, char* argv[])
             break;
         case kModeVulkan:
             commander = std::make_shared<KcCliCommanderVulkan>();
+            break;
+        case kModeBinary:
+            commander = std::make_shared<KcCliCommanderBin>();
             break;
         case RgaMode::kModeOpenclOffline:
         {

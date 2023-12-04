@@ -12,6 +12,98 @@
 
 using namespace beKA;
 
+// Metadata Parsed from Amdgpu-dis code object Metadata string.
+class BeAmdPalMetaData
+{
+public:
+
+    // Enum to represent different stages in hardware pipeline.
+    enum class StageType
+    {
+        kLS,
+        kHS,
+        kES,
+        kGS,
+        kVS,
+        kPS,
+        kCS
+    };
+
+    // Enum to represent different shader types.
+    enum class ShaderType
+    {
+        kVertex,
+        kHull,
+        kDomain,
+        kGeometry,
+        kPixel,
+        kCompute
+    };
+
+    // Enum to represent different shader subtypes.
+    enum class ShaderSubtype
+    {
+        kUnknown,
+        kRayGeneration,
+        kMiss,
+        kAnyHit,
+        kClosestHit,
+        kIntersection,
+        kCallable,
+        kTraversal
+    };
+
+    // Struct to hold hardware stage details.
+    struct HardwareStageMetaData
+    {
+        StageType          stage_type;
+        beKA::AnalysisData stats;
+    };
+
+    // Struct to hold shader function details.
+    struct ShaderFunctionMetaData
+    {
+        std::string        name;
+        ShaderSubtype      shader_subtype;
+        beKA::AnalysisData stats;
+    };
+
+    // Struct to hold shader details.
+    struct ShaderMetaData
+    {
+        ShaderType    shader_type;
+        StageType     hardware_mapping;
+        ShaderSubtype shader_subtype = ShaderSubtype::kUnknown;
+    };
+
+    // Struct to hold amdpal pipeline details.
+    struct PipelineMetaData
+    {
+        std::string                         api;
+        std::vector<HardwareStageMetaData>  hardware_stages;
+        std::vector<ShaderFunctionMetaData> shader_functions;
+        std::vector<ShaderMetaData>         shaders;
+    };
+
+    // Function to convert string stage name to StageType enum
+    static StageType GetStageType(const std::string& stage_name);
+
+    // Function to convert string shader name to ShaderType enum
+    static ShaderType GetShaderType(const std::string& shader_name);
+
+    // Function to convert string shader subtype to ShaderSubtype enum
+    static ShaderSubtype GetShaderSubtype(const std::string& subtype_name);
+
+    // Function to convert StageType enum to string stage name.
+    static std::string GetStageName(StageType stage_type);
+
+    // Function to convert ShaderType enum to string shader name.
+    static std::string GetShaderName(ShaderType shader_type);
+
+    // Function to convert ShaderSubtype enum to string shader subtype.
+    static std::string GetShaderSubtypeName(ShaderSubtype subtype);
+};
+
 // SPIR-V tool.
 enum class BeVulkanSpirvTool
 {
@@ -76,13 +168,20 @@ public:
                                                  std::map<std::string, std::string>& shader_to_disassembly,
                                                  std::string&                        error_msg);
 
-    // Helper function to Extract AmdgpuDis Metadata String From AmdgpuDis Output String.
-    static bool GetAmdgpuDisMetadataStr(const std::string& amdgpu_dis_output, std::string& amdgpu_dis_metadata);
+    // Helper function to Extract from AmdgpuDis Metadata Hardware Maapping for a given api shader stage.
+    static bool GetAmdgpuDisApiShaderToHwMapping(const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline, 
+                                                 const std::string&                        api_shader_stage_name, 
+                                                 std::string&                              hw_mapping_str);
 
-    // Helper function to Extract from AmdgpuDis Metadata String Hardware Maapping for a given api shader stage.
-    static bool GetAmdgpuDisApiShaderToHwMapping(const std::string& amdgpu_dis_metadata, 
-                                                 const std::string& api_shader_stage_name, 
-                                                 std::string&       hw_mapping_str);
+    // Helper function to Write Isa Files with Hw mapping extracted from AmdgpuDis Metadata per api shader stage.
+    static bool WriteIsaFileWithHwMapping(uint32_t                                  stage,
+                                          const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
+                                          const std::map<std::string, std::string>& shader_to_disassembly,
+                                          const std::string&                        isa_file);
+
+    // Parses amdgpu-dis output and extracts code object metadata.
+    static beKA::beStatus ParseAmdgpudisMetadata(const std::string&                  amdgpu_dis_output, 
+                                                 BeAmdPalMetaData::PipelineMetaData& pipeline);
 
 private:
     // Invoke the glslang compiler executable.

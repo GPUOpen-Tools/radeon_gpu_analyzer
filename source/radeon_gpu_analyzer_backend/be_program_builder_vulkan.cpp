@@ -6,6 +6,9 @@
 #include <cassert>
 #include <stdlib.h>
 
+// Yaml.
+#include "yaml-cpp/yaml.h"
+
 // Infra.
 #ifdef _WIN32
     #pragma warning(push)
@@ -147,11 +150,46 @@ static const std::string  kVulkanBackendOptLayersFile = "--layers-file";
 static const std::string  kVulkanBackendOptTarget = "--target";
 
 // Amdgpudis dot tokens.
-static const char* kAmdgpuDisDotAmdgpuPalMetadataBeginToken = ".amdgpu_pal_metadata";
-static const char* kAmdgpuDisDotAmdgpuPalMetadataEndToken   = ".end_amdgpu_pal_metadata";
-static const char* kAmdgpuDisDotHardwareStagesToken         = ".hardware_stages:";
-static const char* kAmdgpuDisDotShadersToken                = ".shaders:";
-static const char* kAmdgpuDisDotHwMappingToken              = ".hardware_mapping:";
+static const std::string kStrLcCodeObjectMetadataTokenStart      = "---\n";
+static const std::string kStrLcCodeObjectMetadataTokenEnd        = "\n...";
+static const std::string kStrCodeObjectMetadataKeyKernels        = "amdhsa.kernels";
+static const std::string kStrCodeObjectMetadataKeyPipelines      = "amdpal.pipelines";
+static const std::string kAmdgpuDisDotApiToken                   = ".api";
+static const std::string kAmdgpuDisDotHardwareStagesToken        = ".hardware_stages";
+static const std::string kAmdgpuDisDotScratchMemorySizeToken     = ".scratch_memory_size";
+static const std::string kAmdgpuDisDotSgprCountToken             = ".sgpr_count";
+static const std::string kAmdgpuDisDotSgprLimitToken             = ".sgpr_limit";
+static const std::string kAmdgpuDisDotVgprCountToken             = ".vgpr_count";
+static const std::string kAmdgpuDisDotVgprLimitToken             = ".vgpr_limit";
+static const std::string kAmdgpuDisDotShaderFunctionsToken       = ".shader_functions";
+static const std::string kAmdgpuDisDotLdsSizeToken               = ".lds_size";
+static const std::string kAmdgpuDisDotShaderSubtypeToken         = ".shader_subtype";
+static const std::string kAmdgpuDisDotShadersToken               = ".shaders";
+static const std::string kAmdgpuDisDotHardwareMappingToken       = ".hardware_mapping";
+
+const std::string kStrLS = ".ls";
+const std::string kStrHS = ".hs";
+const std::string kStrES = ".es";
+const std::string kStrGS = ".gs";
+const std::string kStrVS = ".vs";
+const std::string kStrPS = ".ps";
+const std::string kStrCS = ".cs";
+
+const std::string kStrVertex   = ".vertex";
+const std::string kStrHull     = ".hull";
+const std::string kStrDomain   = ".domain";
+const std::string kStrGeometry = ".geometry";
+const std::string kStrPixel    = ".pixel";
+const std::string kStrCompute  = ".compute";
+
+const std::string kStrUnknown       = "Unknown";
+const std::string kStrRayGeneration = "RayGeneration";
+const std::string kStrMiss          = "Miss";
+const std::string kStrAnyHit        = "AnyHit";
+const std::string kStrClosestHit    = "ClosestHit";
+const std::string kStrIntersection  = "Intersection";
+const std::string kStrCallable      = "Callable";
+const std::string kStrTraversal     = "Traversal";
 
 
 // Copy the Vulkan Validation layers info from temp file ("tempInfoFile") to the Log file and user-provided validation info file ("outputFile").
@@ -451,6 +489,7 @@ beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&        
                 }
                 else
                 {
+                    shader_offset_end = curr_pos + strlen(kAmdgpuDisDotSizeToken);
                     status = kBeStatusCannotParseDisassemblyShaderStage;
                 }
                 
@@ -466,7 +505,6 @@ beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&        
                         const size_t stage_name_offset_begin = curr_pos + strlen(kAmdgpuDisShaderNameStartToken);
                         std::string  stage_name = amdgpu_dis_output.substr(stage_name_offset_begin, stage_name_offset_end - stage_name_offset_begin);
                         assert(!stage_name.empty());
-                        assert(BeUtils::IsValidAmdgpuShaderStage(stage_name));
                         if (BeUtils::IsValidAmdgpuShaderStage(stage_name))
                         {
                             // Construct the shader end token "_amdgpu_<stage_name>_main_symend:".
@@ -774,79 +812,21 @@ beKA::beStatus beProgramBuilderVulkan::InvokeAmdgpudis(const std::string& cmd_li
     return (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusVulkanAmdgpudisLaunchFailed);
 }
 
-bool beProgramBuilderVulkan::GetAmdgpuDisMetadataStr(const std::string& amdgpu_dis_output, std::string& amdgpu_dis_metadata)
-{
-    bool ret = false;
-    assert(!amdgpu_dis_output.empty());
-    if (!amdgpu_dis_output.empty())
-    {
-        // Get to the .amdgpu_pal_metadata section.
-        size_t beg_pos = amdgpu_dis_output.find(kAmdgpuDisDotAmdgpuPalMetadataBeginToken);
-        size_t end_pos = amdgpu_dis_output.find(kAmdgpuDisDotAmdgpuPalMetadataEndToken);
-
-        assert(beg_pos != std::string::npos && end_pos != std::string::npos);
-        if (beg_pos != std::string::npos && end_pos != std::string::npos)
-        {
-            amdgpu_dis_metadata = amdgpu_dis_output.substr(beg_pos + strlen(kAmdgpuDisDotAmdgpuPalMetadataBeginToken), end_pos);
-            assert(amdgpu_dis_metadata.find(kAmdgpuDisDotHardwareStagesToken) != std::string::npos);
-            assert(amdgpu_dis_metadata.find(kAmdgpuDisDotShadersToken) != std::string::npos);
-            ret = true;
-        }
-    }
-    return ret;
-}
-
-bool beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(const std::string& amdgpu_dis_metadata,
-                                                              const std::string& api_shader_stage_name,
-                                                              std::string&       hw_mapping_str)
-{
-    bool ret = false;
-    auto shader_token_beg = amdgpu_dis_metadata.find(kAmdgpuDisDotShadersToken);
-    if (shader_token_beg != std::string::npos)
-    {
-        std::stringstream dot_shader_name_token;
-        dot_shader_name_token << "." << api_shader_stage_name << ":";
-        auto shader_name_token_beg = amdgpu_dis_metadata.find(dot_shader_name_token.str(), shader_token_beg);
-        if (shader_name_token_beg != std::string::npos)
-        {
-            auto hw_mapping_beg = amdgpu_dis_metadata.find(kAmdgpuDisDotHwMappingToken, shader_name_token_beg);
-            if (hw_mapping_beg != std::string::npos)
-            {
-                auto end_of_line = amdgpu_dis_metadata.find("\n", hw_mapping_beg);
-                if (end_of_line != std::string::npos)
-                {
-                    auto end_of_next_line = amdgpu_dis_metadata.find("\n", end_of_line+1);
-                    if (end_of_next_line != std::string::npos)
-                    {
-                        std::string next_line = amdgpu_dis_metadata.substr(end_of_line, end_of_next_line-end_of_line);
-                        auto        beg       = next_line.find(".");
-                        if (beg != std::string::npos)
-                        {
-                            hw_mapping_str = next_line.substr(beg+1);
-                            ret = true;
-                        }                        
-                    }
-                }
-            }
-        }
-    }
-    return ret;
-}
-
-bool WriteIsaFileWithHwMapping(uint32_t                            stage,
-                               const std::string&                  amdgpu_dis_md_str,
-                               std::map<std::string, std::string>& shader_to_disassembly,
-                               const BeVkPipelineFiles&            isa_files)
+bool beProgramBuilderVulkan::WriteIsaFileWithHwMapping(uint32_t                                  stage,
+                                                       const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
+                                                       const std::map<std::string, std::string>& shader_to_disassembly,
+                                                       const std::string&                        isa_file)
 {
     bool        ret             = false;
     const auto& dx12_stage_name = kStrDx12StageNames[stage];
     std::string hw_mapping_name;
-    bool        valid_hw_mapping_found = beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdgpu_dis_md_str, dx12_stage_name, hw_mapping_name);
-    if (valid_hw_mapping_found && shader_to_disassembly.find(hw_mapping_name) != shader_to_disassembly.end())
+    bool        valid_hw_mapping_found = beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdpal_pipeline, dx12_stage_name, hw_mapping_name);
+    auto        itr                    = shader_to_disassembly.find(hw_mapping_name);
+    if (valid_hw_mapping_found && itr != shader_to_disassembly.end())
     {
-        bool is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly[hw_mapping_name], nullptr);
+        bool is_file_written = KcUtils::WriteTextFile(isa_file, itr->second, nullptr);
         assert(is_file_written);
-        if (KcUtils::FileNotEmpty(isa_files[stage]))
+        if (KcUtils::FileNotEmpty(isa_file))
         {
             ret = true;
         }
@@ -855,7 +835,6 @@ bool WriteIsaFileWithHwMapping(uint32_t                            stage,
 }
 
 void WriteIsaFileWithHardcodedMapping(uint32_t                            stage,
-                                      const std::string&                  amdgpu_dis_md_str,
                                       std::map<std::string, std::string>& shader_to_disassembly,
                                       const BeVkPipelineFiles&            isa_files,
                                       std::string&                        error_msg)
@@ -947,17 +926,18 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
                 assert(!shader_to_disassembly.empty());
                 if (is_amdgpu_dis_output_parsed && !shader_to_disassembly.empty())
                 {
-                    std::string amdgpu_dis_md_str;
-                    bool isOk = beProgramBuilderVulkan::GetAmdgpuDisMetadataStr(amdgpu_dis_stdout, amdgpu_dis_md_str);
-                    assert(!amdgpu_dis_md_str.empty() && isOk);
-                    if (!amdgpu_dis_md_str.empty() && isOk)
+                    BeAmdPalMetaData::PipelineMetaData pipeline;
+                    beKA::beStatus md_status = beProgramBuilderVulkan::ParseAmdgpudisMetadata(amdgpu_dis_stdout, pipeline);
+                    assert(md_status == beKA::beStatus::kBeStatusVulkanGraphicsCodeObjMetaDataSuccess);
+                    if (md_status == beKA::beStatus::kBeStatusVulkanGraphicsCodeObjMetaDataSuccess)
                     {
                         // Write the ISA disassembly files.
                         for (uint32_t stage = BePipelineStage::kVertex; stage < BePipelineStage::kCount; stage++)
                         {
                             if (!isa_files[stage].empty())
                             {
-                                bool is_file_written = WriteIsaFileWithHwMapping(stage, amdgpu_dis_md_str, shader_to_disassembly, isa_files);
+                                bool is_file_written =
+                                    beProgramBuilderVulkan::WriteIsaFileWithHwMapping(stage, pipeline, shader_to_disassembly, isa_files[stage]);
                                 if (!is_file_written)
                                 {
                                     std::string amdgpu_stage_name;
@@ -970,7 +950,7 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
                                         std::cout << kWarnCannotWriteDisassemblyFileA << amdgpu_stage_name << kWarnCannotWriteDisassemblyFileB << "\n";
                                     }
 
-                                    WriteIsaFileWithHardcodedMapping(stage, amdgpu_dis_md_str, shader_to_disassembly, isa_files, error_msg);
+                                    WriteIsaFileWithHardcodedMapping(stage, shader_to_disassembly, isa_files, error_msg);
                                 }
                             }
                         }
@@ -988,6 +968,37 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
     }
 
     return status;
+}
+
+bool beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
+                                                              const std::string&                        api_shader_stage_name,
+                                                              std::string&                              hw_mapping_str)
+{
+    bool ret              = false;
+    std::stringstream dot_shader_name_token;
+    dot_shader_name_token << "." << api_shader_stage_name;
+    auto shader_type = BeAmdPalMetaData::GetShaderType(dot_shader_name_token.str());
+    for (const auto& shader : amdpal_pipeline.shaders)
+    {
+        if (shader_type == shader.shader_type)
+        {
+            auto stage_type = shader.hardware_mapping;
+            for (const auto& stage : amdpal_pipeline.hardware_stages)
+            {
+                if (stage_type == stage.stage_type)
+                {
+                    std::string stage_name = hw_mapping_str = BeAmdPalMetaData::GetStageName(stage.stage_type);
+                    auto        beg        = stage_name.find(".");
+                    if (beg != std::string::npos)
+                    {
+                        hw_mapping_str = stage_name.substr(beg + 1);
+                        ret            = true;
+                    }     
+                }
+            }
+        }
+    }
+    return ret;
 }
 
 beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string& loader_debug,
@@ -1108,6 +1119,251 @@ beKA::beStatus beProgramBuilderVulkan::PreprocessSource(const Config& config, co
     if (!opts.empty())
     {
         status = InvokeGlslang(glslang_bin_dir, opts, should_print_cmd, output, error_msg);
+    }
+
+    return status;
+}
+
+
+BeAmdPalMetaData::StageType BeAmdPalMetaData::GetStageType(const std::string& stage_name)
+{
+    static const std::unordered_map<std::string, StageType> stageMap = {{kStrLS, StageType::kLS},
+                                                                        {kStrHS, StageType::kHS},
+                                                                        {kStrES, StageType::kES},
+                                                                        {kStrGS, StageType::kGS},
+                                                                        {kStrVS, StageType::kVS},
+                                                                        {kStrPS, StageType::kPS},
+                                                                        {kStrCS, StageType::kCS}};
+
+    auto it = stageMap.find(stage_name);
+    if (it != stageMap.end())
+    {
+        return it->second;
+    }
+    throw std::runtime_error("Unknown stage type: " + stage_name);
+}
+
+BeAmdPalMetaData::ShaderType BeAmdPalMetaData::GetShaderType(const std::string& shader_name)
+{
+    static const std::unordered_map<std::string, ShaderType> shaderMap = {{kStrVertex,   ShaderType::kVertex},
+                                                                          {kStrHull,     ShaderType::kHull},
+                                                                          {kStrDomain,   ShaderType::kDomain},
+                                                                          {kStrGeometry, ShaderType::kGeometry},
+                                                                          {kStrPixel,    ShaderType::kPixel},
+                                                                          {kStrCompute,  ShaderType::kCompute}};
+
+    auto it = shaderMap.find(shader_name);
+    if (it != shaderMap.end())
+    {
+        return it->second;
+    }
+    throw std::runtime_error("Unknown shader type: " + shader_name);
+}
+
+BeAmdPalMetaData::ShaderSubtype BeAmdPalMetaData::GetShaderSubtype(const std::string& subtype_name)
+{
+    static const std::unordered_map<std::string, ShaderSubtype> subtypeMap = {{kStrUnknown,       ShaderSubtype::kUnknown},
+                                                                              {kStrRayGeneration, ShaderSubtype::kRayGeneration},
+                                                                              {kStrMiss,          ShaderSubtype::kMiss},
+                                                                              {kStrAnyHit,        ShaderSubtype::kAnyHit},
+                                                                              {kStrClosestHit,    ShaderSubtype::kClosestHit},
+                                                                              {kStrIntersection,  ShaderSubtype::kIntersection},
+                                                                              {kStrCallable,      ShaderSubtype::kCallable},
+                                                                              {kStrTraversal,     ShaderSubtype::kTraversal}};
+
+    auto it = subtypeMap.find(subtype_name);
+    if (it != subtypeMap.end())
+    {
+        return it->second;
+    }
+    throw std::runtime_error("Unknown shader subtype: " + subtype_name);
+}
+
+std::string BeAmdPalMetaData::GetStageName(StageType stage_type)
+{
+    static const std::unordered_map<StageType, const std::string&> inverseStageMap = {{StageType::kLS, kStrLS},
+                                                                                      {StageType::kHS, kStrHS},
+                                                                                      {StageType::kES, kStrES},
+                                                                                      {StageType::kGS, kStrGS},
+                                                                                      {StageType::kVS, kStrVS},
+                                                                                      {StageType::kPS, kStrPS},
+                                                                                      {StageType::kCS, kStrCS}};
+
+    auto it = inverseStageMap.find(stage_type);
+    if (it != inverseStageMap.end())
+    {
+        return it->second;
+    }
+    throw std::runtime_error("Unknown stage type: " + std::to_string(static_cast<int>(stage_type)));
+}
+
+std::string BeAmdPalMetaData::GetShaderName(ShaderType shader_type)
+{
+    static const std::unordered_map<ShaderType, const std::string&> inverseShaderMap = {{ShaderType::kVertex,   kStrVertex},
+                                                                                        {ShaderType::kHull,     kStrHull},
+                                                                                        {ShaderType::kDomain,   kStrDomain},
+                                                                                        {ShaderType::kGeometry, kStrGeometry},
+                                                                                        {ShaderType::kPixel,    kStrPixel},
+                                                                                        {ShaderType::kCompute,  kStrCompute}};
+
+    auto it = inverseShaderMap.find(shader_type);
+    if (it != inverseShaderMap.end())
+    {
+        return it->second;
+    }
+    throw std::runtime_error("Unknown shader type: " + std::to_string(static_cast<int>(shader_type)));
+}
+
+std::string BeAmdPalMetaData::GetShaderSubtypeName(ShaderSubtype subtype)
+{
+    static const std::unordered_map<ShaderSubtype, const std::string&> inverseSubtypeMap = {{ShaderSubtype::kUnknown,       kStrUnknown},
+                                                                                            {ShaderSubtype::kRayGeneration, kStrRayGeneration},
+                                                                                            {ShaderSubtype::kMiss,          kStrMiss},
+                                                                                            {ShaderSubtype::kAnyHit,        kStrAnyHit},
+                                                                                            {ShaderSubtype::kClosestHit,    kStrClosestHit},
+                                                                                            {ShaderSubtype::kIntersection,  kStrIntersection},
+                                                                                            {ShaderSubtype::kCallable,      kStrCallable},
+                                                                                            {ShaderSubtype::kTraversal,     kStrTraversal}};
+
+    auto it = inverseSubtypeMap.find(subtype);
+    if (it != inverseSubtypeMap.end())
+    {
+        return it->second;
+    }
+    throw std::runtime_error("Unknown shader subtype: " + std::to_string(static_cast<int>(subtype)));
+}
+
+uint64_t GetHardwareStageProperty(const YAML::Node& node, const std::string& key)
+{
+    uint64_t ret = -1;
+    if (node[key])
+    {
+        ret = node[key].as<uint64_t>();
+    }
+    return ret;
+}
+
+beKA::beStatus beProgramBuilderVulkan::ParseAmdgpudisMetadata(const std::string& amdgpu_dis_output, BeAmdPalMetaData::PipelineMetaData& pipeline_md)
+{
+    beKA::beStatus status       = beKA::beStatus::kBeStatusSuccess;
+    size_t         start_offset = amdgpu_dis_output.find(kStrLcCodeObjectMetadataTokenStart);
+    size_t         end_offset;
+
+    std::vector<BeAmdPalMetaData::PipelineMetaData> pipelines;
+    while ((end_offset = amdgpu_dis_output.find(kStrLcCodeObjectMetadataTokenEnd, start_offset)) != std::string::npos)
+    {
+        try
+        {
+            const std::string& kernel_metadata_text =
+                amdgpu_dis_output.substr(start_offset, end_offset - start_offset + kStrLcCodeObjectMetadataTokenEnd.size());
+            YAML::Node codeobj_metadata_node = YAML::Load(kernel_metadata_text);
+
+            if (!codeobj_metadata_node.IsMap())
+            {
+                status = beKA::beStatus::kBeStatusVulkanCodeObjMdParsingFailed;
+                break;
+            }
+
+            if (codeobj_metadata_node[kStrCodeObjectMetadataKeyKernels])
+            {
+                status = beKA::beStatus::kBeStatusVulkanComputeCodeObjMetaDataSuccess;
+                break;
+            }
+
+            for (const auto& pipelineNode : codeobj_metadata_node[kStrCodeObjectMetadataKeyPipelines])
+            {
+                BeAmdPalMetaData::PipelineMetaData pipeline;
+                pipeline.api = pipelineNode[kAmdgpuDisDotApiToken].as<std::string>();
+
+                for (const auto& stageNode : pipelineNode[kAmdgpuDisDotHardwareStagesToken])
+                {
+                    BeAmdPalMetaData::HardwareStageMetaData stage;
+
+                    stage.stage_type                = BeAmdPalMetaData::GetStageType(stageNode.first.as<std::string>());
+                    stage.stats.lds_size_used       = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotLdsSizeToken);
+                    stage.stats.scratch_memory_used = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotScratchMemorySizeToken);
+                    stage.stats.num_sgprs_used      = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotSgprCountToken);
+                    stage.stats.num_sgprs_available = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotSgprLimitToken);
+                    stage.stats.num_vgprs_used      = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotVgprCountToken);
+                    stage.stats.num_vgprs_available = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotVgprLimitToken);
+                    
+                    pipeline.hardware_stages.push_back(stage);
+                }
+
+                if (pipelineNode[kAmdgpuDisDotShaderFunctionsToken])
+                {
+                    for (const auto& functionNode : pipelineNode[kAmdgpuDisDotShaderFunctionsToken])
+                    {
+                        BeAmdPalMetaData::ShaderFunctionMetaData function;
+
+                        function.name                            = functionNode.first.as<std::string>();
+                        function.shader_subtype                  = BeAmdPalMetaData::GetShaderSubtype(functionNode.second[kAmdgpuDisDotShaderSubtypeToken].as<std::string>());
+
+                        function.stats.lds_size_used       = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotLdsSizeToken);
+                        function.stats.scratch_memory_used = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotScratchMemorySizeToken);
+                        function.stats.num_sgprs_used      = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotSgprCountToken);
+                        function.stats.num_sgprs_available = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotSgprLimitToken);
+                        function.stats.num_vgprs_used      = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotVgprCountToken);
+                        function.stats.num_vgprs_available = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotVgprLimitToken);
+                    
+                        pipeline.shader_functions.push_back(function);
+                    }
+                    status = beKA::beStatus::kBeStatusVulkanRayTracingCodeObjMetaDataSuccess;
+                }
+                else
+                {
+                    status = beKA::beStatus::kBeStatusVulkanGraphicsCodeObjMetaDataSuccess;
+                }
+
+                for (const auto& shaderNode : pipelineNode[kAmdgpuDisDotShadersToken])
+                {
+                    BeAmdPalMetaData::ShaderMetaData shader;
+                    shader.shader_type                    = BeAmdPalMetaData::GetShaderType(shaderNode.first.as<std::string>());
+                    const YAML::Node& hardwareMappingNode = shaderNode.second[kAmdgpuDisDotHardwareMappingToken];
+                    if (hardwareMappingNode.IsSequence() && hardwareMappingNode.size() > 0)
+                    {
+                        shader.hardware_mapping = BeAmdPalMetaData::GetStageType(hardwareMappingNode[0].as<std::string>());
+                    }
+                    else
+                    {
+                        status = beKA::beStatus::kBeStatusVulkanCodeObjMdParsingFailed;
+                        break;
+                    }
+                    if (shaderNode.second[kAmdgpuDisDotShaderSubtypeToken])
+                    {
+                        shader.shader_subtype = BeAmdPalMetaData::GetShaderSubtype(shaderNode.second[kAmdgpuDisDotShaderSubtypeToken].as<std::string>());
+                        if (shader.shader_subtype != BeAmdPalMetaData::ShaderSubtype::kUnknown)
+                        {
+                            status = beKA::beStatus::kBeStatusVulkanRayTracingCodeObjMetaDataSuccess;
+                        }
+                    }
+                    pipeline.shaders.push_back(shader);
+                }
+
+                pipelines.push_back(pipeline);
+            }
+        }
+        catch (const YAML::ParserException&)
+        {
+            status = beKA::beStatus::kBeStatusVulkanCodeObjMdParsingFailed;
+            break;
+        }
+        catch (const std::runtime_error&)
+        {
+            status = beKA::beStatus::kBeStatusVulkanCodeObjMdParsingFailed;
+            break;
+        }
+
+        start_offset = amdgpu_dis_output.find(kStrLcCodeObjectMetadataTokenStart, end_offset);
+        if (start_offset == std::string::npos)
+        {
+            break;
+        }
+    }
+
+    if (status != beKA::beStatus::kBeStatusVulkanCodeObjMdParsingFailed && pipelines.size() > 0)
+    {
+        pipeline_md = std::move(pipelines[0]);
     }
 
     return status;

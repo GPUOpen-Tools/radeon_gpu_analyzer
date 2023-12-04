@@ -14,7 +14,7 @@ class RgMenuBuildSettingsItem :
     Q_OBJECT
 
 public:
-    explicit RgMenuBuildSettingsItem(RgMenu* parent = nullptr);
+    explicit RgMenuBuildSettingsItem(RgMenu* parent = nullptr, QString tooltip = "");
     virtual ~RgMenuBuildSettingsItem() = default;
 
     // Get a pointer to the build settings button within the item.

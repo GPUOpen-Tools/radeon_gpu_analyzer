@@ -3,6 +3,7 @@
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_entry_point_tree.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_menu_file_item_opencl.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 
 // Qt.
@@ -85,7 +86,7 @@ void RgMenuEntryPointTree::HandleOpenContextMenu(const QPoint& widget_click_posi
 {
     // Get and save the kernel name clicked on.
     QModelIndex model_index = this->indexAt(widget_click_position);
-    kernel_name_ = model_index.data().toString();
+    kernel_name_            = model_index.data(RgMenuUserRoles::kCopyNameRole).toString();
 
     // Convert the widget's local click position to the global screen position.
     const QPoint click_point = mapToGlobal(widget_click_position);

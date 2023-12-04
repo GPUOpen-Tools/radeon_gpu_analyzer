@@ -119,11 +119,14 @@ public:
     // output_filename - the output file name
     // callback - callback to log messages
     // print_cmd - print command line to stdout
+    // is_reg_type_sgpr - true for sgpr analysis, default is vgpr.
     static bool PerformLiveRegisterAnalysis(const gtString&         isa_filename,
                                             const gtString&         target,
                                             const gtString&         output_filename,
-                                            LoggingCallbackFunction callback, bool print_cmd,
-                                            beWaveSize        wave_size = beWaveSize::kUnknown);
+                                            LoggingCallbackFunction callback, 
+                                            bool                    print_cmd,
+                                            bool                    is_reg_type_sgpr = false,
+                                            beWaveSize              wave_size = beWaveSize::kUnknown);
 
     // Performs live register analysis for the ISA in the given file, and dumps
     // the output to the given output file name.
@@ -132,28 +135,12 @@ public:
     // output_filename - the output file name
     // callback - callback to log messages
     // print_cmd - print command line to stdout
-    static bool PerformLiveRegisterAnalysis(const std::string& isa_filename,const std::string& target, const std::string& output_filename,
-        LoggingCallbackFunction callback, bool print_cmd);
-
-    // Performs stall analysis for the ISA in the given file, and dumps
-    // the output to the given output file name.
-    // isa_filename - the disassembled ISA file name
-    // target - the target device name
-    // output_filename - the output file name
-    // callback - callback to log messages
-    // print_cmd - print command line to stdout
-    static bool PerformStallAnalysis(const gtString& isa_filename, const gtString& target, const gtString& output_filename,
-        LoggingCallbackFunction callback, bool print_cmd);
-
-    // Performs stall analysis for the ISA in the given file, and dumps
-    // the output to the given output file name.
-    // isa_filename - the disassembled ISA file name
-    // target - the target device name
-    // output_filename - the output file name
-    // callback - callback to log messages
-    // print_cmd - print command line to stdout
-    static bool PerformStallAnalysis(const std::string& isa_filename, const std::string& target, const std::string& output_filename,
-        LoggingCallbackFunction callback, bool print_cmd);
+    static bool PerformLiveRegisterAnalysis(const std::string&      isa_filename,
+                                            const std::string&      target, 
+                                            const std::string&      output_filename,
+                                            LoggingCallbackFunction callback,
+                                            bool                    print_cmd,
+                                            bool                    is_reg_type_sgpr = false);
 
     // Generates control flow graph for the given ISA.
     // isa_file_name - the disassembled ISA file name
@@ -197,6 +184,11 @@ public:
         const std::string& ext,
         std::string& out_filename,
         bool should_append_suffix = true);
+
+    // Checks if the file name is too long for the OS.
+    // file_path - the disassembled ISA file name
+    // returns true if file_path is longer than 256 char
+    static bool IsFileNameTooLong(const std::string& file_path);
 
     // Append suffix to the provided file name.
     // If the file name has an extension, the suffix will be appended before the extension.
@@ -298,6 +290,33 @@ public:
     static ProcessStatus LaunchProcess(const std::string& exec_path, const std::string& args, const std::string& dir,
                                        unsigned long time_out, bool print_cmd, std::string& std_out, std::string& std_err, long& exit_code);
 
+#ifdef _WIN32
+    // Launch a process with provided executable name and command line arguments.
+    // \param[in]  exec_path    the executable path
+    // \param[in]  args         command line arguments
+    // \param[in]  dir          working directory for the process. If empty string is provided, the current directory will be used.
+    // \param[in]  time_out     process time out in milliseconds
+    // \param[in]  print_cmd    print the command + arguments to be launched.
+    // \param[in]  print_dbg    print the captured output debug string from the launched process
+    // \param[in]  dbg_prologue string to be printed before printing the captured output debug string from the launched process
+    // \param[in]  dbg_epilogue string to be printed after printing the captured output debug string from the launched process
+    // \param[out] std_out      the content of stdout stream dumped by launched process
+    // \param[out] std_err      the content of stderr stream dumped by launched process
+    // \param[out] exit_code    the exit code returned by launched process
+    // Returns status of process launch.
+    static ProcessStatus LaunchProcess(const std::string& exec_path,
+                                       const std::string& args,
+                                       const std::string& dir,
+                                       unsigned long      time_out,
+                                       bool               print_cmd,
+                                       bool               print_dbg,
+                                       std::string_view   dbg_prologue,
+                                       std::string_view   dbg_epilogue, 
+                                       std::string&       std_out,
+                                       std::string&       std_err,
+                                       long&              exit_code);
+#endif
+
     // Open new CLI log file and delete old files (older than 1 week).
     static bool  InitCLILogFile(const Config& config);
 
@@ -336,6 +355,9 @@ public:
     // Returns true if the target is Navi21 otherwise.
     static bool IsNavi21(const std::string& target_name);
 
+    // Returns true if the target is of the MIx00 generation and false otherwise.
+    static bool IsMITarget(const std::string& target_name);
+
     // Returns true if the target is of the Vega generation and false otherwise.
     static bool IsVegaTarget(const std::string& target_name);
 
@@ -359,6 +381,9 @@ public:
 
     // Adjust base file name for live register analysis output file.
     static std::string AdjustBaseFileNameLivereg(const std::string& user_input_filename, const std::string& device);
+
+    // Adjust base file name for live register analysis output file.
+    static std::string AdjustBaseFileNameLiveregSgpr(const std::string& user_input_filename, const std::string& device);    
 
     // Adjust base file name for stall analysis output file.
     static std::string AdjustBaseFileNameStallAnalysis(const std::string& user_input_filename, const std::string& device);

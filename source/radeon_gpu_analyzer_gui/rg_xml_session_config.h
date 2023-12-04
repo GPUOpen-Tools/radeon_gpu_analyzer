@@ -21,7 +21,9 @@ public:
     static bool ReadSessionMetadataOpenCL(const std::string& session_metadata_file_path, std::shared_ptr<RgCliBuildOutputOpencl>& cli_output);
 
     // Read the Vulkan Pipeline session metadata XML at the given file path.
-    static bool ReadSessionMetadataVulkan(const std::string& session_metadata_file_path, std::shared_ptr<RgCliBuildOutputPipeline>& cli_output);
+    static bool ReadSessionMetadataVulkan(const std::string&                         session_metadata_file_path,
+                                          std::shared_ptr<RgCliBuildOutputPipeline>& cli_output,
+                                          bool                                       is_codeobj_input_file = false);
 
 private:
     // Read the outputs node into an RgOutputItem array.

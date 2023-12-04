@@ -330,6 +330,10 @@ void RgMainWindow::ConnectBuildViewSignals()
             is_connected = connect(build_view, &RgBuildView::ProjectBuildStarted, this, &RgMainWindow::HandleProjectBuildStarted);
             assert(is_connected);
 
+            // Connect the project build event trigger action signal.
+            is_connected = connect(build_view, &RgBuildView::BuildProjectEvent, this, &RgMainWindow::HandleBuildProjectEvent);
+            assert(is_connected);
+
             // Connect the update application notification message signal.
             is_connected = connect(build_view, &RgBuildView::UpdateApplicationNotificationMessageSignal, this, &RgMainWindow::HandleUpdateAppNotificationMessage);
             assert(is_connected);
@@ -779,6 +783,7 @@ void RgMainWindow::CreateEditMenuActions()
 
 void RgMainWindow::EnableEditMenu(bool is_enabled)
 {
+    assert(app_state_ != nullptr);
     // Toggle the actions associated with the Edit menu items.
     go_to_line_action_->setEnabled(is_enabled);
     find_action_->setEnabled(is_enabled);
@@ -888,7 +893,7 @@ void RgMainWindow::SetWindowTitle(const std::string& title_text)
     // Determine which API is being used.
     std::string api_name;
     RgProjectAPI project_api = RgConfigManager::Instance().GetCurrentAPI();
-    bool is_ok = RgUtils::ProjectAPIToString(project_api, api_name);
+    bool is_ok = RgUtils::ProjectAPIToString(project_api, api_name, false);
     assert(is_ok);
     if (is_ok)
     {
@@ -911,7 +916,7 @@ void RgMainWindow::ResetWindowTitle()
     // Determine which API is being used.
     std::string api_name;
     RgProjectAPI project_api = RgConfigManager::Instance().GetCurrentAPI();
-    bool is_ok = RgUtils::ProjectAPIToString(project_api, api_name);
+    bool is_ok = RgUtils::ProjectAPIToString(project_api, api_name, false);
     assert(is_ok);
     if (is_ok)
     {
@@ -932,6 +937,12 @@ void RgMainWindow::HandleHasSettingsPendingStateChanged(bool has_pending_changes
 
 void RgMainWindow::HandleProjectFileCountChanged(bool is_project_empty)
 {
+    assert(app_state_ != nullptr);
+    if (app_state_ != nullptr && app_state_->IsAnalysis())
+    {
+        return;
+    }
+
     // Toggle the actions associated with the build menu items.
     build_project_action_->setEnabled(!is_project_empty);
 
@@ -1528,9 +1539,17 @@ void RgMainWindow::HandleSelectedFileChanged(const std::string& old_file, const 
     Q_UNUSED(old_file);
     Q_UNUSED(new_file);
 
-    // Enable the Edit menu functionality.
-    go_to_line_action_->setEnabled(true);
-    find_action_->setEnabled(true);
+    assert(app_state_ != nullptr);
+    if (app_state_ != nullptr && app_state_->IsAnalysis())
+    {
+        ;
+    }
+    else
+    {
+        // Enable the Edit menu functionality.
+        go_to_line_action_->setEnabled(true);
+        find_action_->setEnabled(true);
+    }
 }
 
 void RgMainWindow::HandleProjectCreated()
@@ -1635,10 +1654,13 @@ void RgMainWindow::HandleFocusPrevWidget()
 
 void RgMainWindow::HandleProjectBuildFailure()
 {
-    RgUtils::SetStatusTip(kStrStatusBarBuildFailed, this);
+    std::string strStatusBarBuildFailed;
+    status_bar_->ConstructStatusMessageString(RgStatusBar::StatusType::kFailed, strStatusBarBuildFailed);
+
+    RgUtils::SetStatusTip(strStatusBarBuildFailed.c_str(), this);
 
     // Show the build failure message.
-    this->statusBar()->showMessage(kStrStatusBarBuildFailed);
+    this->statusBar()->showMessage(strStatusBarBuildFailed.c_str());
 
     // Reset the view's state.
     ResetViewStateAfterBuild();
@@ -1646,10 +1668,13 @@ void RgMainWindow::HandleProjectBuildFailure()
 
 void RgMainWindow::HandleProjectBuildCanceled()
 {
-    RgUtils::SetStatusTip(kStrStatusBarBuildCanceled, this);
+    std::string strStatusBarBuildCanceled;
+    status_bar_->ConstructStatusMessageString(RgStatusBar::StatusType::kCanceled, strStatusBarBuildCanceled);
+
+    RgUtils::SetStatusTip(strStatusBarBuildCanceled.c_str(), this);
 
     // Show the build cancellation message.
-    this->statusBar()->showMessage(kStrStatusBarBuildCanceled);
+    this->statusBar()->showMessage(strStatusBarBuildCanceled.c_str());
 
     // Reset the view's state.
     ResetViewStateAfterBuild();
@@ -1663,18 +1688,33 @@ void RgMainWindow::ResetViewStateAfterBuild()
     // Use the App State interface to reset the view state.
     app_state_->ResetViewStateAfterBuild();
 
-    // Re-enable all menu items, since the build is over.
-    build_project_action_->setEnabled(true);
-    cancel_build_action_->setEnabled(false);
-    open_project_action_->setEnabled(true);
-    back_to_home_action_->setEnabled(true);
-    build_settings_action_->setEnabled(true);
     assert(app_state_ != nullptr);
-    if (app_state_ != nullptr && app_state_->IsGraphics() &&
-        pipeline_state_action_ != nullptr)
+    if (app_state_ != nullptr && app_state_->IsAnalysis())
     {
-        pipeline_state_action_->setEnabled(true);
+        build_project_action_->setEnabled(false);
+        build_settings_action_->setEnabled(false);
+        cancel_build_action_->setEnabled(false);
+        
+        go_to_line_action_->setEnabled(false);
+        find_action_->setEnabled(false);
+
+        open_project_action_->setEnabled(true);
+        back_to_home_action_->setEnabled(true);
     }
+    else
+    {
+        // Re-enable all menu items, since the build is over.
+        build_project_action_->setEnabled(true);
+        cancel_build_action_->setEnabled(false);
+        open_project_action_->setEnabled(true);
+        back_to_home_action_->setEnabled(true);
+        build_settings_action_->setEnabled(true);
+        assert(app_state_ != nullptr);
+        if (app_state_ != nullptr && app_state_->IsGraphics() && pipeline_state_action_ != nullptr)
+        {
+            pipeline_state_action_->setEnabled(true);
+        }
+    }    
 
     assert(app_state_ != nullptr);
     if (app_state_ != nullptr)
@@ -1702,9 +1742,12 @@ void RgMainWindow::ResetViewStateAfterBuild()
 
 void RgMainWindow::HandleProjectBuildSuccess()
 {
-    RgUtils::SetStatusTip(kStrStatusBarBuildSucceeded, this);
+    std::string strStatusBarBuildSucceeded;
+    status_bar_->ConstructStatusMessageString(RgStatusBar::StatusType::kSucceeded, strStatusBarBuildSucceeded);
 
-    this->statusBar()->showMessage(kStrStatusBarBuildSucceeded);
+    RgUtils::SetStatusTip(strStatusBarBuildSucceeded.c_str(), this);
+
+    this->statusBar()->showMessage(strStatusBarBuildSucceeded.c_str());
 
     // Reset the view's state.
     ResetViewStateAfterBuild();
@@ -1717,7 +1760,11 @@ void RgMainWindow::HandleProjectBuildStarted()
 
     // Update the status bar.
     this->statusBar()->removeWidget(app_notification_widget_);
-    RgUtils::SetStatusTip(kStrStatusBarBuildStarted, this);
+
+    std::string strStatusBarBuildStarted;
+    status_bar_->ConstructStatusMessageString(RgStatusBar::StatusType::kStarted, strStatusBarBuildStarted);
+
+    RgUtils::SetStatusTip(strStatusBarBuildStarted.c_str(), this);
 
     // Do not allow another build while a build is already in progress.
     build_project_action_->setEnabled(false);
@@ -1987,7 +2034,10 @@ void RgMainWindow::HandleStatusBarMessageChange(const QString& msg)
             }
         }
 
-        this->statusBar()->showMessage(is_build_in_progress ? kStrStatusBarBuildStarted : msg);
+        std::string strStatusBarBuildStarted;
+        status_bar_->ConstructStatusMessageString(RgStatusBar::StatusType::kStarted, strStatusBarBuildStarted);
+
+        this->statusBar()->showMessage(is_build_in_progress ? strStatusBarBuildStarted.c_str() : msg);
     }
 }
 
@@ -2262,4 +2312,31 @@ bool RgMainWindow::eventFilter(QObject* object, QEvent* event)
         // Continue default processing.
         return QObject::eventFilter(object, event);
     }
+}
+
+bool RgMainWindow::LoadBinaryCodeObject(const QString filename)
+{
+    QStringList filename_strings;
+    bool        is_file_valid = RgUtils::IsFileExists(filename.toStdString()) && 
+        RgUtils::IsSourceFileTypeValid(filename.toStdString());
+    if (is_file_valid)
+    {
+        filename_strings.push_back(filename);
+
+        // Disable additional drops and open the desired files in the build view.
+        assert(app_state_ != nullptr);
+        if (app_state_ != nullptr)
+        {
+            setAcceptDrops(false);
+            if (is_file_valid)
+            {
+                app_state_->OpenFilesInBuildView(filename_strings);
+            }
+            setAcceptDrops(true);
+        }
+
+        // Set the focus to main window so the user can use keyboard shortcuts.
+        setFocus();
+    }
+    return is_file_valid;
 }

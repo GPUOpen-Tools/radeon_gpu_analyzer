@@ -4,6 +4,7 @@
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_factory.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_opencl.h"
+#include "radeon_gpu_analyzer_gui/rg_factory_binary.h"
 #include "radeon_gpu_analyzer_gui/rg_factory_opencl.h"
 #include "radeon_gpu_analyzer_gui/rg_factory_vulkan.h"
 
@@ -21,6 +22,11 @@ std::shared_ptr<RgFactory> RgFactory::CreateFactory(RgProjectAPI api)
     case RgProjectAPI::kVulkan:
         {
             factory = std::make_shared<RgFactoryVulkan>();
+        }
+        break;
+    case RgProjectAPI::kBinary:
+        {
+            factory = std::make_shared<RgFactoryBinary>();
         }
         break;
     default:

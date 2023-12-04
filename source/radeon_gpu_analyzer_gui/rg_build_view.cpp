@@ -657,6 +657,21 @@ void RgBuildView::BuildCurrentProject()
                     }
                     is_project_built = RgCliLauncher::BuildProjectCloneVulkan(project_, clone_index_, output_path, binary_name, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
                 }
+                else if (current_api == RgProjectAPI::kBinary)
+                {
+                    std::shared_ptr<RgBuildSettings> project_settings = project_->clones[clone_index_]->build_settings;
+                    assert(project_settings != nullptr);
+                    if (project_settings != nullptr)
+                    {
+                        is_project_built = RgCliLauncher::BuildProjectCloneBinary(project_,
+                                                                                  clone_index_,
+                                                                                  output_path,
+                                                                                  project_settings->binary_file_name,
+                                                                                  append_build_output,
+                                                                                  gpus_with_build_outputs,
+                                                                                  cancel_bulid_signal_);
+                    }
+                }
 
                 // Verify that the build was not canceled.
                 if (!cancel_bulid_signal_)
@@ -690,7 +705,7 @@ void RgBuildView::BuildCurrentProject()
                     emit ProjectBuildCanceled();
 
                     // Notify the user that the build was canceled.
-                    HandleNewCLIOutputString(kStrStatusBarBuildCanceled);
+                    HandleNewCLIOutputString(kStrBuildCanceled);
                 }
             }
         }
@@ -777,7 +792,7 @@ bool RgBuildView::CreateNewEmptyProject()
         bool is_valid_project_path = false;
         do
         {
-            RgRenameProjectDialog* rename_project_dialog = factory_->CreateRenameProjectDialog(project_name, parent_);
+             auto rename_project_dialog = std::unique_ptr<RgRenameProjectDialog>(factory_->CreateRenameProjectDialog(project_name, parent_));
 
             // Prompt the user for the project name.
             int rc = rename_project_dialog->exec();
@@ -810,9 +825,6 @@ bool RgBuildView::CreateNewEmptyProject()
             {
                 break;
             }
-
-            // Free memory.
-            RG_SAFE_DELETE(rename_project_dialog);
 
         } while (!is_valid_project_path);
     }
@@ -952,7 +964,8 @@ bool RgBuildView::InitializeView()
 
 void RgBuildView::SetBuildSettingsStylesheet(const std::string& stylesheet)
 {
-    assert(build_settings_view_ != nullptr);
+    RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
+    assert(build_settings_view_ != nullptr || (current_api == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
     if (build_settings_view_ != nullptr)
     {
         build_settings_view_->setStyleSheet(stylesheet.c_str());
@@ -1964,6 +1977,12 @@ void RgBuildView::HandleProjectBuildSuccess()
 
     // Resize the disassembly view.
     HandleDisassemblyTableWidthResizeRequested(0);
+    // Then maximize the size of the disassembly view for Binary Analysis mode.
+    if (disassembly_view_container_ != nullptr && RgConfigManager::Instance().GetCurrentAPI() == RgProjectAPI::kBinary)
+    {
+        disassembly_view_container_->SwitchContainerSize();
+        disassembly_view_container_->SetIsMaximizable(false);
+    }
 
     // Update the notification message if needed.
     UpdateApplicationNotificationMessage();
@@ -2145,6 +2164,12 @@ void RgBuildView::RemoveInputFile(const std::string& input_file_full_path)
         // Hide the disassembly view when there's no data in it.
         if (disassembly_view_->IsEmpty())
         {
+            // Restore disassembly_view_container_ in Binary mode.
+            if (disassembly_view_container_ != nullptr && config_manager.GetCurrentAPI() == RgProjectAPI::kBinary)
+            {
+                disassembly_view_container_->SetIsMaximizable(true);
+            }
+
             // Minimize the disassembly view before hiding it to preserve correct RgBuildView layout.
             disassembly_view_splitter_->Restore();
 
@@ -2588,7 +2613,8 @@ void RgBuildView::CreateBuildSettingsView()
                 {
                     // Create the build settings interface.
                     build_settings_view_ = factory_->CreateBuildSettingsView(this, clone->build_settings, false);
-                    assert(build_settings_view_ != nullptr);
+                    RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
+                    assert(build_settings_view_ != nullptr || (current_api == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
 
                     // If the build settings view was created successfully, connect the signals.
                     if (build_settings_view_ != nullptr)
@@ -2800,7 +2826,7 @@ void RgBuildView::RenameFile(const std::string& old_file_path, const std::string
     }
 
     // Update the project's source file list with the new filepath.
-    RgConfigManager::UpdateSourceFilepath(old_file_path, new_file_path, project_, clone_index_);
+    RgConfigManager::Instance().UpdateSourceFilepath(old_file_path, new_file_path, project_, clone_index_);
 
     // Save the updated project file.
     RgConfigManager::Instance().SaveProjectFile(project_);
@@ -2991,30 +3017,64 @@ void RgBuildView::CheckExternalFileModification()
         // If the modification time is not the same as remembered, the file has been changed externally.
         if (file_info.lastModified() != expected_last_modified)
         {
-            // Notify other components in the system that this file has been modified outside the app.
-            emit CurrentFileModified();
+            HandleExternalFileModification(file_info);
+        }
+    }
+}
 
-            QString message_text = QString(filename.c_str()) + "\n\n" + kStrReloadFileDialogText;
+void RgBuildView::HandleExternalFileModification(const QFileInfo& file_info)
+{
+    std::string modified_filename = file_info.filePath().toStdString();
+    bool is_file_exists = RgUtils::IsFileExists(modified_filename);
+    if (is_file_exists)
+    {
+        // Notify other components in the system that this file has been modified outside the app.
+        emit CurrentFileModified();
 
-            // Show message box to ask if the user want to reload the file.
-            int response = QMessageBox::question(this, kStrReloadFileDialogTitle, message_text, QMessageBox::Yes, QMessageBox::No);
+        QString message_text = QString(modified_filename.c_str()) + "\n\n" + kStrReloadFileDialogText;
 
-            // Get user response.
-            switch (response)
-            {
-            case QMessageBox::Yes:
-                ReloadFile(filename);
-                break;
-            case QMessageBox::No:
-                file_modified_time_map_[current_code_editor_] = file_info.lastModified();
+        // Show message box to ask if the user want to reload the file.
+        int response = QMessageBox::question(this, kStrReloadFileDialogTitle, message_text, QMessageBox::Yes, QMessageBox::No);
 
-                // Indicate the document is unsaved, regardless of any previous state.
-                current_code_editor_->document()->setModified(true);
-                break;
-            default:
-                // Should never get here.
-                assert(false);
-            }
+        // Get user response.
+        switch (response)
+        {
+        case QMessageBox::Yes:
+            ReloadFile(modified_filename);
+            break;
+        case QMessageBox::No:
+            file_modified_time_map_[current_code_editor_] = file_info.lastModified();
+
+            // Indicate the document is unsaved, regardless of any previous state.
+            current_code_editor_->document()->setModified(true);
+            break;
+        default:
+            // Should never get here.
+            assert(false);
+        }
+    }
+    else
+    {
+        QString message_text = QString(modified_filename.c_str()) + "\n\n" + kStrCreateFileDialogText + "\n" + kStrRemoveFileDialogText;
+
+        // Show message box to ask if the user want to sve the file.
+        int response = QMessageBox::question(this, kStrCreateFileDialogTitle, message_text, QMessageBox::Yes, QMessageBox::No);
+
+        // Get user response.
+        switch (response)
+        {
+        case QMessageBox::Yes:
+            current_code_editor_->document()->setModified(true);
+            // Save the file to disk.
+            SaveSourceFile(modified_filename);
+            break;
+        case QMessageBox::No:
+            // Remove the input file from the RgBuildView.
+            RemoveInputFile(modified_filename);
+            break;
+        default:
+            // Should never get here.
+            assert(false);
         }
     }
 }
@@ -3150,7 +3210,8 @@ void RgBuildView::HandleRestoreDefaultsSettingsClicked()
             settings_buttons_view_->EnableSaveButton(false);
         }
 
-        assert(build_settings_view_ != nullptr);
+        RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
+        assert(build_settings_view_ != nullptr || (current_api == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
         if (build_settings_view_ != nullptr)
         {
             build_settings_view_->RestoreDefaultSettings();
@@ -3160,17 +3221,26 @@ void RgBuildView::HandleRestoreDefaultsSettingsClicked()
 
 void RgBuildView::HandleSetFrameBorderGreen()
 {
-    build_settings_widget_->setStyleSheet(kStrBuildViewBuildSettingsWidgetStylesheetGreen);
+    if (build_settings_widget_ != nullptr)
+    {
+        build_settings_widget_->setStyleSheet(kStrBuildViewBuildSettingsWidgetStylesheetGreen);
+    }
 }
 
 void RgBuildView::HandleSetFrameBorderRed()
 {
-    build_settings_widget_->setStyleSheet(kStrBuildViewBuildSettingsWidgetStylesheetRed);
+    if (build_settings_widget_ != nullptr)
+    {
+        build_settings_widget_->setStyleSheet(kStrBuildViewBuildSettingsWidgetStylesheetRed);
+    }
 }
 
 void RgBuildView::HandleSetFrameBorderBlack()
 {
-    build_settings_widget_->setStyleSheet(kStrBuildViewBuildSettingsWidgetStylesheetBlack);
+    if (build_settings_widget_ != nullptr)
+    {
+        build_settings_widget_->setStyleSheet(kStrBuildViewBuildSettingsWidgetStylesheetBlack);
+    }
 }
 
 void RgBuildView::HandleDisassemblyViewSizeMaximize()

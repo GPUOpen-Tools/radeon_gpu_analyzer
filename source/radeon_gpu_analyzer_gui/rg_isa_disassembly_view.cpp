@@ -83,6 +83,9 @@ RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent) :
     // Set the push button font sizes.
     SetFontSizes();
 
+    // Create Full kernel Name Label.
+    CreateKernelNameLabel();
+
     // Set the focus proxy of the view maximize button to be the title bar.
     // This will cause the frame border to change to black when the maximize button loses focus.
     // This is because the view title bar already handles its own loss of focus event.
@@ -408,7 +411,7 @@ void RgIsaDisassemblyView::HandleTargetGpuChanged(int current_index)
         if (target_gpu_item != nullptr)
         {
             // Change the target GPU if it differs from the current target GPU.
-            std::string current_target_gpu = ui_.targetGpuPushButton->text().toStdString();
+            std::string current_target_gpu = GetTargetGpuButtonText();
             std::string new_target_gpu = target_gpu_item->text().toStdString();
             if (current_target_gpu.compare(new_target_gpu) != 0)
             {
@@ -623,6 +626,18 @@ void RgIsaDisassemblyView::ConnectSignals()
     // Connect the handler to process the hot key press.
     is_connected = connect(select_previous_max_vgpr_line_, &QAction::triggered, this, &RgIsaDisassemblyView::HandleSelectPreviousMaxVgprLineAction);
     assert(is_connected);
+}
+
+void RgIsaDisassemblyView::CreateKernelNameLabel()
+{
+    // Update scale factor for widgets.
+    QFont  font         = ui_.kernelNameLabel->font();
+    double scale_factor = ScalingManager::Get().GetScaleFactor();
+    font.setPointSize(font.pointSize() * scale_factor);
+    ui_.kernelNameLabel->setStyleSheet(s_LIST_WIDGET_STYLE.arg(font.pointSize()));
+
+    ui_.horizontalSpacer_2->changeSize(0, 0);
+    HandleSetKernelNameLabel(false);
 }
 
 void RgIsaDisassemblyView::HandleCurrentTabChanged(int index)
@@ -1085,6 +1100,25 @@ void RgIsaDisassemblyView::UpdateAllCheckBoxText()
     }
 }
 
+void RgIsaDisassemblyView::HandleSetKernelNameLabel(bool show, const std::string& setLabelText)
+{
+    if (show)
+    {
+        if (!setLabelText.empty())
+        {
+            std::stringstream ss;
+            ss << "Kernel Name: ";
+            ss << setLabelText;
+            ui_.kernelNameLabel->setText(ss.str().c_str());
+        }
+        ui_.kernelNameLabel->show();
+    }
+    else
+    {
+        ui_.kernelNameLabel->hide();
+    }
+}
+
 void RgIsaDisassemblyView::DestroyDisassemblyViewsForFile(const std::string& input_file_path)
 {
     // Keep a list of tabs that should be destroyed after removing the input file.
@@ -1190,7 +1224,7 @@ void RgIsaDisassemblyView::SetTargetGpu(const std::string& target_gpu)
     static const int kArrowWidgetExtraWidth = 30;
 
     // Update the button text.
-    ui_.targetGpuPushButton->setText(target_gpu.c_str());
+    SetTargetGpuButtonText(target_gpu);
 
     // Measure the width of the Target GPU text, and add extra space to account for the width of the arrow.
     int scaled_arrow_width = static_cast<int>(kArrowWidgetExtraWidth * ScalingManager::Get().GetScaleFactor());
@@ -1402,4 +1436,58 @@ void RgIsaDisassemblyView::HandleSelectPreviousMaxVgprLineAction()
         // Show the previous max VGPR lines for the current tab view.
         current_tab_view_->HandleShowPreviousMaxVgprSignal();
     }
+}
+
+class RgIsaDisassemblyViewDisplayTextUtil
+{
+public:
+    RgIsaDisassemblyViewDisplayTextUtil()
+    {
+        map_text_to_display_ = {{"gfx90a", "gfx90a (mi200)"}};
+        map_display_to_text_ = GenerateReverseMap(map_text_to_display_);
+    }
+
+    std::string GetDisplayText(const std::string& text)
+    {
+        auto it = map_text_to_display_.find(text);
+        if (it != map_text_to_display_.end())
+        {
+            return it->second;
+        }
+        return text;
+    }
+
+    std::string GetOriginalText(const std::string& display)
+    {
+        auto it = map_display_to_text_.find(display);
+        if (it != map_display_to_text_.end())
+        {
+            return it->second;
+        }
+        return display;
+    }
+
+private:
+    std::unordered_map<std::string, std::string> map_text_to_display_;
+    std::unordered_map<std::string, std::string> map_display_to_text_;
+
+    std::unordered_map<std::string, std::string> GenerateReverseMap(const std::unordered_map<std::string, std::string>& input_map)
+    {
+        std::unordered_map<std::string, std::string> reverse_map;
+        for (const auto& pair : input_map)
+        {
+            reverse_map[pair.second] = pair.first;
+        }
+        return reverse_map;
+    }
+} kRgIsaDisassemblyViewDisplayTextUtil;
+
+void RgIsaDisassemblyView::SetTargetGpuButtonText(const std::string& target_gpu)
+{    
+    ui_.targetGpuPushButton->setText(kRgIsaDisassemblyViewDisplayTextUtil.GetDisplayText(target_gpu).c_str());
+}
+
+std::string RgIsaDisassemblyView::GetTargetGpuButtonText() const
+{
+    return kRgIsaDisassemblyViewDisplayTextUtil.GetOriginalText(ui_.targetGpuPushButton->text().toStdString());
 }

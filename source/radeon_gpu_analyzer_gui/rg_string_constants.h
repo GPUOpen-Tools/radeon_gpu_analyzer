@@ -69,14 +69,16 @@ static const char* kStrVkFileExtGlsl      = "vert;frag;tesc;tese;geom;comp";
 static const char* kStrVkFileExtHlsl      = "hlsl";
 
 // *** LOG FILE MESSAGES  - START ***
-static const char* kStrLogRgaGuiStarted             = "RGA GUI started.";
-static const char* kStrLogFailedLoadVersionInfoFile = "Failed to load version info file: ";
-static const char* kStrLogFailedInitConfig          = "Initialization of Config Manager failed.";
-static const char* kStrLogClosingRgaGui             = "Closing RGA GUI.";
-static const char* kStrLogBuildingProjectClone1     = "Building Project: ";
-static const char* kStrLogBuildingProjectClone2     = ", clone: ";
-static const char* kStrLogLaunchingCli              = "Launching RGA CLI with command line: ";
-static const char* kStrLogExtractSettingsError      = "Error reading settings file.";
+static const char* kStrLogRgaGuiStarted              = "RGA GUI started.";
+static const char* kStrLogFailedLoadVersionInfoFile  = "Failed to load version info file: ";
+static const char* kStrLogFailedInitConfig           = "Initialization of Config Manager failed.";
+static const char* kStrLogClosingRgaGui              = "Closing RGA GUI.";
+static const char* kStrLogBuildingProjectClone1      = "Building Project: ";
+static const char* kStrLogBuildingProjectClone2      = ", clone: ";
+static const char* kStrLogLaunchingCli               = "Launching RGA CLI with command line: ";
+static const char* kStrLogExtractSettingsError       = "Error reading settings file.";
+static const char* kStrLogCannotLoadBinaryCodeObject = "Failed to load binary code object file.";
+
 
 // *** LOG FILE MESSAGES  - END ***
 
@@ -231,10 +233,13 @@ static const char* kStrRestoreDefaultSettings = "Restore default settings.";
 // *** STATUS BAR STRINGS - START ***
 
 static const char* kStrStatusBarFileModifiedOutsideEnv = "The current file has been changed outside the environment.";
-static const char* kStrStatusBarBuildStarted           = "Build started...";
-static const char* kStrStatusBarBuildFailed            = "Build failed";
-static const char* kStrStatusBarBuildCanceled          = "Build canceled";
-static const char* kStrStatusBarBuildSucceeded         = "Build succeeded";
+static const char* kStrStatusBarStarted           = "started...";
+static const char* kStrStatusBarFailed            = "failed";
+static const char* kStrStatusBarCanceled          = "canceled";
+static const char* kStrStatusBarSucceeded         = "succeeded";
+static const char* kStrStatusBarBuild             = "Build ";
+static const char* kStrStatusBarAnalysis          = "Binary Analysis ";
+static const char* kStrBuildCanceled              = "Build canceled";
 
 // *** STATUS BAR STRINGS - END ***
 
@@ -282,6 +287,7 @@ static const char* kStrFileDialogRgaCaption           = "Open existing project";
 static const char* kStrFileDialogRgaFilter            = "RGA files (*.rga)";
 static const char* kStrFileDialogSaveNewFile          = "Save new file";
 static const char* kStrFileDialogFilterOpencl         = "OpenCL files (*.cl)";
+static const char* kStrFileDialogFilterBinary         = "Binary Code Object files";
 static const char* kStrFileDialogFilterSpirv          = "SPIR-V files (*.spv)";
 static const char* kStrFileDialogFilterSpirvBinaryExt = "*.spv";
 static const char* kStrFileDialogFilterGlsl           = "GLSL files";
@@ -301,8 +307,17 @@ static const char* kStrMenuBarConfirmRemoveFileDialogTitle   = "Remove file";
 static const char* kStrMenuBarConfirmRemoveFileDialogWarning = " will be removed from the project. Are you sure?";
 
 // Check if the user wants to reload an externally modified file.
-static const char* kStrReloadFileDialogTitle = "Reload";
-static const char* kStrReloadFileDialogText  = "This file has been modified by another project.\nDo you want to reload it?";
+static const char* kStrReloadFileDialogTitle = "Reload file";
+static const char* kStrReloadFileDialogText  = "This file has been modified by another program.\nDo you want to reload it?";
+static const char* kStrReloadFileDialogTextBinary  = "This file has been modified by another program.\nRGA will reload it.";
+
+static const char* kStrCreateFileDialogTitle = "Create file";
+static const char* kStrCreateFileDialogText  = "Failed to find file, it may have been modified by an external program.\nDo you want to create it?";
+
+static const char* kStrRemoveFileDialogTitle = "Remove file";
+static const char* kStrRemoveFileDialogText  = "Otherwise, the file will be removed from the project.";
+static const char* kStrRemoveFileDialogTextBinary  = "Failed to find file, it may have been modified by an external program.\nThe file will now be removed from this project.";
+
 
 // Confirm that the user wants to revert to original SPIR-V binary shader file.
 static const char* kStrMenuBarVulkanConfirmRevertToOrigSpvA = "This will revert all SPIR-V assembly edits and restore the original SPIR-V binary from: ";
@@ -537,7 +552,8 @@ static const char* kStrResourceUsageWavesPerSimd = "Waves/SIMD";
 
 static const char* kStrOutputWindowBuildingProjectHeaderA            = "Building ";
 static const char* kStrOutputWindowBuildingProjectHeaderB            = " project \"";
-static const char* kStrOutputWindowBuildingProjectHeaderC            = "\" for ";
+static const char* kStrOutputWindowBuildingProjectHeaderC            = "\" ";
+static const char* kStrOutputWindowBuildingProjectHeaderD            = "for ";
 static const char* kStrOutputWindowBuildingProjectFailedText         = "Build Failed ";
 static const char* kStrOutputWindowBuildingProjectFailedInvalidClone = "due to invalid clone.";
 static const char* kStrOutputWindowClearButtonTooltip                = "Clear the output window.";
@@ -556,16 +572,20 @@ static const char* kStrStylesheetResourcePath = ":/stylesheets/";
 static const char* kStrFileMenuStylesheetFile          = "rg_file_menu_style.qss";
 static const char* kStrFileMenuStylesheetFileOpencl    = "opencl/rg_file_menu_style_opencl.qss";
 static const char* kStrFileMenuStylesheetFileVulkan    = "vulkan/rg_file_menu_style_vulkan.qss";
+static const char* kStrFileMenuStylesheetFileBinary    = "binary/rg_file_menu_style_binary.qss";
 static const char* kStrApplicationStylesheetFile       = "rg_application_style.qss";
 static const char* kStrApplicationStylesheetFileOpencl = "opencl/rg_application_style_opencl.qss";
 static const char* kStrApplicationStylesheetFileVulkan = "vulkan/rg_application_style_vulkan.qss";
+static const char* kStrApplicationStylesheetFileBinary = "binary/rg_application_style_binary.qss";
 static const char* kStrMainWindowStylesheetFile        = "rg_main_window_style.qss";
 static const char* kStrMainWindowStylesheetFileOpencl  = "opencl/rg_main_window_style_opencl.qss";
 static const char* kStrMainWindowStylesheetFileVulkan  = "vulkan/rg_main_window_style_vulkan.qss";
+static const char* kStrMainWindowStylesheetFileBinary  = "binary/rg_main_window_style_binary.qss";
 
 // Disassembly view frame border color.
 static const char* kStrDisassemblyFrameBorderRedStylesheet   = "QFrame#frame {border: 1px solid rgb(224,30,55)}";
 static const char* kStrDisassemblyFrameBorderGreenStylesheet = "QFrame#frame {border: 1px solid rgb(18, 152, 0)}";
+static const char* kStrDisassemblyFrameBorderPurpleStylesheet = "QFrame#frame {border: 1px solid rgb(128, 0, 128)}";
 static const char* kStrDisassemblyFrameBorderBlackStylesheet = "QFrame#frame {border: 1px solid black}";
 
 // Disassembly view frame selected.
@@ -640,6 +660,7 @@ static const char* kStrBuildViewBuildSettingsWidgetStylesheetBlack = "#buildSett
 
 // *** STARTUP DIALOG STRINGS - START ***
 
+static const char* kStrStartupDialogBinaryDescription = "Analyze pre-compiled binary Code Object files.";
 static const char* kStrStartupDialogOpenclDescription = "Compile and analyze OpenCL source code, using AMD's LLVM-based Lightning Compiler.";
 static const char* kStrStartupDialogVulkanDescription = "Compile and analyze graphics and compute Vulkan pipelines, from SPIR-V or GLSL files.";
 

@@ -4,12 +4,12 @@
         {
             "ReleaseVersion" : {
                 "Major" : 2,
-                "Minor" : 7,
+                "Minor" : 9,
                 "Patch" : 0,
-                "Build" : 129
+                "Build" : 22
             },
-            "ReleaseDate": "2023-01-05",
-            "ReleaseTitle": "Radeon GPU Analyzer 2.7",
+            "ReleaseDate": "2023-12-07",
+            "ReleaseTitle": "Radeon GPU Analyzer 2.9",
             "ReleasePlatforms": [ "Windows" ],
             "ReleaseType" : "GA",
             "ReleaseTags" : [ "Windows", "GA", "OpenCL", "Vulkan" ],
@@ -19,7 +19,7 @@
                     "Description": "The Radeon GPU Analyzer Releases page on Github."
                 },
                 {
-                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.7/RGA-2.7-ReleaseNotes.pdf",
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.9/RGA-2.9-ReleaseNotes.pdf",
                     "Description": "Release Notes."
                 }
             ],
@@ -30,12 +30,12 @@
               "PackageName": "RDTS-ZIP"
             },
             {
-              "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.7/rga-windows-2.7.msi",
+              "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.9/rga-windows-2.9.msi",
               "PackageType": "MSI",
               "PackageName": "RGA-MSI"
             },
             {
-              "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.7/rga-windows-x64-2.7.zip",
+              "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.9/rga-windows-x64-2.9.zip",
               "PackageType": "ZIP",
               "PackageName": "RGA-ZIP"
             }
@@ -44,12 +44,12 @@
         {
             "ReleaseVersion" : {
                 "Major" : 2,
-                "Minor" : 7,
+                "Minor" : 9,
                 "Patch" : 0,
-                "Build" : 116
+                "Build" : 22
             },
-            "ReleaseDate": "2023-01-05",
-            "ReleaseTitle": "Radeon GPU Analyzer 2.7",
+            "ReleaseDate": "2023-12-07",
+            "ReleaseTitle": "Radeon GPU Analyzer 2.9",
             "ReleasePlatforms": [ "Ubuntu" ],
             "ReleaseType" : "GA",
             "ReleaseTags" : [ "Ubuntu", "GA", "OpenCL", "Vulkan" ],
@@ -59,7 +59,7 @@
                     "Description": "The Radeon GPU Analyzer Releases page on Github."
                 },
                 {
-                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.7/RGA-2.7-ReleaseNotes.pdf",
+                    "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.9/RGA-2.9-ReleaseNotes.pdf",
                     "Description": "Release Notes."
                 }
             ],
@@ -70,7 +70,7 @@
               "PackageName": "RDTS-TAR"
             },
             {
-              "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.7/rga-linux-2.7.tgz",
+              "URL": "https://github.com/GPUOpen-Tools/RGA/releases/download/2.9/rga-linux-2.9.tgz",
               "PackageType": "TAR",
               "PackageName": "RGA-TAR"
             }

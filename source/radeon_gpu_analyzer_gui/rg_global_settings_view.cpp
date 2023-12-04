@@ -33,6 +33,7 @@ static const char* kStrGlobalSettingsColumnListItemCheckbox    = "ListWidgetChec
 static const char* kStrGlobalSettingsColumnListItemAllCheckbox = "ListWidgetAllCheckBox";
 
 // API-specific colors.
+static const QColor kApiColorBinary = QColor(128, 0, 128);
 static const QColor kApiColorOpencl = QColor(18, 152, 0);
 static const QColor kApiColorVulkan = QColor(224, 30, 55);
 
@@ -151,10 +152,38 @@ RgGlobalSettingsView::RgGlobalSettingsView(QWidget* parent, const RgGlobalSettin
         ui_.columnVisibilityArrowPushButton->SetBorderColor(kApiColorVulkan);
         ui_.columnVisibilityArrowPushButton->SetShowBorder(true);
     }
+    else if(current_api == RgProjectAPI::kBinary)
+    {
+        ui_.columnVisibilityArrowPushButton->SetBorderColor(kApiColorBinary);
+        ui_.columnVisibilityArrowPushButton->SetShowBorder(true);
+    }    
     else
     {
         // Should not get here.
         assert(false);
+    }
+
+    // Unsupported options under Settings tab needs to be disabled for binary mode.
+    if (current_api == RgProjectAPI::kBinary)
+    {
+        ui_.sourceCodeEditorLabel->hide();
+        ui_.fontFamilyLabel->hide();
+        ui_.fontFamilyComboBox->hide();
+        ui_.fontSizeLabel->hide();
+        ui_.fontSizeComboBox->hide();
+        ui_.includeFilesViewerLabel->hide();
+        ui_.includeFilesViewerLineEdit->hide();
+        ui_.includeFilesViewerBrowseButton->hide();
+
+        ui_.inputFilesLabel->hide();     
+        ui_.assocExtGlslLabel->hide();        
+        ui_.assocExtGlslLineEdit->hide();        
+        ui_.assocExtHlslLabel->hide();        
+        ui_.assocExtHlslLineEdit->hide();   
+        ui_.assocExtSpvasLabel->hide();        
+        ui_.assocExtSpvasLineEdit->hide();        
+        ui_.assocExtSpvBinaryLabel->hide();        
+        ui_.assocExtSpvBinaryLineEdit->hide();        
     }
 }
 
@@ -257,7 +286,7 @@ RgGlobalSettings RgGlobalSettingsView::PullFromWidgets() const
 
     // Default API.
     int default_api_combo_box_index = ui_.defaultApiOnStartupComboBox->currentIndex();
-    if (default_api_combo_box_index >= 0 && default_api_combo_box_index < static_cast<int>(RgProjectAPI::kApiCount))
+    if (default_api_combo_box_index >= static_cast<int>(RgProjectAPI::kUnknown) && default_api_combo_box_index < static_cast<int>(RgProjectAPI::kApiCount))
     {
         settings.default_api = static_cast<RgProjectAPI>(default_api_combo_box_index);
 

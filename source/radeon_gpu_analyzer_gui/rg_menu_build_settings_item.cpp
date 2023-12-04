@@ -13,16 +13,16 @@ static const char* kStrButtonFocusInStylesheetGraphics = "QPushButton { backgrou
 static const char* kStrButtonFocusOutStylesheet = "QPushButton { margin: 1px; background: rgb(214, 214, 214);}";
 static const char* kStrBuildSettingsButtonName = "buildSettingsButton";
 
-RgMenuBuildSettingsItem::RgMenuBuildSettingsItem(RgMenu* parent) :
+RgMenuBuildSettingsItem::RgMenuBuildSettingsItem(RgMenu* parent, QString tooltip) :
     RgMenuItem(parent)
 {
     ui_.setupUi(this);
 
     // Set the status bar tip.
-    this->setStatusTip(kStrMenuBarBuildSettingsTooltip);
+    this->setStatusTip(tooltip);
 
     // Set the tool tip.
-    this->setToolTip(kStrMenuBarBuildSettingsTooltip);
+    this->setToolTip(tooltip);
 
     // Set the mouse cursor to pointing hand cursor.
     SetCursor(Qt::PointingHandCursor);

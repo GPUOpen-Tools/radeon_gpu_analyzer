@@ -65,7 +65,9 @@ bool RgXMLSessionConfig::ReadSessionMetadataOpenCL(const std::string& session_me
     return ret;
 }
 
-bool RgXMLSessionConfig::ReadSessionMetadataVulkan(const std::string& session_metadata_file_path, std::shared_ptr<RgCliBuildOutputPipeline>& cli_output)
+bool RgXMLSessionConfig::ReadSessionMetadataVulkan(const std::string&                         session_metadata_file_path,
+                                                   std::shared_ptr<RgCliBuildOutputPipeline>& cli_output,
+                                                   bool                                       is_codeobj_input_file)
 {
     bool ret = false;
 
@@ -106,8 +108,6 @@ bool RgXMLSessionConfig::ReadSessionMetadataVulkan(const std::string& session_me
                         tinyxml2::XMLNode* stage_node = pipeline_node->FirstChildElement(kStrXmlNodeStage);
                         while (stage_node != nullptr)
                         {
-                            RgFileOutputs file_outputs;
-
                             RgEntryOutput stage_entry = {};
                             stage_entry.entrypoint_name = kStrDefaultVulkanGlslEntrypointName;
 
@@ -168,10 +168,25 @@ bool RgXMLSessionConfig::ReadSessionMetadataVulkan(const std::string& session_me
                             assert(ret);
                             if (ret)
                             {
-                                file_outputs.input_file_path = stage_entry.input_file_path;
+                                bool is_stage_entry_added = false;
+                                if (is_codeobj_input_file)
+                                {
+                                    stage_entry.entrypoint_name = stage_entry.kernel_type;
+                                    auto output_itr             = cli_output->per_file_output.find(stage_entry.input_file_path);
+                                    if (output_itr != cli_output->per_file_output.end())
+                                    {
+                                        output_itr->second.outputs.push_back(stage_entry);
+                                        is_stage_entry_added = true;
+                                    }
+                                }
 
-                                file_outputs.outputs.push_back(stage_entry);
-                                cli_output->per_file_output[stage_entry.input_file_path] = file_outputs;
+                                if (!is_stage_entry_added)
+                                {
+                                    RgFileOutputs file_outputs;
+                                    file_outputs.input_file_path = stage_entry.input_file_path;
+                                    file_outputs.outputs.push_back(stage_entry);
+                                    cli_output->per_file_output[stage_entry.input_file_path] = file_outputs;
+                                }
 
                                 // Search for the next stage node.
                                 stage_node = stage_node->NextSiblingElement(kStrXmlNodeStage);
@@ -313,6 +328,13 @@ bool RgXMLSessionConfig::ReadEntryOutputs(tinyxml2::XMLNode* output_entry_node, 
 
                     if (ret)
                     {
+                        tinyxml2::XMLNode* extremely_long_kernel_name_node = output_entry_node->FirstChildElement(kStrXmlNodeExtremelyLongName);
+                        if (extremely_long_kernel_name_node != nullptr)
+                        {
+                            // Read the full name of the kernel for the input file.
+                            ret = RgXMLUtils::ReadNodeTextString(extremely_long_kernel_name_node, entry.extremely_long_kernel_name);
+                        }
+
                         // Find the the compiled outputs node.
                         tinyxml2::XMLNode* outputs_node = output_entry_node->FirstChildElement(kStrXmlNodeOutput);
                         if (outputs_node != nullptr)

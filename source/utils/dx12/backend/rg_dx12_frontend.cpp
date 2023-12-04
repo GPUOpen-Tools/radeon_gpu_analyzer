@@ -122,6 +122,7 @@ namespace rga
         "1. If your root signature is defined in the HLSL code, make sure that the [RootSignature()] attribute is used for one of the pipeline shaders "
         "with the macro name, or use the --rs-macro option.\n2. If your root signature is precompiled into a binary, please use the --rs-bin "
         "option with the full path to the binary file as an argument.";
+    static const char* kStrHintUseDebugLayer = "To facilitate troubleshooting, we recommend enabling the --debug-layer option when running RGA.";
     static const char* kStrInfoDxrPipelineCompiledUnified = "Pipeline compiled in Unified mode, expect a single uber shader in the output.";
     static const char* kStrInfoDxrPipelineCompiledIndirect1 = "Pipeline compiled in Indirect mode, expect ";
     static const char* kStrInfoDxrPipelineCompiledIndirect2 = " shaders in the output.";
@@ -1246,6 +1247,7 @@ namespace rga
             else
             {
                 std::cerr << kStrErrorFailedToCreateComputePipeline << std::endl;
+                std::cerr << kStrHintUseDebugLayer << std::endl;
                 std::cerr << kStrHintRootSignatureFailure << std::endl;
             }
         }
@@ -1452,6 +1454,7 @@ namespace rga
                         msg << std::endl;
                     }
                     msg << kStrErrorGraphicsPipelineCreationFailure << std::endl;
+                    msg << kStrHintUseDebugLayer << std::endl;
                     msg << kStrHintRootSignatureFailure << std::endl;
                     error_msg.append(msg.str());
                 }

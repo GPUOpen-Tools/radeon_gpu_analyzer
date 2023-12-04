@@ -122,6 +122,10 @@ public:
     // Returns true upon success, false otherwise.
     static bool BePipelineStageToAmdgpudisStageName(BePipelineStage pipeline_stage, std::string& amdgpu_dis_stage);
 
+    // Sets the output stage to the ray tracing shader stage that corresponds to the given amdgpu-dis shader stage name.
+    // Returns true upon success, false otherwise.
+    static bool BeAmdgpudisStageNameToBeRayTracingStage(const std::string& amdgpu_dis_stage, std::size_t& ray_tracing_stage);
+
 private:
     // No instances for this class, as this is a static utility class.
     BeUtils() = default;
