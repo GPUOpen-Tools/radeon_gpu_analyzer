@@ -441,9 +441,9 @@ private:
                 if (tryNext)
                 {
                     filePath = baseFilePath;
-                    std::string  suffix = dateTime + "-";
-                    suffix += ((i < 10 ? "0" : "") + std::to_string(i));
-                    filePath.insert((offset == std::string::npos ? filePath.size() : offset), suffix);
+                    std::string  suffix2 = dateTime + "-";
+                    suffix2 += ((i < 10 ? "0" : "") + std::to_string(i));
+                    filePath.insert((offset == std::string::npos ? filePath.size() : offset), suffix2);
                     continue;
                 }
 

@@ -72,8 +72,8 @@ bool RgaSharedUtils::ComparePaths(const std::string& path1, const std::string& p
     std::string p2_lower = path2;
 
     // Make both paths lowercase and with forward slashes.
-    std::transform(p1_lower.begin(), p1_lower.end(), p1_lower.begin(), [](unsigned char c) {return (c == '\\') ? '/' : std::tolower(c); });
-    std::transform(p2_lower.begin(), p2_lower.end(), p2_lower.begin(), [](unsigned char c) {return (c == '\\') ? '/' : std::tolower(c); });
+    std::transform(p1_lower.begin(), p1_lower.end(), p1_lower.begin(), [](unsigned char c) { return static_cast<unsigned char>((c == '\\') ? '/' : std::tolower(c)); });
+    std::transform(p2_lower.begin(), p2_lower.end(), p2_lower.begin(), [](unsigned char c) { return static_cast<unsigned char>((c == '\\') ? '/' : std::tolower(c)); });
 
     return (p1_lower == p2_lower);
 }
@@ -149,7 +149,7 @@ bool RgaSharedUtils::DeleteOldLogs(const std::string& dir, const std::string& ba
 
 std::string RgaSharedUtils::ConstructLogFileName(const std::string& base_file_name)
 {
-    struct tm tt;
+    struct tm tt{};
     osFilePath log_file_name;
     bool status = !base_file_name.empty();
     if (status)
@@ -196,4 +196,18 @@ bool RgaSharedUtils::InitLogFile(const std::string& dir, const std::string& base
 void RgaSharedUtils::CloseLogFile()
 {
     RgLog::Close();
+}
+
+std::string RgaSharedUtils::ToLower(const std::string& str)
+{
+    std::string lstr = str;
+    std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](const char& c) { return std::tolower(c); });
+    return lstr;
+}
+
+std::string RgaSharedUtils::ToUpper(const std::string& str)
+{
+    std::string ustr = str;
+    std::transform(ustr.begin(), ustr.end(), ustr.begin(), [](const char& c) { return std::toupper(c); });
+    return ustr;
 }

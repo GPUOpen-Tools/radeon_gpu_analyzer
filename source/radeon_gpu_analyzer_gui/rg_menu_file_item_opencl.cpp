@@ -205,8 +205,6 @@ std::string RgMenuItemEntryListModel::GetEntryPointName(const int index) const
 
 std::string RgMenuItemEntryListModel::GetEntryPointName(const std::string& display_entrypoint_name) const
 {
-    int index = 0;
-
     std::string value;
     if (!display_entrypoint_name.empty())
     {

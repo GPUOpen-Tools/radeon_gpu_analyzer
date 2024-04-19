@@ -131,7 +131,7 @@ void RgIncludeDirectoriesView::HandleIncludeFileLocationBrowseButtonClick(bool /
             // If not a duplicate selection, update the list widget.
             if (!items_list_.contains(selected_directory))
             {
-                QListWidgetItem* item = ui_.itemsList->currentItem();
+                item = ui_.itemsList->currentItem();
                 if (item == nullptr)
                 {
                     // There was no selected item,

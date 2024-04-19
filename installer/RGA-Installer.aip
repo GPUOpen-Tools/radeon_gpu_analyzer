@@ -14,7 +14,7 @@
     <ROW Property="AI_SHORTCUTSREG" Value="0|0|0|0|"/>
     <ROW Property="AI_STARTMENU_SH" Type="4" MsiKey="AI_STARTMENU_SH"/>
     <ROW Property="ALLUSERS" Value="1"/>
-    <ROW Property="ARPCOMMENTS" Value="RGA-2.9.0.22-Installer.msi" ValueLocId="*"/>
+    <ROW Property="ARPCOMMENTS" Value="RGA-2.9.1.28-Installer.msi" ValueLocId="*"/>
     <ROW Property="ARPCONTACT" Value="https://github.com/GPUOpen-Tools/"/>
     <ROW Property="ARPNOMODIFY" MultiBuildValue="x64_Release_Static:1"/>
     <ROW Property="ARPNOREPAIR" Value="1"/>
@@ -23,10 +23,10 @@
     <ROW Property="CTRLS" Value="2"/>
     <ROW Property="Manufacturer" Value="GPUOpen"/>
     <ROW Property="PackageFileName" Value="RGA-2.4.0.0-Installer.msi" MultiBuildValue="x64_Release_Static:RGA-2.8.0.20-Installer.msi"/>
-    <ROW Property="ProductCode" Value="1033:{8A0E2F86-5A0A-40E5-91A6-C186853EEB62} " Type="16"/>
+    <ROW Property="ProductCode" Value="1033:{4E2EB749-FB51-4EB7-B51B-721C9671AB7C} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="Radeon GPU Analyzer (RGA)"/>
-    <ROW Property="ProductVersion" Value="2.9.0.22" Type="32"/>
+    <ROW Property="ProductVersion" Value="2.9.1.28" Type="32"/>
     <ROW Property="SETUP_FILE_NAME" Value="RGA-2.8.0.20-Installer.msi"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND"/>
     <ROW Property="UpgradeCode" Value="{72FDBDB3-E5E3-4772-9396-EB5196A89D80}"/>
@@ -187,7 +187,7 @@
     <ROW File="_disassembly_view_binary_analysis.png" Component_="_open_file_link_button.png" FileName="033_DI~1.PNG|033_disassembly_view_binary_analysis.png" Attributes="0" SourcePath="..\build\win\msi\help\rga\_images\033_disassembly_view_binary_analysis.png" SelfReg="false" NextFile="_home_page_bin.png"/>
     <ROW File="_disassembly_view_context_menu_opencl.png" Component_="_open_file_link_button.png" FileName="017_DI~1.PNG|017_disassembly_view_context_menu_opencl.png" Attributes="0" SourcePath="..\build\win\msi\help\rga\_images\017_disassembly_view_context_menu_opencl.png" SelfReg="false" NextFile="_start_tab_open_project.png"/>
     <ROW File="_disassembly_view_opencl.png" Component_="_open_file_link_button.png" FileName="023_DI~1.PNG|023_disassembly_view_opencl.png" Attributes="0" SourcePath="..\build\win\msi\help\rga\_images\023_disassembly_view_opencl.png" SelfReg="false" NextFile="_live_vgpr_range_colors.png"/>
-    <ROW File="_drag_drop_load_code_object.png" Component_="_open_file_link_button.png" FileName="044_DR~1.PNG|044_drag_drop_load_code_object.png" Attributes="0" SourcePath="..\build\win\msi\help\rga\_images\044_drag_drop_load_code_object.png" SelfReg="false"/>
+    <ROW File="_drag_drop_load_code_object.png" Component_="_open_file_link_button.png" FileName="044_DR~1.PNG|044_drag_drop_load_code_object.png" Attributes="0" SourcePath="..\build\win\msi\help\rga\_images\044_drag_drop_load_code_object.png" SelfReg="false" NextFile="oclc_isa_version_942.bc"/>
     <ROW File="_drag_n_drop_project.png" Component_="_open_file_link_button.png" FileName="021_DR~1.PNG|021_drag_n_drop_project.png" Attributes="0" SourcePath="..\build\win\msi\help\rga\_images\021_drag_n_drop_project.png" SelfReg="false" NextFile="_remove_source_file.png"/>
     <ROW File="_file_load_code_object.png" Component_="_open_file_link_button.png" FileName="036_FI~1.PNG|036_file_load_code_object.png" Attributes="0" SourcePath="..\build\win\msi\help\rga\_images\036_file_load_code_object.png" SelfReg="false" NextFile="_home_page_b_recent.png_1"/>
     <ROW File="_file_menu_open_project.png" Component_="_open_file_link_button.png" FileName="020_FI~1.PNG|020_file_menu_open_project.png" Attributes="0" SourcePath="..\build\win\msi\help\rga\_images\020_file_menu_open_project.png" SelfReg="false" NextFile="_drag_n_drop_project.png"/>
@@ -322,6 +322,7 @@
     <ROW File="oclc_isa_version_909.bc" Component_="ockl.amdgcn.bc" FileName="OCLC_I~8.BC|oclc_isa_version_909.bc" Attributes="0" SourcePath="..\build\win\msi\utils\lc\opencl\lib\bitcode\oclc_isa_version_909.bc" SelfReg="false" NextFile="oclc_isa_version_1010.bc"/>
     <ROW File="oclc_isa_version_90a.bc" Component_="ockl.amdgcn.bc" FileName="OCLC_I~1.BC|oclc_isa_version_90a.bc" Attributes="0" SourcePath="..\build\win\msi\utils\lc\opencl\lib\bitcode\oclc_isa_version_90a.bc" SelfReg="false" NextFile="oclc_isa_version_90c.bc"/>
     <ROW File="oclc_isa_version_90c.bc" Component_="ockl.amdgcn.bc" FileName="OCLC_I~2.BC|oclc_isa_version_90c.bc" Attributes="0" SourcePath="..\build\win\msi\utils\lc\opencl\lib\bitcode\oclc_isa_version_90c.bc" SelfReg="false" NextFile="oclc_isa_version_900.bc"/>
+    <ROW File="oclc_isa_version_942.bc" Component_="ockl.amdgcn.bc" FileName="OCLC_~21.BC|oclc_isa_version_942.bc" Attributes="0" SourcePath="..\build\win\msi\utils\lc\opencl\lib\bitcode\oclc_isa_version_942.bc" SelfReg="false"/>
     <ROW File="oclc_unsafe_math_off.bc" Component_="ockl.amdgcn.bc" FileName="OCLC_U~1.BC|oclc_unsafe_math_off.bc" Attributes="0" SourcePath="..\build\win\msi\utils\lc\opencl\lib\bitcode\oclc_unsafe_math_off.bc" SelfReg="false" NextFile="oclc_unsafe_math_on.bc"/>
     <ROW File="oclc_unsafe_math_on.bc" Component_="ockl.amdgcn.bc" FileName="OCLC_U~2.BC|oclc_unsafe_math_on.bc" Attributes="0" SourcePath="..\build\win\msi\utils\lc\opencl\lib\bitcode\oclc_unsafe_math_on.bc" SelfReg="false" NextFile="oclc_wavefrontsize64_off.bc"/>
     <ROW File="oclc_wavefrontsize64_off.bc" Component_="ockl.amdgcn.bc" FileName="OCLC_W~1.BC|oclc_wavefrontsize64_off.bc" Attributes="0" SourcePath="..\build\win\msi\utils\lc\opencl\lib\bitcode\oclc_wavefrontsize64_off.bc" SelfReg="false" NextFile="oclc_wavefrontsize64_on.bc"/>

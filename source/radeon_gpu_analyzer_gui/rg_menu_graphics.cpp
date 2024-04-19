@@ -148,7 +148,6 @@ void RgMenuGraphics::DeselectFileItems()
     // Deselect graphics menu file items.
     for (RgMenuFileItem* item : menu_items_)
     {
-        RgMenuFileItemGraphics* item_graphics = static_cast<RgMenuFileItemGraphics*>(item);
         assert(item != nullptr);
         if (item != nullptr)
         {
@@ -177,7 +176,7 @@ void RgMenuGraphics::InitializeDefaultMenuItems(const std::shared_ptr<RgProjectC
     InitializeDefaultShaderStageItems(project_clone);
 
     // Get the index for the last widget added.
-    int last_stage;
+    int                                     last_stage{};
     std::shared_ptr<RgGraphicsProjectClone> graphics_clone = std::dynamic_pointer_cast<RgGraphicsProjectClone>(project_clone);
     assert(graphics_clone != nullptr);
     if (graphics_clone != nullptr)
@@ -678,10 +677,6 @@ void RgMenuGraphics::DecrementTabFocusIndex()
 {
     // Clear highlight for all file menu items.
     ClearFileMenuHighlight();
-
-    // Decrement the tab focus index.
-    int offset = GetButtonCount() - 1;
-    size_t end_index = total_pipeline_stages_ + offset;
 
     // Decrement focus index and wrap around.
     if (tab_focus_index_ > 0)

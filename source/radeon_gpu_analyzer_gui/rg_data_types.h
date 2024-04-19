@@ -217,6 +217,18 @@ struct RgGpuArchitecture
 
     // An array of GPU families within this GPU hardware architecture.
     std::vector<RgGpuFamily> gpu_families;
+
+    // Returns The name of the GPU HW architecture.
+    std::string GetArchitectureName() const
+    {
+        return architecture_name;
+    }
+
+    // Comparision operator.
+    bool operator<(const RgGpuArchitecture& other) const
+    {
+        return GetArchitectureName() < other.GetArchitectureName();
+    }
 };
 
 // Structure containing the CLI version info.

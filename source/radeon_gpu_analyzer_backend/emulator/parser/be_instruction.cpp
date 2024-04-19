@@ -580,7 +580,7 @@ int Instruction::GetInstructionClockCount(const std::string& device_name) const
     {
         // Ignore the case.
         std::string opcode_lower_case(instruction_opcode_);
-        std::transform(opcode_lower_case.begin(), opcode_lower_case.end(), opcode_lower_case.begin(), ::tolower);
+        std::transform(opcode_lower_case.begin(), opcode_lower_case.end(), opcode_lower_case.begin(), [](const char& c) { return static_cast<char>(std::tolower(c)); });
 
         // First look at the scalar performance table.
         auto dev_iter = scalar_device_perf_table_.find(opcode_lower_case);
@@ -604,7 +604,8 @@ int Instruction::GetInstructionClockCount(const std::string& device_name) const
 void Instruction::SetInstructionStringRepresentation(const std::string& opcode, const std::string& params, const std::string& binary_representation, const std::string& offset)
 {
     instruction_opcode_ = opcode;
-    std::transform(instruction_opcode_.begin(), instruction_opcode_.end(), instruction_opcode_.begin(), ::tolower);
+    std::transform(
+        instruction_opcode_.begin(), instruction_opcode_.end(), instruction_opcode_.begin(), [](const char& c) { return static_cast<char>(std::tolower(c)); });
 
     parameters_ = params;
     binary_representation_ = binary_representation;

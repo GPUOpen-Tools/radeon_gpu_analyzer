@@ -204,9 +204,9 @@ bool rga::RgDxrStateDescReader::ReadDxrStateDesc(const std::string& json_file_pa
                                 if (!should_abort)
                                 {
                                     // File path.
-                                    auto elem = shader.find(kStrJsonElemFilePath);
-                                    assert(elem != shader.end());
-                                    if (elem != shader.end())
+                                    auto file_path_elem = shader.find(kStrJsonElemFilePath);
+                                    assert(file_path_elem != shader.end());
+                                    if (file_path_elem != shader.end())
                                     {
                                         lib->full_path = shader[kStrJsonElemFilePath].get<std::string>();
                                         assert(!lib->full_path.empty());

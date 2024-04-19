@@ -274,12 +274,6 @@ protected:
     // Set the current target GPU to display disassembly for.
     void SetTargetGpu(const std::string& target_gpu);
 
-    // Set the current target GPU text to target GPU button.
-    void SetTargetGpuButtonText(const std::string& target_gpu);
-
-    // Get the current target GPU text from target GPU button.
-    std::string GetTargetGpuButtonText() const;
-
     // Update the "All" checkbox text color to grey or black.
     void UpdateAllCheckBoxText();
 

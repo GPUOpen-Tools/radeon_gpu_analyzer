@@ -55,6 +55,7 @@ endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     include_directories("${PROJECT_SOURCE_DIR}/../../external/dx10_asm/include")
     include_directories("${PROJECT_SOURCE_DIR}/../utils/dx12/backend")
+    include_directories("${PROJECT_SOURCE_DIR}/../../external/dxc/inc")
 endif()
 
 # Source files that are common to Windows and Linux
@@ -91,6 +92,8 @@ file(GLOB WINDOWS_SRC
     "${PROJECT_SOURCE_DIR}/../utils/dx12/backend/rg_dxr_state_desc_reader.cpp"
     "${PROJECT_SOURCE_DIR}/../utils/dx12/backend/rg_dxr_output_metadata.cpp"
     "${PROJECT_SOURCE_DIR}/../utils/dx12/backend/rg_dx12_utils.cpp"
+    "autogen/*.cpp"
+    "autogen/*.h"
 )
 
 # Device Info lib sources

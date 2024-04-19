@@ -121,7 +121,7 @@ std::string RgCliOutputView::GetText() const
     return ui_.outputTextEdit->toPlainText().toStdString();
 }
 
-void RgCliOutputView::focusInEvent(QFocusEvent* event)
+void RgCliOutputView::focusInEvent(QFocusEvent*)
 {
     current_sub_widget_ = CliOutputWindowSubWidgets::kOutputWindow;
 }
@@ -245,7 +245,7 @@ static bool  ParseErrorLocation(const QStringRef& loc, std::pair<QStringRef&, in
     // II. Try mathching the 2nd pattern.
     if (!found)
     {
-        int offset, line_start_offset, line_end_offset;
+        int offset, line_start_offset = 0, line_end_offset;
 
         if ((offset = loc.indexOf(kStrCmplrErrorToken)) != -1 ||
             (offset = loc.indexOf(kStrCmplrWarningToken)) != -1 ||
@@ -279,7 +279,7 @@ void RgCliOutputView::SwitchToErrorLocation(int block_num) const
             QTextBlock    block = doc->findBlockByNumber(block_num);
             QString       block_text = block.text();
             QStringRef    file_path;
-            int           line;
+            int           line = 0;
 
             if (!block_text.isEmpty() && ParseErrorLocation(QStringRef(&block_text), { file_path, line }))
             {

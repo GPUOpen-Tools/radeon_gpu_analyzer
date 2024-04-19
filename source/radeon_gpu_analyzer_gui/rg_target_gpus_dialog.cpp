@@ -15,6 +15,9 @@
 // Infra.
 #include "QtCommon/Util/QtUtil.h"
 
+// Shared.
+#include "common/rga_sorting_utils.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_target_gpus_dialog.h"
 #include "radeon_gpu_analyzer_gui/rg_cli_launcher.h"
@@ -480,50 +483,7 @@ void RgTargetGpusDialog::PopulateTableData(std::shared_ptr<RgCliVersionInfo> ver
         {
             // Most recent hardware appears at the end of the architectures list. Reverse it so that it appears at the top of the table.
             std::vector<RgGpuArchitecture> architectures = current_mode_architectures_iter->second;
-            std::sort(architectures.begin(), architectures.end(), [&](const RgGpuArchitecture& arch1,
-                const RgGpuArchitecture& arch2)
-            {
-                bool is_1_less_than_2 = true;
-                const char* GRAPHICS_TOKEN = "Graphics";
-                size_t pos_graphics_1 = arch1.architecture_name.find(GRAPHICS_TOKEN);
-                size_t pos_graphics_2 = arch2.architecture_name.find(GRAPHICS_TOKEN);
-                if (pos_graphics_1 != std::string::npos &&
-                    pos_graphics_2 != std::string::npos)
-                {
-                    is_1_less_than_2 = (arch1.architecture_name.compare(arch2.architecture_name) < 0);
-                }
-                else if (pos_graphics_1 == std::string::npos && pos_graphics_2 != std::string::npos)
-                {
-                    is_1_less_than_2 = false;
-                }
-                else if (pos_graphics_1 == std::string::npos && pos_graphics_2 == std::string::npos)
-                {
-                    const char* RDNA3_TOKEN = "RDNA3";
-                    const char* RDNA2_TOKEN = "RDNA2";
-                    const char* RDNA_TOKEN = "RDNA";
-                    size_t rdna3_pos_1 = arch1.architecture_name.find(RDNA3_TOKEN);
-                    size_t rdna3_pos_2 = arch2.architecture_name.find(RDNA3_TOKEN);
-                    size_t rdna2_pos_1 = arch1.architecture_name.find(RDNA2_TOKEN);
-                    size_t rdna2_pos_2 = arch2.architecture_name.find(RDNA2_TOKEN);
-                    size_t rdna_pos_1 = arch1.architecture_name.find(RDNA_TOKEN);
-                    size_t rdna_pos_2 = arch2.architecture_name.find(RDNA_TOKEN);
-
-                    if (rdna3_pos_1 != std::string::npos && rdna3_pos_2 == std::string::npos)
-                    {
-                        is_1_less_than_2 = false;
-                    }
-                    else if (rdna2_pos_1 != std::string::npos && rdna2_pos_2 == std::string::npos)
-                    {
-                        is_1_less_than_2 = false;
-                    }
-                    else if (rdna_pos_1 != std::string::npos && rdna_pos_2 == std::string::npos)
-                    {
-                        is_1_less_than_2 = false;
-                    }
-                }
-
-                return is_1_less_than_2;
-            });
+            std::sort(architectures.begin(), architectures.end(), GpuComparator<RgGpuArchitecture>{});
 
             std::reverse(architectures.begin(), architectures.end());
 

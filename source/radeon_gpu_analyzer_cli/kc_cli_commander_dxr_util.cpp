@@ -25,11 +25,6 @@ static const char* kStrKernelName                                 = "Kernel name
 static const char* kStrErrorFailedToCreateOutputFilenameForKernel = "Error: failed to construct output file name for kernel: ";
 static const char* kStrInfoKernelForKernel                        = " for kernel ";
 
-static void LogPreStep(const std::string& msg, const std::string& device = "")
-{
-    std::cout << msg << device << "... ";
-}
-
 static void LogResult(bool result)
 {
     std::cout << (result ? kStrInfoSuccess : kStrInfoFailed) << std::endl;

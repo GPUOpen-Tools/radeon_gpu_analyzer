@@ -123,7 +123,6 @@ void RgIsaDisassemblyTableModel::InsertLabelRows()
         // Determine which column is the left-most visible column in the table.
         for (int column_index = start_column; column_index < end_column; ++column_index)
         {
-            bool is_valid_column_index = (column_index >= start_column) && (column_index < end_column);
             bool is_visible = global_settings->visible_disassembly_view_columns[column_index];
             if (is_visible)
             {
@@ -722,7 +721,7 @@ void RgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selecte
                         QString cell_text_string = isa_table_model_->data(isa_table_model_->index(row_index, static_cast<int>(RgIsaDisassemblyTableColumns::kFunctionalUnit))).toString();
                         if (cell_text_string.compare("Branch") == 0)
                         {
-                            std::shared_ptr<RgIsaLine> isa_line = disassembled_isa_lines_[row_index];
+                            isa_line = disassembled_isa_lines_[row_index];
                             assert(isa_line != nullptr);
                             if (isa_line != nullptr)
                             {
@@ -801,7 +800,7 @@ void RgIsaDisassemblyTableModel::InitializeModelData()
         else if (isa_line->type == RgIsaLineType::kLabel)
         {
         	// Get the instruction line.
-            std::shared_ptr<RgIsaLine>            isa_line         = disassembled_isa_lines_[line_index];
+                                                  isa_line         = disassembled_isa_lines_[line_index];
             std::shared_ptr<RgIsaLineInstruction> instruction_line = std::static_pointer_cast<RgIsaLineInstruction>(isa_line);
 
             // Update the model cells with data from each disassembled ISA instruction line.
@@ -929,7 +928,7 @@ bool RgIsaDisassemblyTableModel::GetPreviousMaxVgprLineNumber(int& line_number)
         }
         else
         {
-            current_max_vgpr_index_ = livereg_data_.max_vgpr_line_numbers.size() - 1;
+            current_max_vgpr_index_ = static_cast<int>(livereg_data_.max_vgpr_line_numbers.size()) - 1;
         }
     }
     else

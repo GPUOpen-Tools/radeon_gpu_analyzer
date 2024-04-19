@@ -341,29 +341,7 @@ beKA::beStatus BeProgramBuilderDx11::Initialize(const std::string& dxx_module_na
     return be_rc;
 }
 
-bool static WriteBinaryFile(const std::string& filename, const std::vector<char>& content)
-{
-    bool ret = false;
-    std::ofstream output;
-    output.open(filename.c_str(), std::ios::binary);
-
-    if (output.is_open() && !content.empty())
-    {
-        output.write(&content[0], content.size());
-        output.close();
-        ret = true;
-    }
-    else
-    {
-        std::stringstream log;
-        log << "Error: Unable to open " << filename << " for write.\n";
-    }
-
-    return ret;
-}
-
-beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_source,
-    const Dx11Options& dx_options, bool is_dxbc_input)
+beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_source, const Dx11Options& dx_options, bool is_dxbc_input)
 {
     beKA::beStatus ret = beStatus::kBeStatusGeneralFailed;
 
@@ -373,27 +351,25 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
 
     // In the case that the input is a DXBC blob, we would read it into this vector.
     std::vector<char> dxbc_blob;
-    char* shader_bytes = nullptr;
-    size_t shader_byte_count = 0;
+    char*             shader_bytes      = nullptr;
+    size_t            shader_byte_count = 0;
 
     if (!is_dxbc_input)
     {
         ID3DBlob* error_messages = nullptr;
 
         // Turn options.m_Defines into what D3DCompile expects.
-        D3D_SHADER_MACRO* macros = new D3D_SHADER_MACRO[dx_options.defines.size() + 1];
-        macros[dx_options.defines.size()].Name = NULL;
+        D3D_SHADER_MACRO* macros                     = new D3D_SHADER_MACRO[dx_options.defines.size() + 1];
+        macros[dx_options.defines.size()].Name       = NULL;
         macros[dx_options.defines.size()].Definition = NULL;
 
         // Handle the defines.
         if (!dx_options.defines.empty())
         {
             int i = 0;
-            for (std::vector<std::pair<std::string, std::string> >::const_iterator it = dx_options.defines.begin();
-                it != dx_options.defines.end();
-                ++it, i++)
+            for (std::vector<std::pair<std::string, std::string> >::const_iterator it = dx_options.defines.begin(); it != dx_options.defines.end(); ++it, i++)
             {
-                macros[i].Name = it->first.c_str();
+                macros[i].Name       = it->first.c_str();
                 macros[i].Definition = it->second.c_str();
             }
         }
@@ -408,14 +384,14 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
             shader_filename << dx_options.filename.c_str();
             osFilePath tmpFilePath(shader_filename);
 
-            gtString shader_dir_str;
+            gtString    shader_dir_str;
             osDirectory shader_dir;
-            bool is_dir_extracted = tmpFilePath.getFileDirectory(shader_dir);
+            bool        is_dir_extracted = tmpFilePath.getFileDirectory(shader_dir);
 
             if (is_dir_extracted)
             {
                 // Create an include manager.
-                shader_dir_str = shader_dir.directoryPath().asString();
+                shader_dir_str    = shader_dir.directoryPath().asString();
                 include_mechanism = new D3dIncludeManager(shader_dir_str.asASCIICharArray(), dx_options.include_directories);
             }
         }
@@ -424,18 +400,17 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
         HRESULT result = E_FAIL;
         try
         {
-            result = d3d_compile_module_.D3DCompile(
-                program_source.c_str(),
-                program_source.length(),
-                LPCSTR(dx_options.filename.c_str()),
-                macros,
-                include_mechanism,
-                dx_options.entrypoint.c_str(),
-                dx_options.target.c_str(),
-                dx_options.dx_flags.flags_as_int,
-                0,
-                &shader,
-                &error_messages);
+            result = d3d_compile_module_.D3DCompile(program_source.c_str(),
+                                                    program_source.length(),
+                                                    LPCSTR(dx_options.filename.c_str()),
+                                                    macros,
+                                                    include_mechanism,
+                                                    dx_options.entrypoint.c_str(),
+                                                    dx_options.target.c_str(),
+                                                    dx_options.dx_flags.flags_as_int,
+                                                    0,
+                                                    &shader,
+                                                    &error_messages);
         }
         catch (...)
         {
@@ -448,8 +423,8 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
 
         if (error_messages != NULL)
         {
-            char* error_string = (char*)error_messages->GetBufferPointer();
-            size_t error_size = error_messages->GetBufferSize();
+            char*             error_string = (char*)error_messages->GetBufferPointer();
+            size_t            error_size   = error_messages->GetBufferSize();
             std::stringstream ss;
             ss << std::string(error_string, error_size);
             LogCallback(ss.str());
@@ -469,7 +444,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
     {
         bool is_blob_read = BeUtils::ReadBinaryFile(dx_options.filename, dxbc_blob);
         assert(is_blob_read);
-        shader_bytes = dxbc_blob.data();
+        shader_bytes      = dxbc_blob.data();
         shader_byte_count = dxbc_blob.size();
     }
 
@@ -497,13 +472,12 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
         if (dx_options.should_dump_ms_intermediate && ms_intermediate_text_.empty())
         {
             ID3DBlob* disassembly = NULL;
-            HRESULT result = d3d_compile_module_.D3DDisassemble(shader_bytes,
-                shader_byte_count, 0, "", &disassembly);
+            HRESULT   result      = d3d_compile_module_.D3DDisassemble(shader_bytes, shader_byte_count, 0, "", &disassembly);
 
             if (result == S_OK)
             {
-                shader_bytes = (char*)disassembly->GetBufferPointer();
-                shader_byte_count = disassembly->GetBufferSize();
+                shader_bytes          = (char*)disassembly->GetBufferPointer();
+                shader_byte_count     = disassembly->GetBufferSize();
                 ms_intermediate_text_ = std::string(shader_bytes, shader_byte_count);
             }
             else
@@ -1206,7 +1180,7 @@ bool BeProgramBuilderDx11::GetWavefrontSize(const std::string& device_name, size
 std::string BeProgramBuilderDx11::ToLower(const std::string& str) const
 {
     std::string result;
-    std::transform(str.begin(), str.end(), inserter(result, result.begin()), ::tolower);
+    std::transform(str.begin(), str.end(), inserter(result, result.begin()), [](const char& c) { return static_cast<char>(std::tolower(c)); });
     return result;
 }
 

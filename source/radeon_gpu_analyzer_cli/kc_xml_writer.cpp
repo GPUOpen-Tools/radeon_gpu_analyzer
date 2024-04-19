@@ -4,6 +4,11 @@
 
 // C++
 #include <cassert>
+#include <set>
+#include <vector>
+
+// Shared.
+#include "common/rga_shared_utils.h"
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
@@ -12,6 +17,9 @@
 #include "common/rga_shared_utils.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
 #include "kc_cli_config_file.h"
+
+// Shared.
+#include "common/rga_sorting_utils.h"
 
 // Static constants.
 static const char* kStrFopenModeAppend = "a";
@@ -49,60 +57,40 @@ static bool AddSupportedGPUInfo(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement
     KcUtils::DeviceNameMap  cards_map;
     if ((ret = KcUtils::GetMarketingNameToCodenameMapping(cards_map)) == true)
     {
-        // Sort the devices by Generation name.
-        std::vector<std::pair<std::string, std::set<std::string>>> devices(cards_map.begin(), cards_map.end());
-        std::sort(devices.begin(), devices.end(),
-            [](const std::pair<std::string, std::set<std::string>>& d1, const std::pair<std::string, std::set<std::string>> &d2)
+        struct Device : public std::pair<std::string, std::set<std::string>>
         {
-            bool is_less_than = true;
-            const char * kStrIpv6Ipv7Ipv8Token = "Graphics";
-            const char * kStrRdnaToken = "RDNA";
-            const char * kStrRdna2Token = "RDNA2";
-            const char * kStrVegaToken = "Vega";
-            auto gen_device_pair1 = GetGenAndCodeNames(d1.first);
-            auto gen_device_pair2 = GetGenAndCodeNames(d2.first);
-
-            size_t gfx_token_pos1 = gen_device_pair1.first.find(kStrIpv6Ipv7Ipv8Token);
-            size_t gfx_token_pos2 = gen_device_pair2.first.find(kStrIpv6Ipv7Ipv8Token);
-            size_t vega_token_pos1 = gen_device_pair1.first.find(kStrVegaToken);
-            size_t vega_token_pos2 = gen_device_pair2.first.find(kStrVegaToken);
-            size_t rdna_token_pos1 = gen_device_pair1.first.find(kStrRdnaToken);
-            size_t rdna_token_pos2 = gen_device_pair2.first.find(kStrRdnaToken);
-            size_t rdna2_token_pos1 = gen_device_pair1.first.find(kStrRdna2Token);
-            size_t rdna2_token_pos2 = gen_device_pair2.first.find(kStrRdna2Token);
-
-            if (rdna2_token_pos1 != std::string::npos && rdna2_token_pos2 == std::string::npos)
+            Device(const std::string& architecture_name, const std::set<std::string>& marketing_names)
+                : std::pair<std::string, std::set<std::string>>(architecture_name, marketing_names)
             {
-                is_less_than = false;
-            }
-            else if (vega_token_pos2 != std::string::npos && rdna_token_pos1 != std::string::npos)
-            {
-                is_less_than = false;
-            }
-            else if (gfx_token_pos1 != std::string::npos &&
-                gfx_token_pos2 != std::string::npos)
-            {
-                is_less_than = gen_device_pair1.first < gen_device_pair2.first;
-            }
-            else if (gfx_token_pos1 == std::string::npos && gfx_token_pos2 != std::string::npos)
-            {
-                is_less_than = false;
-            }
-            else if (!(vega_token_pos1 != std::string::npos && rdna_token_pos2 != std::string::npos))
-            {
-                is_less_than = GetGenAndCodeNames(d1.first).first < GetGenAndCodeNames(d2.first).first;
             }
 
-            return is_less_than;
-        });
+            // Returns The name of the GPU HW architecture.
+            std::string GetArchitectureName() const
+            {
+                return GetGenAndCodeNames(first).first;
+            }
 
+            // Comparision operator.
+            bool operator<(const Device& other) const
+            {
+                return GetArchitectureName() < other.GetArchitectureName();
+            }
+        };
+
+        std::vector<Device> devices;
+        for (const auto& card : cards_map)
+        {
+            devices.emplace_back(card.first, card.second);
+        }
+        std::sort(devices.begin(), devices.end(), GpuComparator<Device>{});
         for (const auto& device : devices)
         {
+
             std::string  device_name = device.first, code_name, gen_name;
             std::tie(gen_name, code_name) = GetGenAndCodeNames(device_name);
 
             // Skip targets that are not supported in this mode.
-            if (targets.count(KcUtils::ToLower(code_name)) == 0)
+            if (targets.count(RgaSharedUtils::ToLower(code_name)) == 0)
             {
                 continue;
             }
@@ -339,7 +327,7 @@ static bool AddOutputFile(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement& pare
 static bool AddEntryType(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* pEntry, RgEntryType rga_entry_type)
 {
     bool ret = (pEntry != nullptr);
-    tinyxml2::XMLElement* entry_type;
+    tinyxml2::XMLElement* entry_type = nullptr;
     if (ret)
     {
         entry_type = doc.NewElement(kStrXmlNodeType);
@@ -436,9 +424,13 @@ static bool AddEntryType(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* pEntr
             break;
         }
 
-        if (ret)
+        if (ret && entry_type)
         {
             entry_type->SetText(entry_type_str.c_str());
+        }
+        else
+        {
+            ret = false;
         }
     }
 
@@ -448,15 +440,19 @@ static bool AddEntryType(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* pEntr
 static bool AddExtremelyLongEntryName(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement* pEntry, const std::string& extremely_long_kernel_name)
 {
     bool                  ret = (pEntry != nullptr);
-    tinyxml2::XMLElement* entry_name;
+    tinyxml2::XMLElement* entry_name = nullptr;
     if (ret)
     {
         entry_name = doc.NewElement(kStrXmlNodeExtremelyLongName);
         ret        = ret && (entry_name != nullptr && pEntry->LinkEndChild(entry_name) != nullptr);
     }
-    if (ret)
+    if (ret && entry_name)
     {
         entry_name->SetText(extremely_long_kernel_name.c_str());
+    }
+    else
+    {
+        ret = false;
     }
 
     return ret;

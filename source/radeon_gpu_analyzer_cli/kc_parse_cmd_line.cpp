@@ -352,6 +352,9 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
                 po::value<std::string>(config.pso_dx12_template))
             ("elf-dis", "Full path to output text file where disassembly of the pipeline ELF binary would be saved.",
                 po::value<std::string>(config.elf_dis))
+
+            // Single shader compilation options.
+            ("autogen-dir", "Path to folder where RGA will attempt to autogenerate the missing component of D3D12 pipeline.", po::value<std::string>(config.dx12_autogen_dir))
             ;
 
         // DXR-specific.
@@ -610,7 +613,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         // Select the mode (source language).
         bool is_source_specified = true;
         std::string src_kind = config.source_kind;
-        std::transform(src_kind.begin(), src_kind.end(), src_kind.begin(), [](unsigned char c){return std::toupper(c);});
+        std::transform(src_kind.begin(), src_kind.end(), src_kind.begin(), [](unsigned char c) { return static_cast<unsigned char>(std::toupper(c)); });
         if (config.source_kind.empty())
         {
             if (config.requested_command != Config::kHelp &&
@@ -956,7 +959,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             }
 
             // Convert the mode name string to lower case for presentation.
-            std::transform(rga_mode_name.begin(), rga_mode_name.end(), rga_mode_name.begin(), ::tolower);
+            std::transform(rga_mode_name.begin(), rga_mode_name.end(), rga_mode_name.begin(), [](const char& c) { return static_cast<char>(std::tolower(c)); });
 
             std::cout << "*** Vulkan Offline mode options ***" << std::endl;
             std::cout << "===================================" << std::endl << std::endl;

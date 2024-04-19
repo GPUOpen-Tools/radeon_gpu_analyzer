@@ -178,7 +178,7 @@ QSize RgMainWindowTabBar::minimumTabSizeHint(int index) const
 QSize RgMainWindowTabBar::tabSizeHint(int index) const
 {
     const int height = kTabBarHeight * ScalingManager::Get().GetScaleFactor();
-    const int width = kTabBarWidth * ScalingManager::Get().GetScaleFactor();
+    const int width  = kTabBarWidth * ScalingManager::Get().GetScaleFactor();
 
     if (index == SpacerIndex())
     {
@@ -186,19 +186,19 @@ QSize RgMainWindowTabBar::tabSizeHint(int index) const
     }
     else if (tabText(index).isEmpty())
     {
-        int width = 0;
+        int additional_tab_width = 0;
         QWidget* widget = tabButton(index, QTabBar::ButtonPosition::LeftSide);
         if (widget)
         {
-            width += widget->width();
+            additional_tab_width += widget->width();
         }
 
         widget = tabButton(index, QTabBar::ButtonPosition::RightSide);
         if (widget)
         {
-            width += widget->width();
+            additional_tab_width += widget->width();
         }
-        return QSize(width, height);
+        return QSize(additional_tab_width, height);
     }
     else
     {

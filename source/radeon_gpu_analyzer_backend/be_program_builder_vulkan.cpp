@@ -30,6 +30,9 @@
 #include "source/common/rg_log.h"
 #include "source/common/rga_cli_defs.h"
 
+// Shared.
+#include "common/rga_shared_utils.h"
+
 using namespace beKA;
 
 // Constants.
@@ -294,14 +297,6 @@ static std::string ConstructVulkanBackendOptions(const std::string& loader_debug
     return opts.str();
 }
 
-// Construct command line options for amdgpu-dis.
-static std::string ConstructAmdgpudis(const std::string& isa_file, const std::string& output_filename)
-{
-    std::stringstream cmd;
-    cmd << isa_file << " " << output_filename;
-    return cmd.str();
-}
-
 // Construct command line options for SPIR-V disassembler.
 static std::string ConstructSpvDisOptions(const std::string& spv_filename, const std::string& spv_dis_filename)
 {
@@ -478,7 +473,7 @@ beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&        
             size_t shader_offset_end   = 0;
 
             // Parse the .text section. Identify each shader's area by its ".size" token.
-            size_t curr_pos = amdgpu_dis_output.find(kAmdgpuDisDotSizeToken);
+            curr_pos = amdgpu_dis_output.find(kAmdgpuDisDotSizeToken);
             while (curr_pos != std::string::npos)
             {
                 size_t      end_of_line = amdgpu_dis_output.find("\n", curr_pos);
@@ -560,8 +555,8 @@ beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&        
     return status;
 }
 
-beKA::beStatus beProgramBuilderVulkan::GetVulkanDriverTargetGPUs(const std::string& loader_debug, const std::string& icd_file, std::set<std::string>& target_gpus,
-    bool should_print_cmd, std::string& errText)
+beKA::beStatus beProgramBuilderVulkan::GetVulkanDriverTargetGPUs(const std::string&, const std::string& icd_file, std::set<std::string>& target_gpus,
+    bool should_print_cmd, std::string&)
 {
     std::string std_out_text, std_err_text;
     std::string opts = kVulkanBackendOptListTargets;
@@ -591,7 +586,7 @@ beKA::beStatus beProgramBuilderVulkan::GetVulkanDriverTargetGPUs(const std::stri
     if (status == kBeStatusSuccess)
     {
         size_t start = 0, end = 0;
-        std::string devices_str = KcUtils::ToLower(std_out_text);
+        std::string devices_str = RgaSharedUtils::ToLower(std_out_text);
 
         while (start < devices_str.size() && (end = devices_str.find_first_of(":\n", start)) != std::string::npos)
         {
@@ -1235,7 +1230,7 @@ std::string BeAmdPalMetaData::GetShaderSubtypeName(ShaderSubtype subtype)
 
 uint64_t GetHardwareStageProperty(const YAML::Node& node, const std::string& key)
 {
-    uint64_t ret = -1;
+    uint64_t ret = static_cast<uint64_t>(-1);
     if (node[key])
     {
         ret = node[key].as<uint64_t>();

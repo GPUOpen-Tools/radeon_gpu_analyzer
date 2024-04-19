@@ -254,19 +254,12 @@ public:
     static bool PrintAsicList(const std::set<std::string>& required_devices = std::set<std::string>(),
                               const std::set<std::string>& disabled_devices = std::set<std::string>());
 
-    // Constructs full path for RGA log file.
-    // Returns "true" if succeeded or "false" otherwise.
-    static bool GetLogFileName(std::string& log_filename);
-
     // Constructs a name for parsed ISA based on provided ISA file name.
     // Returns "true" if succeeded or "false" otherwise.
     static bool GetParsedISAFileName(const std::string& isa_file_name, std::string& parsed_isa_file_name);
 
     // Quote the provided string if it contains spaces.
     static std::string Quote(const std::string& str);
-
-    // Converts the given string to its lower-case version.
-    static std::string ToLower(const std::string& str);
 
     // Delete the files specified in pipeline structure.
     static void DeletePipelineFiles(const BeProgramPipeline& files);
@@ -355,8 +348,11 @@ public:
     // Returns true if the target is Navi21 otherwise.
     static bool IsNavi21(const std::string& target_name);
 
-    // Returns true if the target is of the MIx00 generation and false otherwise.
-    static bool IsMITarget(const std::string& target_name);
+    // Returns true if the target is of the MI200 generation and false otherwise.
+    static bool IsMi200Target(const std::string& target_name);
+
+    // Returns true if the target is of the MI300 generation and false otherwise.
+    static bool IsMi300Target(const std::string& target_name);
 
     // Returns true if the target is of the Vega generation and false otherwise.
     static bool IsVegaTarget(const std::string& target_name);

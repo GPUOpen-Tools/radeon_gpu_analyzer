@@ -33,4 +33,4 @@ of Sale.
 
 AMD, the AMD Arrow logo, Radeon, Ryzen, CrossFire, RDNA and combinations thereof are trademarks of Advanced Micro Devices, Inc. Other product names used in
 this publication are for identification purposes only and may be trademarks of their respective companies.
-© 2023 Advanced Micro Devices, Inc. All rights reserved.
+© 2024 Advanced Micro Devices, Inc. All rights reserved.

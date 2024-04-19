@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <cassert>
+#include <filesystem>
 
 // Infra.
 #include "external/amdt_base_tools/Include/gtString.h"
@@ -15,10 +16,18 @@
 #include "external/amdt_os_wrappers/Include/osApplication.h"
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
 
+// Shared.
+#include "common/rga_shared_utils.h"
+
+// Dx12 Backend.
+#include "utils/dx12/backend/rg_dx12_utils.h"
+
 // Local.
 #include "radeon_gpu_analyzer_backend/be_string_constants.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
 #include "radeon_gpu_analyzer_backend/be_program_builder_dx12.h"
+#include "radeon_gpu_analyzer_backend/autogen/be_utils_dx12.h"
+#include "radeon_gpu_analyzer_backend/autogen/be_validator_dx12.h"
 
 // CLI.
 #include "source/radeon_gpu_analyzer_cli/kc_utils.h"
@@ -46,6 +55,7 @@ static const wchar_t* kDx12AmdxcBundledDriverDir    = L"utils/dx12/amdxc";
 static const wchar_t* kDx12AmdxcBundledDriver       = L"amdxc64";
 static const char*    kDx12BackendExeAscii          = "dx12_backend";
 static const char*    kDx12OfflineBackendAscii      = "withdll";
+static const char*    kStrDxrNullPipelineName       = "null";
 
 // Error messages.
 static const char* kStrErrorNoSupportedTarget1 = "Error: no supported target detected for '";
@@ -59,10 +69,12 @@ static const char* kStrErrorInvalidShaderModel = "Error: invalid shader model: "
 static const char* kStrErrorHlslToDxilCompilationFailed1 = "Error: DXC HLSL->DXIL compilation of ";
 static const char* kStrErrorHlslToDxilCompilationFailed2 = " shader failed.";
 static const char* kStrErrorDxcLaunchFailed = "failed to launch DXC.";
+static const char* kStrErrorFailedToConstructLiveregOutputFilename = "Error: failed to construct live register analysis output file name.";
+static const char* kStrErrorFailedToConstructCfgOutputFilename     = "Error: failed to construct control-flow graph output file name.";
 
 // Info messages.
 static const char* kStrInfoFrontEndCompilationWithDxc1 = "Performing front-end compilation of ";
-static const char* kStrInfoFrontEndCompilationWithDxc2 = " shader through DXC... ";
+static const char* kStrInfoFrontEndCompilationWithDxc2 = " through DXC... ";
 static const char* kStrInfoFrontEndCompilationWithDxcDxr = " HLSL file through DXC.";
 static const char* kStrInfoFrontEndCompilationSuccess = "Front-end compilation success.";
 static const char* kStrInfoDxcOutputPrologue = "*** Output from DXC - START ***";
@@ -80,12 +92,22 @@ static const char* kStrWarningDxcOptionsFileEmpty = "Warning: DXC options file e
 static const char* kStrWarningDxcOptionsFileMissing = "Warning: DXC options file not found: ";
 
 // Tokens.
-const char* kStrDx12TokenBackendErrorToken = "Error";
+static const char* kStrDx12TokenBackendErrorToken = "Error";
 
 // Other constants.
-static const char* FILE_NAME_TOKEN_DXR = "*";
-static const char* STR_DXIL_FILE_NAME = "dxil";
-static const char* STR_DXIL_FILE_SUFFIX = "obj";
+// Other constants.
+static const char* STR_ROOT_SIGNATURE_SUFFIX = "rootsig";
+static const char* FILE_NAME_TOKEN_DXR       = "*";
+static const char* STR_DXIL_FILE_NAME        = "dxil";
+static const char* STR_DXIL_FILE_SUFFIX      = "obj";
+
+// Use DXC to compile shader model 5.1 or above.
+static const char* kStrOptionTargetProfile             = "-T";
+static const char* kStrOptionOutputFile                = "-Fo";
+static const char* kStrOptionEntryPoint                = "-E";
+static const char* kStrOptionIncludePath               = "-I";
+static const char* kStrOptionPreprocessorDefines       = "-D";
+static const char* kStrOptionDxilDisassemblyOutputFile = "-Fc";
 
 static void AddDebugLayerCommand(const Config &config, std::stringstream& cmd)
 {
@@ -93,38 +115,6 @@ static void AddDebugLayerCommand(const Config &config, std::stringstream& cmd)
     {
         cmd << "--debug-layer " << std::endl;
     }
-}
-
-static std::string GetShaderModelPrefix(BePipelineStage stage)
-{
-    std::string ret;
-    switch (stage)
-    {
-    case kVertex:
-        ret = "vs";
-        break;
-    case kTessellationControl:
-        ret = "hs";
-        break;
-    case kTessellationEvaluation:
-        ret = "ds";
-        break;
-    case kGeometry:
-        ret = "gs";
-        break;
-    case kFragment:
-        ret = "ps";
-        break;
-    case kCompute:
-        ret = "cs";
-        break;
-    case kCount:
-    default:
-        // We shouldn't get here.
-        assert(false);
-        break;
-    }
-    return ret;
 }
 
 // Filter out WithDll.exe's messages from the output unless in verbose mode (relevant to offline mode only).
@@ -153,20 +143,37 @@ static void FixIncludePath(const std::string& include_path, std::string& fixed_i
     }
 }
 
-static bool InvokDxc(const Config& config, const std::string& shader_hlsl, const std::string& shader_model,
-    const std::string& entry_point, const std::vector<std::string>& include_paths,
-    const std::vector<std::string>& prepreocessor_defines,
-    const std::string& output_filename, std::string& dxc_output, std::string& dxc_errors)
+static std::string FilterDxcOpts(const std::string& dxc_opts)
+{
+    std::stringstream  filtered_out;
+    std::istringstream iss(dxc_opts);
+
+    std::string curr;
+    std::string prev;
+    while (iss >> curr)
+    {
+        if (BeUtils::StartsWithAny(curr, {kStrOptionIncludePath, kStrOptionPreprocessorDefines}) ||
+            (!prev.empty() && BeUtils::MatchesWithAny(prev, {kStrOptionIncludePath, kStrOptionPreprocessorDefines})))
+        {
+            filtered_out << curr << " ";
+        }
+        prev = curr;
+    }
+    return filtered_out.str();
+}
+
+static bool InvokeDxc(const Config&                   config,
+                      const std::string&              shader_hlsl,
+                      const std::string&              shader_model,
+                      const std::string&              entry_point,
+                      const std::vector<std::string>& include_paths,
+                      const std::vector<std::string>& prepreocessor_defines,
+                      const std::string&              output_filename,
+                      std::string&                    dxc_output,
+                      std::string&                    dxc_errors,
+                      bool                            invoke_for_rootsig_compilation)
 {
     bool ret = false;
-
-    // Use DXC to compile shader model 5.1 or above.
-    const char* kStrOptionTargetProfile = "-T";
-    const char* kStrOptionOutputFile = "-Fo";
-    const char* kStrOptionEntryPoint = "-E";
-    const char* kStrOptionIncludePath = "-I";
-    const char* kStrOptionPreprocessorDefines = "-D";
-    const char* kStrOptionDxilDisassemblyOutputFile = "-Fc";
 
     // Construct the invocation command for DXC.
     std::stringstream cmd;
@@ -198,30 +205,33 @@ static bool InvokDxc(const Config& config, const std::string& shader_hlsl, const
         cmd << kStrOptionPreprocessorDefines << " " << prepreocessor_define << " ";
     }
 
-    // DXIL disassembly.
-    if (!config.cs_dxil_disassembly.empty())
+    if (!invoke_for_rootsig_compilation)
     {
-        cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.cs_dxil_disassembly << "\" ";
-    }
-    else if (!config.vs_dxil_disassembly.empty() && shader_model.find("vs_") == 0)
-    {
-        cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.vs_dxil_disassembly << "\" ";
-    }
-    else if (!config.hs_dxil_disassembly.empty() && shader_model.find("hs_") == 0)
-    {
-        cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.hs_dxil_disassembly << "\" ";
-    }
-    else if (!config.ds_dxil_disassembly.empty() && shader_model.find("ds_") == 0)
-    {
-        cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.ds_dxil_disassembly << "\" ";
-    }
-    else if (!config.gs_dxil_disassembly.empty() && shader_model.find("gs_") == 0)
-    {
-        cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.gs_dxil_disassembly << "\" ";
-    }
-    else if (!config.ps_dxil_disassembly.empty() && shader_model.find("ps_") == 0)
-    {
-        cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.ps_dxil_disassembly << "\" ";
+        // DXIL disassembly.
+        if (!config.cs_dxil_disassembly.empty())
+        {
+            cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.cs_dxil_disassembly << "\" ";
+        }
+        else if (!config.vs_dxil_disassembly.empty() && shader_model.find("vs_") == 0)
+        {
+            cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.vs_dxil_disassembly << "\" ";
+        }
+        else if (!config.hs_dxil_disassembly.empty() && shader_model.find("hs_") == 0)
+        {
+            cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.hs_dxil_disassembly << "\" ";
+        }
+        else if (!config.ds_dxil_disassembly.empty() && shader_model.find("ds_") == 0)
+        {
+            cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.ds_dxil_disassembly << "\" ";
+        }
+        else if (!config.gs_dxil_disassembly.empty() && shader_model.find("gs_") == 0)
+        {
+            cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.gs_dxil_disassembly << "\" ";
+        }
+        else if (!config.ps_dxil_disassembly.empty() && shader_model.find("ps_") == 0)
+        {
+            cmd << kStrOptionDxilDisassemblyOutputFile << " \"" << config.ps_dxil_disassembly << "\" ";
+        }
     }
 
     // Additional options from the user if given.
@@ -234,7 +244,14 @@ static bool InvokDxc(const Config& config, const std::string& shader_hlsl, const
             fixed_opt = fixed_opt.substr(0, fixed_opt.size() - 1);
         }
 
-        cmd << fixed_opt << " ";
+        if (invoke_for_rootsig_compilation)
+        {
+            cmd << FilterDxcOpts(fixed_opt) << " ";
+        }
+        else
+        {
+            cmd << fixed_opt << " ";
+        }
     }
     else if (!config.dxc_opt_file.empty())
     {
@@ -247,7 +264,14 @@ static bool InvokDxc(const Config& config, const std::string& shader_hlsl, const
         {
             if (!dxc_opt_file_content.empty())
             {
-                cmd << dxc_opt_file_content << " ";
+                if (invoke_for_rootsig_compilation)
+                {
+                    cmd << FilterDxcOpts(dxc_opt_file_content) << " ";
+                }
+                else
+                {
+                    cmd << dxc_opt_file_content << " ";
+                }
                 std::cout << kStrInfoDxcOptionsFileReadSuccess << dxc_opt_file_content << std::endl;
             }
             else
@@ -336,8 +360,8 @@ static bool CompileHlslWithDxcDxr(const Config& config, const std::string& hlsl_
         // Perform the front-end compilation through DXC.
         std::string dxc_output;
         std::string dxc_errors;
-        bool is_launch_successful = InvokDxc(config, hlsl_file, shader_model,
-            "", config.include_path, config.defines, dxil_output_file, dxc_output, dxc_errors);
+        bool        is_launch_successful =
+            InvokeDxc(config, hlsl_file, shader_model, "", config.include_path, config.defines, dxil_output_file, dxc_output, dxc_errors, false);
         assert(is_launch_successful);
         bool is_dxc_text_output_available = !dxc_output.empty() || !dxc_errors.empty();
         if (is_dxc_text_output_available)
@@ -401,14 +425,14 @@ static bool CompileHlslWithDxc(const Config& config, const std::string& hlsl_fil
     if (!should_abort)
     {
         // Notify the user.
-        std::cout << kStrInfoFrontEndCompilationWithDxc1 << kStrDx12StageNames[stage] <<
+        std::cout << kStrInfoFrontEndCompilationWithDxc1 << kStrDx12StageNames[stage] << " shader" <<
             kStrInfoFrontEndCompilationWithDxc2 << std::endl;
 
         // Perform the front-end compilation through DXC.
         std::string dxc_output;
         std::string dxc_errors;
-        bool is_launch_successful = InvokDxc(config, hlsl_file, shader_model,
-            entry_point, config.include_path, config.defines, dxil_output_file, dxc_output, dxc_errors);
+        bool        is_launch_successful =
+            InvokeDxc(config, hlsl_file, shader_model, entry_point, config.include_path, config.defines, dxil_output_file, dxc_output, dxc_errors, false);
         assert(is_launch_successful);
         bool is_dxc_text_output_available = !dxc_output.empty() || !dxc_errors.empty();
         if (is_dxc_text_output_available)
@@ -458,73 +482,6 @@ static bool CompileHlslWithDxc(const Config& config, const std::string& hlsl_fil
         }
     }
     return ret;
-}
-
-// Sets output parameter to true if this shader model is a "legacy" shader model,
-// which means that it is supported by D3DCompileFromFile through DXBC rather than DXIL.
-// Namely, checks if the shader model is 5.1 or above.
-// In case of a failure, for example, if the shader model format is invalid, false
-// is return. Otherwise, true is returned.
-static bool IsLegacyShaderModel(const std::string& shader_model, bool& is_legacy)
-{
-    const char* kStrErrorFailedParsingShaderModel = "Error: failed parsing shader model string.";
-    bool ret = true;
-    try
-    {
-        std::vector<std::string> model_components;
-        BeUtils::SplitString(shader_model, '_', model_components);
-        assert(model_components.size() > 2);
-        if (model_components.size() > 2)
-        {
-            bool is_numeric_value = BeUtils::IsNumericValue(model_components[1]);
-            assert(is_numeric_value);
-            if (is_numeric_value)
-            {
-                int version_major = std::stoi(model_components[1]);
-                if (version_major < 5)
-                {
-                    // If shader model is lower than 5, it's legacy.
-                    is_legacy = true;
-                }
-                else if (version_major == 5)
-                {
-                    is_numeric_value = BeUtils::IsNumericValue(model_components[2]);
-                    assert(is_numeric_value);
-                    if (is_numeric_value)
-                    {
-                        int version_minor = std::stoi(model_components[2]);
-                        if (version_minor == 0)
-                        {
-                            // If shader model is 5.0, it's legacy.
-                            is_legacy = true;
-                        }
-                    }
-                    else
-                    {
-                        // Invalid shader model.
-                        ret = false;
-                    }
-                }
-            }
-            else
-            {
-                // Invalid shader model.
-                ret = false;
-            }
-        }
-    }
-    catch (...)
-    {
-        std::cout << kStrErrorFailedParsingShaderModel << std::endl;
-        ret = false;
-    }
-    return ret;
-}
-
-bool BeUtils::IsNumericValue(const std::string& str)
-{
-    return !str.empty() && std::find_if(str.begin(),
-        str.end(), [](char c) { return !std::isdigit(c); }) == str.end();
 }
 
 static beStatus InvokeDx12Backend(const Config&      config, 
@@ -690,6 +647,21 @@ static bool IsSupportedDevice(const std::string& device_name)
 // *** INTERNALLY LINKED SYMBOLS - END ***
 // ***************************************
 
+BeProgramBuilderDx12::~BeProgramBuilderDx12(void)
+{
+    if (!dxc_autogen_pipeline_info_.should_retain_temp_files)
+    {       
+        BeUtils::DeleteFileFromDisk(dxc_autogen_pipeline_info_.root_signature.filename);
+        BeUtils::DeleteFileFromDisk(dxc_autogen_pipeline_info_.vertex_shader.filename);
+        BeUtils::DeleteFileFromDisk(dxc_autogen_pipeline_info_.pixel_shader.filename);
+        BeUtils::DeleteFileFromDisk(dxc_autogen_pipeline_info_.gpso_file.filename);
+        for (const auto& temp_file : dxc_autogen_pipeline_info_.other_temporary_files)
+        {
+            BeUtils::DeleteFileFromDisk(temp_file);
+        }
+    }
+}
+
 beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
     std::vector<std::string>& gpus, std::map<std::string, int>& driver_ids)
 {
@@ -702,7 +674,7 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
     assert(rc == TRUE);
 
     beStatus ret = InvokeDx12Backend(config, "-l", config.print_process_cmd_line, false, supported_gpus, errors);
-    assert(ret = beStatus::kBeStatusSuccess);
+    assert(ret == beStatus::kBeStatusSuccess);
     assert(!supported_gpus.empty());
     if ((ret == beStatus::kBeStatusSuccess) && !supported_gpus.empty())
     {
@@ -724,8 +696,9 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
                     assert(!split_names_colon.empty());
                     if (!split_names_colon.empty())
                     {
-                        std::transform(split_names_colon[0].begin(),
-                            split_names_colon[0].end(), split_names_colon[0].begin(), ::tolower);
+                        std::transform(split_names_colon[0].begin(), split_names_colon[0].end(), split_names_colon[0].begin(), [](const char& c) {
+                            return static_cast<char>(std::tolower(c));
+                        });
 
                         // Check if the name needs to be corrected to the "standard" name used by this tool.
                         auto corrected_name = std::find_if(kPalDeviceNameMapping.cbegin(), kPalDeviceNameMapping.cend(),
@@ -749,8 +722,9 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
                             assert(!split_names_arrow.empty());
                             if (!split_names_arrow.empty())
                             {
-                                std::transform(split_names_arrow[0].begin(),
-                                    split_names_arrow[0].end(), split_names_arrow[0].begin(), ::tolower);
+                                std::transform(split_names_arrow[0].begin(), split_names_arrow[0].end(), split_names_arrow[0].begin(), [](const char& c) {
+                                    return static_cast<char>(std::tolower(c));
+                                });
                                 gpus.push_back(split_names_arrow[0]);
 
                                 // Get the id for this device.
@@ -819,48 +793,163 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
     return ret;
 }
 
-std::string GenerateShaderModel(const std::string &shader_model, const Config &config, BePipelineStage stage)
+static bool CompileRootSignatureWithDxc(const Config&      config,
+                                        const std::string& rootsig_hlsl,
+                                        const std::string& model,
+                                        const std::string& entry_point,
+                                        std::string&       dxil_output_file)
 {
-    std::string ret;
-    if (!shader_model.empty())
+    bool ret          = false;
+    bool should_abort = !KcUtils::ConstructOutFileName("", STR_ROOT_SIGNATURE_SUFFIX, STR_DXIL_FILE_NAME, STR_DXIL_FILE_SUFFIX, dxil_output_file);
+    assert(!should_abort);
+    if (!should_abort)
     {
-        ret = shader_model;
-    }
-    else
-    {
-        // Auto-generate the shader model.
-        bool is_shader_model_generated = false;
-        if (!config.all_model.empty())
+        // Notify the user.
+        std::cout << kStrInfoFrontEndCompilationWithDxc1 << "root signature" << kStrInfoFrontEndCompilationWithDxc2 << std::endl;
+
+        std::string rootsig_model{rga::rs_version_default};
+        if (!model.empty())
         {
-            std::stringstream model;
-            std::string shader_model_prefix = GetShaderModelPrefix(stage);
-            if (!shader_model_prefix.empty())
+            rootsig_model = model;
+        }
+
+        // Perform the front-end compilation through DXC.
+        std::string dxc_output;
+        std::string dxc_errors;
+        bool        is_launch_successful =
+            InvokeDxc(config, rootsig_hlsl, rootsig_model, entry_point, config.include_path, config.defines, dxil_output_file, dxc_output, dxc_errors, true);
+        assert(is_launch_successful);
+        bool is_dxc_text_output_available = !dxc_output.empty() || !dxc_errors.empty();
+        if (is_dxc_text_output_available)
+        {
+            // Inform user that output from DXC is coming.
+            std::cout << std::endl << kStrInfoDxcOutputPrologue << std::endl << std::endl;
+        }
+        if (!dxc_output.empty())
+        {
+            // Print output.
+            std::cout << dxc_output << std::endl;
+        }
+        if (!dxc_errors.empty())
+        {
+            // Print errors.
+            std::cout << dxc_errors << std::endl;
+        }
+        if (is_dxc_text_output_available)
+        {
+            // Print DXC output epilogue.
+            std::cout << kStrInfoDxcOutputEpilogue << std::endl;
+        }
+
+        if (!is_launch_successful)
+        {
+            // If no error messages printed by
+            // front-end compiler, assume failure to launch.
+            if (dxc_output.empty() && dxc_errors.empty())
             {
-                model << shader_model_prefix << "_" << config.all_model;
-                ret = model.str();
-                is_shader_model_generated = true;
+                std::cout << std::endl << kStrErrorDxcLaunchFailed << std::endl;
+            }
+        }
+        else
+        {
+            bool isDxilFileValid = KcUtils::FileNotEmpty(dxil_output_file);
+            if (isDxilFileValid)
+            {
+                std::cout << kStrInfoFrontEndCompilationSuccess << std::endl;
+                ret = true;
+            }
+            else
+            {
+                std::cout << kStrErrorHlslToDxilCompilationFailed1 << STR_ROOT_SIGNATURE_SUFFIX << kStrErrorHlslToDxilCompilationFailed2 << std::endl;
+                ret = false;
             }
         }
     }
     return ret;
 }
 
-bool HandleHlslArgument(const Config &config, BePipelineStage stage,
-    const char* stage_cmd_name, const std::string& hlsl_file,
-    const std::string& shader_model, const std::string& entry_point,
-    bool& is_legacy_shader_model, std::stringstream &cmd, std::string &dxil_compiled)
+void HandleRootSignatureArgument(const Config&                          config,
+                                 const BeDx12Utils::ShaderModelVersion& shader_model_vs,
+                                 const BeDx12Utils::ShaderModelVersion& shader_model_hs,
+                                 const BeDx12Utils::ShaderModelVersion& shader_model_ds,
+                                 const BeDx12Utils::ShaderModelVersion& shader_model_gs,
+                                 const BeDx12Utils::ShaderModelVersion& shader_model_ps,
+                                 const BeDx12Utils::ShaderModelVersion& shader_model_cs,
+                                 std::stringstream&                     cmd,
+                                 std::string&                           dxil_compiled)
+{
+    if (!config.rs_bin.empty())
+    {
+        cmd << "--rs-bin "
+            << "\"" << config.rs_bin << "\" ";
+    }
+    
+    if (shader_model_vs.IsAboveShaderModel_5_1() || shader_model_hs.IsAboveShaderModel_5_1() || shader_model_ds.IsAboveShaderModel_5_1() ||
+        shader_model_gs.IsAboveShaderModel_5_1() || shader_model_ps.IsAboveShaderModel_5_1() || shader_model_cs.IsAboveShaderModel_5_1())
+    {
+        if (!config.rs_hlsl.empty())
+        {
+            if (CompileRootSignatureWithDxc(config, config.rs_hlsl, config.rs_macro_version, config.rs_macro, dxil_compiled))
+            {
+                cmd << "--rs-bin "
+                    << "\"" << dxil_compiled << "\" ";
+            }
+        }
+        else if (!config.all_hlsl.empty() && !config.rs_macro.empty())
+        {
+            if (CompileRootSignatureWithDxc(config, config.all_hlsl, config.rs_macro_version, config.rs_macro, dxil_compiled))
+            {
+                cmd << "--rs-bin "
+                    << "\"" << dxil_compiled << "\" ";
+            }
+        }
+    }
+    else
+    {
+        if (!config.rs_hlsl.empty())
+        {
+            cmd << "--rs-hlsl "
+                << "\"" << config.rs_hlsl << "\" ";
+        }
+        else if (!config.all_hlsl.empty())
+        {
+            cmd << "--rs-hlsl "
+                << "\"" << config.all_hlsl << "\" ";
+        }
+        if (!config.rs_macro.empty())
+        {
+            cmd << "--rs-macro "
+                << "\"" << config.rs_macro << "\" ";
+        }
+        if (!config.rs_macro_version.empty())
+        {
+            cmd << "--rs-macro-version "
+                << "\"" << config.rs_macro_version << "\" ";
+        }
+    }
+}
+
+bool HandleHlslArgument(const Config&                    config,
+                        BePipelineStage                  stage,
+                        const char*                      stage_cmd_name,
+                        const std::string&               hlsl_file,
+                        const std::string&               shader_model,
+                        const std::string&               entry_point,
+                        BeDx12Utils::ShaderModelVersion& shader_model_version,
+                        std::stringstream&               cmd,
+                        std::string&                     dxil_compiled)
 {
     bool ret = false;
 
     // Auto-generate the shader model if needed.
-    std::string shader_model_generated = GenerateShaderModel(shader_model, config, stage);
+    std::string shader_model_generated = BeDx12Utils::GenerateShaderModel(shader_model, config, stage);
     if (!shader_model_generated.empty())
     {
-        bool is_shader_model_valid = IsLegacyShaderModel(shader_model_generated, is_legacy_shader_model);
+        bool is_shader_model_valid = BeDx12Utils::ParseShaderModel(shader_model_generated, shader_model_version);
         assert(is_shader_model_valid);
         if (is_shader_model_valid)
         {
-            if (is_legacy_shader_model)
+            if (shader_model_version.IsBelowShaderModel_5_1())
             {
                 cmd << "--" << stage_cmd_name << " " << "\"" << hlsl_file << "\" ";
                 ret = true;
@@ -903,8 +992,9 @@ bool BeProgramBuilderDx12::EnableNullBackendForDevice(const Config& config, cons
         if (!code_name_to_driver_id_.empty())
         {
             std::string target_device_lower = device_name;
-            std::transform(target_device_lower.begin(), target_device_lower.end(),
-                target_device_lower.begin(), ::tolower);
+            std::transform(target_device_lower.begin(), target_device_lower.end(), target_device_lower.begin(), [](const char& c) {
+                return static_cast<char>(std::tolower(c));
+            });
             auto iter = code_name_to_driver_id_.find(target_device_lower);
             if (iter != code_name_to_driver_id_.end())
             {
@@ -943,9 +1033,14 @@ bool BeProgramBuilderDx12::EnableNullBackendForDevice(const Config& config, cons
     return ret;
 }
 
-beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
- const std::string& target_device, std::string& out_text, std::string& error_msg, BeVkPipelineFiles& generated_isa_files,
-    BeVkPipelineFiles& generated_amdil_files, BeVkPipelineFiles& generated_stats_files, std::string& generated_binary_files)
+beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
+                                             const std::string& target_device,
+                                             std::string&       out_text,
+                                             std::string&       error_msg,
+                                             BeVkPipelineFiles& generated_isa_files,
+                                             BeVkPipelineFiles& generated_amdil_files,
+                                             BeVkPipelineFiles& generated_stats_files,
+                                             std::string&       generated_binary_files)
 {
     beKA::beStatus ret = beStatus::kBeStatusInvalid;
     bool rc = EnableNullBackendForDevice(config, target_device);
@@ -956,12 +1051,12 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
         // If this is the case, we will pass the backend the required parameters to perform the
         // compilation through the runtime into DXBC. Otherwise, we will compile first through DXC
         // into DXIL, and then use the generated binary as a pre-compiled input for the backend.
-        bool is_legacy_shader_model_vs = false;
-        bool is_legacy_shader_model_hs = false;
-        bool is_legacy_shader_model_ds = false;
-        bool is_legacy_shader_model_gs = false;
-        bool is_legacy_shader_model_ps = false;
-        bool is_legacy_shader_model_cs = false;
+        BeDx12Utils::ShaderModelVersion shader_model_version_vs{};
+        BeDx12Utils::ShaderModelVersion shader_model_version_hs{};
+        BeDx12Utils::ShaderModelVersion shader_model_version_ds{};
+        BeDx12Utils::ShaderModelVersion shader_model_version_gs{};
+        BeDx12Utils::ShaderModelVersion shader_model_version_ps{};
+        BeDx12Utils::ShaderModelVersion shader_model_version_cs{};
 
         // Names of DXIL files generated by this stage in
         // case that the shader model is not a legacy one.
@@ -971,6 +1066,7 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
         std::string dxil_compiled_gs;
         std::string dxil_compiled_ps;
         std::string dxil_compiled_cs;
+        std::string dxil_compiled_rs;
 
         // Build the command line invocation for the backend.
         std::stringstream cmd;
@@ -980,39 +1076,64 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
 
         // Generate a lower-case version of the target name.
         std::string target_device_lower = target_device;
-        std::transform(target_device_lower.begin(), target_device_lower.end(),
-            target_device_lower.begin(), ::tolower);
+        std::transform(target_device_lower.begin(), target_device_lower.end(), target_device_lower.begin(), [](const char& c) {
+            return static_cast<char>(std::tolower(c));
+        });
 
         // Input files - HLSL.
         if (!should_abort && !config.vs_hlsl.empty())
         {
             should_abort = !HandleHlslArgument(config, BePipelineStage::kVertex, "vert", config.vs_hlsl,
-                config.vs_model, config.vs_entry_point, is_legacy_shader_model_vs, cmd, dxil_compiled_vs);
+                                               config.vs_model,
+                                               config.vs_entry_point,
+                                               shader_model_version_vs,
+                                               cmd,
+                                               dxil_compiled_vs);
         }
         if (!should_abort && !config.hs_hlsl.empty())
         {
             should_abort = !HandleHlslArgument(config, BePipelineStage::kTessellationControl, "hull", config.hs_hlsl,
-                config.hs_model, config.hs_entry_point, is_legacy_shader_model_hs, cmd, dxil_compiled_hs);
+                                               config.hs_model,
+                                               config.hs_entry_point,
+                                               shader_model_version_hs,
+                                               cmd,
+                                               dxil_compiled_hs);
         }
         if (!should_abort && !config.ds_hlsl.empty())
         {
             should_abort = !HandleHlslArgument(config, BePipelineStage::kTessellationEvaluation, "domain", config.ds_hlsl,
-                config.ds_model, config.ds_entry_point, is_legacy_shader_model_ds, cmd, dxil_compiled_ds);
+                                               config.ds_model,
+                                               config.ds_entry_point,
+                                               shader_model_version_ds,
+                                               cmd,
+                                               dxil_compiled_ds);
         }
         if (!should_abort && !config.gs_hlsl.empty())
         {
             should_abort = !HandleHlslArgument(config, BePipelineStage::kGeometry, "geom", config.gs_hlsl,
-                config.gs_model, config.gs_entry_point, is_legacy_shader_model_gs, cmd, dxil_compiled_gs);
+                                               config.gs_model,
+                                               config.gs_entry_point,
+                                               shader_model_version_gs,
+                                               cmd,
+                                               dxil_compiled_gs);
         }
         if (!should_abort && !config.ps_hlsl.empty())
         {
             should_abort = !HandleHlslArgument(config, BePipelineStage::kFragment, "pixel", config.ps_hlsl,
-                config.ps_model, config.ps_entry_point, is_legacy_shader_model_ps, cmd, dxil_compiled_ps);
+                                               config.ps_model,
+                                               config.ps_entry_point,
+                                               shader_model_version_ps,
+                                               cmd,
+                                               dxil_compiled_ps);
         }
         if (!should_abort && !config.cs_hlsl.empty())
         {
             should_abort = !HandleHlslArgument(config, BePipelineStage::kCompute, "comp", config.cs_hlsl,
-                config.cs_model, config.cs_entry_point, is_legacy_shader_model_cs, cmd, dxil_compiled_cs);
+                                               config.cs_model,
+                                               config.cs_entry_point,
+                                               shader_model_version_cs,
+                                               cmd,
+                                               dxil_compiled_cs);
 
             // Special case: if we switched HLSL input with binary input and RS is in HLSL file and
             // needs to be compiled from a macro, and if an HLSL file has not been given by the user since
@@ -1020,8 +1141,21 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
             // so that the backend knows where to read the macro from.
             if (!dxil_compiled_cs.empty() && !config.rs_macro.empty() && config.rs_hlsl.empty())
             {
-                cmd << " --rs-hlsl " << "\"" << config.cs_hlsl << "\" ";
+                if (shader_model_version_cs.IsAboveShaderModel_5_1())
+                {
+                    if (CompileRootSignatureWithDxc(config, config.cs_hlsl, config.rs_macro_version, config.rs_macro, dxil_compiled_rs))
+                    {
+                        cmd << "--rs-bin "
+                            << "\"" << dxil_compiled_rs << "\" ";
+                    }
+                }
+                else
+                {
+                    cmd << " --rs-hlsl "
+                        << "\"" << config.cs_hlsl << "\" ";
+                }
             }
+
         }
 
         if (!should_abort)
@@ -1079,12 +1213,12 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
             }
 
             // Shader model.
-            std::string vs_model_generated = !config.vs_hlsl.empty() ? GenerateShaderModel(config.vs_model, config, BePipelineStage::kVertex) : "";
-            std::string hs_model_generated = !config.hs_hlsl.empty() ? GenerateShaderModel(config.hs_model, config, BePipelineStage::kTessellationControl) : "";
-            std::string ds_model_generated = !config.ds_hlsl.empty() ? GenerateShaderModel(config.ds_model, config, BePipelineStage::kTessellationEvaluation) : "";
-            std::string gs_model_generated = !config.gs_hlsl.empty() ? GenerateShaderModel(config.gs_model, config, BePipelineStage::kGeometry) : "";
-            std::string ps_model_generated = !config.ps_hlsl.empty() ? GenerateShaderModel(config.ps_model, config, BePipelineStage::kFragment) : "";
-            std::string cs_model_generated = !config.cs_hlsl.empty() ? GenerateShaderModel(config.cs_model, config, BePipelineStage::kCompute) : "";
+            std::string vs_model_generated = !config.vs_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.vs_model, config, BePipelineStage::kVertex) : "";
+            std::string hs_model_generated = !config.hs_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.hs_model, config, BePipelineStage::kTessellationControl) : "";
+            std::string ds_model_generated = !config.ds_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.ds_model, config, BePipelineStage::kTessellationEvaluation) : "";
+            std::string gs_model_generated = !config.gs_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.gs_model, config, BePipelineStage::kGeometry) : "";
+            std::string ps_model_generated = !config.ps_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.ps_model, config, BePipelineStage::kFragment) : "";
+            std::string cs_model_generated = !config.cs_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.cs_model, config, BePipelineStage::kCompute) : "";
 
             if (!vs_model_generated.empty())
             {
@@ -1112,26 +1246,15 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
             }
 
             // Root signature.
-            if (!config.rs_bin.empty())
-            {
-                cmd << "--rs-bin " << "\"" << config.rs_bin << "\" ";
-            }
-            if (!config.rs_hlsl.empty())
-            {
-                cmd << "--rs-hlsl " << "\"" << config.rs_hlsl << "\" ";
-            }
-            else if (!config.all_hlsl.empty())
-            {
-                cmd << "--rs-hlsl " << "\"" << config.all_hlsl << "\" ";
-            }
-            if (!config.rs_macro.empty())
-            {
-                cmd << "--rs-macro " << "\"" << config.rs_macro << "\" ";
-            }
-            if (!config.rs_macro_version.empty())
-            {
-                cmd << "--rs-macro-version " << "\"" << config.rs_macro_version << "\" ";
-            }
+            HandleRootSignatureArgument(config,
+                                        shader_model_version_vs,
+                                        shader_model_version_hs,
+                                        shader_model_version_ds,
+                                        shader_model_version_gs,
+                                        shader_model_version_ps,
+                                        shader_model_version_cs,
+                                        cmd,
+                                        dxil_compiled_rs);
 
             // Include.
             for (const std::string& include_path : config.include_path)
@@ -1242,40 +1365,27 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
 
             // For older shader models, we should retrieve the DXBC disassembly from the runtime compiler.
             // For the newer shader models, this has already been done offline through DXC.
-            bool is_legacy_shader_model = false;
-            if (!config.vs_hlsl.empty() && !config.vs_dxil_disassembly.empty() &&
-                IsLegacyShaderModel(vs_model_generated, is_legacy_shader_model) &&
-                is_legacy_shader_model)
+            if (!config.vs_hlsl.empty() && !config.vs_dxil_disassembly.empty() && shader_model_version_vs.IsBelowShaderModel_5_1())
             {
                 cmd << "--vert-dxbc-dis \"" << config.vs_dxil_disassembly << "\" ";
             }
-            if (!config.hs_hlsl.empty() && !config.hs_dxil_disassembly.empty() &&
-                IsLegacyShaderModel(hs_model_generated, is_legacy_shader_model) &&
-                is_legacy_shader_model)
+            if (!config.hs_hlsl.empty() && !config.hs_dxil_disassembly.empty() && shader_model_version_hs.IsBelowShaderModel_5_1())
             {
                 cmd << "--hull-dxbc-dis \"" << config.hs_dxil_disassembly << "\" ";
             }
-            if (!config.ds_hlsl.empty() && !config.ds_dxil_disassembly.empty() &&
-                IsLegacyShaderModel(ds_model_generated, is_legacy_shader_model) &&
-                is_legacy_shader_model)
+            if (!config.ds_hlsl.empty() && !config.ds_dxil_disassembly.empty() && shader_model_version_ds.IsBelowShaderModel_5_1())
             {
                 cmd << "--domain-dxbc-dis \"" << config.ds_dxil_disassembly << "\" ";
             }
-            if (!config.gs_hlsl.empty() && !config.gs_dxil_disassembly.empty() &&
-                IsLegacyShaderModel(gs_model_generated, is_legacy_shader_model) &&
-                is_legacy_shader_model)
+            if (!config.gs_hlsl.empty() && !config.gs_dxil_disassembly.empty() && shader_model_version_gs.IsBelowShaderModel_5_1())
             {
                 cmd << "--geom-dxbc-dis \"" << config.gs_dxil_disassembly << "\" ";
             }
-            if (!config.ps_hlsl.empty() && !config.ps_dxil_disassembly.empty() &&
-                IsLegacyShaderModel(ps_model_generated, is_legacy_shader_model) &&
-                is_legacy_shader_model)
+            if (!config.ps_hlsl.empty() && !config.ps_dxil_disassembly.empty() && shader_model_version_ps.IsBelowShaderModel_5_1())
             {
                 cmd << "--pixel-dxbc-dis \"" << config.ps_dxil_disassembly << "\" ";
             }
-            if (!config.cs_hlsl.empty() && !config.cs_dxil_disassembly.empty() &&
-                IsLegacyShaderModel(cs_model_generated, is_legacy_shader_model) &&
-                is_legacy_shader_model)
+            if (!config.cs_hlsl.empty() && !config.cs_dxil_disassembly.empty() && shader_model_version_cs.IsBelowShaderModel_5_1())
             {
                 cmd << "--comp-dxbc-dis \"" << config.cs_dxil_disassembly << "\" ";
             }
@@ -1353,6 +1463,10 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config& config,
                 {
                     KcUtils::DeleteFile(dxil_compiled_cs);
                 }
+                if (KcUtils::FileNotEmpty(dxil_compiled_rs))
+                {
+                    KcUtils::DeleteFile(dxil_compiled_rs);
+                }                
             }
         }
     }
@@ -1465,7 +1579,7 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
                 // to generate the file names with a special token '*' which would be replaced by the backend
                 // with the relevant index of that pipeline.
                 bool is_all_mode = (config.dxr_exports.size() == 1 && config.dxr_exports[0].compare("all") == 0);
-                bool is_pipeline_mode = (KcUtils::ToLower(config.dxr_mode).compare("pipeline") == 0);
+                bool is_pipeline_mode = (RgaSharedUtils::ToLower(config.dxr_mode).compare("pipeline") == 0);
 
                 // ISA.
                 if (!config.isa_file.empty())
@@ -1496,8 +1610,9 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
 
                 // Add the required output files to the command.
                 std::string target_device_lower = target_device;
-                std::transform(target_device_lower.begin(), target_device_lower.end(),
-                    target_device_lower.begin(), ::tolower);
+                std::transform(target_device_lower.begin(), target_device_lower.end(), target_device_lower.begin(), [](const char& c) {
+                    return static_cast<char>(std::tolower(c));
+                });
 
                 // Statistics files.
                 if (!config.analysis_file.empty())
@@ -1616,6 +1731,384 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
         }
     }
     return ret;
+}
+
+static std::string GenerateModelString(const Config& config, BePipelineStage shader_stage_from, BePipelineStage shader_stage_to)
+{
+    const auto& prefix_from = BeDx12Utils::GetShaderModelPrefix(shader_stage_from);
+    const auto& prefix_to   = BeDx12Utils::GetShaderModelPrefix(shader_stage_to);
+    std::string model;
+    switch (shader_stage_from)
+    {
+    case BePipelineStage::kVertex:
+        model = BeDx12Utils::GenerateShaderModel(config.vs_model, config, BePipelineStage::kVertex);
+        break;
+    case BePipelineStage::kFragment:
+        model = BeDx12Utils::GenerateShaderModel(config.ps_model, config, BePipelineStage::kFragment);
+        break;
+    default:
+        assert(0);
+    }
+    std::size_t pos = model.find(prefix_from);
+    assert(pos != std::string::npos);
+    if (pos != std::string::npos)
+    {
+        model.replace(pos, prefix_from.length(), prefix_to);
+    }
+    return model;
+}
+
+std::string GetFullPath(const std::string& folder_path, const std::string& filename)
+{
+    std::filesystem::path folder(folder_path);
+    std::filesystem::path file(filename);
+    std::filesystem::path full_path = folder / file;
+    return full_path.string();
+}
+
+void PrintAutoGenFileStatus(const BeDx12AutoGenFile& info, const std::string& file_type, const std::string& autogen_dir)
+{
+    switch (info.status)
+    {
+    case BeDx12AutoGenStatus::kRequired:
+    case BeDx12AutoGenStatus::kFailed:
+    case BeDx12AutoGenStatus::kSuccess:
+        std::cout << "Auto-generating ";
+        std::cout << file_type;
+        std::cout << " using reflection";
+        if (KcUtils::IsDirectory(autogen_dir))
+        {
+            std::cout << " into " << KcUtils::Quote(GetFullPath(autogen_dir, info.filename));
+        }
+        std::cout << " ... ";
+        std::cout << (info.status == BeDx12AutoGenStatus::kSuccess ? "success." : "failure.");
+
+        std::cout << "\n";
+        break;
+
+    case BeDx12AutoGenStatus::kNotRequired:
+    default:
+        break;
+    }
+}
+
+void BeProgramBuilderDx12::PrintAutoGenerationStatus()
+{
+    PrintAutoGenFileStatus(dxc_autogen_pipeline_info_.root_signature, "root signature", dxc_autogen_pipeline_info_.autogen_dir);
+    PrintAutoGenFileStatus(dxc_autogen_pipeline_info_.gpso_file, "graphics pipeline state", dxc_autogen_pipeline_info_.autogen_dir);
+    PrintAutoGenFileStatus(dxc_autogen_pipeline_info_.vertex_shader, "vertex shader", dxc_autogen_pipeline_info_.autogen_dir);
+    PrintAutoGenFileStatus(dxc_autogen_pipeline_info_.pixel_shader, "pixel shader", dxc_autogen_pipeline_info_.autogen_dir);
+
+    std::string dxc_output;
+    BeUtils::TrimLeadingAndTrailingWhitespace(dxc_autogen_pipeline_info_.dxc_out.str(), dxc_output);
+    if (!dxc_output.empty())
+    {
+        std::cout << kStrInfoDxcOutputPrologue << "\n";
+        std::cout << dxc_autogen_pipeline_info_.dxc_out.str();
+        std::cout << kStrInfoDxcOutputEpilogue << "\n";
+    }
+}
+
+beKA::beStatus BeProgramBuilderDx12::CompileDX12Pipeline(const Config&      user_input,
+                                                         const std::string& target_device,
+                                                         std::string&       out_text,
+                                                         std::string&       error_msg,
+                                                         BeVkPipelineFiles& generated_isa_files,
+                                                         BeVkPipelineFiles& generated_amdil_files,
+                                                         BeVkPipelineFiles& generated_stats_files,
+                                                         std::string&       generated_binary_files)
+{
+    beKA::beStatus ret = beStatus::kBeStatusInvalid;
+    if (dxc_autogen_pipeline_info_.autogen_status == BeDx12AutoGenStatus::kSuccess)
+    {
+        PrintAutoGenerationStatus();
+
+        Config updated_config = user_input;
+
+        if (dxc_autogen_pipeline_info_.root_signature.status == BeDx12AutoGenStatus::kSuccess)
+        {
+            updated_config.rs_hlsl  = dxc_autogen_pipeline_info_.root_signature.filename;
+            updated_config.rs_macro = kRootSignature;
+        }
+        if (dxc_autogen_pipeline_info_.gpso_file.status == BeDx12AutoGenStatus::kSuccess)
+        {
+            updated_config.pso_dx12 = dxc_autogen_pipeline_info_.gpso_file.filename;
+        }
+        if (dxc_autogen_pipeline_info_.vertex_shader.status == BeDx12AutoGenStatus::kSuccess)
+        {
+            updated_config.vs_hlsl        = dxc_autogen_pipeline_info_.vertex_shader.filename;
+            updated_config.vs_entry_point = kVSEntryPoint;
+            if (updated_config.all_model.empty())
+            {
+                updated_config.vs_model = GenerateModelString(updated_config, BePipelineStage::kFragment, BePipelineStage::kVertex);
+            }
+        }
+        if (dxc_autogen_pipeline_info_.pixel_shader.status == BeDx12AutoGenStatus::kSuccess)
+        {
+            updated_config.ps_hlsl        = dxc_autogen_pipeline_info_.pixel_shader.filename;
+            updated_config.ps_entry_point = kPSEntryPoint;
+            if (updated_config.all_model.empty())
+            {
+                updated_config.ps_model = GenerateModelString(updated_config, BePipelineStage::kVertex, BePipelineStage::kFragment);
+            }
+        }
+
+        ret = Compile(updated_config, target_device, out_text, error_msg, generated_isa_files, generated_amdil_files, generated_stats_files, generated_binary_files);
+
+        if (dxc_autogen_pipeline_info_.vertex_shader.status == BeDx12AutoGenStatus::kSuccess)
+        {
+            dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_isa_files[BePipelineStage::kVertex]);
+            dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_amdil_files[BePipelineStage::kVertex]);
+            dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_stats_files[BePipelineStage::kVertex]);
+        }
+        if (dxc_autogen_pipeline_info_.pixel_shader.status == BeDx12AutoGenStatus::kSuccess)
+        {
+            dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_isa_files[BePipelineStage::kFragment]);
+            dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_amdil_files[BePipelineStage::kFragment]);
+            dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_stats_files[BePipelineStage::kFragment]);
+        }
+
+    }
+    else
+    {
+        ret = Compile(user_input, target_device, out_text, error_msg, generated_isa_files, generated_amdil_files, generated_stats_files, generated_binary_files);
+    }
+    return ret;
+}
+
+bool BeProgramBuilderDx12::ValidateAndGeneratePipeline(const Config& config, bool is_dxr_pipeline)
+{
+    return BeDx12PipelineValidator::ValidateAndGenerateDx12Pipeline(config, is_dxr_pipeline, dxc_autogen_pipeline_info_);
+}
+
+void BeProgramBuilderDx12::PerformLiveVgprAnalysis(const std::string& isa_file,
+                                                   const std::string& stage_name,
+                                                   const std::string& target,
+                                                   const Config&      config,
+                                                   bool&              is_ok) const
+{
+    if (!isa_file.empty() && dxc_autogen_pipeline_info_.other_temporary_files.find(isa_file) == dxc_autogen_pipeline_info_.other_temporary_files.end())
+    {
+        std::cout << kStrInfoPerformingLiveregAnalysisVgpr;
+        std::cout << stage_name << kStrInfoPerformingAnalysis2 << std::endl;
+
+        // Construct a name for the output file.
+        std::string output_filename;
+        std::string file_suffix = stage_name;
+
+        is_ok = KcUtils::ConstructOutFileName(config.livereg_analysis_file,
+                                              file_suffix,
+                                              target,
+                                              kStrDefaultExtensionLivereg,
+                                              output_filename,
+                                              !KcUtils::IsDirectory(config.livereg_analysis_file));
+
+        if (is_ok)
+        {
+            // Delete that file if it already exists.
+            if (BeUtils::IsFilePresent(output_filename))
+            {
+                KcUtils::DeleteFile(output_filename.c_str());
+            }
+
+            is_ok = KcUtils::PerformLiveRegisterAnalysis(isa_file, target, output_filename, NULL, config.print_process_cmd_line);
+            if (is_ok)
+            {
+                if (KcUtils::FileNotEmpty(output_filename))
+                {
+                    std::cout << kStrInfoSuccess << std::endl;
+                }
+                else
+                {
+                    std::cout << kStrInfoFailed << std::endl;
+                    KcUtils::DeleteFile(output_filename);
+                }
+            }
+        }
+        else
+        {
+            std::cout << kStrErrorFailedToConstructLiveregOutputFilename << std::endl;
+        }
+    }
+}
+
+void BeProgramBuilderDx12::PerformLiveSgprAnalysis(const std::string& isa_file,
+                                                   const std::string& stage_name,
+                                                   const std::string& target,
+                                                   const Config&      config,
+                                                   bool&              is_ok) const
+{
+    if (!isa_file.empty() && dxc_autogen_pipeline_info_.other_temporary_files.find(isa_file) == dxc_autogen_pipeline_info_.other_temporary_files.end())
+    {
+        std::cout << kStrInfoPerformingLiveregAnalysisSgpr;
+        std::cout << stage_name << kStrInfoPerformingAnalysis2 << std::endl;
+
+        // Construct a name for the output file.
+        std::string output_filename;
+        std::string file_suffix = stage_name;
+
+        is_ok = KcUtils::ConstructOutFileName(config.sgpr_livereg_analysis_file,
+                                              file_suffix,
+                                              target,
+                                              kStrDefaultExtensionLiveregSgpr,
+                                              output_filename,
+                                              !KcUtils::IsDirectory(config.sgpr_livereg_analysis_file));
+
+        if (is_ok)
+        {
+            // Delete that file if it already exists.
+            if (BeUtils::IsFilePresent(output_filename))
+            {
+                KcUtils::DeleteFile(output_filename.c_str());
+            }
+
+            is_ok = KcUtils::PerformLiveRegisterAnalysis(isa_file, target, output_filename, NULL, config.print_process_cmd_line, true);
+            if (is_ok)
+            {
+                if (KcUtils::FileNotEmpty(output_filename))
+                {
+                    std::cout << kStrInfoSuccess << std::endl;
+                }
+                else
+                {
+                    std::cout << kStrInfoFailed << std::endl;
+                    KcUtils::DeleteFile(output_filename);
+                }
+            }
+        }
+        else
+        {
+            std::cout << kStrErrorFailedToConstructLiveregOutputFilename << std::endl;
+        }
+    }
+}
+
+void BeProgramBuilderDx12::GeneratePerBlockCfg(const std::string& isa_file,
+                                               const std::string& pipeline_name_dxr,
+                                               const std::string& stage_name,
+                                               const std::string& target,
+                                               const Config&      config_updated,
+                                               bool               is_dxr,
+                                               bool&              is_ok) const
+{
+    if (!isa_file.empty() && dxc_autogen_pipeline_info_.other_temporary_files.find(isa_file) == dxc_autogen_pipeline_info_.other_temporary_files.end())
+    {
+        std::cout << kStrInfoContructingPerBlockCfg1;
+        if (is_dxr)
+        {
+            std::cout << kStrInfoDxrOutputShader << stage_name << kStrInfoDxrPerformingPostProcessing << std::endl;
+        }
+        else
+        {
+            std::cout << stage_name << kStrInfoContructingPerBlockCfg2 << std::endl;
+        }
+
+        // Construct a name for the output file.
+        std::string output_filename;
+        std::string file_suffix = stage_name;
+        if (is_dxr && !IsDxrNullPipeline(pipeline_name_dxr))
+        {
+            std::stringstream suffix_updated;
+            suffix_updated << pipeline_name_dxr << "_" << stage_name;
+            file_suffix = suffix_updated.str();
+        }
+
+        is_ok = KcUtils::ConstructOutFileName(
+            config_updated.block_cfg_file, file_suffix, target, kStrDefaultExtensionDot, output_filename, !KcUtils::IsDirectory(config_updated.block_cfg_file));
+
+        if (is_ok)
+        {
+            // Delete that file if it already exists.
+            if (BeUtils::IsFilePresent(output_filename))
+            {
+                BeUtils::DeleteFileFromDisk(output_filename);
+            }
+
+            is_ok = KcUtils::GenerateControlFlowGraph(isa_file, target, output_filename, NULL, false, config_updated.print_process_cmd_line);
+            if (is_ok)
+            {
+                if (KcUtils::FileNotEmpty(output_filename))
+                {
+                    std::cout << kStrInfoSuccess << std::endl;
+                }
+                else
+                {
+                    std::cout << kStrInfoFailed << std::endl;
+                    KcUtils::DeleteFile(output_filename);
+                }
+            }
+        }
+        else
+        {
+            std::cout << kStrErrorFailedToConstructCfgOutputFilename << std::endl;
+        }
+    }
+}
+
+void BeProgramBuilderDx12::GeneratePerInstructionCfg(const std::string& isa_file,
+                                                     const std::string& pipeline_name_dxr,
+                                                     const std::string& stage_name,
+                                                     const std::string& target,
+                                                     const Config&      config_updated,
+                                                     bool               is_dxr,
+                                                     bool&              is_ok) const
+{
+    if (!isa_file.empty() && dxc_autogen_pipeline_info_.other_temporary_files.find(isa_file) == dxc_autogen_pipeline_info_.other_temporary_files.end())
+    {
+        std::cout << kStrInfoContructingPerInstructionCfg1;
+        if (is_dxr && !pipeline_name_dxr.empty())
+        {
+            std::cout << kStrInfoDxrOutputShader << stage_name << kStrInfoDxrPerformingPostProcessing << std::endl;
+        }
+        else
+        {
+            std::cout << stage_name << kStrInfoContructingPerInstructionCfg2 << std::endl;
+        }
+
+        // Construct a name for the output file.
+        std::string output_filename;
+        std::string file_suffix = stage_name;
+        if (is_dxr && !IsDxrNullPipeline(pipeline_name_dxr))
+        {
+            std::stringstream suffix_updated;
+            suffix_updated << pipeline_name_dxr << "_" << stage_name;
+            file_suffix = suffix_updated.str();
+        }
+        is_ok = KcUtils::ConstructOutFileName(
+            config_updated.inst_cfg_file, file_suffix, target, kStrDefaultExtensionDot, output_filename, !KcUtils::IsDirectory(config_updated.inst_cfg_file));
+
+        if (is_ok)
+        {
+            // Delete that file if it already exists.
+            if (BeUtils::IsFilePresent(output_filename))
+            {
+                BeUtils::DeleteFileFromDisk(output_filename);
+            }
+
+            is_ok = KcUtils::GenerateControlFlowGraph(isa_file, target, output_filename, NULL, true, config_updated.print_process_cmd_line);
+            if (is_ok)
+            {
+                if (KcUtils::FileNotEmpty(output_filename))
+                {
+                    std::cout << kStrInfoSuccess << std::endl;
+                }
+                else
+                {
+                    std::cout << kStrInfoFailed << std::endl;
+                    KcUtils::DeleteFile(output_filename);
+                }
+            }
+        }
+        else
+        {
+            std::cout << kStrErrorFailedToConstructCfgOutputFilename << std::endl;
+        }
+    }
+}
+
+bool BeProgramBuilderDx12::IsDxrNullPipeline(const std::string& pipeline_name)
+{
+    return (pipeline_name.empty() || pipeline_name.compare(kStrDxrNullPipelineName) == 0);
 }
 
 #endif

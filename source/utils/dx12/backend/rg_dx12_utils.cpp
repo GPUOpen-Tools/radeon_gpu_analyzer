@@ -24,6 +24,15 @@ namespace rga
     static const char* kStrErrTextFileReadFailed = "Error: failed to read text file: ";
     static const char* kStrErrBinaryFileWriteFailed = "Error: failed to write binary file: ";
 
+    // Schema constants.
+    const char* RgDx12Utils::kStrElemSchemaVersion               = "schemaVersion";
+    const char* RgDx12Utils::kStrElemSchemaVersion10             = "1.0";
+    const char* RgDx12Utils::kStrElemSchemaInputLayoutNum        = "InputLayoutNumElements";
+    const char* RgDx12Utils::kStrElemSchemaInputLayout           = "InputLayout";
+    const char* RgDx12Utils::kStrElemSchemaPrimitiveTopologyType = "PrimitiveTopologyType";
+    const char* RgDx12Utils::kStrElemSchemaNumRenderTargets      = "NumRenderTargets";
+    const char* RgDx12Utils::kStrElemSchemaRtvFormats            = "RTVFormats";
+
     // *** CONSTANTS - END ***
 
     // Splits comma-separated values wrapped in '{' '}', e.g. { X, Y, Z }.
@@ -142,7 +151,7 @@ namespace rga
     std::string RgDx12Utils::ToLower(const std::string& str)
     {
         std::string lstr = str;
-        std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](const char& c) {return std::tolower(c); });
+        std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](const char& c) { return static_cast<char>(std::tolower(c)); });
         return lstr;
     }
 
@@ -233,15 +242,6 @@ namespace rga
         const char* kStrWarningUnrecognizedPrimitiveTopologyType2 = "\", assuming D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED.";
         const char* kStrWarningRenderTargetsMismatch              = "Warning: mismatch between number of RTV format values and the NumRenderTargets.";
         const char* kStrWarningNumRenderTargetsExceedsMax         = "Warning: NumRenderTargets exceeds max of 8, assuming 8.";
-
-        // Schema constants.
-        const char* kStrElemSchemaVersion               = "schemaVersion";
-        const char* kStrElemSchemaVersion10             = "1.0";
-        const char* kStrElemSchemaInputLayoutNum        = "InputLayoutNumElements";
-        const char* kStrElemSchemaInputLayout           = "InputLayout";
-        const char* kStrElemSchemaPrimitiveTopologyType = "PrimitiveTopologyType";
-        const char* kStrElemSchemaNumRenderTargets      = "NumRenderTargets";
-        const char* kStrElemSchemaRtvFormats            = "RTVFormats";
 
         // Container for input element descriptors.
         D3D12_INPUT_ELEMENT_DESC* elem = {};
@@ -575,9 +575,6 @@ namespace rga
                                                     std::cout << kStrWarningUnrecognizedDxgiFormat1 << rtv_format_values[i]
                                                               << kStrWarningUnrecognizedDxgiFormat2 << std::endl;
                                                 }
-
-                                                // Continue to the next element.
-                                                break;
                                             }
 
                                             // Assume success as long as we did not have to abort.

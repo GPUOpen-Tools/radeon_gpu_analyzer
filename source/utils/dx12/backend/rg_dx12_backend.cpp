@@ -72,7 +72,7 @@ namespace rga
     // In case of any error messages, they will be set into error_msg.
     // Returns true on success, false otherwise.
     static bool ExtractXmlContent(IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
-        AmdExtD3DPipelineHandle* pipeline_handle, char*& xml_buffer, std::string& error_msg)
+        AmdExtD3DPipelineHandle* pipeline_handle, char*& xml_buffer, std::string&)
     {
         bool ret = false;
         size_t isa_size = 0;
@@ -96,7 +96,7 @@ namespace rga
                                                 AmdExtD3DPipelineHandle*   pipeline_handle,
                                                 char*&                     xml_buffer,
                                                 RgDx12PipelineResults&     results,
-                                                std::string&               error_msg)
+                                                std::string&               )
     {
         bool                         ret        = false;
         size_t                       amdil_size = 0;
@@ -154,7 +154,7 @@ namespace rga
                                                AmdExtD3DPipelineHandle*   pipeline_handle,
                                                char*&                     xml_buffer,
                                                RgDx12ShaderResults&       results,
-                                               std::string&               error_msg)
+                                               std::string&               )
     {
         bool                         ret        = false;
         size_t                       amdil_size = 0;
@@ -1069,7 +1069,7 @@ namespace rga
     }
 
     bool RgDx12Backend::Impl::CreateStateObjectShader(const D3D12_STATE_OBJECT_DESC* ray_tracing_state_object,
-        const std::wstring& shader_name, RgDx12ShaderResultsRayTracing& shader_stats, std::vector<unsigned char>& pipeline_binary, std::string& error_msg) const
+        const std::wstring& shader_name, RgDx12ShaderResultsRayTracing& shader_stats, std::vector<unsigned char>&, std::string& error_msg) const
     {
         assert(amd_shader_analyzer_ext_ != nullptr);
         bool ret = amd_shader_analyzer_ext_ != nullptr;

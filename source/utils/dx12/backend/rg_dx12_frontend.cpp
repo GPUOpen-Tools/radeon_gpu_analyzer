@@ -67,6 +67,7 @@ namespace rga
     static const char* kStrErrorDxrRootSignatureFailureHlsl3 = "with the macro name as the argument, or use the --rs-macro option. If your root signature is precompiled into a binary, please use "
         "the --rs-bin option with the full path to the binary file as an argument. For more information about root signatures in HLSL, "
         "see https://docs.microsoft.com/en-us/windows/win32/direct3d12/specifying-root-signatures-in-hlsl#compiling-an-hlsl-root-signature";
+    static const char* kStrErrorDxrRootSignatureFailureHlsl4 = "root signature file could be auto-generated for pipelines with vertex, pixel, or compute shaders.";
     static const char* kStrErrorFailedToWriteOutputFile1 = "Error: failed to write ";
     static const char* kStrErrorFailedToWriteOutputFile2 = " file to ";
     static const char* kStrErrorFailedToWriteOutputFile3 = "make sure that the path is valid.";
@@ -243,7 +244,7 @@ namespace rga
 
     static bool CompileHlslShader(const RgDx12Config& config, const std::string& hlsl_full_path,
         const std::string& entry_point, const std::string& shader_model,
-        D3D12_SHADER_BYTECODE& bytecode, std::string& error_msg)
+        D3D12_SHADER_BYTECODE& bytecode, std::string&)
     {
         bool ret = false;
 
@@ -572,7 +573,6 @@ namespace rga
 
         // Buffer to hold DXBC compiled shader.
         D3D12_SHADER_BYTECODE bytecode;
-        HRESULT hr = E_FAIL;
 
         if (is_front_end_compilation_required)
         {
@@ -667,6 +667,7 @@ namespace rga
                 {
                     std::cout << kStrErrorDxrRootSignatureFailureHlsl1 <<
                         kStrErrorDxrRootSignatureFailureHlsl2Compute << kStrErrorDxrRootSignatureFailureHlsl3 << std::endl;
+                    std::cout << kStrErrorDxrRootSignatureFailureHlsl4 << std::endl;
                 }
             }
         }
@@ -905,7 +906,6 @@ namespace rga
         bool is_serialized_root_signature = !config.rs_serialized.empty();
 
         RgDx12PipelineByteCode bytecode = {};
-        HRESULT hr = E_FAIL;
 
         // Compile the graphics pipeline shaders.
         ret = CompileGraphicsShaders(config, bytecode, pso, error_msg);
@@ -1386,10 +1386,6 @@ namespace rga
                 }
                 else
                 {
-                    // If the root signature was already created, use it. Otherwise,
-                    // try to extract it from the DXBC binary after compiling the HLSL code.
-                    bool should_extract_root_signature = !config.rs_macro.empty();
-
                     // If the input is HLSL, we need to compile the root signature out of the HLSL file.
                     // Otherwise, if the input is a DXBC binary and it has a root signature baked into it,
                     // then the root signature would be automatically fetched from the binary, there is no
@@ -1639,7 +1635,6 @@ namespace rga
                                 // Track the results.
                                 std::vector<RgDxrPipelineResults> results_pipeline_mode;
 
-                                const wchar_t* kStrExportNameAll = L"all";
                                 const char* kStrModeNameShader = "shader";
                                 const char* kOutputFilenameSuffixUnified = "unified";
                                 std::wstring dxr_export_wide = RgDx12Utils::strToWstr(config.dxrExport);
@@ -2079,7 +2074,7 @@ namespace rga
         return ret;
     }
 
-    bool rgDx12Frontend::CompileRayTracingShader(const RgDx12Config& config, std::string& error_msg) const
+    bool rgDx12Frontend::CompileRayTracingShader(const RgDx12Config&, std::string&) const
     {
         bool ret = false;
         return ret;

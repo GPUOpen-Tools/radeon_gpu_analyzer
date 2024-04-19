@@ -329,7 +329,6 @@ void RgMenuBinary::UpdateBuildOutput(const RgBuildOutputsMap& build_outputs)
             if (file_item_opencl != nullptr)
             {
                 // Auto-expand the list of entrypoints in the selected file item.
-                const std::string& selected_filename = file_item_opencl->GetFilename();
                 file_item_opencl->ShowEntrypointsList(true);
             }
         }
@@ -360,7 +359,7 @@ void RgMenuBinary::HandleBuildEnded()
     link_source_menu_item_->GetLinkSourceButton()->setEnabled(true);
 }
 
-void RgMenuBinary::SelectFocusItem(FileMenuActionType action_type)
+void RgMenuBinary::SelectFocusItem(FileMenuActionType)
 {
     assert(build_settings_menu_item_ != nullptr);
     if (build_settings_menu_item_ != nullptr)
@@ -401,7 +400,6 @@ void RgMenuBinary::SelectFocusItem(FileMenuActionType action_type)
             // Deselect OpenCL menu file items.
             for (RgMenuFileItem* item : menu_items_)
             {
-                RgMenuFileItemOpencl* item_opencl = static_cast<RgMenuFileItemOpencl*>(item);
                 assert(item != nullptr);
                 if (item != nullptr)
                 {
@@ -547,7 +545,7 @@ void RgMenuBinary::HandleBuildSettingsButtonClicked(bool /*checked*/)
     build_settings_menu_item_->GetBuildSettingsButton()->setCursor(Qt::ArrowCursor);
 }
 
-void RgMenuBinary::HandleSelectedEntrypointChanged(const std::string& target_gpu, const std::string& input_file_path, const std::string& selected_entrypoint_name)
+void RgMenuBinary::HandleSelectedEntrypointChanged(const std::string&, const std::string& input_file_path, const std::string& selected_entrypoint_name)
 {
     // Find the given input file and select the incoming entry point name.
     for (RgMenuFileItem* file_item : menu_items_)
@@ -670,7 +668,7 @@ void RgMenuBinary::SetButtonsNoFocus()
     }
 }
 
-void RgMenuBinary::SelectTabFocusItem(bool shift_tab_focus)
+void RgMenuBinary::SelectTabFocusItem(bool)
 {
 }
 
@@ -691,7 +689,6 @@ void RgMenuBinary::dragEnterEvent(QDragEnterEvent* event)
         assert(mime_data != nullptr);
         if (mime_data != nullptr)
         {
-            const int num_files = mime_data->urls().size();
             bool is_file_read_error     = false;
 
             // Make sure the drop data has one or more file urls.

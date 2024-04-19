@@ -153,7 +153,7 @@ beKA::beStatus GraphicsBinaryWorkflowStrategy::WriteOutputFiles(const Config&   
                                                                 const std::string&                        asic,
                                                                 const std::map<std::string, std::string>& kernel_to_disassembly,
                                                                 const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md,
-                                                                std::string&                              error_msg)
+                                                                std::string&                              )
 {
     beKA::beStatus status = beKA::beStatus::kBeStatusGeneralFailed;
     assert(!kernel_to_disassembly.empty());
@@ -290,7 +290,7 @@ void GraphicsBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config&   
     }
 }
 
-void GraphicsBinaryWorkflowStrategy::RunPostProcessingSteps(const Config& config, const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md)
+void GraphicsBinaryWorkflowStrategy::RunPostProcessingSteps(const Config& config, const BeAmdPalMetaData::PipelineMetaData&)
 {
     const auto&              suffixes = beProgramBuilderBinary::GetStageFileSuffixesFromApi(graphics_api_);
     KcCLICommanderVulkanUtil vk_util(output_metadata_, "", log_callback_, suffixes);
@@ -474,11 +474,10 @@ void RayTracingBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config& 
 beKA::beStatus ComputeBinaryWorkflowStrategy::WriteOutputFiles(const Config&                             config,
                                                                const std::string&                        asic,
                                                                const std::map<std::string, std::string>& kernel_to_disassembly,
-                                                               const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md,
+                                                               const BeAmdPalMetaData::PipelineMetaData& ,
                                                                std::string&                              error_msg)
 {
     beKA::beStatus     status   = beKA::beStatus::kBeStatusGeneralFailed;
-    const std::string& bin_file = config.binary_codeobj_file;
     const std::string& isa_file = config.isa_file;
     size_t             long_kernel_name_count = 0;
 
@@ -543,7 +542,7 @@ void ComputeBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config&    
     output_metadata_[{asic, kernel_name}] = outFiles;
 }
 
-void ComputeBinaryWorkflowStrategy::RunPostProcessingSteps(const Config& config, const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md)
+void ComputeBinaryWorkflowStrategy::RunPostProcessingSteps(const Config& config, const BeAmdPalMetaData::PipelineMetaData&)
 {
     CmpilerPaths compiler_paths = {config.compiler_bin_path, config.compiler_inc_path, config.compiler_lib_path};
     bool should_print_cmd       = config.print_process_cmd_line;

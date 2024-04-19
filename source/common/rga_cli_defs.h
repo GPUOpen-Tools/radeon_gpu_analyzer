@@ -110,6 +110,7 @@ static const char* kStrCliDescAlternativeLightningCompilerLibFolder =
     "oclc_isa_version_909.bc, "
     "oclc_isa_version_90a.bc, "
     "oclc_isa_version_90c.bc, "
+    "oclc_isa_version_942.bc, "
     "oclc_unsafe_math_off.bc, "
     "oclc_unsafe_math_on.bc, "
     "oclc_isa_version_1034.bc, "

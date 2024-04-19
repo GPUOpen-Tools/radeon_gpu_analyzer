@@ -434,14 +434,14 @@ static bool BuildAnalysisData(const KernelCodeProperties& kernel_code_props, con
     }
     else
     {
-        stats.lds_size_available  = -1;
-        stats.num_sgprs_available = -1;
-        stats.num_vgprs_available = -1;
+        stats.lds_size_available  = static_cast<uint64_t>(-1);
+        stats.num_sgprs_available = static_cast<uint64_t>(-1);
+        stats.num_vgprs_available = static_cast<uint64_t>(-1);
     }
-    stats.num_threads_per_group_total = -1;
-    stats.num_threads_per_group_x     = -1;
-    stats.num_threads_per_group_y     = -1;
-    stats.num_threads_per_group_z     = -1;
+    stats.num_threads_per_group_total = static_cast<uint64_t>(-1);
+    stats.num_threads_per_group_x     = static_cast<uint64_t>(-1);
+    stats.num_threads_per_group_y     = static_cast<uint64_t>(-1);
+    stats.num_threads_per_group_z     = static_cast<uint64_t>(-1);
 
     stats.scratch_memory_used = kernel_code_props.private_segment_size;
     stats.lds_size_used       = kernel_code_props.workgroup_segment_size;
@@ -651,10 +651,10 @@ static size_t ParsePreprocessorLine(const std::string& text, const std::string& 
     ParsePreprocessorHint(text.substr(offset + 1, eol - offset - 1), hint_items);
     if (hint_items.size() == 2 || (hint_items.size() == 3 && std::atoi(hint_items[2].c_str()) == 2))
     {
-        unsigned int offset = std::atoi(hint_items[0].c_str());
+        offset = std::atoi(hint_items[0].c_str());
         if (offset > 0 && hint_items[1] == filename)
         {
-            file_offset = offset;
+            file_offset = static_cast<unsigned int>(offset);
             line_number = 0;
         }
         else
@@ -767,7 +767,7 @@ static bool ExtractEntriesPreprocessed(std::string& text, const std::string& fil
     //                                        the number of this line in preprocessed file + file offet.
 
     size_t                            offset = 0, kernel_qual_start = 0, size = text.size();
-    unsigned int                      file_offset, line_number = 0, bracket_count = 0;
+    unsigned int                      file_offset = 0, line_number = 0, bracket_count = 0;
     unsigned char                     prev_symbol = '\n';
     bool                              in_kernel   = false;
     std::tuple<std::string, int, int> entry_decl_info;

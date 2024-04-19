@@ -183,8 +183,8 @@ void RgIsaDisassemblyTableView::SetVgprColumnWidth()
             assert(header != nullptr);
             if (header != nullptr)
             {
-               // Check the global settings to determine which disassembly table columns are visible.
-                std::shared_ptr<RgGlobalSettings> global_settings = RgConfigManager::Instance().GetGlobalConfig();
+                // Check the global settings to determine which disassembly table columns are visible.
+                global_settings = RgConfigManager::Instance().GetGlobalConfig();
                 assert(global_settings != nullptr);
                 if (global_settings != nullptr)
                 {
@@ -205,9 +205,7 @@ void RgIsaDisassemblyTableView::SetVgprColumnWidth()
                             // Calculate the VGPR column index from the currently displayed columns.
                             for (int column_index = start_column; column_index < end_column; ++column_index)
                             {
-                                bool is_valid_column_index = (column_index >= start_column) && (column_index < end_column);
-                                bool is_visible            = global_settings->visible_disassembly_view_columns[column_index];
-                                if (is_visible)
+                                if (global_settings->visible_disassembly_view_columns[column_index])
                                 {
                                     // Compare the header name for each column until the VGPR column is found.
                                     QStandardItem* item  = isa_table_model->horizontalHeaderItem(column_index);
@@ -371,8 +369,6 @@ void RgIsaDisassemblyTableView::HandleCopyDisassemblyClicked()
     if (!selection.isEmpty())
     {
         // Get the selected line numbers.
-        int start_row = 0;
-        int end_row = 0;
         QItemSelectionModel* table_selection_model = ui_.instructionsTreeView->selectionModel();
         QModelIndexList selected_rows = table_selection_model->selectedRows();
         for (auto& current_index : selected_rows)

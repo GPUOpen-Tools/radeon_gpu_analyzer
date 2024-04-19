@@ -278,8 +278,8 @@ void RgPipelineStateEditorWidgetEnum::SetValue(uint32_t value)
             if (enum_item != nullptr)
             {
                 // Set the push button's text to the item with the given value.
-                int item_index = enumerator_iter - enumerators_.begin();
-                auto enum_item = enum_list_widget_->item(item_index);
+                item_index = enumerator_iter - enumerators_.begin();
+                enum_item  = enum_list_widget_->item(item_index);
                 assert(enum_item != nullptr);
                 if (enum_item != nullptr)
                 {
@@ -462,7 +462,6 @@ void RgPipelineStateEditorWidgetEnum::CreateEnumControls()
     static const int kMaxListHeight = 250;
 
     // Setup the list widget that opens when the user clicks the enum arrow.
-    QMainWindow* main_window = qobject_cast<QMainWindow*>(QApplication::activeWindow());
     RgUtils::SetupComboList(parent_, enum_list_widget_, ui_.enumComboPushButton, enum_list_event_filter_, false);
     enum_list_widget_->setMaximumHeight(kMaxListHeight);
     enum_list_widget_->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);

@@ -142,7 +142,7 @@ void RgBuildViewGraphics::HandleLoadPipelineStateFile(const std::string& file_pa
 
         // Extract directory from full path.
         std::string file_directory;
-        bool is_ok = RgUtils::ExtractFileDirectory(file_path, file_directory);
+        is_ok = RgUtils::ExtractFileDirectory(file_path, file_directory);
         assert(is_ok);
 
         if (is_ok)

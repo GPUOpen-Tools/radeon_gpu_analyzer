@@ -187,8 +187,8 @@ static std::string GetVulkanBackendExeName()
 static bool IsSubstringIgnoreCase(const std::string& src, const std::string& substr)
 {
     std::string s1_u = src, s2_u = substr;
-    std::transform(s1_u.begin(), s1_u.end(), s1_u.begin(), [](unsigned char c) {return std::toupper(c); });
-    std::transform(s2_u.begin(), s2_u.end(), s2_u.begin(), [](unsigned char c) {return std::toupper(c); });
+    std::transform(s1_u.begin(), s1_u.end(), s1_u.begin(), [](unsigned char c) { return static_cast<unsigned char>(std::toupper(c)); });
+    std::transform(s2_u.begin(), s2_u.end(), s2_u.begin(), [](unsigned char c) { return static_cast<unsigned char>(std::toupper(c)); });
     return (s1_u.find(s2_u) != std::string::npos);
 }
 
@@ -793,7 +793,6 @@ bool RgVulkanBackend::ListAdapters(bool& is_amd_gpu, bool should_print)
                     // First, enumerate the extensions that are supported by the primary device.
                     uint32_t extensions_count = 0;
                     VkResult result = VK_SUCCESS;
-                    bool should_abort = false;
                     result = vkEnumerateDeviceExtensionProperties(gpu.second, nullptr, &extensions_count, nullptr);
                     if ((result == VK_SUCCESS) && (extensions_count > 0))
                     {
@@ -957,11 +956,11 @@ std::vector<const char*> RgVulkanBackend::InitExtensions()
 }
 
 // Call-back function for Vulkan validation layers.
-static VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(VkDebugReportFlagsEXT flags,
-    VkDebugReportObjectTypeEXT object_type,
-    uint64_t                   object,
-    size_t                     location,
-    int32_t                    message_code,
+static VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(VkDebugReportFlagsEXT ,
+    VkDebugReportObjectTypeEXT ,
+    uint64_t                   ,
+    size_t                     ,
+    int32_t                    ,
     const char* layer_prefix,
     const char* message,
     void* user_data)
@@ -1386,11 +1385,11 @@ bool RgVulkanBackend::CreateComputePipeline()
 
             // Attempt to create the compute pipeline.
             VkPipeline compute_pipeline = VK_NULL_HANDLE;
-            VkComputePipelineCreateInfo* compute_pipeline_create_info = compute_pipeline_create_info_->GetComputePipelineCreateInfo();
-            assert(compute_pipeline_create_info != nullptr);
-            if ((ret = (compute_pipeline_create_info != nullptr)) == true)
+            VkComputePipelineCreateInfo* compute_pipeline_create_info_2 = compute_pipeline_create_info_->GetComputePipelineCreateInfo();
+            assert(compute_pipeline_create_info_2 != nullptr);
+            if ((ret = (compute_pipeline_create_info_2 != nullptr)) == true)
             {
-                VkResult create_result = vkCreateComputePipelines(device_, VK_NULL_HANDLE, 1, compute_pipeline_create_info, nullptr, &compute_pipeline);
+                VkResult create_result = vkCreateComputePipelines(device_, VK_NULL_HANDLE, 1, compute_pipeline_create_info_2, nullptr, &compute_pipeline);
                 assert(create_result == VK_SUCCESS);
                 if ((ret = (create_result == VK_SUCCESS)) == false)
                 {
@@ -1966,7 +1965,7 @@ bool RgVulkanBackend::BuildPipeline() const
     return status;
 }
 
-bool RgVulkanBackend::BuildToStatistics(const std::string& stats_filename, const std::string& pipeline_name,
+bool RgVulkanBackend::BuildToStatistics(const std::string& stats_filename, const std::string&,
     VkPipeline pipeline, VkShaderStageFlagBits stage) const
 {
     VkShaderStatisticsInfoAMD stats = {};
@@ -2012,7 +2011,7 @@ bool RgVulkanBackend::BuildToStatistics(const std::string& stats_filename, const
     return status;
 }
 
-bool RgVulkanBackend::BuildToBinary(const std::string& pipeline_name, VkPipeline pipeline) const
+bool RgVulkanBackend::BuildToBinary(const std::string&, VkPipeline pipeline) const
 {
     size_t binary_size = 0;
 

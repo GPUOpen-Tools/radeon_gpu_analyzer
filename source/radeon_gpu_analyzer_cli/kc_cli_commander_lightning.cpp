@@ -32,6 +32,10 @@
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
 #include "radeon_gpu_analyzer_backend/be_string_constants.h"
+#include "radeon_gpu_analyzer_backend/be_utils.h"
+
+// Shared.
+#include "common/rga_shared_utils.h"
 
 // *****************************************
 // *** INTERNALLY LINKED SYMBOLS - START ***
@@ -52,6 +56,7 @@ kLcLlvmTargetsToDeviceInfoTargets = { {"gfx801", "carrizo"},
                                        {"gfx908", "gfx908"},
                                        {"gfx90a", "gfx90a"},
                                        {"gfx90c", "gfx90c"},
+                                       {"gfx942", "gfx942"},
                                        {"gfx1010", "gfx1010"},
                                        {"gfx1011", "gfx1011"},
                                        {"gfx1012", "gfx1012"},
@@ -119,12 +124,6 @@ static const int     kIsaInstruction32BitBytes          = 4;
 // *** INTERNALLY LINKED SYMBOLS - END ***
 // ***************************************
 
-// Get default target name.
-static std::string GetDefaultTarget()
-{
-    return kLcDefaultTarget;
-}
-
 // Returns the list of additional LC targets specified in the "additional-targets" file.
 static std::vector<std::string> GetExtraTargetList()
 {
@@ -145,7 +144,7 @@ static std::vector<std::string> GetExtraTargetList()
             if (device.find("//") == std::string::npos)
             {
                 // Save the target name in lower case to avoid case-sensitivity issues.
-                std::transform(device.begin(), device.end(), device.begin(), [](const char& c) {return std::tolower(c); });
+                std::transform(device.begin(), device.end(), device.begin(), [](const char& c) {return static_cast<char>(std::tolower(c)); });
                 device_list.push_back(device);
             }
         }
@@ -206,7 +205,7 @@ bool KcCLICommanderLightning::InitRequestedAsicListLC(const Config& config)
                 // Check if the matched architecture name is present in the list of supported devices.
                 for (std::string supported_device : supported_targets)
                 {
-                    if (KcUtils::ToLower(matched_arch_name).find(supported_device) != std::string::npos)
+                    if (RgaSharedUtils::ToLower(matched_arch_name).find(supported_device) != std::string::npos)
                     {
                         targets_.insert(supported_device);
                         ret = true;
@@ -219,7 +218,7 @@ bool KcCLICommanderLightning::InitRequestedAsicListLC(const Config& config)
             {
                 // Try additional devices from "additional-targets" file.
                 std::vector<std::string> extra_devices = GetExtraTargetList();
-                std::transform(device.begin(), device.end(), device.begin(), [](const char& c) {return std::tolower(c); });
+                std::transform(device.begin(), device.end(), device.begin(), [](const char& c) {return static_cast<char>(std::tolower(c)); });
                 if (std::find(extra_devices.cbegin(), extra_devices.cend(), device) != extra_devices.cend())
                 {
                     RgLog::stdErr << kStrWarningOpenclOfflineUsingExtraDevice1 << device << kStrWarningRocmclUsingExtraDevice2 << std::endl << std::endl;
@@ -514,7 +513,7 @@ beKA::beStatus KcCLICommanderLightning::DisassembleBinary(const std::string& bin
     return status;
 }
 
-void KcCLICommanderLightning::RunCompileCommands(const Config& config, LoggingCallbackFunction log_callback)
+void KcCLICommanderLightning::RunCompileCommands(const Config& config, LoggingCallbackFunction)
 {
     bool is_multiple_devices = (config.asics.size() > 1);
     bool status = Compile(config);
@@ -862,7 +861,7 @@ bool KcCLICommanderLightning::SplitISAText(const std::string& isa_text,
     bool  status = true;
     const std::string  LABEL_NAME_END_TOKEN = ":\n";
     const std::string  BLOCK_END_TOKEN = "\n\n";
-    size_t label_name_start = 0, label_name_end = 0, kernel_isa_end = 0, block_end = 0;
+    size_t label_name_start = 0, label_name_end = 0, kernel_isa_end = 0;
 
     label_name_start = isa_text.find_first_not_of('\n');
 

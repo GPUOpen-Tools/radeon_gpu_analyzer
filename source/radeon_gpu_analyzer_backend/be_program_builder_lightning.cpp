@@ -52,6 +52,7 @@ static const std::string  kStrLcCompilerOpenclDefaultDevice = "gfx1100";
 static const std::string  kStrLcCompilerOpenclSwitchVersion = "--version";
 static const std::string  kStrLcCompilerOpenclSwitchPreprocessor = "-E";
 static const std::string  kStrLcCompilerOpenclSwitchRcomLibPath  = "--rocm-device-lib-path=";
+static const std::string  kStrLcCompilerOpenclIgnoreUnresolvedSymbols = "-Wl,--unresolved-symbols=ignore-all";
 
 // This flag is set to dump LLVM IR for 1st pass only instead of all passes.
 // This is used to prevent compilation hanging for real world kernels.
@@ -169,6 +170,9 @@ beKA::beStatus BeProgramBuilderLightning::AddCompilerStandardOptions(beKA::RgaMo
         static const std::string  kStrLcCompilerOpenclSwitchStatic = "-static";
         options_stream << " " << kStrLcCompilerOpenclSwitchStatic << " " << kStrLcCompilerOpenCLSwitchShortWcharWindows;
 #endif
+
+        // Add ignore unresolved symbols option.
+        options_stream << " " << kStrLcCompilerOpenclIgnoreUnresolvedSymbols;
 
         // Add OpenCL include required by OpenCL compiler.
         osFilePath  include_file_path;
@@ -467,7 +471,7 @@ beKA::beStatus BeProgramBuilderLightning::PreprocessOpencl(const CmpilerPaths& c
         
         std::string std_out, std_err;
 
-        beKA::beStatus status = InvokeCompiler(beKA::RgaMode::kModeOpenclOffline, compiler_paths.bin, compiler_args.str(), should_print_cmd, std_out, std_err, kLcPreprocessingTimeoutMs);
+        status = InvokeCompiler(beKA::RgaMode::kModeOpenclOffline, compiler_paths.bin, compiler_args.str(), should_print_cmd, std_out, std_err, kLcPreprocessingTimeoutMs);
 
         if (status == beKA::beStatus::kBeStatusSuccess)
         {
@@ -505,7 +509,7 @@ beKA::beStatus BeProgramBuilderLightning::DisassembleBinary(const std::string& u
         out_isa_text = "";
         ObjDumpOp op = (line_numbers ? ObjDumpOp::kDisassembleWithLineNumbers : ObjDumpOp::kDisassemble);
 
-        beKA::beStatus status = ConstructObjDumpOptions(op, user_bin_dir, bin_filename, device, should_print_cmd, objdump_options);
+        status = ConstructObjDumpOptions(op, user_bin_dir, bin_filename, device, should_print_cmd, objdump_options);
 
         if (status == beKA::kBeStatusSuccess)
         {
@@ -650,7 +654,8 @@ int BeProgramBuilderLightning::GetKernelCodeSize(const std::string & user_bin_di
     beKA::beStatus status = beKA::beStatus::kBeStatusLightningGetKernelCodeSizeFailed;
     std::string symbols, options, error_text;
     int ret = -1, symSize;
-    size_t offset, name_offset, name_end_offset, size_offset;
+    size_t offset, name_offset, size_offset;
+    std::size_t    name_end_offset = std::string::npos;
 
     // Launch the LC ReadObj.
     status = ConstructObjDumpOptions(ObjDumpOp::kGetKernelCodeSize, user_bin_dir, bin_file, "", should_print_cmd, options);
@@ -849,102 +854,6 @@ bool BeProgramBuilderLightning::DoesReadobjSupportMetadata(const std::string& us
     }
 
     return ret;
-}
-
-static bool GetIsaSize(const std::string& isa_text, const std::string& kernel_name, size_t& size_in_bytes)
-{
-    // Example of the ISA instruction in the disassembled ISA text:
-    //
-    // s_load_dword s4, s[6:7], 0x10          // 000000001118: C0020103 00000010
-    //                                           `-- addr --'  `-- inst code --'
-
-    const std::string kKernelEndToken    = "\n\n";
-    const std::string kAddressCommentPrefix = "// ";
-    const std::string kAddressCodeDelimiter = ":";
-
-    const unsigned int kInstructionCodeLength64 = 16;
-    const unsigned int kInstructionSize32     =  4;
-    const unsigned int kInstructionSize64     =  8;
-
-    bool status = true;
-    size_t kernel_isa_begin, kernel_isa_end, address_begin, address_end;
-    kernel_isa_begin = kernel_isa_end = address_begin = address_end = 0;
-    std::string kernel_isa_text;
-    uint64_t instruction_address_first, instruction_address_last;
-
-    status = (!isa_text.empty() && !kernel_name.empty());
-    size_in_bytes = 0;
-
-    // Get the ISA text for the required kernel.
-    if (status)
-    {
-        if (status = (kernel_isa_begin = isa_text.find(kernel_name + kAddressCodeDelimiter)) != std::string::npos)
-        {
-            if ((kernel_isa_end = isa_text.find(kKernelEndToken, kernel_isa_begin)) == std::string::npos)
-            {
-                kernel_isa_end = isa_text.size();
-            }
-        }
-    }
-
-    if (status)
-    {
-        kernel_isa_text = isa_text.substr(kernel_isa_begin, kernel_isa_end - kernel_isa_begin);
-        address_begin = kernel_isa_text.find(kAddressCommentPrefix);
-    }
-
-    // Find the beginning and the end of the first instruction address.
-    if (status && address_begin != std::string::npos)
-    {
-        address_begin += kAddressCommentPrefix.size();
-        status = (address_end = kernel_isa_text.find(kAddressCodeDelimiter, address_begin)) != std::string::npos;
-    }
-
-    // Parse the address of the 1st instruction.
-    if (status)
-    {
-        try
-        {
-            instruction_address_first = std::stoull(kernel_isa_text.substr(address_begin, address_end - address_begin), nullptr, 16);
-        }
-        catch (const std::invalid_argument&)
-        {
-            status = false;
-        }
-    }
-
-    // Find the beginning and the end of the last instruction address.
-    if (status)
-    {
-        status = (address_end = kernel_isa_text.rfind(kAddressCodeDelimiter)) != std::string::npos;
-        if (status)
-        {
-            status = (address_begin = kernel_isa_text.rfind(kAddressCommentPrefix, address_end)) != std::string::npos;
-        }
-    }
-
-    // Parse the address of the last instruction.
-    if (status)
-    {
-        try
-        {
-            address_begin += kAddressCommentPrefix.size();
-            instruction_address_last = std::stoull(kernel_isa_text.substr(address_begin, address_end - address_begin), nullptr, 16);
-        }
-        catch (const std::invalid_argument&)
-        {
-            status = false;
-        }
-    }
-
-    // ISA size = address_of_last_instruction - address_of_1st_instruction + size_of_last_instruction.
-    if (status)
-    {
-        size_t  lastInstSize = ( (kernel_isa_text.size() - address_end) >= kInstructionCodeLength64 ? kInstructionSize64 : kInstructionSize32 );
-        size_in_bytes = static_cast<size_t>(instruction_address_last - instruction_address_first + lastInstSize);
-    }
-
-    return status;
 }
 
 // Parse an integer YAML node for CodeProps value.

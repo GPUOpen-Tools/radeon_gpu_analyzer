@@ -515,17 +515,21 @@ bool RgBuildView::PopulateBuildView()
     if (is_project_sources_valid)
     {
         bool is_populated = PopulateMenu();
-        RgMenu* menu = GetMenu();
-        assert(menu != nullptr);
-        if (menu != nullptr)
+        assert(is_populated);
+        if (is_populated)
         {
-            // Does the menu contain any files after attempting to populate it?
-            if (menu->IsEmpty())
+            RgMenu* menu = GetMenu();
+            assert(menu != nullptr);
+            if (menu != nullptr)
             {
-                // There are no files to display. Open the RgBuildView in an empty state, and return true.
-                SwitchEditMode(EditMode::kEmpty);
+                // Does the menu contain any files after attempting to populate it?
+                if (menu->IsEmpty())
+                {
+                    // There are no files to display. Open the RgBuildView in an empty state, and return true.
+                    SwitchEditMode(EditMode::kEmpty);
+                }
+                ret = true;
             }
-            ret = true;
         }
     }
 
@@ -681,8 +685,7 @@ void RgBuildView::BuildCurrentProject()
                     {
                         // Load the build outputs in the project's directory.
                         std::string project_directory;
-                        bool is_ok = RgUtils::ExtractFileDirectory(project_->project_file_full_path, project_directory);
-                        if (is_ok)
+                        if (RgUtils::ExtractFileDirectory(project_->project_file_full_path, project_directory))
                         {
                             bool is_output_loaded = LoadBuildOutput(project_directory, &gpus_with_build_outputs);
                             assert(is_output_loaded);
@@ -1026,7 +1029,7 @@ bool RgBuildView::LoadBuildOutput(const std::string& project_folder, const std::
     {
         // Append the clone folder to the build output path.
         std::string cloneNameString = RgUtils::GenerateCloneName(clone_index_);
-        bool is_ok = RgUtils::AppendFolderToPath(output_folder_path, cloneNameString, output_folder_path);
+        is_ok = RgUtils::AppendFolderToPath(output_folder_path, cloneNameString, output_folder_path);
         assert(is_ok);
         if (is_ok)
         {
@@ -1124,7 +1127,7 @@ void RgBuildView::ReloadFile(const std::string& file_path)
     SetSourceCodeText(file_path);
 }
 
-void RgBuildView::SaveCurrentFile(EditMode mode)
+void RgBuildView::SaveCurrentFile(EditMode)
 {
     bool is_source_code_editor_valid = (current_code_editor_ != nullptr);
     assert(is_source_code_editor_valid);
@@ -1980,6 +1983,7 @@ void RgBuildView::HandleProjectBuildSuccess()
     // Then maximize the size of the disassembly view for Binary Analysis mode.
     if (disassembly_view_container_ != nullptr && RgConfigManager::Instance().GetCurrentAPI() == RgProjectAPI::kBinary)
     {
+        disassembly_view_container_->SetIsMaximizable(true);
         disassembly_view_container_->SwitchContainerSize();
         disassembly_view_container_->SetIsMaximizable(false);
     }

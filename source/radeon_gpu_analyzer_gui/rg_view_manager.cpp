@@ -171,7 +171,7 @@ void RgViewManager::FocusNextView()
             }
             else
             {
-                RgViewContainer* view_container = view_containers_.at(new_focus_index);
+                view_container = view_containers_.at(new_focus_index);
                 while (view_container->IsInHiddenState() && new_focus_index < view_containers_.size())
                 {
                     new_focus_index++;
@@ -307,7 +307,7 @@ void RgViewManager::FocusPrevView()
                     new_focus_index = static_cast<int>(view_containers_.size()) - 1;
                 }
 
-                RgViewContainer* view_container = view_containers_.at(new_focus_index);
+                view_container = view_containers_.at(new_focus_index);
                 while (view_container->IsInHiddenState() && new_focus_index < view_containers_.size())
                 {
                     new_focus_index--;

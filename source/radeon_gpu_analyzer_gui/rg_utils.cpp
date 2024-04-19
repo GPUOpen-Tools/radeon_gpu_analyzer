@@ -366,7 +366,7 @@ bool RgUtils::GetComputeCapabilityToArchMapping(std::map<std::string, std::strin
     // Find the architecture node for our current mode.
     auto current_mode_architectures_iter = version_info->gpu_architectures.find(current_mode_str);
     bool is_mode_found                   = (current_mode_architectures_iter != version_info->gpu_architectures.end());
-    assert(is_mode_found || (current_mode == RgProjectAPI::kBinary && is_mode_found == false));
+    assert(is_mode_found);
     if (is_mode_found)
     {
         // Step through each GPU hardware architecture.

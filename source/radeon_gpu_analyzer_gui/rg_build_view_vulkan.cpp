@@ -359,7 +359,7 @@ bool RgBuildViewVulkan::PopulateMenu()
         bool is_graphics_pipeline = (vulkan_clone->pipeline.type == RgPipelineType::kGraphics);
 
         // 1st non-empty stage item.
-        size_t first_non_empty_stage = -1;
+        size_t first_non_empty_stage = static_cast<size_t>(-1);
 
         // Step through each stage type in a graphics pipeline by default.
         size_t first_stage = static_cast<size_t>(RgPipelineStage::kVertex);
@@ -1216,8 +1216,8 @@ void RgBuildViewVulkan::HandleRestoreOriginalSpvClicked(RgPipelineStage stage)
                 spv_disasm_files_[stage] = spv_disasm_output;
 
                 // Store the spv last modification time.
-                QFileInfo file_info(orig_spv.c_str());
-                file_modified_time_map_[current_code_editor_] = file_info.lastModified();
+                QFileInfo spv_file_info(orig_spv.c_str());
+                file_modified_time_map_[current_code_editor_] = spv_file_info.lastModified();
             }
 
             // Replace file path in the File Menu.
@@ -1621,7 +1621,7 @@ bool RgBuildViewVulkan::CreateProject(RgPipelineType pipeline_type)
             if (project_ != nullptr)
             {
                 // Ensure that the incoming clone index is valid for the current project.
-                bool res = (clone_index_ >= 0 && clone_index_ < project_->clones.size());
+                res = (clone_index_ >= 0 && clone_index_ < project_->clones.size());
                 assert(res);
 
                 if (res)

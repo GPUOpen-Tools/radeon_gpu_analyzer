@@ -667,8 +667,7 @@ void RgGlobalSettingsView::HandleColumnVisibilityComboBoxItemClicked(const QStri
             QString          check_box_text = check_box->text();
             if (check_box_text.compare(text) == 0)
             {
-                QCheckBox* check_box = (QCheckBox*)disassembly_columns_list_widget_->itemWidget(item);
-                check_box->setChecked(true);
+                ((QCheckBox*)disassembly_columns_list_widget_->itemWidget(item))->setChecked(true);
             }
         }
     }

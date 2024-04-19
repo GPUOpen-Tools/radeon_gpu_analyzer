@@ -327,13 +327,13 @@ void RgOrderedListDialog::HandleNewButtonClick(bool /* checked */)
     }
     if (item != nullptr && item->text().isEmpty())
     {
-        QListWidgetItem* item = ui_.itemsList->item(ui_.itemsList->count() - 1);
+        item = ui_.itemsList->item(ui_.itemsList->count() - 1);
         ui_.itemsList->setCurrentItem(item);
         ui_.itemsList->editItem(item);
     }
     else
     {
-        QListWidgetItem* item = new QListWidgetItem;
+        item = new QListWidgetItem;
         item->setText("");
         item->setFlags(item->flags() | Qt::ItemIsEditable);
         ui_.itemsList->setCurrentItem(item);

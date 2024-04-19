@@ -362,8 +362,9 @@ beKA::beStatus KcCLICommanderVulkanUtil::ConvertStats(const std::string& isa_fil
     std::string stats_text, isa_text;
     auto        log_func = [](const std::string& s) { RgLog::stdOut << s; };
 
-    if (((result = KcUtils::ReadTextFile(stats_file, stats_text, log_func) == true) &&
-         ((result = KcUtils::ReadTextFile(isa_file, isa_text, log_func)) == true)))
+    bool is_stats_file_read = (result = KcUtils::ReadTextFile(stats_file, stats_text, log_func));
+    bool is_isa_file_read   = (result = KcUtils::ReadTextFile(isa_file, isa_text, log_func));
+    if (is_stats_file_read && is_isa_file_read)
     {
         beKA::AnalysisData stats_data;
         if ((result = ParseVulkanStats(isa_text, stats_text, stats_data)) == true)
@@ -401,18 +402,6 @@ bool KcCLICommanderVulkanUtil::GetParsedIsaCsvText(const std::string& isaText, c
         ret      = true;
     }
     return ret;
-}
-
-
-static uint64_t ParseHardwareStageProp(size_t search_start_index, const std::string& haystack, const std::string& needle)
-{
-    uint64_t property = -1;
-    size_t   curr_pos = haystack.find(needle, search_start_index);
-    if (curr_pos != std::string::npos)
-    {
-        property = strtoul(haystack.substr(curr_pos + needle.length()).c_str(), nullptr, 16);
-    }
-    return property;
 }
 
 static std::string GetHardwareStageDotTokenStr(const std::string& hardware_stage_suffix)
@@ -591,8 +580,6 @@ void KcCLICommanderVulkanUtil::ExtractStatistics(const Config&                  
                                                  const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md,
                                                  const std::map<std::string, std::string>& shader_to_disassembly)
 {
-    bool ret = true;
-
     std::string base_stats_filename = config.analysis_file;
     beStatus    status              = beKA::beStatus::kBeStatusSuccess;
 
@@ -600,7 +587,6 @@ void KcCLICommanderVulkanUtil::ExtractStatistics(const Config&                  
     if (itr != output_metadata_.end())
     {
         // device md exists.
-        bool               is_ok         = true;
         const std::string& device_string = itr->first;
         auto&              device_md     = itr->second;
         BeVkPipelineFiles  isa_files, stats_files;

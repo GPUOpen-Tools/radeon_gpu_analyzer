@@ -284,7 +284,6 @@ void RgMenuOpencl::UpdateBuildOutput(const RgBuildOutputsMap& build_outputs)
             if (file_item_opencl != nullptr)
             {
                 // Auto-expand the list of entrypoints in the selected file item.
-                const std::string& selected_filename = file_item_opencl->GetFilename();
                 file_item_opencl->ShowEntrypointsList(true);
             }
         }
@@ -360,7 +359,6 @@ void RgMenuOpencl::SelectFocusItem(FileMenuActionType action_type)
             // Deselect OpenCL menu file items.
             for (RgMenuFileItem* item : menu_items_)
             {
-                RgMenuFileItemOpencl* item_opencl = static_cast<RgMenuFileItemOpencl*>(item);
                 assert(item != nullptr);
                 if (item != nullptr)
                 {
@@ -654,7 +652,6 @@ void RgMenuOpencl::dragEnterEvent(QDragEnterEvent* event)
         assert(mime_data != nullptr);
         if (mime_data != nullptr)
         {
-            const int num_files = mime_data->urls().size();
             bool is_file_read_error     = false;
 
             // Make sure the drop data has one or more file urls.

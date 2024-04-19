@@ -7,13 +7,21 @@
 // D3D12.
 #include <d3d12.h>
 #include <wrl/client.h>
-using namespace Microsoft::WRL;
 
 namespace rga
 {
     class RgDx12Utils
     {
     public:
+        // Gpso Schema constants.
+        static const char* kStrElemSchemaVersion;
+        static const char* kStrElemSchemaVersion10;
+        static const char* kStrElemSchemaInputLayoutNum;
+        static const char* kStrElemSchemaInputLayout;
+        static const char* kStrElemSchemaPrimitiveTopologyType;
+        static const char* kStrElemSchemaNumRenderTargets;
+        static const char* kStrElemSchemaRtvFormats;
+
         // Files.
         static bool WriteTextFile(const std::string& filename, const std::string& content);
         static bool ReadTextFile(const std::string& filename, std::string& content);

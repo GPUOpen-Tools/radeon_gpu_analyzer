@@ -129,4 +129,9 @@ static const char* kStrRgaModeDx12             = "DX12";
 static const char* kStrRgaModeDxr              = "DXR";
 static const char* kStrRgaModeErrorUnknownMode = "Unknown mode.";
 
+// Tokens.
+static const char* kStrInfoDxrOutputShader = "shader ";
+static const char* kStrInfoDxrPerformingPostProcessing = "...";
+
+
 #endif // RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_STRING_CONSTANTS_H_

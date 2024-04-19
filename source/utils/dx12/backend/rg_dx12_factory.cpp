@@ -91,7 +91,7 @@ namespace rga
     }
 
     void RgDx12Factory::CreateDxilLibrarySubobject(CD3DX12_STATE_OBJECT_DESC* state_object_desc_x,
-        const RgDxrDxilLibrary& dxil_lib_data, std::string& error_msg)
+        const RgDxrDxilLibrary& dxil_lib_data, std::string&)
     {
         assert(!dxil_lib_data.binary_data.empty());
         if (!dxil_lib_data.binary_data.empty())

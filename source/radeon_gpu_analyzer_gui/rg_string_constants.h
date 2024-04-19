@@ -16,7 +16,7 @@ static const char* kStrAppFolderName = "RadeonGPUAnalyzer";
 
 // Application executable name.
 #ifdef __linux
-static const char* kStrExecutableName = "./rga";
+static const char* kStrExecutableName = "rga";
 #else
 static const char* kStrExecutableName                               = "rga.exe";
 #endif

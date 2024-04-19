@@ -271,7 +271,6 @@ void RgMenuVulkan::HandleActivateItemAction()
             const int kBuildSettingsItemLocalIndex = 1;
 
             // Calculate the index of the relevant item.
-            const int button_count = GetButtonCount();
             const size_t num_of_file_items = menu_items_.size();
             size_t target_item_index = static_cast<size_t>(tab_focus_index_) - num_of_file_items;
             assert(target_item_index == 0 || target_item_index == 1);

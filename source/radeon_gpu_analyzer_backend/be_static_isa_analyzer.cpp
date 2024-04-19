@@ -69,12 +69,13 @@ static bool GetLiveRegAnalyzerPath(std::string& analyzer_path)
 // Accepts the target name and returns the relevant Shae --isa command.
 static std::string GetShaeIsaCmd(const gtString& target)
 {
-    const gtString kShaeGfx8  = L"gfx8";
-    const gtString kShaeGfx9  = L"gfx9";
+    const gtString kShaeGfx8    = L"gfx8";
+    const gtString kShaeGfx9    = L"gfx9";
     const gtString kShaeGfx90a  = L"gfx90a";
+    const gtString kShaeGfx942  = L"gfx942";
     const gtString kShaeGfx10_1 = L"gfx10_1";
-	const gtString kShaeGfx10_3 = L"gfx10_3";
-	const gtString kShaeGfx11 = L"gfx11";
+    const gtString kShaeGfx10_3 = L"gfx10_3";
+    const gtString kShaeGfx11   = L"gfx11";
 
 	std::stringstream    shae_gfx_generation;
 	shae_gfx_generation << "--isa ";
@@ -92,7 +93,11 @@ static std::string GetShaeIsaCmd(const gtString& target)
     }
     else if (KcUtils::IsVegaTarget(target.asASCIICharArray()))
     {
-        if (KcUtils::IsMITarget(target.asASCIICharArray()))
+        if (KcUtils::IsMi300Target(target.asASCIICharArray()))
+        {
+            shae_gfx_generation << kShaeGfx942.asASCIICharArray();
+        }
+        else if (KcUtils::IsMi200Target(target.asASCIICharArray()))
         {
             shae_gfx_generation << kShaeGfx90a.asASCIICharArray();
         }

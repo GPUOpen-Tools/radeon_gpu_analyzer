@@ -63,7 +63,6 @@ bool RgIsaDisassemblyViewBinary::PopulateDisassemblyView(const std::string& bina
                 {
                     // Get the list of outputs for the input file.
                     RgFileOutputs& file_outputs = output_iter->second;
-                    const std::vector<RgEntryOutput>& file_entry_outputs = file_outputs.outputs;
 
                     // Transform the disassembled entries into a map of GPU -> Entries.
                     // This will make populating the UI much simpler.

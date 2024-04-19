@@ -29,6 +29,9 @@
 #include "radeon_gpu_analyzer_backend/be_static_isa_analyzer.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
 
+// Shared.
+#include "common/rga_shared_utils.h"
+
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
@@ -840,7 +843,7 @@ bool KcUtils::GetMarketingNameToCodenameMapping(DeviceNameMap& cards_map)
 // Stores the result in "dstName".
 static void ReduceDeviceName(std::string& name)
 {
-    std::transform(name.begin(), name.end(), name.begin(), [](const char& c) {return std::tolower(c);});
+    std::transform(name.begin(), name.end(), name.begin(), [](const char& c) {return static_cast<char>(std::tolower(c));});
     name.erase(std::remove_if(name.begin(), name.end(), [](const char& c) {return (std::isspace(c) || c == '-');}), name.end());
 }
 
@@ -930,11 +933,11 @@ bool KcUtils::FindGPUArchName(const std::string& device, std::string& matched_de
                 // Put the found arch with an all its devices into the "matchedArchs" map.
                 // Filter out the devices with code names and unused names.
                 std::set<std::string>& device_list = matched_devices[arch_name];
-                for (const std::string& device : pair.second)
+                for (const std::string& device_name : pair.second)
                 {
-                    if (device.find(kFILTER_INDICATOR_1) == std::string::npos && device.find(kFILTER_INDICATOR_2) == std::string::npos)
+                    if (device_name.find(kFILTER_INDICATOR_1) == std::string::npos && device_name.find(kFILTER_INDICATOR_2) == std::string::npos)
                     {
-                        device_list.emplace(device);
+                        device_list.emplace(device_name);
                     }
                 }
             }
@@ -1063,7 +1066,7 @@ bool KcUtils::PrintAsicList(const std::set<std::string>& required_devices, const
             auto is_in_device_list = [](const std::set<std::string>& list, const std::string & device)
             {
                 for (auto & d : list)
-                    if (KcUtils::ToLower(device).find(KcUtils::ToLower(d)) != std::string::npos)
+                    if (RgaSharedUtils::ToLower(device).find(RgaSharedUtils::ToLower(d)) != std::string::npos)
                         return true;
                 return false;
             };
@@ -1090,32 +1093,6 @@ bool KcUtils::PrintAsicList(const std::set<std::string>& required_devices, const
     return result;
 }
 
-bool KcUtils::GetLogFileName(std::string& log_filename)
-{
-    bool ret = false;
-    osDirectory tmp_dir;
-    osFilePath log_file;
-    if (GetRGATempDir(tmp_dir))
-    {
-        log_file.setFileDirectory(tmp_dir);
-        log_file.setFileName(kRgaCliLogFileName);
-        log_file.setFileExtension(kRgaCliLogFileExt);
-        log_filename = log_file.asString().asASCIICharArray();
-
-        // Wrap the file name with double quotes in case that it
-        // contains a whitespace.
-        if (log_filename.find_first_not_of(' ') != std::string::npos)
-        {
-            std::stringstream wrapped_filename;
-            wrapped_filename << "\"" << log_filename << "\"";
-            log_filename = wrapped_filename.str();
-        }
-
-        ret = true;
-    }
-    return ret;
-}
-
 bool KcUtils::GetParsedISAFileName(const std::string& isa_filename, std::string& parsed_isa_filename)
 {
     gtString  filename_gtstr;
@@ -1129,13 +1106,6 @@ bool KcUtils::GetParsedISAFileName(const std::string& isa_filename, std::string&
 std::string KcUtils::Quote(const std::string& str)
 {
     return (str.find(' ') == std::string::npos ? str : (std::string("\"") + str + '"'));
-}
-
-std::string KcUtils::ToLower(const std::string& str)
-{
-    std::string lstr = str;
-    std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](const char& c) {return std::tolower(c);});
-    return lstr;
 }
 
 void KcUtils::DeletePipelineFiles(const BeProgramPipeline & files)
@@ -1177,7 +1147,7 @@ void KcUtils::PrintRgaVersion()
 
 #ifdef _WIN32
 KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, const std::string& args, const std::string& dir,
-    unsigned long time_out, bool print_cmd, std::string& std_out, std::string& std_err, long& exit_code)
+    unsigned long, bool print_cmd, std::string& std_out, std::string& std_err, long& exit_code)
 {
     ProcessStatus status = ProcessStatus::kSuccess;
     exit_code = 0;
@@ -1233,7 +1203,7 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, cons
 KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path,
                                               const std::string& args,
                                               const std::string& dir,
-                                              unsigned long      time_out,
+                                              unsigned long      ,
                                               bool               print_cmd,
                                               bool               print_dbg,
                                               std::string_view   dbg_prologue,
@@ -1648,8 +1618,8 @@ bool  KcUtils::InitCLILogFile(const Config& config)
 bool KcUtils::StrCmpNoCase(const std::string & s1, const std::string & s2)
 {
     std::string s1_u = s1, s2_u = s2;
-    std::transform(s1_u.begin(), s1_u.end(), s1_u.begin(), [](unsigned char c) {return std::toupper(c);});
-    std::transform(s2_u.begin(), s2_u.end(), s2_u.begin(), [](unsigned char c) {return std::toupper(c);});
+    std::transform(s1_u.begin(), s1_u.end(), s1_u.begin(), [](unsigned char c) {return static_cast<unsigned char>(std::toupper(c));});
+    std::transform(s2_u.begin(), s2_u.end(), s2_u.begin(), [](unsigned char c) {return static_cast<unsigned char>(std::toupper(c));});
     return (s1_u == s2_u);
 }
 
@@ -1827,9 +1797,14 @@ bool KcUtils::IsNavi21(const std::string& target_name)
     return target_name == "gfx1030";
 }
 
-bool KcUtils::IsMITarget(const std::string& target_name)
+bool KcUtils::IsMi200Target(const std::string& target_name)
 {
     return target_name == "gfx90a";
+}
+
+bool KcUtils::IsMi300Target(const std::string& target_name)
+{
+    return target_name == "gfx942";
 }
 
 bool KcUtils::IsVegaTarget(const std::string& target_name)

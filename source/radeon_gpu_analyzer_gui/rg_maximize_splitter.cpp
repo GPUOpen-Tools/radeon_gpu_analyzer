@@ -213,8 +213,7 @@ void RgMaximizeSplitter::HandleChildDestroyed(QObject* child)
         {
             for (auto it = maximize_containers_.begin(); it != maximize_containers_.end(); it++)
             {
-                RgViewContainer* container = *it;
-                if (container == destroyed_widget)
+                if (*it == destroyed_widget)
                 {
                     maximize_containers_.erase(it);
                     break;

@@ -45,7 +45,7 @@ static const char* kShaderStageCs = "cs";
 static std::string ToLower(const std::string& str)
 {
     std::string lstr = str;
-    std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](const char& c) {return std::tolower(c); });
+    std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](const char& c) { return static_cast<char>(std::tolower(c)); });
     return lstr;
 }
 
@@ -110,6 +110,8 @@ bool BeUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& card_list,
     AddGenerationDevices(GDT_HW_GENERATION_GFX10, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX103, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX11, card_list, public_device_unique_names, convert_to_lower);
+    AddGenerationDevices(GDT_HW_GENERATION_CDNA2, card_list, public_device_unique_names, convert_to_lower);
+    AddGenerationDevices(GDT_HW_GENERATION_CDNA3, card_list, public_device_unique_names, convert_to_lower);
 
     return (!card_list.empty() && !public_device_unique_names.empty());
 }
@@ -617,4 +619,9 @@ bool BeUtils::BeAmdgpudisStageNameToBeRayTracingStage(const std::string& amdgpu_
         }
     }
     return ret;
+}
+
+bool BeUtils::IsNumericValue(const std::string& str)
+{
+    return !str.empty() && std::find_if(str.begin(), str.end(), [](char c) { return !std::isdigit(c); }) == str.end();
 }

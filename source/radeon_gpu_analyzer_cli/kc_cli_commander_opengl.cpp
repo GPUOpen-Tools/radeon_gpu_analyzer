@@ -35,7 +35,7 @@ static const char* kStrErrTextFileWriteFailed          = "Error: unable to write
 static const char* kStrErrNoInputFile = "Error: no input file received.";
 
 // Unsupported devices.
-static const std::set<std::string> kUnsupportedDevicesOpengl = {"gfx900", "gfx902", "gfx904", "gfx906", "gfx908", "gfx90a", "gfx90c"};
+static const std::set<std::string> kUnsupportedDevicesOpengl = {"gfx900", "gfx902", "gfx904", "gfx906", "gfx908", "gfx90a", "gfx90c", "gfx942"};
 
 void KcCliCommanderOpenGL::GlcStatsToString(const beKA::AnalysisData& stats, std::stringstream& serialized_stats)
 {
@@ -71,10 +71,10 @@ bool KcCliCommanderOpenGL::WriteTextFile(const gtString& filename, const std::st
 }
 
 void KcCliCommanderOpenGL::CreateStatisticsFile(const gtString&         statistics_file,
-                                 const Config&           config,
+                                 const Config&           ,
                                  const std::string&      device,
                                  IStatisticsParser&      stats_parser,
-                                 LoggingCallbackFunction log_cb)
+                                 LoggingCallbackFunction )
 {
     // Parse the backend statistics.
     beKA::AnalysisData statistics;
@@ -486,7 +486,6 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                         // Parse ISA and write it to a csv file if required.
                         if (is_isa_required && config.is_parsed_isa_required)
                         {
-                            bool  status;
                             std::string  isa_text, parsed_isa_text, parsed_isa_file_name;
                             BeProgramPipeline  isa_files = gl_options.isa_disassembly_output_files;
                             for (const gtString& isa_filename : { isa_files.compute_shader, isa_files.fragment_shader, isa_files.geometry_shader,

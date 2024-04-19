@@ -1063,9 +1063,6 @@ void RgMainWindow::HandleOpenProjectFileEvent()
                         RgBuildView* build_view = app_state_->GetBuildView();
                         if (build_view != nullptr && build_view->HasProject())
                         {
-                            // Ask the user if they want to save all unsaved files.
-                            bool is_accepted = build_view->RequestRemoveAllFiles();
-
                             // Destroy the RgBuildView instance since the project is being closed.
                             DestroyBuildView();
                         }
@@ -2284,7 +2281,6 @@ bool RgMainWindow::eventFilter(QObject* object, QEvent* event)
         else if (event->type() == QEvent::KeyPress)
         {
             QKeyEvent* key_event = static_cast<QKeyEvent*>(event);
-            const int key = key_event->key();
             Qt::KeyboardModifiers keyboard_modifiers = QApplication::keyboardModifiers();
             if ((key_event->key() != Qt::Key_Up) && (key_event->key() != Qt::Key_Down))
             {

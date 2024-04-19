@@ -8,6 +8,9 @@
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_utils.h"
 
+// Shared.
+#include "common/rga_shared_utils.h"
+
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
 #include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
@@ -29,7 +32,7 @@ static const char* kStrErrorFailedToGenerateVersionInfoFileVulkanSystem = "Error
 static const char* kStrErrorFailedToGenerateVersionInfoFileVulkan       = "Error: failed to generate version info for Vulkan live-driver mode.";
 static const char* kStrErrorFailedToGenerateVersionInfoBinaryAnalysis   = "Error: failed to generate version info for Binary Analysis mode.";
 
-void KcCliCommander::Version(Config& config, LoggingCallbackFunction callback)
+void KcCliCommander::Version(Config&, LoggingCallbackFunction)
 {
     KcUtils::PrintRgaVersion();
 }
@@ -68,7 +71,7 @@ void KcCliCommander::ListAdapters(Config & config, LoggingCallbackFunction callb
     callback(msg.str());
 }
 
-bool KcCliCommander::RunPostCompileSteps(const Config & config)
+bool KcCliCommander::RunPostCompileSteps(const Config&)
 {
     return true;
 }
@@ -155,7 +158,7 @@ bool KcCliCommander::GenerateVersionInfoFile(const Config& config)
     return status;
 }
 
-bool KcCliCommander::ListEntries(const Config & config, LoggingCallbackFunction callback)
+bool KcCliCommander::ListEntries(const Config&, LoggingCallbackFunction)
 {
     RgLog::stdErr << kStrErrorCommandNotSupported << std::endl;
     return false;
@@ -181,10 +184,10 @@ bool KcCliCommander::InitRequestedAsicList(const std::vector<std::string>& devic
                 // The architecture returned by FindGPUArchName() is an extended name, for example: "gfx804 (Graphics IP v8)",
                 // while the items in the list of known ASICs are "short" names: "gfx804".
                 bool is_supported = false;
-                matched_arch_name = KcUtils::ToLower(matched_arch_name);
+                matched_arch_name = RgaSharedUtils::ToLower(matched_arch_name);
                 for (const std::string& asic : supported_devices)
                 {
-                    if (matched_arch_name.find(KcUtils::ToLower(asic)) != std::string::npos)
+                    if (matched_arch_name.find(RgaSharedUtils::ToLower(asic)) != std::string::npos)
                     {
                         matched_devices.insert(asic);
                         is_supported = true;

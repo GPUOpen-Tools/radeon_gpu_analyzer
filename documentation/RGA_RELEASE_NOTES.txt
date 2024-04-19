@@ -1,13 +1,13 @@
-Radeon GPU Analyzer 2.9 Release Notes
+Radeon GPU Analyzer 2.9.1 Release Notes
 =======================================
 Highlights
 ==========
--    New Binary Analysis mode for analyzing pre-compiled AMD GPU Code Object binaries in both the command line tool and the GUI application.
-     Inspect the ISA disassembly of pre-compiled binaries and analyze VGPR pressure and static hardware resource allocation. 
--	 Added support for MI-200 (gfx90a) as a target in OpenCL mode.
--	 Added live SGPR analysis support in command line tool (add --livereg-sgpr option to command).
--    DX12: RGA command line tool now captures the debug output when the D3D Debug Layer is enabled (--debug-layer).
--	 Updates to the OpenGL offline compiler.
+-	Analyze pre-compiled HIP Code Object binaries for the MI-300 with RGA's Binary Analysis mode.
+-	Added support for MI-300 (gfx942) as a target in OpenCL mode.
+-	DX12 single shader support: compile single DX12 shaders in isolation (CS, VS or PS). When an incomplete DX12 pipeline is received (missing a shader, root signature or state subset), the tool will use reflection to auto-generate the missing pieces of the pipeline for you. No impact to the invocation command, just omit the missing pieces.
+-	DX12 Agility SDK updated to version v613.
+-	DXC updated to version v1.8.2403.2 (HLSL 2021 is now enabled by default).
+
 
 Known Issues
 ============
@@ -21,14 +21,6 @@ Vulkan Live Driver Mode
 Offline OpenCL Mode
 -------------------
 -	OpenCL C++ kernels are not yet supported by the Lightning Compiler.
--   The OpenCL Lightning Compiler has a known issue with unresolved __printf_alloc symbols, when using -mlink-builtin-bitcode to link against the device libraries
-    (i.e. linking in the device libraries using the ----rocm-device-lib-path option), which can cause link failures in .cl code containing printf references.
--	Cycle estimate for certain VALU instructions appears as “Varies” instead of 4.
-
-OpenGL Mode
------------
-Resource usage statistics for OpenGL mode only displays usage of SGPRs and VGPRs.
-=======
 -	Cycle estimate for certain VALU instructions appears as “Varies” instead of 4.
 
 DirectX 12 Mode
@@ -249,7 +241,7 @@ All Vulkan offline modes (vk-offline, vk-spv-offline and vk-spv-txt-offline) are
 
 DirectX 12
 ----------
--	It is recommended to use the latest Adrenalin drivers for the best experience in DirectX 12 and DirectX 11 modes.
+-	It is recommended to use the latest Adrenalin drivers for the best experience in DirectX 12 and DXR modes.
 -	Please note that to enable the D3D12 debug layer (--debug-layer option), your Windows system must have the Graphics Tools feature installed (on Windows, go to Settings -> Apps -> Apps & features/Optional features). This is a D3D12 requirement which is unrelated to RGA.    
 
 DirectX 11

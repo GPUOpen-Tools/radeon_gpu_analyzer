@@ -450,7 +450,7 @@ void RgBuildViewBinary::ReloadFile(const std::string& file_path)
     emit BuildProjectEvent();
 }
 
-void RgBuildViewBinary::SaveCurrentFile(EditMode mode)
+void RgBuildViewBinary::SaveCurrentFile(EditMode)
 {
     
 }
@@ -706,12 +706,12 @@ bool RgBuildViewBinary::GetEntrypointNameForLineNumber(const std::string& file_p
     return found;
 }
 
-bool RgBuildViewBinary::IsLineCorrelationEnabled(RgSourceCodeEditor* source_editor)
+bool RgBuildViewBinary::IsLineCorrelationEnabled(RgSourceCodeEditor*)
 {
     return false;
 }
 
-void RgBuildViewBinary::HandleSelectedFileChanged(const std::string& old_file_path, const std::string& new_file_path)
+void RgBuildViewBinary::HandleSelectedFileChanged(const std::string&, const std::string& new_file_path)
 {
     // Get a pointer to the editor responsible for displaying the new file.
     RgSourceCodeEditor* editor = GetEditorForFilepath(new_file_path, RgSrcLanguage::kOpenCL);
@@ -751,11 +751,11 @@ void RgBuildViewBinary::HandleSelectedFileChanged(const std::string& old_file_pa
                                 ToggleDisassemblyViewKernelLabelVisiblity(file_item_opencl, selected_entrypoint_name);
 
                                 // Update correlation in the disassembly view.
-                                RgSourceCodeEditor* editor = GetEditorForFilepath(new_file_path);
-                                assert(editor != nullptr);
-                                if (editor != nullptr)
+                                RgSourceCodeEditor* filepath_editor = GetEditorForFilepath(new_file_path);
+                                assert(filepath_editor != nullptr);
+                                if (filepath_editor != nullptr)
                                 {
-                                    const int selected_line_number = editor->GetSelectedLineNumber();
+                                    const int selected_line_number = filepath_editor->GetSelectedLineNumber();
                                     disassembly_view_->HandleInputFileSelectedLineChanged(current_target_gpu_, new_file_path, selected_entrypoint_name, selected_line_number);
                                 }
                             }

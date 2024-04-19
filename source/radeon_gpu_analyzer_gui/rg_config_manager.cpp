@@ -11,6 +11,9 @@
 #include "source/common/rg_log.h"
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 
+// Shared.
+#include "common/rga_sorting_utils.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
@@ -101,70 +104,34 @@ private:
         // hardware to build for by default.
         RgConfigManager&                  config_manager = RgConfigManager::Instance();
         std::shared_ptr<RgCliVersionInfo> version_info   = config_manager.GetVersionInfo();
-
         assert(version_info != nullptr);
         if (version_info != nullptr)
         {
-            const char* kTokenRdna3 = "RDNA3";
-            const char* kTokenRdna2 = "RDNA2";
-            const char* kTokenRdna  = "RDNA";
-            const char* kTokenVega  = "Vega";
-
             // Find the set of GPU architectures supported in the current mode.
             auto mode_architectures_iter = version_info->gpu_architectures.find(api_mode);
             if (mode_architectures_iter != version_info->gpu_architectures.end())
             {
-                // Search for the latest target. Start with RDNA3, then RDNA2, then RDNA and Vega. As a fall back
-                // just take the first element.
-                const std::vector<RgGpuArchitecture>& mode_architectures = mode_architectures_iter->second;
-                auto last_architecture_iter = std::find_if(mode_architectures.begin(), mode_architectures.end(), [&](const RgGpuArchitecture& arch) {
-                    return arch.architecture_name.compare(kTokenRdna3) == 0;
-                });
+                std::vector<RgGpuArchitecture>&  mode_architectures = mode_architectures_iter->second;
+                std::sort(mode_architectures.begin(), mode_architectures.end(), GpuComparator<RgGpuArchitecture>{});
 
-                if (last_architecture_iter == mode_architectures.end())
+                auto last_architecture_iter = mode_architectures.rbegin();
+                if (last_architecture_iter != mode_architectures.rend())
                 {
-                    last_architecture_iter = std::find_if(mode_architectures.begin(), mode_architectures.end(), [&](const RgGpuArchitecture& arch) {
-                        return arch.architecture_name.compare(kTokenRdna2) == 0;
+                    // Find the last family within the most recent architecture.
+                    std::vector<RgGpuFamily>& architecture_families = last_architecture_iter->gpu_families;
+                    std::sort(architecture_families.begin(), architecture_families.end(), [&](const RgGpuFamily& family1, const RgGpuFamily& family2) {
+                        return family1.family_name < family2.family_name;
                     });
+                    const auto&        latest_family      = architecture_families.rbegin();
+                    const std::string& latest_family_name = latest_family->family_name;
 
-                    if (last_architecture_iter == mode_architectures.end())
-                    {
-                        // Search for the latest target. Start with RDNA, if not look for Vega. As a fall back
-                        // just take the first element.
-                        const std::vector<RgGpuArchitecture>& mode_architectures = mode_architectures_iter->second;
-                        last_architecture_iter = std::find_if(mode_architectures.begin(), mode_architectures.end(), [&](const RgGpuArchitecture& arch) {
-                            return arch.architecture_name.compare(kTokenRdna) == 0;
-                        });
-
-                        if (last_architecture_iter == mode_architectures.end())
-                        {
-                            last_architecture_iter = std::find_if(mode_architectures.begin(), mode_architectures.end(), [&](const RgGpuArchitecture& arch) {
-                                return arch.architecture_name.compare(kTokenVega) == 0;
-                            });
-
-                            if (last_architecture_iter == mode_architectures.end())
-                            {
-                                // Take the first element.
-                                last_architecture_iter = mode_architectures.begin();
-
-                                // We shouldn't be getting here normally.
-                                assert(false);
-                            }
-                        }
-                    }
+                    // Add the latest supported GPU family as the default target GPU.
+                    build_settings->target_gpus.push_back(latest_family_name); 
                 }
-
-                // Find the last family within the most recent architecture.
-                std::vector<RgGpuFamily> architecture_families = last_architecture_iter->gpu_families;
-                std::sort(architecture_families.begin(), architecture_families.end(), [&](const RgGpuFamily& family1, const RgGpuFamily& family2) {
-                    return family1.family_name < family2.family_name;
-                });
-
-                const auto&        latest_family      = architecture_families.rbegin();
-                const std::string& latest_family_name = latest_family->family_name;
-
-                // Add the latest supported GPU family as the default target GPU.
-                build_settings->target_gpus.push_back(latest_family_name);
+                else
+                {
+                    assert(false);
+                }
             }
         }
     }
@@ -220,7 +187,7 @@ static std::string GenConfigFileName()
 {
     std::string config_file_name = kStrGlobalConfigFileNamePrefix;
     std::string versionSuffix    = std::string("_") + std::to_string(RGA_VERSION_MAJOR) + "_" + std::to_string(RGA_VERSION_MINOR);
-    if (RGA_VERSION_UPDATE != 0)
+    if constexpr (RGA_VERSION_UPDATE != 0)
     {
         versionSuffix += "_" + std::to_string(RGA_VERSION_UPDATE);
     }
@@ -342,10 +309,10 @@ bool RgConfigManager::Init()
         if (is_initialized_)
         {
             // Initialize GUI log file.
-            std::string log_file_dir  = (global_settings_->log_file_location.empty() ? app_data_dir : global_settings_->log_file_location);
-            bool        is_successful = RgaSharedUtils::InitLogFile(log_file_dir, kGuiLogFilePrefix, kDefaultOldLogFilesDays);
-            assert(is_successful);
-            if (is_successful)
+            std::string log_file_dir           = (global_settings_->log_file_location.empty() ? app_data_dir : global_settings_->log_file_location);
+            bool        is_successful_log_file = RgaSharedUtils::InitLogFile(log_file_dir, kGuiLogFilePrefix, kDefaultOldLogFilesDays);
+            assert(is_successful_log_file);
+            if (is_successful_log_file)
             {
                 RgLog::file << kStrLogRgaGuiStarted << std::endl;
             }

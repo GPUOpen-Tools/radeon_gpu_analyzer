@@ -95,7 +95,7 @@ static bool ExtractLdsByteSizeGL(const std::string& file_content, size_t& scratc
     return ExtractNumericStatistic(file_content, kGlLDSByteSizeToken, scratch_regs);
 }
 
-bool KcOpenGLStatisticsParser::ParseStatistics(const std::string& device, const gtString& stats_file, beKA::AnalysisData& stats)
+bool KcOpenGLStatisticsParser::ParseStatistics(const std::string&, const gtString& stats_file, beKA::AnalysisData& stats)
 {
     bool ret = false;
     stats.isa_size = 0;

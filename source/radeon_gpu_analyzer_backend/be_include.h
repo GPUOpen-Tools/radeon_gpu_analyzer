@@ -162,6 +162,11 @@ enum beStatus
     kBeStatusDx12AlternativeDriverMissing,
     kBeStatusCannotParseDisassemblyShaderStage,
     kBeStatusCannotParseDisassemblyGeneral,
+    kBeStatusDxcCannotAutoGenerateRootSignature,
+    kBeStatusDxcCannotAutoGenerateVertexShader,
+    kBeStatusDxcCannotAutoGeneratePixelShader,
+    kBeStatusDxcCannotAutoGenerateGpso,
+    kBeStatusDxcCheckHrFailed,
     kBeStatusGeneralFailed
 };
 

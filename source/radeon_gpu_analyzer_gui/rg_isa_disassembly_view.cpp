@@ -286,8 +286,7 @@ void RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(const QStri
             QString check_box_text = check_box->text();
             if (check_box_text.compare(text) == 0)
             {
-                QCheckBox* check_box = (QCheckBox*)disassembly_columns_list_widget_->itemWidget(item);
-                check_box->setChecked(true);
+                ((QCheckBox*)disassembly_columns_list_widget_->itemWidget(item))->setChecked(true);
             }
         }
     }
@@ -370,7 +369,7 @@ void RgIsaDisassemblyView::HandleColumnVisibilityFilterStateChanged(bool checked
     emit DisassemblyColumnVisibilityUpdated();
 }
 
-void RgIsaDisassemblyView::HandleTargetGpuArrowClicked(bool clicked)
+void RgIsaDisassemblyView::HandleTargetGpuArrowClicked(bool)
 {
     // Make the list widget appear and process user selection from the list widget.
     bool visible = target_gpus_list_widget_->isVisible();
@@ -411,7 +410,7 @@ void RgIsaDisassemblyView::HandleTargetGpuChanged(int current_index)
         if (target_gpu_item != nullptr)
         {
             // Change the target GPU if it differs from the current target GPU.
-            std::string current_target_gpu = GetTargetGpuButtonText();
+            std::string current_target_gpu = ui_.targetGpuPushButton->text().toStdString();
             std::string new_target_gpu = target_gpu_item->text().toStdString();
             if (current_target_gpu.compare(new_target_gpu) != 0)
             {
@@ -1224,7 +1223,7 @@ void RgIsaDisassemblyView::SetTargetGpu(const std::string& target_gpu)
     static const int kArrowWidgetExtraWidth = 30;
 
     // Update the button text.
-    SetTargetGpuButtonText(target_gpu);
+    ui_.targetGpuPushButton->setText(target_gpu.c_str());
 
     // Measure the width of the Target GPU text, and add extra space to account for the width of the arrow.
     int scaled_arrow_width = static_cast<int>(kArrowWidgetExtraWidth * ScalingManager::Get().GetScaleFactor());
@@ -1436,58 +1435,4 @@ void RgIsaDisassemblyView::HandleSelectPreviousMaxVgprLineAction()
         // Show the previous max VGPR lines for the current tab view.
         current_tab_view_->HandleShowPreviousMaxVgprSignal();
     }
-}
-
-class RgIsaDisassemblyViewDisplayTextUtil
-{
-public:
-    RgIsaDisassemblyViewDisplayTextUtil()
-    {
-        map_text_to_display_ = {{"gfx90a", "gfx90a (mi200)"}};
-        map_display_to_text_ = GenerateReverseMap(map_text_to_display_);
-    }
-
-    std::string GetDisplayText(const std::string& text)
-    {
-        auto it = map_text_to_display_.find(text);
-        if (it != map_text_to_display_.end())
-        {
-            return it->second;
-        }
-        return text;
-    }
-
-    std::string GetOriginalText(const std::string& display)
-    {
-        auto it = map_display_to_text_.find(display);
-        if (it != map_display_to_text_.end())
-        {
-            return it->second;
-        }
-        return display;
-    }
-
-private:
-    std::unordered_map<std::string, std::string> map_text_to_display_;
-    std::unordered_map<std::string, std::string> map_display_to_text_;
-
-    std::unordered_map<std::string, std::string> GenerateReverseMap(const std::unordered_map<std::string, std::string>& input_map)
-    {
-        std::unordered_map<std::string, std::string> reverse_map;
-        for (const auto& pair : input_map)
-        {
-            reverse_map[pair.second] = pair.first;
-        }
-        return reverse_map;
-    }
-} kRgIsaDisassemblyViewDisplayTextUtil;
-
-void RgIsaDisassemblyView::SetTargetGpuButtonText(const std::string& target_gpu)
-{    
-    ui_.targetGpuPushButton->setText(kRgIsaDisassemblyViewDisplayTextUtil.GetDisplayText(target_gpu).c_str());
-}
-
-std::string RgIsaDisassemblyView::GetTargetGpuButtonText() const
-{
-    return kRgIsaDisassemblyViewDisplayTextUtil.GetOriginalText(ui_.targetGpuPushButton->text().toStdString());
 }

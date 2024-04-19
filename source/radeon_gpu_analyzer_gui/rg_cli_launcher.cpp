@@ -2,6 +2,10 @@
 #include <sstream>
 #include <cassert>
 
+// Qt
+#include <QtWidgets/QApplication>
+#include <QDir>
+
 // Infra.
 #include <external/amdt_base_tools/Include/gtString.h>
 #include <external/amdt_os_wrappers/Include/osProcess.h>
@@ -31,7 +35,16 @@
 void BuildRgaExecutableCommandString(std::stringstream& command_stream)
 {
     // Add the RGA executable name to invoke, and a space.
-    command_stream << kStrExecutableName;
+    if (qApp != nullptr && !qApp->applicationDirPath().isEmpty())
+    {
+        const QString rga_executable =
+            QDir::toNativeSeparators(QString("\"") + qApp->applicationDirPath() + QDir::separator() + kStrExecutableName + QString("\""));
+        command_stream << rga_executable.toStdString();
+    }
+    else
+    {
+        command_stream << kStrExecutableName;
+    }
     command_stream << " ";
 }
 

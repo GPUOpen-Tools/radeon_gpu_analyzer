@@ -52,6 +52,9 @@ int main(int argc, char *argv[])
     }
 #endif
 
+    // Start the Qt application.
+    QApplication application_instance(argc, argv);
+
     // Initialize the configuration manager.
     bool is_initialized = RgConfigManager::Instance().Init();
     assert(is_initialized);
@@ -59,9 +62,6 @@ int main(int argc, char *argv[])
     // Get the global settings from the config manager.
     std::shared_ptr<RgGlobalSettings> global_settings = RgConfigManager::Instance().GetGlobalConfig();
     assert(global_settings != nullptr);
-
-    // Start the Qt application.
-    QApplication application_instance(argc, argv);
 
     bool enable_feature_interop = QCoreApplication::arguments().count() == 2;
     if (enable_feature_interop)
@@ -80,9 +80,8 @@ int main(int argc, char *argv[])
 #ifdef RGA_GUI_AUTOMATION
                 tester.StartupDlgCreated(&startup_dialog);
 #endif
-                int result = startup_dialog.exec();
 
-                if (result == QDialog::Rejected)
+                if (startup_dialog.exec() == QDialog::Rejected)
                 {
                     // exit RGA.
                     exit(0);

@@ -526,13 +526,13 @@ bool RgStatusBar::eventFilter(QObject* object, QEvent* event)
                     if (current_index == 1 || current_index == 0)
                     {
                         const int numRows = api_mode_tree_widget_->topLevelItemCount();
-                        QTreeWidgetItem* item = api_mode_tree_widget_->topLevelItem(numRows - 1);
+                        item = api_mode_tree_widget_->topLevelItem(numRows - 1);
                         api_mode_tree_widget_->setCurrentItem(item);
                         HandleTreeWidgetItemEntered(item, 0);
                     }
                     else
                     {
-                        QTreeWidgetItem* item = api_mode_tree_widget_->topLevelItem(current_index-1);
+                        item = api_mode_tree_widget_->topLevelItem(current_index-1);
                         api_mode_tree_widget_->setCurrentItem(item);
                         HandleTreeWidgetItemEntered(item, 0);
                     }
@@ -543,13 +543,13 @@ bool RgStatusBar::eventFilter(QObject* object, QEvent* event)
                 {
                     if (current_index == (api_mode_tree_widget_->topLevelItemCount() - 1))
                     {
-                        QTreeWidgetItem* item = api_mode_tree_widget_->topLevelItem(1);
+                        item = api_mode_tree_widget_->topLevelItem(1);
                         api_mode_tree_widget_->setCurrentItem(item);
                         HandleTreeWidgetItemEntered(item, 0);
                     }
                     else
                     {
-                        QTreeWidgetItem* item = api_mode_tree_widget_->topLevelItem(current_index+1);
+                        item = api_mode_tree_widget_->topLevelItem(current_index+1);
                         api_mode_tree_widget_->setCurrentItem(item);
                         HandleTreeWidgetItemEntered(item, 0);
                     }
@@ -558,7 +558,7 @@ bool RgStatusBar::eventFilter(QObject* object, QEvent* event)
                 }
                 else if ((key_event->key() == Qt::Key_Enter) || (key_event->key() == Qt::Key_Return))
                 {
-                    QTreeWidgetItem* item = api_mode_tree_widget_->currentItem();
+                    item = api_mode_tree_widget_->currentItem();
                     HandleTreeWidgetItemClicked(item, kTreeWidgetApiColumnId);
                     HandleTreeWidgetItemEntered(item, 0);
 

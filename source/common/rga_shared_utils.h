@@ -37,6 +37,12 @@ public:
     // Close the log file.
     static void  CloseLogFile();
 
+    // Converts the given string to its lower-case version.
+    static std::string ToLower(const std::string& str);
+
+    // Convert sthe given string to its upper-case version.
+    static std::string ToUpper(const std::string& str);
+
 private:
     RgaSharedUtils() = delete;
     ~RgaSharedUtils() = delete;

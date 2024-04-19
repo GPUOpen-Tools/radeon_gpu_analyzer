@@ -102,7 +102,9 @@ static bool ExtractUsedVgprs(const std::string& file_content, size_t& isa_sizeIn
 static bool IsGfx6Device(const std::string& device)
 {
     std::string device_lower = device;
-    std::transform(device_lower.begin(), device_lower.end(), device_lower.begin(), ::tolower);
+    std::transform(device_lower.begin(), device_lower.end(), device_lower.begin(), [](const char& c) {
+        return static_cast<char>(std::tolower(c)); 
+    });
     bool ret = device_lower.find(kOfflineDeviceNameTahiti) != std::string::npos ||
         device_lower.find(kOfflineDeviceNameCapeverde) != std::string::npos ||
         device_lower.find(kOfflineDeviceNameHainan) != std::string::npos ||
@@ -123,7 +125,7 @@ bool KcVulkanStatisticsParser::ParseStatistics(const std::string& device, const 
 
     // Special cases.
     std::string device_lower = device;
-    std::transform(device_lower.begin(), device_lower.end(), device_lower.begin(), ::tolower);
+    std::transform(device_lower.begin(), device_lower.end(), device_lower.begin(), [](const char& c) { return static_cast<char>(std::tolower(c)); });
     if (device_lower.find(kOfflineDeviceNameTonga) != std::string::npos ||
         device_lower.find(kOfflineDeviceNameIceland) != std::string::npos)
     {

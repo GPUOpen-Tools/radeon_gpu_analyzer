@@ -31,48 +31,48 @@ beKA::beStatus BeProgramBuilderOpencl::Initialize(const std::string& dll_module 
     return beKA::kBeStatusSuccess;
 }
 
-beKA::beStatus BeProgramBuilderOpencl::GetKernels(const std::string& device, std::vector<std::string>& kernels)
+beKA::beStatus BeProgramBuilderOpencl::GetKernels(const std::string&, std::vector<std::string>&)
 {
     return beKA::beStatus::kBeStatusInvalid;
 }
 
-beKA::beStatus BeProgramBuilderOpencl::GetBinary(const std::string& device, const beKA::BinaryOptions& binopts, std::vector<char>& binary)
+beKA::beStatus BeProgramBuilderOpencl::GetBinary(const std::string&, const beKA::BinaryOptions&, std::vector<char>&)
 {
     return beKA::beStatus::kBeStatusInvalid;
 }
 
-beKA::beStatus BeProgramBuilderOpencl::GetBinaryFromFile(const std::string& path_to_binary, const beKA::BinaryOptions& binopts, std::vector<char>& output_path)
+beKA::beStatus BeProgramBuilderOpencl::GetBinaryFromFile(const std::string&, const beKA::BinaryOptions&, std::vector<char>&)
 {
     return beKA::beStatus::kBeStatusInvalid;
 }
 
-beKA::beStatus BeProgramBuilderOpencl::GetStatistics(const std::string& device, const std::string& kernel, beKA::AnalysisData& analysis)
+beKA::beStatus BeProgramBuilderOpencl::GetStatistics(const std::string&, const std::string&, beKA::AnalysisData&)
 {
     return beKA::beStatus::kBeStatusInvalid;
 }
 
-beKA::beStatus BeProgramBuilderOpencl::GetKernelMetaDataText(const std::string& device, const std::string& kernel, std::string& metadata)
+beKA::beStatus BeProgramBuilderOpencl::GetKernelMetaDataText(const std::string&, const std::string&, std::string&)
 {
     return beKA::beStatus::kBeStatusInvalid;
 }
 
-beKA::beStatus BeProgramBuilderOpencl::GetKernelIlText(const std::string& device, const std::string& kernel_name, std::string& kernel_text)
+beKA::beStatus BeProgramBuilderOpencl::GetKernelIlText(const std::string&, const std::string&, std::string&)
 {
     return beKA::beStatus::kBeStatusInvalid;
 }
 
-beKA::beStatus BeProgramBuilderOpencl::GetKernelSectionText(const std::string& device, const std::string& kernel_name, std::string& kernel_text)
+beKA::beStatus BeProgramBuilderOpencl::GetKernelSectionText(const std::string&, const std::string&, std::string&)
 {
     return beKA::beStatus::kBeStatusInvalid;
 }
 
-beKA::beStatus BeProgramBuilderOpencl::GetKernelIsaText(const std::string& device, const std::string& kernel, std::string& isa)
+beKA::beStatus BeProgramBuilderOpencl::GetKernelIsaText(const std::string&, const std::string&, std::string&)
 {
     return beKA::beStatus::kBeStatusInvalid;
 }
 
-beKA::beStatus BeProgramBuilderOpencl::Compile(const std::string& program_source, const OpenCLOptions& opencl_options,
-    const std::string& source_code_full_path, const std::vector<std::string>* source_path, int& successful_builds_count)
+beKA::beStatus BeProgramBuilderOpencl::Compile(const std::string&, const OpenCLOptions&,
+    const std::string&, const std::vector<std::string>*, int&)
 {
     return beKA::beStatus::kBeStatusInvalid;
 }
@@ -108,8 +108,8 @@ void BeProgramBuilderOpencl::GetDeviceToCodeObjectDisassemblyMapping(std::map<st
     mapping = device_to_code_object_disassembly_isa_;
 }
 
-bool BeProgramBuilderOpencl::ExtractStatisticsCodeObject(const std::string& device,
-    std::map<std::string, beKA::AnalysisData>& stats)
+bool BeProgramBuilderOpencl::ExtractStatisticsCodeObject(const std::string&,
+    std::map<std::string, beKA::AnalysisData>&)
 {
     return false;
 }

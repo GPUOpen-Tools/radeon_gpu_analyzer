@@ -30,11 +30,15 @@ public:
     void RunCompileCommands(const Config& config, LoggingCallbackFunction callback);
 
     // Print the list of supported targets.
-    virtual bool PrintAsicList(const Config&) override;
+    virtual bool PrintAsicList(const Config& config) override;
 
 private:
+
+    // Print the list of supported targets for DX12 driver.
+    bool GetDX12DriverAsicList(const Config& config, std::set<std::string>& target_gpus, bool print = false);
+
     std::vector<GDT_GfxCardInfo> dx_default_asic_list_;
-    BeProgramBuilderDx12 dx12_backend_;;
+    BeProgramBuilderDx12 dx12_backend_;
 };
 
 #endif

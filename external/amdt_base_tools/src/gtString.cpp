@@ -897,7 +897,7 @@ int gtString::reverseFind(const gtString& subString, int searchStartPosition) co
     // If we were asked to start the search from the string end:
     if (searchStartPosition == -1)
     {
-        searchStartPosition = (int)std::string::npos;
+        searchStartPosition = static_cast<int>(std::string::npos);
     }
 
     int retVal = (int)_impl.rfind(subString._impl, searchStartPosition);
@@ -1029,7 +1029,7 @@ int gtString::reverseFind(wchar_t character, int searchStartPosition) const
     // If we were asked to start the search from the string end:
     if (searchStartPosition == -1)
     {
-        searchStartPosition = (int)std::string::npos;
+        searchStartPosition = static_cast<int>(std::string::npos);
     }
 
     int retVal = (int)_impl.rfind(character, searchStartPosition);

@@ -126,6 +126,59 @@ public:
     // Returns true upon success, false otherwise.
     static bool BeAmdgpudisStageNameToBeRayTracingStage(const std::string& amdgpu_dis_stage, std::size_t& ray_tracing_stage);
 
+    // String helper StartsWith.
+    static inline auto StartsWith(std::string_view str, std::string_view prefix) -> bool
+    {
+        // Optimization: 'pos' == 0 limits the search for the prefix.
+        // The function does not search backwards through the entire string!
+        return str.rfind(prefix, 0) == 0;
+    }
+
+    // String helper EndsWith.
+    static inline auto EndsWith(std::string_view str, std::string_view suffix) -> bool
+    {
+        if (str.length() < suffix.length())
+        {
+            return false;
+        }
+        return std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
+    }
+
+    // String helper MatchWith for equality.
+    static inline auto MatchWith(std::string_view str, std::string_view other) -> bool
+    {
+        return str.compare(other) == 0;
+    }
+
+    // String helper ContainsAny of part_strings.
+    static inline auto ContainsAny(std::string_view str, std::initializer_list<std::string_view> part_strings) -> bool
+    {
+        return std::any_of(part_strings.begin(), part_strings.end(), [&str = std::as_const(str)](std::string_view partString) {
+            return str.find(partString) != std::string_view::npos;
+        });
+    }
+
+    // String helper StartsWithAny of part_strings.
+    static inline auto StartsWithAny(std::string_view str, std::initializer_list<std::string_view> part_strings) -> bool
+    {
+        return std::any_of(
+            part_strings.begin(), part_strings.end(), [&str = std::as_const(str)](std::string_view part_string) { return StartsWith(str, part_string); });
+    }
+
+    // String helper StartsWithAny of part_strings.
+    static inline auto EndsWithAny(std::string_view str, std::initializer_list<std::string_view> part_strings) -> bool
+    {
+        return std::any_of(
+            part_strings.begin(), part_strings.end(), [&str = std::as_const(str)](std::string_view part_string) { return EndsWith(str, part_string); });
+    }
+
+    // String helper MatchesWithAny of part_strings.
+    static inline auto MatchesWithAny(std::string_view str, std::initializer_list<std::string_view> part_strings) -> bool
+    {
+        return std::any_of(
+            part_strings.begin(), part_strings.end(), [&str = std::as_const(str)](std::string_view part_string) { return MatchWith(str, part_string); });
+    }
+
 private:
     // No instances for this class, as this is a static utility class.
     BeUtils() = default;

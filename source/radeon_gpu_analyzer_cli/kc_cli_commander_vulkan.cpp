@@ -498,7 +498,7 @@ static RgVulkanInputType GetInputTypeForExt(std::string file_ext)
 
     if (!file_ext.empty())
     {
-        std::transform(file_ext.begin(), file_ext.end(), file_ext.begin(), [](const char& c) {return std::tolower(c); });
+        std::transform(file_ext.begin(), file_ext.end(), file_ext.begin(), [](const char& c) {return static_cast<char>(std::tolower(c)); });
         if (std::find(kStrGlslFileExtensions.cbegin(), kStrGlslFileExtensions.cend(), file_ext) != kStrGlslFileExtensions.cend() ||
             std::find(kStrGlslFileExtensionsAdditional.cbegin(), kStrGlslFileExtensionsAdditional.cend(), file_ext) != kStrGlslFileExtensionsAdditional.cend())
         {
@@ -862,7 +862,7 @@ bool KcCliCommanderVulkan::PrintAsicList(const Config& config)
     return result;
 }
 
-bool KcCliCommanderVulkan::ListEntries(const Config& config, LoggingCallbackFunction callback)
+bool KcCliCommanderVulkan::ListEntries(const Config& config, LoggingCallbackFunction)
 {
     std::string prepro_text, err_msg;
     bool ret = false;

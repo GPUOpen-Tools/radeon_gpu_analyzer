@@ -673,11 +673,11 @@ void RgBuildViewOpencl::HandleSelectedFileChanged(const std::string& old_file_pa
                                 emit SelectedEntrypointChanged(current_target_gpu_, new_file_path, selected_entrypoint_name);
 
                                 // Update correlation in the disassembly view.
-                                RgSourceCodeEditor* editor = GetEditorForFilepath(new_file_path);
-                                assert(editor != nullptr);
-                                if (editor != nullptr)
+                                RgSourceCodeEditor* filepath_editor = GetEditorForFilepath(new_file_path);
+                                assert(filepath_editor != nullptr);
+                                if (filepath_editor != nullptr)
                                 {
-                                    const int selected_line_number = editor->GetSelectedLineNumber();
+                                    const int selected_line_number = filepath_editor->GetSelectedLineNumber();
                                     disassembly_view_->HandleInputFileSelectedLineChanged(current_target_gpu_, new_file_path, selected_entrypoint_name, selected_line_number);
                                 }
                             }

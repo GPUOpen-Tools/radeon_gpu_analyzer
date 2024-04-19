@@ -42,6 +42,9 @@ namespace rga
         std::string dxbc_disassembly;
     };
 
+    // Root signature version by default.
+    static const std::string rs_version_default = "rootsig_1_1";
+
     // Global configuration (based on user's invocation command).
     struct RgDx12Config
     {
@@ -66,7 +69,7 @@ namespace rga
         std::string rs_macro_file;
 
         // Root signature version, by default "rootsig_1_1" is assumed.
-        std::string rs_version = "rootsig_1_1";
+        std::string rs_version = rs_version_default;
 
         // Full path to the serialized root signature file.
         std::string rs_serialized;

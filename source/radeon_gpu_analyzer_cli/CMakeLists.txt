@@ -163,7 +163,7 @@ endif()
 
 # Link settings
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools
+    target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools d3d12.lib
                            optimized ${BOOST_LIBRARY1}
                            optimized ${BOOST_LIBRARY2}
                            optimized ${BOOST_LIBRARY3}

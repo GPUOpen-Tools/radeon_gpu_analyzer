@@ -19,6 +19,7 @@
 
 // Shared between CLI and GUI.
 #include "common/rga_version_info.h"
+#include "common/rga_shared_utils.h"
 
 // Infra.
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
@@ -31,7 +32,7 @@ static const char* kStrErrorVkOfflineCannotExtractVulkanVersion = "Error: unable
 static const char* kStrErrorVkOfflineMixedInputFiles = "Error: cannot mix stage-specific input files (--vert, --tesc, --tese, --geom, --frag, --comp) with a stage-less SPIR-V input file.";
 
 // Unsupported devices.
-static const std::set<std::string> kUnsupportedDevicesVkOffline = {"gfx908", "gfx90a"};
+static const std::set<std::string> kUnsupportedDevicesVkOffline = {"gfx908", "gfx90a", "gfx942"};
 
 KcCLICommanderVkOffline::KcCLICommanderVkOffline() : vulkan_builder_(new BeProgramBuilderVkOffline)
 {
@@ -118,12 +119,6 @@ bool ValidateInputFiles(const Config& config, VkOfflineOptions& vulkan_options, 
     bool is_geom_shader_present            = (!config.geometry_shader.empty());
     bool is_frag_shader_present            = (!config.fragment_shader.empty());
     bool is_comp_shader_present            = (!config.compute_shader.empty());
-    bool is_isa_required                   = IsIsaRequired(config);
-    bool is_block_cfg_required             = (!config.block_cfg_file.empty());
-    bool is_inst_cfg_required              = (!config.inst_cfg_file.empty());
-    bool is_pipeline_binary_required       = (!config.binary_output_file.empty());
-    bool is_il_required                    = (!config.il_file.empty());
-    bool is_stats_required                 = (!config.analysis_file.empty());
     bool is_pipe_input                     = (!config.pipe_file.empty());
 
     // Cannot mix compute and non-compute shaders in Vulkan.
@@ -250,7 +245,7 @@ bool ValidateInputFiles(const Config& config, VkOfflineOptions& vulkan_options, 
     return should_abort;
 }
 
-bool ValidateOutputDir(const Config& config, VkOfflineOptions& vulkan_options, std::stringstream& log_msg)
+bool ValidateOutputDir(const Config& config, VkOfflineOptions&, std::stringstream& log_msg)
 {
     bool should_abort = false;
 
@@ -334,7 +329,7 @@ void AdjustRenderingPipelineOutputFileNames(const Config&                   conf
     }
 
     // Lower case of the device name to be used for generating output paths.
-    std::string device_to_lower = KcUtils::ToLower(device);
+    std::string device_to_lower = RgaSharedUtils::ToLower(device);
 
     // Set the optimization level.
     if (config.opt_level == -1 || config.opt_level == 0 || config.opt_level == 1)
@@ -359,10 +354,10 @@ void AdjustRenderingPipelineOutputFileNames(const Config&                   conf
         if (is_isa_required)
         {
             vulkan_options.is_amd_isa_disassembly_required = true;
-            std::string adjusted_base_file_name            = KcUtils::AdjustBaseFileNameIsaDisassembly(config.isa_file, device);
+            std::string adjusted_base_file_name_isa            = KcUtils::AdjustBaseFileNameIsaDisassembly(config.isa_file, device);
 
             status &= KcUtils::AdjustRenderingPipelineOutputFileNames(
-                adjusted_base_file_name, "", kStrDefaultExtensionIsa, device_to_lower, vulkan_options.isa_disassembly_output_files);
+                adjusted_base_file_name_isa, "", kStrDefaultExtensionIsa, device_to_lower, vulkan_options.isa_disassembly_output_files);
         }
     }
 

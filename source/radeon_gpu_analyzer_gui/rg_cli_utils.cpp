@@ -216,7 +216,7 @@ bool RgCliUtils::GenerateVulkanBuildSettingsString(const RgBuildSettingsVulkan& 
     return ret;
 }
 
-bool RgCliUtils::GenerateBinaryBuildSettingsString(const RgBuildSettingsBinary& build_settings, std::string& str, bool additional_options)
+bool RgCliUtils::GenerateBinaryBuildSettingsString(const RgBuildSettingsBinary& build_settings, std::string& str, bool)
 {
     bool              ret = false;
     std::stringstream cmd;

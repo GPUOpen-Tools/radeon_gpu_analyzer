@@ -132,7 +132,7 @@ bool RgConfigFileReaderBinary::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
     return ret;
 }
 
-bool RgConfigFileReaderBinary::ReadApiBuildSettings(tinyxml2::XMLNode* node, std::shared_ptr<RgBuildSettings> build_settings, const std::string& version)
+bool RgConfigFileReaderBinary::ReadApiBuildSettings(tinyxml2::XMLNode* node, std::shared_ptr<RgBuildSettings> build_settings, const std::string&)
 {
     bool ret = false;
 
