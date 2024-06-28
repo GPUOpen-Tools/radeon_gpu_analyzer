@@ -40,7 +40,7 @@ class RgOptionalRef
 {
 public:
     RgOptionalRef()       : good_(false), ref_(ms_empty_obj_) {}
-    RgOptionalRef(bool b) : good_(false), ref_(ms_empty_obj_) { assert(b == false); }
+    RgOptionalRef([[maybe_unused]] bool b) : good_(false), ref_(ms_empty_obj_) { assert(b == false); }
     RgOptionalRef(T& ref) : ref_(ref), good_(true) {}
     inline RgOptionalRef& operator=(T& ref) { ref_ = ref; good_ = true; return *this; }
     inline operator bool() { return good_; }

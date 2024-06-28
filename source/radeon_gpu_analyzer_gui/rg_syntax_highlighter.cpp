@@ -2,6 +2,9 @@
 // C++
 #include <cassert>
 
+// Qt.
+#include <QStringView>
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_syntax_highlighter.h"
 
@@ -193,7 +196,7 @@ int  RgSyntaxHighlighter::ProcessComment(const QString& text, int offset, bool i
     if (is_multi_line)
     {
         QString& ml_comment_end = lang_desc_.comments.multi_line_end;
-        while (end_offset < size && ml_comment_end.compare(QStringRef(&text, end_offset, ml_comment_end.size())) != 0)
+        while (end_offset < size && ml_comment_end.compare(QStringView(text.begin() + end_offset, ml_comment_end.size())) != 0)
         {
             end_offset++;
         }
@@ -260,10 +263,10 @@ bool  RgSyntaxHighlighter::ProcessToken(const QString& text, int begin, int end)
     //  begin -'   `- end
 
     assert(begin >= 0 && begin <= end && end < text.size());
-    bool  ret = false;
-    QChar symbol = text[begin];
-    int token_size = end - begin + 1;
-    const QStringRef token = QStringRef(&text, begin, token_size);
+    bool              ret        = false;
+    QChar             symbol     = text[begin];
+    int               token_size = end - begin + 1;
+    const QStringView token      = QStringView(text.begin() + begin, token_size);
 
     // Check if the token starts with one of predefined keyword prefixes.
     for (const QString& prefix : lang_desc_.keyword_prefixes)
@@ -345,11 +348,11 @@ void  RgSyntaxHighlighter::highlightBlock(const QString& text)
         else
         {
             // Check if current symbol starts a comment.
-            if (sl_comment_start.compare(QStringRef(&text, offset, sl_comment_start.size())) == 0)
+            if (sl_comment_start.compare(QStringView(text.begin() + offset, sl_comment_start.size())) == 0)
             {
                 offset = ProcessComment(text, offset, false);
             }
-            else if (ml_comment_start.compare(QStringRef(&text, offset, ml_comment_start.size())) == 0)
+            else if (ml_comment_start.compare(QStringView(text.begin() + offset, ml_comment_start.size())) == 0)
             {
                 offset = ProcessComment(text, offset, true);
             }

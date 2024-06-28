@@ -22,7 +22,7 @@ public:
     struct CurrentSelection
     {
         // The currently selected row.
-        RgEditorElement* selected_row;
+        RgEditorElement* selected_row = nullptr;
 
         // The currently selected column.
         int focused_column;

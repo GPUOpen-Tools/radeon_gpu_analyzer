@@ -10,7 +10,7 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_check_box.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_opencl.h"
 
-RgCheckBox::RgCheckBox(QWidget* parent) : QCheckBox(parent)
+RgCheckBox::RgCheckBox(QWidget* parent) : ScaledCheckBox(parent)
 {
 }
 
@@ -39,7 +39,7 @@ void RgCheckBox::mouseMoveEvent(QMouseEvent* event)
     QString tooltip = TOOLTIPS[widgetName];
 
     // Display the tooltip.
-    QToolTip::showText(event->globalPos(), tooltip);
+    QToolTip::showText(event->globalPosition().toPoint(), tooltip);
 
     // Pass the event onto the base class.
     QCheckBox::mouseMoveEvent(event);

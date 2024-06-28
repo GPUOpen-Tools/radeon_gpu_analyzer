@@ -32,6 +32,7 @@ void RgPipelineStateEditorWidgetArrayElementRemove::SetTrashCanIconTooltip(const
 void RgPipelineStateEditorWidgetArrayElementRemove::ConnectSignals()
 {
     // Connect the add element button's signal to be forwarded to a local public signal.
-    bool is_connected = connect(ui_.deleteElementButton, &QPushButton::clicked, this, &RgPipelineStateEditorWidgetArrayElementRemove::DeleteButtonClicked);
+    [[maybe_unused]] bool is_connected =
+        connect(ui_.deleteElementButton, &QPushButton::clicked, this, &RgPipelineStateEditorWidgetArrayElementRemove::DeleteButtonClicked);
     assert(is_connected);
 }

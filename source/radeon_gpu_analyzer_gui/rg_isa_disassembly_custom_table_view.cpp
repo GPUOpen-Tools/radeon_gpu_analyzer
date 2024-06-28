@@ -276,12 +276,15 @@ public:
 };
 
 RgIsaDisassemblyCustomTableView::RgIsaDisassemblyCustomTableView(QWidget* parent) :
-    QTreeView(parent)
+    ScaledTreeView(parent)
 {
     // Enable treeview's header's click event.
     QHeaderView* header_view = this->header();
     assert(header_view != nullptr);
     header_view->setSectionsClickable(true);
+
+    // Don't have alternating row colors since they cause painting issue with vgpr row highlighting.
+    setAlternatingRowColors(false);
 
     // Connect signals.
     ConnectSignals();
@@ -326,7 +329,7 @@ void RgIsaDisassemblyCustomTableView::ConnectSignals()
 
     if (header_view != nullptr)
     {
-        bool is_connected = connect(header_view, &QHeaderView::sectionClicked, this, &RgIsaDisassemblyCustomTableView::HandleHeaderClicked);
+        [[maybe_unused]] bool is_connected = connect(header_view, &QHeaderView::sectionClicked, this, &RgIsaDisassemblyCustomTableView::HandleHeaderClicked);
         assert(is_connected);
     }
 

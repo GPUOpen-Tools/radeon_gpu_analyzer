@@ -85,7 +85,7 @@ RgMenu* RgFactoryOpencl::CreateFileMenu(QWidget* parent)
     std::vector<std::string> stylesheet_file_names;
     stylesheet_file_names.push_back(kStylesheetPackage.file_menu_stylesheet);
     stylesheet_file_names.push_back(kStylesheetPackage.file_menu_api_stylesheet);
-    bool status = RgUtils::LoadAndApplyStyle(stylesheet_file_names, menu);
+    [[maybe_unused]] bool status = RgUtils::LoadAndApplyStyle(stylesheet_file_names, menu);
     assert(status);
 
     return menu;
@@ -113,9 +113,6 @@ RgRenameProjectDialog* RgFactoryOpencl::CreateRenameProjectDialog(std::string& p
 {
     RgRenameProjectDialog* rename_dialog = new RgRenameProjectDialog(project_name, parent);
     rename_dialog->setWindowTitle(kStrRenameProjectDialogBoxTitleOpencl);
-
-    // Register the rename dialog with the scaling manager.
-    ScalingManager::Get().RegisterObject(rename_dialog);
 
     // Center the dialog on the view (registering with the scaling manager
     // shifts it out of the center so we need to manually center it).

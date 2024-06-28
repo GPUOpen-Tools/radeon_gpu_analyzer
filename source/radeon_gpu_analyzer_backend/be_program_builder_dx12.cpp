@@ -575,7 +575,7 @@ static beStatus InvokeDx12Backend(const Config&      config,
 
             // Set the environment variable.
             wchar_t* kKmtMuxerEnvVar = L"URSubDx12Path";
-            BOOL     rc              = SetEnvironmentVariable(kKmtMuxerEnvVar, dx12_amdxc_driver.asString().asCharArray());
+            [[maybe_unused]] BOOL rc              = SetEnvironmentVariable(kKmtMuxerEnvVar, dx12_amdxc_driver.asString().asCharArray());
             std::cout << "Info: using amdxc64.dll from " << dx12_amdxc_driver.asString().asASCIICharArray() << std::endl;
             assert(rc == TRUE);
 
@@ -670,7 +670,7 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
 
     // Retrieve the list of targets.
     std::string supported_gpus;
-    BOOL rc = SetEnvironmentVariable(kStrEnvVarNameAmdVirtualGpuId, L"0");
+    [[maybe_unused]] BOOL rc = SetEnvironmentVariable(kStrEnvVarNameAmdVirtualGpuId, L"0");
     assert(rc == TRUE);
 
     beStatus ret = InvokeDx12Backend(config, "-l", config.print_process_cmd_line, false, supported_gpus, errors);

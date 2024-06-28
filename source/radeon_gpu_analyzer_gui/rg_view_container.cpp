@@ -189,7 +189,7 @@ QSize RgViewContainer::minimumSizeHint() const
     return ret;
 }
 
-void RgViewContainer::enterEvent(QEvent* event)
+void RgViewContainer::enterEvent(QEnterEvent* event)
 {
     Q_UNUSED(event);
 
@@ -299,7 +299,7 @@ void RgViewContainer::ExtractMaximizeButton()
     // Connect the button's signals/slots if a valid one is found.
     if (maximize_button_ != nullptr)
     {
-        bool is_connected = connect(maximize_button_, &QAbstractButton::clicked, this, &RgViewContainer::MaximizeButtonClicked);
+        [[maybe_unused]] bool is_connected = connect(maximize_button_, &QAbstractButton::clicked, this, &RgViewContainer::MaximizeButtonClicked);
         assert(is_connected);
     }
 }

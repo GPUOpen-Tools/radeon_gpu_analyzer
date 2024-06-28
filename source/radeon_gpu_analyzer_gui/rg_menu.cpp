@@ -21,7 +21,6 @@
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
-#include "QtCommon/Scaling/ScalingManager.h"
 
 RgMenu::RgMenu(QWidget* parent) :
     QFrame(parent),

@@ -21,7 +21,8 @@ void RgMenuVulkan::ConnectDefaultItemSignals()
     assert(build_settings_menu_item_ != nullptr);
     if (build_settings_menu_item_ != nullptr)
     {
-        bool is_connected = connect(build_settings_menu_item_->GetBuildSettingsButton(), &QPushButton::clicked, this, &RgMenu::HandleBuildSettingsButtonClicked);
+        [[maybe_unused]] bool is_connected =
+            connect(build_settings_menu_item_->GetBuildSettingsButton(), &QPushButton::clicked, this, &RgMenu::HandleBuildSettingsButtonClicked);
         assert(is_connected);
     }
 }

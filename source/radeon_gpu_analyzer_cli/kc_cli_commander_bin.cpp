@@ -238,7 +238,7 @@ beKA::beStatus KcCliCommanderBin::InitRequestedAsicBinary(const Config& config, 
         }
 
         std::string device;
-        bool        is_device_extracted = ExtractDeviceFromAmdgpudisOutput(amdgpu_dis_output, device);
+        [[maybe_unused]] bool is_device_extracted = ExtractDeviceFromAmdgpudisOutput(amdgpu_dis_output, device);
         assert(is_device_extracted);
         assert(!device.empty());
 

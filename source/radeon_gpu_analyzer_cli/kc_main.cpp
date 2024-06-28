@@ -9,16 +9,10 @@
 #include <sstream>
 
 // Infra.
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning(disable:4309)
-#endif
 #include "external/amdt_os_wrappers/Include/osEnvironmentVariable.h"
 #include "external/amdt_os_wrappers/Include/osProcess.h"
 #include "common/rg_log.h"
-#ifdef _WIN32
-#pragma warning(pop)
-#endif
+
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_program_builder_opencl.h"
 // Local.

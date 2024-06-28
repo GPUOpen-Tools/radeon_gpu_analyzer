@@ -55,8 +55,8 @@ RgSourceCodeEditor::RgSourceCodeEditor(QWidget* parent, RgSrcLanguage lang) : QP
 
         // A tab is the same width as 4 spaces.
         QFontMetrics metrics(font);
-        int tab_width = metrics.width(' ') * 4;
-        setTabStopWidth(tab_width);
+        int          tab_width = metrics.horizontalAdvance(' ') * 4;
+        setTabStopDistance(tab_width);
     }
 
     // Configure the word wrap mode.
@@ -138,7 +138,7 @@ int RgSourceCodeEditor::LineNumberAreaWidth() const
         ++digits;
     }
 
-    int space = 15 + fontMetrics().width(QLatin1Char('9')) * digits;
+    int space = 15 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
 
     return space;
 }
@@ -244,11 +244,9 @@ void RgSourceCodeEditor::HandleOpenHeaderFile()
         // Parse the line.
         if (IsIncludeDirectiveLine(line_text))
         {
-            // Check the type of the include directive: double-quotes or triangular.
             bool is_double_quoted = (line_text.count("\"") == 2);
-            bool is_triangular = !is_double_quoted && (line_text.count("<") == 1) && (line_text.count(">") == 1) &&
-                (std::find(line_text.begin(), line_text.end(), "<") < std::find(line_text.begin(), line_text.end(), ">"));
-
+            bool is_triangular =
+                !is_double_quoted && (line_text.indexOf("<") != -1) && (line_text.indexOf(">") != -1) && (line_text.indexOf("<") < line_text.indexOf(">"));
             if (is_double_quoted)
             {
                 // Extract the file name.
@@ -558,7 +556,8 @@ void RgSourceCodeEditor::mousePressEvent(QMouseEvent* event)
     {
         // Simulate a left click event to bring us to the current line.
         Qt::MouseButtons buttons;
-        QMouseEvent* dummy_event = new QMouseEvent(event->type(), event->localPos(), event->screenPos(),
+        QMouseEvent*     dummy_event =
+            new QMouseEvent(event->type(), event->position(), event->globalPosition(),
             Qt::MouseButton::LeftButton, buttons, event->modifiers());
         emit mousePressEvent(dummy_event);
     }

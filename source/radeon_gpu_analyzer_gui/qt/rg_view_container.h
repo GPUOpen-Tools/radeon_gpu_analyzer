@@ -58,10 +58,10 @@ protected:
     void resizeEvent(QResizeEvent* event) override;
     virtual QSize sizeHint() const override;
     virtual QSize minimumSizeHint() const override;
-    virtual void enterEvent(QEvent* event) override;
-    virtual void leaveEvent(QEvent* event) override;
-    virtual void mouseDoubleClickEvent(QMouseEvent* event) override;
-    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void  enterEvent(QEnterEvent* event) override;
+    virtual void  leaveEvent(QEvent* event) override;
+    virtual void  mouseDoubleClickEvent(QMouseEvent* event) override;
+    virtual void  mousePressEvent(QMouseEvent* event) override;
 
 private:
     // Refresh geometry of child widgets.

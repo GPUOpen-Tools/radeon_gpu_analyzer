@@ -1053,7 +1053,7 @@ Go to (source line)                        Ctrl+G
 Maximize/minimize views in build view      Ctrl+R
 Save file                                  Ctrl+S
 Build project                              Ctrl+Shift+B
-Cancel build                               Ctrl+Shift+X
+Cancel build                               Ctrl+Shift+T
 Cycle thru various views in build view     Ctrl+Tab & Ctrl+Shift+Tab
 Cycle thru various widgets in build view   Tab & Shift+Tab
 **Settings view**

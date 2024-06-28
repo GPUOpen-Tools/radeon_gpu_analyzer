@@ -4,9 +4,6 @@
 // Qt.
 #include <QKeyEvent>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_build_settings_item.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_graphics.h"
@@ -227,10 +224,6 @@ void RgMenuGraphics::InitializeDefaultMenuItems(const std::shared_ptr<RgProjectC
 
         // Set cursor.
         SetCursor(Qt::ArrowCursor);
-
-        // Register the buttons with the scaling manager.
-        ScalingManager::Get().RegisterObject(build_settings_menu_item_);
-        ScalingManager::Get().RegisterObject(pipeline_state_item_);
     }
 }
 
@@ -280,9 +273,6 @@ void RgMenuGraphics::InitializeDefaultShaderStageItems(const std::shared_ptr<RgP
                 layout_->insertWidget(stage_index, graphics_pipeline_stage_item);
                 shader_stage_items_[stage_index] = graphics_pipeline_stage_item;
 
-                // Register the stage with the scaling manager.
-                ScalingManager::Get().RegisterObject(graphics_pipeline_stage_item);
-
                 // Connect to file item's drag and drop signal.
                 bool is_connected = connect(graphics_pipeline_stage_item, &RgMenuFileItemGraphics::DragAndDropExistingFile,
                     this, &RgMenuGraphics::HandleDragAndDropExistingFile);
@@ -304,9 +294,6 @@ void RgMenuGraphics::InitializeDefaultShaderStageItems(const std::shared_ptr<RgP
             RgMenuFileItemGraphics* compute_pipeline_stage_item = new RgMenuFileItemGraphics(this, compute_stage);
             layout_->insertWidget(0, compute_pipeline_stage_item);
             shader_stage_items_[static_cast<size_t>(compute_stage)] = compute_pipeline_stage_item;
-
-            // Register the stage with the scaling manager.
-            ScalingManager::Get().RegisterObject(compute_pipeline_stage_item);
 
             // Connect to file item's drag and drop signal.
             bool is_connected = connect(compute_pipeline_stage_item, &RgMenuFileItemGraphics::DragAndDropExistingFile,

@@ -12,7 +12,7 @@
 #include "rg_dx12_utils.h"
 
 // Json.
-#include "json/json-3.2.0/single_include/nlohmann/json.hpp"
+#include "json/json-3.11.3/single_include/nlohmann/json.hpp"
 
 using namespace rga;
 

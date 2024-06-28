@@ -11,14 +11,7 @@
 #ifndef __GTDEFINITIONS
 #define __GTDEFINITIONS
 
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include <external/amdt_base_tools/Include/gtGRBaseToolsDLLBuild.h>
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // Standard C definitions (including NULL definition):
 #if defined(__linux__)

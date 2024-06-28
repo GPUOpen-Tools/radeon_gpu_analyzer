@@ -11,6 +11,7 @@
 class QStandardItem;
 class QStandardItemModel;
 class QDialog;
+class QRegularExpression;
 class RgTableFilterProxyModel;
 struct RgCliVersionInfo;
 
@@ -43,7 +44,7 @@ public:
     std::vector<std::string> GetSelectedCapabilityGroups() const;
 
     // Is the given row visible when filtered with the given search string?
-    bool IsRowVisible(int row_index, const QModelIndex& source_parent, const QRegExp& search_filter);
+    bool IsRowVisible(int row_index, const QModelIndex& source_parent, const QRegularExpression& search_filter);
 
 public slots:
     // Handler invoked when the user changes the check state for a row.
@@ -127,13 +128,13 @@ private:
     void ToggleRowChecked(const QModelIndex& index);
 
     // Highlight matching rows.
-    void HighlightMatchingRows(const QRegExp& search_text);
+    void HighlightMatchingRows(const QRegularExpression& search_text);
 
     // Set the default table background colors.
     void SetDefaultTableBackgroundColors();
 
     // Check if the group rows match the search string.
-    bool IsRowMatchingSearchString(const TableRow& current_row, const QRegExp search_filter);
+    bool IsRowMatchingSearchString(const TableRow& current_row, const QRegularExpression& search_filter);
 
     // The model holding the data for the GPU tree view.
     QStandardItemModel* gpu_tree_model_ = nullptr;

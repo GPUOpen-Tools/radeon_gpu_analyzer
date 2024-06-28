@@ -80,7 +80,7 @@
          <number>5</number>
         </property>
         <item>
-         <widget class="ArrowIconWidget" name="targetGpuPushButton">
+         <widget class="ArrowIconComboBox" name="targetGpuPushButton">
           <property name="minimumSize">
            <size>
             <width>55</width>
@@ -106,7 +106,7 @@
          </widget>
         </item>
         <item>
-         <widget class="ArrowIconWidget" name="columnVisibilityArrowPushButton">
+         <widget class="ArrowIconComboBox" name="columnVisibilityArrowPushButton">
           <property name="minimumSize">
            <size>
             <width>80</width>
@@ -296,9 +296,9 @@ border: none;
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ArrowIconWidget</class>
+   <class>ArrowIconComboBox</class>
    <extends>QPushButton</extends>
-   <header location="global">../../QtCommon/CustomWidgets/ArrowIconWidget.h</header>
+   <header location="global">qt_common/custom_widgets/arrow_icon_combo_box.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

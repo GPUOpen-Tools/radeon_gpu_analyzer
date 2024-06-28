@@ -6,9 +6,6 @@
 #include <QWidget>
 #include <QKeyEvent>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_mode_push_button.h"
 
@@ -72,40 +69,37 @@ void RgModePushButton::paintEvent(QPaintEvent *event)
     setAutoFillBackground(true);
     setPalette(pal);
 
-    // Get the scaling factor.
-    const double scaling_factor = ScalingManager::Get().GetScaleFactor();
-
     // Draw the text.
     QFont font = this->font();
-    font.setPixelSize(font_size_ * scaling_factor);
+    font.setPixelSize(font_size_);
     painter.setFont(font);
     QPen pen;
     pen.setColor(font_color_);
     painter.setPen(pen);
     QString textQStr = QString::fromStdString(text_);
-    painter.drawText(kTextOffsetX * scaling_factor, kTextOffsetY * scaling_factor, textQStr);
+    painter.drawText(kTextOffsetX, kTextOffsetY, textQStr);
 
     // Calculate new points using the current scale factor.
     QPoint scaled_points[kNumberOfVertices];
     for (int i = 0; i < kNumberOfVertices; i++)
     {
-        scaled_points[i].setX(vertices_[i].x() * scaling_factor);
-        scaled_points[i].setY(vertices_[i].y() * scaling_factor);
+        scaled_points[i].setX(vertices_[i].x());
+        scaled_points[i].setY(vertices_[i].y());
     }
 
     // Calculate text width.
     QFontMetrics fm(font);
-    int end_of_text = fm.width(textQStr) + kTextOffsetX * scaling_factor;
+    int          end_of_text = fm.horizontalAdvance(textQStr) + kTextOffsetX;
 
     // Position the paint object.
-    painter.translate(end_of_text, -kCenterUpArrow * scaling_factor);
+    painter.translate(end_of_text, -kCenterUpArrow);
 
     // Rotate the paint object to generate an up arrow.
     painter.rotate(180);
 
     // Also translate the paint object towards the bottom of the rect.
     painter.translate(0, -3);
-    painter.translate(-kArrowXOffset * scaling_factor, (-size_ - kCenterDownArrow) * scaling_factor);
+    painter.translate(-kArrowXOffset, (-size_ - kCenterDownArrow));
 
     // Create the upward arrow.
     QPolygon polygon;

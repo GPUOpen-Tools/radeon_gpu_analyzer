@@ -249,8 +249,7 @@ namespace rga
         bool ret = false;
 
         // Convert the shader file name to wide characters.
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-        std::wstring hlsl_full_path_wide = converter.from_bytes(hlsl_full_path);
+        std::wstring hlsl_full_path_wide = RgDx12Utils::strToWstr(hlsl_full_path);
 
         // Extract the hlsl file's folder and instantiate the include manager.
         std::string hlsl_file_folder = ExtractFileDirectory(hlsl_full_path);
@@ -604,7 +603,7 @@ namespace rga
         if (!config.comp.dxbcOut.empty())
         {
             // If the user wants to dump the bytecode as a binary, do it here.
-            bool is_dxbc_written = WriteDxbcFile(bytecode, config.comp.dxbcOut);
+            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(bytecode, config.comp.dxbcOut);
             assert(is_dxbc_written);
         }
 
@@ -613,7 +612,7 @@ namespace rga
             if (!config.comp.dxbc_disassembly.empty())
             {
                 // If the user wants to dump the bytecode disassembly, do it here.
-                bool is_dxbc_disassembly_generated = DisassembleDxbc(bytecode, config.comp.dxbc_disassembly);
+                [[maybe_unused]] bool is_dxbc_disassembly_generated = DisassembleDxbc(bytecode, config.comp.dxbc_disassembly);
                 assert(is_dxbc_disassembly_generated);
             }
 
@@ -835,27 +834,27 @@ namespace rga
     {
         if (!config.vert.dxbcOut.empty())
         {
-            bool is_dxbc_written = WriteDxbcFile(pso.VS, config.vert.dxbcOut);
+            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(pso.VS, config.vert.dxbcOut);
             assert(is_dxbc_written);
         }
         if (!config.hull.dxbcOut.empty())
         {
-            bool is_dxbc_written = WriteDxbcFile(pso.HS, config.hull.dxbcOut);
+            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(pso.HS, config.hull.dxbcOut);
             assert(is_dxbc_written);
         }
         if (!config.domain.dxbcOut.empty())
         {
-            bool is_dxbc_written = WriteDxbcFile(pso.DS, config.domain.dxbcOut);
+            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(pso.DS, config.domain.dxbcOut);
             assert(is_dxbc_written);
         }
         if (!config.geom.dxbcOut.empty())
         {
-            bool is_dxbc_written = WriteDxbcFile(pso.GS, config.geom.dxbcOut);
+            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(pso.GS, config.geom.dxbcOut);
             assert(is_dxbc_written);
         }
         if (!config.pixel.dxbcOut.empty())
         {
-            bool is_dxbc_written = WriteDxbcFile(pso.PS, config.pixel.dxbcOut);
+            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(pso.PS, config.pixel.dxbcOut);
             assert(is_dxbc_written);
         }
     }
@@ -864,27 +863,27 @@ namespace rga
     {
         if (!config.vert.dxbc_disassembly.empty())
         {
-            bool isDxbcDisassemblyGenerated = DisassembleDxbc(bytecode.vert, config.vert.dxbc_disassembly);
+            [[maybe_unused]] bool isDxbcDisassemblyGenerated = DisassembleDxbc(bytecode.vert, config.vert.dxbc_disassembly);
             assert(isDxbcDisassemblyGenerated);
         }
         if (!config.hull.dxbc_disassembly.empty())
         {
-            bool isDxbcDisassemblyGenerated = DisassembleDxbc(bytecode.hull, config.hull.dxbc_disassembly);
+            [[maybe_unused]] bool isDxbcDisassemblyGenerated = DisassembleDxbc(bytecode.hull, config.hull.dxbc_disassembly);
             assert(isDxbcDisassemblyGenerated);
         }
         if (!config.domain.dxbc_disassembly.empty())
         {
-            bool isDxbcDisassemblyGenerated = DisassembleDxbc(bytecode.domain, config.domain.dxbc_disassembly);
+            [[maybe_unused]] bool isDxbcDisassemblyGenerated = DisassembleDxbc(bytecode.domain, config.domain.dxbc_disassembly);
             assert(isDxbcDisassemblyGenerated);
         }
         if (!config.geom.dxbc_disassembly.empty())
         {
-            bool isDxbcDisassemblyGenerated = DisassembleDxbc(bytecode.geom, config.geom.dxbc_disassembly);
+            [[maybe_unused]] bool isDxbcDisassemblyGenerated = DisassembleDxbc(bytecode.geom, config.geom.dxbc_disassembly);
             assert(isDxbcDisassemblyGenerated);
         }
         if (!config.pixel.dxbc_disassembly.empty())
         {
-            bool isDxbcDisassemblyGenerated = DisassembleDxbc(bytecode.pixel, config.pixel.dxbc_disassembly);
+            [[maybe_unused]] bool isDxbcDisassemblyGenerated = DisassembleDxbc(bytecode.pixel, config.pixel.dxbc_disassembly);
             assert(isDxbcDisassemblyGenerated);
         }
     }

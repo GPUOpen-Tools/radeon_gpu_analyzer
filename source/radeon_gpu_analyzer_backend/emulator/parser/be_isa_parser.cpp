@@ -3,23 +3,21 @@
 //=================================================================
 #define _HAS_AUTO_PTR_ETC 1
 
-#define _HAS_AUTO_PTR_ETC 1
-
 // C++.
 #include <fstream>
 #include <string>
 
 // Boost.
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#endif
 #include <boost/regex.hpp>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "amdt_os_wrappers/Include/osDebugLog.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // Local.
 #include "be_string_constants.h"

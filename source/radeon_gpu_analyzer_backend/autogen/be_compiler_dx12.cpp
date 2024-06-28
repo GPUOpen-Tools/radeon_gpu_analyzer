@@ -18,12 +18,15 @@
 // D3D12.
 #include <d3d12.h>
 
+// DXC files and folder path string constants.
 static const wchar_t* kDxCompilerFileName = L"dxcompiler.dll";
 static const wchar_t* kDxIlFileName       = L"dxil.dll";
 static const wchar_t* kDxcDefaultpath     = L"utils\\dx12\\dxc\\";
 
+// DXC create instance function name string constant.
 static const char* kStrDxcCreateInstance = "DxcCreateInstance";
 
+// Errors and warning strings.
 static const char* kStrErrorDxcUtils = "Error: Failed to initialize DXC utils.\n";
 static const char* kStrErrorDxcCompiler = "Error: Failed to initialize DXC compiler.\n";
 static const char* kStrDebugLayerEnabled = "Info: enabled Debug Layer.\n";
@@ -295,7 +298,7 @@ bool BeDx12Compiler::CompileSrc(const Config&         config,
     return ret;
 }
 
-bool BeDx12Compiler::DetectRootSignatureInBlob(const std::string& source_file_path, bool& is_root_signature_specified, std::stringstream& err) const
+bool BeDx12Compiler::DetectRootSignatureInBlob(const std::string& source_file_path, bool& is_root_signature_specified, std::stringstream&) const
 {
     bool ret = false;
     // Check if IDxcUtils was initialized.

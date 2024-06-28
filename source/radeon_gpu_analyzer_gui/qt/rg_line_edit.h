@@ -5,7 +5,7 @@
 #include <QLineEdit>
 
 // Infra.
-#include "QtCommon/CustomWidgets/ArrowIconWidget.h"
+#include "qt_common/custom_widgets/arrow_icon_combo_box.h"
 
 class RgLineEdit : public QLineEdit
 {

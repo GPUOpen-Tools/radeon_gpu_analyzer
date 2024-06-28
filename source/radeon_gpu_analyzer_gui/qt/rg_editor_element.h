@@ -9,8 +9,7 @@
 #include <QWidget>
 
 // Infra.
-#include "QtCommon/CustomWidgets/ArrowIconWidget.h"
-
+#include "qt_common/custom_widgets/arrow_icon_combo_box.h"
 // Local.
 #include "ui_rg_editor_element.h"
 
@@ -126,9 +125,6 @@ public:
 
     // Set this row's parent RgPipelineStateTree.
     void SetParentStateTree(RgPipelineStateTree* parent_tree);
-
-    // Remove a child from the item.
-    void RemoveChild(RgEditorElement* child_item);
 
     // Get a child item by row index.
     RgEditorElement* GetChild(int row_index) const;
@@ -270,7 +266,7 @@ protected:
     std::function<void()> value_changed_callback_ = nullptr;
 
     // A vector of child nodes for this item.
-    std::vector<RgEditorElement*> child_items_;
+    std::vector<std::shared_ptr<RgEditorElement>> child_items_;
 
     // The name of the member being edited.
     std::string member_name_;

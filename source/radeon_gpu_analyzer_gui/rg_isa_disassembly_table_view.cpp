@@ -12,8 +12,7 @@
 #include <QStyledItemDelegate>
 
 // Infra.
-#include "QtCommon/Util/QtUtil.h"
-#include "QtCommon/Scaling/ScalingManager.h"
+#include "qt_common/utils/qt_util.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
@@ -139,7 +138,7 @@ bool RgIsaDisassemblyTableView::LoadDisassembly(const std::string& disassembly_c
         InitializeLinkLabels();
 
         // Adjust the table column widths after populating with data.
-        QtCommon::QtUtil::AutoAdjustTableColumns(ui_.instructionsTreeView, 10, 20);
+        QtCommon::QtUtils::AutoAdjustTableColumns(ui_.instructionsTreeView, 10, 20);
     }
 
     return is_disassembly_cached_;
@@ -155,7 +154,7 @@ bool RgIsaDisassemblyTableView::LoadLiveVgpr(const std::string& live_vgpr_file_p
         live_vgprs_file_path_ = live_vgpr_file_path;
 
         // Adjust the table column widths after populating with data.
-        QtCommon::QtUtil::AutoAdjustTableColumns(ui_.instructionsTreeView, 10, 20);
+        QtCommon::QtUtils::AutoAdjustTableColumns(ui_.instructionsTreeView, 10, 20);
 
         // Set the VGPR column width.
         SetVgprColumnWidth();
@@ -250,7 +249,7 @@ void RgIsaDisassemblyTableView::RequestTableResize()
     static const int kColumnPadding = 20;
 
     // Compute the ideal width of the table and emit a signal to readjust the view dimensions.
-    int min_width = QtCommon::QtUtil::ComputeMinimumTableWidth(ui_.instructionsTreeView, kMaxNumRows, kColumnPadding);
+    int min_width = QtCommon::QtUtils::ComputeMinimumTableWidth(ui_.instructionsTreeView, kMaxNumRows, kColumnPadding);
     emit DisassemblyTableWidthResizeRequested(min_width);
 }
 
@@ -287,7 +286,7 @@ void RgIsaDisassemblyTableView::UpdateFilteredTable()
     InitializeLinkLabels();
 
     // Adjust the table column widths after populating with data.
-    QtCommon::QtUtil::AutoAdjustTableColumns(ui_.instructionsTreeView, 32, 20);
+    QtCommon::QtUtils::AutoAdjustTableColumns(ui_.instructionsTreeView, 32, 20);
 
     // Set the VGPR column width.
     SetVgprColumnWidth();
@@ -491,7 +490,8 @@ void RgIsaDisassemblyTableView::ConnectSelectionSignals()
     if (selection_model != nullptr)
     {
         // Connect the table's selection changed handler.
-        bool is_connected = connect(selection_model, &QItemSelectionModel::selectionChanged, this, &RgIsaDisassemblyTableView::HandleCurrentSelectionChanged);
+        [[maybe_unused]] bool is_connected =
+            connect(selection_model, &QItemSelectionModel::selectionChanged, this, &RgIsaDisassemblyTableView::HandleCurrentSelectionChanged);
         assert(is_connected);
     }
 }
@@ -646,7 +646,7 @@ void RgIsaDisassemblyTableView::InitializeLinkLabels()
             link_label->setFont(ui_.instructionsTreeView->font());
 
             // Connect the link clicked handler to the new label.
-            bool is_connected = connect(link_label, &QLabel::linkActivated, this, &RgIsaDisassemblyTableView::HandleBranchLinkClicked);
+            [[maybe_unused]] bool is_connected = connect(link_label, &QLabel::linkActivated, this, &RgIsaDisassemblyTableView::HandleBranchLinkClicked);
             assert(is_connected);
 
             // Insert the link label into the table.
@@ -723,7 +723,7 @@ void RgIsaDisassemblyTableView::ScrollToLine(int line_number)
     }
 
     // If the line we're scrolling to is already visible within view, don't scroll the view.
-    const int adjust_visible_row          = kTableBottomMargin * ScalingManager::Get().GetScaleFactor();
+    const int adjust_visible_row = kTableBottomMargin;
     bool      is_line_visible = (line_number >= first_visible_row) && (line_number <= last_visible_row - adjust_visible_row);
     if (!is_line_visible)
     {

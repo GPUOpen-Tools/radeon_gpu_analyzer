@@ -40,7 +40,8 @@ void RgPipelineStateEditorWidgetArrayElementAdd::HandleAddButtonClicked()
 void RgPipelineStateEditorWidgetArrayElementAdd::ConnectSignals()
 {
     // Connect the add element button's signal to be forwarded to a local public signal.
-    bool is_connected = connect(ui_.addElementButton, &QPushButton::clicked, this, &RgPipelineStateEditorWidgetArrayElementAdd::HandleAddButtonClicked);
+    [[maybe_unused]] bool is_connected =
+        connect(ui_.addElementButton, &QPushButton::clicked, this, &RgPipelineStateEditorWidgetArrayElementAdd::HandleAddButtonClicked);
     assert(is_connected);
 }
 

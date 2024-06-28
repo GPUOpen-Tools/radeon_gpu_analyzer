@@ -2,9 +2,6 @@
 #include <cassert>
 #include <sstream>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_tab_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_view.h"
@@ -79,9 +76,6 @@ bool RgIsaDisassemblyTabView::PopulateEntries(const std::vector<RgEntryOutput>& 
 
             // Add the table to the tab's grid.
             ui_.tableGrid->addWidget(table_view);
-
-            // Register the table with the scaling manager.
-            ScalingManager::Get().RegisterObject(table_view);
 
             // Hide the table initially, as only a single table can be shown at once.
             table_view->hide();

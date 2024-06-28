@@ -9,18 +9,11 @@
 #include <fstream>
 
 // Infra.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "external/amdt_os_wrappers/Include/osProcess.h"
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osFile.h"
 #include "external/amdt_os_wrappers/Include/osApplication.h"
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // Local.
 #include "radeon_gpu_analyzer_backend/be_static_isa_analyzer.h"

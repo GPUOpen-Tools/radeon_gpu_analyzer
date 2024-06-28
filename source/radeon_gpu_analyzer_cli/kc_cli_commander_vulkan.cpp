@@ -11,15 +11,8 @@
 #include <fstream>
 #include <algorithm>
 
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning(disable:4309)
-#endif
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/vulkan/tools/include/spirv_cross/spirv_cross.hpp"
-#ifdef _WIN32
-#pragma warning(pop)
-#endif
 
 // Shared.
 #include "common/rga_cli_defs.h"

@@ -38,8 +38,7 @@ RgSourceEditorTitlebar QLabel
 /********************************************************************/
 /* Disassembly view titlebar
 /********************************************************************/
-RgIsaDisassemblyView #viewTitlebar ArrowIconWidget,
-RgIsaDisassemblyView #viewTitlebar ArrowIconWidget
+RgIsaDisassemblyView #viewTitlebar ArrowIconComboBox
 {
     qproperty-fontColor: white;
 }
@@ -58,13 +57,36 @@ RgIsaDisassemblyCustomTableView QHeaderView::section:hover
     background-color: white;
     border: none;
     padding-left: 6px white;
+    font: 9pt;
 }
 
 RgIsaDisassemblyCustomTableView QHeaderView::section:!hover
 {
+    font: 9pt;
     background-color: white;
     border: none;
     padding-left: 6px white;
+}
+
+/********************************************************************/
+/* Find text widget
+/********************************************************************/
+RgFindTextWidget QPushButton
+{
+    border: 1px solid black;
+    background-color: rgb(240, 240, 240);
+}
+
+RgFindTextWidget QPushButton:hover:!pressed
+{
+    background-color: rgb(229, 243, 255);
+    border: 1px solid black;
+}
+
+RgFindTextWidget QPushButton:checked
+{
+    background-color: rgb(229, 243, 255);
+    border: 1px solid black;
 }
 
 /********************************************************************/
@@ -173,7 +195,7 @@ RgGlobalSettingsView #outputFilesLabel
     background: rgb(240, 240, 240);
 }
 
-RgGlobalSettingsView RgComboBox, QFontComboBox
+RgGlobalSettingsView RgComboBox, ScaledFontComboBox
 {
     combobox-popup: 0; color: black; padding: 0px 0px 0px 0px;
 }
@@ -192,6 +214,11 @@ RgGlobalSettingsView#columnVisibilityArrowPushButton
 /* OpenCL build settings view.
 /********************************************************************/
 RgBuildSettingsViewOpencl #allOptionsTextEdit
+{
+    background: rgb(240, 240, 240);
+}
+
+RgBuildSettingsViewOpencl #additionalOptionsTextEdit
 {
     background: rgb(240, 240, 240);
 }
@@ -289,6 +316,9 @@ RgPipelineStateView #settingsTree::item:selected
 QScrollBar::handle:vertical
 {
     background: lightGrey;
+    min-height: 20px;
+    height: 20px;
+    max-height: 20px;
 }
 
 QScrollBar::handle:horizontal

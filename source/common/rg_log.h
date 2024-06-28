@@ -14,7 +14,16 @@
 #include <sys/stat.h>
 
 // Infra
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable : 4459)
+    #pragma warning(disable : 4996)
+#endif
 #include "spdlog/spdlog.h"
+#include "spdlog/sinks/basic_file_sink.h"
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif
 
 // Local
 #include "common/rg_optional_ref.h"

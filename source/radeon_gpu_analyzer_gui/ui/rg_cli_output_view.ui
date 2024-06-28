@@ -50,7 +50,6 @@
        </property>
        <property name="font">
         <font>
-         <weight>1</weight>
          <bold>false</bold>
         </font>
        </property>
@@ -82,7 +81,6 @@
          <widget class="QLabel" name="outputHeaderLabel">
           <property name="font">
            <font>
-            <weight>50</weight>
             <bold>false</bold>
            </font>
           </property>
@@ -94,7 +92,7 @@
         <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+           <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -125,7 +123,7 @@
            </size>
           </property>
           <property name="focusPolicy">
-           <enum>Qt::StrongFocus</enum>
+           <enum>Qt::FocusPolicy::StrongFocus</enum>
           </property>
           <property name="toolTip">
            <string>Clear the output pane</string>
@@ -180,11 +178,11 @@
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>4</height>
+       <height>100</height>
       </size>
      </property>
      <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
+      <enum>Qt::FocusPolicy::NoFocus</enum>
      </property>
      <property name="readOnly">
       <bool>true</bool>

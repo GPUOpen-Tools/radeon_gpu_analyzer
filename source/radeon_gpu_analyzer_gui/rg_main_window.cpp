@@ -17,7 +17,7 @@
 #include <QtWidgets/QApplication>
 
 // Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
+#include "qt_common/utils/qt_util.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_about_dialog.h"
@@ -68,10 +68,9 @@ RgMainWindow::RgMainWindow(QWidget* parent)
     setWindowIcon(QIcon(kIconResourceRgaLogo));
 
     // Set the background color to white.
-    QPalette pal = palette();
-    pal.setColor(QPalette::Background, Qt::white);
     this->setAutoFillBackground(true);
-    this->setPalette(pal);
+    qApp->setPalette(QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette());
+
 
     // Install the event filter.
     installEventFilter(this);
@@ -187,9 +186,6 @@ void RgMainWindow::CreateStartTab()
     {
         RgStartTab* start_tab = factory_->CreateStartTab(this);
 
-        // Register the start tab with the scaling manager.
-        ScalingManager::Get().RegisterObject(start_tab);
-
         assert(start_tab != nullptr && app_state_ != nullptr);
         if (start_tab != nullptr && app_state_ != nullptr)
         {
@@ -278,9 +274,6 @@ bool RgMainWindow::AddBuildView()
 
             // Add the RgBuildView instance to the main window's build page.
             ui_.buildPage->layout()->addWidget(build_view);
-
-            // Register the object with the scaling manager.
-            ScalingManager::Get().RegisterObject(build_view);
 
             // Adjust the actions to the build view's initial state.
             EnableBuildViewActions();
@@ -1936,9 +1929,6 @@ void RgMainWindow::HandleGoToLineEvent()
                     go_to_line_dialog->setModal(true);
                     go_to_line_dialog->setWindowTitle(kStrGoToLineDialogTitle);
 
-                    // Register the dialog with the scaling manager.
-                    ScalingManager::Get().RegisterObject(go_to_line_dialog);
-
                     // Center the dialog on the view (registering with the scaling manager
                     // shifts it out of the center so we need to manually center it).
                     RgUtils::CenterOnWidget(go_to_line_dialog, this);
@@ -2226,11 +2216,6 @@ void RgMainWindow::CreateCustomStatusBar()
             size.setWidth(QWIDGETSIZE_MAX);
             statusBar()->setFixedSize(size);
             status_bar_->setFixedSize(size);
-
-            // Register the status bar with the scaling manager.
-            ScalingManager& scaling_manager = ScalingManager::Get();
-            scaling_manager.RegisterObject(statusBar());
-            scaling_manager.RegisterObject(status_bar_);
             statusBar()->addWidget(status_bar_);
 
             // Disable the resize grip.

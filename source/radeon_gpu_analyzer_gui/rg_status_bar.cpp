@@ -11,9 +11,6 @@
 #include <QStyledItemDelegate>
 #include <QPainter>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_main_window.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_mode_push_button.h"
@@ -23,7 +20,9 @@
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_binary.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
-#include "QtCommon/Util/QtUtil.h"
+
+// Infra.
+#include "qt_common/utils/qt_util.h"
 
 static const int kWidgetMinimumHeight = 25;
 static const int kModeButtonMinimumWidth = 150;
@@ -243,7 +242,7 @@ void RgStatusBar::CreateApiTreeWidget()
                 QString toolTip = kStrApiButtonTooltipA + QString::fromStdString(display_string) + kStrApiButtonTooltipB;
                 item->setToolTip(kTreeWidgetIconColumnId, toolTip);
                 item->setToolTip(kTreeWidgetApiColumnId, toolTip);
-                item->setBackgroundColor(kTreeWidgetIconColumnId, kApiModeTreeWidgetFirstColumnBackgroundColor);
+                item->setBackground(kTreeWidgetIconColumnId, kApiModeTreeWidgetFirstColumnBackgroundColor);
             }
         }
         api_mode_tree_widget_->resizeColumnToContents(kTreeWidgetApiColumnId);
@@ -349,8 +348,8 @@ void RgStatusBar::HandleModePushButtonClicked(bool /* checked */)
             SetApiListVisibility(true);
             QPoint pos(0, 0);
             pos = mode_push_button_->mapTo(parent_, pos);
-            const int y_position = pos.y() - (kTreeWidgetHeight * ScalingManager::Get().GetScaleFactor()) - kOffsetAboveStatusBar;;
-            const int height = kTreeWidgetHeight * ScalingManager::Get().GetScaleFactor();
+            const int y_position   = pos.y() - (kTreeWidgetHeight) - kOffsetAboveStatusBar;
+            const int height       = kTreeWidgetHeight;
             api_mode_tree_widget_->setGeometry(pos.x(), y_position, mode_push_button_->width(), height);
             api_mode_tree_widget_->setFocus();
 
@@ -358,8 +357,8 @@ void RgStatusBar::HandleModePushButtonClicked(bool /* checked */)
             QTreeWidgetItemIterator it(api_mode_tree_widget_);
             while (*it)
             {
-                (*it)->setBackgroundColor(kTreeWidgetIconColumnId, Qt::GlobalColor::transparent);
-                (*it)->setBackgroundColor(kTreeWidgetApiColumnId, Qt::GlobalColor::transparent);
+                (*it)->setBackground(kTreeWidgetIconColumnId, Qt::GlobalColor::transparent);
+                (*it)->setBackground(kTreeWidgetApiColumnId, Qt::GlobalColor::transparent);
                 ++it;
             }
         }
@@ -395,7 +394,7 @@ void RgStatusBar::AddCheckBoxIcon(QTreeWidgetItem* item) const
     QIcon icon(kStrCheckBoxDisabledIconFile);
     QLabel* icon_label = new QLabel();
     icon_label->setAutoFillBackground(true);
-    QPixmap pixmap = icon.pixmap(QSize(kTreeWidgetItemHeight * ScalingManager::Get().GetScaleFactor(), kTreeWidgetItemHeight * ScalingManager::Get().GetScaleFactor()));
+    QPixmap pixmap = icon.pixmap(QSize(kTreeWidgetItemHeight, kTreeWidgetItemHeight));
     icon_label->setPixmap(pixmap);
     icon_label->setContentsMargins(10, 0, 0, 0);
     icon_label->setStyleSheet(kStrCheckBoxIconLabelStylesheet);
@@ -588,8 +587,8 @@ void RgStatusBar::HandleTreeWidgetItemEntered(QTreeWidgetItem* item, const int c
     QTreeWidgetItemIterator it(api_mode_tree_widget_);
     while (*it)
     {
-        (*it)->setBackgroundColor(kTreeWidgetIconColumnId, Qt::GlobalColor::transparent);
-        (*it)->setBackgroundColor(kTreeWidgetApiColumnId, Qt::GlobalColor::transparent);
+        (*it)->setBackground(kTreeWidgetIconColumnId, Qt::GlobalColor::transparent);
+        (*it)->setBackground(kTreeWidgetApiColumnId, Qt::GlobalColor::transparent);
         ++it;
     }
 
@@ -601,7 +600,7 @@ void RgStatusBar::HandleTreeWidgetItemEntered(QTreeWidgetItem* item, const int c
         const int column_count = item->columnCount();
         for (int column_number = 0; column_number < column_count; column_number++)
         {
-            item->setBackgroundColor(column_number, light_blue);
+            item->setBackground(column_number, light_blue);
         }
     }
 }

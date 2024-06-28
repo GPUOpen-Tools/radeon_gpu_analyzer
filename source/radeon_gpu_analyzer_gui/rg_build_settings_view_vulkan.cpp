@@ -6,13 +6,12 @@
 // Qt.
 #include <QWidget>
 #include <QMessageBox>
-#include <QDesktopWidget>
 #include <QFileDialog>
 
 // Infra.
-#include "QtCommon/Util/RestoreCursorPosition.h"
-#include "QtCommon/Scaling/ScalingManager.h"
-#include "source/common/rga_cli_defs.h"
+#include "qt_common/utils/restore_cursor_position.h"
+
+#include "common/rga_cli_defs.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_build_settings_view.h"
@@ -42,7 +41,7 @@ RgBuildSettingsViewVulkan::RgBuildSettingsViewVulkan(QWidget* parent, const RgBu
 
     // Set the background to white.
     QPalette pal = palette();
-    pal.setColor(QPalette::Background, Qt::white);
+    pal.setColor(QPalette::Window, Qt::white);
     this->setAutoFillBackground(true);
     this->setPalette(pal);
 
@@ -326,7 +325,7 @@ void RgBuildSettingsViewVulkan::HandleOutputBinaryEditBoxChanged(const QString& 
     ui_.outputFileBinaryNameLineEdit->setToolTip(text);
 
     // Restore the cursor to the original position when the text has changed.
-    QtCommon::QtUtil::RestoreCursorPosition cursor_position(ui_.outputFileBinaryNameLineEdit);
+    QtCommon::QtUtils::RestoreCursorPosition cursor_position(ui_.outputFileBinaryNameLineEdit);
 
     // Signal to any listeners that the values in the UI have changed.
     HandlePendingChangesStateChanged(GetHasPendingChanges());
@@ -355,7 +354,7 @@ void RgBuildSettingsViewVulkan::HandleICDLocationBrowseButtonClick(bool /* check
 void RgBuildSettingsViewVulkan::HandleICDLocationLineEditChanged(const QString& text)
 {
     // Restore the cursor to the original position when the text has changed.
-    QtCommon::QtUtil::RestoreCursorPosition cursor_position(ui_.ICDLocationLineEdit);
+    QtCommon::QtUtils::RestoreCursorPosition cursor_position(ui_.ICDLocationLineEdit);
 
     // Set the text value.
     ui_.ICDLocationLineEdit->setText(text);
@@ -370,7 +369,7 @@ void RgBuildSettingsViewVulkan::HandleICDLocationLineEditChanged(const QString& 
 void RgBuildSettingsViewVulkan::HandleGlslangOptionsLineEditChanged(const QString& text)
 {
     // Restore the cursor to the original position when the text has changed.
-    QtCommon::QtUtil::RestoreCursorPosition cursor_position(ui_.glslangOptionsLineEdit);
+    QtCommon::QtUtils::RestoreCursorPosition cursor_position(ui_.glslangOptionsLineEdit);
 
     // Set the text value.
     ui_.glslangOptionsLineEdit->setText(text);
@@ -410,7 +409,7 @@ void RgBuildSettingsViewVulkan::HandleAlternativeCompilerBrowseButtonClicked()
 void RgBuildSettingsViewVulkan::HandleAlternativeCompilerLineEditChanged(const QString& text)
 {
     // Restore the cursor to the original position when the text has changed.
-    QtCommon::QtUtil::RestoreCursorPosition cursor_position(ui_.compilerBinariesLineEdit);
+    QtCommon::QtUtils::RestoreCursorPosition cursor_position(ui_.compilerBinariesLineEdit);
 
     // Set the text value.
     ui_.compilerBinariesLineEdit->setText(text);
@@ -509,9 +508,6 @@ void RgBuildSettingsViewVulkan::HandleAddTargetGpusButtonClick()
 
     // Create a new Target GPU Selection dialog instance.
     target_gpus_dialog_ = new RgTargetGpusDialog(selected_gpus, this);
-
-    // Register the target gpu dialog box with the scaling manager.
-    ScalingManager::Get().RegisterObject(target_gpus_dialog_);
 
     // Center the dialog on the view (registering with the scaling manager
     // shifts it out of the center so we need to manually center it).
@@ -745,7 +741,7 @@ void RgBuildSettingsViewVulkan::HandleIncludeDirsBrowseButtonClick()
     emit SetFrameBorderRedSignal();
 
     // Position the window in the middle of the screen.
-    include_directories_view_->setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, include_directories_view_->size(), qApp->desktop()->availableGeometry()));
+    include_directories_view_->setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, include_directories_view_->size(), QGuiApplication::primaryScreen()->availableGeometry()));
 
     // Set the current include dirs.
     include_directories_view_->SetListItems(ui_.includeDirectoriesLineEdit->text());
@@ -777,7 +773,7 @@ void RgBuildSettingsViewVulkan::HandlePreprocessorDirectivesBrowseButtonClick()
     emit SetFrameBorderRedSignal();
 
     // Position the window in the middle of the screen.
-    preprocessor_directives_dialog_->setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, preprocessor_directives_dialog_->size(), qApp->desktop()->availableGeometry()));
+    preprocessor_directives_dialog_->setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, preprocessor_directives_dialog_->size(), QGuiApplication::primaryScreen()->availableGeometry()));
 
     // Set the current preprocessor directives in the dialog.
     preprocessor_directives_dialog_->SetListItems(ui_.predefinedMacrosLineEdit->text());

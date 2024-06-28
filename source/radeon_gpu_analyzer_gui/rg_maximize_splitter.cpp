@@ -7,9 +7,6 @@
 #include <QVariant>
 #include <QWidget>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_maximize_splitter.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_view_container.h"
@@ -24,16 +21,12 @@ void RgMaximizeSplitter::AddMaximizableWidget(RgViewContainer* view_container)
 {
     if (view_container != nullptr)
     {
-        ScalingManager& scaling_manager = ScalingManager::Get();
-
-        // Ensure the container is scaling registered.
-        scaling_manager.RegisterObject(view_container);
-
         // Add the container to the list.
         maximize_containers_.push_back(view_container);
 
         // Handle the corner button press on the maximization container.
-        bool is_connected = connect(view_container, &RgViewContainer::MaximizeButtonClicked, this, &RgMaximizeSplitter::HandleCornerButtonClicked);
+        [[maybe_unused]] bool is_connected =
+            connect(view_container, &RgViewContainer::MaximizeButtonClicked, this, &RgMaximizeSplitter::HandleCornerButtonClicked);
         assert(is_connected);
 
         // Add the container to the splitter.
@@ -134,6 +127,21 @@ void RgMaximizeSplitter::Restore()
         // Clear the maximized widget.
         maximized_widget_ = nullptr;
     }
+}
+
+std::vector<int> RgMaximizeSplitter::ToStdVector()
+{
+    std::vector<int> result;
+    if (this != nullptr)
+    {
+        qsizetype n = this->sizes().size();
+        result.reserve(n);
+        for (const auto& item : this->sizes())
+        {
+            result.push_back(item);
+        }
+    }
+    return result;
 }
 
 void RgMaximizeSplitter::HandleCornerButtonClicked()

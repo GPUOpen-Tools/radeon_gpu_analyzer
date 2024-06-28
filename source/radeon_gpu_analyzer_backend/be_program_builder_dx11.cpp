@@ -9,10 +9,6 @@
 #include <iterator>
 
 // Infra.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "CElf.h"
 #include "DeviceInfoUtils.h"
 #include "amdt_base_tools/Include/gtString.h"
@@ -22,9 +18,6 @@
 #include "amdt_os_wrappers/Include/osModule.h"
 #include "amdt_os_wrappers/Include/osApplication.h"
 #include "amdt_os_wrappers/Include/osProcess.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // Local.
 #include "radeon_gpu_analyzer_backend/be_d3d_include_manager.h"
@@ -442,7 +435,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
     }
     else
     {
-        bool is_blob_read = BeUtils::ReadBinaryFile(dx_options.filename, dxbc_blob);
+        [[maybe_unused]] bool is_blob_read = BeUtils::ReadBinaryFile(dx_options.filename, dxbc_blob);
         assert(is_blob_read);
         shader_bytes      = dxbc_blob.data();
         shader_byte_count = dxbc_blob.size();
@@ -601,7 +594,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileDXAsm(const std::string& program_sou
 {
     uint32_t shader_code_size = 0;
     const char* shader_code = nullptr;
-    bool is_ok = ExtractShaderCode(program_source, shader_code_size, shader_code);
+    [[maybe_unused]] bool is_ok            = ExtractShaderCode(program_source, shader_code_size, shader_code);
     assert(is_ok);
 
     AmdDxGsaCompileShaderInput shader_input;

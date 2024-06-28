@@ -4,7 +4,6 @@
 
 // Local.
 #include "radeon_gpu_analyzer_backend/autogen/be_reflection_dx12.h"
-#include "radeon_gpu_analyzer_backend/autogen/be_string_constants_dx12.h"
 
 static bool ShaderStageToVisibility(BePipelineStage stage, D3D12_SHADER_VISIBILITY& visibility)
 {

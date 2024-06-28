@@ -4,7 +4,6 @@
 
 // Qt.
 #include <QKeyEvent>
-#include <QtWidgets/QDesktopWidget>
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_settings_tab.h"
@@ -27,19 +26,17 @@ void RgSettingsTab::Initialize()
 {
     // Create the global settings view and add it to the Settings Tab.
     RgConfigManager& config_manager = RgConfigManager::Instance();
-    RgProjectAPI     current_api    = config_manager.GetCurrentAPI();
+    [[maybe_unused]] RgProjectAPI     current_api     = config_manager.GetCurrentAPI();
     std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
 
     // Set various properties for the scroll area.
     QPalette palette;
-    palette.setColor(QPalette::Background, Qt::GlobalColor::transparent);
+    palette.setColor(QPalette::Window, Qt::GlobalColor::transparent);
     ui_.scrollArea->setPalette(palette);
     ui_.scrollArea->setFrameShape(QFrame::NoFrame);
     ui_.scrollArea->setAlignment(Qt::AlignTop);
     ui_.scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     ui_.scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-
-    ScalingManager::Get().RegisterObject(ui_.settingsButtonsView);
 
     // Create the application settings view and add it to the settings tab.
     global_settings_view_ = new RgGlobalSettingsView(this, *global_settings);
@@ -47,7 +44,6 @@ void RgSettingsTab::Initialize()
     if (global_settings_view_ != nullptr)
     {
         AddSettingsView(global_settings_view_);
-        ScalingManager::Get().RegisterObject(global_settings_view_);
     }
 
     // Create the API-specific build settings view and add it to the Settings Tab.
@@ -56,7 +52,6 @@ void RgSettingsTab::Initialize()
     if (build_settings_view_ != nullptr)
     {
         AddSettingsView(build_settings_view_);
-        ScalingManager::Get().RegisterObject(build_settings_view_);
     }
 
     // Add vertical spacer to the scroll area contents to ensure settings are top aligned.
@@ -89,9 +84,8 @@ void RgSettingsTab::Initialize()
     UpdateBuildSettingsTitle(false);
 
     // Resize the list widget to fit its contents.
-    const int extra_width_to_avoid_scrollbar = 20 * ScalingManager::Get().GetScaleFactor();
+    const int extra_width_to_avoid_scrollbar = 20;
     ui_.settingsListWidget->setMinimumWidth(ui_.settingsListWidget->sizeHintForColumn(0) + extra_width_to_avoid_scrollbar);
-    ScalingManager::Get().DisableScalingForObject(ui_.settingsListWidget);
 
     // Set the settings list widget's current row to "Global".
     ui_.settingsListWidget->setCurrentRow(static_cast<int>(SettingsListWidgetEntries::kGlobal));
@@ -103,7 +97,6 @@ void RgSettingsTab::Initialize()
     ui_.settingsListWidget->viewport()->installEventFilter(this);
 
     // Make sure all child objects (except those which were excluded) get registered for scaling.
-    ScalingManager::Get().RegisterObject(this);
 }
 
 RgBuildSettingsView* RgSettingsTab::CreateApiBuildSettingsView()
@@ -213,7 +206,7 @@ bool RgSettingsTab::eventFilter(QObject* object, QEvent* event)
 
             if (mouse_event != nullptr)
             {
-                const QPoint local_point = mouse_event->localPos().toPoint();
+                const QPoint local_point = mouse_event->position().toPoint();
                 QListWidgetItem* item = ui_.settingsListWidget->itemAt(local_point);
                 QListWidgetItem* current_item = ui_.settingsListWidget->currentItem();
                 if (item != nullptr && current_item != nullptr)
@@ -427,9 +420,6 @@ RgUnsavedItemsDialog::UnsavedFileDialogResult RgSettingsTab::ShowSaveSettingsCon
             {
                 unsaved_changes_dialog->AddFile(build_settings_view_->GetTitleString().c_str());
             }
-
-            // Register the dialog with the scaling manager.
-            ScalingManager::Get().RegisterObject(unsaved_changes_dialog);
 
             // Center the dialog on the view (registering with the scaling manager
             // shifts it out of the center so we need to manually center it).

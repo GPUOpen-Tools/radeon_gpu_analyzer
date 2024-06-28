@@ -44,7 +44,7 @@ ENDIF(WIN32)
 include_directories("${PROJECT_SOURCE_DIR}/../../external/dx11/")
 include_directories("${PROJECT_SOURCE_DIR}/../common")
 include_directories("${PROJECT_SOURCE_DIR}/../../external")
-include_directories("${PROJECT_SOURCE_DIR}/../../external/third-party")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/third_party/spdlog/spdlog-1.14.1/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/dx11/GSA")
 include_directories("${PROJECT_SOURCE_DIR}/../")
 include_directories("${PROJECT_SOURCE_DIR}/../../")
@@ -277,6 +277,7 @@ IF(WIN32)
         COMMAND ${CMAKE_COMMAND} -E echo "Copying Visual Studio redist files from ${VSREDISTDIR} to $<TARGET_FILE_DIR:${PROJECT_NAME}>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/msvcp140.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/msvcp140.dll
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/msvcp140_1.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/msvcp140_2.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/concrt140.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/concrt140.dll
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/vccorlib140.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/vccorlib140.dll
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VSREDISTDIR}/vcruntime140.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/vcruntime140.dll

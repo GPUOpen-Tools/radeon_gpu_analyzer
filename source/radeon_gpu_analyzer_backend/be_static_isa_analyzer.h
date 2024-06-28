@@ -6,14 +6,7 @@
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_STATIC_ISA_ANALYZER_H_
 
 // Infra.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "external/amdt_base_tools/Include/gtString.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // Local.
 #include "radeon_gpu_analyzer_backend/be_data_types.h"

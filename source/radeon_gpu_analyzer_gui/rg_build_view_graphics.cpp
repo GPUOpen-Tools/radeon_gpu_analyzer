@@ -100,7 +100,8 @@ void RgBuildViewGraphics::HandleModeSpecificEditMode(EditMode new_mode)
 void RgBuildViewGraphics::ConnectPsoFindSignals()
 {
     // Connect the find widget's close toggle handler.
-    bool is_connected = connect(pso_find_widget_, &RgFindTextWidget::CloseWidgetSignal, this, &RgBuildViewGraphics::HandleFindWidgetVisibilityToggled);
+    [[maybe_unused]] bool is_connected =
+        connect(pso_find_widget_, &RgFindTextWidget::CloseWidgetSignal, this, &RgBuildViewGraphics::HandleFindWidgetVisibilityToggled);
     assert(is_connected);
 }
 

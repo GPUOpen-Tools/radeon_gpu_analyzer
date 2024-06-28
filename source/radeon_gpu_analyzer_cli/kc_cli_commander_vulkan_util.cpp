@@ -499,7 +499,7 @@ bool WriteStatsFileWithHwMapping(uint32_t                                  stage
     bool        valid_hw_mapping_found = beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdpal_pipeline_md, dx12_stage_name, hw_mapping_name);
     if (valid_hw_mapping_found && shader_to_disassembly.find(hw_mapping_name) != shader_to_disassembly.end())
     {
-        bool is_file_written = WriteStatsFile(amdpal_pipeline_md, hw_mapping_name, stage, device_md, callback, isa_files, stats_files);
+        [[maybe_unused]] bool is_file_written = WriteStatsFile(amdpal_pipeline_md, hw_mapping_name, stage, device_md, callback, isa_files, stats_files);
         assert(is_file_written);
         if (KcUtils::FileNotEmpty(stats_files[stage]))
         {
@@ -527,7 +527,7 @@ void WriteIsaFileWithHardcodedMapping(uint32_t                                  
     {
         if (shader_to_disassembly.find(amdgpu_stage_name) != shader_to_disassembly.end())
         {
-            bool is_file_written = WriteStatsFile(amdpal_pipeline_md, amdgpu_stage_name, stage, device_md, callback, isa_files, stats_files);
+            [[maybe_unused]] bool is_file_written = WriteStatsFile(amdpal_pipeline_md, amdgpu_stage_name, stage, device_md, callback, isa_files, stats_files);
             assert(is_file_written);
             if (!KcUtils::FileNotEmpty(stats_files[stage]))
             {

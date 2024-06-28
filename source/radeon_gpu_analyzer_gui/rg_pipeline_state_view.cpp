@@ -6,8 +6,7 @@
 #include <QDragEnterEvent>
 
 // Infra.
-#include "QtCommon/Util/QtUtil.h"
-#include "QtCommon/Scaling/ScalingManager.h"
+#include "qt_common/utils/qt_util.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_pipeline_state_model.h"
@@ -37,13 +36,9 @@ RgPipelineStateView::RgPipelineStateView(QWidget* parent) :
 
     // Set focus policy.
     setFocusPolicy(Qt::FocusPolicy::StrongFocus);
-}
 
-void RgPipelineStateView::ScaleSettingsTree()
-{
-    // Unregister/Register this object with the scaling manager.
-    ScalingManager::Get().UnregisterObject(this);
-    ScalingManager::Get().RegisterObject(this);
+    // Set the font size.
+    ui_.pipelineStateHeaderLabel->setStyleSheet("font-size: 12pt");
 }
 
 void RgPipelineStateView::resizeEvent(QResizeEvent* event)
@@ -126,7 +121,7 @@ void RgPipelineStateView::InitializeModel(RgPipelineStateModel* pipeline_state_m
         }
 
         // Connect the expand node handler.
-        bool is_connected = connect(pipeline_state_model, &RgPipelineStateModel::ExpandNode, this, &RgPipelineStateView::HandleNodeExpanded);
+        [[maybe_unused]] bool is_connected = connect(pipeline_state_model, &RgPipelineStateModel::ExpandNode, this, &RgPipelineStateView::HandleNodeExpanded);
         assert(is_connected);
 
         // Update the label depending on pipeline type.

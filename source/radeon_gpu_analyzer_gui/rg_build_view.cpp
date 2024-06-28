@@ -20,9 +20,6 @@
 #include <QProcess>
 #include <QDesktopServices>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_app_state.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_build_view.h"
@@ -250,7 +247,7 @@ void RgBuildView::ConnectBuildSettingsSignals()
 void RgBuildView::ConnectFindSignals()
 {
     // Connect the find widget's close toggle handler.
-    bool is_connected = connect(find_widget_, &RgFindTextWidget::CloseWidgetSignal, this, &RgBuildView::HandleFindWidgetVisibilityToggled);
+    [[maybe_unused]] bool is_connected = connect(find_widget_, &RgFindTextWidget::CloseWidgetSignal, this, &RgBuildView::HandleFindWidgetVisibilityToggled);
     assert(is_connected);
 }
 
@@ -750,9 +747,6 @@ bool RgBuildView::CreateFileMenu()
         // Create the menu title bar where the program name is displayed.
         file_menu_titlebar_ = new RgMenuTitlebar();
 
-        // Register the menu title bar with scaling manager.
-        ScalingManager::Get().RegisterObject(file_menu_titlebar_);
-
         // Wrap the file menu in a view container with its title bar.
         file_menu_view_container_->SetMainWidget(menu);
         file_menu_view_container_->SetTitlebarWidget(file_menu_titlebar_);
@@ -967,7 +961,7 @@ bool RgBuildView::InitializeView()
 
 void RgBuildView::SetBuildSettingsStylesheet(const std::string& stylesheet)
 {
-    RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
+    [[maybe_unused]] RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
     assert(build_settings_view_ != nullptr || (current_api == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
     if (build_settings_view_ != nullptr)
     {
@@ -1295,7 +1289,6 @@ RgUnsavedItemsDialog::UnsavedFileDialogResult RgBuildView::RequestSaveFiles(cons
 
         // Register the dialog with the scaling manager.
         unsaved_file_dialog->show();
-        ScalingManager::Get().RegisterObject(unsaved_file_dialog);
 
         // Center the dialog on the view (registering with the scaling manager
         // shifts it out of the center so we need to manually center it).
@@ -2617,7 +2610,7 @@ void RgBuildView::CreateBuildSettingsView()
                 {
                     // Create the build settings interface.
                     build_settings_view_ = factory_->CreateBuildSettingsView(this, clone->build_settings, false);
-                    RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
+                    [[maybe_unused]] RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
                     assert(build_settings_view_ != nullptr || (current_api == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
 
                     // If the build settings view was created successfully, connect the signals.
@@ -2645,7 +2638,8 @@ void RgBuildView::CreateBuildSettingsView()
                         scroll_area->setWidgetResizable(true);
 
                         // Connect the scroll area click to set the border to the API-specific color.
-                        bool is_connected = connect(scroll_area, &RgScrollArea::ScrollAreaClickedEvent, this, &RgBuildView::SetAPISpecificBorderColor);
+                        [[maybe_unused]] bool is_connected =
+                            connect(scroll_area, &RgScrollArea::ScrollAreaClickedEvent, this, &RgBuildView::SetAPISpecificBorderColor);
                         assert(is_connected);
 
                         // Add various widgets to this tab.
@@ -2672,7 +2666,6 @@ void RgBuildView::CreateFindWidget()
     {
         // Create the find widget, register with the scaling manager.
         find_widget_ = new RgFindTextWidget(this);
-        ScalingManager::Get().RegisterObject(find_widget_);
 
         // The find widget is hidden by default.
         find_widget_->hide();
@@ -2704,7 +2697,9 @@ void RgBuildView::CreateIsaDisassemblyView()
             disassembly_view_container_->SetMainWidget(disassembly_view_);
 
             // Connect the container single click signal to disassembly view focus in handler.
-            bool is_connected = connect(disassembly_view_container_, &RgViewContainer::ViewContainerMouseClickEventSignal, disassembly_view_,
+            [[maybe_unused]] bool is_connected = connect(disassembly_view_container_,
+                                                         &RgViewContainer::ViewContainerMouseClickEventSignal,
+                                                         disassembly_view_,
                 &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
             assert(is_connected);
 
@@ -2755,7 +2750,8 @@ RgSourceCodeEditor* RgBuildView::GetEditorForFilepath(const std::string& full_fi
             source_code_editors_[full_file_path] = editor;
 
             // Connect to the specific editor's signals.
-            bool is_connected = connect(editor, &RgSourceCodeEditor::OpenHeaderFileRequested, this, &RgBuildView::HandleSourceEditorOpenHeaderRequest);
+            [[maybe_unused]] bool is_connected =
+                connect(editor, &RgSourceCodeEditor::OpenHeaderFileRequested, this, &RgBuildView::HandleSourceEditorOpenHeaderRequest);
             assert(is_connected);
 
             QFileInfo file_info(full_file_path.c_str());
@@ -2897,7 +2893,7 @@ void RgBuildView::SaveEditorTextToFile(RgSourceCodeEditor* editor, const std::st
     // Only save if the editor is modified.
     if (is_editor_valid && editor->document()->isModified())
     {
-        bool is_save_successful = RgUtils::WriteTextFile(full_path, editor->toPlainText().toStdString());
+        [[maybe_unused]] bool is_save_successful = RgUtils::WriteTextFile(full_path, editor->toPlainText().toStdString());
         assert(is_save_successful);
 
         // Remember most recent time file was modified.
@@ -3087,11 +3083,17 @@ void RgBuildView::SetConfigSplitterPositions()
 {
     RgConfigManager& config_manager = RgConfigManager::Instance();
 
-    // Build output splitter.
-    config_manager.SetSplitterValues(kStrSplitterNameBuildOutput, output_splitter_->sizes().toVector().toStdVector());
+    if (output_splitter_)
+    {
+        // Build output splitter.
+        config_manager.SetSplitterValues(kStrSplitterNameBuildOutput, output_splitter_->ToStdVector());
+    }
 
-    // Disassembly/source view splitter.
-    config_manager.SetSplitterValues(kStrSplitterNameSourceDisassembly, disassembly_view_splitter_->sizes().toVector().toStdVector());
+    if (disassembly_view_splitter_)
+    {
+        // Disassembly/source view splitter.
+        config_manager.SetSplitterValues(kStrSplitterNameSourceDisassembly, disassembly_view_splitter_->ToStdVector()); 
+    }
 }
 
 void RgBuildView::RestoreViewLayout()
@@ -3103,14 +3105,14 @@ void RgBuildView::RestoreViewLayout()
     bool has_splitter_values = config_manager.GetSplitterValues(kStrSplitterNameBuildOutput, splitter_values);
     if (has_splitter_values)
     {
-        output_splitter_->setSizes(QVector<int>::fromStdVector(splitter_values).toList());
+        output_splitter_->setSizes(QVector<int>(splitter_values.cbegin(), splitter_values.cend()).toList());
     }
 
     // Disassembly/source view splitter.
     has_splitter_values = config_manager.GetSplitterValues(kStrSplitterNameSourceDisassembly, splitter_values);
     if (has_splitter_values)
     {
-        disassembly_view_splitter_->setSizes(QVector<int>::fromStdVector(splitter_values).toList());
+        disassembly_view_splitter_->setSizes(QVector<int>(splitter_values.begin(), splitter_values.end()).toList());
     }
 }
 
@@ -3214,7 +3216,7 @@ void RgBuildView::HandleRestoreDefaultsSettingsClicked()
             settings_buttons_view_->EnableSaveButton(false);
         }
 
-        RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
+        [[maybe_unused]] RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
         assert(build_settings_view_ != nullptr || (current_api == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
         if (build_settings_view_ != nullptr)
         {
@@ -3280,7 +3282,7 @@ std::string RgBuildView::GetCurrentProjectAPIName() const
 {
     std::string project_api = "";
 
-    bool ok = RgUtils::ProjectAPIToString(project_->api, project_api);
+    [[maybe_unused]] bool ok = RgUtils::ProjectAPIToString(project_->api, project_api);
     assert(ok);
 
     return project_api;

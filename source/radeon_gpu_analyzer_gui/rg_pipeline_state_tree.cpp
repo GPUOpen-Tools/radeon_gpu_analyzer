@@ -472,7 +472,7 @@ void RgPipelineStateTree::SetRootItem(RgEditorElement* item)
     }
 }
 
-// A predicate used to find the given rgEditorElement within a list.
+// A predicate used to find the given RgEditorElement within a list.
 struct RgRowSearcher
 {
     RgRowSearcher(RgEditorElement* element) : element(element) { }

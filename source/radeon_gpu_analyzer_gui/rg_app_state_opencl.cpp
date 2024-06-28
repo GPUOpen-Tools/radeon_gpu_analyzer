@@ -219,7 +219,7 @@ void RgAppStateOpencl::CreateBuildView()
 
         // Connect the project created handler so the RgMainWindow can
         // add the new RgBuildView instance to the widget hierarchy.
-        bool is_connected = connect(build_view_, &RgBuildView::ProjectCreated, main_window_, &RgMainWindow::HandleProjectCreated);
+        [[maybe_unused]] bool is_connected = connect(build_view_, &RgBuildView::ProjectCreated, main_window_, &RgMainWindow::HandleProjectCreated);
         assert(is_connected);
     }
 }

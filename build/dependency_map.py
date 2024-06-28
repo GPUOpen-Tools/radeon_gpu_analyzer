@@ -1,5 +1,5 @@
 #!python
-# Copyright (c) 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # RGA git project names and revisions
 #
@@ -13,10 +13,14 @@ sys.dont_write_bytecode = True
 # key = GitHub release link
 # value = target location
 url_mapping_win = {
-    "https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp" : "../external/json/json-3.2.0/single_include/nlohmann"
+    "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp" : "../external/json/json-3.11.3/single_include/nlohmann",
+    "https://github.com/nlohmann/json/releases/download/v3.11.3/json_fwd.hpp" : "../external/json/json-3.11.3/single_include/nlohmann",
+    "https://github.com/gabime/spdlog/archive/refs/tags/v1.14.1.zip" : "../external/third_party/spdlog"
 }
 url_mapping_linux = {
-    "https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp" : "../external/json/json-3.2.0/single_include/nlohmann"
+    "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp" : "../external/json/json-3.11.3/single_include/nlohmann",
+    "https://github.com/nlohmann/json/releases/download/v3.11.3/json_fwd.hpp" : "../external/json/json-3.11.3/single_include/nlohmann",
+    "https://github.com/gabime/spdlog/archive/refs/tags/v1.14.1.tar.gz": "../external/third_party/spdlog"
 }
 
 # To allow for future updates where we may have cloned the project, store the root of
@@ -40,8 +44,8 @@ github_mapping = {
     "tsingleton"                     : ["../external/tsingleton",               "master"],
     "common_src_miniz"               : ["../external/miniz",                    "master"],
     "dynamic_library_module"         : ["../external/dynamic_library_module",   "amd-rga-v2.7"],
-    "device_info"                    : ["../external/device_info",              "master"],
+    "device_info"                    : ["../external/device_info",              "c374c2b328bea66a92db6e49f6b32607f97b3e2c"],
     "update_check_api"               : ["../external/update_check_api",         "v2.1.1"],
-  # QtCommon.
-    "qt_common"                      : ["../external/QtCommon",                 "rga-2.5"],
+ # QtCommon.
+    "qt_common"                      : ["../external/QtCommon",                 "6377814493f6e5c97fd5c44fccdd22767bf86355"],
 }

@@ -22,7 +22,7 @@ RgGoToLineDialog::RgGoToLineDialog(int maxLineNumber, QWidget* parent) :
 
     // Set the background to white.
     QPalette pal = palette();
-    pal.setColor(QPalette::Background, Qt::white);
+    pal.setColor(QPalette::Window, Qt::white);
     this->setAutoFillBackground(true);
     this->setPalette(pal);
 
@@ -60,7 +60,7 @@ void RgGoToLineDialog::ConnectSignals()
     button_signal_mapper->setMapping(ui_.cancelPushButton, RgGoToLineDialog::kCancel);
 
     // Signal mapper.
-    is_connected = connect(button_signal_mapper, SIGNAL(mapped(int)), this, SLOT(done(int)));
+    is_connected = connect(button_signal_mapper, SIGNAL(mappedInt(int)), this, SLOT(done(int)));
     assert(is_connected);
 
     // The line number edit box.

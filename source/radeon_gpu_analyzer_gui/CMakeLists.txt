@@ -4,6 +4,11 @@ project (radeon_gpu_analyzer_gui)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+# Add cmake utilities
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(devtools_qt_helper)
+include(dev_tools)
+
 # Add RGA macro.
 add_definitions(-D__RGA)
 
@@ -32,12 +37,12 @@ if (RGA_ENABLE_VULKAN)
     endif()
 endif()
 
-find_package(Qt5 5.5 COMPONENTS Core Gui Widgets Network Widgets Svg Test REQUIRED
+find_package(Qt6 COMPONENTS Core Gui Widgets Network Widgets Svg Test REQUIRED
              HINTS ${QT_PACKAGE_ROOT} ${NO_DEFAULT_QT_OPTION})
 
-get_target_property(QtCoreLocation Qt5::Core LOCATION)
-get_filename_component(Qt5_LIB_DIR ${QtCoreLocation} DIRECTORY)
-set(Qt5_ROOT_DIR "${Qt5_LIB_DIR}/..")
+get_target_property(QtCoreLocation Qt6::Core LOCATION)
+get_filename_component(Qt6_LIB_DIR ${QtCoreLocation} DIRECTORY)
+set(Qt6_ROOT_DIR "${Qt6_LIB_DIR}/..")
 
 # Add this definitions if static linkage is used with the other projects
 add_definitions(-DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC)
@@ -59,15 +64,14 @@ include_directories("${PROJECT_SOURCE_DIR}/../../external")
 include_directories("${PROJECT_SOURCE_DIR}/../../external")
 include_directories("${PROJECT_SOURCE_DIR}/../../")
 include_directories("${PROJECT_SOURCE_DIR}/../common")
-include_directories("${PROJECT_SOURCE_DIR}/../../external/third-party")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/third_party/spdlog/spdlog-1.14.1/include")
 include_directories(${UPDATECHECKAPI_INC_DIRS})
 if (GUI_AUTOMATION)
     include_directories("${PROJECT_SOURCE_DIR}/../../external/rga_internal_utils/tests_gui/include")
 endif()
+include_directories("${PROJECT_SOURCE_DIR}/../../external/qt_common/")
 
-add_subdirectory("${PROJECT_SOURCE_DIR}/../../external/QtCommon/Scaling" QtCommon/Scaling)
-add_subdirectory("${PROJECT_SOURCE_DIR}/../../external/QtCommon/Util" QtCommon/Util)
-add_subdirectory("${PROJECT_SOURCE_DIR}/../../external/QtCommon/CustomWidgets" QtCommon/CustomWidgets)
+add_subdirectory("${PROJECT_SOURCE_DIR}/../../external/qt_common" "../qt_common")
 
 # TinyXML library
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -132,12 +136,12 @@ if (GUI_AUTOMATION)
     source_group("Tests-GUI" FILES ${TESTS_GUI_CPP_INC} ${TESTS_GUI_CPP_SRC} ${TESTS_GUI_MOC_INC})
 endif()
 
-qt5_wrap_cpp(GENERATED_MOC  ${MOC_INC})
-qt5_wrap_ui (GENERATED_UI   ${UI_SRC})
-qt5_add_resources(GENERATED_RES ${RES_SRC})
+qt6_wrap_cpp(GENERATED_MOC  ${MOC_INC})
+qt6_wrap_ui (GENERATED_UI   ${UI_SRC})
+qt6_add_resources(GENERATED_RES ${RES_SRC})
 
-add_definitions(${Qt5Widgets_DEFINITIONS})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
+add_definitions(${Qt6Widgets_DEFINITIONS})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt6Widgets_EXECUTABLE_COMPILE_FLAGS}")
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     # Libraries used by AMDTOSWrappers on Linux
@@ -154,7 +158,7 @@ else()
     # Disable RPATH
     set(CMAKE_SKIP_RPATH TRUE)
     set_property(TARGET radeon_gpu_analyzer_gui APPEND_STRING PROPERTY
-                 LINK_FLAGS "-Wl,-rpath-link,${Qt5_LIB_DIR}")
+                 LINK_FLAGS "-Wl,-rpath-link,${Qt6_LIB_DIR}")
 endif()
 
 # Set Visual C++ warning level to 4
@@ -163,14 +167,14 @@ if(MSVC)
 endif()
 
 if (GUI_AUTOMATION)
-    set(QT_TEST_LIB Qt5::Test)
+    set(QT_TEST_LIB Qt6::Test)
     set(AUTO_ARG "-automation")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers QtScaling QtUtil QtCustomWidgets optimized ${TINYXML_LIB} debug ${TINYXML_LIBD} general Qt5::Gui Qt5::Widgets Qt5::Core ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
+    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers optimized ${TINYXML_LIB} debug ${TINYXML_LIBD} general Qt6::Gui Qt6::Widgets Qt6::Core QtCustomWidgets QtUtils ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
 else()
-    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers QtScaling QtUtil QtCustomWidgets ${TINYXML_LIB} Qt5::Gui Qt5::Widgets Qt5::Core ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
+    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers ${TINYXML_LIB} Qt6::Gui Qt6::Widgets Qt6::Core QtCustomWidgets QtUtils ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
 endif()
 
 # Copy the RGA-Updates file into the output directory for ease of testing.
@@ -182,50 +186,18 @@ add_custom_command(TARGET radeon_gpu_analyzer_gui POST_BUILD
 # Setup the post-build script.
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(DEBUG_ARG "-debug")
-    get_target_property(QtCoreLocation Qt5::Core LOCATION)
-    get_filename_component(Qt5_DIR ${QtCoreLocation} DIRECTORY)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E echo "Copying external files to $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/Qt5Core$<$<CONFIG:debug>:d>.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/Qt5Core$<$<CONFIG:debug>:d>.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/Qt5Gui$<$<CONFIG:debug>:d>.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/Qt5Gui$<$<CONFIG:debug>:d>.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/Qt5Widgets$<$<CONFIG:debug>:d>.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/Qt5Widgets$<$<CONFIG:debug>:d>.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/Qt5Svg$<$<CONFIG:debug>:d>.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/Qt5Svg$<$<CONFIG:debug>:d>.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/../plugins/platforms/qwindows$<$<CONFIG:debug>:d>.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/qwindows$<$<CONFIG:debug>:d>.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/../plugins/iconengines/qsvgicon$<$<CONFIG:debug>:d>.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/iconengines/qsvgicon$<$<CONFIG:debug>:d>.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/../plugins/imageformats/qsvg$<$<CONFIG:debug>:d>.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/imageformats/qsvg$<$<CONFIG:debug>:d>.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/../plugins/styles/qwindowsvistastyle$<$<CONFIG:debug>:d>.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/styles/qwindowsvistastyle$<$<CONFIG:debug>:d>.dll
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../../external/update_check_api/rtda/windows/rtda.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/rtda.exe
     )
     if (GUI_AUTOMATION)
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E echo "Copying Qt5 test library to $<TARGET_FILE_DIR:${PROJECT_NAME}>"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/Qt5Test$<$<CONFIG:debug>:d>.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/Qt5Test$<$<CONFIG:debug>:d>.dll
+            COMMAND ${CMAKE_COMMAND} -E echo "Copying Qt6 test library to $<TARGET_FILE_DIR:${PROJECT_NAME}>"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt6_LIB_DIR}/Qt6Test$<$<CONFIG:debug>:d>.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/Qt6Test$<$<CONFIG:debug>:d>.dll
         )
     endif()
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    # Detect path to the Qt plugins folder.
-    # The GUI post-build script will copy 2 Qt libraries from the plugins folder: libqsvg.so and libqxcb.so
-    find_library(QT_LIBQSVG "libqsvg.so" PATHS "${Qt5_ROOT_DIR}/plugins/imageformats" "/usr/lib/x86_64-linux-gnu/qt5/plugins/imageformats")
-    find_library(QT_LIBQXCB "libqxcb.so" PATHS "${Qt5_ROOT_DIR}/plugins/platforms" "/usr/lib/x86_64-linux-gnu/qt5/plugins/platforms")
-    if (NOT QT_LIBQSVG OR NOT QT_LIBQXCB)
-        message(FATAL_ERROR "Error: cannot find reqired Qt libraries: libqsvg.so and libqxcb.so.")
-    endif()
-    get_filename_component(QT_PLUGINS_DIR  "${QT_LIBQSVG}" DIRECTORY)
-    set (QT_PLUGINS_DIR "${QT_PLUGINS_DIR}/..")
-
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "Copying Qt libraries from ${Qt5_LIB_DIR} and ${QT_PLUGINS_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/libQt5Core.so.5 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libQt5Core.so.5
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/libQt5DBus.so.5 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libQt5DBus.so.5
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/libQt5Gui.so.5 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libQt5Gui.so.5
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/libQt5Svg.so.5 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libQt5Svg.so.5
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/libQt5Widgets.so.5 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libQt5Widgets.so.5
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/libQt5XcbQpa.so.5 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libQt5XcbQpa.so.5
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/libicui18n.so.50 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libicui18n.so.50
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/libicudata.so.50 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libicudata.so.50
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/libicuuc.so.50 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libicuuc.so.50
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_PLUGINS_DIR}/imageformats/libqsvg.so $<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/imageformats/libqsvg.so
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QT_PLUGINS_DIR}/platforms/libqxcb.so $<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/platforms/libqxcb.so
         COMMAND ${CMAKE_COMMAND} -E echo "Copying rtda to $<TARGET_FILE_DIR:${PROJECT_NAME}>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../../external/update_check_api/rtda/linux/rtda $<TARGET_FILE_DIR:${PROJECT_NAME}>/rtda
         COMMAND ${CMAKE_COMMAND} -E echo "Copying RadeonGPUAnalyzer shell script to $<TARGET_FILE_DIR:${PROJECT_NAME}>"
@@ -235,9 +207,12 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "D
     if (GUI_AUTOMATION)
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E echo "Copying GUI test app and test kit files"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt5_LIB_DIR}/libQt5Test.so.5 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libQt5Test.so.5
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Qt6_LIB_DIR}/libQt6Test.so.6 $<TARGET_FILE_DIR:${PROJECT_NAME}>/lib/libQt6Test.so.6
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../../external/rga_internal_utils/tests_gui/run.py $<TARGET_FILE_DIR:${PROJECT_NAME}>/run.py
         )
     endif()
 
 endif()
+
+# Attach *deployqt post-build commands for packaging
+deploy_qt_install_hook(${PROJECT_NAME} "")

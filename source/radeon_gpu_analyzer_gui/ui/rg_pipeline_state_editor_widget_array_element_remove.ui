@@ -36,7 +36,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QPushButton" name="deleteElementButton">
+    <widget class="ScaledPushButton" name="deleteElementButton">
      <property name="minimumSize">
       <size>
        <width>18</width>
@@ -82,6 +82,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ScaledPushButton</class>
+   <extends>QPushButton</extends>
+   <header>qt_common/custom_widgets/scaled_push_button.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../resources/radeon_gpu_analyzer_gui.qrc"/>
  </resources>

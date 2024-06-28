@@ -15,15 +15,11 @@
 #include <QAction>
 #include <QCheckBox>
 #include <QListWidgetItem>
-#include <QPlainTextEdit>
-#include <QTextStream>
 
 // Infra.
-#include "QtCommon/CustomWidgets/ArrowIconWidget.h"
-#include "QtCommon/CustomWidgets/ListWidget.h"
-#include "QtCommon/Scaling/ScalingManager.h"
-#include "QtCommon/Util/CommonDefinitions.h"
-#include "QtCommon/Util/QtUtil.h"
+#include "qt_common/custom_widgets/arrow_icon_combo_box.h"
+#include "qt_common/utils/common_definitions.h"
+#include "qt_common/utils/qt_util.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_hide_list_widget_event_filter.h"
@@ -80,9 +76,6 @@ RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent) :
     // Block recursively repolishing child tables in the disassembly view.
     ui_.disassemblyTableHostWidget->setProperty(kIsRepolishingBlocked, true);
 
-    // Set the push button font sizes.
-    SetFontSizes();
-
     // Create Full kernel Name Label.
     CreateKernelNameLabel();
 
@@ -95,19 +88,13 @@ RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent) :
 RgIsaDisassemblyView::~RgIsaDisassemblyView()
 {
     // Remove the column dropdown focus event filters if they exist.
-    if (disassembly_columns_list_widget_ != nullptr && disassembly_columns_list_event_filter_ != nullptr)
+    if (ui_.columnVisibilityArrowPushButton != nullptr && disassembly_columns_list_event_filter_ != nullptr)
     {
-        disassembly_columns_list_widget_->removeEventFilter(disassembly_columns_list_event_filter_);
+        ui_.columnVisibilityArrowPushButton->removeEventFilter(disassembly_columns_list_event_filter_);
         qApp->removeEventFilter(disassembly_columns_list_event_filter_);
     }
-
-    // Remove the GPU dropdown event filter.
-    if (target_gpus_list_widget_ != nullptr && target_gpus_list_event_filter_ != nullptr)
-    {
-        target_gpus_list_widget_->removeEventFilter(target_gpus_list_event_filter_);
-        qApp->removeEventFilter(target_gpus_list_event_filter_);
-    }
 }
+
 
 void RgIsaDisassemblyView::ClearBuildOutput()
 {
@@ -207,70 +194,38 @@ void RgIsaDisassemblyView::HandleSelectedEntrypointChanged(const std::string& ta
     }
 }
 
-void RgIsaDisassemblyView::HandleColumnVisibilityButtonClicked(bool /*clicked*/)
+void RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(QCheckBox* check_box)
 {
-    // Make the list widget appear and process user selection from the list widget.
-    bool visible = disassembly_columns_list_widget_->isVisible();
-    if (visible == true)
-    {
-        disassembly_columns_list_widget_->hide();
+    const QString& text = check_box->text();
 
-        // Change the up arrow to a down arrow.
-        ui_.columnVisibilityArrowPushButton->SetDirection(ArrowIconWidget::Direction::DownArrow);
+    RgConfigManager& config_manager = RgConfigManager::Instance();
+    const int        first_column   = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress);
+    const int        last_column    = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCount);
+
+    // Get the current checked state of the ui_.
+    // This will include changes from the check/uncheck that triggered this callback.
+    std::vector<bool> column_visibility = RgUtils::GetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton);
+
+    bool all_checked = std::all_of(column_visibility.begin() + first_column, column_visibility.begin() + last_column, [](bool b) { return b == true; });
+    if (all_checked)
+    {
+        // All the items were checked, so disable the "All" option.
+        QListWidgetItem* all_item = ui_.columnVisibilityArrowPushButton->FindItem(0);
+        QCheckBox* all_check_box = (QCheckBox*)all_item->listWidget()->itemWidget(all_item);
+        all_check_box->setDisabled(true);
     }
     else
     {
-        // Update the check box values in case they were changed in global settings.
-        RgConfigManager& config_manager = RgConfigManager::Instance();
-        std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
-        ListWidget::SetColumnVisibilityCheckboxes(disassembly_columns_list_widget_, global_settings->visible_disassembly_view_columns);
-
-        // Compute where to place the combo box relative to where the arrow button is.
-        QWidget* widget = ui_.columnVisibilityArrowPushButton;
-        disassembly_columns_list_widget_->show();
-        disassembly_columns_list_widget_->setFocus();
-        QRect rect = widget->geometry();
-        QPoint pos(0, 0);
-        pos = widget->mapTo(this, pos);
-        pos.setY(pos.y() + rect.height());
-        int height = QtCommon::QtUtil::GetListWidgetHeight(disassembly_columns_list_widget_);
-        int width = QtCommon::QtUtil::GetListWidgetWidth(disassembly_columns_list_widget_);
-        disassembly_columns_list_widget_->setGeometry(pos.x(), pos.y(), width + s_CHECK_BOX_WIDTH, height);
-
-        // Change the down arrow to an up arrow.
-        ui_.columnVisibilityArrowPushButton->SetDirection(ArrowIconWidget::Direction::UpArrow);
+        QListWidgetItem* all_item = ui_.columnVisibilityArrowPushButton->FindItem(0);
+        QCheckBox* all_check_box = (QCheckBox*)all_item->listWidget()->itemWidget(all_item);
+        all_check_box->setDisabled(false);
     }
-}
-
-void RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(const QString& text, const bool checked)
-{
-    RgConfigManager& config_manager = RgConfigManager::Instance();
-    std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
-
-    const int first_column = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress);
-    const int last_column = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCount);
-
-    // Get the current checked state of the UI.
-    // This will include changes from the check/uncheck that triggered this callback.
-    std::vector<bool> column_visibility = ListWidget::GetColumnVisibilityCheckboxes(disassembly_columns_list_widget_);
 
     // Make sure at least one check box is still checked.
-    bool is_at_least_one_checked = std::any_of(column_visibility.begin() + first_column, column_visibility.begin() + last_column, [](bool b) { return b == true; });
+    bool isAtLeastOneChecked = std::any_of(column_visibility.begin() + first_column, column_visibility.begin() + last_column, [](bool b) { return b == true; });
 
-    if (checked || is_at_least_one_checked)
+    if (isAtLeastOneChecked)
     {
-        // If the user checked the "All" option, Step through each column and set to visible.
-        if (text.compare(kStrDisassemblyTableColumnAll) == 0 && (checked == true))
-        {
-            for (int column_index = first_column; column_index < last_column; ++column_index)
-            {
-                column_visibility[column_index] = checked;
-            }
-
-            // Update the state of the dropdown check boxes to reflect that all options are checked.
-            ListWidget::SetColumnVisibilityCheckboxes(disassembly_columns_list_widget_, column_visibility);
-        }
-
         // Save the changes.
         config_manager.Instance().SetDisassemblyColumnVisibility(column_visibility);
         config_manager.SaveGlobalConfigFile();
@@ -279,59 +234,23 @@ void RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(const QStri
     {
         // The user tried to uncheck the last check box, but at least one box
         // MUST be checked, so find that item in the ListWidget, and set it back to checked.
-        for (int row = 0; row < disassembly_columns_list_widget_->count(); row++)
+        for (int row = 0; row < ui_.columnVisibilityArrowPushButton->RowCount(); row++)
         {
-            QListWidgetItem* item = disassembly_columns_list_widget_->item(row);
-            QCheckBox* check_box = (QCheckBox*)disassembly_columns_list_widget_->itemWidget(item);
-            QString check_box_text = check_box->text();
-            if (check_box_text.compare(text) == 0)
+            QListWidgetItem* item                = ui_.columnVisibilityArrowPushButton->FindItem(row);
+            QCheckBox*       check_box_item      = static_cast<QCheckBox*>(item->listWidget()->itemWidget(item));
+            QString          check_box_item_text = check_box_item->text();
+            if (check_box_item_text.compare(text) == 0)
             {
-                ((QCheckBox*)disassembly_columns_list_widget_->itemWidget(item))->setChecked(true);
+                check_box->setChecked(true);
             }
         }
     }
 
-    // See if the "All" box needs checking/unchecking.
-    ListWidget::UpdateAllCheckbox(disassembly_columns_list_widget_);
+    // Update the "All" checkbox.
+    UpdateAllCheckBox();
 
-    // Update the "All" checkbox text color to grey or black.
-    UpdateAllCheckBoxText();
-
-    // If the user unchecked the "VGPR pressure" box, disable the show
-    // max VGPR feature.
-    if (text.compare(kStrDisassemblyTableLiveVgprHeaderPart) == 0 && current_tab_view_ != nullptr)
-    {
-        // Get the current table view.
-        RgIsaDisassemblyTableView* current_table_view = current_tab_view_->GetCurrentTableView();
-
-        // Process the checked value.
-        if (checked)
-        {
-            // Enable the Edit->Go to next maximum live VGPR line option.
-            emit EnableShowMaxVgprOptionSignal(true);
-
-            // Enable the context menu item.
-            if (current_table_view != nullptr)
-            {
-                current_table_view->EnableShowMaxVgprContextOption(true);
-            }
-        }
-        else
-        {
-            // Reset the show maximum VGPR feature.
-            if (current_table_view != nullptr)
-            {
-                // Reset the current max VGPR line number.
-                current_table_view->ResetCurrentMaxVgprIndex();
-
-                // Disable the Edit->Go to next maximum live VGPR line option.
-                emit EnableShowMaxVgprOptionSignal(false);
-
-                // Disable the context menu item.
-                current_table_view->EnableShowMaxVgprContextOption(false);
-            }
-        }
-    }
+    // Emit a signal to trigger a refresh of the disassembly table's filter.
+    emit DisassemblyColumnVisibilityUpdated();
 }
 
 void RgIsaDisassemblyView::EnableShowMaxVgprContextOption() const
@@ -349,142 +268,37 @@ void RgIsaDisassemblyView::EnableShowMaxVgprContextOption() const
     }
 }
 
-void RgIsaDisassemblyView::HandleColumnVisibilityFilterStateChanged(bool checked)
+void RgIsaDisassemblyView::HandleTargetGpuChanged()
 {
-    // Figure out the sender and process appropriately.
-    QObject* sender = QObject::sender();
-    assert(sender != nullptr);
-
-    // Find out which entry caused the signal.
-    QWidget* item = qobject_cast<QWidget*>(sender);
-    assert(item != nullptr);
-
-    QCheckBox* check_box = qobject_cast<QCheckBox*>(sender);
-    assert(check_box != nullptr);
-
-    // Process the click.
-    HandleColumnVisibilityComboBoxItemClicked(check_box->text(), checked);
-
-    // Emit a signal to trigger a refresh of the disassembly table's filter.
-    emit DisassemblyColumnVisibilityUpdated();
-}
-
-void RgIsaDisassemblyView::HandleTargetGpuArrowClicked(bool)
-{
-    // Make the list widget appear and process user selection from the list widget.
-    bool visible = target_gpus_list_widget_->isVisible();
-    if (visible == true)
+    if (ui_.targetGpuPushButton != nullptr)
     {
-        target_gpus_list_widget_->hide();
+        std::string newTargetGpu = ui_.targetGpuPushButton->SelectedText().toStdString();
 
-        // Change the up arrow to a down arrow.
-        ui_.targetGpuPushButton->SetDirection(ArrowIconWidget::Direction::DownArrow);
-    }
-    else
-    {
-        // Compute where to place the combo box relative to where the arrow button is.
-        QWidget* widget = ui_.targetGpuPushButton;
-        target_gpus_list_widget_->show();
-        target_gpus_list_widget_->setFocus();
-        target_gpus_list_widget_->setCursor(Qt::PointingHandCursor);
-        QRect rect = widget->geometry();
-        QPoint pos(0, 0);
-        pos = widget->mapTo(this, pos);
-        pos.setY(pos.y() + rect.height());
-        int height = QtCommon::QtUtil::GetListWidgetHeight(target_gpus_list_widget_);
-        int width = QtCommon::QtUtil::GetListWidgetWidth(target_gpus_list_widget_);
-        target_gpus_list_widget_->setGeometry(pos.x(), pos.y(), width + s_CHECK_BOX_WIDTH, height);
-
-        // Change the down arrow to an up arrow.
-        ui_.targetGpuPushButton->SetDirection(ArrowIconWidget::Direction::UpArrow);
-    }
-}
-
-void RgIsaDisassemblyView::HandleTargetGpuChanged(int current_index)
-{
-    assert(target_gpus_list_widget_ != nullptr);
-    if (target_gpus_list_widget_ != nullptr)
-    {
-        auto target_gpu_item = target_gpus_list_widget_->item(current_index);
-        assert(target_gpu_item != nullptr);
-        if (target_gpu_item != nullptr)
+        // Strip the GPU name from the architecture if needed.
+        std::string strippedGpuName;
+        size_t      bracketPos = newTargetGpu.find("(");
+        if (bracketPos != std::string::npos && newTargetGpu.size() > 2)
         {
-            // Change the target GPU if it differs from the current target GPU.
-            std::string current_target_gpu = ui_.targetGpuPushButton->text().toStdString();
-            std::string new_target_gpu = target_gpu_item->text().toStdString();
-            if (current_target_gpu.compare(new_target_gpu) != 0)
-            {
-                // Use the dropdown list's selection model to change the currently selected target GPU.
-                QItemSelectionModel* selection_model = target_gpus_list_widget_->selectionModel();
-                assert(selection_model != nullptr);
-                if (selection_model != nullptr)
-                {
-                    // Select the new target GPU within the dropdown list widget.
-                    QAbstractItemModel* list_model = target_gpus_list_widget_->model();
-
-                    assert(list_model != nullptr);
-                    if (list_model != nullptr)
-                    {
-                        QModelIndex model_index = list_model->index(current_index, 0);
-                        selection_model->setCurrentIndex(model_index, QItemSelectionModel::SelectionFlag::Select);
-                    }
-                }
-
-                // Change the target GPU to the newly selected item.
-                SetTargetGpu(new_target_gpu);
-
-                // Strip the GPU name from the architecture if needed.
-                std::string stripped_gpu_name;
-                size_t bracket_pos = new_target_gpu.find("(");
-                if (bracket_pos != std::string::npos && new_target_gpu.size() > 2)
-                {
-                    stripped_gpu_name = new_target_gpu.substr(0, bracket_pos - 1);
-                }
-                else
-                {
-                    stripped_gpu_name = new_target_gpu;
-                }
-
-                // Strip gfx notation if needed.
-                size_t slash_pos = stripped_gpu_name.find("/");
-                if (slash_pos != std::string::npos)
-                {
-                    stripped_gpu_name = stripped_gpu_name.substr(slash_pos + 1);
-                }
-
-                // Emit a signal with the name of the target GPU to switch to.
-                emit SelectedTargetGpuChanged(stripped_gpu_name);
-            }
+            strippedGpuName = newTargetGpu.substr(0, bracketPos - 1);
         }
+        else
+        {
+            strippedGpuName = newTargetGpu;
+        }
+
+        // Strip gfx notation if needed.
+        size_t slashPos = strippedGpuName.find("/");
+        if (slashPos != std::string::npos)
+        {
+            strippedGpuName = strippedGpuName.substr(slashPos + 1);
+        }
+
+        // Emit a signal with the name of the target GPU to switch to.
+        emit SelectedTargetGpuChanged(strippedGpuName);
     }
 
     // Set focus to disassembly view.
     setFocus();
-}
-
-void RgIsaDisassemblyView::ClearListWidget(ListWidget* &list_widget)
-{
-    assert(list_widget != nullptr);
-
-    // Disconnect slot/signal connection for each check box
-    for (int row = 0; row < list_widget->count(); row++)
-    {
-        QListWidgetItem* item = list_widget->item(row);
-        QCheckBox* check_box = (QCheckBox*)list_widget->itemWidget(item);
-
-        if (list_widget->objectName().compare(kStrDisassemblyColumnVisibilityList) == 0)
-        {
-            bool is_disconnected = disconnect(check_box, &QCheckBox::clicked, this, &RgIsaDisassemblyView::HandleColumnVisibilityFilterStateChanged);
-            assert(is_disconnected);
-        }
-        else
-        {
-            assert(false);
-        }
-    }
-
-    // Clear the list widget. This also deletes each item.
-    list_widget->clear();
 }
 
 void RgIsaDisassemblyView::ConnectDisassemblyTabViewSignals(RgIsaDisassemblyTabView* entry_view)
@@ -548,32 +362,24 @@ void RgIsaDisassemblyView::ConnectDisassemblyTabViewSignals(RgIsaDisassemblyTabV
 
 void RgIsaDisassemblyView::ConnectSignals()
 {
-    // Connect the column visibility selector arrow button.
-    bool is_connected = connect(ui_.columnVisibilityArrowPushButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleColumnVisibilityButtonClicked);
-    assert(is_connected);
-
-    // Connect the handler to show/hide the target GPU list when the arrow button is clicked.
-    is_connected = connect(ui_.targetGpuPushButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleTargetGpuArrowClicked);
-    assert(is_connected);
-
     // Connect the handler to give focus to frame on view maximize button click.
-    is_connected = connect(ui_.viewMaximizeButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+    bool is_connected = connect(ui_.viewMaximizeButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
     assert(is_connected);
 
     // Connect the handler to give focus to frame on disassembly column list widget's gain of focus.
-    is_connected = connect(disassembly_columns_list_widget_, &ListWidget::FocusInEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusInEvent);
+    is_connected = connect(ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::FocusInEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusInEvent);
     assert(is_connected);
 
     // Connect the handler to remove focus from frame on disassembly column list widget's loss of focus.
-    is_connected = connect(disassembly_columns_list_widget_, &ListWidget::FocusOutEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
+    is_connected = connect(ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::FocusOutEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
     assert(is_connected);
 
     // Connect the handler to give focus to frame on target GPUs list widget's gain of focus.
-    is_connected = connect(target_gpus_list_widget_, &ListWidget::FocusInEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusInEvent);
+    is_connected = connect(ui_.targetGpuPushButton, &ArrowIconComboBox::FocusInEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusInEvent);
     assert(is_connected);
 
     // Connect the handler to give focus to frame on target GPUs list widget's loss of focus.
-    is_connected = connect(target_gpus_list_widget_, &ListWidget::FocusOutEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
+    is_connected = connect(ui_.targetGpuPushButton, &ArrowIconComboBox::FocusOutEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
     assert(is_connected);
 
     // Connect the handler to give focus to frame on columns push button click.
@@ -585,11 +391,11 @@ void RgIsaDisassemblyView::ConnectSignals()
     assert(is_connected);
 
     // Connect the handler to remove focus from frame on columns push button loss of focus.
-    is_connected = connect(ui_.columnVisibilityArrowPushButton, &ArrowIconWidget::FocusOutEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
+    is_connected = connect(ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::FocusOutEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
     assert(is_connected);
 
     // Connect the handler to give focus to frame on target GPUs push button loss of focus.
-    is_connected = connect(ui_.targetGpuPushButton, &ArrowIconWidget::FocusOutEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
+    is_connected = connect(ui_.targetGpuPushButton, &ArrowIconComboBox::FocusOutEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
     assert(is_connected);
 
     // Select next GPU device action.
@@ -629,128 +435,47 @@ void RgIsaDisassemblyView::ConnectSignals()
 
 void RgIsaDisassemblyView::CreateKernelNameLabel()
 {
-    // Update scale factor for widgets.
-    QFont  font         = ui_.kernelNameLabel->font();
-    double scale_factor = ScalingManager::Get().GetScaleFactor();
-    font.setPointSize(font.pointSize() * scale_factor);
-    ui_.kernelNameLabel->setStyleSheet(s_LIST_WIDGET_STYLE.arg(font.pointSize()));
-
     ui_.horizontalSpacer_2->changeSize(0, 0);
     HandleSetKernelNameLabel(false);
-}
-
-void RgIsaDisassemblyView::HandleCurrentTabChanged(int index)
-{
-    if (index == 0)
-    {
-        ui_.columnVisibilityArrowPushButton->setHidden(false);
-    }
-    else if (index == 1)
-    {
-        ui_.columnVisibilityArrowPushButton->setHidden(true);
-    }
-    else
-    {
-        // Should not get here.
-        assert(false);
-    }
 }
 
 void RgIsaDisassemblyView::CreateColumnVisibilityControls()
 {
     // Setup the list widget that opens when the user clicks the column visibility arrow.
-    RgUtils::SetupComboList(this, disassembly_columns_list_widget_, ui_.columnVisibilityArrowPushButton, disassembly_columns_list_event_filter_, false);
-    disassembly_columns_list_widget_->setObjectName(kStrDisassemblyColumnVisibilityList);
-
-    // Handle the open gpu list widget signal and,
-    // the update current sub widget signal from the hide list widget event filter object.
-    if (disassembly_columns_list_event_filter_ != nullptr)
-    {
-        RgHideListWidgetEventFilter* event_filter = static_cast<RgHideListWidgetEventFilter*>(disassembly_columns_list_event_filter_);
-        if (event_filter != nullptr)
-        {
-            bool is_connected = connect(event_filter, &RgHideListWidgetEventFilter::OpenGpuListWidget, this, &RgIsaDisassemblyView::HandleOpenGpuListWidget);
-            assert(is_connected);
-
-            is_connected = connect(event_filter, &RgHideListWidgetEventFilter::UpdateCurrentSubWidget, this, &RgIsaDisassemblyView::UpdateCurrentSubWidget);
-            assert(is_connected);
-
-            is_connected = connect(event_filter, &RgHideListWidgetEventFilter::FocusCliOutputWindow, this, &RgIsaDisassemblyView::FocusCliOutputWindow);
-            assert(is_connected);
-        }
-    }
-
-    // Update scale factor for widgets.
-    QFont font = ui_.columnVisibilityArrowPushButton->font();
-    double scale_factor = ScalingManager::Get().GetScaleFactor();
-    font.setPointSize(kPushButtonFontSize * scale_factor);
-    disassembly_columns_list_widget_->setStyleSheet(s_LIST_WIDGET_STYLE.arg(font.pointSize()));
-
-    // Reset the current selection in the column visibility list.
-    disassembly_columns_list_widget_->setCurrentRow(0);
+    ui_.columnVisibilityArrowPushButton->InitMultiSelect(this, "Columns");
 }
 
 void RgIsaDisassemblyView::HandleOpenColumnListWidget()
 {
-    if (disassembly_columns_list_widget_ != nullptr)
-    {
-        ui_.columnVisibilityArrowPushButton->clicked();
-    }
+    ui_.columnVisibilityArrowPushButton->clicked();
 }
 
 void RgIsaDisassemblyView::CreateTargetGpuListControls()
 {
     // Setup the list widget used to select the current target GPU.
-    RgUtils::SetupComboList(this, target_gpus_list_widget_, ui_.targetGpuPushButton, target_gpus_list_event_filter_, false);
-    target_gpus_list_widget_->setObjectName(kStrDisassemblyTargetGpuList);
-
-    if (target_gpus_list_event_filter_ != nullptr)
-    {
-        RgHideListWidgetEventFilter* event_filter = static_cast<RgHideListWidgetEventFilter*>(target_gpus_list_event_filter_);
-        if (event_filter != nullptr)
-        {
-            bool is_connected = connect(event_filter, &RgHideListWidgetEventFilter::OpenColumnListWidget, this, &RgIsaDisassemblyView::HandleOpenColumnListWidget);
-            assert(is_connected);
-
-            is_connected = connect(event_filter, &RgHideListWidgetEventFilter::UpdateCurrentSubWidget, this, &RgIsaDisassemblyView::UpdateCurrentSubWidget);
-            assert(is_connected);
-        }
-    }
-
-    // Update scale factor for widgets.
-    QFont font = ui_.targetGpuPushButton->font();
-    double scale_factor = ScalingManager::Get().GetScaleFactor();
-    font.setPointSize(kPushButtonFontSize * scale_factor);
-    target_gpus_list_widget_->setStyleSheet(s_LIST_WIDGET_STYLE.arg(font.pointSize()));
-
-    // Reset the current selection in the target GPU dropdown list.
-    target_gpus_list_widget_->setCurrentRow(0);
+    ui_.targetGpuPushButton->InitSingleSelect(this, "Target GPU", false);
 
     // Connect the signal used to handle a change in the selected target GPU.
-    bool is_connected = connect(target_gpus_list_widget_, &QListWidget::currentRowChanged, this, &RgIsaDisassemblyView::HandleTargetGpuChanged);
+    [[maybe_unused]] bool is_connected = connect(ui_.targetGpuPushButton, &ArrowIconComboBox::SelectionChanged, this, &RgIsaDisassemblyView::HandleTargetGpuChanged);
     assert(is_connected);
 }
 
 void RgIsaDisassemblyView::HandleOpenGpuListWidget()
 {
-    if (target_gpus_list_widget_ != nullptr)
-    {
-        ui_.targetGpuPushButton->clicked();
-    }
+    ui_.targetGpuPushButton->clicked();
 }
 
-std::string RgIsaDisassemblyView::GetDisassemblyColumnName(RgIsaDisassemblyTableColumns column) const
+QString RgIsaDisassemblyView::GetDisassemblyColumnName(RgIsaDisassemblyTableColumns column) const
 {
-    std::string result;
+    QString result;
 
-    static const std::map<RgIsaDisassemblyTableColumns, std::string> kColumnNameMap =
-    {
-        { RgIsaDisassemblyTableColumns::kAddress,        kStrDisassemblyTableColumnAddress },
-        { RgIsaDisassemblyTableColumns::kOpcode,         kStrDisassemblyTableColumnOpcode },
-        { RgIsaDisassemblyTableColumns::kOperands,       kStrDisassemblyTableColumnOperands },
-        { RgIsaDisassemblyTableColumns::kFunctionalUnit, kStrDisassemblyTableColumnFunctionalUnit },
-        { RgIsaDisassemblyTableColumns::kCycles,         kStrDisassemblyTableColumnCycles },
-        { RgIsaDisassemblyTableColumns::kBinaryEncoding, kStrDisassemblyTableColumnBinaryEncoding },
+    static std::map<RgIsaDisassemblyTableColumns, QString> kColumnNameMap = {
+        {RgIsaDisassemblyTableColumns::kAddress, kStrDisassemblyTableColumnAddress},
+        {RgIsaDisassemblyTableColumns::kOpcode, kStrDisassemblyTableColumnOpcode},
+        {RgIsaDisassemblyTableColumns::kOperands, kStrDisassemblyTableColumnOperands},
+        {RgIsaDisassemblyTableColumns::kFunctionalUnit, kStrDisassemblyTableColumnFunctionalUnit},
+        {RgIsaDisassemblyTableColumns::kCycles, kStrDisassemblyTableColumnCycles},
+        {RgIsaDisassemblyTableColumns::kBinaryEncoding, kStrDisassemblyTableColumnBinaryEncoding},
         { RgIsaDisassemblyTableColumns::kLiveVgprs,      kStrDisassemblyTableLiveVgprHeaderPart},
     };
 
@@ -789,9 +514,9 @@ void RgIsaDisassemblyView::PopulateTargetGpuList(const RgBuildOutputsMap& build_
     bool has_arch_mapping = RgUtils::GetComputeCapabilityToArchMapping(compute_capability_to_arch);
 
     // Block signals to stop updates when each new GPU is added to the list.
-    target_gpus_list_widget_->blockSignals(true);
+    ui_.targetGpuPushButton->blockSignals(true);
 
-    target_gpus_list_widget_->clear();
+    ui_.targetGpuPushButton->ClearItems();
 
     std::vector<std::string> targets;
 
@@ -877,14 +602,17 @@ void RgIsaDisassemblyView::PopulateTargetGpuList(const RgBuildOutputsMap& build_
 
     for (const std::string& str : targets)
     {
-        target_gpus_list_widget_->addItem(str.c_str());
+        ui_.targetGpuPushButton->AddItem(str.c_str());
     }
 
     // Switch to the first target GPU.
-    HandleTargetGpuChanged(0);
+    ui_.targetGpuPushButton->SetSelectedRow(0);
 
     // Re-enable signals emitted from the target GPU list.
-    target_gpus_list_widget_->blockSignals(false);
+    ui_.targetGpuPushButton->blockSignals(false);
+
+    // Set the default target GPU.
+    HandleTargetGpuChanged();
 }
 
 bool RgIsaDisassemblyView::PopulateDisassemblyEntries(const GpuToEntryVector& gpu_to_disassembly_csv_entries)
@@ -968,9 +696,6 @@ bool RgIsaDisassemblyView::PopulateResourceUsageEntries(const GpuToEntryVector& 
                         resource_usage_text_ = resource_usage_view->GetResourceUsageText();
                         resource_usage_font_ = resource_usage_view->GetResourceUsageFont();
 
-                        // Register the resource usage view with the scaling manager.
-                        ScalingManager::Get().RegisterObject(resource_usage_view);
-
                         // Connect resource usage view signals.
                         ConnectResourceUsageViewSignals(resource_usage_view);
 
@@ -999,28 +724,33 @@ bool RgIsaDisassemblyView::PopulateResourceUsageEntries(const GpuToEntryVector& 
     return !is_load_failed;
 }
 
-void RgIsaDisassemblyView::ConnectResourceUsageViewSignals(RgResourceUsageView * resource_usage_view)
+void RgIsaDisassemblyView::ConnectResourceUsageViewSignals(RgResourceUsageView* resource_usage_view)
 {
     // Connect to the resource usage view's mouse press event.
-    bool is_connected = connect(resource_usage_view, &RgResourceUsageView::ResourceUsageViewClickedSignal, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+    bool is_connected =
+        connect(resource_usage_view, &RgResourceUsageView::ResourceUsageViewClickedSignal, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
     assert(is_connected);
 
     // Connect to the resource usage view's focus out event.
-    is_connected = connect(resource_usage_view, &RgResourceUsageView::ResourceUsageViewFocusOutEventSignal, this, &RgIsaDisassemblyView::HandleResourceUsageViewFocusOutEvent);
+    is_connected = connect(
+        resource_usage_view, &RgResourceUsageView::ResourceUsageViewFocusOutEventSignal, this, &RgIsaDisassemblyView::HandleResourceUsageViewFocusOutEvent);
     assert(is_connected);
 }
 
 void RgIsaDisassemblyView::PopulateColumnVisibilityList()
 {
-    // Set up the function pointer responsible for handling column visibility filter state change.
-    using std::placeholders::_1;
-    std::function<void(bool)> slot_function_pointer = std::bind(&RgIsaDisassemblyView::HandleColumnVisibilityFilterStateChanged, this, _1);
-
     // Remove the existing items first
-    ClearListWidget(disassembly_columns_list_widget_);
+    ui_.columnVisibilityArrowPushButton->ClearItems();
 
-    // Add the "All" entry
-    ListWidget::AddListWidgetCheckboxItem(kStrDisassemblyTableColumnAll, disassembly_columns_list_widget_, slot_function_pointer, this, kStrDisassemblyColumnVisibilityList, kStrDisassemblyColumnListItemAllCheckbox);
+    // Add the "All" entry, use index (0) as the user data, default to not checked.
+    QCheckBox* all_check_box = ui_.columnVisibilityArrowPushButton->AddCheckboxItem(kStrDisassemblyTableColumnAll, 0, false, true);
+
+    // Set list widget's check box's focus proxy to be the frame.
+    SetCheckBoxFocusProxies(all_check_box);
+
+    // Get global config to see which columns should be visible initially.
+    RgConfigManager&                  configManager   = RgConfigManager::Instance();
+    std::shared_ptr<RgGlobalSettings> global_settings = configManager.GetGlobalConfig();
 
     // Loop through each column enum member.
     int start_column = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress);
@@ -1030,50 +760,28 @@ void RgIsaDisassemblyView::PopulateColumnVisibilityList()
     for (int column_index = start_column; column_index < end_column; ++column_index)
     {
         // Add an item for each possible column in the table.
-        std::string column_name = GetDisassemblyColumnName(static_cast<RgIsaDisassemblyTableColumns>(column_index));
-        ListWidget::AddListWidgetCheckboxItem(column_name.c_str(), disassembly_columns_list_widget_, slot_function_pointer, this, kStrDisassemblyColumnVisibilityList, kStrDisassemblyColumnListItemCheckbox);
+        QString    column_name = GetDisassemblyColumnName(static_cast<RgIsaDisassemblyTableColumns>(column_index));
+        bool is_checked = global_settings->visible_disassembly_view_columns[column_index];
+        QCheckBox* check_box   = ui_.columnVisibilityArrowPushButton->AddCheckboxItem(column_name, column_index, is_checked, false);
+
+        // Set list widget's check box's focus proxy to be the frame.
+        SetCheckBoxFocusProxies(check_box);
     }
 
-    // Populate the check box items by reading the global settings.
-    RgConfigManager& config_manager = RgConfigManager::Instance();
-    std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
-    ListWidget::SetColumnVisibilityCheckboxes(disassembly_columns_list_widget_, global_settings->visible_disassembly_view_columns);
+    bool is_connected = connect(ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::CheckboxChanged, this, &RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked);
+    Q_ASSERT(is_connected);
 
-    // Update the "All" checkbox text color to grey or black.
-    UpdateAllCheckBoxText();
-
-    // Set list widget's check box's focus proxy to be the frame.
-    SetCheckBoxFocusProxies(disassembly_columns_list_widget_);
+    UpdateAllCheckBox();
 }
 
-void RgIsaDisassemblyView::SetCheckBoxFocusProxies(const ListWidget* list_widget) const
-{
-    for (int i = 0; i < list_widget->count(); i++)
-    {
-        QListWidgetItem* item = list_widget->item(i);
-        assert(item != nullptr);
-
-        QCheckBox* check_box = qobject_cast<QCheckBox*>(list_widget->itemWidget(item));
-        assert(check_box != nullptr);
-
-        check_box->setFocusProxy(ui_.frame);
-    }
-}
-
-void RgIsaDisassemblyView::UpdateAllCheckBoxText()
+void RgIsaDisassemblyView::UpdateAllCheckBox()
 {
     bool are_all_items_checked = true;
 
-    // Check to see if all of the boxes are checked.
-    for (int i = 1; i < disassembly_columns_list_widget_->count(); i++)
+    // Scan to see if any of the boxes are not checked.
+    for (int i = 1; i < ui_.columnVisibilityArrowPushButton->RowCount(); i++)
     {
-        QListWidgetItem* item = disassembly_columns_list_widget_->item(i);
-        assert(item != nullptr);
-
-        QCheckBox* check_box = qobject_cast<QCheckBox*>(disassembly_columns_list_widget_->itemWidget(item));
-        assert(check_box != nullptr);
-
-        if (check_box->checkState() == Qt::CheckState::Unchecked)
+        if (ui_.columnVisibilityArrowPushButton->IsChecked(i) == false)
         {
             are_all_items_checked = false;
             break;
@@ -1081,18 +789,20 @@ void RgIsaDisassemblyView::UpdateAllCheckBoxText()
     }
 
     // If all boxes are checked, update the text color of the All check box.
-    QListWidgetItem* item = disassembly_columns_list_widget_->item(0);
+    QListWidgetItem* item = ui_.columnVisibilityArrowPushButton->FindItem(0);
     if (item != nullptr)
     {
-        QCheckBox* check_box = qobject_cast<QCheckBox*>(disassembly_columns_list_widget_->itemWidget(item));
+        QCheckBox* check_box = qobject_cast<QCheckBox*>(item->listWidget()->itemWidget(item));
         if (check_box != nullptr)
         {
             if (are_all_items_checked)
             {
+                check_box->setChecked(true);
                 check_box->setStyleSheet("QCheckBox#ListWidgetAllCheckBox {color: grey;}");
             }
             else
             {
+                check_box->setChecked(false);
                 check_box->setStyleSheet("QCheckBox#ListWidgetAllCheckBox {color: black;}");
             }
         }
@@ -1116,6 +826,13 @@ void RgIsaDisassemblyView::HandleSetKernelNameLabel(bool show, const std::string
     {
         ui_.kernelNameLabel->hide();
     }
+}
+
+void RgIsaDisassemblyView::SetCheckBoxFocusProxies(QCheckBox* check_box)
+{
+    assert(check_box != nullptr);
+
+    check_box->setFocusProxy(ui_.frame);
 }
 
 void RgIsaDisassemblyView::DestroyDisassemblyViewsForFile(const std::string& input_file_path)
@@ -1218,39 +935,12 @@ void RgIsaDisassemblyView::SetCursor()
     ui_.viewMaximizeButton->setCursor(Qt::PointingHandCursor);
 }
 
-void RgIsaDisassemblyView::SetTargetGpu(const std::string& target_gpu)
+bool RgIsaDisassemblyView::IsLineCorrelatedInEntry(const std::string& input_file_path,
+                                                   const std::string& target_gpu,
+                                                   const std::string& entrypoint,
+                                                   int                src_line) const
 {
-    static const int kArrowWidgetExtraWidth = 30;
-
-    // Update the button text.
-    ui_.targetGpuPushButton->setText(target_gpu.c_str());
-
-    // Measure the width of the Target GPU text, and add extra space to account for the width of the arrow.
-    int scaled_arrow_width = static_cast<int>(kArrowWidgetExtraWidth * ScalingManager::Get().GetScaleFactor());
-    int text_width = QtCommon::QtUtil::GetTextWidth(ui_.targetGpuPushButton->font(), target_gpu.c_str());
-    ui_.targetGpuPushButton->setMinimumWidth(scaled_arrow_width + text_width);
-}
-
-void RgIsaDisassemblyView::SetFontSizes()
-{
-    // Set column visibility push button font.
-    ArrowIconWidget* arrow_widget = dynamic_cast<ArrowIconWidget*>(ui_.columnVisibilityArrowPushButton);
-    if (arrow_widget != nullptr)
-    {
-        arrow_widget->SetFontSize(kPushButtonFontSize);
-    }
-
-    // Set ISA list push button font.
-    arrow_widget = dynamic_cast<ArrowIconWidget*>(ui_.targetGpuPushButton);
-    if (arrow_widget != nullptr)
-    {
-        arrow_widget->SetFontSize(kPushButtonFontSize);
-    }
-}
-
-bool RgIsaDisassemblyView::IsLineCorrelatedInEntry(const std::string& input_file_path, const std::string& target_gpu, const std::string& entrypoint, int src_line) const
-{
-    bool  ret = false;
+    bool ret = false;
 
     RgIsaDisassemblyTabView* target_gpu_tab = GetTargetGpuTabWidgetByTabName(target_gpu.c_str());
 
@@ -1349,7 +1039,7 @@ void RgIsaDisassemblyView::ConnectTitleBarDoubleClick(const RgViewContainer* dis
     assert(disassembly_view_container != nullptr);
     if (disassembly_view_container != nullptr)
     {
-        bool is_connected = connect(ui_.viewTitlebar, &RgIsaDisassemblyViewTitlebar::ViewTitleBarDoubleClickedSignal, disassembly_view_container, &RgViewContainer::MaximizeButtonClicked);
+        [[maybe_unused]] bool is_connected = connect(ui_.viewTitlebar, &RgIsaDisassemblyViewTitlebar::ViewTitleBarDoubleClickedSignal, disassembly_view_container, &RgViewContainer::MaximizeButtonClicked);
         assert(is_connected);
     }
 }
@@ -1390,9 +1080,9 @@ bool RgIsaDisassemblyView::ReplaceInputFilePath(const std::string& old_file_path
 
 void RgIsaDisassemblyView::HandleSelectNextGPUTargetAction()
 {
-    int current_row = target_gpus_list_widget_->currentRow();
+    int current_row = ui_.targetGpuPushButton->CurrentRow();
 
-    if (current_row < target_gpus_list_widget_->count() - 1)
+    if (current_row < ui_.targetGpuPushButton->RowCount() - 1)
     {
         current_row++;
     }
@@ -1400,16 +1090,17 @@ void RgIsaDisassemblyView::HandleSelectNextGPUTargetAction()
     {
         current_row = 0;
     }
-    target_gpus_list_widget_->setCurrentRow(current_row);
+
+    ui_.targetGpuPushButton->SetSelectedRow(current_row);
 }
 
 void RgIsaDisassemblyView::HandleSelectNextMaxVgprLineAction()
 {
     // Check to make sure that the max VGPR column is currently visible
     // before enabling this feature.
-    std::vector<bool> column_visibility = ListWidget::GetColumnVisibilityCheckboxes(disassembly_columns_list_widget_);
+    std::vector<bool> column_visibility = RgUtils::GetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton);
     bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
-    if (is_visible && current_tab_view_ != nullptr)
+    if (is_visible)
     {
         // Show the max VGPR lines for the current tab view.
         current_tab_view_->HandleShowNextMaxVgprSignal();
@@ -1418,7 +1109,7 @@ void RgIsaDisassemblyView::HandleSelectNextMaxVgprLineAction()
 
 bool RgIsaDisassemblyView::IsMaxVgprColumnVisible() const
 {
-    std::vector<bool> column_visibility = ListWidget::GetColumnVisibilityCheckboxes(disassembly_columns_list_widget_);
+    std::vector<bool> column_visibility = RgUtils::GetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton);
     bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
 
     return is_visible;
@@ -1428,11 +1119,16 @@ void RgIsaDisassemblyView::HandleSelectPreviousMaxVgprLineAction()
 {
     // Check to make sure that the max VGPR column is currently visible
     // before enabling this feature.
-    std::vector<bool> column_visibility = ListWidget::GetColumnVisibilityCheckboxes(disassembly_columns_list_widget_);
+    std::vector<bool> column_visibility = RgUtils::GetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton);
     bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
     if (is_visible && current_tab_view_ != nullptr)
     {
         // Show the previous max VGPR lines for the current tab view.
         current_tab_view_->HandleShowPreviousMaxVgprSignal();
     }
+}
+
+ArrowIconComboBox* RgIsaDisassemblyView::GetColumnVisibilityComboBox()
+{
+    return ui_.columnVisibilityArrowPushButton;
 }

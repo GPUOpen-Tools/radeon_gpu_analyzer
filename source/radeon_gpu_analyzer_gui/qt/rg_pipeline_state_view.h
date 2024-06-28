@@ -38,7 +38,7 @@ public:
     virtual void dragEnterEvent(QDragEnterEvent* event) override;
 
     // Handler invoked when the user drops a dragged file.
-    virtual void dropEvent(QDropEvent *event) override;
+    virtual void dropEvent(QDropEvent* event) override;
 
     // Overridden focus in event.
     virtual void focusInEvent(QFocusEvent* event);
@@ -63,9 +63,6 @@ public:
 
     // Reset the search in find text widget.
     void ResetSearch();
-
-    // Scale the settings tree using the scaling manager.
-    void ScaleSettingsTree();
 
     // Set enum list widget status.
     void SetEnumListWidgetStatus(bool is_open);

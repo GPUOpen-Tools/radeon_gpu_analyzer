@@ -43,10 +43,6 @@ RgEditorElementEnum::RgEditorElementEnum(QWidget* parent, const std::string& mem
         // Connect the list widget status signal.
         is_connected = connect(editor_widget_, &RgPipelineStateEditorWidgetEnum::EnumListWidgetStatusSignal, this, &RgEditorElementEnum::EnumListWidgetStatusSignal);
         assert(is_connected);
-
-        // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgEditorElementEnum::HotKeyPressedSignal, editor_widget_, &RgPipelineStateEditorWidgetEnum::HandleHotKeyPressedSignal);
-        assert(is_connected);
     }
 }
 

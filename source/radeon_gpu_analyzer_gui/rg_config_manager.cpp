@@ -217,7 +217,7 @@ bool RgConfigManager::Init()
         // If the output directory does not exist - create it.
         if (!RgUtils::IsDirExists(app_data_dir))
         {
-            bool is_dir_created = RgUtils::CreateFolder(app_data_dir);
+            [[maybe_unused]] bool is_dir_created = RgUtils::CreateFolder(app_data_dir);
             assert(is_dir_created);
         }
 
@@ -342,7 +342,7 @@ bool RgConfigManager::Init()
             // If necessary - create the Projects sub-directory.
             if (!RgUtils::IsDirExists(project_sub_dir))
             {
-                bool is_dir_created = RgUtils::CreateFolder(project_sub_dir);
+                [[maybe_unused]] bool is_dir_created = RgUtils::CreateFolder(project_sub_dir);
                 assert(is_dir_created);
             }
         }
@@ -919,7 +919,7 @@ bool RgConfigManager::SaveProjectFile(std::shared_ptr<RgProject> project)
 
         if (!RgUtils::IsDirExists(project_directory))
         {
-            bool is_dir_created = RgUtils::CreateFolder(project_directory);
+            [[maybe_unused]] bool is_dir_created = RgUtils::CreateFolder(project_directory);
             assert(is_dir_created);
         }
 

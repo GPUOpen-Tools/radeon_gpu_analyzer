@@ -32,6 +32,9 @@ public:
     // Restore the splitter to it's default non-maximized state.
     void Restore();
 
+    // Return vector of splitter values.
+    std::vector<int> ToStdVector();
+
 private:
     // Vector of all view containers in this splitter.
     std::vector<RgViewContainer*> maximize_containers_;

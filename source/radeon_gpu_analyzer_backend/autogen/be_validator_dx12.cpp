@@ -472,7 +472,7 @@ void BeDx12PipelineValidator::AutoGenerateMissingPipeline(const Config& config, 
             }
         }
 
-        info.autogen_dir = KcUtils::Quote(BeDx12Utils::GetAbsoluteFileName(config.dx12_autogen_dir));
+        info.autogen_dir = BeDx12Utils::GetAbsoluteFileName(config.dx12_autogen_dir);
         if (KcUtils::IsDirectory(info.autogen_dir) || config.should_retain_temp_files)
         {
             info.should_retain_temp_files = true;

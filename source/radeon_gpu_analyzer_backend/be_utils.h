@@ -19,14 +19,7 @@
 #include "radeon_gpu_analyzer_backend/be_include.h"
 
 // Infra.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "external/amdt_base_tools/Include/gtString.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // A container that keeps the mapping between some "non-standard" PAL NULL device names
 // returned by driver and the "standard" names that can be found in the Device Info lib.

@@ -2,9 +2,6 @@
 #include <cassert>
 #include <sstream>
 
-// Infra.
-#include <QtCommon/Scaling/ScalingManager.h>
-
 // Qt.
 #include <QMenu>
 #include <QStandardItemModel>
@@ -162,11 +159,11 @@ void RgMenuItemEntryListModel::AddEntry(const RgEntryOutput& entrypoint)
     QSize size = entry_point_item_model_->data(model_index, Qt::SizeHintRole).toSize();
     if (is_dxr_entrypoint)
     {
-        size.setHeight(ScalingManager::Get().Scaled(s_FILE_MENU_DXR_KERNEL_ITEM_HEIGHT));
+        size.setHeight(s_FILE_MENU_DXR_KERNEL_ITEM_HEIGHT); 
     }
     else
     {
-        size.setHeight(ScalingManager::Get().Scaled(s_FILE_MENU_KERNEL_ITEM_HEIGHT));
+        size.setHeight(s_FILE_MENU_KERNEL_ITEM_HEIGHT);
     }
     entry_point_item_model_->setData(model_index, size, Qt::SizeHintRole);
 }
@@ -262,7 +259,7 @@ RgMenuFileItemOpencl::RgMenuFileItemOpencl(const std::string& file_full_path, Rg
     SetCursor();
 }
 
-void RgMenuFileItemOpencl::enterEvent(QEvent* event)
+void RgMenuFileItemOpencl::enterEvent(QEnterEvent* event)
 {
     Q_UNUSED(event);
 

@@ -33,7 +33,9 @@ SCRIPT_NAME = os.path.basename(__file__)
 
 # Command line parser.
 parser = None
+
 def parse_arguments():
+    global parser
     # initialize some paths for default argument values
     if sys.platform == "win32":
         output_root = os.path.join(SCRIPT_ROOT, "win")
@@ -44,7 +46,7 @@ def parse_arguments():
 
     # parse the command line arguments
     parser = argparse.ArgumentParser(description="A script that generates all the necessary build dependencies for a project")
-    parser.add_argument("--qt", default="5.15.2", help="specify the version of QT to be used with the script (default: 5.15.2)" )
+    parser.add_argument("--qt", default="6.7.0", help="specify the version of QT to be used with the script (default: 6.7.0)" )
     parser.add_argument("--clean", action="store_true", help="delete any directories created by this script")
     parser.add_argument("--no-qt", action="store_true", help="build a headless version (not applicable for all products)")
     parser.add_argument("--build-number", default="0",
@@ -124,10 +126,10 @@ def mkdir_print(dir):
 # Look for Qt path in specified Qt root directory
 # Example:
 # --qt-root=C:\\Qt
-# --qt=5.15.2
-# Look first for C:\\Qt\\Qt5.15.2\\5.15.2
+# --qt=6.7.0
+# Look first for C:\\Qt\\Qt6.7.0\\6.7.0
 #  (if not found..)
-# Look next for C:\\Qt\\5.15.2
+# Look next for C:\\Qt\\6.7.0
 #
 # If neither of those can be found AND we are using the default
 # qt-root dir (i.e. the user did not specify --qt-root), then also
@@ -148,7 +150,7 @@ def check_qt_path(qt_root, qt_root_arg, qt_arg):
             qt_path_not_found_error = qt_path_not_found_error + "\n      " + qt_path
             # if there is no user-specified qt-root, then check additional locations
             # used by the various Qt installers
-            if qt_root_arg == parser.get_default('qt_root'):
+            if qt_root_arg == parser.get_default('qt-root'):
                 qt_path = os.path.normpath(os.path.join(qt_root, "..", "Qt" + qt_arg, qt_arg))
                 if not os.path.exists(qt_path):
                     qt_path_not_found_error = qt_path_not_found_error + "\n      " + qt_path

@@ -6,7 +6,6 @@
 #include "radeon_gpu_analyzer_backend/autogen/be_generator_dx12.h"
 #include "radeon_gpu_analyzer_backend/autogen/be_utils_dx12.h"
 #include "radeon_gpu_analyzer_backend/autogen/be_reflection_dx12.h"
-#include "radeon_gpu_analyzer_backend/autogen/be_string_constants_dx12.h"
 
 // CLI.
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
@@ -15,6 +14,11 @@
 #include <chrono>
 #include <iomanip>
 #include <cassert>
+
+// File extensions string constants.
+static const char* kTempRootSignatureFileExtension = "rootsig";
+static const char* kTempGpsoFileExtension          = "gpso";
+static const char* kTempShaderFileExtension        = "hlsl";
 
 BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& config, BeDx12AutoGenInput& input_files, std::stringstream& err)
 {

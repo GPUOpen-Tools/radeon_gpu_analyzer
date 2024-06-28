@@ -370,7 +370,7 @@ beKA::beStatus RayTracingBinaryWorkflowStrategy::WriteOutputFiles(const Config& 
                         KcUtils::DeleteFile(amdgpu_out_file_name);
                     }
 
-                    bool is_file_written = KcUtils::WriteTextFile(amdgpu_out_file_name, shader_kernel_content, nullptr);
+                    [[maybe_unused]] bool is_file_written = KcUtils::WriteTextFile(amdgpu_out_file_name, shader_kernel_content, nullptr);
                     assert(is_file_written);
                     if (!KcUtils::FileNotEmpty(amdgpu_out_file_name))
                     {
@@ -508,7 +508,7 @@ beKA::beStatus ComputeBinaryWorkflowStrategy::WriteOutputFiles(const Config&    
         {
             KcUtils::DeleteFile(amdgpu_out_file_name);
 
-            bool is_file_written = KcUtils::WriteTextFile(amdgpu_out_file_name, shader_kernel_content, nullptr);
+            [[maybe_unused]] bool is_file_written = KcUtils::WriteTextFile(amdgpu_out_file_name, shader_kernel_content, nullptr);
             assert(is_file_written);
             if (!KcUtils::FileNotEmpty(amdgpu_out_file_name))
             {

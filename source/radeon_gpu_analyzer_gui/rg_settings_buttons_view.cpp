@@ -11,11 +11,11 @@
 #include <QWidget>
 
 // Infra.
-#include "QtCommon/CustomWidgets/ArrowIconWidget.h"
-#include "QtCommon/Util/CommonDefinitions.h"
-#include "QtCommon/CustomWidgets/ListWidget.h"
-#include "QtCommon/Util/QtUtil.h"
-#include "QtCommon/Util/RestoreCursorPosition.h"
+#include "qt_common/custom_widgets/arrow_icon_combo_box.h"
+#include "qt_common/utils/common_definitions.h"
+#include "qt_common/custom_widgets/list_widget.h"
+#include "qt_common/utils/qt_util.h"
+#include "qt_common/utils/restore_cursor_position.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_config_manager.h"
@@ -34,7 +34,7 @@ RgSettingsButtonsView::RgSettingsButtonsView(QWidget* parent) :
 
     // Set the background to white.
     QPalette pal = palette();
-    pal.setColor(QPalette::Background, Qt::white);
+    pal.setColor(QPalette::Window, Qt::white);
     this->setAutoFillBackground(true);
     this->setPalette(pal);
 

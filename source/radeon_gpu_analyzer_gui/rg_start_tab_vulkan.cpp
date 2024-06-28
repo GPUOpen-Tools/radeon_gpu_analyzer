@@ -1,9 +1,6 @@
 // C++.
 #include <cassert>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_start_tab_vulkan.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_vulkan.h"

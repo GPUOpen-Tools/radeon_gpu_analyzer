@@ -1,8 +1,8 @@
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_COMBO_BOX_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_COMBO_BOX_H_
 
-// Qt.
-#include <QComboBox>
+// Infra.
+#include "qt_common/custom_widgets/scaled_combo_box.h"
 
 class RgComboBox : public QComboBox
 {

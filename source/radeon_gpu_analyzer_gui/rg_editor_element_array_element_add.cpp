@@ -16,8 +16,8 @@ RgEditorElementArrayElementAdd::RgEditorElementArrayElementAdd(QWidget* parent, 
         ui_.editorLayout->insertWidget(0, editor_widget_);
 
         // Connect the loss of focus handler.
-        bool is_connected = connect(editor_widget_, &RgPipelineStateEditorWidget::FocusOutSignal,
-            this, &RgEditorElement::HandleEditorFocusOut);
+        [[maybe_unused]] bool is_connected =
+            connect(editor_widget_, &RgPipelineStateEditorWidget::FocusOutSignal, this, &RgEditorElement::HandleEditorFocusOut);
         assert(is_connected);
     }
 }

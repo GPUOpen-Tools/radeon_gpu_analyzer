@@ -6,8 +6,7 @@
 #include <QPainter>
 
 // Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-#include "QtCommon/Util/QtUtil.h"
+#include "qt_common/utils/qt_util.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_label.h"
@@ -75,32 +74,29 @@ void RgLabel::paintEvent(QPaintEvent* event)
         // Go through all highlight locations.
         for (const auto& string_highlight_data : string_highlight_data_)
         {
-            QString current = text().mid(0, string_highlight_data.m_startLocation);
-            int initial_text_width = QtCommon::QtUtil::GetTextWidth(font, current);
+            QString current = text().mid(0, string_highlight_data.start_location);
+            int initial_text_width = QtCommon::QtUtils::GetTextWidth(font, current);
 
-            assert(string_highlight_data.m_endLocation - string_highlight_data.m_startLocation > 0);
-            current = text().mid(string_highlight_data.m_startLocation,
-                string_highlight_data.m_endLocation - string_highlight_data.m_startLocation);
+            assert(string_highlight_data.end_location - string_highlight_data.start_location > 0);
+            current = text().mid(string_highlight_data.start_location,
+                string_highlight_data.end_location - string_highlight_data.start_location);
 
             assert(!current.isNull());
             if (!current.isNull())
             {
-                int width = QtCommon::QtUtil::GetTextWidth(font, current);
+                int width = QtCommon::QtUtils::GetTextWidth(font, current);
                 QRect rect = this->rect();
                 rect.setX(rect.x() + kPaintLocationX + initial_text_width);
                 rect.setHeight(rect.height() - kHighlightVerticalMargin);
                 rect.setY(rect.y() + kHighlightVerticalMargin);
                 rect.setWidth(width);
-                painter.fillRect(rect, string_highlight_data.m_highlightColor);
+                painter.fillRect(rect, string_highlight_data.highlight_color);
             }
         }
     }
 
-    // Get the scaling factor.
-    const double scaling_factor = ScalingManager::Get().GetScaleFactor();
-
     // Draw the text.
-    painter.drawText(kPaintLocationX, (kLabelSize / 2 + kVerticalMargin) * scaling_factor, text());
+    painter.drawText(kPaintLocationX, (kLabelSize / 2 + kVerticalMargin), text());
 
     painter.end();
 }

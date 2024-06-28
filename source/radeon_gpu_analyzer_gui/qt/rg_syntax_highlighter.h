@@ -11,19 +11,6 @@
 // Local
 #include "source/radeon_gpu_analyzer_gui/rg_data_types.h"
 
-// Hash class for QChar
-namespace std
-{
-template<>
-struct hash<QChar>
-{
-    size_t  operator()(const QChar& c) const {
-        return static_cast<size_t>(c.toLatin1());
-    }
-};
-}
-
-//
 // RGA GUI Syntax Highlighter
 //
 // The Syntax Highlighter uses single-pass parsing of the text, very similar to lexical parsing.

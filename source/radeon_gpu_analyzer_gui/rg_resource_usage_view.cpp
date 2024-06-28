@@ -2,7 +2,7 @@
 #include <sstream>
 
 // Infra.
-#include "QtCommon/Util/QtUtil.h"
+#include "qt_common/utils/qt_util.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_resource_usage_view.h"
@@ -108,7 +108,7 @@ void RgResourceUsageView::PopulateView(const RgResourceUsageData& resource_usage
     // Convert the LDS used and available byte counts to an abbreviated file size with an acronym.
     QString lds_bytes_used;
     QString lds_bytes_available;
-    QtCommon::QtUtil::GetFilesizeAcronymFromByteCount(resource_usage.available_lds_bytes, lds_bytes_available);
+    QtCommon::QtUtils::GetFilesizeAcronymFromByteCount(resource_usage.available_lds_bytes, lds_bytes_available);
     is_lds_hazard = (resource_usage.used_lds_bytes >= resource_usage.available_lds_bytes);
 
     // Set the LDS usage string in the view.
@@ -116,7 +116,7 @@ void RgResourceUsageView::PopulateView(const RgResourceUsageData& resource_usage
 
     // Scratch memory.
     QString scratch_mem;
-    QtCommon::QtUtil::GetFilesizeAcronymFromByteCount(resource_usage.scratch_memory, scratch_mem);
+    QtCommon::QtUtils::GetFilesizeAcronymFromByteCount(resource_usage.scratch_memory, scratch_mem);
     is_scratch_memory_hazard = (resource_usage.scratch_memory > 0);
     resource_usage_header_stream << StartResourceSection(is_scratch_memory_hazard) << "<b>" << kStrResourceUsageScratch << "</b>: " << scratch_mem.toStdString() << EndResourceSection(is_scratch_memory_hazard) << " | ";
 

@@ -6,10 +6,6 @@
 #include "tinyxml2/Include/tinyxml2.h"
 
 // Infra.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "external/amdt_base_tools/Include/gtString.h"
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osFile.h"
@@ -18,9 +14,6 @@
 #include "external/amdt_os_wrappers/Include/osEnvironmentVariable.h"
 #include "external/amdt_os_wrappers/Include/osApplication.h"
 #include "update_check_api.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // Common.
 #include "source/common/rga_cli_defs.h"
@@ -1018,7 +1011,7 @@ bool KcUtils::CopyTextFile(const std::string& filename_from, const std::string& 
         assert(is_file_read);
         if (is_file_read && !content.empty())
         {
-            bool is_file_written = KcUtils::WriteTextFile(filename_to, content, nullptr);
+            [[maybe_unused]] bool is_file_written = KcUtils::WriteTextFile(filename_to, content, nullptr);
             assert(is_file_written);
             if (KcUtils::FileNotEmpty(filename_to))
             {

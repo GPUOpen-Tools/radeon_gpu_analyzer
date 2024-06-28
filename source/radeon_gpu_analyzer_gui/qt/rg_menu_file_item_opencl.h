@@ -91,7 +91,7 @@ public:
     virtual ~RgMenuFileItemOpencl() = default;
 
     // Handler for mouse hover enter events.
-    virtual void enterEvent(QEvent* event) override;
+    virtual void enterEvent(QEnterEvent* event) override;
 
     // Handler for mouse hover leave events.
     virtual void leaveEvent(QEvent* event) override;

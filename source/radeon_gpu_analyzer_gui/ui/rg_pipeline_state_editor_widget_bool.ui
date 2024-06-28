@@ -67,7 +67,7 @@ margin-right:100%;</string>
  <customwidgets>
   <customwidget>
    <class>RgCheckBox</class>
-   <extends>QCheckBox</extends>
+   <extends>ScaledCheckBox</extends>
    <header>rg_check_box.h</header>
    <container>1</container>
   </customwidget>

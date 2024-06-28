@@ -2,8 +2,6 @@
 // Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
 //======================================================================
 
-#define _HAS_AUTO_PTR_ETC 1
-
 // C++.
 #include <iostream>
 #include <string>

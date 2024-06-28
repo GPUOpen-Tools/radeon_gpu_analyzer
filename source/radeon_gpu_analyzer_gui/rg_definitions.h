@@ -67,7 +67,7 @@ static const char* kActionHotkeyShowMaxVgprs   = "Ctrl+F4";
 static const char* kActionHotkeyBuildProject   = "Ctrl+Shift+B";
 static const char* kActionHotkeyBuildSettings  = "F8";
 static const char* kActionHotkeyPipelineState  = "F9";
-static const char* kActionHotkeyBuildCancel    = "Ctrl+Shift+X";
+static const char* kActionHotkeyBuildCancel    = "Ctrl+Shift+T";
 
 // Source view hotkey definitions.
 static const char* kSourceEditorHotkeyContextMenuCut = "Ctrl+X";

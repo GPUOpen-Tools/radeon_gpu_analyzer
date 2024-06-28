@@ -5,13 +5,11 @@
 // Qt.
 #include <QWidget>
 #include <QMessageBox>
-#include <QDesktopWidget>
 #include <QFileDialog>
 
 // Infra.
-#include "QtCommon/Util/RestoreCursorPosition.h"
-#include "QtCommon/Scaling/ScalingManager.h"
-#include "source/common/rga_cli_defs.h"
+#include "qt_common/utils/restore_cursor_position.h"
+#include "common/rga_cli_defs.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_build_settings_view.h"
@@ -41,7 +39,7 @@ RgBuildSettingsViewOpencl::RgBuildSettingsViewOpencl(QWidget* parent, const RgBu
 
     // Set the background to white.
     QPalette pal = palette();
-    pal.setColor(QPalette::Background, Qt::white);
+    pal.setColor(QPalette::Window, Qt::white);
     this->setAutoFillBackground(true);
     this->setPalette(pal);
 
@@ -365,7 +363,8 @@ void RgBuildSettingsViewOpencl::ConnectCheckBoxClickedEvents()
 
 void RgBuildSettingsViewOpencl::ConnectComboboxClickEvent()
 {
-    bool is_connected = connect(this->ui_.optimizationLevelComboBox, &RgComboBox::ComboBoxFocusInEvent, this, &RgBuildSettingsViewOpencl::HandleComboBoxFocusInEvent);
+    [[maybe_unused]] bool is_connected =
+        connect(this->ui_.optimizationLevelComboBox, &RgComboBox::ComboBoxFocusInEvent, this, &RgBuildSettingsViewOpencl::HandleComboBoxFocusInEvent);
     assert(is_connected);
 }
 
@@ -395,9 +394,6 @@ void RgBuildSettingsViewOpencl::HandleAddTargetGpusButtonClick()
 
     // Create a new Target GPU Selection dialog instance.
     target_gpus_dialog_ = new RgTargetGpusDialog(selected_gpus, this);
-
-    // Register the target gpu dialog box with the scaling manager.
-    ScalingManager::Get().RegisterObject(target_gpus_dialog_);
 
     // Center the dialog on the view (registering with the scaling manager
     // shifts it out of the center so we need to manually center it).
@@ -666,7 +662,7 @@ void RgBuildSettingsViewOpencl::SetCursor()
 void RgBuildSettingsViewOpencl::HandleIncludeDirsBrowseButtonClick()
 {
     // Position the window in the middle of the screen.
-    include_directories_view_->setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, include_directories_view_->size(), qApp->desktop()->availableGeometry()));
+    include_directories_view_->setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, include_directories_view_->size(), QGuiApplication::primaryScreen()->availableGeometry()));
 
     // Set the current include dirs.
     include_directories_view_->SetListItems(ui_.includeDirectoriesLineEdit->text());
@@ -692,7 +688,7 @@ void RgBuildSettingsViewOpencl::HandleIncludeDirsUpdated(QStringList includeDirs
 void RgBuildSettingsViewOpencl::HandlePreprocessorDirectivesBrowseButtonClick()
 {
     // Position the window in the middle of the screen.
-    preprocessor_directives_dialog_->setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, preprocessor_directives_dialog_->size(), qApp->desktop()->availableGeometry()));
+    preprocessor_directives_dialog_->setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, preprocessor_directives_dialog_->size(), QGuiApplication::primaryScreen()->availableGeometry())); 
 
     // Set the current preprocessor directives in the dialog.
     preprocessor_directives_dialog_->SetListItems(ui_.predefinedMacrosLineEdit->text());
@@ -733,7 +729,7 @@ void RgBuildSettingsViewOpencl::SetToolTipGeometry()
     const int width = ui_.includeDirectoriesLineEdit->width();
 
     // Calculate the height of the tooltip string.
-    const int height = fontMetrics.height() * ScalingManager::Get().GetScaleFactor();
+    const int height = fontMetrics.height();
 
     // Create a width and a height string.
     const QString widthString = QString(kStrFilemenuTitleBarTooltipWidth).arg(width).arg(width);

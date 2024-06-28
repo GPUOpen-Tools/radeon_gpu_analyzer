@@ -79,7 +79,7 @@ void RgMenuFileItem::ShowRenameControls(bool is_renaming)
         line_edit->setVisible(true);
 
         std::string filename_only;
-        bool got_filename = RgUtils::ExtractFileName(filename_, filename_only, false);
+        [[maybe_unused]] bool got_filename = RgUtils::ExtractFileName(filename_, filename_only, false);
         assert(got_filename);
 
         // Focus on the widget with the filename selected so the user can start typing immediately.
@@ -120,7 +120,7 @@ void RgMenuFileItem::UpdateFilepath(const std::string& new_file_path)
     if (!new_file_path.empty())
     {
         // Only display the filename in the interface- not the full path to the file.
-        bool is_ok = RgUtils::ExtractFileName(new_file_path, filename_);
+        [[maybe_unused]] bool is_ok = RgUtils::ExtractFileName(new_file_path, filename_);
         assert(is_ok);
     }
     else
@@ -228,7 +228,7 @@ bool RgMenuFileItem::RenameFile()
         {
             // The renamed file will live in the same location as the old one.
             std::string file_folder_path;
-            bool got_folder = RgUtils::ExtractFileDirectory(full_file_path_, file_folder_path);
+            [[maybe_unused]] bool got_folder = RgUtils::ExtractFileDirectory(full_file_path_, file_folder_path);
             assert(got_folder);
 
             // Generate the full path to where the new file lives.

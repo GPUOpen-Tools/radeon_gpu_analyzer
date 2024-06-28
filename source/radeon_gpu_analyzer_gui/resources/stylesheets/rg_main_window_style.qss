@@ -1,6 +1,224 @@
+/*************************************/
+/* Global
+/*************************************/
+
+ArrowIconComboBox
+{
+background: white;
+border: none;
+font-size: 8pt;
+text-align:left;
+}
+
+RgIsaDisassemblyView ArrowIconComboBox
+{
+background: rgb(51, 51, 51);
+border: none;
+}
+
+RgIsaDisassemblyCustomTableView
+{
+font-size: 10pt;
+}
+
+ListWidget
+{
+font-size: 8pt;
+text-align: left;
+border: 1px solid gray;
+}
+
+ListWidget QCheckBox
+{
+font-size: 8pt;
+padding-left: 3px;
+}
+
+ListWidget QLabel
+{
+font-size: 8pt;
+padding-left: 3px;
+}
+
+ListWidget::item:hover
+{
+background: rgb(214, 214, 214);
+}
+
+ListWidget::item:selected
+{
+background: rgb(143, 193, 231);
+}
+
+ListWidget::item
+{
+border-bottom: none;
+}
+
+CheckBoxWidget
+{
+font-size: 8pt;
+}
+
+CheckBoxWidget::indicator::checked::disabled
+{
+image: url(:/Resources/assets/checkbox_on_gray.svg);
+}
+
+CheckBoxWidget::indicator::unchecked::disabled
+{
+image: url(:/Resources/assets/checkbox_off_gray.svg);
+}
+
+CheckBoxWidget::indicator:checked
+{
+image: url(:/Resources/assets/checkbox_on.svg);
+}
+
+CheckBoxWidget::indicator:unchecked
+{
+image: url(:/Resources/assets/checkbox_off.svg);
+}
+
+ColoredLegendGraphicsView
+{
+font-size: 8pt;
+}
+
+DonutPieWidget
+{
+background-color: white;
+}
+
+NavigationListWidget
+{
+background: rgb(240, 240, 240);
+border-right: 2px groove gray;
+outline: none;
+border: none;
+font: 8pt;
+}
+
+NavigationListWidget::item:hover
+{
+background: rgb(214, 214, 214);
+}
+
+NavigationListWidget::item:selected
+{
+background: rgb(143, 193, 231);
+}
+
+NavigationListWidget::item
+{
+border-bottom: none;
+padding: 7px;
+color: rgb(51, 51, 51);
+}
+
+RecentTraceMiniWidget
+{
+font-size: 8pt;
+}
+
+ScaledCycleButton
+{
+background: white;
+border: none;
+text-align:center;
+}
+
+ScaledTableView, ScaledTreeView
+{
+font-size: 9pt;
+}
+
+ScaledHeaderView
+{
+font: bold 9pt;
+}
+
+ScaledTabWidget
+{
+font: bold 8pt;
+}
+
+ScaledTabWidget > QTabBar::tab
+{
+padding: 0.5em 1em 0.5em 1em;
+}
+
+ScaledTabWidget > QTabBar::tab:!first
+{
+margin-left: -1px;
+}
+
+ScaledTabWidget > QTabBar::tab:selected
+{
+background-color: white;
+border: 1px solid #C4C4C3;
+}
+
+ScaledTabWidget > QTabBar::tab:!selected
+{
+background-color: rgb(236, 236, 236);
+border-right: 1px solid #C4C4C3;
+border-left: 1px solid #C4C4C3;
+}
+
+ScaledTabWidget > QTabBar::tab:!selected:hover {
+background-color: rgb(237, 246, 255)
+}
+
+ScaledLabel, ScaledPushButton, QLabel, QPushButton
+{
+font-size: 8pt;
+}
+
+ScaledLineEdit
+{
+font-size: 8pt;
+border: 1px solid black;
+}
+
+TextSearchWidget
+{
+font-size: 8pt;
+border: 1px solid gray;
+background: white;
+}
+
+ScaledCheckBox
+{
+font-size: 8pt;
+}
+
 /********************************************************************/
 /* Main Window
 /********************************************************************/
+RgMainWindow QTabWidget::pane
+{
+    border : 0px  solid #444;
+    background: solid white;
+}
+
+RgMainWindow #mainTabWidget > QTabWidget::pane
+{
+    border-top: 0px solid #444;
+}
+
+RgMainWindow #mainTabWidget > QTabBar
+{
+    font: bold 10.5pt;
+}
+
+RgMainWindow #mainTabWidget > QTabBar::tab
+{
+    background: rgb(51,51,51);
+    color: #666;
+    bottom: 1px;
+    font-size: 10.5pt;
+}
 
 /* Home page background (appears as background color for empty tab bar space) */
 #homePage
@@ -77,6 +295,11 @@ QPushButton#noRecentSessionsDummyPushButton
     font: 10pt;
 }
 
+RgStartTab #startLabel, #recentLabel, #helpLabel, #helloLabel
+{
+    font: bold 12pt;
+}
+
 /********************************************************************/
 /* SETTINGS tab.
 /********************************************************************/
@@ -126,6 +349,7 @@ RgSettingsTab #settingsListWidget::item
     padding: 7px;
     padding-left: 30px;
     color: rgb(51, 51, 51);
+    font: bold 8pt;
 }
 
 RgSettingsTab #rightFrame > QFrame:focus
@@ -136,11 +360,18 @@ RgSettingsTab #rightFrame > QFrame:focus
 RgSettingsTab #globalSettingsLabel
 {
     background:  rgb(240, 240, 240);
+    font: 8pt;
+    padding: 5px;
+}
+
+QFontComboBox, QComboBox
+{
+    font-size: 8pt;
 }
 
 QComboBox::drop-down
 {
-    width: 17px;
+    width: 25px;
 }
 
 /********************************************************************/
@@ -153,7 +384,6 @@ RgAboutDialog #checkForUpdatesButton
     color: rgb(0, 0, 255);
     border: none;
     text-align: left;
-    font: 8pt;
 }
 
 RgAboutDialog #checkForUpdatesButton:hover

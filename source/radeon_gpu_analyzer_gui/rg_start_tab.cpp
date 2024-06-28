@@ -6,9 +6,6 @@
 #include <QKeyEvent>
 #include <QButtonGroup>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_recent_project_widget.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_start_tab.h"
@@ -144,9 +141,8 @@ void RgStartTab::InitializeStartButtons()
             // Set the cursor for each of the start buttons being added to the start tab.
             start_button->setCursor(Qt::PointingHandCursor);
 
-            // Add the widget to the start tab and the ScalingManager.
+            // Add the widget to the start tab.
             vertical_buttons_layout->addWidget(start_button);
-            ScalingManager::Get().RegisterObject(start_button);
         }
     }
 }
@@ -256,8 +252,7 @@ void RgStartTab::PopulateRecentProjectsList()
     {
         // Create a new button group to handle clicks on recent project buttons.
         recent_project_button_group_ = new QButtonGroup(this);
-        bool is_connected = connect(recent_project_button_group_, static_cast<void (QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked),
-            this, &RgStartTab::HandleRecentProjectClickedEvent);
+        bool is_connected            = connect(recent_project_button_group_, &QButtonGroup::buttonClicked, this, &RgStartTab::HandleRecentProjectClickedEvent);
         assert(is_connected);
 
         // If the button group handler is connected correctly, add a button for each recent project entry.
@@ -431,12 +426,13 @@ void RgStartTab::HandleContextMenuRequest(const QPoint& pos)
     }
 }
 
-void RgStartTab::HandleRecentProjectClickedEvent(int recent_file_index)
+void RgStartTab::HandleRecentProjectClickedEvent(QAbstractButton* recent_file_button)
 {
     std::shared_ptr<RgGlobalSettings> global_settings = RgConfigManager::Instance().GetGlobalConfig();
 
-    if (global_settings != nullptr)
+    if (global_settings != nullptr && recent_project_button_group_ != nullptr && recent_file_button != nullptr)
     {
+        int  recent_file_index = recent_project_button_group_->id(recent_file_button);
         bool is_valid_range = (recent_file_index >= 0 && recent_file_index < global_settings->recent_projects.size());
         assert(is_valid_range);
 

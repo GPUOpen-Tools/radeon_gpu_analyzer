@@ -1,12 +1,10 @@
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_CUSTOM_TABLE_VIEW_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_CUSTOM_TABLE_VIEW_H_
 
-// Qt.
-#include <QTreeView>
-#include <QHeaderView>
+#include "qt_common/custom_widgets/scaled_tree_view.h"
 
 // Local.
-#include "source/radeon_gpu_analyzer_gui/rg_data_types.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types.h"
 
 // Forward declarations.
 class QLabel;
@@ -14,7 +12,7 @@ class RgIsaDisassemblyTableModel;
 
 // A custom QTreeView implementation used to present rows of disassembled instructions.
 // This widget makes use of a custom row paint function to customize individual row style.
-class RgIsaDisassemblyCustomTableView : public QTreeView
+class RgIsaDisassemblyCustomTableView : public ScaledTreeView
 {
     Q_OBJECT
 

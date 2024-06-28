@@ -1,7 +1,8 @@
-Radeon GPU Analyzer 2.9.1 Release Notes
-=======================================
+Radeon GPU Analyzer 2.10.0 Release Notes
+========================================
 Highlights
 ==========
+-   The RGA GUI application now handles display scaling, which allows for a better experience when working with multiple monitors or when changing display settings.
 -	Analyze pre-compiled HIP Code Object binaries for the MI-300 with RGA's Binary Analysis mode.
 -	Added support for MI-300 (gfx942) as a target in OpenCL mode.
 -	DX12 single shader support: compile single DX12 shaders in isolation (CS, VS or PS). When an incomplete DX12 pipeline is received (missing a shader, root signature or state subset), the tool will use reflection to auto-generate the missing pieces of the pipeline for you. No impact to the invocation command, just omit the missing pieces.

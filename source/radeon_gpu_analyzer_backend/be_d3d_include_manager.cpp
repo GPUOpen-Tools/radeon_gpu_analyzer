@@ -11,10 +11,6 @@
 // Local.
 #include "source/radeon_gpu_analyzer_backend/be_d3d_include_manager.h"
 
-#pragma warning(push)
-#pragma warning(disable:4309)
-#pragma warning(pop)
-
 // *****************************************
 // *** INTERNALLY LINKED SYMBOLS - START ***
 // *****************************************

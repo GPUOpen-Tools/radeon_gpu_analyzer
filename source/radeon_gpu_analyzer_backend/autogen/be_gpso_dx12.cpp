@@ -8,7 +8,6 @@
 // Local.
 #include "radeon_gpu_analyzer_backend/autogen/be_reflection_dx12.h"
 #include "radeon_gpu_analyzer_backend/autogen/be_utils_dx12.h"
-#include "radeon_gpu_analyzer_backend/autogen/be_string_constants_dx12.h"
 
 // CLI.
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
@@ -226,7 +225,6 @@ const char* DxgiFormatToString(DXGI_FORMAT dxgi_format)
         case DXGI_FORMAT_V408 : return "DXGI_FORMAT_V408";
         case DXGI_FORMAT_SAMPLER_FEEDBACK_MIN_MIP_OPAQUE : return "DXGI_FORMAT_SAMPLER_FEEDBACK_MIN_MIP_OPAQUE";
         case DXGI_FORMAT_SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE : return "DXGI_FORMAT_SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE";
-        // case DXGI_FORMAT_A4B4G4R4_UNORM : return "";
         default: return nullptr;
     }
 }

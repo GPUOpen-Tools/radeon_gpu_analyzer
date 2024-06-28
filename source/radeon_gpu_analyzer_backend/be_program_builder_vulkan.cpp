@@ -7,19 +7,20 @@
 #include <stdlib.h>
 
 // Yaml.
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#pragma warning(disable : 4127)
+#endif
 #include "yaml-cpp/yaml.h"
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 // Infra.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
 #include "external/amdt_os_wrappers/Include/osApplication.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // Local.
 #include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
@@ -819,7 +820,7 @@ bool beProgramBuilderVulkan::WriteIsaFileWithHwMapping(uint32_t                 
     auto        itr                    = shader_to_disassembly.find(hw_mapping_name);
     if (valid_hw_mapping_found && itr != shader_to_disassembly.end())
     {
-        bool is_file_written = KcUtils::WriteTextFile(isa_file, itr->second, nullptr);
+        [[maybe_unused]] bool is_file_written = KcUtils::WriteTextFile(isa_file, itr->second, nullptr);
         assert(is_file_written);
         if (KcUtils::FileNotEmpty(isa_file))
         {
@@ -844,7 +845,7 @@ void WriteIsaFileWithHardcodedMapping(uint32_t                            stage,
     {
         if (shader_to_disassembly.find(amdgpu_stage_name) != shader_to_disassembly.end())
         {
-            bool is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly[amdgpu_stage_name], nullptr);
+            [[maybe_unused]] bool is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly[amdgpu_stage_name], nullptr);
             assert(is_file_written);
             if (!KcUtils::FileNotEmpty(isa_files[stage]))
             {

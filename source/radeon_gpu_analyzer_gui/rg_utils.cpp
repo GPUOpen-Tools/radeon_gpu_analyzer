@@ -31,8 +31,7 @@
 #pragma warning(pop)
 #endif
 
-#include "QtCommon/CustomWidgets/ArrowIconWidget.h"
-#include "QtCommon/CustomWidgets/ListWidget.h"
+#include "qt_common/custom_widgets/arrow_icon_combo_box.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_browse_missing_file_dialog.h"
@@ -357,7 +356,6 @@ bool RgUtils::GetComputeCapabilityToArchMapping(std::map<std::string, std::strin
     bool ret = false;
 
     // Get the current app mode.
-    RgProjectAPI       current_mode     = RgConfigManager::Instance().GetCurrentAPI();
     const std::string& current_mode_str = RgConfigManager::Instance().GetCurrentModeString();
 
     // Get the version info.
@@ -459,33 +457,50 @@ bool RgUtils::GetFirstValidOutputGpu(const RgBuildOutputsMap& build_outputs, std
     return ret;
 }
 
-void RgUtils::SetupComboList(QWidget* parent, ListWidget*& list_widget, ArrowIconWidget*& button, QObject*& event_filter, bool hide)
+std::vector<bool> RgUtils::GetColumnVisibilityCheckboxes(const ArrowIconComboBox* combo_box)
 {
-    assert(button != nullptr);
-    if (button != nullptr)
+    std::vector<bool> visibility;
+
+    assert(combo_box != nullptr);
+    if (combo_box != nullptr)
     {
-        // Create list widget for the combo box.
-        list_widget = new ListWidget(parent, button, hide);
+        const int column_count = combo_box->RowCount();
 
-        assert(list_widget != nullptr);
-        if (list_widget != nullptr)
+        // Subtract 1 to skip over the "All" option.
+        visibility.resize(column_count - 1, false);
+
+        // Start from columnIndex = 1, to skip over the "All" option.
+        for (int column_index = 1; column_index < column_count; ++column_index)
         {
-            list_widget->hide();
-
-            // Also disable scrollbars on this list widget.
-            list_widget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-            list_widget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
-            // Install a custom event filter on this list widget
-            // so it can be hidden when something else is clicked on.
-            event_filter = new RgHideListWidgetEventFilter(list_widget, button);
-            list_widget->installEventFilter(event_filter);
-            qApp->installEventFilter(event_filter);
-
-            // Start out the combo box with the first entry.
-            list_widget->setCurrentRow(0);
+            bool is_visible              = combo_box->IsChecked(column_index);
+            visibility[column_index - 1] = is_visible;
         }
     }
+
+    return visibility;
+}
+
+void RgUtils::SetColumnVisibilityCheckboxes(ArrowIconComboBox*& combo_box, const std::vector<bool>& column_visibility)
+{
+    assert(combo_box != nullptr);
+
+    // The count of incoming visibility flags must match the number of list items + 1, to account for "All".
+    int column_count = combo_box->RowCount();
+    assert(column_visibility.size() == (size_t)(column_count - 1));
+
+    bool all_selected = true;
+
+    // Start at the 1st item instead of the 0th in order to skip the "All" check box item.
+    for (int column_index = 1; column_index < column_count; column_index++)
+    {
+        // Offset the column index to account for the extra "All" item.
+        bool is_visible = column_visibility[column_index - 1];
+        all_selected    = (all_selected && is_visible);
+        combo_box->SetChecked(column_index, is_visible);
+    }
+
+    // Update "All" checkbox.
+    combo_box->SetChecked(0, all_selected);
 }
 
 std::string RgUtils::GenerateCloneName(int clone_index)
@@ -685,7 +700,7 @@ bool RgUtils::ShowBrowseMissingFilesDialog(std::shared_ptr<RgProject>          p
     if (project != nullptr)
     {
         // Ensure that the incoming list of filenames isn't empty.
-        int num_missing_files = static_cast<int>(missing_files_list.size());
+        [[maybe_unused]] int num_missing_files = static_cast<int>(missing_files_list.size());
         assert(num_missing_files > 0);
 
         // Create a new dialog to let the user browse to the missing source files.
@@ -1022,7 +1037,7 @@ bool RgUtils::ReadTextFile(const std::string& file_full_path, QString& txt)
         QTextStream in(&f);
 
         // Support Unicode characters.
-        in.setCodec("UTF-8");
+        in.setEncoding(QStringConverter::Utf8);
 
         txt = in.readAll();
         ret = true;
@@ -1453,7 +1468,7 @@ void RgUtils::SetBackgroundColor(QWidget* widget, const QColor& color)
     {
         // Set the background color.
         QPalette palette = widget->palette();
-        palette.setColor(QPalette::Background, color);
+        palette.setColor(QPalette::Window, color);
         widget->setAutoFillBackground(true);
         widget->setPalette(palette);
     }
@@ -1523,7 +1538,7 @@ std::string RgUtils::TruncateString(const std::string& text,
             truncated_string = front + back;
 
             // Check text width/length to see if truncation is needed.
-            unsigned text_width       = fm.width(truncated_string.c_str());
+            unsigned text_width       = fm.horizontalAdvance(truncated_string.c_str());
             bool     is_within_bounds = text_width <= available_width;
             bool     is_at_min_length = front.length() <= num_front_chars && back.length() <= num_back_chars;
 
@@ -1545,7 +1560,7 @@ std::string RgUtils::TruncateString(const std::string& text,
                 truncated_string = front + kStrTruncatedStringDelimeter + back;
 
                 // Check text width/length to see if truncation is still needed.
-                text_width       = fm.width(truncated_string.c_str());
+                text_width       = fm.horizontalAdvance(truncated_string.c_str());
                 is_within_bounds = text_width <= available_width;
                 is_at_min_length = front.length() <= num_front_chars && back.length() <= num_back_chars;
             }

@@ -3,7 +3,7 @@
 #include <QKeyEvent>
 
 // Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
+#include "qt_common/utils/qt_util.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
@@ -33,10 +33,8 @@ RgStartupDialog::RgStartupDialog(QWidget* parent) :
     ui_.setupUi(this);
 
     // Set the background color to white.
-    QPalette pal = palette();
-    pal.setColor(QPalette::Background, Qt::white);
     setAutoFillBackground(true);
-    setPalette(pal);
+    setPalette(QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette());
 
     // Disable the help button in the title bar, and disable resizing of this dialog.
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint | Qt::MSWindowsFixedSizeDialogHint);
@@ -72,8 +70,8 @@ RgStartupDialog::RgStartupDialog(QWidget* parent) :
     SetDescriptionLength();
 
     // Set button shortcuts.
-    ui_.exitPushButton->setShortcut(Qt::AltModifier + Qt::Key_X);
-    ui_.startRGAPushButton->setShortcut(Qt::AltModifier + Qt::Key_R);
+    ui_.exitPushButton->setShortcut(Qt::AltModifier | Qt::Key_X);
+    ui_.startRGAPushButton->setShortcut(Qt::AltModifier | Qt::Key_R);
 
     //Scale the dialog and the widget inside it.
     ScaleDialog();
@@ -225,7 +223,7 @@ void RgStartupDialog::SetDescriptionLength()
     {
         const QFont font = ui_.descriptionLabel->font();
         QFontMetrics fm(font);
-        const int text_width = fm.width(text);
+        const int    text_width = fm.horizontalAdvance(text);
 
         if (text_width > maxDescriptionWidth)
         {
@@ -237,13 +235,10 @@ void RgStartupDialog::SetDescriptionLength()
 
 void RgStartupDialog::ScaleDialog()
 {
-    ScalingManager& scaling_manager = ScalingManager::Get();
-    const double scale_factor = scaling_manager.GetScaleFactor();
-
     // Scale the dialog.
     QSize size;
-    size.setWidth(width() * scale_factor);
-    size.setHeight(height() * scale_factor);
+    size.setWidth(width());
+    size.setHeight(height());
     setFixedSize(size);
 
     int left_margin;
@@ -251,36 +246,31 @@ void RgStartupDialog::ScaleDialog()
     int right_margin;
     int bottom_margin;
     this->layout()->getContentsMargins(&left_margin, &top_margin, &right_margin, &bottom_margin);
-    left_margin = left_margin * scale_factor;
-    top_margin = top_margin * scale_factor;
-    right_margin = right_margin * scale_factor;
-    bottom_margin = bottom_margin * scale_factor;
+    left_margin = left_margin;
+    top_margin = top_margin;
+    right_margin = right_margin;
+    bottom_margin = bottom_margin;
     this->layout()->setContentsMargins(left_margin, top_margin, right_margin, bottom_margin);
 
     // Scale the description header label.
-    size.setWidth(ui_.descriptionLabel_1->width() * scale_factor);
-    size.setHeight(ui_.descriptionLabel_1->height() * scale_factor);
+    size.setWidth(ui_.descriptionLabel_1->width());
+    size.setHeight(ui_.descriptionLabel_1->height());
     ui_.descriptionLabel_1->setFixedSize(size);
 
     // Scale the list widget.
-    size.setWidth(ui_.apiListWidget->width() * scale_factor);
-    size.setHeight(ui_.apiListWidget->height() * scale_factor);
+    size.setWidth(ui_.apiListWidget->width());
+    size.setHeight(ui_.apiListWidget->height());
     ui_.apiListWidget->setFixedSize(size);
 
     // Scale the description text label.
-    size.setWidth(ui_.descriptionLabel->width() * scale_factor);
-    size.setHeight(ui_.descriptionLabel->height() * scale_factor);
+    size.setWidth(ui_.descriptionLabel->width());
+    size.setHeight(ui_.descriptionLabel->height());
     ui_.descriptionLabel->setFixedSize(size);
 
     // Scale the buttons.
-    ui_.exitPushButton->setFixedWidth(ui_.exitPushButton->width() * scale_factor);
-    ui_.startRGAPushButton->setFixedWidth(ui_.startRGAPushButton->width() * scale_factor);
+    ui_.exitPushButton->setFixedWidth(ui_.exitPushButton->width());
+    ui_.startRGAPushButton->setFixedWidth(ui_.startRGAPushButton->width());
 
     // Recalculate and set the width.
-    setFixedWidth(maxDescriptionWidth + ui_.apiListWidget->width()
-                  + kHorizontalLayoutSpacing * ScalingManager::Get().GetScaleFactor()
-                  + kLeftAndRightMargin * ScalingManager::Get().GetScaleFactor()
-                  + kSpacingAfterLabel * ScalingManager::Get().GetScaleFactor()
-                  );
-
+    setFixedWidth(maxDescriptionWidth + ui_.apiListWidget->width() + kHorizontalLayoutSpacing + kLeftAndRightMargin + kSpacingAfterLabel);
 }

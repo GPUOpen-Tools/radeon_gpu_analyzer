@@ -3,7 +3,7 @@
 #include <sstream>
 
 // Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
+#include "qt_common/utils/scaling_manager.h"
 
 // Utils.
 #include "source/common/vulkan/rg_pso_factory_vulkan.h"
@@ -720,6 +720,70 @@ RgPipelineStateModelVulkan::RgPipelineStateModelVulkan(QWidget* parent)
 {
 }
 
+RgPipelineStateModelVulkan::~RgPipelineStateModelVulkan()
+{
+    RG_SAFE_DELETE(flags_);
+    RG_SAFE_DELETE(alpha_blend_op_node_);
+    RG_SAFE_DELETE(color_component_write_mask_);
+    RG_SAFE_DELETE(color_blend_op_node_);
+    RG_SAFE_DELETE(compare_op_node_);
+    RG_SAFE_DELETE(cull_mode_node_);
+    RG_SAFE_DELETE(dependency_flags_);
+    RG_SAFE_DELETE(depth_compare_op_node_);
+    RG_SAFE_DELETE(depth_fail_op_);
+    RG_SAFE_DELETE(descriptor_set_layout_flags_node_);
+    RG_SAFE_DELETE(descriptor_type_node_);
+    RG_SAFE_DELETE(dst_access_mask_);
+    RG_SAFE_DELETE(dst_alpha_blend_factor_node_);
+    RG_SAFE_DELETE(dst_color_blend_factor_node_);
+    RG_SAFE_DELETE(dst_stage_mask_);
+    RG_SAFE_DELETE(fail_op_node_);
+    RG_SAFE_DELETE(final_layout_item_);
+    RG_SAFE_DELETE(flags_element_);
+    RG_SAFE_DELETE(flags_item_);
+    RG_SAFE_DELETE(flags_item1_);
+    RG_SAFE_DELETE(format_element_);
+    RG_SAFE_DELETE(format_element1_);
+    RG_SAFE_DELETE(front_face_node_);
+    RG_SAFE_DELETE(image_layout_node_);
+    RG_SAFE_DELETE(initial_layout_item_);
+    RG_SAFE_DELETE(input_rate_element_);
+    RG_SAFE_DELETE(load_op_item_);
+    RG_SAFE_DELETE(logic_op_node_);
+    RG_SAFE_DELETE(pass_op_node_);
+    RG_SAFE_DELETE(pipeline_bind_point_node);
+    RG_SAFE_DELETE(polygon_mode_node_);
+    RG_SAFE_DELETE(rasterization_samples_);
+    RG_SAFE_DELETE(src_access_mask_);
+    RG_SAFE_DELETE(src_alpha_blend_factor_node_);
+    RG_SAFE_DELETE(src_color_blend_factor_node_);
+    RG_SAFE_DELETE(src_stage_mask_);
+    RG_SAFE_DELETE(stage_flags_node_);
+    RG_SAFE_DELETE(stage_flags_node1_);
+    RG_SAFE_DELETE(pipeline_bind_point_node_);
+    RG_SAFE_DELETE(stencil_load_op_item_);
+    RG_SAFE_DELETE(stencil_store_op_item_);
+    RG_SAFE_DELETE(store_op_item_);
+    RG_SAFE_DELETE(topology_item_);
+    for (RgEditorElement* element : front_stencil_op_state_node_)
+    {
+        if (element != nullptr)
+        {
+            RG_SAFE_DELETE(element);
+        }
+    }
+    front_stencil_op_state_node_.clear();
+
+    for (RgEditorElement* element : back_stencil_op_state_node_)
+    {
+        if (element != nullptr)
+        {
+            RG_SAFE_DELETE(element);
+        }
+    }
+    back_stencil_op_state_node_.clear();
+}
+
 uint32_t GetSampleMaskDimension(VkSampleCountFlagBits sample_count_bits)
 {
     uint32_t enum_dimension = 0;
@@ -1129,6 +1193,7 @@ void RgPipelineStateModelVulkan::InitializeVkGraphicsPipelineCreateInfo(RgEditor
         // Connect to the splitter moved signal to close the drop down.
         RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
         bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(flags_item), &RgEditorElementEnum::HotKeyPressedSignal);
+        assert(is_connected);
 
         // Set object name.
         flags_item->setObjectName(kStrFlagsItem);
@@ -3239,22 +3304,22 @@ void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
 
             // Add the "pipelineBindPoint" member.
             const RgEnumValuesVector& pipeline_bind_point_enumerators = GetPipelineBindPointEnumerators();
-            RgEditorElement* pipeline_bind_point_node = new RgEditorElementEnum(parent_, kStrVulkanRenderPassDependencyPipelineBindPoint, pipeline_bind_point_enumerators, reinterpret_cast<uint32_t*>(&offset_subpass_description->pipelineBindPoint));
-            root_element->AppendChildItem(pipeline_bind_point_node);
+            RgEditorElement* new_pipeline_bind_point_node = new RgEditorElementEnum(parent_, kStrVulkanRenderPassDependencyPipelineBindPoint, pipeline_bind_point_enumerators, reinterpret_cast<uint32_t*>(&offset_subpass_description->pipelineBindPoint));
+            root_element->AppendChildItem(new_pipeline_bind_point_node);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(pipeline_bind_point_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(new_pipeline_bind_point_node), &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
-            pipeline_bind_point_node->setObjectName(kStrPipelineBindPointNode);
+            new_pipeline_bind_point_node->setObjectName(kStrPipelineBindPointNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(pipeline_bind_point_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected = connect(new_pipeline_bind_point_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(pipeline_bind_point_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(new_pipeline_bind_point_node), &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
         // Input attachment array:

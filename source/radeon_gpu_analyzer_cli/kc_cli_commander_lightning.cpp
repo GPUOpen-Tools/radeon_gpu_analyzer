@@ -9,16 +9,9 @@
 #include <regex>
 
 // Infra.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
 #include "external/amdt_os_wrappers/Include/osApplication.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 #include "common/rg_log.h"
 
 // Local.
@@ -188,7 +181,7 @@ bool KcCLICommanderLightning::InitRequestedAsicListLC(const Config& config)
             std::set<std::string> supported_targets;
             std::string matched_arch_name;
 
-            bool is_supported_target_extracted = GetSupportedTargets(supported_targets);
+            [[maybe_unused]] bool is_supported_target_extracted = GetSupportedTargets(supported_targets);
             assert(is_supported_target_extracted);
 
             // If the device is specified in the LLVM format, convert it to the DeviceInfo format.

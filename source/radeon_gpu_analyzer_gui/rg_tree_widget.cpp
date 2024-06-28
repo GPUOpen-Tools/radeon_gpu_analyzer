@@ -43,7 +43,7 @@ void RgTreeWidget::mouseMoveEvent(QMouseEvent* event)
                 const int column_count = item->columnCount();
                 for (int column_number = 0; column_number < column_count; column_number++)
                 {
-                    item->setBackgroundColor(column_number, light_blue);
+                    item->setBackground(column_number, light_blue);
                 }
 
                 // Pass the event onto the base class.
@@ -67,8 +67,8 @@ void RgTreeWidget::leaveEvent(QEvent* event)
     QTreeWidgetItemIterator it(this);
     while (*it)
     {
-        (*it)->setBackgroundColor(kTreeWidgetIconColumnId, Qt::GlobalColor::transparent);
-        (*it)->setBackgroundColor(kTreeWidgetApiColumnId, Qt::GlobalColor::transparent);
+        (*it)->setBackground(kTreeWidgetIconColumnId, Qt::GlobalColor::transparent);
+        (*it)->setBackground(kTreeWidgetApiColumnId, Qt::GlobalColor::transparent);
         ++it;
     }
 }

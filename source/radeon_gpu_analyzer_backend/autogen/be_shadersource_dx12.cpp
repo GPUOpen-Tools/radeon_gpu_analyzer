@@ -5,7 +5,6 @@
 // Local.
 #include "radeon_gpu_analyzer_backend/autogen/be_reflection_dx12.h"
 #include "radeon_gpu_analyzer_backend/autogen/be_utils_dx12.h"
-#include "radeon_gpu_analyzer_backend/autogen/be_string_constants_dx12.h"
 
 // CLI.
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
@@ -322,8 +321,7 @@ static const uint8_t DxgiFormatToComponentCount(DXGI_FORMAT dxgi_format)
         case DXGI_FORMAT_B8G8R8X8_TYPELESS: return 4;
         case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB: return 4;
         case DXGI_FORMAT_B4G4R4A4_UNORM: return 4;
-        // case DXGI_FORMAT_A4B4G4R4_UNORM: return 4;
-       default: return 0;
+        default: return 0;
     }
 }
 
@@ -471,16 +469,16 @@ beKA::beStatus ShaderSourceGeneratorVertex::SetPixelShaderInputs(const D3D12_SIG
             // {
             //     Ignore, system value is auto-generated.
             // }
+        }
 
-            if (!position_found && rc == beKA::beStatus::kBeStatusSuccess)
-            {
-                D3D12_SIGNATURE_PARAMETER_DESC param_desc = {};
-                param_desc.SemanticName                   = "SV_Position";
-                param_desc.SystemValueType                = D3D_NAME_POSITION;
-                param_desc.ComponentType                  = D3D_REGISTER_COMPONENT_FLOAT32;
-                param_desc.Mask                           = 0xF;
-                vs_outputs_.push_back(param_desc);
-            }
+        if (!position_found && rc == beKA::beStatus::kBeStatusSuccess)
+        {
+            D3D12_SIGNATURE_PARAMETER_DESC param_desc = {};
+            param_desc.SemanticName                   = "SV_Position";
+            param_desc.SystemValueType                = D3D_NAME_POSITION;
+            param_desc.ComponentType                  = D3D_REGISTER_COMPONENT_FLOAT32;
+            param_desc.Mask                           = 0xF;
+            vs_outputs_.push_back(param_desc);
         }
     }
     return rc;

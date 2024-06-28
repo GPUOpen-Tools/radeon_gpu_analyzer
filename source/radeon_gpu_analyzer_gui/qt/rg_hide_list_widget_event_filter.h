@@ -9,14 +9,14 @@
 // Local.
 #include "source/radeon_gpu_analyzer_gui/rg_data_types.h"
 
-class ArrowIconWidget;
+class ArrowIconComboBox;
 
 // An event filter responsible for hiding list widgets on loss of focus.
 class RgHideListWidgetEventFilter : public QObject
 {
     Q_OBJECT
 public:
-    explicit RgHideListWidgetEventFilter(QListWidget* list_widget, ArrowIconWidget* button);
+    explicit RgHideListWidgetEventFilter(QListWidget* list_widget, ArrowIconComboBox* button);
     virtual ~RgHideListWidgetEventFilter() = default;
 
     // API to allow addition to the object name list.
@@ -50,12 +50,12 @@ signals:
 
 private:
     // The list widget losing focus.
-    QListWidget*        list_widget_;
+    QListWidget*       list_widget_;
 
     // The push button used to open the list widget.
-    ArrowIconWidget*    button_;
+    ArrowIconComboBox* button_;
 
     // The string list of widget names.
-    static QStringList  string_list_;
+    static QStringList string_list_;
 };
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_HIDE_LIST_WIDGET_EVENT_FILTER_H_

@@ -9,14 +9,7 @@
 #include <vector>
 #include <string>
 
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include <external/amdt_base_tools/Include/gtString.h>
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // A structure to hold the shader file names of a given pipeline.
 struct BeProgramPipeline

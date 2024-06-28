@@ -41,7 +41,8 @@ RgMenuPipelineStateItem::RgMenuPipelineStateItem(RgPipelineType pipeline_type, R
 void RgMenuPipelineStateItem::ConnectSignals()
 {
     // Connect the "Pipeline State" button to a handler to convert the parameter.
-    bool is_connected = connect(ui_.pipelineStateButton, &QPushButton::clicked, this, &RgMenuPipelineStateItem::HandlePipelineStateButtonClicked);
+    [[maybe_unused]] bool is_connected =
+        connect(ui_.pipelineStateButton, &QPushButton::clicked, this, &RgMenuPipelineStateItem::HandlePipelineStateButtonClicked);
     assert(is_connected);
 }
 

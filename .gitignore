@@ -20,7 +20,7 @@ source/common/vulkan_layer_launcher/RGALayerLauncher/bin
 source/utils/vulkan/backend/build
 external/third_party
 external/QtCommon
-external/qtcommon
+external/qt_common
 external/adl
 external/adlutil
 external/appsdk

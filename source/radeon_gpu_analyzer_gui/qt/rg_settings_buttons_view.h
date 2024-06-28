@@ -3,11 +3,6 @@
 
 // C++.
 #include <memory>
-
-// Infra.
-#include "QtCommon/CustomWidgets/ListWidget.h"
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "ui_rg_settings_buttons_view.h"
 #include "source/radeon_gpu_analyzer_gui/rg_data_types.h"

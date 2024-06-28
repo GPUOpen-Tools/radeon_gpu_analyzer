@@ -37,7 +37,7 @@ void RgAppStateVulkan::ResetBuildView()
 
 void RgAppStateVulkan::ConnectBuildViewSignals(RgBuildView* build_view)
 {
-    bool is_connected = connect(build_view, &RgBuildView::ProjectLoaded, this, &RgAppStateVulkan::HandleProjectLoaded);
+    [[maybe_unused]] bool is_connected = connect(build_view, &RgBuildView::ProjectLoaded, this, &RgAppStateVulkan::HandleProjectLoaded);
     assert(is_connected);
 }
 

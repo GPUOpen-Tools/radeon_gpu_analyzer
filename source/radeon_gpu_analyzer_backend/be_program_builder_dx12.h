@@ -58,7 +58,7 @@ public:
     // This functions also tries autogenerating other required files to complete the pipeline.
     bool ValidateAndGeneratePipeline(const Config& config, bool is_dxr_pipeline);
 
-    // Generate Livereg VGPR Analysis file.
+    // Generate livereg VGPR analysis file.
     void PerformLiveVgprAnalysis(const std::string& isa_file,
                                  const std::string& stage_name,
                                  const std::string& target,

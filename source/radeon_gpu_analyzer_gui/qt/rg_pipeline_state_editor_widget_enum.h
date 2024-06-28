@@ -2,8 +2,6 @@
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_PIPELINE_STATE_EDITOR_WIDGET_ENUM_H_
 
 // Infra.
-#include "QtCommon/CustomWidgets/ListWidget.h"
-#include "QtCommon/Scaling/ScalingManager.h"
 
 // Local.
 #include "source/radeon_gpu_analyzer_gui/qt/rg_pipeline_state_editor_widget.h"
@@ -11,7 +9,6 @@
 #include "ui_rg_pipeline_state_editor_widget_enum.h"
 
 // Forward declarations.
-class ListWidget;
 namespace Ui {
 class RgPipelineStateEditorWidgetEnum;
 }
@@ -40,32 +37,19 @@ signals:
     // A signal to indicate list widget status change.
     void EnumListWidgetStatusSignal(bool is_opened);
 
-public slots:
-    // Handler for the hotkey pressed signal.
-    void HandleHotKeyPressedSignal();
-
 protected:
-    // The widget used to display all enum values.
-    ListWidget* enum_list_widget_ = nullptr;
-
     // The generated UI object.
     Ui::RgPipelineStateEditorWidgetEnum ui_;
 
 private slots:
-    // Handler for the enum list push button click.
-    void HandleEnumPushButtonClick(bool checked);
-
     // Handler invoked when a check state changes in a flag enumeration.
-    void HandleFlagCheckStateChanged(bool checked);
+    void HandleFlagCheckStateChanged(QCheckBox* check_box);
 
-    // Handler invoked when the selected row index is changed (for index-based enumerations).
-    void HandleEnumChanged(int index);
+    // Handler invoked when a list selection has changed.
+    void HandleSelectionChanged();
 
     // Handle updating the enum button's text when the selected value changes.
     void HandleUpdateEnumButtonText(const QString& text, bool checked);
-
-    // Handle application lost focus event.
-    void HandleApplicationFocusOutEvent(Qt::ApplicationState state);
 
 private:
     // Connect internal signals.
@@ -79,12 +63,6 @@ private:
 
     // Return a string displaying the selected enum/bitwise'd flag strings.
     void GetTooltipString(std::string& tooltip_text);
-
-    // Hide the list widget.
-    void HideListWidget();
-
-    // Set the selected row in an index-based enumeration.
-    void SetSelectedListRow(int row_index);
 
     // Bump up the enum push button counter.
     static void UpdateEnumPushButtonCounter();

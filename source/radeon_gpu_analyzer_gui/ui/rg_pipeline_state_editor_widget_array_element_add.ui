@@ -36,7 +36,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QPushButton" name="addElementButton">
+    <widget class="ScaledPushButton" name="addElementButton">
      <property name="minimumSize">
       <size>
        <width>18</width>
@@ -65,7 +65,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="countLabel">
+    <widget class="ScaledLabel" name="countLabel">
      <property name="font">
       <font>
        <family>Segoe UI</family>
@@ -92,6 +92,18 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ScaledLabel</class>
+   <extends>QLabel</extends>
+   <header>qt_common/custom_widgets/scaled_label.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ScaledPushButton</class>
+   <extends>QPushButton</extends>
+   <header>qt_common/custom_widgets/scaled_push_button.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../resources/radeon_gpu_analyzer_gui.qrc"/>
  </resources>

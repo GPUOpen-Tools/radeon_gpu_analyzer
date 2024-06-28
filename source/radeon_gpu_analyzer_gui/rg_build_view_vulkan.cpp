@@ -11,7 +11,6 @@
 #include <QWidget>
 
 // Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
 #include "source/common/vulkan/rg_pso_factory_vulkan.h"
 #include "source/common/vulkan/rg_pso_serializer_vulkan.h"
 
@@ -47,6 +46,14 @@ static const char* kStrApplicationInformationTooltip = "Compilation failed with 
 RgBuildViewVulkan::RgBuildViewVulkan(QWidget* parent)
     : RgBuildViewGraphics(RgProjectAPI::kVulkan, parent)
 {
+}
+
+RgBuildViewVulkan::~RgBuildViewVulkan()
+{
+    RG_SAFE_DELETE(disassembly_view_);
+    RG_SAFE_DELETE(file_menu_);
+    RG_SAFE_DELETE(pipeline_state_model_);
+    RG_SAFE_DELETE(pipeline_state_view_);
 }
 
 void RgBuildViewVulkan::ConnectBuildSettingsSignals()
@@ -269,9 +276,6 @@ bool RgBuildViewVulkan::LoadPipelineStateFile(const std::string& pipeline_state_
 
             // Initialize the model.
             pipeline_state_view_->InitializeModel(pipeline_state_model_);
-
-            // Scale the settings tree after each load.
-            pipeline_state_view_->ScaleSettingsTree();
         }
     }
 
@@ -1254,13 +1258,6 @@ bool RgBuildViewVulkan::CreateMenu(QWidget* parent)
     is_connected = connect(file_menu_, &RgMenuVulkan::EnableBuildSettingsMenuItem, this, &RgBuildViewVulkan::EnableBuildSettingsMenuItem);
     assert(is_connected);
 
-    // Register the file menu with scaling manager.
-    assert(file_menu_ != nullptr);
-    if (file_menu_ != nullptr)
-    {
-        ScalingManager::Get().RegisterObject(file_menu_);
-    }
-
     return file_menu_ != nullptr;
 }
 
@@ -1388,7 +1385,6 @@ void RgBuildViewVulkan::CreatePipelineStateView(QWidget* parent)
 
         // Create the find widget, register with the scaling manager.
         pso_find_widget_ = new RgFindTextWidget(pipeline_state_view_);
-        ScalingManager::Get().RegisterObject(pso_find_widget_);
 
         // The find widget is hidden by default.
         pso_find_widget_->hide();
@@ -1560,7 +1556,7 @@ bool RgBuildViewVulkan::CreateNewSourceFile(RgPipelineStage stage, const std::st
             RgUtils::ExtractFileDirectory(full_source_file_path, sourcefile_folder);
             if (!RgUtils::IsDirExists(sourcefile_folder))
             {
-                bool is_dir_created = RgUtils::CreateFolder(sourcefile_folder);
+                [[maybe_unused]] bool is_dir_created = RgUtils::CreateFolder(sourcefile_folder);
                 assert(is_dir_created);
             }
 
@@ -1570,7 +1566,7 @@ bool RgBuildViewVulkan::CreateNewSourceFile(RgPipelineStage stage, const std::st
 
             // Use the Vulkan factory to fill the new file with the default code for the stage being created.
             QTextStream stream(&empty_file);
-            stream << vulkan_utils->GetDefaultShaderCode(stage).c_str() << endl;
+            stream << vulkan_utils->GetDefaultShaderCode(stage).c_str() << Qt::endl;
             empty_file.close();
 
             // Add the source file's path to the project's clone.

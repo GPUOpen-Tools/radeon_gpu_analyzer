@@ -6,7 +6,6 @@
 #include <QPushButton>
 
 // Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
 #include "update_check_api/source/update_check_thread.h"
 #include "update_check_api/source/update_check_results_dialog.h"
 
@@ -28,12 +27,6 @@ RgAboutDialog::RgAboutDialog(QWidget* parent) :
     check_for_updates_thread_(nullptr)
 {
     ui_.setupUi(this);
-
-    // Set the size to fixed.
-    QSize size;
-    size.setWidth(300 * ScalingManager::Get().GetScaleFactor());
-    size.setHeight(125 * ScalingManager::Get().GetScaleFactor());
-    setFixedSize(size);
 
     // Set the background to white.
     RgUtils::SetBackgroundColor(this, Qt::white);
@@ -58,7 +51,7 @@ RgAboutDialog::RgAboutDialog(QWidget* parent) :
 
     // Convert the date string.
     std::string gui_data_string(kStrRgaBuildDate);
-    bool is_converted = RgaSharedUtils::ConvertDateString(gui_data_string);
+    [[maybe_unused]] bool is_converted = RgaSharedUtils::ConvertDateString(gui_data_string);
     assert(is_converted);
 
     gui_version_string << ui_.ApplicationVersionLabel->text().toStdString() << " " <<
@@ -109,8 +102,8 @@ void RgAboutDialog::HandleCheckForUpdatesClicked()
             check_for_updates_dialog_ = new QDialog(this);
             check_for_updates_dialog_->setWindowTitle(kStrAppName);
             check_for_updates_dialog_->setWindowFlags(check_for_updates_dialog_->windowFlags() & ~Qt::WindowContextHelpButtonHint | Qt::MSWindowsFixedSizeDialogHint);
-            check_for_updates_dialog_->setFixedWidth(250 * ScalingManager::Get().GetScaleFactor());
-            check_for_updates_dialog_->setFixedHeight(100 * ScalingManager::Get().GetScaleFactor());
+            check_for_updates_dialog_->setFixedWidth(250);
+            check_for_updates_dialog_->setFixedHeight(100);
 
             // Set background to white.
             RgUtils::SetBackgroundColor(check_for_updates_dialog_, Qt::white);
@@ -129,10 +122,12 @@ void RgAboutDialog::HandleCheckForUpdatesClicked()
             check_for_updates_dialog_->layout()->addWidget(check_for_updates_dialog_button_box_);
 
             // If the cancel button is pressed, signal the dialog to reject, which is similar to closing it.
-            bool is_rejected_connected = connect(check_for_updates_dialog_button_box_, &QDialogButtonBox::rejected, check_for_updates_dialog_, &QDialog::reject);
+            [[maybe_unused]] bool is_rejected_connected =
+                connect(check_for_updates_dialog_button_box_, &QDialogButtonBox::rejected, check_for_updates_dialog_, &QDialog::reject);
             assert(is_rejected_connected);
 
-            bool is_ok_connected = connect(check_for_updates_dialog_button_box_, &QDialogButtonBox::accepted, check_for_updates_dialog_, &QDialog::accept);
+            [[maybe_unused]] bool is_ok_connected =
+                connect(check_for_updates_dialog_button_box_, &QDialogButtonBox::accepted, check_for_updates_dialog_, &QDialog::accept);
             assert(is_ok_connected);
         }
         else
@@ -144,13 +139,16 @@ void RgAboutDialog::HandleCheckForUpdatesClicked()
         }
 
         // Cancel the check for updates if the dialog is closed.
-        bool is_cancel_dialog_connected = connect(check_for_updates_dialog_, &QDialog::rejected, check_for_updates_thread_, &UpdateCheck::ThreadController::CancelCheckForUpdates);
+        [[maybe_unused]] bool is_cancel_dialog_connected =
+            connect(check_for_updates_dialog_, &QDialog::rejected, check_for_updates_thread_, &UpdateCheck::ThreadController::CancelCheckForUpdates);
         assert(is_cancel_dialog_connected);
 
         // Get notified when the check for updates has completed or was cancelled.
-        bool is_completed_connected = connect(check_for_updates_thread_, &UpdateCheck::ThreadController::CheckForUpdatesComplete, this, &RgAboutDialog::HandleCheckForUpdatesCompleted);
+        [[maybe_unused]] bool is_completed_connected =
+            connect(check_for_updates_thread_, &UpdateCheck::ThreadController::CheckForUpdatesComplete, this, &RgAboutDialog::HandleCheckForUpdatesCompleted);
         assert(is_completed_connected);
-        bool is_cancelled_connected = connect(check_for_updates_thread_, &UpdateCheck::ThreadController::CheckForUpdatesCancelled, this, &RgAboutDialog::HandleCheckForUpdatesCancelled);
+        [[maybe_unused]] bool is_cancelled_connected =
+            connect(check_for_updates_thread_, &UpdateCheck::ThreadController::CheckForUpdatesCancelled, this, &RgAboutDialog::HandleCheckForUpdatesCancelled);
         assert(is_cancelled_connected);
 
         check_for_updates_thread_->StartCheckForUpdates(kStrRgaUpdatecheckUrl, kStrRgaUpdatecheckAssetName);
@@ -207,8 +205,7 @@ void RgAboutDialog::HandleCheckForUpdatesCompleted(UpdateCheck::ThreadController
             // Set this dialog to get deleted when it is closed.
             results_dialog->setAttribute(Qt::WA_DeleteOnClose, true);
             results_dialog->setWindowFlags(results_dialog->windowFlags() & ~Qt::WindowContextHelpButtonHint);
-            results_dialog->setFixedSize(400 * ScalingManager::Get().GetScaleFactor(),
-                300 * ScalingManager::Get().GetScaleFactor());
+            results_dialog->setFixedSize(400, 300);
             QDialogButtonBox* button_box = results_dialog->findChild<QDialogButtonBox*>("button_box_");
             if (button_box != nullptr)
             {

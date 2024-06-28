@@ -19,7 +19,6 @@
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
-#include "QtCommon/Scaling/ScalingManager.h"
 
 static const char* kStrButtonFocusInStylesheetBinary = "QPushButton { background: rgb(253,255,174); border: 2px inset rgb(128, 0, 128); }";
 
@@ -36,7 +35,6 @@ void RgMenuBinary::InitializeDefaultMenuItems(const std::shared_ptr<RgProjectClo
     build_settings_menu_item_ = new RgMenuBuildSettingsItem();
     layout_->insertWidget(0, build_settings_menu_item_);
     // Disable the "Build Settings" oitem for Binary mode.
-    // TODO - AMK3 - Unhide these to show build settings file button.
     auto build_settings_button = build_settings_menu_item_->GetBuildSettingsButton();
     if (build_settings_button)
     {
@@ -65,16 +63,12 @@ void RgMenuBinary::InitializeDefaultMenuItems(const std::shared_ptr<RgProjectClo
     //// Make the menu as wide as the items.
     const int height = link_source_menu_item_->height();
     this->resize(link_source_menu_item_->width(), 2 * (height));
-
-    //// Register the buttons with the scaling manager.
-    ScalingManager::Get().RegisterObject(build_settings_menu_item_);
-    ScalingManager::Get().RegisterObject(link_source_menu_item_);
 }
 
 void RgMenuBinary::ConnectDefaultItemSignals()
 {
     // Handler invoked when the "Load CodeObj Binary" button is clicked within an API item.
-    bool is_connected = connect(link_source_menu_item_->GetLoadCodeObjButton(), &QPushButton::clicked, this, &RgMenu::CreateFileButtonClicked);
+    [[maybe_unused]] bool is_connected = connect(link_source_menu_item_->GetLoadCodeObjButton(), &QPushButton::clicked, this, &RgMenu::CreateFileButtonClicked);
     assert(is_connected);
     
     // Handler invoked when the "Link Source File" button is clicked within an API item.
@@ -139,7 +133,8 @@ bool RgMenuBinary::AddItem(const std::string& full_path, bool is_new_file_item)
             menu_items_.push_back(new_menu_item);
 
             // Connect to this file item to change the stylesheet when the build is successful.
-            bool is_connected = connect(this, &RgMenuBinary::ProjectBuildSuccess, new_menu_item, &RgMenuFileItemOpencl::HandleProjectBuildSuccess);
+            [[maybe_unused]] bool is_connected =
+                connect(this, &RgMenuBinary::ProjectBuildSuccess, new_menu_item, &RgMenuFileItemOpencl::HandleProjectBuildSuccess);
             assert(is_connected);
 
             // Emit a signal that indicates that the number of items in the menu change,
@@ -152,9 +147,6 @@ bool RgMenuBinary::AddItem(const std::string& full_path, bool is_new_file_item)
             // Insert the item just above the default "CL" menu item.
             const size_t index = (!menu_items_.empty()) ? (menu_items_.size() - 1) : 0;
             layout_->insertWidget(static_cast<const int>(index), new_menu_item, Qt::AlignTop);
-
-            // Register the object with the scaling manager.
-            ScalingManager::Get().RegisterObject(new_menu_item);
 
             // Connect signals for the new file menu item.
             ConnectMenuFileItemSignals(new_menu_item);

@@ -17,10 +17,10 @@ The RGA package contains both a GUI app and a command-line executable.
 The supported modes by the **GUI app** are:
 * Vulkan - GLSL/SPIR-V as input, together with the Vulkan pipeline state; compiled through AMD's Vulkan driver
 * OpenCL - AMD's LLVM-based Lightning Compiler for OpenCL
-* Binary Analysis - Analyze pre-compiled binary Code Object files
+* Binary Analysis - analyze pre-compiled AMD GPU Code Object binary files
 
 The supported modes by the **command-line tool** are:
-* Binary Analysis - analyze pre-compiled binary Code Object files
+* Binary Analysis - analyze pre-compiled AMD GPU Code Object binary files
 * DX12 (see https://gpuopen.com/radeon-gpu-analyzer-2-2-direct3d12-compute/ and https://gpuopen.com/radeon-gpu-analyzer-2-3-direct3d-12-graphics/ for more details)
 * DX11
 * DXR
@@ -56,7 +56,7 @@ to your build output folder (make sure to place the folder in the same folder hi
 As a preliminary step, make sure that you have the following installed on your system:
 * CMake 3.10 or above is required for Visual Studio 2019. CMake 3.21 or above is required for Visual Studio 2022. For auto-detecting the Vulkan SDK version 3.7 or above is required.
 * Python 3.10 or above
-* Qt (in case that you are interested in building the GUI app; you can build the command line executable without Qt). Qt 5.15.2 is recommended.
+* Qt (in case that you are interested in building the GUI app; you can build the command line executable without Qt). Qt 6.7.0 is recommended.
 
 cd to the build sub-folder, and run:
 
@@ -64,7 +64,7 @@ cd to the build sub-folder, and run:
 python pre_build.py --qt <version of QT> --vs 2019
 ```
 
-Where <version of QT> is the version of QT to be used with the script, such as 5.15.2  (default is 5.15.2).
+Where <version of QT> is the version of QT to be used with the script, such as 6.7.0  (default is 6.7.0).
 
 Running the pre_build.py script will fetch all the dependencies and generate the solution file for Visual Studio.
 After successfully running the pre_build.py script, open RGA.sln from build\windows\vs2019 (or vs2017), and build:
@@ -112,7 +112,7 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
    On Linux, it is recommended to explicitly pass to CMake the location of the Vulkan SDK include and lib directories as well as the location of Qt. For example:
 
    ```
-   python pre_build.py --qt 5.15.2 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
+   python pre_build.py --qt 6.7.0 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
    ```
 
    This will fetch all the dependencies and generate the make files.
@@ -198,7 +198,7 @@ to your build output folder (make sure to place the folder in the same folder hi
 As a preliminary step, make sure that you have the following installed on your system:
 * CMake 3.10 or above. For auto-detecting the Vulkan SDK version 3.7 or above is required.
 * Python 3.10 or above
-* Qt (in case that you are interested in building the GUI app; you can build the command line executable without Qt). Qt 5.15.2 is recommended.
+* Qt (in case that you are interested in building the GUI app; you can build the command line executable without Qt). Qt 6.7.0 is recommended.
 
 cd to the build sub-folder, and run:
 
@@ -206,7 +206,7 @@ cd to the build sub-folder, and run:
 python pre_build.py --qt <version of Qt> --vs 2019
 ```
 
-Where <version of QT> is the version of QT to be used with the script, such as 5.15.2  (default is 5.15.2).
+Where <version of QT> is the version of QT to be used with the script, such as 6.7.0  (default is 6.7.0).
 
 Running the pre_build script will fetch all the dependencies and generate the solution file for Visual Studio.
 After successfully running the preuild script, open RGA.sln from build\windows\vs2019 (or vs2017), and build:
@@ -253,7 +253,7 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
    On Linux, it is recommended to explicitly pass to CMake the location of the Vulkan SDK include and lib directories as well as the location of Qt. For example:
 
    ```
-   python pre_build.py --qt 5.15.2 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
+   python pre_build.py --qt 6.7.0 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
    ```
 
    This will fetch all the dependencies and generate the make files.

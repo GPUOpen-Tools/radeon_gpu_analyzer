@@ -4,15 +4,8 @@
 
 #ifdef _WIN32
 // Infra.
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning(disable:4309)
-#endif
 #include "external/amdt_base_tools/Include/gtString.h"
 #include "external/amdt_base_tools/Include/gtAssert.h"
-#ifdef _WIN32
-#pragma warning(pop)
-#endif
 
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_program_builder_dx11.h"

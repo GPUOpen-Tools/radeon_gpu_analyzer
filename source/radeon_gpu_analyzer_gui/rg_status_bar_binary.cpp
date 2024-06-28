@@ -4,9 +4,6 @@
 #include <QStatusBar>
 #include <QColor>
 
-// Infra.
-#include "QtCommon/CustomWidgets/ArrowIconWidget.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_status_bar.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_status_bar_binary.h"

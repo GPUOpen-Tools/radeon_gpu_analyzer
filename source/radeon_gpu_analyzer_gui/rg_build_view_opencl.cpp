@@ -6,9 +6,9 @@
 // Qt.
 #include <QWidget>
 #include <QTextStream>
+#include <QFile>
 
 // Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
 #include "source/common/rga_shared_utils.h"
 
 // Local.
@@ -208,13 +208,6 @@ bool RgBuildViewOpencl::CreateMenu(QWidget* parent)
     // when an already built project is being loaded.
     is_connected = connect(this, &RgBuildViewOpencl::UpdateFileColoring, file_menu_, &RgMenuOpencl::ProjectBuildSuccess);
     assert(is_connected);
-
-    // Register the file menu with scaling manager.
-    assert(file_menu_ != nullptr);
-    if (file_menu_ != nullptr)
-    {
-        ScalingManager::Get().RegisterObject(file_menu_);
-    }
 
     return file_menu_ != nullptr;
 }
@@ -495,7 +488,7 @@ bool RgBuildViewOpencl::CreateNewSourceFile(const std::string& source_file_name,
             RgUtils::ExtractFileDirectory(full_source_file_path, source_file_folder);
             if (!RgUtils::IsDirExists(source_file_folder))
             {
-                bool is_dir_created = RgUtils::CreateFolder(source_file_folder);
+                [[maybe_unused]] bool is_dir_created = RgUtils::CreateFolder(source_file_folder);
                 assert(is_dir_created);
             }
 
@@ -505,7 +498,7 @@ bool RgBuildViewOpencl::CreateNewSourceFile(const std::string& source_file_name,
 
             // Add the template source code to the newly created file.
             QTextStream stream(&empty_file);
-            stream << RgUtils::GenerateTemplateCode(project_->api, new_file_name).c_str() << endl;
+            stream << RgUtils::GenerateTemplateCode(project_->api, new_file_name).c_str() << Qt::endl;
             empty_file.close();
 
             // Add the source file's path to the project's clone.

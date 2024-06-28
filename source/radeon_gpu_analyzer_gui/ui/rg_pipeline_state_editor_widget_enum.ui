@@ -39,7 +39,7 @@
     <number>0</number>
    </property>
    <item row="0" column="0">
-    <widget class="ArrowIconWidget" name="enumComboPushButton">
+    <widget class="ArrowIconComboBox" name="enumComboPushButton">
      <property name="minimumSize">
       <size>
        <width>200</width>
@@ -47,7 +47,7 @@
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true"/>
+      <string notr="true">background-color: white</string>
      </property>
      <property name="text">
       <string>PushButton</string>
@@ -58,9 +58,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ArrowIconWidget</class>
+   <class>ArrowIconComboBox</class>
    <extends>QPushButton</extends>
-   <header>../../QtCommon/CustomWidgets/ArrowIconWidget.h</header>
+   <header>qt_common/custom_widgets/arrow_icon_combo_box.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -17,9 +17,6 @@
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 static const int kTabBarHeight = 47;
 static const int kTabBarWidth = 100;
 
@@ -177,8 +174,8 @@ QSize RgMainWindowTabBar::minimumTabSizeHint(int index) const
 
 QSize RgMainWindowTabBar::tabSizeHint(int index) const
 {
-    const int height = kTabBarHeight * ScalingManager::Get().GetScaleFactor();
-    const int width  = kTabBarWidth * ScalingManager::Get().GetScaleFactor();
+    const int height       = kTabBarHeight;
+    const int width        = kTabBarWidth;
 
     if (index == SpacerIndex())
     {
@@ -258,7 +255,7 @@ int RgMainWindowTabBar::CalcSpacerWidth() const
         if (count() > 1)
         {
             left_tab_rect = tabRect(spacer_index_ - 1);
-            tab_margin = ScalingManager::Get().Scaled(4);
+            tab_margin = 4;
         }
 
         int right_tabs_width = left_tab_rect.width() * (count() - (spacer_index_ + 1));

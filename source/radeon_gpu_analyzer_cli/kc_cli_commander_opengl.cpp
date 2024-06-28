@@ -10,16 +10,9 @@
 #include "radeon_gpu_analyzer_backend/be_backend.h"
 
 // Infra.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "external/amdt_base_tools/Include/gtAssert.h"
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osFile.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_opengl.h"

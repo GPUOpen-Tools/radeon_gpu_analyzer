@@ -19,7 +19,7 @@ class RgBuildViewVulkan : public RgBuildViewGraphics
 
 public:
     RgBuildViewVulkan(QWidget* parent);
-    virtual ~RgBuildViewVulkan() = default;
+    virtual ~RgBuildViewVulkan();
 
     // Connect the Vulkan-specific signals.
     virtual void ConnectBuildSettingsSignals() override;

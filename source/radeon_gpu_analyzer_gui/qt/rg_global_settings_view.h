@@ -4,9 +4,10 @@
 // C++.
 #include <memory>
 
+#include <QWidget>
+
 // Infra.
-#include "QtCommon/CustomWidgets/ListWidget.h"
-#include "QtCommon/Scaling/ScalingManager.h"
+#include "qt_common/custom_widgets/list_widget.h"
 
 // Local.
 #include "ui_rg_global_settings_view.h"
@@ -24,7 +25,6 @@ class RgGlobalSettingsView : public RgBuildSettingsView
 public:
     RgGlobalSettingsView(QWidget* parent, const RgGlobalSettings& global_settings);
     virtual ~RgGlobalSettingsView();
-    void CloseListWidget();
 
 public:
     virtual bool GetHasPendingChanges() const override;
@@ -46,6 +46,9 @@ public:
     // Process the blank input file.
     void ProcessInputFileBlank() const;
 
+    // Getter for the combo box.
+    ArrowIconComboBox* GetColumnVisibilityComboBox();
+
 signals:
     // A signal to indicate that one or more of the input file names is empty.
     void InputFileNameBlankSignal(bool is_empty);
@@ -64,13 +67,7 @@ public slots:
     void HandleIncludeFilesViewerBrowseButtonClick(bool checked);
 
     // Handler for when the column visibility combo box item is clicked.
-    void HandleColumnVisibilityComboBoxItemClicked(const QString& text, bool checked);
-
-    // Handler for when the column visibility filter state has changed.
-    void HandleColumnVisibilityFilterStateChanged(bool checked);
-
-    // Handler for when the view column button is clicked.
-    void HandleViewColumnsButtonClick(bool checked);
+    void HandleColumnVisibilityComboBoxItemClicked(QCheckBox* check_box);
 
     // Handler for when the project name check box state has changed.
     void HandleProjectNameCheckboxStateChanged(int checked);
@@ -106,9 +103,6 @@ private slots:
 protected:
     virtual void showEvent(QShowEvent* event) override;
 
-    // The widget used to display all columns available for display in the disassembly table.
-    ListWidget* disassembly_columns_list_widget_ = nullptr;
-
 private:
     // Make the UI reflect the values in the supplied global settings struct.
     void PushToWidgets(const RgGlobalSettings& global_settings);
@@ -117,9 +111,6 @@ private:
     // contains the pending changes.
     RgGlobalSettings PullFromWidgets() const;
 
-    // Remove all items from the given list widget.
-    void ClearListWidget(ListWidget* &list_widget);
-
     // Connect the signals.
     void ConnectSignals();
 
@@ -127,10 +118,13 @@ private:
     void CreateColumnVisibilityControls();
 
     // Get the name of the given disassembly column as a string.
-    std::string GetDisassemblyColumnName(RgIsaDisassemblyTableColumns column) const;
+    QString GetDisassemblyColumnName(RgIsaDisassemblyTableColumns column) const;
 
     // Populate the names in the column visibility list.
     void PopulateColumnVisibilityList();
+
+    // Populate Font size dropdown.
+    void PopulateFontSizeDropdown();
 
     // Set the cursor to pointing hand cursor for various widgets.
     void SetCursor();
@@ -140,13 +134,6 @@ private:
 
     // Set the tooltips for the edit boxes.
     void SetEditBoxToolTips();
-
-    // Update the "All" checkbox text color to grey if it is already checked,
-    // to black otherwise.
-    void UpdateAllCheckBoxText();
-
-    // A custom event filter for the disassembly columns list widget.
-    QObject* disassembly_columns_list_event_filter_ = nullptr;
 
     // A pointer to the parent widget.
     QWidget* parent_ = nullptr;

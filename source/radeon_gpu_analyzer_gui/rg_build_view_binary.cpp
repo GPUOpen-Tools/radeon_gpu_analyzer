@@ -11,7 +11,6 @@
 #include <QMessageBox>
 
 // Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
 #include "source/common/rga_shared_utils.h"
 
 // Local.
@@ -204,13 +203,6 @@ bool RgBuildViewBinary::CreateMenu(QWidget* parent)
     // when an already built project is being loaded.
     is_connected = connect(this, &RgBuildViewBinary::UpdateFileColoring, file_menu_, &RgMenuBinary::ProjectBuildSuccess);
     assert(is_connected);
-
-    // Register the file menu with scaling manager.
-    assert(file_menu_ != nullptr);
-    if (file_menu_ != nullptr)
-    {
-        ScalingManager::Get().RegisterObject(file_menu_);
-    }
 
     return file_menu_ != nullptr;
 }

@@ -9,9 +9,6 @@
 #include <QLineEdit>
 #include <QKeyEvent>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_titlebar.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"

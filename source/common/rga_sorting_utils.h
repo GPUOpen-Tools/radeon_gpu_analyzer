@@ -21,29 +21,29 @@ static const char* kStrCdna3   = "CDNA3";
 
 enum class GpuArchitecture
 {
-    GpuArchitectureIpv6,
-    GpuArchitectureIpv7,
-    GpuArchitectureIpv8,
-    GpuArchitectureVega,
-    GpuArchitectureRdna,
-    GpuArchitectureCdna,
-    GpuArchitectureRdna2,
-    GpuArchitectureCdna2,
-    GpuArchitectureRdna3,
-    GpuArchitectureCdna3
+    kGpuArchitectureIpv6,
+    kGpuArchitectureIpv7,
+    kGpuArchitectureIpv8,
+    kGpuArchitectureVega,
+    kGpuArchitectureRdna,
+    kGpuArchitectureCdna,
+    kGpuArchitectureRdna2,
+    kGpuArchitectureCdna2,
+    kGpuArchitectureRdna3,
+    kGpuArchitectureCdna3
 };
 
 // GPU Architectures sort priority.
-static const std::unordered_map<std::string, GpuArchitecture> kGpuSortPriority = {{kStrIpv6, GpuArchitecture::GpuArchitectureIpv6},
-                                                                                  {kStrIpv6, GpuArchitecture::GpuArchitectureIpv7},
-                                                                                  {kStrIpv6, GpuArchitecture::GpuArchitectureIpv8},
-                                                                                  {kStrVega, GpuArchitecture::GpuArchitectureVega},
-                                                                                  {kStrRdna, GpuArchitecture::GpuArchitectureRdna},
-                                                                                  {kStrCdna, GpuArchitecture::GpuArchitectureCdna},
-                                                                                  {kStrRdna2, GpuArchitecture::GpuArchitectureRdna2},
-                                                                                  {kStrCdna2, GpuArchitecture::GpuArchitectureCdna2},
-                                                                                  {kStrRdna3, GpuArchitecture::GpuArchitectureRdna3},
-                                                                                  {kStrCdna3, GpuArchitecture::GpuArchitectureCdna3}};
+static const std::unordered_map<std::string, GpuArchitecture> kGpuSortPriority = {{kStrIpv6, GpuArchitecture::kGpuArchitectureIpv6},
+                                                                                  {kStrIpv6, GpuArchitecture::kGpuArchitectureIpv7},
+                                                                                  {kStrIpv6, GpuArchitecture::kGpuArchitectureIpv8},
+                                                                                  {kStrVega, GpuArchitecture::kGpuArchitectureVega},
+                                                                                  {kStrRdna, GpuArchitecture::kGpuArchitectureRdna},
+                                                                                  {kStrCdna, GpuArchitecture::kGpuArchitectureCdna},
+                                                                                  {kStrRdna2, GpuArchitecture::kGpuArchitectureRdna2},
+                                                                                  {kStrCdna2, GpuArchitecture::kGpuArchitectureCdna2},
+                                                                                  {kStrRdna3, GpuArchitecture::kGpuArchitectureRdna3},
+                                                                                  {kStrCdna3, GpuArchitecture::kGpuArchitectureCdna3}};
 
 // Definition of GpuComparator
 template <typename Gpu>

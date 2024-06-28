@@ -7,9 +7,6 @@
 // Qt.
 #include <QAbstractItemModel>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "source/radeon_gpu_analyzer_gui/qt/rg_editor_element.h"
 #include "source/radeon_gpu_analyzer_gui/qt/rg_editor_element_array_element_add.h"
@@ -89,15 +86,15 @@ protected:
 
     // Remove the given element in the provided array and shift the following elements forward.
     template <typename T>
-    void RemoveElement(const T* pOriginalArray, int element_count, int element_index)
+    void RemoveElement(const T* original_array, int element_count, int element_index)
     {
         // If we remove the given element, is it necessary to shift other subsequent elements?
         if (element_count > 1 && element_index < element_count - 1)
         {
             // Shift all elements after the removed element.
-            for (int copyIndex = element_index; copyIndex < (element_count - 1); ++copyIndex)
+            for (int copy_index = element_index; copy_index < (element_count - 1); ++copy_index)
             {
-                memcpy((void*)(pOriginalArray + copyIndex), pOriginalArray + (copyIndex + 1), sizeof(T));
+                memcpy((void*)(original_array + copy_index), original_array + (copy_index + 1), sizeof(T));
             }
         }
     }

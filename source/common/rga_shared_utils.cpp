@@ -5,17 +5,10 @@
 #include <ctime>
 
 // Infra.
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "external/amdt_base_tools/Include/gtString.h"
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osFile.h"
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 // Local
 #include "common/rga_shared_utils.h"
@@ -201,13 +194,13 @@ void RgaSharedUtils::CloseLogFile()
 std::string RgaSharedUtils::ToLower(const std::string& str)
 {
     std::string lstr = str;
-    std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](const char& c) { return std::tolower(c); });
+    std::transform(lstr.begin(), lstr.end(), lstr.begin(), [](const char& c) { return static_cast<char>(std::tolower(c)); });
     return lstr;
 }
 
 std::string RgaSharedUtils::ToUpper(const std::string& str)
 {
     std::string ustr = str;
-    std::transform(ustr.begin(), ustr.end(), ustr.begin(), [](const char& c) { return std::toupper(c); });
+    std::transform(ustr.begin(), ustr.end(), ustr.begin(), [](const char& c) { return static_cast<char>(std::toupper(c)); });
     return ustr;
 }

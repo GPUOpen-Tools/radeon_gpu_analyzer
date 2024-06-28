@@ -328,7 +328,7 @@ static void DisassembleElfBinary(const std::string& target, const std::string& p
         if (is_elf_disassembled && !elf_disassembly.empty())
         {
             std::cout << kStrInfoDisassemblingBinaryElfContainerSuccess << std::endl;
-            bool isElfDisassemblySaved = KcUtils::WriteTextFile(output_filename, elf_disassembly, nullptr);
+            [[maybe_unused]] bool isElfDisassemblySaved = KcUtils::WriteTextFile(output_filename, elf_disassembly, nullptr);
             assert(isElfDisassemblySaved);
         }
         else

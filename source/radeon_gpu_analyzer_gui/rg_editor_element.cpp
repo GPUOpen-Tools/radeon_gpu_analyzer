@@ -3,12 +3,9 @@
 
 // Qt.
 #include <QInputMethodEvent>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSpacerItem>
 #include <QTextCharFormat>
-
-// QtCommon.
-#include "QtCommon/Scaling/ScalingManager.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_editor_element.h"
@@ -82,16 +79,13 @@ RgEditorElement::RgEditorElement(QWidget* parent, const std::string& member_name
 void RgEditorElement::AppendChildItem(RgEditorElement* item)
 {
     item->parent_item_ = this;
-    child_items_.push_back(item);
+    child_items_.push_back(std::shared_ptr<RgEditorElement>(item));
 
     // Ensure that the expand button is visible when appending children.
     ui_.expandPushButton->setVisible(true);
 
     // Insert the new child to the end of the layout.
     ui_.childRowsLayout->addWidget(item);
-
-    // Register the new row with the ScalingManager.
-    ScalingManager::Get().RegisterObject(item);
 
     // Update the widget geometry now that the newest child element has been added.
     ui_.childRowsLayout->update();
@@ -100,13 +94,17 @@ void RgEditorElement::AppendChildItem(RgEditorElement* item)
 void RgEditorElement::ClearChildren()
 {
     // Destroy all children and clear the child vector.
-    for (auto child_iter = child_items_.begin(); child_iter != child_items_.end(); ++child_iter)
+    for (auto child : child_items_)
     {
         // Remove the child element from the children list layout.
-        ui_.childRowsLayout->removeWidget(*child_iter);
+        ui_.childRowsLayout->removeWidget(child.get());
+    }
 
-        // Destroy the child element.
-        RG_SAFE_DELETE(*child_iter);
+    // Clear the current selection in the tree.
+    RgPipelineStateTree* parent_tree = GetParentStateTree();
+    if (parent_tree != nullptr)
+    {
+        parent_tree->SetCurrentSelection(nullptr);
     }
 
     child_items_.clear();
@@ -241,7 +239,6 @@ RgPipelineStateTree* RgEditorElement::GetParentStateTree() const
     }
 
     // Ensure that the root parent element's tree pointer is valid.
-    assert(current_element->parent_tree_ != nullptr);
     if (current_element->parent_tree_ != nullptr)
     {
         parent_tree = current_element->parent_tree_;
@@ -259,25 +256,9 @@ void RgEditorElement::SetParentStateTree(RgPipelineStateTree* parent_tree)
     }
 }
 
-void RgEditorElement::RemoveChild(RgEditorElement* child_item)
-{
-    auto child_iter = std::find(child_items_.begin(), child_items_.end(), child_item);
-    if (child_iter != child_items_.cend())
-    {
-        // Remove the child element from the children list layout.
-        ui_.childRowsLayout->removeWidget(child_item);
-
-        // Erase the target item from the list of children and destroy it.
-        child_items_.erase(child_iter);
-
-        // Destroy the child element.
-        RG_SAFE_DELETE(child_item);
-    }
-}
-
 RgEditorElement* RgEditorElement::GetChild(int row_index) const
 {
-    return child_items_[row_index];
+    return child_items_[row_index].get();
 }
 
 bool RgEditorElement::GetIsEditable() const
@@ -364,7 +345,8 @@ int RgEditorElement::GetRowIndex() const
     if (parent_item_ != nullptr)
     {
         // Find this item within the parent's children.
-        auto child_iter = std::find(parent_item_->child_items_.begin(), parent_item_->child_items_.end(), this);
+        auto child_iter = std::find_if(
+            parent_item_->child_items_.begin(), parent_item_->child_items_.end(), [this](std::shared_ptr<RgEditorElement> child) { return child.get() == this; });
         if (child_iter != parent_item_->child_items_.end())
         {
             // Compute the child index for this item.
@@ -394,7 +376,7 @@ void RgEditorElement::SetExpansionState(RgRowExpansionState state, bool update_c
     int num_children = ChildCount();
     for (int child_index = 0; child_index < num_children; ++child_index)
     {
-        RgEditorElement* child_element = child_items_[child_index];
+        RgEditorElement* child_element = child_items_[child_index].get();
         assert(child_element != nullptr);
         if (child_element != nullptr)
         {
@@ -429,22 +411,28 @@ void RgEditorElement::SetStyleFlags(uint32_t style_flags)
 
         // Update the "selected" property in the row to highlight the currently-selected row.
         bool is_selected_row = (style_flags_ & static_cast<uint32_t>(RgStyleFlags::CurrentRow)) == static_cast<uint32_t>(RgStyleFlags::CurrentRow);
-        ui_.rowInfo->setProperty("selected", is_selected_row);
+        assert(ui_.rowInfo != nullptr);
+        if (ui_.rowInfo != nullptr)
+        {
+            ui_.rowInfo->setProperty("selected", is_selected_row);
 
-        // Update the "currentResult" property in the row to highlight the current search result.
-        bool is_current_result = (style_flags_ & static_cast<uint32_t>(RgStyleFlags::SearchResultCurrent)) == static_cast<uint32_t>(RgStyleFlags::SearchResultCurrent);
-        ui_.rowInfo->setProperty("currentResult", is_current_result);
+            // Update the "currentResult" property in the row to highlight the current search result.
+            bool is_current_result =
+                (style_flags_ & static_cast<uint32_t>(RgStyleFlags::SearchResultCurrent)) == static_cast<uint32_t>(RgStyleFlags::SearchResultCurrent);
+            ui_.rowInfo->setProperty("currentResult", is_current_result);
 
-        // Update the "resultOccurrence" property in the row to indicate that this row includes a
-        // search result- it's just not the current search result.
-        bool is_result_occurrence = (style_flags_ & static_cast<uint32_t>(RgStyleFlags::SearchResultOccurrence)) == static_cast<uint32_t>(RgStyleFlags::SearchResultOccurrence);
-        ui_.rowInfo->setProperty("resultOccurrence", is_result_occurrence);
+            // Update the "resultOccurrence" property in the row to indicate that this row includes a
+            // search result- it's just not the current search result.
+            bool is_result_occurrence =
+                (style_flags_ & static_cast<uint32_t>(RgStyleFlags::SearchResultOccurrence)) == static_cast<uint32_t>(RgStyleFlags::SearchResultOccurrence);
+            ui_.rowInfo->setProperty("resultOccurrence", is_result_occurrence);
 
-        // Repolish the row's visual style.
-        RgUtils::StyleRepolish(ui_.rowInfo, true);
+            // Repolish the row's visual style.
+            RgUtils::StyleRepolish(ui_.rowInfo, true);
 
-        // Update to repaint the row.
-        update();
+            // Update to repaint the row.
+            update();
+        }
     }
 }
 
@@ -671,13 +659,13 @@ void RgEditorElement::HighlightButtonSubString(int start_location, const std::st
 void RgEditorElement::UpdateButtonSubString()
 {
     QPushButton *pPushButton = ui_.editorHost->findChild<QPushButton*>();
-    ArrowIconWidget* push_button = qobject_cast<ArrowIconWidget*>(pPushButton);
-    if (push_button != nullptr)
+    ArrowIconComboBox* combo_box   = dynamic_cast<ArrowIconComboBox*>(pPushButton);
+    if (combo_box != nullptr)
     {
         // Update the button string.
-        push_button->SetHighLightSubStringData(string_highlight_data_);
-        push_button->SetHighLightSubString(true);
-        push_button->update();
+        combo_box->SetHighLightSubStringData(string_highlight_data_);
+        combo_box->SetHighLightSubString(true);
+        combo_box->update();
     }
 }
 
@@ -690,7 +678,7 @@ void RgEditorElement::UpdateStringMatchingLocation(int start_location, int lengt
     std::vector<int> remove_entries;
     for (auto& string_data : string_highlight_data_)
     {
-        if (string_data.m_highlightString != search_string)
+        if (string_data.highlight_string != search_string)
         {
             remove_entries.push_back(count);
         }
@@ -704,10 +692,10 @@ void RgEditorElement::UpdateStringMatchingLocation(int start_location, int lengt
     // Update existing locations, if any.
     for (auto& string_data : string_highlight_data_)
     {
-        if (string_data.m_startLocation == start_location)
+        if (string_data.start_location == start_location)
         {
-            string_data.m_endLocation = start_location + length;
-            string_data.m_highlightString = search_string;
+            string_data.end_location = start_location + length;
+            string_data.highlight_string = search_string;
             is_found = true;
             SetHighlightColor(string_data);
             break;
@@ -718,9 +706,9 @@ void RgEditorElement::UpdateStringMatchingLocation(int start_location, int lengt
     if (!is_found)
     {
         StringHighlightData string_highlight_data = {};
-        string_highlight_data.m_startLocation = start_location;
-        string_highlight_data.m_endLocation = start_location + length;
-        string_highlight_data.m_highlightString = search_string;
+        string_highlight_data.start_location = start_location;
+        string_highlight_data.end_location = start_location + length;
+        string_highlight_data.highlight_string = search_string;
         SetHighlightColor(string_highlight_data);
         string_highlight_data_.push_back(string_highlight_data);
     }
@@ -736,24 +724,24 @@ void  RgEditorElement::SetHighlightColor(StringHighlightData& string_highlight_d
 
     if (is_current_match_)
     {
-        string_highlight_data.m_highlightColor = kHighlightColorMatchCurrent;
+        string_highlight_data.highlight_color = kHighlightColorMatchCurrent;
     }
     else
     {
-        string_highlight_data.m_highlightColor = kHighlightColorMatchOther;
+        string_highlight_data.highlight_color = kHighlightColorMatchOther;
     }
 }
 
 void RgEditorElement::ResetButtonSubString()
 {
     QPushButton *push_buttons = ui_.editorHost->findChild<QPushButton*>();
-    ArrowIconWidget* icon_widget = qobject_cast<ArrowIconWidget*>(push_buttons);
-    assert(icon_widget != nullptr);
-    if (icon_widget != nullptr)
+    ArrowIconComboBox* combo_box    = dynamic_cast<ArrowIconComboBox*>(push_buttons);
+    assert(combo_box != nullptr);
+    if (combo_box != nullptr)
     {
-        icon_widget->ClearHighLightSubStringData();
-        icon_widget->SetHighLightSubString(false);
-        icon_widget->update();
+        combo_box->ClearHighLightSubStringData();
+        combo_box->SetHighLightSubString(false);
+        combo_box->update();
     }
 }
 

@@ -5,7 +5,7 @@
 #include <QWidget>
 
 // Infra.
-#include "QtCommon/Util/ModelViewMapper.h"
+#include "qt_common/utils/model_view_mapper.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_output_file_utils.h"

@@ -46,6 +46,6 @@ void RgStartTabBinary::InitializeStartButtons()
 void RgStartTabBinary::ConnectSignals()
 {
     // Create New File action.
-    bool is_connected = connect(add_existing_code_obj_file_, &QPushButton::clicked, this, &RgStartTabBinary::OpenExistingCodeObjFileEvent);
+    [[maybe_unused]] bool is_connected = connect(add_existing_code_obj_file_, &QPushButton::clicked, this, &RgStartTabBinary::OpenExistingCodeObjFileEvent);
     assert(is_connected);
 }

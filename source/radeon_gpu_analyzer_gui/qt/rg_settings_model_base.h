@@ -8,7 +8,7 @@
 #include <QVariant>
 
 // Infra.
-#include "QtCommon/Util/ModelViewMapper.h"
+#include "qt_common/utils/model_view_mapper.h"
 
 // A structure containing field validation failure info.
 struct RgInvalidFieldInfo

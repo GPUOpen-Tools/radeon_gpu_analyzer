@@ -21,7 +21,7 @@ class RgPipelineStateModelVulkan : public RgPipelineStateModel
 
 public:
     RgPipelineStateModelVulkan(QWidget* parent = nullptr);
-    virtual ~RgPipelineStateModelVulkan() = default;
+    virtual ~RgPipelineStateModelVulkan();
 
     // Load a pipeline state configuration from the file at the given path.
     bool LoadPipelineStateFile(QWidget* parent, const std::string& pso_file_path, RgPipelineType pipeline_type, std::string& error_string);
@@ -96,6 +96,8 @@ private:
     void InitializeDescriptorSetLayoutBinding(RgEditorElement* root_element,
         VkDescriptorSetLayoutBinding* descriptor_set_layout, int item_index);
 
+    void InitializeStencilOpState(RgEditorElement* depth_stencil_state_root, VkStencilOpState* stencil_op_state);
+
     // The number of descriptor set layouts configured by the user.
     uint32_t descriptor_set_layout_count_;
 
@@ -158,8 +160,7 @@ private:
     void InitializeSampleMask(RgEditorElement* root_element, uint32_t* sample_mask, int item_index);
 
     // Initialize a single VkStencilOpState element.
-    void InitializeStencilOpState(RgEditorElement* depth_stencil_state_root,
-        VkStencilOpState* stencil_op_state);
+    void InitializeStencilOpState(RgEditorElement* depth_stencil_state_root, VkStencilOpState* stencil_op_state, QVector<RgEditorElement*>& op_state_node);
 
     // Initialize the Depth Stencil State CreateInfo tree structure.
     void InitializeDepthStencilStateCreateInfo(RgEditorElement* root_element, VkPipelineDepthStencilStateCreateInfo* pipeline_depth_stencil_state_create_info);
@@ -270,5 +271,54 @@ private:
 
     // The compute pipeline state structure being edited.
     RgPsoComputeVulkan* compute_pipeline_state_ = nullptr;
+
+    // Various RgEditorElement items for drop downs.
+    RgEditorElement* flags_                            = nullptr;
+    RgEditorElement* alpha_blend_op_node_              = nullptr;
+    RgEditorElement* color_component_write_mask_       = nullptr;
+    RgEditorElement* color_blend_op_node_              = nullptr;
+    RgEditorElement* compare_op_node_                  = nullptr;
+    RgEditorElement* cull_mode_node_                   = nullptr;
+    RgEditorElement* dependency_flags_                 = nullptr;
+    RgEditorElement* depth_compare_op_node_            = nullptr;
+    RgEditorElement* depth_fail_op_                    = nullptr;
+    RgEditorElement* descriptor_set_layout_flags_node_ = nullptr;
+    RgEditorElement* descriptor_type_node_             = nullptr;
+    RgEditorElement* dst_access_mask_                  = nullptr;
+    RgEditorElement* dst_alpha_blend_factor_node_      = nullptr;
+    RgEditorElement* dst_color_blend_factor_node_      = nullptr;
+    RgEditorElement* dst_stage_mask_                   = nullptr;
+    RgEditorElement* fail_op_node_                     = nullptr;
+    RgEditorElement* final_layout_item_                = nullptr;
+    RgEditorElement* flags_element_                    = nullptr;
+    RgEditorElement* flags_item_                       = nullptr;
+    RgEditorElement* flags_item1_                      = nullptr;
+    RgEditorElement* format_element_                   = nullptr;
+    RgEditorElement* format_element1_                  = nullptr;
+    RgEditorElement* front_face_node_                  = nullptr;
+    RgEditorElement* image_layout_node_                = nullptr;
+    RgEditorElement* initial_layout_item_              = nullptr;
+    RgEditorElement* input_rate_element_               = nullptr;
+    RgEditorElement* load_op_item_                     = nullptr;
+    RgEditorElement* logic_op_node_                    = nullptr;
+    RgEditorElement* pass_op_node_                     = nullptr;
+    RgEditorElement* pipeline_bind_point_node          = nullptr;
+    RgEditorElement* polygon_mode_node_                = nullptr;
+    RgEditorElement* rasterization_samples_            = nullptr;
+    RgEditorElement* src_access_mask_                  = nullptr;
+    RgEditorElement* src_alpha_blend_factor_node_      = nullptr;
+    RgEditorElement* src_color_blend_factor_node_      = nullptr;
+    RgEditorElement* src_stage_mask_                   = nullptr;
+    RgEditorElement* stage_flags_node_                 = nullptr;
+    RgEditorElement* stage_flags_node1_                = nullptr;
+    RgEditorElement* pipeline_bind_point_node_         = nullptr;
+    RgEditorElement* stencil_load_op_item_             = nullptr;
+    RgEditorElement* stencil_store_op_item_            = nullptr;
+    RgEditorElement* store_op_item_                    = nullptr;
+    RgEditorElement* topology_item_                    = nullptr;
+
+    // Store various RgEditorElement items.
+    std::vector<RgEditorElement*> front_stencil_op_state_node_ = {};
+    std::vector<RgEditorElement*> back_stencil_op_state_node_  = {};
 };
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_PIPELINE_STATE_MODEL_VULKAN_H_

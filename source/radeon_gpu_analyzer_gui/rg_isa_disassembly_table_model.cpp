@@ -509,7 +509,7 @@ void RgIsaDisassemblyTableModel::SetTableModelTextColor(const QColor& model_colo
 void RgIsaDisassemblyTableModel::SetTableModelBackgroundColor(const QColor& model_color, uint row_index, uint column_index)
 {
     // Set the background color role in the model.
-    isa_table_model_->setData(isa_table_model_->index(row_index, column_index), model_color, Qt::BackgroundColorRole);
+    isa_table_model_->setData(isa_table_model_->index(row_index, column_index), model_color, Qt::BackgroundRole);
 }
 
 bool RgIsaDisassemblyTableModel::ParseCsvIsaLine(const std::string& disassembled_line, std::shared_ptr<RgIsaLine>& parsed_line, int& input_source_line_index)
@@ -651,7 +651,7 @@ void RgIsaDisassemblyTableModel::GetColumnMaxWidths(const QVector<int>& selected
                     if (disassembled_isa_lines_[row]->type == RgIsaLineType::kInstruction)
                     {
                         QVariant  call_text = isa_table_model_->data(isa_table_model_->index(row, col));
-                        max_width = std::max(max_width, call_text.toString().size());
+                        max_width = std::max(max_width, static_cast<int>(call_text.toString().size()));
                     }
                 }
             }

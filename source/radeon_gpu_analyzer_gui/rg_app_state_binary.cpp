@@ -36,7 +36,8 @@ void RgAppStateBinary::ConnectBuildViewSignals(RgBuildView* build_view)
     if (binary_build_view != nullptr)
     {
         // Connect the RgBuildViewBinary default menu item's Load Code object button.
-        bool is_connected = connect(binary_build_view, &RgBuildViewBinary::CreateFileButtonClicked, this, &RgAppStateBinary::HandleLoadCodeObjectBinary);
+        [[maybe_unused]] bool is_connected =
+            connect(binary_build_view, &RgBuildViewBinary::CreateFileButtonClicked, this, &RgAppStateBinary::HandleLoadCodeObjectBinary);
         assert(is_connected);
     }
 }
@@ -141,7 +142,7 @@ void RgAppStateBinary::CreateBuildView()
 
         // Connect the project created handler so the RgMainWindow can
         // add the new RgBuildView instance to the widget hierarchy.
-        bool is_connected = connect(build_view_, &RgBuildView::ProjectCreated, main_window_, &RgMainWindow::HandleProjectCreated);
+        [[maybe_unused]] bool is_connected = connect(build_view_, &RgBuildView::ProjectCreated, main_window_, &RgMainWindow::HandleProjectCreated);
         assert(is_connected);
     }
 }
@@ -152,7 +153,8 @@ void RgAppStateBinary::ConnectFileMenuActions()
     if (start_tab_ != nullptr)
     {
         // Connect the "Load Code Object Binary" button in the start page.
-        bool is_connected = connect(start_tab_, &RgStartTabBinary::OpenExistingCodeObjFileEvent, this, &RgAppStateBinary::HandleLoadCodeObjectBinary);
+        [[maybe_unused]] bool is_connected =
+            connect(start_tab_, &RgStartTabBinary::OpenExistingCodeObjFileEvent, this, &RgAppStateBinary::HandleLoadCodeObjectBinary);
         assert(is_connected);
     }
 }

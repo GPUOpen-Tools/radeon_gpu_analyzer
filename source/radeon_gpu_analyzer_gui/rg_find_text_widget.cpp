@@ -201,7 +201,7 @@ void RgFindTextWidget::CreateActions()
         find_next_action_->setShortcut(QKeySequence(kActionHotkeyFindNext));
 
         // Connect the handler for the "Find next" button.
-        bool is_connected = connect(find_next_action_, &QAction::triggered, this, &RgFindTextWidget::HandleFindNextButtonClicked);
+        [[maybe_unused]] bool is_connected = connect(find_next_action_, &QAction::triggered, this, &RgFindTextWidget::HandleFindNextButtonClicked);
         assert(is_connected);
     }
 
@@ -214,7 +214,7 @@ void RgFindTextWidget::CreateActions()
         find_previous_action_->setShortcut(QKeySequence(kActionHotkeyFindPrevious));
 
         // Connect the handler for the "Find previous" button.
-        bool is_connected = connect(find_previous_action_, &QAction::triggered, this, &RgFindTextWidget::HandleFindPreviousButtonClicked);
+        [[maybe_unused]] bool is_connected = connect(find_previous_action_, &QAction::triggered, this, &RgFindTextWidget::HandleFindPreviousButtonClicked);
         assert(is_connected);
     }
 }

@@ -1,10 +1,10 @@
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_CHECK_BOX_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_CHECK_BOX_H_
 
-// Qt.
-#include <QCheckBox>
+// Infra.
+#include "qt_common/custom_widgets/scaled_check_box.h"
 
-class RgCheckBox : public QCheckBox
+class RgCheckBox : public ScaledCheckBox
 {
     Q_OBJECT
 
@@ -15,7 +15,7 @@ public:
 protected:
     virtual void focusInEvent(QFocusEvent* event) override;
     virtual void focusOutEvent(QFocusEvent* event) override;
-    virtual void mouseMoveEvent(QMouseEvent* Event) override;
+    virtual void mouseMoveEvent(QMouseEvent* event) override;
 
 signals:
     void CheckBoxFocusInEvent();

@@ -13,10 +13,8 @@ class QApplication;
 class QFont;
 class QObject;
 class QString;
-class QStringList;
 class QWidget;
-class ArrowIconWidget;
-class ListWidget;
+class ArrowIconComboBox;
 
 class RgUtils
 {
@@ -311,7 +309,15 @@ public:
     // List widgets - BEGIN.
     // *********************
 
-    static void SetupComboList(QWidget* parent, ListWidget* &list_widget, ArrowIconWidget* &bustton, QObject* &pEventFilter, bool hide);
+    /// @brief Helper function to get the selected Column Visibility checkboxes.
+    /// @param combo_box The ArrowIconComboBox to scan.
+    /// @return A vector of booleans which correspond to the checked items in the combo box.
+    static std::vector<bool> GetColumnVisibilityCheckboxes(const ArrowIconComboBox* combo_box);
+
+    /// @brief Helper function to set the selected Column Visibility checkboxes.
+    /// @param combo_box The ArrowIconComboBox to update.
+    /// @param column_visibility A vector of booleans which correspond to the checked items in the combo box.
+    static void SetColumnVisibilityCheckboxes(ArrowIconComboBox*& combo_box, const std::vector<bool>& column_visibility);
 
     // *******************
     // List widgets - END.

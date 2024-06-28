@@ -20,15 +20,8 @@
 
 // Infra.
 #include <DeviceInfoUtils.h>
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
-#endif
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osDebugLog.h"
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif
 
 std::vector<std::string> Backend::custom_dx11_load_paths_;
 

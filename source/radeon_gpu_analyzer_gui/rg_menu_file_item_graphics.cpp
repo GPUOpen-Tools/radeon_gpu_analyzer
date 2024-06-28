@@ -274,7 +274,7 @@ QLabel* RgMenuFileItemGraphics::GetItemLabel()
     return ui_.stageNameLabel;
 }
 
-void RgMenuFileItemGraphics::enterEvent(QEvent* event)
+void RgMenuFileItemGraphics::enterEvent(QEnterEvent* event)
 {
     Q_UNUSED(event);
 

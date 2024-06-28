@@ -145,7 +145,7 @@ void RgPipelineStateEditorWidgetNumeric::UpdateStringMatchingLocation(int start_
     std::vector<int> remove_entries;
     for (auto& stringData : string_highlight_data_)
     {
-        if (stringData.m_highlightString != search_string)
+        if (stringData.highlight_string != search_string)
         {
             remove_entries.push_back(count);
         }
@@ -159,10 +159,10 @@ void RgPipelineStateEditorWidgetNumeric::UpdateStringMatchingLocation(int start_
     // Update existing locations, if any.
     for (auto& string_data : string_highlight_data_)
     {
-        if (string_data.m_startLocation == start_location)
+        if (string_data.start_location == start_location)
         {
-            string_data.m_endLocation = start_location + length;
-            string_data.m_highlightString = search_string;
+            string_data.end_location = start_location + length;
+            string_data.highlight_string = search_string;
             found = true;
             break;
         }
@@ -172,10 +172,10 @@ void RgPipelineStateEditorWidgetNumeric::UpdateStringMatchingLocation(int start_
     if (!found)
     {
         StringHighlightData string_highlight_data = {};
-        string_highlight_data.m_startLocation = start_location;
-        string_highlight_data.m_endLocation = start_location + length;
-        string_highlight_data.m_highlightString = search_string;
-        string_highlight_data.m_highlightColor = Qt::yellow;
+        string_highlight_data.start_location = start_location;
+        string_highlight_data.end_location = start_location + length;
+        string_highlight_data.highlight_string = search_string;
+        string_highlight_data.highlight_color = Qt::yellow;
         string_highlight_data_.push_back(string_highlight_data);
     }
 }

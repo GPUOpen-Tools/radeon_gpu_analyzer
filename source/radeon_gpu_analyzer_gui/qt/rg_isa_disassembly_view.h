@@ -5,16 +5,17 @@
 #include <memory>
 
 // Qt.
-#include <QWidget>
 #include <QPlainTextEdit>
+#include <QWidget>
+
+// Infra.
+#include "qt_common/custom_widgets/arrow_icon_combo_box.h"
 
 // Local.
-#include "source/radeon_gpu_analyzer_gui/rg_data_types.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types.h"
 #include "ui_rg_isa_disassembly_view.h"
 
 // Forward declarations.
-class ArrowIconWidget;
-class ListWidget;
 enum class RgIsaDisassemblyTableColumns;
 class RgIsaDisassemblyTabView;
 class RgResourceUsageView;
@@ -65,6 +66,9 @@ public:
 
     // Enable/disable the show max VGPR context menu option.
     void EnableShowMaxVgprContextOption() const;
+
+    // Getter for the combo box.
+    ArrowIconComboBox* GetColumnVisibilityComboBox();
 
 signals:
     // A signal emitted when the input source file's highlighted correlation line should be updated.
@@ -141,14 +145,8 @@ public slots:
     void HandleFocusColumnsPushButton();
 
 protected slots:
-    // Handler invoked when the user clicks the column visibility arrow.
-    void HandleColumnVisibilityButtonClicked(bool clicked);
-
     // Handler invoked when the user clicks an item in the column visibility list.
-    void HandleColumnVisibilityComboBoxItemClicked(const QString& text, const bool checked);
-
-    // Handler invoked when a check box's state is changed.
-    void HandleColumnVisibilityFilterStateChanged(bool checked);
+    void HandleColumnVisibilityComboBoxItemClicked(QCheckBox* check_box);
 
     // Handler invoked when the disassembly view loses focus.
     void HandleDisassemblyTabViewLostFocus();
@@ -159,11 +157,8 @@ protected slots:
     // Handler invoked when the user clicks outside of the resource view.
     void HandleResourceUsageViewFocusOutEvent();
 
-    // Handler invoked when the user clicks the Target GPU dropdown arrow button.
-    void HandleTargetGpuArrowClicked(bool clicked);
-
     // Handler invoked when the user changes the selected target GPU.
-    void HandleTargetGpuChanged(int current_index);
+    void HandleTargetGpuChanged();
 
     // Handler invoked when the list widget gains focus.
     void HandleListWidgetFocusInEvent();
@@ -189,8 +184,6 @@ protected slots:
     // Handler to open the GPU list widget.
     void HandleOpenGpuListWidget();
 
-    // Handler invoked when disassembly view tab widget tab is changed.
-    void HandleCurrentTabChanged(int index);
 
 protected:
     // A map that associates an GPU name to a list of program build outputs.
@@ -208,9 +201,6 @@ protected:
     // A map of full input file path to a map of QPlainTextEdit for the file.
     typedef std::map<std::string, EntryPointToLiveregAnalysisViews> InputToEntrypointLiveregViews;
 
-    // Remove all items from the given list widget.
-    void ClearListWidget(ListWidget* &list_widget);
-
     // Connect signals for a new disassembly tab view.
     void ConnectDisassemblyTabViewSignals(RgIsaDisassemblyTabView* entry_view);
 
@@ -227,7 +217,7 @@ protected:
     void CreateTargetGpuListControls();
 
     // Get the name of the given disassembly column as a string.
-    std::string GetDisassemblyColumnName(RgIsaDisassemblyTableColumns column) const;
+    QString GetDisassemblyColumnName(RgIsaDisassemblyTableColumns column) const;
 
     // Retrieve a RgIsaDisassemblyTabView based on the given GPU name.
     RgIsaDisassemblyTabView* GetTargetGpuTabWidgetByTabName(const std::string& gpu_family_name) const;
@@ -253,11 +243,8 @@ protected:
     // Clean up all resource usage views related to the given input source file.
     void DestroyResourceUsageViewsForFile(const std::string& input_file_path);
 
-    // Set focus proxies for list widget check boxes to the frame.
-    void SetCheckBoxFocusProxies(const ListWidget* list_widget) const;
-
-    // Set font sizes for list widget push buttons.
-    void SetFontSizes();
+    // Set focus proxies for check boxes to the frame.
+    void SetCheckBoxFocusProxies(QCheckBox* check_box);
 
     // Set the currently active resource usage view.
     void SetCurrentResourceUsageView(RgResourceUsageView* resource_usage_view);
@@ -271,11 +258,8 @@ protected:
     // Set the border stylesheet.
     virtual void SetBorderStylesheet(bool is_selected) = 0;
 
-    // Set the current target GPU to display disassembly for.
-    void SetTargetGpu(const std::string& target_gpu);
-
-    // Update the "All" checkbox text color to grey or black.
-    void UpdateAllCheckBoxText();
+    // Updates the "All" checkbox option.
+    void UpdateAllCheckBox();
 
     // A map of GPU to the views showing disassembly for multiple kernel entries.
     std::map<std::string, RgIsaDisassemblyTabView*> gpu_tab_views_;
@@ -289,17 +273,8 @@ protected:
     // The current target GPU tab being viewed.
     RgIsaDisassemblyTabView* current_tab_view_ = nullptr;
 
-    // The widget used to display all columns available for display in the disassembly table.
-    ListWidget* disassembly_columns_list_widget_ = nullptr;
-
     // A custom event filter for the disassembly columns list widget.
     QObject* disassembly_columns_list_event_filter_ = nullptr;
-
-    // The list widget used to select the current target GPU.
-    ListWidget* target_gpus_list_widget_ = nullptr;
-
-    // A custom event filter responsible for hiding the target GPU dropdown list.
-    QObject* target_gpus_list_event_filter_ = nullptr;
 
     // The resource usage text.
     std::string resource_usage_text_;

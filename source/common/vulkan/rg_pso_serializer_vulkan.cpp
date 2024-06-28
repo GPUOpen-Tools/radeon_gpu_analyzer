@@ -3,7 +3,7 @@
 #include <sstream>
 
 // Infra.
-#include "json/json-3.2.0/single_include/nlohmann/json.hpp"
+#include "json/json-3.11.3/single_include/nlohmann/json.hpp"
 #include "source/common/vulkan/rg_pso_serializer_vulkan.h"
 
 // Local.

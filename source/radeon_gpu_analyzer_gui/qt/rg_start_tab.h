@@ -58,7 +58,7 @@ protected slots:
     void HandleContextMenuRequest(const QPoint& pos);
 
     // Handler for a click on a recent program item.
-    void HandleRecentProjectClickedEvent(int button_id);
+    void HandleRecentProjectClickedEvent(QAbstractButton* recent_file_button);
 
 protected:
     // Apply API-specific string constants to the view object's widgets.

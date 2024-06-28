@@ -4,9 +4,6 @@
 // Qt.
 #include <QAction>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_ordered_list_dialog.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
@@ -28,7 +25,7 @@ RgOrderedListDialog::RgOrderedListDialog(const char* delimiter, QWidget* parent)
 
     // Set the background to white.
     QPalette pal = palette();
-    pal.setColor(QPalette::Background, Qt::white);
+    pal.setColor(QPalette::Window, Qt::white);
     this->setAutoFillBackground(true);
     this->setPalette(pal);
 
@@ -36,9 +33,9 @@ RgOrderedListDialog::RgOrderedListDialog(const char* delimiter, QWidget* parent)
     setWindowIcon(QIcon(":/icons/rgaIcon.png"));
 
     // Set the size of the window.
-    QSize size;
-    size.setWidth(kWidgetFixedWidth * ScalingManager::Get().GetScaleFactor());
-    size.setHeight(kWidgetFixedHeight * ScalingManager::Get().GetScaleFactor());
+    QSize  size;
+    size.setWidth(kWidgetFixedWidth);
+    size.setHeight(kWidgetFixedHeight);
     setMinimumSize(size);
 
     // Disable the help button in the title bar.
@@ -215,7 +212,7 @@ void RgOrderedListDialog::HandleMoveDownButtonClick(bool /* checked */)
                 ui_.itemsList->setCurrentRow(current_index + 1);
 
                 // Update local data with this change.
-                items_list_.swap(current_index, current_index + 1);
+                items_list_.swapItemsAt(current_index, current_index + 1);
             }
         }
     }
@@ -242,7 +239,7 @@ void RgOrderedListDialog::HandleMoveUpButtonClick(bool /* checked */)
                 ui_.itemsList->setCurrentRow(current_index - 1);
 
                 // Update local data with this change.
-                items_list_.swap(current_index - 1, current_index);
+                items_list_.swapItemsAt(current_index - 1, current_index);
             }
         }
     }
@@ -263,7 +260,7 @@ void RgOrderedListDialog::HandleDeleteButtonClick(bool /* checked */)
         QListWidgetItem* current_item = ui_.itemsList->takeItem(current_index);
 
         // Remove the selected item from the string list.
-        if (current_item != nullptr)
+        if (current_item != nullptr && current_index < items_list_.count())
         {
             items_list_.removeAt(current_index);
 

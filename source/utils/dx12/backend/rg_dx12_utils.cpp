@@ -817,18 +817,20 @@ namespace rga
         return ret;
     }
 
-    std::wstring RgDx12Utils::strToWstr(const std::string& str_to_convert)
+    std::wstring RgDx12Utils::strToWstr(const std::string& str)
     {
-        using convert_typeX = std::codecvt_utf8<wchar_t>;
-        std::wstring_convert<convert_typeX, wchar_t> wstr_converter;
-        return wstr_converter.from_bytes(str_to_convert);
+        const std::size_t    len = static_cast<std::size_t>(swprintf(nullptr, 0, L"%.*hs", static_cast<int>(str.size()), str.data()));
+        std::vector<wchar_t> vec(len + 1);
+        swprintf(vec.data(), len + 1, L"%.*hs", static_cast<int>(str.size()), str.data());
+        return std::wstring(vec.data(), len);
     }
 
     std::string RgDx12Utils::wstrToStr(const std::wstring& wstr)
     {
-        using convert_typeX = std::codecvt_utf8<wchar_t>;
-        std::wstring_convert<convert_typeX, wchar_t> converter_x;
-        return converter_x.to_bytes(wstr);
+        const std::size_t len = static_cast<std::size_t>(snprintf(nullptr, 0, "%.*ws", static_cast<int>(wstr.size()), wstr.data()));
+        std::vector<char> vec(len + 1);
+        snprintf(vec.data(), len + 1, "%.*ws", static_cast<int>(wstr.size()), wstr.data());
+        return std::string(vec.data(), len);
     }
 
     static std::string TrimCharacters(const std::string& str, const std::string& chars_to_trim)

@@ -4,10 +4,10 @@
 
 // Qt.
 #include <QPainter>
+#include <QTimer>
 
 // Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-#include "QtCommon/Util/QtUtil.h"
+#include "qt_common/utils/qt_util.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_line_edit.h"
@@ -71,18 +71,18 @@ void RgLineEdit::paintEvent(QPaintEvent* event)
         // Go through all highlight locations.
         for (const auto& string_highlight_data : string_highlight_data_)
         {
-            QString current = text().mid(0, string_highlight_data.m_startLocation);
-            int initial_text_width = QtCommon::QtUtil::GetTextWidth(font, current);
+            QString current = text().mid(0, string_highlight_data.start_location);
+            int initial_text_width = QtCommon::QtUtils::GetTextWidth(font, current);
 
-            current = text().mid(string_highlight_data.m_startLocation,
-                string_highlight_data.m_endLocation - string_highlight_data.m_startLocation);
-            int width = QtCommon::QtUtil::GetTextWidth(font, current);
+            current = text().mid(string_highlight_data.start_location,
+                string_highlight_data.end_location - string_highlight_data.start_location);
+            int width = QtCommon::QtUtils::GetTextWidth(font, current);
             QRect rect = this->rect();
             rect.setX(rect.x() + kPaintLocationX + initial_text_width);
             rect.setHeight(rect.height() - kHighlightVerticalMargin);
             rect.setY(rect.y() + kHighlightVerticalMargin);
             rect.setWidth(width);
-            painter.fillRect(rect, string_highlight_data.m_highlightColor);
+            painter.fillRect(rect, string_highlight_data.highlight_color);
         }
     }
 

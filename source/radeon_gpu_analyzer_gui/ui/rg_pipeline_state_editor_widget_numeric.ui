@@ -62,7 +62,7 @@
  <customwidgets>
   <customwidget>
    <class>RgLineEdit</class>
-   <extends>QLineEdit</extends>
+   <extends>ScaledLineEdit</extends>
    <header>rg_line_edit.h</header>
   </customwidget>
  </customwidgets>

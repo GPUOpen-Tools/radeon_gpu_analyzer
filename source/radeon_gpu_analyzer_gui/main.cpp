@@ -4,9 +4,9 @@
 
 // Qt.
 #include <QtWidgets/QApplication>
+#include <QStyleFactory>
 
 // Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
 #include "source/common/rg_log.h"
 #ifdef RGA_GUI_AUTOMATION
 #include <rg_test_client_thread.h>
@@ -54,9 +54,10 @@ int main(int argc, char *argv[])
 
     // Start the Qt application.
     QApplication application_instance(argc, argv);
+    application_instance.setStyle(QStyleFactory::create("fusion"));
 
     // Initialize the configuration manager.
-    bool is_initialized = RgConfigManager::Instance().Init();
+    [[maybe_unused]] bool is_initialized = RgConfigManager::Instance().Init();
     assert(is_initialized);
 
     // Get the global settings from the config manager.
@@ -131,11 +132,6 @@ int main(int argc, char *argv[])
 
     // Force an explicit minimum size.
     main_window.setMinimumSize(kExplicitMinWidth, kExplicitMinHeight);
-
-    // Initialize the scaling manager.
-    ScalingManager& scaling_manager = ScalingManager::Get();
-    scaling_manager.Initialize(&main_window);
-    scaling_manager.RegisterAll();
 
     // Show maximized if either geometry value is zero, or if the window was closed maximized.
     if (window_config.window_width == 0 || window_config.window_height == 0 || window_config.window_state & Qt::WindowMaximized || window_config.window_state & Qt::WindowFullScreen)

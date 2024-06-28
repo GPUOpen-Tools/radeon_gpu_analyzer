@@ -9,8 +9,8 @@
 #include <QObject>
 
 // Infra.
-#include "QtCommon/CustomWidgets/ArrowIconWidget.h"
-#include "QtCommon/Util/CommonDefinitions.h"
+#include "qt_common/custom_widgets/arrow_icon_combo_box.h"
+#include "qt_common/utils/common_definitions.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_hide_list_widget_event_filter.h"
@@ -79,7 +79,8 @@ QStringList RgHideListWidgetEventFilter::string_list_ =
     kStrPsoEditorSaveButton,
 };
 
-RgHideListWidgetEventFilter::RgHideListWidgetEventFilter(QListWidget* list_widget, ArrowIconWidget* button) :
+RgHideListWidgetEventFilter::RgHideListWidgetEventFilter(QListWidget* list_widget, ArrowIconComboBox* button)
+    :
     QObject(list_widget),
     list_widget_(list_widget),
     button_(button)
@@ -104,7 +105,7 @@ bool RgHideListWidgetEventFilter::eventFilter(QObject* object, QEvent* event)
                 list_widget_->hide();
 
                 // Set the button icon to down arrow.
-                button_->SetDirection(ArrowIconWidget::Direction::DownArrow);
+                button_->ToggleDirection();
 
                 // Emit the list widget status changed signal.
                 emit EnumListWidgetStatusSignal(false);
@@ -144,7 +145,7 @@ bool RgHideListWidgetEventFilter::eventFilter(QObject* object, QEvent* event)
                         list_widget_->hide();
 
                         // Set the button icon to down arrow.
-                        button_->SetDirection(ArrowIconWidget::Direction::DownArrow);
+                        button_->ToggleDirection();
 
                         // Emit the list widget status changed signal.
                         emit EnumListWidgetStatusSignal(false);
@@ -178,7 +179,7 @@ bool RgHideListWidgetEventFilter::eventFilter(QObject* object, QEvent* event)
                     list_widget_->hide();
 
                     // Set the button icon to down arrow.
-                    button_->SetDirection(ArrowIconWidget::Direction::DownArrow);
+                    button_->ToggleDirection();
 
                     // Emit the list widget status changed signal.
                     emit EnumListWidgetStatusSignal(false);
@@ -206,7 +207,7 @@ bool RgHideListWidgetEventFilter::eventFilter(QObject* object, QEvent* event)
                     list_widget_->hide();
 
                     // Set the button icon to down arrow.
-                    button_->SetDirection(ArrowIconWidget::Direction::DownArrow);
+                    button_->ToggleDirection();
 
                     // Emit the list widget status changed signal.
                     emit EnumListWidgetStatusSignal(false);
@@ -233,7 +234,7 @@ bool RgHideListWidgetEventFilter::eventFilter(QObject* object, QEvent* event)
                     list_widget_->close();
 
                     // Set the button icon to down arrow.
-                    button_->SetDirection(ArrowIconWidget::Direction::DownArrow);
+                    button_->ToggleDirection();
 
                     // Emit the list widget status changed signal.
                     emit EnumListWidgetStatusSignal(false);

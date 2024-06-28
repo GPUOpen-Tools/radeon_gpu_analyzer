@@ -13,7 +13,10 @@
 #include <QVariant>
 
 // Infra.
-#include "QtCommon/Util/QtUtil.h"
+#include "qt_common/utils/qt_util.h"
+
+// Shared.
+#include "common/rga_sorting_utils.h"
 
 // Shared.
 #include "common/rga_sorting_utils.h"
@@ -36,20 +39,7 @@ protected:
     // A row-filtering predicate responsible for matching rows against the user's search text.
     virtual bool filterAcceptsRow(int source_row, const QModelIndex& source_parent) const override
     {
-        bool is_filtered = false;
-
-        // Filter each row using rgFilterProxyModel's regex.
-        if (filterRegExp().isEmpty() == false)
-        {
-            is_filtered = parent_Dialog->IsRowVisible(source_row, source_parent, filterRegExp());
-        }
-        else
-        {
-            // Invoke the default filtering on the row.
-            is_filtered = QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent);
-        }
-
-        return is_filtered;
+        return parent_Dialog->IsRowVisible(source_row, source_parent, filterRegularExpression());
     }
 
 private:
@@ -275,14 +265,14 @@ void RgTargetGpusDialog::HandleRowDoubleClicked(const QModelIndex& index)
 void RgTargetGpusDialog::HandleSearchTextChanged(const QString& search_text)
 {
     // A regex used to check the user's search term against the incoming test string.
-    QRegExp regex("", Qt::CaseInsensitive);
+    QRegularExpression regex("", QRegularExpression::CaseInsensitiveOption);
     if (!search_text.isEmpty())
     {
         regex.setPattern(".*" + search_text + ".*");
     }
 
     // Set the filter model regex.
-    table_filter_model_->setFilterRegExp(regex);
+    table_filter_model_->setFilterRegularExpression(regex);
 
 #ifdef _HIGHLIGHT_MATCHING_ROWS
     // Disable this for now as the value we get from the feature
@@ -353,7 +343,7 @@ void RgTargetGpusDialog::InitializeCheckedRows(std::vector<std::string> compute_
     }
 }
 
-bool RgTargetGpusDialog::IsRowVisible(int row_index, const QModelIndex& source_parent, const QRegExp& search_filter)
+bool RgTargetGpusDialog::IsRowVisible(int row_index, const QModelIndex& source_parent, const QRegularExpression& search_filter)
 {
     Q_UNUSED(source_parent);
 
@@ -384,62 +374,59 @@ bool RgTargetGpusDialog::IsRowVisible(int row_index, const QModelIndex& source_p
     return is_filtered;
 }
 
-void RgTargetGpusDialog::HighlightMatchingRows(const QRegExp& search_filter)
+void RgTargetGpusDialog::HighlightMatchingRows(const QRegularExpression& search_filter)
 {
     // Reset the table colors to default background colors.
     SetDefaultTableBackgroundColors();
 
     // Filter the matching rows and highlight them with a different color.
-    if (!search_filter.isEmpty())
+    // Container for indices of rows containing matching GPU names.
+    std::vector<QModelIndex> matching_rows;
+
+    for (int row_index = 0; row_index < table_row_index_to_group_index_.size(); row_index++)
     {
-        // Container for indices of rows containing matching GPU names.
-        std::vector<QModelIndex>  matching_rows;
-
-        for (int row_index = 0; row_index < table_row_index_to_group_index_.size(); row_index++)
+        auto table_row_to_group_iter = table_row_index_to_group_index_.find(row_index);
+        if (table_row_to_group_iter != table_row_index_to_group_index_.end())
         {
-            auto table_row_to_group_iter = table_row_index_to_group_index_.find(row_index);
-            if (table_row_to_group_iter != table_row_index_to_group_index_.end())
+            int                    group_index = table_row_to_group_iter->second;
+            const CapabilityGroup& group_info  = capability_groups_[group_index];
+
+            // Check if any of the cells associated with the group match the user's search string.
+            for (const TableRow& current_row : group_info.group_rows)
             {
-                int group_index = table_row_to_group_iter->second;
-                const CapabilityGroup& group_info = capability_groups_[group_index];
+                bool is_matching = IsRowMatchingSearchString(current_row, search_filter);
 
-                // Check if any of the cells associated with the group match the user's search string.
-                for (const TableRow& current_row : group_info.group_rows)
+                // If this is a matching row, set it as selected.
+                if (is_matching)
                 {
-                    bool is_matching = IsRowMatchingSearchString(current_row, search_filter);
-
-                    // If this is a matching row, set it as selected.
-                    if (is_matching)
-                    {
-                        // Store the model index for this row.
-                        QModelIndex model_index = gpu_tree_model_->index(current_row.row_index, 0);
-                        matching_rows.push_back(model_index);
-                    }
+                    // Store the model index for this row.
+                    QModelIndex model_index = gpu_tree_model_->index(current_row.row_index, 0);
+                    matching_rows.push_back(model_index);
                 }
             }
         }
-
-        // Highlight matching rows.
-        for (const QModelIndex& index : matching_rows)
-        {
-            ui_.gpuTreeView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-        }
-
-        // Update the table.
-        ui_.gpuTreeView->update();
     }
+
+    // Highlight matching rows.
+    for (const QModelIndex& index : matching_rows)
+    {
+        ui_.gpuTreeView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+    }
+
+    // Update the table.
+    ui_.gpuTreeView->update();
 }
 
 void RgTargetGpusDialog::ToggleItemCheckChangedHandler(bool is_enabled)
 {
     if (is_enabled)
     {
-        bool is_connected = connect(gpu_tree_model_, &QStandardItemModel::itemChanged, this, &RgTargetGpusDialog::HandleItemChanged);
+        [[maybe_unused]] bool is_connected = connect(gpu_tree_model_, &QStandardItemModel::itemChanged, this, &RgTargetGpusDialog::HandleItemChanged);
         assert(is_connected);
     }
     else
     {
-        bool is_disconnected = disconnect(gpu_tree_model_, &QStandardItemModel::itemChanged, this, &RgTargetGpusDialog::HandleItemChanged);
+        [[maybe_unused]] bool is_disconnected = disconnect(gpu_tree_model_, &QStandardItemModel::itemChanged, this, &RgTargetGpusDialog::HandleItemChanged);
         assert(is_disconnected);
     }
 }
@@ -585,7 +572,7 @@ void RgTargetGpusDialog::PopulateTableData(std::shared_ptr<RgCliVersionInfo> ver
 
     // Display the filtered model in the QTreeView.
     ui_.gpuTreeView->setModel(table_filter_model_);
-    QtCommon::QtUtil::AutoAdjustTableColumns(ui_.gpuTreeView, 32, 10);
+    QtCommon::QtUtils::AutoAdjustTableColumns(ui_.gpuTreeView, 32, 10);
 }
 
 void RgTargetGpusDialog::SetIsGroupChecked(int group_index, bool is_checked)
@@ -627,7 +614,7 @@ void RgTargetGpusDialog::SetTableBackgroundColor(int row, const QColor& backgrou
         if (is_valid)
         {
             // Set the data at the correct index in the GPU tree.
-            gpu_tree_model_->setData(model_index, background_color, Qt::BackgroundColorRole);
+            gpu_tree_model_->setData(model_index, background_color, Qt::BackgroundRole);
         }
     }
 }
@@ -703,20 +690,20 @@ void RgTargetGpusDialog::SetDefaultTableBackgroundColors()
     }
 }
 
-bool RgTargetGpusDialog::IsRowMatchingSearchString(const TableRow& current_row, const QRegExp search_filter)
+bool RgTargetGpusDialog::IsRowMatchingSearchString(const TableRow& current_row, const QRegularExpression& search_filter)
 {
     bool is_matching = false;
 
     // Does the architecture name match the filter string?
-    is_matching = search_filter.exactMatch(current_row.architecture.c_str());
+    is_matching = search_filter.match(current_row.architecture.c_str()).hasMatch();
     if (!is_matching)
     {
         // Does the compute capability match the filter string?
-        is_matching = search_filter.exactMatch(current_row.compute_capability.c_str());
+        is_matching = search_filter.match(current_row.compute_capability.c_str()).hasMatch();
         if (!is_matching)
         {
             // Does the product name match the filter string?
-            is_matching = search_filter.exactMatch(current_row.product_name.c_str());
+            is_matching = search_filter.match(current_row.product_name.c_str()).hasMatch();
         }
     }
 

@@ -6,9 +6,6 @@
 // Qt.
 #include <QFileDialog>
 
-// Infra.
-#include "QtCommon/Scaling/ScalingManager.h"
-
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_include_directories_view.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
@@ -42,7 +39,8 @@ void RgIncludeDirectoriesView::ConnectSignals()
     assert(browse_push_button_ != nullptr);
 
     // Browse new include directory button.
-    bool is_connected = connect(browse_push_button_, &QPushButton::clicked, this, &RgIncludeDirectoriesView::HandleIncludeFileLocationBrowseButtonClick);
+    [[maybe_unused]] bool is_connected =
+        connect(browse_push_button_, &QPushButton::clicked, this, &RgIncludeDirectoriesView::HandleIncludeFileLocationBrowseButtonClick);
     assert(is_connected);
 }
 
@@ -64,7 +62,6 @@ void RgIncludeDirectoriesView::InitializeBrowseButton()
         if (vertical_buttons_layout != nullptr)
         {
             vertical_buttons_layout->insertWidget(kBrowseButtonInsertionIndex, browse_push_button_);
-            ScalingManager::Get().RegisterObject(browse_push_button_);
         }
     }
 }

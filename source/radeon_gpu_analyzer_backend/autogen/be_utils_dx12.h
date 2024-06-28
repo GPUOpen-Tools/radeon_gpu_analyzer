@@ -55,8 +55,8 @@ public:
     // Struct representing Dx12 Shader Model.
     struct ShaderModelVersion
     {
-        int major;
-        int minor;
+        int major = 0;
+        int minor = 0;
 
         // If this shader model is a "legacy" shader model,
         // which means that it is supported by D3DCompileFromFile through DXBC rather than DXIL.
