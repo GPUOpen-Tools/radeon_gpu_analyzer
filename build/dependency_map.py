@@ -47,5 +47,5 @@ github_mapping = {
     "device_info"                    : ["../external/device_info",              "c374c2b328bea66a92db6e49f6b32607f97b3e2c"],
     "update_check_api"               : ["../external/update_check_api",         "v2.1.1"],
  # QtCommon.
-    "qt_common"                      : ["../external/QtCommon",                 "6377814493f6e5c97fd5c44fccdd22767bf86355"],
+    "qt_common"                      : ["../external/qt_common",                 "6377814493f6e5c97fd5c44fccdd22767bf86355"],
 }

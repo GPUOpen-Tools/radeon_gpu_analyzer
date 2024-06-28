@@ -15,9 +15,6 @@ import shutil
 import subprocess
 import platform
 import time
-# START_REMOVE_DURING_SANITIZATION
-import fetch_qt
-# END_REMOVE_DURING_SANITIZATION
 
 # prevent generation of .pyc file
 sys.dont_write_bytecode = True
@@ -210,15 +207,6 @@ def generate_config(config, args):
         qt_expanded_root = os.path.expanduser(args.qt_root)
         qt_found,qt_path = check_qt_path(qt_expanded_root, args.qt_root, args.qt)
 
-        # START_REMOVE_DURING_SANITIZATION
-        if qt_found == False:
-            # Call fetch_qt script
-            log_print ("Fetching Qt...\n")
-            target_qt_dir = qt_expanded_root
-            fetch_qt.do_fetch_qt(target_qt_dir)
-            qt_found,qt_path = check_qt_path(qt_expanded_root, args.qt_root, args.qt)
-        # END_REMOVE_DURING_SANITIZATION
-
         if qt_found == False:
             log_error_and_exit(qt_path)
 
@@ -240,12 +228,6 @@ def generate_config(config, args):
             elif args.toolchain == "2017":
                 cmake_args.extend(["-Tv141"])
 
-    # START_REMOVE_DURING_SANITIZATION
-    if args.internal:
-        cmake_args.extend(["-DINTERNAL_BUILD:BOOL=TRUE"])
-    if args.automation:
-        cmake_args.extend(["-DGUI_AUTOMATION=ON"])
-    # END_REMOVE_DURING_SANITIZATION
 
     # Use build number.
     cmake_args.extend(["-DRGA_BUILD_NUMBER=" + str(args.build_number)])
