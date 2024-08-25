@@ -46,6 +46,7 @@ def parse_arguments():
     parser.add_argument("--qt", default="6.7.0", help="specify the version of QT to be used with the script (default: 6.7.0)" )
     parser.add_argument("--clean", action="store_true", help="delete any directories created by this script")
     parser.add_argument("--no-qt", action="store_true", help="build a headless version (not applicable for all products)")
+    parser.add_argument("--no-dx10", action="store_true", help="build a version without dx10 support")
     parser.add_argument("--build-number", default="0",
                         help="specify the build number, primarily to be used by build machines to produce versioned builds")
     parser.add_argument("--internal", action="store_true", help="configure internal builds of the RGA applications (only used within AMD")
@@ -218,6 +219,9 @@ def generate_config(config, args):
         cmake_args = ["cmake", cmakelist_path, "-DCMAKE_PREFIX_PATH=" + qt_path, "-DQT_PACKAGE_ROOT=" + qt_path, "-G", cmake_generator]
     else:
         cmake_args = ["cmake", cmakelist_path, "-DHEADLESS=TRUE", "-DBUILD_CLI_ONLY=ON"]
+
+    if args.no_dx10:
+        cmake_args.extend(["-DRGA_DISABLE_DX10=ON"])
 
     if sys.platform == "win32":
         if args.vs != "2017":
