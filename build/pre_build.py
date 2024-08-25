@@ -217,7 +217,7 @@ def generate_config(config, args):
 
         cmake_args = ["cmake", cmakelist_path, "-DCMAKE_PREFIX_PATH=" + qt_path, "-DQT_PACKAGE_ROOT=" + qt_path, "-G", cmake_generator]
     else:
-        cmake_args = ["cmake", cmakelist_path, "-DHEADLESS=TRUE"]
+        cmake_args = ["cmake", cmakelist_path, "-DHEADLESS=TRUE", "-DBUILD_CLI_ONLY=ON"]
 
     if sys.platform == "win32":
         if args.vs != "2017":
@@ -237,6 +237,9 @@ def generate_config(config, args):
         cmake_args.extend(["-DVULKAN_SDK_INC_DIR=" + str(args.vk_include)])
     if not args.vk_lib is None:
         cmake_args.extend(["-DVULKAN_SDK_LIB_DIR=" + str(args.vk_lib)])
+
+    if args.vk_include is None:
+        cmake_args.extend(["-DRGA_ENABLE_VULKAN=OFF"])
 
     if sys.platform.startswith('linux'):
         if args.disable_extra_qt_lib_deploy:

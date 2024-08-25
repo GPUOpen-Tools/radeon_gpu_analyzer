@@ -156,9 +156,9 @@ namespace rga
                 {
                     desc->pExports[i];
                     delete[] desc->pExports[i].Name;
-                    desc->pExports[i].Name = nullptr;
+                    ((D3D12_EXPORT_DESC*)desc->pExports)[i].Name = nullptr;
                     delete[] desc->pExports[i].ExportToRename;
-                    desc->pExports[i].ExportToRename = nullptr;
+                    ((D3D12_EXPORT_DESC*)desc->pExports)[i].ExportToRename = nullptr;
                 }
                 delete[] desc->pExports;
                 desc->pExports = nullptr;
