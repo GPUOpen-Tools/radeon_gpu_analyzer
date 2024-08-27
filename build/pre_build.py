@@ -46,6 +46,8 @@ def parse_arguments():
     parser.add_argument("--qt", default="6.7.0", help="specify the version of QT to be used with the script (default: 6.7.0)" )
     parser.add_argument("--clean", action="store_true", help="delete any directories created by this script")
     parser.add_argument("--no-qt", action="store_true", help="build a headless version (not applicable for all products)")
+    parser.add_argument("--no-vulkan", action="store_true", help="build a version without vulkan support")
+    parser.add_argument("--no-dx10", action="store_true", help="build a version without dx10 support")
     parser.add_argument("--build-number", default="0",
                         help="specify the build number, primarily to be used by build machines to produce versioned builds")
     parser.add_argument("--internal", action="store_true", help="configure internal builds of the RGA applications (only used within AMD")
@@ -59,6 +61,7 @@ def parse_arguments():
     parser.add_argument("--vscode", action="store_true", help="generate CMake options into VsCode settings file for this project")
     parser.add_argument("--platform", default="x64", choices=["x64", "x86"], help="specify the platform (32 or 64 bit)")
     if sys.platform == "win32":
+        parser.add_argument("--use-mt", action="store_true", help="build a version with MT instead of MD")
         parser.add_argument("--cppcheck", action="store_true", help="create a cppcheck project in the Visual Studio solution")
         parser.add_argument("--vs", default="2022", choices=["2017", "2019", "2022"], help="specify the version of Visual Studio to be used with this script (default: 2019)")
         parser.add_argument("--toolchain", default=None, choices=["2017", "2019", "2022"], help="specify the compiler toolchain to be used with this script (default: 2019)")
@@ -217,7 +220,10 @@ def generate_config(config, args):
 
         cmake_args = ["cmake", cmakelist_path, "-DCMAKE_PREFIX_PATH=" + qt_path, "-DQT_PACKAGE_ROOT=" + qt_path, "-G", cmake_generator]
     else:
-        cmake_args = ["cmake", cmakelist_path, "-DHEADLESS=TRUE"]
+        cmake_args = ["cmake", cmakelist_path, "-DHEADLESS=TRUE", "-DBUILD_CLI_ONLY=ON"]
+
+    if args.no_dx10:
+        cmake_args.extend(["-DRGA_DISABLE_DX10=ON"])
 
     if sys.platform == "win32":
         if args.vs != "2017":
@@ -237,6 +243,13 @@ def generate_config(config, args):
         cmake_args.extend(["-DVULKAN_SDK_INC_DIR=" + str(args.vk_include)])
     if not args.vk_lib is None:
         cmake_args.extend(["-DVULKAN_SDK_LIB_DIR=" + str(args.vk_lib)])
+
+    if args.no_vulkan:
+        cmake_args.extend(["-DRGA_ENABLE_VULKAN=OFF"])
+		
+    if sys.platform == "win32":
+        if args.use_mt:
+            cmake_args.extend(["-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded"])
 
     if sys.platform.startswith('linux'):
         if args.disable_extra_qt_lib_deploy:

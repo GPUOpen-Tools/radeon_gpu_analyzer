@@ -184,7 +184,7 @@ endif()
 set_target_properties(AMDTOSWrappers PROPERTIES DEBUG_POSTFIX -d CXX_STANDARD 17)
 
 # Set Visual C++ warning level to 4
-if(MSVC)
+if(MSVC AND RGA_ENABLE_VULKAN)
   target_compile_options(vulkan_backend PRIVATE /W4)
 endif()
 
