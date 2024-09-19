@@ -8,6 +8,9 @@
 #include <QMimeData>
 #include <QMenu>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_file_item_graphics.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_graphics.h"
@@ -16,7 +19,8 @@
 #include "radeon_gpu_analyzer_gui/rg_utils_graphics.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
-static const char* kStrSubButtonNoFocusStylesheet = "rgMenuFileItemGraphics #addFilePushButton:hover\
+static const char* kStrSubButtonNoFocusStylesheet =
+    "rgMenuFileItemGraphics #addFilePushButton:hover\
 { \
 border-style: solid;\
 border-width: 2px;\
@@ -28,13 +32,20 @@ border-style: solid;\
 border-width: 2px;\
 border-color: rgb(135,20,16)}";
 static const char* kStrSubButtonInFocusStylesheet = "border: 2px inset rgb(135, 20, 16);";
-static const char* kStrFileMenuItemNameGraphics = "fileMenuItemGraphics";
+static const char* kStrFileMenuItemNameGraphics   = "fileMenuItemGraphics";
 
 RgMenuFileItemGraphics::RgMenuFileItemGraphics(RgMenu* parent, RgPipelineStage stage)
     : RgMenuFileItem("", parent)
     , stage_(stage)
 {
     ui_.setupUi(this);
+
+    ColorThemeType color_theme = QtCommon::QtUtils::ColorTheme::Get().GetColorTheme();
+
+    if (color_theme == kColorThemeTypeDark)
+    {
+        ui_.addFilePushButton->setIcon(QIcon(":/icons/add_file_icon_dark_mode.svg"));
+    }
 
     // Disable the renaming controls upon creation.
     ShowRenameControls(false);
@@ -177,7 +188,7 @@ void RgMenuFileItemGraphics::RemoveContextMenuActionRestoreSpv()
 void RgMenuFileItemGraphics::SetStringConstants()
 {
     // Create a utility class instance based on the current API. It will be used to display API-specific shader stage names.
-    RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
+    RgProjectAPI                     current_api   = RgConfigManager::Instance().GetCurrentAPI();
     std::shared_ptr<RgUtilsGraphics> graphics_util = RgUtilsGraphics::CreateUtility(current_api);
 
     assert(graphics_util != nullptr);
@@ -220,7 +231,7 @@ void RgMenuFileItemGraphics::SetStringConstants()
 void RgMenuFileItemGraphics::UpdateFilenameLabelText()
 {
     // Create a utility class instance based on the current API. It will be used to display API-specific shader stage names.
-    RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
+    RgProjectAPI                     current_api   = RgConfigManager::Instance().GetCurrentAPI();
     std::shared_ptr<RgUtilsGraphics> graphics_util = RgUtilsGraphics::CreateUtility(current_api);
 
     assert(graphics_util != nullptr);
@@ -329,14 +340,14 @@ void RgMenuFileItemGraphics::mousePressEvent(QMouseEvent* event)
     }
 }
 
-void RgMenuFileItemGraphics::resizeEvent(QResizeEvent *event)
+void RgMenuFileItemGraphics::resizeEvent(QResizeEvent* event)
 {
     Q_UNUSED(event);
 
     UpdateFilenameLabelText();
 }
 
-void RgMenuFileItemGraphics::showEvent(QShowEvent *event)
+void RgMenuFileItemGraphics::showEvent(QShowEvent* event)
 {
     Q_UNUSED(event);
 
@@ -411,10 +422,10 @@ void RgMenuFileItemGraphics::dragEnterEvent(QDragEnterEvent* event)
                 QUrl url = mime_data->urls().at(0);
 
                 // Do not allow the user to use PSO files.
-                bool valid_file = true;
-                QString extension;
-                const QString file_path = url.toLocalFile();
-                QStringList name_extension = file_path.split(kStrFileExtensionDelimiter);
+                bool          valid_file = true;
+                QString       extension;
+                const QString file_path      = url.toLocalFile();
+                QStringList   name_extension = file_path.split(kStrFileExtensionDelimiter);
                 assert(name_extension.size() == 2);
                 if (name_extension.size() == 2)
                 {
@@ -465,7 +476,7 @@ void RgMenuFileItemGraphics::dragLeaveEvent(QDragLeaveEvent* event)
     SetCurrent(false);
 }
 
-void RgMenuFileItemGraphics::dragMoveEvent(QDragMoveEvent *event)
+void RgMenuFileItemGraphics::dragMoveEvent(QDragMoveEvent* event)
 {
     // If there is already a file present in this stage,
     // do not allow the user to drop here.

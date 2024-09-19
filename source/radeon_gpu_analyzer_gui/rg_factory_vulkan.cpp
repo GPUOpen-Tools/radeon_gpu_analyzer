@@ -84,15 +84,20 @@ RgIsaDisassemblyView* RgFactoryVulkan::CreateDisassemblyView(QWidget* parent)
 RgMenu* RgFactoryVulkan::CreateFileMenu(QWidget* parent)
 {
     RgMenu* menu = new RgMenuVulkan(parent);
-
+    
     // Apply the file menu stylesheet.
+    ApplyFileMenuStylesheet(menu);
+
+    return menu;
+}
+
+void RgFactoryVulkan::ApplyFileMenuStylesheet(QWidget* widget)
+{
     std::vector<std::string> stylesheet_file_names;
     stylesheet_file_names.push_back(kStylesheetPackage.file_menu_stylesheet);
     stylesheet_file_names.push_back(kStylesheetPackage.file_menu_api_stylesheet);
-    [[maybe_unused]] bool status = RgUtils::LoadAndApplyStyle(stylesheet_file_names, menu);
+    [[maybe_unused]] bool status = RgUtils::LoadAndApplyStyle(stylesheet_file_names, widget);
     assert(status);
-
-    return menu;
 }
 
 RgStartTab* RgFactoryVulkan::CreateStartTab(QWidget* parent)

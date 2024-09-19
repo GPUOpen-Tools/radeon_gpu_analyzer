@@ -39,8 +39,8 @@ struct RgCliBuildOutput;
 typedef std::map<std::string, RgMenuFileItem*> StringToFileItemMap;
 
 // Stylesheet for add/create buttons when in focus.
-static const char* kStrButtonFocusOutStylesheet = "QPushButton { margin: 1px; background: rgb(214, 214, 214);}";
-static const char* kStrButtonFocusInStylesheet = "QPushButton { border: 1px solid #6666FF; margin: 1px; background: rgb(253,255,174);}";
+static const char* kStrButtonFocusOutStylesheet = "QPushButton { margin: 1px; background: palette(button);}";
+static const char* kStrButtonFocusInStylesheet = "QPushButton { border: 1px solid #6666FF; margin: 1px; background: palette(highlight); }";
 
 // Indices for special case file items.
 enum class FileMenuFocusItems

@@ -7,18 +7,26 @@
 #include <QDragEnterEvent>
 #include <QPushButton>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_pipeline_state_item.h"
 
-static const char* kStrButtonFocusInStylesheetGraphics = "QPushButton { background: rgb(253,255,174); border-style: solid; border-width: 2px; border-color: rgb(135, 20, 16);}";
-static const char* kStrButtonFocusOutStylesheet = "QPushButton { margin: 1px; background: rgb(214, 214, 214);}";
+// Stylesheet for the when the menu buttons have focus.
+static const char* kStrButtonFocusInStylesheetGraphics =
+    "QPushButton { background: palette(highlight); border-style: solid; border-width: 2px; border-color: rgb(135, 20, 16);}";
+
+// Stylesheet for the when the menu buttons do not have focus.
+static const char* kStrButtonFocusOutStylesheet = "QPushButton { margin: 1px; }";
+
 static const char* kStrDefaultPipelineFileExtensionGraphicsLocal = "gpso";
-static const char* kStrDefaultPipelineFileExtensionComputeLocal = "cpso";
+static const char* kStrDefaultPipelineFileExtensionComputeLocal  = "cpso";
 
 RgMenuPipelineStateItem::RgMenuPipelineStateItem(RgPipelineType pipeline_type, RgMenu* parent)
-    : pipeline_type_(pipeline_type),
-    RgMenuItem(parent)
+    : pipeline_type_(pipeline_type)
+    , RgMenuItem(parent)
 {
     ui_.setupUi(this);
 
@@ -27,6 +35,13 @@ RgMenuPipelineStateItem::RgMenuPipelineStateItem(RgPipelineType pipeline_type, R
 
     // Set the tool tip.
     this->setToolTip(kStrGraphicsMenuPipelineStateTooltip);
+
+    ColorThemeType color_theme = QtCommon::QtUtils::ColorTheme::Get().GetColorTheme();
+
+    if (color_theme == kColorThemeTypeDark)
+    {
+        ui_.pipelineStateButton->setIcon(QIcon(":/icons/state_settings_cube_dark_mode.svg"));
+    }
 
     // Set the mouse cursor to arrow cursor.
     SetCursor(Qt::PointingHandCursor);
@@ -140,10 +155,10 @@ void RgMenuPipelineStateItem::dragEnterEvent(QDragEnterEvent* event)
                 QUrl url = mime_data->urls().at(0);
 
                 // Verify we have the correct file for the current pipeline type.
-                bool valid_file = false;
-                QString extension;
-                const QString file_path = url.toLocalFile();
-                QStringList num_extension = file_path.split(kStrFileExtensionDelimiter);
+                bool          valid_file = false;
+                QString       extension;
+                const QString file_path     = url.toLocalFile();
+                QStringList   num_extension = file_path.split(kStrFileExtensionDelimiter);
                 assert(num_extension.size() == 2);
                 if (num_extension.size() == 2)
                 {

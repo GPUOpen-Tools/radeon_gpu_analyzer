@@ -37,12 +37,6 @@ RgBuildSettingsViewOpencl::RgBuildSettingsViewOpencl(QWidget* parent, const RgBu
     // Setup the UI.
     ui_.setupUi(this);
 
-    // Set the background to white.
-    QPalette pal = palette();
-    pal.setColor(QPalette::Window, Qt::white);
-    this->setAutoFillBackground(true);
-    this->setPalette(pal);
-
     // Create the include directories editor view.
     include_directories_view_ = new RgIncludeDirectoriesView(kOptionsListDelimiter, this);
 

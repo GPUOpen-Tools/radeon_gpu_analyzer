@@ -15,10 +15,6 @@
 // C++
 #include<string>
 
-// Dxr string constants.
-static const char* kStrDxrModeShader   = "shader";
-static const char* kStrDxrModePipeline = "pipeline";
-
 class BeDx12Utils
 {
 public:
@@ -83,9 +79,6 @@ public:
     // In case of a failure, for example, if the shader model format is invalid, false is return. 
     // Otherwise, true is returned.
     static bool ParseShaderModel(const std::string& shader_model_str, ShaderModelVersion& shader_model);
-
-    // Returns true if this is DXR Shader mode and false otherwise.
-    static bool IsDxrShaderMode(const Config& config);
 };
 
 #endif  // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_UTILS_DX12_H_

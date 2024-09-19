@@ -5,7 +5,7 @@
 /* The default color is gray. */
 RgMenuFileItemGraphics #itemBackground
 {
-    background-color: rgb(234, 235, 230);
+    background-color: palette(midlight);
     border-style: solid;
     border-width: 1px;
     border-color: rgb(135,20,16);
@@ -14,7 +14,7 @@ RgMenuFileItemGraphics #itemBackground
 /* Current item color is light yellow (the RGA "highlight" color). */
 RgMenuFileItemGraphics #itemBackground[current=true]
 {
-    background-color: rgb(253,255,174);
+    background-color: palette(highlight);
     border-style: solid;
     border-width: 1px;
     border-color: rgb(135,20,16);
@@ -23,7 +23,7 @@ RgMenuFileItemGraphics #itemBackground[current=true]
 /* Occupied but not current item color is grayish light yellow. */
 RgMenuFileItemGraphics #itemBackground[current=false][occupied=true]
 {
-    background-color: rgb(253, 255, 238);
+    background-color: palette(base);
     border-style: solid;
     border-width: 1px;
     border-color: rgb(135,20,16);
@@ -65,7 +65,6 @@ RgMenuFileItemGraphics #removeButton:hover
 
 RgMenuPipelineStateItem QPushButton
 {
-    background-color: rgb(214, 214, 214);
     text-align: left;
     padding-left: 11px;
 }

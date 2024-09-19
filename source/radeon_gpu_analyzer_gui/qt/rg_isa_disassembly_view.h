@@ -184,7 +184,6 @@ protected slots:
     // Handler to open the GPU list widget.
     void HandleOpenGpuListWidget();
 
-
 protected:
     // A map that associates an GPU name to a list of program build outputs.
     typedef std::map<std::string, std::vector<RgEntryOutput>> GpuToEntryVector;
@@ -232,7 +231,7 @@ protected:
     bool PopulateResourceUsageEntries(const GpuToEntryVector& gpu_to_resource_usage_csv_entries);
 
     // Connect resource usage view signals.
-    void ConnectResourceUsageViewSignals(RgResourceUsageView * resource_usage_view);
+    void ConnectResourceUsageViewSignals(RgResourceUsageView* resource_usage_view);
 
     // Populate the names in the column visibility list.
     void PopulateColumnVisibilityList();
@@ -300,4 +299,4 @@ protected:
     // The interface responsible for presenting disassembly results for multiple GPUs.
     Ui::RgIsaDisassemblyView ui_;
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_VIEW_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_VIEW_H_

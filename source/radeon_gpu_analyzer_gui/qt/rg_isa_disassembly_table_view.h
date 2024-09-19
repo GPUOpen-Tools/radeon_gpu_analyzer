@@ -147,6 +147,9 @@ private slots:
     // Handler invoked when the table's context menu should be opened.
     void HandleOpenContextMenu(const QPoint& widget_click_position);
 
+    // Handler invoked when the color theme is changed.
+    void HandleColorThemeChanged();
+
 protected:
     // Connect signals used for the right-click context menu.
     void ConnectContextMenuSignals();
@@ -211,4 +214,4 @@ protected:
     // The disassembly view's interface.
     Ui::RgIsaDisassemblyTableView ui_;
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_TABLE_VIEW_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_TABLE_VIEW_H_

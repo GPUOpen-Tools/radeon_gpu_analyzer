@@ -5,6 +5,11 @@
 // Qt.
 #include <QKeyEvent>
 #include <QButtonGroup>
+#include <QColor>
+
+// QtCommon.
+#include "qt_common/utils/common_definitions.h"
+#include "qt_common/utils/qt_util.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_recent_project_widget.h"
@@ -17,9 +22,14 @@
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 
+// Icons for each api type and each color mode.
+static QString kOpenClIcons[ColorThemeType::kColorThemeTypeCount] = {":/icons/api_logos/opencl_icon_wide.png", ":/icons/api_logos/opencl_icon_wide_dark.png"};
+static QString kVulkanIcons[ColorThemeType::kColorThemeTypeCount] = {":/icons/api_logos/vulkan_icon.png", ":/icons/api_logos/vulkan_icon_dark.png"};
+static QString kBinaryIcons[ColorThemeType::kColorThemeTypeCount] = {":/icons/api_logos/binary_icon_wide.png", ":/icons/api_logos/binary_icon_wide_dark.png"};
+
 RgStartTab::RgStartTab(QWidget* parent)
-    : QWidget(parent),
-    parent_(parent)
+    : QWidget(parent)
+    , parent_(parent)
 {
     // Setup the UI.
     ui_.setupUi(this);
@@ -47,6 +57,9 @@ void RgStartTab::Initialize()
 
     // Set the cursor type for specific widgets in the view.
     SetCursor();
+
+    SetLinkButtonStylesheet();
+    connect(&QtCommon::QtUtils::ColorTheme::Get(), &QtCommon::QtUtils::ColorTheme::ColorThemeUpdated, this, &RgStartTab::OnColorThemeChanged);
 
     // Install an event filter to handle up/down arrow keys on the recent files list widget.
     qApp->installEventFilter(this);
@@ -203,26 +216,55 @@ void RgStartTab::SetCursor()
     ui_.helpManualPushButton->setCursor(Qt::PointingHandCursor);
 }
 
+void RgStartTab::SetLinkButtonStylesheet()
+{
+    QString stylesheet;
+
+    if (QtCommon::QtUtils::ColorTheme::Get().GetColorTheme() == ColorThemeType::kColorThemeTypeDark)
+    {
+        stylesheet = kDarkLinkButtonStylesheet;
+    }
+    else
+    {
+        stylesheet = kLinkButtonStylesheet;
+    }
+
+    std::vector<QPushButton*> start_buttons;
+    GetStartButtons(start_buttons);
+
+    for (auto start_button : start_buttons)
+    {
+        start_button->setStyleSheet(stylesheet);
+    }
+
+    ui_.recentProjectsOtherPushButton->setStyleSheet(stylesheet);
+    ui_.aboutRGAPushButton->setStyleSheet(stylesheet);
+    ui_.gettingStartedPushButton->setStyleSheet(stylesheet);
+    ui_.helpManualPushButton->setStyleSheet(stylesheet);
+    ui_.noRecentSessionsDummyPushButton->setStyleSheet(stylesheet);
+}
+
 void RgStartTab::SetProjectAPIIcon(RgProjectAPI api, RgRecentProjectWidget* recent_project_widget)
 {
+    ColorThemeType color_theme = QtCommon::QtUtils::ColorTheme::Get().GetColorTheme();
     // Get and set the appropriate API icon.
     switch (api)
     {
     case RgProjectAPI::kOpenCL:
     {
-        recent_project_widget->SetIcon(QIcon(":/icons/api_logos/opencl_icon_wide.png"));
+        recent_project_widget->SetIcon(QIcon(kOpenClIcons[color_theme]));
         recent_project_widget->SetIconProjectType(kStrApiNameOpencl);
     }
     break;
     case RgProjectAPI::kVulkan:
     {
-        recent_project_widget->SetIcon(QIcon(":/icons/api_logos/vulkan_icon.png"));
+        recent_project_widget->SetIcon(QIcon(kVulkanIcons[color_theme]));
         recent_project_widget->SetIconProjectType(kStrApiNameVulkan);
     }
     break;
     case RgProjectAPI::kBinary:
     {
-        recent_project_widget->SetIcon(QIcon(":/icons/api_logos/binary_icon_wide.png"));
+        recent_project_widget->SetIcon(QIcon(kBinaryIcons[color_theme]));
         recent_project_widget->SetIconProjectType(kStrApiAbbreviationBinary);
     }
     break;
@@ -267,17 +309,18 @@ void RgStartTab::PopulateRecentProjectsList()
             // button is being identified within the group when signals are being fired.
             int button_index = num_recent_projects;
             for (std::vector<std::shared_ptr<RgRecentProject>>::const_reverse_iterator project_iter = recent_projects.rbegin();
-                project_iter != recent_projects.rend(); ++project_iter)
+                 project_iter != recent_projects.rend();
+                 ++project_iter)
             {
                 if (*project_iter != nullptr)
                 {
                     // Display the most recent projects at the end of the list.
-                    const std::string& project_path = (*project_iter)->project_path;
-                    RgProjectAPI project_api_type = (*project_iter)->api_type;
+                    const std::string& project_path     = (*project_iter)->project_path;
+                    RgProjectAPI       project_api_type = (*project_iter)->api_type;
 
                     // Extract just the filename to display in the list of recent projects.
                     std::string project_name;
-                    bool is_ok = RgUtils::ExtractFileName(project_path, project_name, true);
+                    bool        is_ok = RgUtils::ExtractFileName(project_path, project_name, true);
                     assert(is_ok);
 
                     if (is_ok)
@@ -302,7 +345,8 @@ void RgStartTab::PopulateRecentProjectsList()
                         recent_project_widget->setContextMenuPolicy(Qt::CustomContextMenu);
 
                         // Connect signal/slot for the context menu.
-                        is_connected = connect(recent_project_widget, &RgRecentProjectWidget::customContextMenuRequested, this, &RgStartTab::HandleContextMenuRequest);
+                        is_connected =
+                            connect(recent_project_widget, &RgRecentProjectWidget::customContextMenuRequested, this, &RgStartTab::HandleContextMenuRequest);
                         assert(is_connected);
 
                         // Add the recent project button to the group.
@@ -320,6 +364,49 @@ void RgStartTab::PopulateRecentProjectsList()
 QWidget* RgStartTab::GetRecentProgramsListWidget() const
 {
     return ui_.recentProgramsWrapper;
+}
+
+void RgStartTab::OnColorThemeChanged()
+{
+    SetLinkButtonStylesheet();
+
+    const std::vector<std::shared_ptr<RgRecentProject>>& recent_projects = RgConfigManager::Instance().GetRecentProjects();
+
+    bool has_recent_projects = recent_projects.size() > 0;
+
+    // Change the visibility of the "No recent sessions" label depending on what's in the settings file.
+    ui_.noRecentSessionsDummyPushButton->setVisible(!has_recent_projects);
+
+    if (has_recent_projects)
+    {
+        int i = 0;
+
+        QLayout* recent_projects_list = ui_.recentProgramsWrapper->layout();
+        assert(recent_projects_list != nullptr);
+
+        int num_recent_projects = static_cast<int>(recent_projects.size());
+
+        // The index of the button in the QButtonGroup. This is how the
+        // button is being identified within the group when signals are being fired.
+        int button_index = num_recent_projects;
+        for (std::vector<std::shared_ptr<RgRecentProject>>::const_reverse_iterator project_iter = recent_projects.rbegin();
+             project_iter != recent_projects.rend();
+             ++project_iter)
+        {
+            if (*project_iter != nullptr)
+            {
+                RgProjectAPI project_api_type = (*project_iter)->api_type;
+
+                RgRecentProjectWidget* recent_project_widget = qobject_cast<RgRecentProjectWidget*>(recent_projects_list->itemAt(i)->widget());
+                if (recent_project_widget != nullptr)
+                {
+                    SetProjectAPIIcon(project_api_type, recent_project_widget);
+                }
+            }
+
+            i++;
+        }
+    }
 }
 
 // Get the button used to create a new project.
@@ -350,14 +437,14 @@ void RgStartTab::HandleContextMenuRequest(const QPoint& pos)
     QList<QAction*> menu_actions = menu_.actions();
 
     // Extract the file name clicked on
-    QObject* sender = QObject::sender();
+    QObject*               sender                = QObject::sender();
     RgRecentProjectWidget* recent_project_widget = qobject_cast<RgRecentProjectWidget*>(sender);
     assert(recent_project_widget != nullptr);
     if (recent_project_widget != nullptr)
     {
         QString filename = recent_project_widget->GetProjectName();
 
-        foreach(auto action, menu_actions)
+        foreach (auto action, menu_actions)
         {
             if (action == open_recent_action_)
             {
@@ -379,11 +466,11 @@ void RgStartTab::HandleContextMenuRequest(const QPoint& pos)
             QString menu_selection = action->text();
 
             // Find out the index into the button group for this file
-            QList<QAbstractButton *> button_list = recent_project_button_group_->buttons();
-            int recent_file_index = 0;
+            QList<QAbstractButton*> button_list       = recent_project_button_group_->buttons();
+            int                     recent_file_index = 0;
 
             // Find the index for the button clicked on
-            foreach(auto button, button_list)
+            foreach (auto button, button_list)
             {
                 recent_file_index++;
                 if (filename.compare(button->text()) == 0)
@@ -393,14 +480,14 @@ void RgStartTab::HandleContextMenuRequest(const QPoint& pos)
             }
 
             // Determine the index of the recent item that was clicked.
-            int selected_file_index = button_list.count() - recent_file_index;
-            bool is_index_valid = (selected_file_index >= 0 && selected_file_index < button_list.count());
+            int  selected_file_index = button_list.count() - recent_file_index;
+            bool is_index_valid      = (selected_file_index >= 0 && selected_file_index < button_list.count());
             assert(is_index_valid);
             if (is_index_valid)
             {
                 // Pull the recent project info out of the global settings structure.
                 std::shared_ptr<RgGlobalSettings> global_settings = RgConfigManager::Instance().GetGlobalConfig();
-                const std::string& project_path = global_settings->recent_projects[selected_file_index]->project_path;
+                const std::string&                project_path    = global_settings->recent_projects[selected_file_index]->project_path;
 
                 if (action == open_recent_action_)
                 {
@@ -412,7 +499,7 @@ void RgStartTab::HandleContextMenuRequest(const QPoint& pos)
                 {
                     // Get the directory where the project's settings file lives.
                     std::string file_directory;
-                    bool got_directory = RgUtils::ExtractFileDirectory(project_path, file_directory);
+                    bool        got_directory = RgUtils::ExtractFileDirectory(project_path, file_directory);
                     assert(got_directory);
 
                     if (got_directory)
@@ -433,7 +520,7 @@ void RgStartTab::HandleRecentProjectClickedEvent(QAbstractButton* recent_file_bu
     if (global_settings != nullptr && recent_project_button_group_ != nullptr && recent_file_button != nullptr)
     {
         int  recent_file_index = recent_project_button_group_->id(recent_file_button);
-        bool is_valid_range = (recent_file_index >= 0 && recent_file_index < global_settings->recent_projects.size());
+        bool is_valid_range    = (recent_file_index >= 0 && recent_file_index < global_settings->recent_projects.size());
         assert(is_valid_range);
 
         // If the file index is valid, attempt to open the file.
@@ -481,18 +568,18 @@ bool RgStartTab::eventFilter(QObject* object, QEvent* event)
                     switch (key_event->key())
                     {
                     case Qt::Key_Up:
+                    {
+                        // Give focus to the last item under the "Start" section.
+                        std::vector<QPushButton*> start_buttons;
+                        GetStartButtons(start_buttons);
+                        if (!start_buttons.empty())
                         {
-                            // Give focus to the last item under the "Start" section.
-                            std::vector<QPushButton*> start_buttons;
-                            GetStartButtons(start_buttons);
-                            if (!start_buttons.empty())
-                            {
-                                QPushButton* last_start_button = *(start_buttons.rbegin());
-                                last_start_button->setFocus();
-                            }
-                            filtered = true;
+                            QPushButton* last_start_button = *(start_buttons.rbegin());
+                            last_start_button->setFocus();
                         }
-                        break;
+                        filtered = true;
+                    }
+                    break;
                     case Qt::Key_Down:
                         // Give focus to the next widget.
                         ui_.recentProjectsOtherPushButton->setFocus();
@@ -523,7 +610,7 @@ bool RgStartTab::ProcessKeyPress(QKeyEvent* key_event, const QString& object_nam
 {
     assert(key_event != nullptr);
 
-    static const char* kStrNewFilePushButton = "newFilePushButton";
+    static const char* kStrNewFilePushButton        = "newFilePushButton";
     static const char* kStrGettingStartedPushButton = "gettingStartedPushButton";
 
     bool result = true;

@@ -1461,19 +1461,6 @@ void RgUtils::StyleRepolish(QWidget* widget, bool repolish_children)
     }
 }
 
-void RgUtils::SetBackgroundColor(QWidget* widget, const QColor& color)
-{
-    assert(widget != nullptr);
-    if (widget != nullptr)
-    {
-        // Set the background color.
-        QPalette palette = widget->palette();
-        palette.setColor(QPalette::Window, color);
-        widget->setAutoFillBackground(true);
-        widget->setPalette(palette);
-    }
-}
-
 std::string RgUtils::TruncateString(const std::string& text,
                                     unsigned int       num_front_chars,
                                     unsigned int       num_back_chars,

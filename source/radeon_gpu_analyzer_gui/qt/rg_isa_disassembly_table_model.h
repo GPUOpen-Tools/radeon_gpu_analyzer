@@ -83,7 +83,7 @@ public:
     // Populate the model by loading a disassembly CSV file.
     bool PopulateFromCsvFile(const std::string& csv_file_full_path);
 
-     // Load the data in the given live VGPR file into the model.
+    // Load the data in the given live VGPR file into the model.
     bool LoadLiveVgprsData(const std::string& live_vgpr_file_full_path);
 
     // Set the correlated input source line index to highlight.
@@ -203,4 +203,4 @@ protected:
     // Boolean to indicate if the user already pressed F4.
     bool is_show_current_max_vgpr_enabled_ = false;
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_TABLE_MODEL_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_TABLE_MODEL_H_

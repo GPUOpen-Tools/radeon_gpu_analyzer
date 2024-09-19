@@ -17,9 +17,6 @@ RgRenameProjectDialog::RgRenameProjectDialog(std::string& project_name, QWidget*
     // Setup the UI.
     ui_.setupUi(this);
 
-    // Set the background to white.
-    RgUtils::SetBackgroundColor(this, Qt::white);
-
     // Generate a unique project name based on the incoming base name string.
     project_name_ = RgUtils::GenerateDefaultProjectName();
     ui_.lineEditProjectName->setText(project_name_.c_str());

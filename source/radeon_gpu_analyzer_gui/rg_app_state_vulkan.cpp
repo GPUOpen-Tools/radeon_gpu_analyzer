@@ -313,7 +313,7 @@ std::string RgAppStateVulkan::GetGlobalSettingsViewStylesheet() const
         "RgGlobalSettingsView #defaultLangComboBox:hover"
         "{"
         "border: 1px solid rgb(224, 30, 55);"
-        "background: rgb(240, 240, 240);"
+        "background-color: palette(alternate-base);"
         "}";
     return kStrVulkanAppSettingsStylesheet;
 }
@@ -343,7 +343,7 @@ std::string RgAppStateVulkan::GetBuildSettingsViewStylesheet() const
         "RgBuildSettingsView #outputFileBinaryNameLineEdit:hover"
         "{"
         "border: 1px solid rgb(224, 30, 55);"
-        "background: rgb(240, 240, 240);"
+        "background-color: palette(alternate-base);"
         "}";
     return kStrVulkanBuildSettingsStylesheet;
 }

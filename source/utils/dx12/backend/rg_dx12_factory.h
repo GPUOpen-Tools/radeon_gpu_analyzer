@@ -47,8 +47,5 @@ namespace rga
 
         // Destroy a hit group subobject that was created by this factory.
         static void DestroyHitGroupSubobject(D3D12_STATE_SUBOBJECT*& hit_group_subobject);
-
-        // Destroy a DXIL library subobject that was created by this factory.
-        static void DestroyDxilLibrarySubobject(D3D12_STATE_SUBOBJECT*& dxil_library_subobject);
     };
 }

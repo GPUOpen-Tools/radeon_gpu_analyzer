@@ -7,32 +7,31 @@
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vk_offline.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_commander_vulkan_util.h"
+#include "radeon_gpu_analyzer_cli/kc_statistics_parser_vulkan.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
-#include "radeon_gpu_analyzer_cli/kc_statistics_parser_vulkan.h"
-#include "radeon_gpu_analyzer_cli/kc_cli_commander_vulkan_util.h"
 
 // Backend.
-#include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
 #include "radeon_gpu_analyzer_backend/be_backend.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
+#include "radeon_gpu_analyzer_backend/be_metadata_parser.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
 
 // Shared between CLI and GUI.
-#include "common/rga_version_info.h"
 #include "common/rga_shared_utils.h"
+#include "common/rga_version_info.h"
 
 // Infra.
-#include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
-
-
+#include "external/amdt_os_wrappers/Include/osFilePath.h"
 
 // Constants: error messages.
 static const char* kStrErrorVkOfflineCannotExtractVulkanVersion = "Error: unable to extract the Vulkan version.";
 static const char* kStrErrorVkOfflineMixedInputFiles = "Error: cannot mix stage-specific input files (--vert, --tesc, --tese, --geom, --frag, --comp) with a stage-less SPIR-V input file.";
 
 // Unsupported devices.
-static const std::set<std::string> kUnsupportedDevicesVkOffline = {"gfx908", "gfx90a", "gfx942"};
+static const std::set<std::string> kUnsupportedDevicesVkOffline = {"gfx900", "gfx902", "gfx904", "gfx906", "gfx908", "gfx90a", "gfx90c", "gfx942", "gfx1033"};
 
 KcCLICommanderVkOffline::KcCLICommanderVkOffline() : vulkan_builder_(new BeProgramBuilderVkOffline)
 {
@@ -676,9 +675,9 @@ void KcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
                         StoreOutputFilesToOutputMD(device, spv_files, isa_files, stats_files);
 
                         BeAmdPalMetaData::PipelineMetaData pipeline;
-                        auto md_status = beProgramBuilderVulkan::ParseAmdgpudisMetadata(amdgpu_dis_stdout, pipeline);
-                        assert(md_status == beKA::beStatus::kBeStatusVulkanGraphicsCodeObjMetaDataSuccess);
-                        if (md_status == beKA::beStatus::kBeStatusVulkanGraphicsCodeObjMetaDataSuccess)
+                        auto                               md_status = BeAmdPalMetaData::ParseAmdgpudisMetadata(amdgpu_dis_stdout, pipeline);
+                        assert(md_status == beKA::beStatus::kBeStatusGraphicsCodeObjMetaDataSuccess);
+                        if (md_status == beKA::beStatus::kBeStatusGraphicsCodeObjMetaDataSuccess)
                         {
                             vk_util.ExtractStatistics(config, device, pipeline, shader_to_disassembly);
                         }

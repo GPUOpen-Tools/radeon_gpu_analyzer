@@ -234,10 +234,3 @@ bool BeDx12Utils::ParseShaderModel(const std::string& shader_model_str, ShaderMo
     }
     return ret;
 }
-
-// Returns true if this is DXR Shader mode and false otherwise.
-bool BeDx12Utils::IsDxrShaderMode(const Config& config)
-{
-    std::string dxr_mode = RgaSharedUtils::ToLower(config.dxr_mode);
-    return (dxr_mode.compare(kStrDxrModeShader) == 0);
-}

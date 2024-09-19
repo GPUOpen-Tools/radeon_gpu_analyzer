@@ -1,8 +1,9 @@
 // C++.
 #include <assert.h>
 #include <QKeyEvent>
+#include <QStyleHints>
 
-// Infra.
+// QtCommon.
 #include "qt_common/utils/qt_util.h"
 
 // Local.
@@ -17,24 +18,19 @@
 static const int kHorizontalLayoutSpacing = 15;
 static const int kLeftAndRightMargin      = 23;
 static const int kSpacingAfterLabel       = 10;
-static const std::vector<const char*> kDescription = 
-{
-    kStrStartupDialogBinaryDescription,
-    kStrStartupDialogOpenclDescription,
-    kStrStartupDialogVulkanDescription    
-};
+
+static const std::vector<const char*> kDescription = {kStrStartupDialogBinaryDescription,
+                                                      kStrStartupDialogOpenclDescription,
+                                                      kStrStartupDialogVulkanDescription};
+
 int maxDescriptionWidth = 0;
 
-RgStartupDialog::RgStartupDialog(QWidget* parent) :
-    QDialog(parent),
-    selected_api_(static_cast<RgProjectAPI>(static_cast<int>(RgProjectAPI::kApiCount) - 1)),
-    should_not_ask_again_(false)
+RgStartupDialog::RgStartupDialog(QWidget* parent)
+    : QDialog(parent)
+    , selected_api_(static_cast<RgProjectAPI>(static_cast<int>(RgProjectAPI::kApiCount) - 1))
+    , should_not_ask_again_(false)
 {
     ui_.setupUi(this);
-
-    // Set the background color to white.
-    setAutoFillBackground(true);
-    setPalette(QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette());
 
     // Disable the help button in the title bar, and disable resizing of this dialog.
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint | Qt::MSWindowsFixedSizeDialogHint);
@@ -51,7 +47,7 @@ RgStartupDialog::RgStartupDialog(QWidget* parent) :
         RgProjectAPI current_api = static_cast<RgProjectAPI>(api_index);
         std::string  api_string;
         RgUtils::ProjectAPIToString(current_api, api_string, false);
-        ui_.apiListWidget->addItem(QString::fromStdString(api_string));     
+        ui_.apiListWidget->addItem(QString::fromStdString(api_string));
     }
 
     // Select Vulkan selection in the list widget by default.
@@ -75,6 +71,10 @@ RgStartupDialog::RgStartupDialog(QWidget* parent) :
 
     //Scale the dialog and the widget inside it.
     ScaleDialog();
+
+    setStyleSheet(
+        "QCheckBox::indicator { border: 1px solid palette(text); background-color: rgb(240, 240, 240); width: 12px; height: 12px; } "
+        "QCheckBox::indicator:checked { image: url(:/icons/checkmark_black.svg);}");
 }
 
 void RgStartupDialog::ConnectSignals() const
@@ -98,7 +98,48 @@ void RgStartupDialog::ConnectSignals() const
     // Connect the handler invoked when the user selects the API by using up/down arrow keys.
     is_connected = connect(ui_.apiListWidget, &QListWidget::currentRowChanged, this, &RgStartupDialog::HandleListWidgetItemSelected);
     assert(is_connected);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    is_connected = connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this, &RgStartupDialog::HandleOsColorSchemeChanged);
+    assert(is_connected);
+#endif
 }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+void RgStartupDialog::HandleOsColorSchemeChanged(Qt::ColorScheme color_scheme)
+{
+    if (RgConfigManager::Instance().GetGlobalConfig()->color_theme != kColorThemeTypeCount)
+    {
+        return;
+    }
+
+    if (color_scheme == Qt::ColorScheme::Unknown)
+    {
+        return;
+    }
+
+    ColorThemeType color_mode = kColorThemeTypeLight;
+    if (color_scheme == Qt::ColorScheme::Light)
+    {
+        color_mode = kColorThemeTypeLight;
+    }
+    else if (color_scheme == Qt::ColorScheme::Dark)
+    {
+        color_mode = kColorThemeTypeDark;
+    }
+
+    if (color_mode == QtCommon::QtUtils::ColorTheme::Get().GetColorTheme())
+    {
+        return;
+    }
+
+    QtCommon::QtUtils::ColorTheme::Get().SetColorTheme(color_mode);
+
+    qApp->setPalette(QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette());
+
+    emit QtCommon::QtUtils::ColorTheme::Get().ColorThemeUpdated();
+}
+#endif
 
 void RgStartupDialog::SetCursor() const
 {
@@ -162,7 +203,7 @@ void RgStartupDialog::HandleListWidgetItemClicked(QListWidgetItem* item)
 
         // Also update the description.
         ui_.descriptionLabel->setText(kStrStartupDialogBinaryDescription);
-    }    
+    }
     else
     {
         // Should not get here.
@@ -221,7 +262,7 @@ void RgStartupDialog::SetDescriptionLength()
 {
     for (const char* text : kDescription)
     {
-        const QFont font = ui_.descriptionLabel->font();
+        const QFont  font = ui_.descriptionLabel->font();
         QFontMetrics fm(font);
         const int    text_width = fm.horizontalAdvance(text);
 
@@ -246,9 +287,9 @@ void RgStartupDialog::ScaleDialog()
     int right_margin;
     int bottom_margin;
     this->layout()->getContentsMargins(&left_margin, &top_margin, &right_margin, &bottom_margin);
-    left_margin = left_margin;
-    top_margin = top_margin;
-    right_margin = right_margin;
+    left_margin   = left_margin;
+    top_margin    = top_margin;
+    right_margin  = right_margin;
     bottom_margin = bottom_margin;
     this->layout()->setContentsMargins(left_margin, top_margin, right_margin, bottom_margin);
 

@@ -63,7 +63,7 @@ private:
     void ConnectSignals();
 
     // The Build Settings file item interface.
-    Ui::RgMenuBuildSettingsItem ui_;
+    Ui::rgMenuBuildSettingsItem ui_;
 
     // Flag to keep track of whether this item is currently selected.
     bool current_ = false;

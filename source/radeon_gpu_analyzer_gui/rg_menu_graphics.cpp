@@ -10,8 +10,10 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_pipeline_state_item.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_file_item_graphics.h"
 
-static const char* kStrButtonFocusInStylesheetGraphics = "QPushButton { background: rgb(253,255,174); border-style: solid; border-width: 2px; border-color: rgb(135, 20, 16);}";
-static const char* kButtonTabbedStylesheet = "QPushButton { border: 2px solid rgb(135,20,16); margin: 1px; background: rgb(214,214,214);}";
+// Stylesheets for the menu buttons.
+static const char* kStrButtonFocusInStylesheetGraphics = "QPushButton { background: palette(highlight); border-style: solid; border-width: 2px; border-color: rgb(135, 20, 16);}";
+static const char* kButtonTabbedStylesheet = "QPushButton { border: 2px solid rgb(135,20,16); margin: 1px; background: palette(button);}";
+
 static const char* kFileMenuNameGraphics = "fileMenuGraphics";
 
 static const int kPipelineStateButtonIndex = 1;

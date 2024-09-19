@@ -4,7 +4,6 @@
 
 RgMenuBuildSettingsItem QPushButton
 {
-    background-color: rgb(214, 214, 214);
     text-align: left;
     padding-left: 11px;
 }
@@ -26,5 +25,6 @@ RgIsaDisassemblyView #frame[selected=true]
 
 RgIsaDisassemblyView #frame[selected=false]
 {
-    border: 1px solid black;
+    border: 1px solid palette(text);
+
 }

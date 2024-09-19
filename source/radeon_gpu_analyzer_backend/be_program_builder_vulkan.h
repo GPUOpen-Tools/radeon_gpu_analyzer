@@ -8,101 +8,10 @@
 // Local.
 #include "radeon_gpu_analyzer_backend/be_data_types.h"
 #include "radeon_gpu_analyzer_backend/be_program_builder.h"
+#include "radeon_gpu_analyzer_backend/be_metadata_parser.h"
 #include "source/radeon_gpu_analyzer_cli/kc_config.h"
 
 using namespace beKA;
-
-// Metadata Parsed from Amdgpu-dis code object Metadata string.
-class BeAmdPalMetaData
-{
-public:
-
-    // Enum to represent different stages in hardware pipeline.
-    enum class StageType
-    {
-        kLS,
-        kHS,
-        kES,
-        kGS,
-        kVS,
-        kPS,
-        kCS
-    };
-
-    // Enum to represent different shader types.
-    enum class ShaderType
-    {
-        kVertex,
-        kHull,
-        kDomain,
-        kGeometry,
-        kPixel,
-        kCompute
-    };
-
-    // Enum to represent different shader subtypes.
-    enum class ShaderSubtype
-    {
-        kUnknown,
-        kRayGeneration,
-        kMiss,
-        kAnyHit,
-        kClosestHit,
-        kIntersection,
-        kCallable,
-        kTraversal
-    };
-
-    // Struct to hold hardware stage details.
-    struct HardwareStageMetaData
-    {
-        StageType          stage_type;
-        beKA::AnalysisData stats;
-    };
-
-    // Struct to hold shader function details.
-    struct ShaderFunctionMetaData
-    {
-        std::string        name;
-        ShaderSubtype      shader_subtype;
-        beKA::AnalysisData stats;
-    };
-
-    // Struct to hold shader details.
-    struct ShaderMetaData
-    {
-        ShaderType    shader_type;
-        StageType     hardware_mapping;
-        ShaderSubtype shader_subtype = ShaderSubtype::kUnknown;
-    };
-
-    // Struct to hold amdpal pipeline details.
-    struct PipelineMetaData
-    {
-        std::string                         api;
-        std::vector<HardwareStageMetaData>  hardware_stages;
-        std::vector<ShaderFunctionMetaData> shader_functions;
-        std::vector<ShaderMetaData>         shaders;
-    };
-
-    // Function to convert string stage name to StageType enum
-    static StageType GetStageType(const std::string& stage_name);
-
-    // Function to convert string shader name to ShaderType enum
-    static ShaderType GetShaderType(const std::string& shader_name);
-
-    // Function to convert string shader subtype to ShaderSubtype enum
-    static ShaderSubtype GetShaderSubtype(const std::string& subtype_name);
-
-    // Function to convert StageType enum to string stage name.
-    static std::string GetStageName(StageType stage_type);
-
-    // Function to convert ShaderType enum to string shader name.
-    static std::string GetShaderName(ShaderType shader_type);
-
-    // Function to convert ShaderSubtype enum to string shader subtype.
-    static std::string GetShaderSubtypeName(ShaderSubtype subtype);
-};
 
 // SPIR-V tool.
 enum class BeVulkanSpirvTool
@@ -151,10 +60,6 @@ public:
     static beStatus PreprocessSource(const Config& config, const std::string& glslang_bin_dir, const std::string& input_file,
         bool is_hlsl, bool should_print_cmd, std::string& output, std::string& error_msg);
 
-   // Invoke the amdgpu-dis executable.
-    static beStatus InvokeAmdgpudis(const std::string& cmd_line_options, bool should_print_cmd,
-        std::string& out_text, std::string& error_txt);
-
     // Parses amdgpu-dis output and extracts a table with the amdgpu shader stage name being the key ("vs", "ps", etc.) 
     // and that shader stage's disassembly the value.
     static beStatus ParseAmdgpudisOutput(const std::string& amdgpu_dis_output, 
@@ -178,10 +83,6 @@ public:
                                           const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
                                           const std::map<std::string, std::string>& shader_to_disassembly,
                                           const std::string&                        isa_file);
-
-    // Parses amdgpu-dis output and extracts code object metadata.
-    static beKA::beStatus ParseAmdgpudisMetadata(const std::string&                  amdgpu_dis_output, 
-                                                 BeAmdPalMetaData::PipelineMetaData& pipeline);
 
 private:
     // Invoke the glslang compiler executable.

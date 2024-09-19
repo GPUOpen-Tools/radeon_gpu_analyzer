@@ -161,6 +161,9 @@ protected:
     // Create an API-specific file menu.
     virtual bool CreateMenu(QWidget* parent) override;
 
+    // Reapply the stylesheet for the Vulkan-specific file menu when the color theme has changed.
+    virtual void ReapplyMenuStyleSheet() override;
+
     // Connect API-specific RgBuildView signals to the disassembly view.
     virtual void ConnectDisassemblyViewApiSpecificSignals() override;
 

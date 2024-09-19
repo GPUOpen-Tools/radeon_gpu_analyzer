@@ -320,7 +320,7 @@ std::string RgAppStateOpencl::GetGlobalSettingsViewStylesheet() const
         "RgGlobalSettingsView #defaultLangComboBox:hover"
         "{"
         "border: 1px solid lightGreen;"
-        "background: rgb(240, 240, 240);"
+        "background-color: palette(alternate-base);"
         "}";
     return kStrOpenclAppSettingsStylesheet;
 }
@@ -362,7 +362,7 @@ std::string RgAppStateOpencl::GetBuildSettingsViewStylesheet() const
         "RgBuildSettingsView #compilerLibrariesLineEdit:hover"
         "{"
         "border: 1px solid lightGreen;"
-        "background: rgb(240, 240, 240);"
+        "background-color: palette(alternate-base);"
         "}";
     return kStrOpenclBuildSettingsStylesheet;
 }

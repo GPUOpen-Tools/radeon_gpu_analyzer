@@ -5,6 +5,10 @@
 // Qt.
 #include <QStringView>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+#include "qt_common/utils/shared_isa_dictionary.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_syntax_highlighter.h"
 
@@ -167,6 +171,17 @@ RgSyntaxHighlighter::Style  RgSyntaxHighlighter::GetDefaultStyle()
     style.comments.setForeground(Qt::darkGreen);
     style.strings.setForeground(Qt::darkRed);
     style.preproc.setForeground(Qt::darkBlue);
+
+    if (QtCommon::QtUtils::ColorTheme::Get().GetColorTheme() == ColorThemeType::kColorThemeTypeDark)
+    {
+        // Dark mode needs a different set of syntax highlight colors.
+        style.keywords.setForeground(QColor(70, 150, 240));
+        style.types.setForeground(QColor(70, 150, 240));
+        style.functions.setForeground(QColor(210, 213, 164));
+        style.comments.setForeground(QColor(106, 153, 62));
+        style.strings.setForeground(QColor(211, 149, 106));
+        style.preproc.setForeground(QColor(152, 217, 251));
+    }
 
     return style;
 }

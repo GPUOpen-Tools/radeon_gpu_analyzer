@@ -10,6 +10,9 @@
 #include <QFileInfo>
 #include <QMessageBox>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+
 // Infra.
 #include "source/common/rga_shared_utils.h"
 
@@ -204,7 +207,14 @@ bool RgBuildViewBinary::CreateMenu(QWidget* parent)
     is_connected = connect(this, &RgBuildViewBinary::UpdateFileColoring, file_menu_, &RgMenuBinary::ProjectBuildSuccess);
     assert(is_connected);
 
+    connect(&QtCommon::QtUtils::ColorTheme::Get(), &QtCommon::QtUtils::ColorTheme::ColorThemeUpdated, this, &RgBuildViewBinary::ReapplyMenuStyleSheet);
+
     return file_menu_ != nullptr;
+}
+
+void RgBuildViewBinary::ReapplyMenuStyleSheet()
+{
+    factory_->ApplyFileMenuStylesheet(file_menu_);
 }
 
 void RgBuildViewBinary::ConnectDisassemblyViewApiSpecificSignals()

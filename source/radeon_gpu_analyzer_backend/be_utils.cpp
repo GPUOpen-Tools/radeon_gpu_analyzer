@@ -103,6 +103,7 @@ bool BeUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& card_list,
     AddGenerationDevices(GDT_HW_GENERATION_GFX10, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX103, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX11, card_list, public_device_unique_names, convert_to_lower);
+    AddGenerationDevices(GDT_HW_GENERATION_GFX115, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_CDNA2, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_CDNA3, card_list, public_device_unique_names, convert_to_lower);
 
@@ -317,95 +318,6 @@ bool BeUtils::DeviceNameLessThan(const std::string& a, const std::string& b)
         }
     }
     return ret;
-}
-
-bool BeUtils::DisassembleCodeObject(const std::string& code_object_filename, bool should_print_cmd,
-    std::string& disassembly_whole, std::string& disassembly_text, std::string& error_msg)
-{
-    static const wchar_t* kLcDisassemblerExe = L"amdgpu-dis";
-    static const wchar_t* kLcDisassemblerDir = L"utils/lc/disassembler";
-    const char* kStrErrorCodeObjectParseFailure = "Error: failed to parse Code Object .text section.";
-    const char* kStrErrorLcDisassemblerLaunchFailure = "Error: failed to launch the LC disassembler.";
-
-    // Build the command.
-    std::stringstream cmd;
-    cmd << code_object_filename;
-
-    osFilePath lc_disassembler_exe;
-    long exit_code = 0;
-
-    osGetCurrentApplicationPath(lc_disassembler_exe, false);
-    lc_disassembler_exe.appendSubDirectory(kLcDisassemblerDir);
-    lc_disassembler_exe.setFileName(kLcDisassemblerExe);
-
-    // Clear the error message buffer.
-    error_msg.clear();
-    std::string out_text;
-
-    KcUtils::ProcessStatus status = KcUtils::LaunchProcess(lc_disassembler_exe.asString().asASCIICharArray(),
-        cmd.str(),
-        "",
-        kProcessWaitInfinite,
-        should_print_cmd,
-        out_text,
-        error_msg,
-        exit_code);
-
-    // Extract the .text disassembly.
-    assert(!out_text.empty());
-    disassembly_whole = out_text;
-
-    if (!disassembly_whole.empty())
-    {
-        // Find where the .text section starts.
-        size_t text_offset_start = disassembly_whole.find(".text");
-        assert(text_offset_start != std::string::npos);
-        assert(text_offset_start != std::string::npos &&
-            text_offset_start < disassembly_whole.size() + 5);
-        if (text_offset_start < disassembly_whole.size() + 5)
-        {
-            // Skip .text identifier.
-            text_offset_start += 5;
-
-            // Find where the relevant portion of the disassembly ends.
-            size_t text_offset_end = disassembly_whole.find("s_code_end");
-            if (text_offset_end == std::string::npos)
-            {
-                // If s_code_end could not be found, compromise on finding the beginning of the next section.
-                text_offset_end = disassembly_whole.find(".section", text_offset_start);
-            }
-            assert(text_offset_end != std::string::npos);
-            if (text_offset_end != std::string::npos)
-            {
-                // Extract the relevant section.
-                size_t num_characters = text_offset_end - text_offset_start;
-                assert(num_characters > 0);
-                assert(num_characters < disassembly_whole.size() - text_offset_start);
-                if (num_characters > 0 && num_characters < disassembly_whole.size() - text_offset_start)
-                {
-                    disassembly_text = disassembly_whole.substr(text_offset_start, num_characters);
-                }
-                else if (error_msg.empty())
-                {
-                    error_msg = kStrErrorCodeObjectParseFailure;
-                }
-            }
-            else if (error_msg.empty())
-            {
-                error_msg = kStrErrorCodeObjectParseFailure;
-            }
-        }
-    }
-
-    if (disassembly_text.empty())
-    {
-        if (status == KcUtils::ProcessStatus::kSuccess && error_msg.empty())
-        {
-            error_msg = kStrErrorLcDisassemblerLaunchFailure;
-        }
-    }
-
-    return (status == KcUtils::ProcessStatus::kSuccess ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusdx12BackendLaunchFailure);
 }
 
 static bool ExtractAttributeValue(const std::string &disassembly_whole, size_t kd_pos, const std::string& attribute_name, uint32_t& value)

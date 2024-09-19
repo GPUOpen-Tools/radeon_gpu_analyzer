@@ -97,12 +97,6 @@ public:
     // number (e.g. gfx900 is less than gfx902 and gfx902 is less than gfx906).
     static bool DeviceNameLessThan(const std::string& a, const std::string& b);
 
-    // Disassembles the given Code Object, sets the output variables with the entire disassembly
-    // and with the .text section disassembly. If shouldPrintCmd is set to true, the invocation
-    // command of the external process would be printed to the console.
-    static bool DisassembleCodeObject(const std::string& code_object_filename, bool should_print_cmd,
-        std::string& disassembly_whole, std::string& disassembly_text, std::string& error_msg);
-
     // Extracts statistics from a given Code Object's disassembly.
     // Returns true on success and false otherwise.
     static bool ExtractCodeObjectStatistics(const std::string& disassembly_whole,

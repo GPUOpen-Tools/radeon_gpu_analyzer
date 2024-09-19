@@ -12,6 +12,9 @@
 #include <rg_test_client_thread.h>
 #endif
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_app_state.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_main_window.h"
@@ -63,6 +66,28 @@ int main(int argc, char *argv[])
     // Get the global settings from the config manager.
     std::shared_ptr<RgGlobalSettings> global_settings = RgConfigManager::Instance().GetGlobalConfig();
     assert(global_settings != nullptr);
+
+    ColorThemeType color_mode = static_cast<ColorThemeType>(global_settings->color_theme);
+
+    if (color_mode == kColorThemeTypeCount)
+    {
+        color_mode = QtCommon::QtUtils::DetectOsSetting();
+    }
+
+    QtCommon::QtUtils::ColorTheme::Get().SetColorTheme(static_cast<ColorThemeType>(color_mode));
+
+    QPalette common_palette = QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette();
+    if (color_mode == kColorThemeTypeDark)
+    {
+        common_palette.setColor(QPalette::Midlight, QColor(60, 60, 60));
+        common_palette.setColor(QPalette::Highlight, QColor(100, 100, 50, 130));
+    }
+    else
+    {
+        common_palette.setColor(QPalette::Midlight, QColor(200, 200, 200));
+        common_palette.setColor(QPalette::Highlight, QColor(255, 255, 178));
+    }
+    qApp->setPalette(common_palette);
 
     bool enable_feature_interop = QCoreApplication::arguments().count() == 2;
     if (enable_feature_interop)

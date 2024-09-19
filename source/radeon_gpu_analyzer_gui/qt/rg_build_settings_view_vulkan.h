@@ -161,6 +161,6 @@ private:
     RgBuildSettingsVulkan initial_settings_;
 
     // The generated interface view object.
-    Ui::RgBuildSettingsViewVulkan ui_;
+    Ui::rgBuildSettingsViewVulkan ui_;
 };
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_BUILD_SETTINGS_VIEW_VULKAN_H_

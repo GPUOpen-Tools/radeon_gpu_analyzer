@@ -28,7 +28,10 @@ enum class RgStyleFlags : char
 
     // The row is displayed as the "Current Search Result," because it's flagged as containing a
     // search result, and it's the current result being focused on.
-    SearchResultCurrent = 1 << 2
+    SearchResultCurrent = 1 << 2,
+
+    // Max value of style flag.
+    MaxRgStyleFlags = CurrentRow | SearchResultOccurrence | SearchResultCurrent
 };
 
 // This enum identifies each row's data.

@@ -22,6 +22,9 @@ option(NO_DEFAULT_QT "Add -DNO_DEFAULT_QT=ON to disable using default Qt package
 # Boolean option to enable live Vulkan mode.
 option(RGA_ENABLE_VULKAN "Add -DRGA_ENABLE_VULKAN=OFF to build RGA without Vulkan mode support. By default, Vulkan mode is enabled." ON)
 
+# Boolean option to disable dx10 mode.
+option(RGA_DISABLE_DX10 "Add -DRGA_DISABLE_DX10=OFF to build RGA without DX10 support. By default, DX10 support is enabled." OFF)
+
 # Define build level here
 add_definitions(-DAMDT_PUBLIC -DCMAKE_BUILD)
 

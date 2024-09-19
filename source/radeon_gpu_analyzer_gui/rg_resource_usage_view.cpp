@@ -1,7 +1,7 @@
 // C++.
 #include <sstream>
 
-// Infra.
+// QtCommon.
 #include "qt_common/utils/qt_util.h"
 
 // Local.

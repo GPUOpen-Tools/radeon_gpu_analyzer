@@ -18,14 +18,14 @@ static const char* kStrAppFolderName = "RadeonGPUAnalyzer";
 #ifdef __linux
 static const char* kStrExecutableName = "rga";
 #else
-static const char* kStrExecutableName                               = "rga.exe";
+static const char* kStrExecutableName = "rga.exe";
 #endif
 
 // Projects folder name.
 #ifdef __linux
 static const char* kStrProjectsFolderName = "projects";
 #else
-static const char* kStrProjectsFolderName                           = "Projects";
+static const char* kStrProjectsFolderName = "Projects";
 #endif  //  __linux
 
 // String used to build the window title text.
@@ -78,7 +78,6 @@ static const char* kStrLogBuildingProjectClone2      = ", clone: ";
 static const char* kStrLogLaunchingCli               = "Launching RGA CLI with command line: ";
 static const char* kStrLogExtractSettingsError       = "Error reading settings file.";
 static const char* kStrLogCannotLoadBinaryCodeObject = "Failed to load binary code object file.";
-
 
 // *** LOG FILE MESSAGES  - END ***
 
@@ -233,13 +232,13 @@ static const char* kStrRestoreDefaultSettings = "Restore default settings.";
 // *** STATUS BAR STRINGS - START ***
 
 static const char* kStrStatusBarFileModifiedOutsideEnv = "The current file has been changed outside the environment.";
-static const char* kStrStatusBarStarted           = "started...";
-static const char* kStrStatusBarFailed            = "failed";
-static const char* kStrStatusBarCanceled          = "canceled";
-static const char* kStrStatusBarSucceeded         = "succeeded";
-static const char* kStrStatusBarBuild             = "Build ";
-static const char* kStrStatusBarAnalysis          = "Binary Analysis ";
-static const char* kStrBuildCanceled              = "Build canceled";
+static const char* kStrStatusBarStarted                = "started...";
+static const char* kStrStatusBarFailed                 = "failed";
+static const char* kStrStatusBarCanceled               = "canceled";
+static const char* kStrStatusBarSucceeded              = "succeeded";
+static const char* kStrStatusBarBuild                  = "Build ";
+static const char* kStrStatusBarAnalysis               = "Binary Analysis ";
+static const char* kStrBuildCanceled                   = "Build canceled";
 
 // *** STATUS BAR STRINGS - END ***
 
@@ -251,7 +250,7 @@ static const char* kStrBuildCanceled              = "Build canceled";
 #ifdef __linux
 static const char* kStrFileContextMenuOpenContainingFolder = "Show in file browser";
 #else
-static const char* kStrFileContextMenuOpenContainingFolder          = "Show in explorer";
+static const char* kStrFileContextMenuOpenContainingFolder = "Show in explorer";
 #endif
 static const char* kStrFileContextMenuRenameFile   = "Rename";
 static const char* kStrFileContextMenuRemoveFile   = "Remove";
@@ -307,17 +306,17 @@ static const char* kStrMenuBarConfirmRemoveFileDialogTitle   = "Remove file";
 static const char* kStrMenuBarConfirmRemoveFileDialogWarning = " will be removed from the project. Are you sure?";
 
 // Check if the user wants to reload an externally modified file.
-static const char* kStrReloadFileDialogTitle = "Reload file";
-static const char* kStrReloadFileDialogText  = "This file has been modified by another program.\nDo you want to reload it?";
-static const char* kStrReloadFileDialogTextBinary  = "This file has been modified by another program.\nRGA will reload it.";
+static const char* kStrReloadFileDialogTitle      = "Reload file";
+static const char* kStrReloadFileDialogText       = "This file has been modified by another program.\nDo you want to reload it?";
+static const char* kStrReloadFileDialogTextBinary = "This file has been modified by another program.\nRGA will reload it.";
 
 static const char* kStrCreateFileDialogTitle = "Create file";
 static const char* kStrCreateFileDialogText  = "Failed to find file, it may have been modified by an external program.\nDo you want to create it?";
 
 static const char* kStrRemoveFileDialogTitle = "Remove file";
 static const char* kStrRemoveFileDialogText  = "Otherwise, the file will be removed from the project.";
-static const char* kStrRemoveFileDialogTextBinary  = "Failed to find file, it may have been modified by an external program.\nThe file will now be removed from this project.";
-
+static const char* kStrRemoveFileDialogTextBinary =
+    "Failed to find file, it may have been modified by an external program.\nThe file will now be removed from this project.";
 
 // Confirm that the user wants to revert to original SPIR-V binary shader file.
 static const char* kStrMenuBarVulkanConfirmRevertToOrigSpvA = "This will revert all SPIR-V assembly edits and restore the original SPIR-V binary from: ";
@@ -583,10 +582,10 @@ static const char* kStrMainWindowStylesheetFileVulkan  = "vulkan/rg_main_window_
 static const char* kStrMainWindowStylesheetFileBinary  = "binary/rg_main_window_style_binary.qss";
 
 // Disassembly view frame border color.
-static const char* kStrDisassemblyFrameBorderRedStylesheet   = "QFrame#frame {border: 1px solid rgb(224,30,55)}";
-static const char* kStrDisassemblyFrameBorderGreenStylesheet = "QFrame#frame {border: 1px solid rgb(18, 152, 0)}";
+static const char* kStrDisassemblyFrameBorderRedStylesheet    = "QFrame#frame {border: 1px solid rgb(224,30,55)}";
+static const char* kStrDisassemblyFrameBorderGreenStylesheet  = "QFrame#frame {border: 1px solid rgb(18, 152, 0)}";
 static const char* kStrDisassemblyFrameBorderPurpleStylesheet = "QFrame#frame {border: 1px solid rgb(128, 0, 128)}";
-static const char* kStrDisassemblyFrameBorderBlackStylesheet = "QFrame#frame {border: 1px solid black}";
+static const char* kStrDisassemblyFrameBorderBlackStylesheet  = "QFrame#frame {border: 1px solid black}";
 
 // Disassembly view frame selected.
 static const char* kStrDisassemblyFrameSelected = "selected";
@@ -646,13 +645,13 @@ static const char* kStrSettingsConfirmationApplicationSettings = "Application se
 #ifdef __linux
 static const char* kStrBuildViewFontFamily = "DejaVu Sans Mono";
 #else
-static const char* kStrBuildViewFontFamily                          = "Consolas";
+static const char* kStrBuildViewFontFamily = "Consolas";
 #endif
 static const char* kStrBuildViewSettingsScrollarea                 = "settingsScrollArea";
 static const char* kStrBuildViewSettingsScrollareaStylesheet       = "QScrollArea#settingsScrollArea { background-color: transparent; }";
 static const char* kStrBuildViewBuildSettingsWidgetStylesheetGreen = "#buildSettingsWidget { border: 1px solid rgb(18, 152, 0) }";
 static const char* kStrBuildViewBuildSettingsWidgetStylesheetRed   = "#buildSettingsWidget { border: 1px solid rgb(224, 30, 55); }";
-static const char* kStrBuildViewBuildSettingsWidgetStylesheetBlack = "#buildSettingsWidget { border: 1px solid black; }";
+static const char* kStrBuildViewBuildSettingsWidgetStylesheetBlack = "#buildSettingsWidget { border: 1px solid palette(text); }";
 
 // *** BUILD VIEW FONT FAMILY - END ***
 
@@ -676,4 +675,3 @@ static const char* kStrUpdatesResultsWindowTitle = "Available updates";
 
 // *** CHECK FOR UPDATES  DIALOG STRINGS - END ***
 #endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_STRING_CONSTANTS_H_
-

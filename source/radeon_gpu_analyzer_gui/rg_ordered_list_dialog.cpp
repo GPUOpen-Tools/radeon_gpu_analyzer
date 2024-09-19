@@ -23,12 +23,6 @@ RgOrderedListDialog::RgOrderedListDialog(const char* delimiter, QWidget* parent)
     // Setup the UI.
     ui_.setupUi(this);
 
-    // Set the background to white.
-    QPalette pal = palette();
-    pal.setColor(QPalette::Window, Qt::white);
-    this->setAutoFillBackground(true);
-    this->setPalette(pal);
-
     // Set the window icon.
     setWindowIcon(QIcon(":/icons/rgaIcon.png"));
 

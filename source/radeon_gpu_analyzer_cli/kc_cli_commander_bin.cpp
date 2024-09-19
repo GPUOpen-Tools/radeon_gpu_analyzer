@@ -141,10 +141,10 @@ beKA::beStatus KcCliCommanderBin::IsBinaryInputValid(const Config& config) const
 
 beKA::beStatus KcCliCommanderBin::InvokeAmdgpudis(const std::string& bin_file, bool should_print_cmd, std::string& out_text, std::string& error_txt) const
 {
-    std::stringstream bin_file_with_quotes;
-    bin_file_with_quotes << "\"" << bin_file << "\"";
-    beKA::beStatus ret = beProgramBuilderVulkan::InvokeAmdgpudis(bin_file_with_quotes.str(), should_print_cmd, out_text, error_txt);
-    if (ret == beKA::beStatus::kBeStatusSuccess && out_text.empty())
+    beKA::beStatus ret = KcUtils::InvokeAmdgpudis(KcUtils::Quote(bin_file), should_print_cmd, out_text, error_txt)
+                             ? beKA::beStatus::kBeStatusSuccess
+                             : beKA::beStatus::kBeStatusVulkanAmdgpudisLaunchFailed;
+    if (out_text.empty())
     {
         ret = beKA::beStatus::kBeStatusVulkanAmdgpudisLaunchFailed;
     }
@@ -160,23 +160,22 @@ beKA::beStatus KcCliCommanderBin::DetectAndSetWorkflowStrategy(const Config& con
         LogPreStep(kStrInfoDetectBinWorkflowType, config.binary_codeobj_file);
     }
 
-    // TODO: use std::make_unique function - currently incompatible with gcc7.
-    beKA::beStatus status = beProgramBuilderVulkan::ParseAmdgpudisMetadata(amdgpu_dis_output, amdpal_pipeline_md_);
+    beKA::beStatus status = BeAmdPalMetaData::ParseAmdgpudisMetadata(amdgpu_dis_output, amdpal_pipeline_md_);
     switch (status)
     {
-    case beKA::beStatus::kBeStatusVulkanRayTracingCodeObjMetaDataSuccess:
+    case beKA::beStatus::kBeStatusRayTracingCodeObjMetaDataSuccess:
         amdgpudis_parser_strategy_ = std::unique_ptr<ParseAmdgpudisOutputGraphicStrategy>(new ParseAmdgpudisOutputGraphicStrategy());
-        workflow_strategy_         = std::unique_ptr<RayTracingBinaryWorkflowStrategy>(new RayTracingBinaryWorkflowStrategy(log_callback_));
+        workflow_strategy_         = std::unique_ptr<RayTracingBinaryWorkflowStrategy>(new RayTracingBinaryWorkflowStrategy(config.binary_codeobj_file, log_callback_));
         status                     = beKA::beStatus::kBeStatusSuccess;
         break;
-    case beKA::beStatus::kBeStatusVulkanGraphicsCodeObjMetaDataSuccess:
+    case beKA::beStatus::kBeStatusGraphicsCodeObjMetaDataSuccess:
         amdgpudis_parser_strategy_ = std::unique_ptr<ParseAmdgpudisOutputGraphicStrategy>(new ParseAmdgpudisOutputGraphicStrategy());
-        workflow_strategy_         = std::unique_ptr<GraphicsBinaryWorkflowStrategy>(new GraphicsBinaryWorkflowStrategy(log_callback_));
+        workflow_strategy_ = std::unique_ptr<GraphicsBinaryWorkflowStrategy>(new GraphicsBinaryWorkflowStrategy(config.binary_codeobj_file, log_callback_));
         status                     = beKA::beStatus::kBeStatusSuccess;
         break;
-    case beKA::beStatus::kBeStatusVulkanComputeCodeObjMetaDataSuccess:
+    case beKA::beStatus::kBeStatusComputeCodeObjMetaDataSuccess:
         amdgpudis_parser_strategy_ = std::unique_ptr<ParseAmdgpudisOutputComputeStrategy>(new ParseAmdgpudisOutputComputeStrategy());
-        workflow_strategy_         = std::unique_ptr<ComputeBinaryWorkflowStrategy>(new ComputeBinaryWorkflowStrategy(log_callback_));
+        workflow_strategy_ = std::unique_ptr<ComputeBinaryWorkflowStrategy>(new ComputeBinaryWorkflowStrategy(config.binary_codeobj_file, log_callback_));
         status                     = beKA::beStatus::kBeStatusSuccess;
         break;
     default:

@@ -39,11 +39,10 @@ void RgTreeWidget::mouseMoveEvent(QMouseEvent* event)
             {
                 setCursor(Qt::PointingHandCursor);
 
-                QColor light_blue(229, 243, 255);
                 const int column_count = item->columnCount();
                 for (int column_number = 0; column_number < column_count; column_number++)
                 {
-                    item->setBackground(column_number, light_blue);
+                    item->setBackground(column_number, qApp->palette().color(QPalette::Highlight));
                 }
 
                 // Pass the event onto the base class.

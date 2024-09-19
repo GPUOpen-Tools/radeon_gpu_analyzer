@@ -2,19 +2,17 @@
 /* File menu item (RgMenuFileItemOpencl)
 /********************************************************************/
 
-/* The default color is grayish light yellow. */
+/* The default color. */
 RgMenuFileItemOpencl #itemBackground
 {
-    background-color: rgb(253, 255, 242);
     border-style: solid;
     border-width: 1px;
     border-color: rgb(18, 152, 0);
 }
 
-/* Current item color is light yellow (the RGA "highlight" color). */
+/* Current item color. */
 RgMenuFileItemOpencl #itemBackground[current=true]
 {
-    background-color: rgb(255, 255, 178);
     border-style: solid;
     border-width: 1px;
     border-color: rgb(18, 152, 0);
@@ -53,7 +51,7 @@ RgIsaDisassemblyView #frame[selected=true]
 
 RgIsaDisassemblyView #frame[selected=false]
 {
-    border: 1px solid black;
+    border: 1px solid palette(text);
 }
 
 /********************************************************************/
@@ -62,7 +60,6 @@ RgIsaDisassemblyView #frame[selected=false]
 
 RgAddCreateMenuItem QPushButton
 {
-    background-color: rgb(214, 214, 214);
     text-align: left;
     padding-left: 11px;
 }
@@ -80,7 +77,6 @@ RgAddCreateMenuItem QPushButton:hover
 
 RgMenuBuildSettingsItem QPushButton
 {
-    background-color: rgb(214, 214, 214);
     text-align: left;
     padding-left: 11px;
 }

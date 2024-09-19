@@ -145,9 +145,7 @@ public:
     // DX12: DXR.
     std::string dxr_state_desc;                                 ///< Full path to the DXR state description file.
     std::string dxr_hlsl;                                       ///< Full path to the DXR HLSL input file.
-    std::string dxr_mode;                                       ///< DXR mode: shader or pipeline.
     std::string dxr_shader_model;                               ///< DXR shader model: shader model to be used for DXR front-end compilation.
-    std::vector<std::string> dxr_exports;                       ///< DXR exports to retrieve disassembly for. In pipeline mode this should be one or more a raygeneration shaders.
 
     // DX12: debug layer.
     bool dx12_debug_layer_enabled  = false;                     ///< True to enable D3D12 debug layer.

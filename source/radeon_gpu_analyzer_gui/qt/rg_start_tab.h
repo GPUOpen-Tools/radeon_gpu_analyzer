@@ -60,6 +60,9 @@ protected slots:
     // Handler for a click on a recent program item.
     void HandleRecentProjectClickedEvent(QAbstractButton* recent_file_button);
 
+    // Handle when the color theme is changed. Sets the link button stylesheets and icons for the recent files list.
+    void OnColorThemeChanged();
+
 protected:
     // Apply API-specific string constants to the view object's widgets.
     virtual void ApplyApiStringConstants() = 0;
@@ -104,6 +107,9 @@ private:
     // Set the view's cursor for each relevant widget.
     void SetCursor();
 
+    // Set the sytlesheet for the link buttons;
+    void SetLinkButtonStylesheet();
+
     // Set the project API icon to recent projects push button.
     void SetProjectAPIIcon(RgProjectAPI api, RgRecentProjectWidget* widget);
 
@@ -116,4 +122,4 @@ private:
     // The parent widget.
     QWidget* parent_ = nullptr;
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_START_TAB_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_START_TAB_H_

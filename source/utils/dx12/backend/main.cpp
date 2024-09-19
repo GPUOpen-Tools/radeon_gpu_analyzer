@@ -42,23 +42,11 @@ static const char* kStrErrorNoDxrStateDescriptionFile = "Error: no DXR state des
 static const char* kStrInfoCompilingComputePipeline = "Compiling compute pipeline...";
 static const char* kStrInfoCompilingGraphicsPipeline = "Compiling graphics pipeline...";
 static const char* kStrInfoCompilingDxrPipeline = "Compiling ray tracing pipeline...";
-static const char* kStrInfoCompilingDxrShader = "Compiling ray tracing shader...";
 
 // *** CONSTANTS - END ***
 
 
 // *** INTERNALLY LINKED UTILITIES - START ***
-
-// Returns true if the user specified a DXR configuration.
-static bool IsDxrConfig(const rga::RgDx12Config &config, bool& is_pipeline_mode, bool& is_shader_mode)
-{
-    const char* kStrModePipeline = "pipeline";
-    const char* kStrModeShader = "shader";
-    std::string mode_lower = rga::RgDx12Utils::ToLower(config.dxr_mode);
-    is_pipeline_mode = mode_lower.compare(kStrModePipeline) == 0;
-    is_shader_mode = !is_pipeline_mode && mode_lower.compare(kStrModeShader) == 0;
-    return (is_pipeline_mode || is_shader_mode);
-}
 
 // Validates the inputs, prints error messages as
 // necessary and also adjusts the configuration as necessary.
@@ -87,9 +75,7 @@ static bool IsInputValid(rga::RgDx12Config& config)
         }
         else
         {
-            bool is_dxr_pipeline = false;
-            bool is_dxr_shader = false;
-            bool is_dxr = IsDxrConfig(config, is_dxr_pipeline, is_dxr_shader);
+            bool is_dxr = config.is_config_dxr;
             if (is_dxr)
             {
                 if (config.dxr_state_file.empty() && config.dxr_hlsl_input.empty())
@@ -314,24 +300,17 @@ int main(int argc, char* argv[])
                     cxxopts::value<std::string>(config.rs_pso))
 
                 // DXR options.
-                ("mode", "Compilation mode (Pipeline or Shader).",
-                        cxxopts::value<std::string>(config.dxr_mode))
+                ("dxr", "Set compilation mode as DXR. Default mode is DX12.",
+                        cxxopts::value<bool>(config.is_config_dxr))
                 ("state-desc", "Full path to the DXR state description JSON file.",
                         cxxopts::value<std::string>(config.dxr_state_file))
-                ("export", "The name of the export to target, could be a raygeneration shader "
-                    "name in Pipeline mode or a shader name in Shader mode.",
-                        cxxopts::value<std::string>(config.dxrExport))
-                ("dxr-isa", "Full path to DXR ISA disassembly output file.",
-                        cxxopts::value<std::string>(config.dxr_isa_output))
-                ("dxr-stats", "Full path to DXR hardware usage statistics output file.",
-                        cxxopts::value<std::string>(config.dxr_statistics_output))
                 ("dxr-bin", "Full path to DXR pipeline binary output file.",
                         cxxopts::value<std::string>(config.dxr_binary_output))
                 ("dxr-hlsl-mapping", "HLSL->DXIL mapping (optional).",
                         cxxopts::value<std::string>(config.dxr_hlsl_mapping))
-                 ("output-metadata", "Full path to output metadata file.",
+                ("output-metadata", "Full path to output metadata file.",
                         cxxopts::value<std::string>(config.output_metadata))
-                 ("hlsl", "Full path to input HLSL file.",
+                ("hlsl", "Full path to input HLSL file.",
                         cxxopts::value<std::string>(config.dxr_hlsl_input))
 
                 // General options.
@@ -361,9 +340,7 @@ int main(int argc, char* argv[])
             if (is_input_valid)
             {
                 // Check if this is a DXR or standard graphics or compute pipeline.
-                bool is_dxr_pipeline = false;
-                bool is_dxr_shader = false;
-                bool is_dxr = IsDxrConfig(config, is_dxr_pipeline, is_dxr_shader);
+                bool is_dxr = config.is_config_dxr;
 
                 if (config.should_enable_debug_layer)
                 {
@@ -434,15 +411,8 @@ int main(int argc, char* argv[])
                             if (is_dxr)
                             {
 #ifdef RGA_DXR_ENABLED
-                                // DXR pipeline or shader.
-                                if (is_dxr_pipeline)
-                                {
-                                    std::cout << kStrInfoCompilingDxrPipeline << std::endl;
-                                }
-                                else
-                                {
-                                    std::cout << kStrInfoCompilingDxrShader << std::endl;
-                                }
+                                // DXR pipeline.
+                                std::cout << kStrInfoCompilingDxrPipeline << std::endl;
                                 is_ok = rgFrontend.CompileRayTracingPipeline(config, error_msg);
 #endif
                             }

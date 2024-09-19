@@ -5,16 +5,20 @@
 // Qt.
 #include <QPushButton>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_build_settings_item.h"
 
-static const char* kStrButtonFocusInStylesheetGraphics = "QPushButton { background: rgb(253,255,174); border-style: solid; border-width: 2px; border-color: rgb(135, 20, 16);}";
-static const char* kStrButtonFocusOutStylesheet = "QPushButton { margin: 1px; background: rgb(214, 214, 214);}";
-static const char* kStrBuildSettingsButtonName = "buildSettingsButton";
+static const char* kStrButtonFocusInStylesheetGraphics =
+    "QPushButton { background: palette(highlight); border-style: solid; border-width: 2px; border-color: rgb(135, 20, 16);}";
+static const char* kStrButtonFocusOutStylesheet = "QPushButton {background: palette(button); margin: 1px; }";
+static const char* kStrBuildSettingsButtonName  = "buildSettingsButton";
 
-RgMenuBuildSettingsItem::RgMenuBuildSettingsItem(RgMenu* parent, QString tooltip) :
-    RgMenuItem(parent)
+RgMenuBuildSettingsItem::RgMenuBuildSettingsItem(RgMenu* parent, QString tooltip)
+    : RgMenuItem(parent)
 {
     ui_.setupUi(this);
 
@@ -23,6 +27,13 @@ RgMenuBuildSettingsItem::RgMenuBuildSettingsItem(RgMenu* parent, QString tooltip
 
     // Set the tool tip.
     this->setToolTip(tooltip);
+
+    ColorThemeType color_theme = QtCommon::QtUtils::ColorTheme::Get().GetColorTheme();
+
+    if (color_theme == kColorThemeTypeDark)
+    {
+        ui_.buildSettingsButton->setIcon(QIcon(":/icons/gear_icon_white.svg"));
+    }
 
     // Set the mouse cursor to pointing hand cursor.
     SetCursor(Qt::PointingHandCursor);

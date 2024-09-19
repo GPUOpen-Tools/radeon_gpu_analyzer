@@ -25,10 +25,12 @@ class KcCLICommanderLightningUtil
 {
 public:
 
-    KcCLICommanderLightningUtil(RgClOutputMetadata&     output_metadata, 
-                                bool                    should_print_cmd, 
+    KcCLICommanderLightningUtil(const std::string&      binary_codeobj_file,
+                                RgClOutputMetadata&     output_metadata,
+                                bool                    should_print_cmd,
                                 LoggingCallbackFunction log_callback)
-        : output_metadata_(output_metadata)
+        : binary_codeobj_file_(binary_codeobj_file)
+        , output_metadata_(output_metadata)
         , should_print_cmd_(should_print_cmd)
         , log_callback_(log_callback)
     {}
@@ -78,6 +80,9 @@ private:
     void DeleteTempFiles() const;
 
     // ---- DATA ----
+
+    // CodeObject Binary filename.
+    std::string binary_codeobj_file_;
 
     // Output Metadata.
     RgClOutputMetadata& output_metadata_;

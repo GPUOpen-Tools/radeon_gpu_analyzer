@@ -42,6 +42,13 @@ private slots:
     // Handler for when the user selects the API by using up/down arrow keys.
     void HandleListWidgetItemSelected(int current_row);
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    /// @brief Handle Color scheme changed in the OS.
+    ///
+    /// color_scheme The color scheme selected by the OS.
+    void HandleOsColorSchemeChanged(Qt::ColorScheme color_scheme);
+#endif
+
 private:
     // Set the cursor to pointing hand cursor.
     void SetCursor() const;

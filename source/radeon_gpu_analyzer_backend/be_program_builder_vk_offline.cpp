@@ -38,8 +38,8 @@ static const std::map<std::string, std::string> kVkAmdllpcTargetsToDeviceInfoTar
                                                                                         {"gfx1100", "11.0.0"},
                                                                                         {"gfx1101", "11.0.1"},
                                                                                         {"gfx1102", "11.0.2"},
-                                                                                        {"gfx1103", "11.0.3"}};  
-// gfx110x is not supported by amdllpc as of 07/11/2023.
+                                                                                        {"gfx1103", "11.0.3"},
+                                                                                        {"gfx1150", "11.5.0"}};  
 
 
 static bool GetAmdllpcPath(std::string& amdllpc_path)

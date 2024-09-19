@@ -1,8 +1,31 @@
 /********************************************************************/
 /* Line Edit and Checkbox focus border
 /********************************************************************/
-QLineEdit:focus,
+
+RgCheckBox:!focus
+{
+    border-color: palette(text);
+}
+
 RgCheckBox:focus
+{
+    border-color: rgb(224, 30, 55);
+}
+
+QCheckBox::indicator
+{
+    border: 1px solid palette(text);
+    background-color: rgb(240, 240, 240);
+    width: 10px;
+    height: 10px;
+}
+
+QCheckBox::indicator:checked
+{
+    image: url(:/icons/checkmark_black.svg);
+}
+
+QLineEdit:focus
 {
     border: 1px solid rgb(224, 30, 55);
 }
@@ -12,7 +35,7 @@ RgCheckBox:focus
 /********************************************************************/
 RgMenuGraphics
 {
-    border: 1px solid black;
+    border: 1px solid palette(text);
 }
 
 /********************************************************************/
@@ -20,7 +43,7 @@ RgMenuGraphics
 /********************************************************************/
 QFrame:focus
 {
-    border: 1px solid black;
+    border: 1px solid palette(text);
 }
 
 RgBuildSettingsViewVulkan #addTargetGPUsButton:focus,
@@ -34,8 +57,8 @@ RgBuildSettingsViewVulkan #predefinedMacrosBrowseButton:hover,
 RgBuildSettingsViewVulkan #ICDLocationBrowseButton:hover,
 RgBuildSettingsViewVulkan #compilerBrowseButton:hover
 {
+    background-color: palette(alternate-base);
     border: 1px solid rgb(224, 30, 55);
-    background: rgb(240, 240, 240);
 }
 
 RgViewContainer[viewHovered="true"][viewFocused="false"] RgMenuTitlebar #itemBackground,
@@ -61,7 +84,7 @@ RgViewContainer[viewFocused="true"] #viewTitlebar
 /********************************************************************/
 RgBuildSettingsViewVulkan #targetGPUsLineEdit
 {
-    background-color: rgb(240, 240, 240);
+    background-color: palette(alternate-base);
 }
 
 /********************************************************************/
@@ -69,7 +92,7 @@ RgBuildSettingsViewVulkan #targetGPUsLineEdit
 /********************************************************************/
 QLineEdit
 {
-    border: 1px solid black;
+    border: 1px solid palette(text);
 }
 
 rgPipelineStateEditorWidgetNumeric #lineEdit:focus
@@ -82,5 +105,5 @@ rgPipelineStateEditorWidgetNumeric #lineEdit:focus
 /********************************************************************/
 RgBuildSettingsViewVulkan #allOptionsTextEdit
 {
-    border: 1px solid black;
+    border: 1px solid palette(text);
 }

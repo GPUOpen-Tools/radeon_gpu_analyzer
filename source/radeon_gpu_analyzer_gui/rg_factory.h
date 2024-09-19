@@ -57,6 +57,9 @@ public:
     // Create an API-specific file menu.
     virtual RgMenu* CreateFileMenu(QWidget* parent) = 0;
 
+    // Apply the stylesheet for the api-specific file menu.
+    virtual void ApplyFileMenuStylesheet(QWidget* widget) = 0;
+
     // Create an API-specific start tab.
     virtual RgStartTab* CreateStartTab(QWidget* parent) = 0;
 

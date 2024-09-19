@@ -11,7 +11,7 @@
 #include <QStandardItemModel>
 #include <QStyledItemDelegate>
 
-// Infra.
+// QtCommon.
 #include "qt_common/utils/qt_util.h"
 
 // Local.
@@ -25,17 +25,25 @@
 // The bottom margin of the disassembly table.
 static const int kTableBottomMargin = 5;
 
+// The style for the tooltip background color.
+static const QString kStyleSheetText[ColorThemeType::kColorThemeTypeCount] = {
+    "QToolTip {background-color: rgb(240, 230, 200); border: 1px solid palette(text);}",
+    "QToolTip {background-color: rgb(60, 60, 60); border: 1px solid palette(text);}"};
+
 // A class used to filter the ISA disassembly table columns.
 class RgIsaDisassemblyTableModelFilteringModel : public QSortFilterProxyModel
 {
 public:
-    RgIsaDisassemblyTableModelFilteringModel(RgIsaDisassemblyTableModel* source_model, QObject* parent = nullptr) :
-        QSortFilterProxyModel(parent), source_model_(source_model) {}
+    RgIsaDisassemblyTableModelFilteringModel(RgIsaDisassemblyTableModel* source_model, QObject* parent = nullptr)
+        : QSortFilterProxyModel(parent)
+        , source_model_(source_model)
+    {
+    }
     ~RgIsaDisassemblyTableModelFilteringModel() = default;
 
 protected:
     // A column-filtering predicate.
-    virtual bool filterAcceptsColumn(int source_column, const QModelIndex &source_parent) const override
+    virtual bool filterAcceptsColumn(int source_column, const QModelIndex& source_parent) const override
     {
         Q_UNUSED(source_parent);
 
@@ -57,8 +65,8 @@ private:
     RgIsaDisassemblyTableModel* source_model_ = nullptr;
 };
 
-RgIsaDisassemblyTableView::RgIsaDisassemblyTableView(QWidget* parent) :
-    QWidget(parent)
+RgIsaDisassemblyTableView::RgIsaDisassemblyTableView(QWidget* parent)
+    : QWidget(parent)
 {
     ui_.setupUi(this);
 
@@ -81,6 +89,12 @@ RgIsaDisassemblyTableView::RgIsaDisassemblyTableView(QWidget* parent) :
 
     // Allow the last column to stretch.
     ui_.instructionsTreeView->header()->setStretchLastSection(true);
+
+    // Set style for the tooltip background color.
+    ColorThemeType color_theme = QtCommon::QtUtils::ColorTheme::Get().GetColorTheme();
+    setStyleSheet(kStyleSheetText[color_theme]);
+    connect(
+        &QtCommon::QtUtils::ColorTheme::Get(), &QtCommon::QtUtils::ColorTheme::ColorThemeUpdated, this, &RgIsaDisassemblyTableView::HandleColorThemeChanged);
 
     // Initialize the context menu.
     InitializeContextMenu();
@@ -126,7 +140,7 @@ void RgIsaDisassemblyTableView::InitializeModelData()
 }
 
 bool RgIsaDisassemblyTableView::LoadDisassembly(const std::string& disassembly_csv_file_path)
-    {
+{
     is_disassembly_cached_ = isa_table_model_->PopulateFromCsvFile(disassembly_csv_file_path);
 
     if (is_disassembly_cached_)
@@ -150,7 +164,7 @@ bool RgIsaDisassemblyTableView::LoadLiveVgpr(const std::string& live_vgpr_file_p
 
     if (is_live_vgpr_cached_)
     {
-       // Cache the path to the live Vgprs file being loaded.
+        // Cache the path to the live Vgprs file being loaded.
         live_vgprs_file_path_ = live_vgpr_file_path;
 
         // Adjust the table column widths after populating with data.
@@ -207,7 +221,7 @@ void RgIsaDisassemblyTableView::SetVgprColumnWidth()
                                 if (global_settings->visible_disassembly_view_columns[column_index])
                                 {
                                     // Compare the header name for each column until the VGPR column is found.
-                                    QStandardItem* item  = isa_table_model->horizontalHeaderItem(column_index);
+                                    QStandardItem* item = isa_table_model->horizontalHeaderItem(column_index);
                                     assert(item != nullptr);
                                     if (item != nullptr)
                                     {
@@ -249,7 +263,7 @@ void RgIsaDisassemblyTableView::RequestTableResize()
     static const int kColumnPadding = 20;
 
     // Compute the ideal width of the table and emit a signal to readjust the view dimensions.
-    int min_width = QtCommon::QtUtils::ComputeMinimumTableWidth(ui_.instructionsTreeView, kMaxNumRows, kColumnPadding);
+    int  min_width = QtCommon::QtUtils::ComputeMinimumTableWidth(ui_.instructionsTreeView, kMaxNumRows, kColumnPadding);
     emit DisassemblyTableWidthResizeRequested(min_width);
 }
 
@@ -364,12 +378,12 @@ void RgIsaDisassemblyTableView::HandleCopyDisassemblyClicked()
     QVector<int> selected_row_numbers;
 
     QItemSelectionModel* selection_model = ui_.instructionsTreeView->selectionModel();
-    const QItemSelection selection = selection_model->selection();
+    const QItemSelection selection       = selection_model->selection();
     if (!selection.isEmpty())
     {
         // Get the selected line numbers.
         QItemSelectionModel* table_selection_model = ui_.instructionsTreeView->selectionModel();
-        QModelIndexList selected_rows = table_selection_model->selectedRows();
+        QModelIndexList      selected_rows         = table_selection_model->selectedRows();
         for (auto& current_index : selected_rows)
         {
             int row_index = current_index.row();
@@ -388,7 +402,7 @@ void RgIsaDisassemblyTableView::HandleOpenDisassemblyInFileBrowserClicked()
 {
     // Use the path to the loaded CSV file to figure out which folder to open.
     std::string build_output_directory;
-    bool is_ok = RgUtils::ExtractFileDirectory(disassembly_file_path_, build_output_directory);
+    bool        is_ok = RgUtils::ExtractFileDirectory(disassembly_file_path_, build_output_directory);
     assert(is_ok);
     if (is_ok)
     {
@@ -422,8 +436,8 @@ void RgIsaDisassemblyTableView::HandleCurrentSelectionChanged(const QItemSelecti
                 isa_table_model_->GetInputSourceLineNumberFromInstructionRow(first_selected_row_index, input_source_line_number);
 
                 // Did the user select a line that isn't currently highlighted?
-                const std::vector<int>& indices = isa_table_model_->GetCorrelatedLineIndices();
-                auto correlated_lines_iter = std::find(indices.begin(), indices.end(), first_selected_row_index);
+                const std::vector<int>& indices               = isa_table_model_->GetCorrelatedLineIndices();
+                auto                    correlated_lines_iter = std::find(indices.begin(), indices.end(), first_selected_row_index);
                 if (correlated_lines_iter == indices.end())
                 {
                     // Invalidate the currently highlighted lines.
@@ -431,7 +445,7 @@ void RgIsaDisassemblyTableView::HandleCurrentSelectionChanged(const QItemSelecti
                 }
 
                 // Do the instruction lines in the selected block all contiguously map to the same input source file line?
-                int correlated_line_index = kInvalidCorrelationLineIndex;
+                int  correlated_line_index        = kInvalidCorrelationLineIndex;
                 bool is_contiguous_block_selected = IsContiguousCorrelatedRangeSelected(correlated_line_index);
 
                 if (is_contiguous_block_selected)
@@ -459,6 +473,12 @@ void RgIsaDisassemblyTableView::HandleOpenContextMenu(const QPoint& widget_click
 
     // Open the context menu at the user's click position.
     context_menu_->exec(click_point);
+}
+
+void RgIsaDisassemblyTableView::HandleColorThemeChanged()
+{
+    ColorThemeType color_theme = QtCommon::QtUtils::ColorTheme::Get().GetColorTheme();
+    setStyleSheet(kStyleSheetText[color_theme]);
 }
 
 void RgIsaDisassemblyTableView::ConnectContextMenuSignals()
@@ -499,31 +519,40 @@ void RgIsaDisassemblyTableView::ConnectSelectionSignals()
 void RgIsaDisassemblyTableView::ConnectSignals()
 {
     // Connect the disassembly table's focus in signal.
-    bool is_connected = connect(ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::FrameFocusInSignal, this, &RgIsaDisassemblyTableView::FrameFocusInSignal);
+    bool is_connected =
+        connect(ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::FrameFocusInSignal, this, &RgIsaDisassemblyTableView::FrameFocusInSignal);
     assert(is_connected);
 
     // Connect the disassembly table's focus out signal.
-    is_connected = connect(ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::FrameFocusOutSignal, this, &RgIsaDisassemblyTableView::FrameFocusOutSignal);
+    is_connected =
+        connect(ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::FrameFocusOutSignal, this, &RgIsaDisassemblyTableView::FrameFocusOutSignal);
     assert(is_connected);
 
     // Connect the disassembly table view's enable scroll bar signal.
-    is_connected = connect(this, &RgIsaDisassemblyTableView::EnableScrollbarSignals, ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::EnableScrollbarSignals);
+    is_connected =
+        connect(this, &RgIsaDisassemblyTableView::EnableScrollbarSignals, ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::EnableScrollbarSignals);
     assert(is_connected);
 
     // Connect the disassembly table view's disable scroll bar signal.
-    is_connected = connect(this, &RgIsaDisassemblyTableView::DisableScrollbarSignals, ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::DisableScrollbarSignals);
+    is_connected =
+        connect(this, &RgIsaDisassemblyTableView::DisableScrollbarSignals, ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::DisableScrollbarSignals);
     assert(is_connected);
 
     // Connect the disassembly table's target GPU push button focus in signal.
-    is_connected = connect(ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::FocusTargetGpuPushButton, this, &RgIsaDisassemblyTableView::FocusTargetGpuPushButton);
+    is_connected = connect(
+        ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::FocusTargetGpuPushButton, this, &RgIsaDisassemblyTableView::FocusTargetGpuPushButton);
     assert(is_connected);
 
     // Connect the disassembly table's target GPU push button focus in signal.
-    is_connected = connect(ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::SwitchDisassemblyContainerSize, this, &RgIsaDisassemblyTableView::SwitchDisassemblyContainerSize);
+    is_connected = connect(ui_.instructionsTreeView,
+                           &RgIsaDisassemblyCustomTableView::SwitchDisassemblyContainerSize,
+                           this,
+                           &RgIsaDisassemblyTableView::SwitchDisassemblyContainerSize);
     assert(is_connected);
 
     // Connect the disassembly table's columns push button focus in signal.
-    is_connected = connect(ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::FocusColumnPushButton, this, &RgIsaDisassemblyTableView::FocusColumnPushButton);
+    is_connected =
+        connect(ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::FocusColumnPushButton, this, &RgIsaDisassemblyTableView::FocusColumnPushButton);
     assert(is_connected);
 
     // Connect the disassembly table's source window focus in signal.
@@ -531,11 +560,13 @@ void RgIsaDisassemblyTableView::ConnectSignals()
     assert(is_connected);
 
     // Connect the disassembly table view's update current sub widget signal.
-    is_connected = connect(this, &RgIsaDisassemblyTableView::UpdateCurrentSubWidget, ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::HandleUpdateCurrentSubWidget);
+    is_connected = connect(
+        this, &RgIsaDisassemblyTableView::UpdateCurrentSubWidget, ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::HandleUpdateCurrentSubWidget);
     assert(is_connected);
 
     // Connect the disassembly table's focus cli output window signal.
-    is_connected = connect(ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::FocusCliOutputWindow, this, &RgIsaDisassemblyTableView::FocusCliOutputWindow);
+    is_connected =
+        connect(ui_.instructionsTreeView, &RgIsaDisassemblyCustomTableView::FocusCliOutputWindow, this, &RgIsaDisassemblyTableView::FocusCliOutputWindow);
     assert(is_connected);
 }
 
@@ -544,7 +575,7 @@ bool RgIsaDisassemblyTableView::GetSelectedRowRange(int& min_row, int& max_row) 
     bool got_range = false;
 
     QItemSelectionModel* table_selection_model = ui_.instructionsTreeView->selectionModel();
-    auto rows_selection = table_selection_model->selectedRows();
+    auto                 rows_selection        = table_selection_model->selectedRows();
 
     if (!rows_selection.isEmpty())
     {
@@ -554,8 +585,8 @@ bool RgIsaDisassemblyTableView::GetSelectedRowRange(int& min_row, int& max_row) 
         for (QModelIndex& current_index : rows_selection)
         {
             int row_index = current_index.row();
-            min_row = (row_index < min_row) ? row_index : min_row;
-            max_row = (row_index > max_row) ? row_index : max_row;
+            min_row       = (row_index < min_row) ? row_index : min_row;
+            max_row       = (row_index > max_row) ? row_index : max_row;
         }
 
         got_range = true;
@@ -614,17 +645,17 @@ void RgIsaDisassemblyTableView::InitializeLinkLabels()
     std::vector<QLabel*> labelLinks;
 
     auto start_label = link_labels.begin();
-    auto end_label = link_labels.end();
+    auto end_label   = link_labels.end();
     for (auto labels_iter = start_label; labels_iter != end_label; ++labels_iter)
     {
         // Extract the line number and label text from the map.
-        int label_line_index = labels_iter->first;
-        std::string& label_text = labels_iter->second;
+        int          label_line_index = labels_iter->first;
+        std::string& label_text       = labels_iter->second;
 
         QStandardItemModel* table_model = isa_table_model_->GetTableModel();
 
         // Compute the index in the table where the link needs to get inserted.
-        QModelIndex label_index = table_model->index(label_line_index, column_index);
+        QModelIndex label_index    = table_model->index(label_line_index, column_index);
         QModelIndex filtered_index = isa_table_filtering_model_->mapFromSource(label_index);
 
         if (filtered_index.isValid())
@@ -666,8 +697,8 @@ bool RgIsaDisassemblyTableView::IsContiguousCorrelatedRangeSelected(int& correla
     bool is_non_contiguous = false;
 
     // Find the bounds of the selected row indices.
-    int min_row = 0;
-    int max_row = 0;
+    int  min_row   = 0;
+    int  max_row   = 0;
     bool got_range = GetSelectedRowRange(min_row, max_row);
     if (got_range)
     {
@@ -675,8 +706,8 @@ bool RgIsaDisassemblyTableView::IsContiguousCorrelatedRangeSelected(int& correla
         int correlated_line = kInvalidCorrelationLineIndex;
         for (int selected_row_index = min_row; selected_row_index <= max_row; ++selected_row_index)
         {
-            int input_line_index = 0;
-            bool got_line = isa_table_model_->GetInputSourceLineNumberFromInstructionRow(selected_row_index, input_line_index);
+            int  input_line_index = 0;
+            bool got_line         = isa_table_model_->GetInputSourceLineNumberFromInstructionRow(selected_row_index, input_line_index);
             if (got_line)
             {
                 if (correlated_line != kInvalidCorrelationLineIndex)
@@ -684,14 +715,14 @@ bool RgIsaDisassemblyTableView::IsContiguousCorrelatedRangeSelected(int& correla
                     if (input_line_index != correlated_line)
                     {
                         // The instruction was emitted due to a different input source line. This isn't a contiguous block.
-                        is_non_contiguous = true;
+                        is_non_contiguous     = true;
                         correlated_line_index = kInvalidCorrelationLineIndex;
                         break;
                     }
                 }
                 else
                 {
-                    correlated_line = input_line_index;
+                    correlated_line       = input_line_index;
                     correlated_line_index = input_line_index;
                 }
             }
@@ -704,7 +735,7 @@ bool RgIsaDisassemblyTableView::IsContiguousCorrelatedRangeSelected(int& correla
 void RgIsaDisassemblyTableView::ScrollToLine(int line_number)
 {
     // Find the row of the index at the top left of the table.
-    int first_visible_row = 0;
+    int               first_visible_row   = 0;
     const QModelIndex first_visible_index = ui_.instructionsTreeView->indexAt(ui_.instructionsTreeView->rect().topLeft());
     if (first_visible_index.isValid())
     {
@@ -724,7 +755,7 @@ void RgIsaDisassemblyTableView::ScrollToLine(int line_number)
 
     // If the line we're scrolling to is already visible within view, don't scroll the view.
     const int adjust_visible_row = kTableBottomMargin;
-    bool      is_line_visible = (line_number >= first_visible_row) && (line_number <= last_visible_row - adjust_visible_row);
+    bool      is_line_visible    = (line_number >= first_visible_row) && (line_number <= last_visible_row - adjust_visible_row);
     if (!is_line_visible)
     {
         // Scroll the instruction table's vertical scrollbar to the given line.

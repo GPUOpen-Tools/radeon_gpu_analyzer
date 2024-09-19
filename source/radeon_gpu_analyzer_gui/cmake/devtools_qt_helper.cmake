@@ -31,33 +31,6 @@ if (NOT Qt6_DIR)
     endif ()
 endif ()
 
-# START_REMOVE_DURING_SANITIZATION
-# linuxdeployqt
-if (UNIX AND NOT APPLE)
-
-    if (Qt6_DIR)
-       set(LINUXDEPLOYQT_URL "http://bdcartifactory.amd.com/artifactory/DevToolsBDC/Assets/radeon_developer_panel/linuxdeployqt6.tar.xz")
-    else ()
-       set(LINUXDEPLOYQT_URL "http://bdcartifactory.amd.com/artifactory/DevToolsBDC/Assets/radeon_developer_panel/linuxdeployqt.zip")
-    endif ()
-
-    include(FetchContent)
-    FetchContent_Declare(
-            linuxdeployqt
-            URL ${LINUXDEPLOYQT_URL}
-            SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/linuxdeployqt
-    )
-    FetchContent_MakeAvailable(linuxdeployqt)
-
-    find_program(LINUXDEPLOYQT "linuxdeployqt" HINTS "${PROJECT_SOURCE_DIR}/external/linuxdeployqt")
-    if (LINUXDEPLOYQT)
-        message(STATUS "Found linuxdeployqt: ${LINUXDEPLOYQT}")
-    else ()
-        message(ERROR "linuxdeployqt not found but is required for build")
-    endif ()
-endif ()
-# END_REMOVE_DURING_SANITIZATION
-
 if (Qt5_DIR OR Qt6_DIR)
     #######################################################################################################################
     # Setup the INSTALL target to include Qt DLLs

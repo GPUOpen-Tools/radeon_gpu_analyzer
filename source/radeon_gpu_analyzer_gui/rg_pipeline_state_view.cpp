@@ -5,7 +5,7 @@
 #include <QMimeData>
 #include <QDragEnterEvent>
 
-// Infra.
+// QtCommon.
 #include "qt_common/utils/qt_util.h"
 
 // Local.

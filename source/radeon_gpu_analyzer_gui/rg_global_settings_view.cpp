@@ -5,9 +5,12 @@
 // Qt.
 #include <QApplication>
 #include <QCheckBox>
+#include <QDir>
 #include <QFileDialog>
 #include <QFocusEvent>
 #include <QMessageBox>
+#include <QProcess>
+#include <QStyleHints>
 #include <QWidget>
 
 // Infra.
@@ -36,6 +39,10 @@ static const QColor kApiColorBinary = QColor(128, 0, 128);
 static const QColor kApiColorOpencl = QColor(18, 152, 0);
 static const QColor kApiColorVulkan = QColor(224, 30, 55);
 
+const static QString kLightThemeOption = "Light";
+const static QString kDarkThemeOption  = "Dark";
+const static QString kDetectOsOption   = "Detect OS";
+
 // Columns push button font size.
 const int kPushButtonFontSize = 11;
 
@@ -47,12 +54,6 @@ RgGlobalSettingsView::RgGlobalSettingsView(QWidget* parent, const RgGlobalSettin
     // Setup the UI.
     ui_.setupUi(this);
 
-    // Set the background to white.
-    QPalette pal = palette();
-    pal.setColor(QPalette::Window, Qt::white);
-    this->setAutoFillBackground(true);
-    this->setPalette(pal);
-
     // Create the widget used to control column visibility.
     CreateColumnVisibilityControls();
 
@@ -61,6 +62,18 @@ RgGlobalSettingsView::RgGlobalSettingsView(QWidget* parent, const RgGlobalSettin
 
     // Initialize the combo box for font size.
     PopulateFontSizeDropdown();
+
+    ui_.color_theme_combo_box_->InitSingleSelect(this, kLightThemeOption, false, "Color Theme: ");
+    ui_.color_theme_combo_box_->AddItem(kLightThemeOption, kColorThemeTypeLight);
+    ui_.color_theme_combo_box_->AddItem(kDarkThemeOption, kColorThemeTypeDark);
+    ui_.color_theme_combo_box_->AddItem(kDetectOsOption, kColorThemeTypeCount);
+
+    ui_.color_theme_combo_box_->SetSelectedRow(initial_settings_.color_theme);
+
+    connect(ui_.color_theme_combo_box_, &ArrowIconComboBox::SelectedItem, this, &RgGlobalSettingsView::HandleColorThemeComboBoxChanged);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this, &RgGlobalSettingsView::HandleOsColorSchemeChanged);
+#endif
 
     // Push values to various widgets.
     PushToWidgets(global_settings);
@@ -232,6 +245,8 @@ void RgGlobalSettingsView::PushToWidgets(const RgGlobalSettings& global_settings
         ui_.fontSizeComboBox->setCurrentIndex(index);
     }
 
+    ui_.color_theme_combo_box_->SetSelectedRow(global_settings.color_theme);
+
     // Include files viewer.
     ui_.includeFilesViewerLineEdit->setText(global_settings.include_files_viewer.c_str());
 
@@ -280,6 +295,8 @@ RgGlobalSettings RgGlobalSettingsView::PullFromWidgets() const
 
     // Font size.
     settings.font_size = ui_.fontSizeComboBox->itemData(ui_.fontSizeComboBox->currentIndex()).toInt();
+
+    settings.color_theme = ui_.color_theme_combo_box_->CurrentRow();
 
     // Include files viewer.
     settings.include_files_viewer = ui_.includeFilesViewerLineEdit->text().toStdString();
@@ -826,6 +843,131 @@ void RgGlobalSettingsView::HandleComboBoxChanged(int index)
     HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+void RgGlobalSettingsView::HandleOsColorSchemeChanged(Qt::ColorScheme color_scheme)
+{
+    if (RgConfigManager::Instance().GetGlobalConfig()->color_theme != kColorThemeTypeCount)
+    {
+        return;
+    }
+
+    if (color_scheme == Qt::ColorScheme::Unknown)
+    {
+        return;
+    }
+
+    ColorThemeType color_mode = kColorThemeTypeLight;
+    if (color_scheme == Qt::ColorScheme::Light)
+    {
+        color_mode = kColorThemeTypeLight;
+    }
+    else if (color_scheme == Qt::ColorScheme::Dark)
+    {
+        color_mode = kColorThemeTypeDark;
+    }
+
+    if (color_mode == QtCommon::QtUtils::ColorTheme::Get().GetColorTheme())
+    {
+        return;
+    }
+
+    QtCommon::QtUtils::ColorTheme::Get().SetColorTheme(color_mode);
+
+    qApp->setPalette(QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette());
+
+    emit QtCommon::QtUtils::ColorTheme::Get().ColorThemeUpdated();
+}
+#endif
+
+void RgGlobalSettingsView::HandleColorThemeComboBoxChanged(QListWidgetItem* color_theme_option)
+{
+    ColorThemeType selected_color_mode = static_cast<ColorThemeType>(color_theme_option->data(Qt::UserRole).toInt());
+
+    // If the setting was not changed, return early.
+    if (selected_color_mode == RgConfigManager::Instance().GetGlobalConfig()->color_theme)
+    {
+        return;
+    }
+
+    HandlePendingChangesStateChanged(GetHasPendingChanges());
+}
+
+bool RgGlobalSettingsView::SetColorTheme()
+{
+    ColorThemeType selected_color_mode = static_cast<ColorThemeType>(initial_settings_.color_theme);
+
+    // If the setting was not changed return early.
+    if (selected_color_mode == QtCommon::QtUtils::ColorTheme::Get().GetColorTheme())
+    {
+        return false;
+    }
+
+    ColorThemeType color_mode = selected_color_mode;
+
+    if (selected_color_mode == kColorThemeTypeCount)
+    {
+        color_mode = QtCommon::QtUtils::DetectOsSetting();
+    }
+
+    // If the setting was changed, but won't result in a color theme change return early.
+    if (color_mode == QtCommon::QtUtils::ColorTheme::Get().GetColorTheme())
+    {
+        return false;
+    }
+
+    
+    QString color_theme_changed_title = "Color Theme Changed. Restart Application?";
+    QString color_theme_changed_text =
+        "Not all UI elements will update to reflect the change in color theme until the application has restarted. Restart Application?";
+
+    int ret = QtCommon::QtUtils::ShowMessageBox(
+        this, QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Question, color_theme_changed_title, color_theme_changed_text);
+
+    bool restart = false;
+
+    if (ret == QMessageBox::Cancel)
+    {
+        int old_color_theme = RgConfigManager::Instance().GetGlobalConfig()->color_theme;
+
+        for (int i = 0; i <= kColorThemeTypeCount; i++)
+        {
+            if (i == old_color_theme)
+            {
+                ui_.color_theme_combo_box_->SetSelectedRow(i);
+            }
+        }
+        initial_settings_.color_theme = old_color_theme;
+    }
+    else
+    {
+        QtCommon::QtUtils::ColorTheme::Get().SetColorTheme(color_mode);
+    
+        if (ret == QMessageBox::Yes)
+        {
+            restart = true;
+        }
+        else if (ret == QMessageBox::No)
+        {
+        
+            QPalette common_palette = QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette();
+            if (color_mode == kColorThemeTypeDark)
+            {
+                common_palette.setColor(QPalette::Midlight, QColor(60, 60, 60));
+                common_palette.setColor(QPalette::Highlight, QColor(100, 100, 50, 130));
+            }
+            else
+            {
+                common_palette.setColor(QPalette::Midlight, QColor(200, 200, 200));
+                common_palette.setColor(QPalette::Highlight, QColor(255, 255, 178));
+            }
+            qApp->setPalette(common_palette);
+
+            emit QtCommon::QtUtils::ColorTheme::Get().ColorThemeUpdated();
+        }
+    }
+    return restart;
+}
+
 bool RgGlobalSettingsView::GetHasPendingChanges() const
 {
     RgGlobalSettings current_settings = PullFromWidgets();
@@ -873,6 +1015,8 @@ bool RgGlobalSettingsView::SaveSettings()
     // Reset the initial settings to match what the UI shows.
     initial_settings_ = PullFromWidgets();
 
+    bool restart = SetColorTheme();
+
     // Update the config manager to use these new settings.
     RgConfigManager& config_manager = RgConfigManager::Instance();
     config_manager.SetGlobalConfig(initial_settings_);
@@ -884,6 +1028,34 @@ bool RgGlobalSettingsView::SaveSettings()
     {
         // Make sure the rest of the UI knows that the settings have been saved.
         HandlePendingChangesStateChanged(false);
+    }
+
+    if (restart)
+    {
+        QString default_exe_name;
+        default_exe_name.append(QDir::separator());
+        default_exe_name.append(kStrAppFolderName);
+
+#ifdef WIN32
+        // Append an extension only in Windows.
+        default_exe_name.append(".exe");
+#endif
+
+        const QString rga_executable = QDir::toNativeSeparators(qApp->applicationDirPath() + default_exe_name);
+
+        QFileInfo file(rga_executable);
+        if (file.exists())
+        {
+            QProcess* process = new QProcess(this);
+            if (process != nullptr)
+            {
+                bool process_result = process->startDetached(rga_executable);
+                if (process_result)
+                {
+                    qApp->quit();
+                }
+            }
+        }
     }
 
     return is_saved;

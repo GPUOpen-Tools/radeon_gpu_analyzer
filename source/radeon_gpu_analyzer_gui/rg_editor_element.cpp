@@ -7,6 +7,9 @@
 #include <QSpacerItem>
 #include <QTextCharFormat>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_editor_element.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_label.h"
@@ -24,30 +27,6 @@ static const int kIndentationWidth = 20;
 
 // The horizontal position where the Value column starts.
 static const int kValueColumnPosition = 180;
-
-// The stylesheet for each row in the PSO editor tree. Dynamic properties and repolishing
-// are used to update the row background color without resetting the stylesheet string.
-static const QString kStrRowStylesheet =
-"*                                                                      \
-{                                                                       \
-    background-color: rgba(255, 128 255, 255);                           \
-}                                                                       \
-                                                                        \
-*[selected=true]                                                        \
-{                                                                       \
-    background-color: rgba(255, 255, 178, 255);                          \
-}                                                                       \
-                                                                        \
-*[resultOccurrence=true][currentResult=false][selected=false]           \
-{                                                                       \
-    background-color: rgba(192, 192, 192, 255);                          \
-}                                                                       \
-                                                                        \
-*[currentResult=true]                                                   \
-{                                                                       \
-    background-color: rgba(255, 255, 178, 255);                          \
-}                                                                       \
-";
 
 RgEditorElement::RgEditorElement(QWidget* parent, const std::string& member_name, RgEditorDataType data_type, std::function<void()> value_changed_callback)
     : QWidget(parent)
@@ -71,9 +50,6 @@ RgEditorElement::RgEditorElement(QWidget* parent, const std::string& member_name
 
     // Connect internal signals to slots.
     ConnectSignals();
-
-    // Apply a stylesheet to the row that's used to alter the background color.
-    setStyleSheet(kStrRowStylesheet);
 }
 
 void RgEditorElement::AppendChildItem(RgEditorElement* item)
@@ -321,12 +297,14 @@ void RgEditorElement::RemoveStyleFlag(RgStyleFlags style_flag)
 {
     // Get the row's current style.
     uint32_t row_style_flags = GetStyleFlags();
+    if (row_style_flags <= static_cast<uint32_t>(RgStyleFlags::MaxRgStyleFlags))
+    {
+        // Remove the given style flag.
+        row_style_flags &= ~static_cast<uint32_t>(style_flag);
 
-    // Remove the given style flag.
-    row_style_flags &= ~static_cast<uint32_t>(style_flag);
-
-    // Apply the updated style flags to the row.
-    SetStyleFlags(row_style_flags);
+        // Apply the updated style flags to the row.
+        SetStyleFlags(row_style_flags);
+    }
 }
 
 RgEditorElement* RgEditorElement::GetParentItem() const
@@ -345,8 +323,9 @@ int RgEditorElement::GetRowIndex() const
     if (parent_item_ != nullptr)
     {
         // Find this item within the parent's children.
-        auto child_iter = std::find_if(
-            parent_item_->child_items_.begin(), parent_item_->child_items_.end(), [this](std::shared_ptr<RgEditorElement> child) { return child.get() == this; });
+        auto child_iter = std::find_if(parent_item_->child_items_.begin(), parent_item_->child_items_.end(), [this](std::shared_ptr<RgEditorElement> child) {
+            return child.get() == this;
+        });
         if (child_iter != parent_item_->child_items_.end())
         {
             // Compute the child index for this item.
@@ -362,15 +341,31 @@ void RgEditorElement::SetExpansionState(RgRowExpansionState state, bool update_c
     // Update the row's expansion state.
     row_state_ = state;
 
+    ColorThemeType color_theme = QtCommon::QtUtils::ColorTheme::Get().GetColorTheme();
+
     // Toggle the visibility of all children based on the row state.
     bool is_row_expanded = (row_state_ == RgRowExpansionState::kExpanded);
     if (is_row_expanded)
     {
-        ui_.expandPushButton->setIcon(QIcon(kIconResourceExpandedRow));
+        if (color_theme == ColorThemeType::kColorThemeTypeDark)
+        {
+            ui_.expandPushButton->setIcon(QIcon(kIconResourceExpandedRowDark));
+        }
+        else
+        {
+            ui_.expandPushButton->setIcon(QIcon(kIconResourceExpandedRowLight));
+        }
     }
     else
     {
-        ui_.expandPushButton->setIcon(QIcon(kIconResourceCollapsedRow));
+        if (color_theme == ColorThemeType::kColorThemeTypeDark)
+        {
+            ui_.expandPushButton->setIcon(QIcon(kIconResourceCollapsedRowDark));
+        }
+        else
+        {
+            ui_.expandPushButton->setIcon(QIcon(kIconResourceCollapsedRowLight));
+        }
     }
 
     int num_children = ChildCount();
@@ -527,8 +522,7 @@ void RgEditorElement::ExpandTreeEntry()
 void RgEditorElement::HandleExpandClicked()
 {
     // Toggle the expanded/collapsed state of the row.
-    RgRowExpansionState new_row_state = (row_state_ == RgRowExpansionState::kExpanded) ?
-        RgRowExpansionState::kCollapsed : RgRowExpansionState::kExpanded;
+    RgRowExpansionState new_row_state = (row_state_ == RgRowExpansionState::kExpanded) ? RgRowExpansionState::kCollapsed : RgRowExpansionState::kExpanded;
 
     // Update the expansion state.
     SetExpansionState(new_row_state);
@@ -627,7 +621,7 @@ void RgEditorElement::UpdateIndentation()
 
     // Calculate the width of the member name label.
     const QRect bounding_rect = font_metrics.boundingRect(member_name_.c_str());
-    const int width = bounding_rect.width();
+    const int   width         = bounding_rect.width();
 
     // Set the width of the value indent spacer. This aligns all editor widgets under the value
     // column to the same horizontal position.
@@ -658,7 +652,7 @@ void RgEditorElement::HighlightButtonSubString(int start_location, const std::st
 
 void RgEditorElement::UpdateButtonSubString()
 {
-    QPushButton *pPushButton = ui_.editorHost->findChild<QPushButton*>();
+    QPushButton*       pPushButton = ui_.editorHost->findChild<QPushButton*>();
     ArrowIconComboBox* combo_box   = dynamic_cast<ArrowIconComboBox*>(pPushButton);
     if (combo_box != nullptr)
     {
@@ -674,7 +668,7 @@ void RgEditorElement::UpdateStringMatchingLocation(int start_location, int lengt
     bool is_found = false;
 
     // Remove any entries that do not match the search string anymore.
-    int count = 0;
+    int              count = 0;
     std::vector<int> remove_entries;
     for (auto& string_data : string_highlight_data_)
     {
@@ -694,9 +688,9 @@ void RgEditorElement::UpdateStringMatchingLocation(int start_location, int lengt
     {
         if (string_data.start_location == start_location)
         {
-            string_data.end_location = start_location + length;
+            string_data.end_location     = start_location + length;
             string_data.highlight_string = search_string;
-            is_found = true;
+            is_found                     = true;
             SetHighlightColor(string_data);
             break;
         }
@@ -706,21 +700,23 @@ void RgEditorElement::UpdateStringMatchingLocation(int start_location, int lengt
     if (!is_found)
     {
         StringHighlightData string_highlight_data = {};
-        string_highlight_data.start_location = start_location;
-        string_highlight_data.end_location = start_location + length;
-        string_highlight_data.highlight_string = search_string;
+        string_highlight_data.start_location      = start_location;
+        string_highlight_data.end_location        = start_location + length;
+        string_highlight_data.highlight_string    = search_string;
         SetHighlightColor(string_highlight_data);
         string_highlight_data_.push_back(string_highlight_data);
     }
 }
 
-void  RgEditorElement::SetHighlightColor(StringHighlightData& string_highlight_data)
+void RgEditorElement::SetHighlightColor(StringHighlightData& string_highlight_data)
 {
     // The color in which the current match would be highlighted.
-    static const QColor kHighlightColorMatchOther = QColor::fromRgba(qRgba(254, 206, 0, 200));
+    static const QColor kHighlightColorMatchOther = QtCommon::QtUtils::ColorTheme::Get().GetCurrentThemeColors().row_selected_color;
+    //QColor::fromRgba(qRgba(254, 206, 0, 200));
 
     // The color in which any match would be highlighted.
-    static QColor kHighlightColorMatchCurrent = QColor::fromRgba(qRgba(165, 175, 146, 200));
+    static QColor kHighlightColorMatchCurrent = qApp->palette().color(QPalette::Highlight);
+    //QColor::fromRgba(qRgba(165, 175, 146, 200));
 
     if (is_current_match_)
     {
@@ -734,7 +730,7 @@ void  RgEditorElement::SetHighlightColor(StringHighlightData& string_highlight_d
 
 void RgEditorElement::ResetButtonSubString()
 {
-    QPushButton *push_buttons = ui_.editorHost->findChild<QPushButton*>();
+    QPushButton*       push_buttons = ui_.editorHost->findChild<QPushButton*>();
     ArrowIconComboBox* combo_box    = dynamic_cast<ArrowIconComboBox*>(push_buttons);
     assert(combo_box != nullptr);
     if (combo_box != nullptr)

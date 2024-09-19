@@ -53,7 +53,7 @@ RgMainWindow::RgMainWindow(QWidget* parent)
 {
     // Get the startup mode.
     RgConfigManager& config_manager = RgConfigManager::Instance();
-    RgProjectAPI current_api = config_manager.GetCurrentAPI();
+    RgProjectAPI     current_api    = config_manager.GetCurrentAPI();
 
     // We must have a known mode at startup.
     assert(current_api != RgProjectAPI::kUnknown);
@@ -67,18 +67,8 @@ RgMainWindow::RgMainWindow(QWidget* parent)
     // Set the window icon to the product logo.
     setWindowIcon(QIcon(kIconResourceRgaLogo));
 
-    // Set the background color to white.
-    this->setAutoFillBackground(true);
-    qApp->setPalette(QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette());
-
-
     // Install the event filter.
     installEventFilter(this);
-
-    // Set the status bar message's font color to white.
-    QPalette palette;
-    palette.setColor(QPalette::WindowText, Qt::GlobalColor::white);
-    statusBar()->setPalette(palette);
 
     // Declare DisassemblyViewSubWidgets as a meta type so it can be used with slots/signals.
     int id = qRegisterMetaType<DisassemblyViewSubWidgets>();
@@ -106,6 +96,9 @@ void RgMainWindow::InitMainWindow()
     // Increase the double click interval as the default one is too quick.
     const int doubleClickInterval = qApp->doubleClickInterval();
     qApp->setDoubleClickInterval(doubleClickInterval * 2);
+
+    connect(&QtCommon::QtUtils::ColorTheme::Get(), &QtCommon::QtUtils::ColorTheme::ColorThemeUpdated, this, &RgMainWindow::SetApplicationStylesheet);
+    connect(&QtCommon::QtUtils::ColorTheme::Get(), &QtCommon::QtUtils::ColorTheme::ColorThemeUpdated, this, &RgMainWindow::ApplyMainWindowStylesheet);
 }
 
 void RgMainWindow::ConnectSignals()
@@ -161,7 +154,8 @@ void RgMainWindow::CreateSettingsTab()
                     ui_.settingsTab->layout()->addWidget(settings_tab_);
 
                     // Handle when the Settings tab signals that it has pending changes.
-                    bool is_connected = connect(settings_tab_, &RgSettingsTab::PendingChangesStateChanged, this, &RgMainWindow::HandleHasSettingsPendingStateChanged);
+                    bool is_connected =
+                        connect(settings_tab_, &RgSettingsTab::PendingChangesStateChanged, this, &RgMainWindow::HandleHasSettingsPendingStateChanged);
                     assert(is_connected);
                     Q_UNUSED(is_connected);
                 }
@@ -300,7 +294,8 @@ void RgMainWindow::ConnectBuildViewSignals()
         if (build_view != nullptr)
         {
             // Editor text change handler.
-            bool is_connected = connect(build_view, &RgBuildView::CurrentEditorModificationStateChanged, this, &RgMainWindow::OnCurrentEditorModificationStateChanged);
+            bool is_connected =
+                connect(build_view, &RgBuildView::CurrentEditorModificationStateChanged, this, &RgMainWindow::OnCurrentEditorModificationStateChanged);
             assert(is_connected);
 
             // Connect the project count changed signal.
@@ -328,7 +323,8 @@ void RgMainWindow::ConnectBuildViewSignals()
             assert(is_connected);
 
             // Connect the update application notification message signal.
-            is_connected = connect(build_view, &RgBuildView::UpdateApplicationNotificationMessageSignal, this, &RgMainWindow::HandleUpdateAppNotificationMessage);
+            is_connected =
+                connect(build_view, &RgBuildView::UpdateApplicationNotificationMessageSignal, this, &RgMainWindow::HandleUpdateAppNotificationMessage);
             assert(is_connected);
 
             // Connect the project build failure signal.
@@ -390,7 +386,7 @@ void RgMainWindow::HandleEnablePipelineMenuItem(bool is_enabled)
 
 void RgMainWindow::HandleEnableBuildSettingsMenuItem(bool is_enabled)
 {
-	// Update the Build menu item for "Build settings".
+    // Update the Build menu item for "Build settings".
     build_settings_action_->setEnabled(is_enabled);
 }
 
@@ -793,7 +789,7 @@ bool RgMainWindow::OpenProjectFileAtPath(const std::string& project_file_path)
         // Read the project file to determine the project's API. The GUI's current mode may have to
         // be changed to match the API used by the project.
         std::shared_ptr<RgProject> project = nullptr;
-        is_project_loaded = RgXmlConfigFile::ReadProjectConfigFile(project_file_path, project);
+        is_project_loaded                  = RgXmlConfigFile::ReadProjectConfigFile(project_file_path, project);
 
         assert(is_project_loaded);
         assert(project != nullptr);
@@ -863,7 +859,7 @@ bool RgMainWindow::OpenProjectFileAtPath(const std::string& project_file_path)
                         // Destroy the RgBuildView instance since the project is not being opened.
                         DestroyBuildView();
 
-                         // Reset the window title.
+                        // Reset the window title.
                         ResetWindowTitle();
 
                         // Reset the status bar.
@@ -884,9 +880,9 @@ void RgMainWindow::SetWindowTitle(const std::string& title_text)
     window_title << kStrAppName << " - ";
 
     // Determine which API is being used.
-    std::string api_name;
+    std::string  api_name;
     RgProjectAPI project_api = RgConfigManager::Instance().GetCurrentAPI();
-    bool is_ok = RgUtils::ProjectAPIToString(project_api, api_name, false);
+    bool         is_ok       = RgUtils::ProjectAPIToString(project_api, api_name, false);
     assert(is_ok);
     if (is_ok)
     {
@@ -907,9 +903,9 @@ void RgMainWindow::ResetWindowTitle()
     window_title << kStrAppName;
 
     // Determine which API is being used.
-    std::string api_name;
+    std::string  api_name;
     RgProjectAPI project_api = RgConfigManager::Instance().GetCurrentAPI();
-    bool is_ok = RgUtils::ProjectAPIToString(project_api, api_name, false);
+    bool         is_ok       = RgUtils::ProjectAPIToString(project_api, api_name, false);
     assert(is_ok);
     if (is_ok)
     {
@@ -949,8 +945,7 @@ void RgMainWindow::HandleProjectFileCountChanged(bool is_project_empty)
     // the pipeline state items are enabled, since we are in a project (and not in the home page).
     build_settings_action_->setEnabled(true);
     assert(app_state_ != nullptr);
-    if (app_state_ != nullptr && app_state_->IsGraphics() &&
-        pipeline_state_action_ != nullptr)
+    if (app_state_ != nullptr && app_state_->IsGraphics() && pipeline_state_action_ != nullptr)
     {
         pipeline_state_action_->setEnabled(true);
     }
@@ -1025,7 +1020,6 @@ void RgMainWindow::HandleOpenProjectFileEvent()
 
     if (!IsInputFileNameBlank())
     {
-
         assert(settings_tab_ != nullptr);
         if (settings_tab_ != nullptr)
         {
@@ -1042,11 +1036,11 @@ void RgMainWindow::HandleOpenProjectFileEvent()
             if (did_uesr_confirm)
             {
                 std::string selected_file;
-                bool is_ok = RgUtils::OpenProjectDialog(this, selected_file);
+                bool        is_ok = RgUtils::OpenProjectDialog(this, selected_file);
 
                 // Verify that the project name is valid.
                 std::string error_string;
-                bool is_valid_project_name = RgUtils::IsValidProjectName(selected_file, error_string);
+                bool        is_valid_project_name = RgUtils::IsValidProjectName(selected_file, error_string);
                 if (is_valid_project_name && is_ok && !selected_file.empty())
                 {
                     // Destroy current BuildView if it has some project open.
@@ -1077,7 +1071,7 @@ void RgMainWindow::HandleOpenProjectFileEvent()
                 {
                     // Display error message box.
                     std::stringstream msg;
-                    std::string filename;
+                    std::string       filename;
                     msg << error_string << " \"";
                     RgUtils::ExtractFileName(selected_file, filename, false);
                     msg << filename << "\".";
@@ -1201,8 +1195,8 @@ void RgMainWindow::HandleBackToHomeEvent()
 
 void RgMainWindow::HandleExitEvent()
 {
-    static const int kTopMargin = 8;
-    bool is_save_settings_accepted = true;
+    static const int kTopMargin                = 8;
+    bool             is_save_settings_accepted = true;
 
     // Prompt the user to save any pending changes on SETTINGS tab.
 
@@ -1227,7 +1221,8 @@ void RgMainWindow::HandleExitEvent()
                 if (is_accepted && is_save_settings_accepted)
                 {
                     // Save the window geometry.
-                    RgConfigManager::Instance().SetWindowGeometry(pos().x(), pos().y() + statusBar()->height() + kTopMargin, size().width(), size().height(), windowState());
+                    RgConfigManager::Instance().SetWindowGeometry(
+                        pos().x(), pos().y() + statusBar()->height() + kTopMargin, size().width(), size().height(), windowState());
 
                     QApplication::exit(0);
                 }
@@ -1237,9 +1232,9 @@ void RgMainWindow::HandleExitEvent()
                 // Exit out of the application only if the user did NOT press cancel.
                 if (is_save_settings_accepted)
                 {
-
                     // Save the window geometry.
-                    RgConfigManager::Instance().SetWindowGeometry(pos().x(), pos().y() + statusBar()->height() + kTopMargin, size().width(), size().height(), windowState());
+                    RgConfigManager::Instance().SetWindowGeometry(
+                        pos().x(), pos().y() + statusBar()->height() + kTopMargin, size().width(), size().height(), windowState());
 
                     QApplication::exit(0);
                 }
@@ -1288,7 +1283,7 @@ void RgMainWindow::dragEnterEvent(QDragEnterEvent* event)
     }
 }
 
-void RgMainWindow::dropEvent(QDropEvent *event)
+void RgMainWindow::dropEvent(QDropEvent* event)
 {
     // Get list of all file urls.
     QList<QUrl> file_urls = event->mimeData()->urls();
@@ -1298,7 +1293,7 @@ void RgMainWindow::dropEvent(QDropEvent *event)
     {
         // Verify that the project file name is valid.
         std::string error_message;
-        bool is_project_file_valid = RgUtils::IsValidProjectName(file_urls.at(0).toLocalFile().toStdString(), error_message);
+        bool        is_project_file_valid = RgUtils::IsValidProjectName(file_urls.at(0).toLocalFile().toStdString(), error_message);
         if (is_project_file_valid)
         {
             bool is_load_successful = OpenProjectFileAtPath(file_urls.at(0).toLocalFile().toStdString());
@@ -1326,12 +1321,12 @@ void RgMainWindow::dropEvent(QDropEvent *event)
     {
         // Convert url list to a string list of local file paths.
         QStringList filename_strings;
-        bool is_file_valid = false;
+        bool        is_file_valid = false;
         for (QUrl& file_url : file_urls)
         {
             if (file_url.isLocalFile())
             {
-                QString filename = file_url.toLocalFile();
+                QString     filename = file_url.toLocalFile();
                 std::string error_message;
                 is_file_valid = RgUtils::IsSourceFileTypeValid(filename.toStdString());
                 // Filter out all files that aren't valid source files.
@@ -1390,8 +1385,8 @@ void RgMainWindow::HandleGettingStartedGuideEvent()
 {
     // Build the path to the quickstart guide document.
     static const char* QUICKSTART_GUIDE_RELATIVE_PATH = "/help/rga/quickstart.html";
-    QString quickstart_file_path = "file:///";
-    QString app_dir_path = qApp->applicationDirPath();
+    QString            quickstart_file_path           = "file:///";
+    QString            app_dir_path                   = qApp->applicationDirPath();
     quickstart_file_path.append(app_dir_path);
     quickstart_file_path.append(QUICKSTART_GUIDE_RELATIVE_PATH);
     QDesktopServices::openUrl(QUrl(quickstart_file_path, QUrl::TolerantMode));
@@ -1401,8 +1396,8 @@ void RgMainWindow::HandleHelpManual()
 {
     // Build the path to the help manual document.
     static const char* HELP_MANUAL_RELATIVE_PATH = "/help/rga/help_manual.html";
-    QString help_manual_file_path = "file:///";
-    QString app_dir_path = qApp->applicationDirPath();
+    QString            help_manual_file_path     = "file:///";
+    QString            app_dir_path              = qApp->applicationDirPath();
     help_manual_file_path.append(app_dir_path);
     help_manual_file_path.append(HELP_MANUAL_RELATIVE_PATH);
     QDesktopServices::openUrl(QUrl(help_manual_file_path, QUrl::TolerantMode));
@@ -1447,7 +1442,6 @@ void RgMainWindow::HandleBuildSettingsEvent()
 
             // Enable the Build menu item for "Build settings".
             build_settings_action_->setEnabled(false);
-
         }
     }
 
@@ -1490,8 +1484,7 @@ void RgMainWindow::HandlePipelineStateEvent()
     assert(app_state_ != nullptr);
     if (app_state_ != nullptr)
     {
-        std::shared_ptr<RgAppStateGraphics> graphics_app_state =
-            std::static_pointer_cast<RgAppStateGraphics>(app_state_);
+        std::shared_ptr<RgAppStateGraphics> graphics_app_state = std::static_pointer_cast<RgAppStateGraphics>(app_state_);
 
         assert(graphics_app_state != nullptr);
         if (graphics_app_state != nullptr)
@@ -1564,8 +1557,7 @@ void RgMainWindow::HandleProjectLoaded(std::shared_ptr<RgProject> project)
             build_project_action_->setEnabled(false);
             build_settings_action_->setEnabled(true);
             assert(app_state_ != nullptr);
-            if (app_state_ != nullptr && app_state_->IsGraphics() &&
-                pipeline_state_action_ != nullptr)
+            if (app_state_ != nullptr && app_state_->IsGraphics() && pipeline_state_action_ != nullptr)
             {
                 pipeline_state_action_->setEnabled(true);
             }
@@ -1597,8 +1589,7 @@ void RgMainWindow::HandleFocusNextWidget()
         while (test_widget != nullptr)
         {
             // Check that the widget accepts focus and is visible to the current focus widget.
-            if (test_widget->focusPolicy() != Qt::NoFocus &&
-                test_widget->isVisibleTo(focus_widget))
+            if (test_widget->focusPolicy() != Qt::NoFocus && test_widget->isVisibleTo(focus_widget))
             {
                 focus_widget = test_widget;
                 break;
@@ -1626,8 +1617,7 @@ void RgMainWindow::HandleFocusPrevWidget()
         while (test_widget != nullptr)
         {
             // Check that the widget accepts focus and is visible to the current focus widget.
-            if (test_widget->focusPolicy() != Qt::NoFocus &&
-                test_widget->isVisibleTo(focus_widget))
+            if (test_widget->focusPolicy() != Qt::NoFocus && test_widget->isVisibleTo(focus_widget))
             {
                 focus_widget = test_widget;
                 break;
@@ -1684,7 +1674,7 @@ void RgMainWindow::ResetViewStateAfterBuild()
         build_project_action_->setEnabled(false);
         build_settings_action_->setEnabled(false);
         cancel_build_action_->setEnabled(false);
-        
+
         go_to_line_action_->setEnabled(false);
         find_action_->setEnabled(false);
 
@@ -1704,7 +1694,7 @@ void RgMainWindow::ResetViewStateAfterBuild()
         {
             pipeline_state_action_->setEnabled(true);
         }
-    }    
+    }
 
     assert(app_state_ != nullptr);
     if (app_state_ != nullptr)
@@ -1775,8 +1765,7 @@ void RgMainWindow::HandleProjectBuildStarted()
     // Do not allow going to the build settings or pipeline state view.
     build_settings_action_->setEnabled(false);
     assert(app_state_ != nullptr);
-    if (app_state_ != nullptr && app_state_->IsGraphics() &&
-        pipeline_state_action_ != nullptr)
+    if (app_state_ != nullptr && app_state_->IsGraphics() && pipeline_state_action_ != nullptr)
     {
         pipeline_state_action_->setEnabled(false);
     }
@@ -1868,8 +1857,8 @@ void RgMainWindow::CreateAppNotificationMessageLabel(const std::string& message,
         app_notification_widget_->setToolTip(QString::fromStdString(tooltip));
 
         // Create icon and text labels.
-        QIcon* icon = new QIcon(kIconResourceRemoveNotification);
-        QPixmap pixmap = icon->pixmap(QSize(24, 24));
+        QIcon*  icon       = new QIcon(kIconResourceRemoveNotification);
+        QPixmap pixmap     = icon->pixmap(QSize(24, 24));
         QLabel* icon_label = new QLabel(app_notification_widget_);
         icon_label->setPixmap(pixmap);
         QLabel* text_label = new QLabel(QString::fromStdString(message), app_notification_widget_);
@@ -2265,7 +2254,7 @@ bool RgMainWindow::eventFilter(QObject* object, QEvent* event)
         }
         else if (event->type() == QEvent::KeyPress)
         {
-            QKeyEvent* key_event = static_cast<QKeyEvent*>(event);
+            QKeyEvent*            key_event          = static_cast<QKeyEvent*>(event);
             Qt::KeyboardModifiers keyboard_modifiers = QApplication::keyboardModifiers();
             if ((key_event->key() != Qt::Key_Up) && (key_event->key() != Qt::Key_Down))
             {
@@ -2298,8 +2287,7 @@ bool RgMainWindow::eventFilter(QObject* object, QEvent* event)
 bool RgMainWindow::LoadBinaryCodeObject(const QString filename)
 {
     QStringList filename_strings;
-    bool        is_file_valid = RgUtils::IsFileExists(filename.toStdString()) && 
-        RgUtils::IsSourceFileTypeValid(filename.toStdString());
+    bool        is_file_valid = RgUtils::IsFileExists(filename.toStdString()) && RgUtils::IsSourceFileTypeValid(filename.toStdString());
     if (is_file_valid)
     {
         filename_strings.push_back(filename);

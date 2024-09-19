@@ -1,14 +1,16 @@
-Radeon GPU Analyzer 2.10.0 Release Notes
-========================================
+Radeon™ GPU Analyzer 2.11 Release Notes
+=======================================
 Highlights
 ==========
--   The RGA GUI application now handles display scaling, which allows for a better experience when working with multiple monitors or when changing display settings.
--	Analyze pre-compiled HIP Code Object binaries for the MI-300 with RGA's Binary Analysis mode.
--	Added support for MI-300 (gfx942) as a target in OpenCL mode.
--	DX12 single shader support: compile single DX12 shaders in isolation (CS, VS or PS). When an incomplete DX12 pipeline is received (missing a shader, root signature or state subset), the tool will use reflection to auto-generate the missing pieces of the pipeline for you. No impact to the invocation command, just omit the missing pieces.
--	DX12 Agility SDK updated to version v613.
--	DXC updated to version v1.8.2403.2 (HLSL 2021 is now enabled by default).
+-	Added support for gfx1150 as a compiler target across all modes.
+-	DXR mode now supports AMD compiler’s raytracing updates. With Radeon Adrenalin™ driver version 24.9.1, the AMD compiler includes changes to the way raytracing state objects are being compiled. Use this new version of RGA to ensure compatibility with the new compiler.
+-	Dark mode: the RGA GUI application now lets you choose between Light and Dark themes or have the UI follow the OS theme. To control this behavior, visit the tool’s Settings menu.
+-	Updated DXC to version v1.8.2407.
+-	Updated the offline Vulkan and OpenGL compilers.
 
+Notes: 
+•	As part of adding support for AMD compiler’s raytracing updates, the DXR invocation command is now simplified, removing support for the --mode and --export command line options. Any DXR state object compilation would be considered a Pipeline compilation, and it is up to the driver to decide on the compilation type (Indirect vs. Unified). For more information and usage examples, run rga -s dxr -h.
+•	This release removes support for pre-RDNA targets in the Vulkan offline mode.
 
 Known Issues
 ============
@@ -220,6 +222,11 @@ GUI Application
 -	Certain GDS instructions are being misclassified as SALU.
 -	Changing disassembly columns can be sluggish on certain systems in projects with multiple .cl files.
 -	On systems with default Unicode path for the RGA projects folder, the tool will not be able to save files. A workaround has been provided in version 2.6.1 (allowing the user to change the folder in which projects are saved).
+-	On Linux, if the OS color theme is updated while the RGA GUI application is running, the RGA GUI application will not immediately reflect these changes (the changes will be reflected the next time that you launch the application).
+
+General
+-	RGA compilation is not impacted by Driver Experiments. Activating driver experiments would generally have no impact on RGA’s behavior and the compiled shaders, kernels and pipelines.
+
 
 Notes for OpenCL Mode Users 
 ===========================

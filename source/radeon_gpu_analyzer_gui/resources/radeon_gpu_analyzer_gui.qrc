@@ -47,5 +47,16 @@
         <file>stylesheets/binary/rg_file_menu_style_binary.qss</file>
         <file>stylesheets/binary/rg_main_window_style_binary.qss</file>
         <file>icons/api_logos/binary_icon_wide.png</file>
+        <file>icons/api_logos/binary_icon_wide_dark.png</file>
+        <file>icons/api_logos/opencl_icon_wide_dark.png</file>
+        <file>icons/api_logos/vulkan_icon_dark.png</file>
+        <file>icons/checkmark_black.svg</file>
+        <file>icons/new_file_icon_dark_mode.svg</file>
+        <file>icons/state_settings_cube_dark_mode.svg</file>
+        <file>icons/add_file_icon_dark_mode.svg</file>
+        <file>icons/filter_rows_icon_dark_mode.svg</file>
+        <file>icons/find_next_icon_dark_mode.svg</file>
+        <file>icons/find_previous_icon_dark_mode.svg</file>
+        <file>icons/magnifying_glass_icon_dark_mode.svg</file>
     </qresource>
 </RCC>

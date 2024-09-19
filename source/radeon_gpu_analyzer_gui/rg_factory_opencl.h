@@ -42,6 +42,9 @@ public:
     // Create an OpenCL file menu.
     virtual RgMenu* CreateFileMenu(QWidget* parent) override;
 
+    // Apply the stylesheet for the OpenCL file menu.
+    virtual void ApplyFileMenuStylesheet(QWidget* widget) override;
+
     // Create an OpenCL-specific start tab.
     virtual RgStartTab* CreateStartTab(QWidget* parent) override;
 

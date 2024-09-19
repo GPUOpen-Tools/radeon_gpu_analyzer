@@ -142,31 +142,4 @@ namespace rga
        }
     }
 
-    void RgDx12Factory::DestroyDxilLibrarySubobject(D3D12_STATE_SUBOBJECT*& dxil_library_subobject)
-    {
-        if (dxil_library_subobject != nullptr)
-        {
-            if (dxil_library_subobject->pDesc != nullptr)
-            {
-                D3D12_DXIL_LIBRARY_DESC* desc = (D3D12_DXIL_LIBRARY_DESC*)(dxil_library_subobject->pDesc);
-                desc->DXILLibrary.BytecodeLength = 0;
-                delete[] desc->DXILLibrary.pShaderBytecode;
-                desc->DXILLibrary.pShaderBytecode = nullptr;
-                for (uint32_t i = 0; i < desc->NumExports; i++)
-                {
-                    desc->pExports[i];
-                    delete[] desc->pExports[i].Name;
-                    desc->pExports[i].Name = nullptr;
-                    delete[] desc->pExports[i].ExportToRename;
-                    desc->pExports[i].ExportToRename = nullptr;
-                }
-                delete[] desc->pExports;
-                desc->pExports = nullptr;
-            }
-
-            delete dxil_library_subobject;
-            dxil_library_subobject = nullptr;
-        }
-    }
-
 }

@@ -5,6 +5,7 @@
 
 // C++.
 #include <cassert>
+#include <memory>
 
 // Infra.
 #include "external/amdt_base_tools/Include/gtString.h"
@@ -13,42 +14,43 @@
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 
 // Backend.
-#include "radeon_gpu_analyzer_backend/be_utils.h"
-#include "radeon_gpu_analyzer_backend/be_data_types.h"
 #include "radeon_gpu_analyzer_backend/autogen/be_utils_dx12.h"
+#include "radeon_gpu_analyzer_backend/be_data_types.h"
+#include "radeon_gpu_analyzer_backend/be_metadata_parser.h"
+#include "radeon_gpu_analyzer_backend/be_utils.h"
 
 // Shared.
 #include "common/rga_shared_utils.h"
 
 // Local.
+#include "radeon_gpu_analyzer_cli/kc_cli_commander_bin_util.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_dx12.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 
 // Device info.
 #include "DeviceInfoUtils.h"
 
-using namespace rga;
-
 // *****************************************
 // *** INTERNALLY LINKED SYMBOLS - START ***
 // *****************************************
 
 // Constants - error messages.
-static const char* kStrErrorDx12NoTargetProvided = "Error: no supported target device provided.";
-static const char* kStrErrorDx12IsaNotGeneratedA = "Error: failed to generate ISA disassembly for ";
-static const char* kStrErrorDx12AmdilNotGeneratedA = "Error: failed to generate AMDIL disassembly for ";
+static const char* kStrErrorDx12NoTargetProvided    = "Error: no supported target device provided.";
+static const char* kStrErrorDx12IsaNotGeneratedA    = "Error: failed to generate ISA disassembly for ";
+static const char* kStrErrorDx12AmdilNotGeneratedA  = "Error: failed to generate AMDIL disassembly for ";
 static const char* kStrErrorDx12OutputNotGeneratedB = " shader";
-static const char* kStrErrorDx12StatsNotGeneratedA = "Error: failed to generate resource usage statistics for ";
-static const char* kStrErrorDx12StatsNotGeneratedB = " shader";
+static const char* kStrErrorDx12StatsNotGeneratedA  = "Error: failed to generate resource usage statistics for ";
+static const char* kStrErrorDx12StatsNotGeneratedB  = " shader";
 static const char* kStrErrorDx12BinaryNotGeneratedA = "Error: failed to extract pipeline binary for ";
 
-static const char* kStrErrorInvalidDxcOptionArgument = "Error: argument to --dxc option should be path to the folder where DXC is located, not a full path to a file.";
+static const char* kStrErrorInvalidDxcOptionArgument =
+    "Error: argument to --dxc option should be path to the folder where DXC is located, not a full path to a file.";
 static const char* kStrErrorGpsoFileWriteFailed = "Error: failed to write template .gpso file to: ";
 
 // DXR-specific error messages.
-static const char* kStrErrorDxrIsaNotGeneratedB = " export.";
+static const char* kStrErrorDxrIsaNotGeneratedB         = " export.";
 static const char* kStrErrorDxrIsaNotGeneratedBPipeline = " pipeline.";
-static const char* kStrErrorDxrNoSupportedTargetsFound = "Error: non of the targets which are supported by the driver is gfx1030 or beyond. Aborting.";
+static const char* kStrErrorDxrNoSupportedTargetsFound  = "Error: non of the targets which are supported by the driver is gfx1030 or beyond. Aborting.";
 
 // Constants - warnings messages.
 static const char* kStrWarningDx12AutoDeducingRootSignatureAsHlsl = "Warning: --rs-hlsl option not provided, assuming that root signature macro is defined in ";
@@ -57,18 +59,26 @@ static const char* kStrWarningDx12AutoDeducingRootSignatureAsHlsl = "Warning: --
 static const char* kStrWarningDxrSkippingUnsupportedTarget = "Warning: DXR mode only supports gfx1030 and beyond as a target. Skipping ";
 
 // Constants - info messages.
-static const char* kStrInfoTemplateGpsoFileGenerated = "Template .gpso file created successfully.";
-static const char* kStrInfoDx12PostProcessingSeparator = "-=-=-=-=-=-=-";
-static const char* kStrInfoDx12PostProcessing = "Post-processing...";
-static const char* kStrInfoDxrAssumingShaderMode = "Info: no --mode argument detected, assuming '--mode shader' by default.";
-static const char* kStrInfoDxrOutputPipelineNumber = "pipeline #";
-static const char* kStrInfoDxrOutputPipelineName = "pipeline associated with raygeneration shader ";
-static const char* kStrInfoDxrUsingDefaultShaderModel = "Info: using user-provided shader model instead of the default model (";
+static const char* kStrInfoTemplateGpsoFileGenerated              = "Template .gpso file created successfully.";
+static const char* kStrInfoDx12PostProcessingSeparator            = "-=-=-=-=-=-=-";
+static const char* kStrInfoDx12PostProcessing                     = "Post-processing...";
+static const char* kStrInfoDxrUsingDefaultShaderModel             = "Info: using user-provided shader model instead of the default model (";
+static const char* kStrInfoDxrUnifiedPipelineGenerated            = "Pipeline compiled in Unified mode, expect a single uber shader in the output.";
+static const char* kStrInfoDxrIndirectPipelineGenerated           = "Pipeline compiled in Indirect mode.";
+static const char* kStrInfoDxrExtractedDisassemblyA               = "Extracting disassembly for pipeline associated with ";
+static const char* kStrInfoDxrExtractedDisassemblyB               = " shader ";
+static const char* kStrInfoDxrExtractedDisassemblyC               = "...  ";
+static const char* kStrInfoDisassemblingBinaryElfContainer        = "Disassembling pipeline binary ELF container ";
+static const char* kStrInfoDisassemblingBinaryElfContainerSuccess = "Pipeline binary ELF container disassembled successfully.";
+static const char* kStrInfoDisassemblingBinaryElfFailure          = "failure.";
+static const char* kStrInfoDisassemblingBinaryElfContainerOnlyVegaRdna =
+    "Disassembling pipeline binary ELF container (--elf-dis) is only supported for binaries generated for Vega, RDNA and beyond. Skipping for ";
 
 // Constants - other.
-static const char* kStrDxrUnifiedSuffix = "_unified";
-const char kStrFileNmaeTokenIndirect = '*';
+const char  kStrFileNmaeTokenIndirect = '*';
 const char* kStrDefaultDxrShaderModel = "lib_6_3";
+
+static const char* kAmdgpuDisShaderIdentifiersToken = "_amdgpu_shader_identifiers";
 
 // Update the user provided configuration if necessary.
 static void UpdateConfig(const Config& user_input, Config& updated_config)
@@ -142,14 +152,6 @@ static void UpdateConfig(const Config& user_input, Config& updated_config)
     }
     else
     {
-        // Use shader mode by default.
-        if (user_input.dxr_mode.compare(kStrDxrModeShader) != 0 &&
-            user_input.dxr_mode.compare(kStrDxrModePipeline) != 0)
-        {
-            std::cout << kStrInfoDxrAssumingShaderMode << std::endl;
-            updated_config.dxr_mode = kStrDxrModeShader;
-        }
-
         if (user_input.dxr_shader_model.empty())
         {
             // Use the default shader model unless specified otherwise by the user.
@@ -163,183 +165,61 @@ static void UpdateConfig(const Config& user_input, Config& updated_config)
     }
 }
 
-
-static bool PerformLiveVgprAnalysisDxr(const Config& config_updated, const std::string& isa_file, const std::string& target,
-    const std::string& output_filename, const std::string&, const RgDxrShaderResults& shader_results)
+struct RaytracingPipelineMetaData : public BeAmdPalMetaData::PipelineMetaData
 {
-    bool is_ok = false;
-    if (!isa_file.empty())
-    {
-        std::cout << kStrInfoPerformingLiveregAnalysisVgpr;
-        std::cout << kStrInfoDxrOutputShader << shader_results.export_name << kStrInfoDxrPerformingPostProcessing << std::endl;
+    // Return true if it is a compute pipeline metadata.
+    bool IsComputePipeline();
 
-        // Delete the file if it already exists.
-        if (BeUtils::IsFilePresent(output_filename))
-        {
-            KcUtils::DeleteFile(output_filename.c_str());
-        }
+    // Returns true if the compute pipeline metadata is that of a Unified RayGen shader.
+    bool IsUnifiedRaygenShader();
 
-        is_ok = KcUtils::PerformLiveRegisterAnalysis(isa_file, target, output_filename, NULL,
-            config_updated.print_process_cmd_line);
+    // Return true if it is a compute pipeline metadata.
+    bool IsComputeLibrary();
 
-        if (is_ok)
-        {
-            if (KcUtils::FileNotEmpty(output_filename))
-            {
-                std::cout << kStrInfoSuccess << std::endl;
-            }
-            else
-            {
-                std::cout << kStrInfoFailed << std::endl;
-                KcUtils::DeleteFile(output_filename);
-            }
-        }
-    }
+    // Returns true if type is a Ray Tracing Shader type.
+    static bool IsRayTracingShaderType(BeAmdPalMetaData::ShaderSubtype type);
+};
 
-    return is_ok;
+bool RaytracingPipelineMetaData::IsComputePipeline()
+{
+    return shaders.size() == 1 && shader_functions.empty() && shaders.front().shader_type == BeAmdPalMetaData::ShaderType::kCompute;
 }
 
-static bool PerformLiveSgprAnalysisDxr(const Config&             config_updated,
-                                       const std::string&        isa_file,
-                                       const std::string&        target,
-                                       const std::string&        output_filename,
-                                       const std::string&        ,
-                                       const RgDxrShaderResults& shader_results)
+bool RaytracingPipelineMetaData::IsUnifiedRaygenShader()
 {
-    bool is_ok = false;
-    if (!isa_file.empty())
-    {
-        std::cout << kStrInfoPerformingLiveregAnalysisSgpr;
-        std::cout << kStrInfoDxrOutputShader << shader_results.export_name << kStrInfoDxrPerformingPostProcessing << std::endl;
-
-        // Delete the file if it already exists.
-        if (BeUtils::IsFilePresent(output_filename))
-        {
-            KcUtils::DeleteFile(output_filename.c_str());
-        }
-
-        is_ok = KcUtils::PerformLiveRegisterAnalysis(isa_file, target, output_filename, NULL, config_updated.print_process_cmd_line, true);
-
-        if (is_ok)
-        {
-            if (KcUtils::FileNotEmpty(output_filename))
-            {
-                std::cout << kStrInfoSuccess << std::endl;
-            }
-            else
-            {
-                std::cout << kStrInfoFailed << std::endl;
-                KcUtils::DeleteFile(output_filename);
-            }
-        }
-    }
-
-    return is_ok;
+    return IsComputePipeline() && shaders.front().shader_subtype == BeAmdPalMetaData::ShaderSubtype::kRayGeneration;
 }
 
-static bool GeneratePerBlockCfgDxr(const Config& config_updated, const std::string& isa_file, const std::string& target,
-    const std::string& output_filename, const std::string&, const RgDxrShaderResults& shader_results)
+bool RaytracingPipelineMetaData::IsComputeLibrary()
 {
-    bool is_ok = false;
-    if (!isa_file.empty())
-    {
-        std::cout << kStrInfoContructingPerBlockCfg1;
-        std::cout << kStrInfoDxrOutputShader << shader_results.export_name << kStrInfoDxrPerformingPostProcessing << std::endl;
-
-        // Delete the file if it already exists.
-        if (BeUtils::IsFilePresent(output_filename))
-        {
-            KcUtils::DeleteFile(output_filename.c_str());
-        }
-
-        is_ok = KcUtils::GenerateControlFlowGraph(isa_file, target, output_filename, NULL,
-            false, config_updated.print_process_cmd_line);
-
-        if (is_ok)
-        {
-            if (KcUtils::FileNotEmpty(output_filename))
-            {
-                std::cout << kStrInfoSuccess << std::endl;
-            }
-            else
-            {
-                std::cout << kStrInfoFailed << std::endl;
-                KcUtils::DeleteFile(output_filename);
-            }
-        }
-    }
-
-    return is_ok;
+    return shaders.empty() && shader_functions.size() == 1;
 }
 
-static bool GeneratePerInstructionCfgDxr(const Config& config_updated, const std::string& isa_file, const std::string& target,
-    const std::string& output_filename, const std::string&, const RgDxrShaderResults& shader_results)
+bool RaytracingPipelineMetaData::IsRayTracingShaderType(BeAmdPalMetaData::ShaderSubtype type)
 {
-    bool is_ok = false;
-    if (!isa_file.empty())
+    bool ret = true;
+    switch (type)
     {
-        std::cout << kStrInfoContructingPerInstructionCfg1;
-        std::cout << kStrInfoDxrOutputShader << shader_results.export_name << kStrInfoDxrPerformingPostProcessing << std::endl;
-
-        // Delete the file if it already exists.
-        if (BeUtils::IsFilePresent(output_filename))
-        {
-            KcUtils::DeleteFile(output_filename.c_str());
-        }
-
-        is_ok = KcUtils::GenerateControlFlowGraph(isa_file, target, output_filename, NULL,
-            true, config_updated.print_process_cmd_line);
-
-        if (is_ok)
-        {
-            if (KcUtils::FileNotEmpty(output_filename))
-            {
-                std::cout << kStrInfoSuccess << std::endl;
-            }
-            else
-            {
-                std::cout << kStrInfoFailed << std::endl;
-                KcUtils::DeleteFile(output_filename);
-            }
-        }
+    case BeAmdPalMetaData::ShaderSubtype::kRayGeneration:
+    case BeAmdPalMetaData::ShaderSubtype::kMiss:
+    case BeAmdPalMetaData::ShaderSubtype::kAnyHit:
+    case BeAmdPalMetaData::ShaderSubtype::kClosestHit:
+    case BeAmdPalMetaData::ShaderSubtype::kIntersection:
+    case BeAmdPalMetaData::ShaderSubtype::kCallable:
+        break;
+    default:
+        ret = false;
     }
-
-    return is_ok;
+    return ret;
 }
 
-// Disassembles ELF container and saves it to the requested output file according to the given Config.
-// pipelineBinary is the full path to the pipeline binary ELF container file.
-static void DisassembleElfBinary(const std::string& target, const std::string& pipeline_binary, const Config& config, const std::string& output_filename, std::string error_msg)
+bool IsDxrPostProcessingRequired(const Config& config)
 {
-    const char* kStrInfoDisassemblingBinaryElfContainer = "Disassembling pipeline binary ELF container ";
-    const char* kStrInfoDisassemblingBinaryElfContainerSuccess = "Pipeline binary ELF container disassembled successfully.";
-    const char* kStrInfoDisassemblingBinaryElfFailure = "failure.";
-    const char* kStrInfoDisassemblingBinaryElfContainerOnlyVegaRdna = "Disassembling pipeline binary ELF container (--elf-dis) is only supported for binaries generated for Vega, RDNA and beyond. Skipping for ";
-    std::cout << kStrInfoDisassemblingBinaryElfContainer << pipeline_binary << "... " << std::endl;
-    std::string elf_disassembly;
-    std::string elf_disassembly_dot_text;
-
-    if (KcUtils::IsNaviTarget(target) || KcUtils::IsVegaTarget(target))
-    {
-        const std::string quoted_binary_path = KcUtils::Quote(pipeline_binary);
-        bool is_elf_disassembled = BeUtils::DisassembleCodeObject(quoted_binary_path,
-            config.print_process_cmd_line, elf_disassembly, elf_disassembly_dot_text, error_msg);
-        assert(is_elf_disassembled);
-        if (is_elf_disassembled && !elf_disassembly.empty())
-        {
-            std::cout << kStrInfoDisassemblingBinaryElfContainerSuccess << std::endl;
-            [[maybe_unused]] bool isElfDisassemblySaved = KcUtils::WriteTextFile(output_filename, elf_disassembly, nullptr);
-            assert(isElfDisassemblySaved);
-        }
-        else
-        {
-            std::cout << kStrInfoDisassemblingBinaryElfFailure << std::endl;
-        }
-    }
-    else
-    {
-        std::cout << kStrInfoDisassemblingBinaryElfContainerOnlyVegaRdna << target << "." << std::endl;
-    }
+    bool is_livereg_required   = !config.livereg_analysis_file.empty();
+    bool is_live_sgpr_required = !config.sgpr_livereg_analysis_file.empty();
+    bool is_stats_required     = !config.analysis_file.empty();
+    bool is_cfg_required       = (!config.block_cfg_file.empty() || !config.inst_cfg_file.empty());
+    return is_livereg_required || is_live_sgpr_required || is_stats_required || is_cfg_required;
 }
 
 // ****************************************
@@ -408,12 +288,6 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                 // Validate the input.
                 bool is_dxr = (config_updated.mode == RgaMode::kModeDxr);
                 bool is_input_valid = dx12_backend_.ValidateAndGeneratePipeline(config_updated, is_dxr);
-
-                // In DXR pipeline mode, always assume "all" as the export.
-                if (is_dxr && !BeDx12Utils::IsDxrShaderMode(config_updated) && config_updated.dxr_exports.empty())
-                {
-                    config_updated.dxr_exports.push_back("all");
-                }
 
                 bool was_asic_list_auto_generated = false;
                 if (is_input_valid)
@@ -505,245 +379,37 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                     {
                                         for (const RgDxrPipelineResults& curr_pipeline_results : output_mapping)
                                         {
-                                            for (const RgDxrShaderResults& curr_shader_results : curr_pipeline_results.results)
-                                            {
-                                                // The key to the map is the export name.
-                                                const std::string& currExport = curr_shader_results.export_name;
-
-                                                // Verify ISA files created.
-                                                if (!curr_shader_results.isa_disassembly.empty() && !KcUtils::FileNotEmpty(curr_shader_results.isa_disassembly))
-                                                {
-                                                    std::cout << kStrErrorDx12IsaNotGeneratedA << currExport
-                                                        << kStrErrorDxrIsaNotGeneratedB << std::endl;
-                                                    is_success = false;
-                                                }
-
-                                                if (!curr_shader_results.stats.empty() && !KcUtils::FileNotEmpty(curr_shader_results.stats))
-                                                {
-                                                    std::cout << kStrErrorDx12StatsNotGeneratedA << currExport
-                                                        << kStrErrorDxrIsaNotGeneratedB << std::endl;
-                                                    is_success = false;
-                                                }
-                                            }
-
                                             // Verify binary files created.
-                                            bool should_extract_pipeline_binaries =
-                                                config_updated.dxr_mode.compare(kStrDxrModeShader) != 0 && !curr_pipeline_results.pipeline_binary.empty();
+                                            bool should_extract_pipeline_binaries = !curr_pipeline_results.pipeline_binary.empty();
                                             if (should_extract_pipeline_binaries)
                                             {
-                                                if (!curr_pipeline_results.pipeline_binary.empty() && !KcUtils::FileNotEmpty(curr_pipeline_results.pipeline_binary))
+                                                if (!KcUtils::FileNotEmpty(curr_pipeline_results.pipeline_binary))
                                                 {
-                                                    std::cout << kStrErrorDx12BinaryNotGeneratedA << curr_pipeline_results.pipeline_name
-                                                        << kStrErrorDxrIsaNotGeneratedBPipeline << std::endl;
+                                                    std::cout << kStrErrorDx12BinaryNotGeneratedA << curr_pipeline_results.pipeline_binary
+                                                              << kStrErrorDxrIsaNotGeneratedBPipeline << "\n";
                                                     is_success = false;
                                                 }
                                                 else
                                                 {
-                                                    // Generate ELF disassembly if needed.
-                                                    if (!config_updated.elf_dis.empty())
+                                                    // Generate ELF disassembly.
+                                                    std::string elf_disassembly;
+                                                    is_success = DisassembleElfBinary(
+                                                        config_updated, target, curr_pipeline_results.pipeline_binary, elf_disassembly, error_msg);
+                                                    if (is_success)
                                                     {
-                                                        // Construct a name for the output file.
-                                                        std::string output_filename;
-                                                        is_ok = KcUtils::ConstructOutFileName(config_updated.elf_dis, "",
-                                                            target, kStrDefaultExtensionText, output_filename);
-
-                                                        // Disassemble the pipeline binary.
-                                                        DisassembleElfBinary(target, curr_pipeline_results.pipeline_binary,
-                                                            config_updated, output_filename, error_msg);
+                                                        is_success = PostProcessElfBinary(
+                                                            config_updated, target, curr_pipeline_results.pipeline_binary, elf_disassembly, error_msg);
+                                                    }
+                                                    else
+                                                    {
+                                                        std::cout << error_msg << "\n";
                                                     }
                                                 }
-                                            }
-                                        }
-                                    }
 
-                                    if (is_success)
-                                    {
-                                        const bool is_shader_mode = BeDx12Utils::IsDxrShaderMode(config_updated);
-                                        std::cout << kStrInfoSuccess << std::endl;
-                                        if (!config_updated.livereg_analysis_file.empty() || 
-                                            !config_updated.sgpr_livereg_analysis_file.empty() ||
-                                            !config_updated.inference_analysis_file.empty() ||
-                                            !config_updated.inst_cfg_file.empty() ||
-                                            !config_updated.block_cfg_file.empty())
-                                        {
-                                            // Post-processing.
-                                            std::cout << kStrInfoDx12PostProcessingSeparator << std::endl;
-                                            std::cout << kStrInfoDx12PostProcessing << std::endl;
-
-                                            // Live register analysis files.
-                                            if (!config_updated.livereg_analysis_file.empty())
-                                            {
-                                                for (const RgDxrPipelineResults& curr_pipeline_results : output_mapping)
+                                                // Clean up temporary files.
+                                                if (!config.should_retain_temp_files && config.binary_output_file.empty())
                                                 {
-                                                    if (!BeProgramBuilderDx12::IsDxrNullPipeline(curr_pipeline_results.pipeline_name))
-                                                    {
-                                                        // Announce the pipeline name in pipeline mode.
-                                                        std::cout << kStrInfoPerformingLiveregAnalysisVgpr <<
-                                                            (curr_pipeline_results.isUnified ? kStrInfoDxrOutputPipelineName : kStrInfoDxrOutputPipelineNumber) <<
-                                                            curr_pipeline_results.pipeline_name << "..." << std::endl;
-                                                    }
-
-                                                    for (const RgDxrShaderResults& curr_shader_results : curr_pipeline_results.results)
-                                                    {
-                                                        std::stringstream filename_suffix_stream;
-                                                        if (!BeProgramBuilderDx12::IsDxrNullPipeline(curr_pipeline_results.pipeline_name) &&
-                                                            !curr_pipeline_results.isUnified)
-                                                        {
-                                                            filename_suffix_stream << curr_pipeline_results.pipeline_name << "_";
-                                                        }
-                                                        filename_suffix_stream << curr_shader_results.export_name;
-                                                        if (!is_shader_mode && curr_pipeline_results.isUnified)
-                                                        {
-                                                            filename_suffix_stream << kStrDxrUnifiedSuffix;
-                                                        }
-                                                        std::string filename_suffix = filename_suffix_stream.str();
-
-                                                        // Do not append a suffix in case that the file name is empty,
-                                                        // to prevent a situation where we have the shader name appearing twice.
-                                                        bool should_append_suffix = !KcUtils::IsDirectory(config.livereg_analysis_file);
-
-                                                        std::string output_filename;
-                                                        KcUtils::ConstructOutFileName(config.livereg_analysis_file, filename_suffix,
-                                                            target, kStrDefaultExtensionLivereg, output_filename, should_append_suffix);
-
-                                                        PerformLiveVgprAnalysisDxr(config_updated, curr_shader_results.isa_disassembly, target,
-                                                            output_filename, filename_suffix, curr_shader_results);
-                                                    }
-                                                }
-                                            }
-
-                                            // Live register analysis files (Sgpr).
-                                            if (!config_updated.sgpr_livereg_analysis_file.empty())
-                                            {
-                                                for (const RgDxrPipelineResults& curr_pipeline_results : output_mapping)
-                                                {
-                                                    if (!BeProgramBuilderDx12::IsDxrNullPipeline(curr_pipeline_results.pipeline_name))
-                                                    {
-                                                        // Announce the pipeline name in pipeline mode.
-                                                        std::cout << kStrInfoPerformingLiveregAnalysisSgpr
-                                                                  << (curr_pipeline_results.isUnified ? kStrInfoDxrOutputPipelineName
-                                                                                                      : kStrInfoDxrOutputPipelineNumber)
-                                                                  << curr_pipeline_results.pipeline_name << "..." << std::endl;
-                                                    }
-
-                                                    for (const RgDxrShaderResults& curr_shader_results : curr_pipeline_results.results)
-                                                    {
-                                                        std::stringstream filename_suffix_stream;
-                                                        if (!BeProgramBuilderDx12::IsDxrNullPipeline(curr_pipeline_results.pipeline_name) &&
-                                                            !curr_pipeline_results.isUnified)
-                                                        {
-                                                            filename_suffix_stream << curr_pipeline_results.pipeline_name << "_";
-                                                        }
-                                                        filename_suffix_stream << curr_shader_results.export_name;
-                                                        if (!is_shader_mode && curr_pipeline_results.isUnified)
-                                                        {
-                                                            filename_suffix_stream << kStrDxrUnifiedSuffix;
-                                                        }
-                                                        std::string filename_suffix = filename_suffix_stream.str();
-
-                                                        // Do not append a suffix in case that the file name is empty,
-                                                        // to prevent a situation where we have the shader name appearing twice.
-                                                        bool should_append_suffix = !KcUtils::IsDirectory(config.sgpr_livereg_analysis_file);
-
-                                                        std::string output_filename;
-                                                        KcUtils::ConstructOutFileName(config.sgpr_livereg_analysis_file,
-                                                                                      filename_suffix,
-                                                                                      target,
-                                                                                      kStrDefaultExtensionLiveregSgpr,
-                                                                                      output_filename,
-                                                                                      should_append_suffix);
-
-                                                        PerformLiveSgprAnalysisDxr(config_updated,
-                                                                                   curr_shader_results.isa_disassembly,
-                                                                                   target,
-                                                                                   output_filename,
-                                                                                   filename_suffix,
-                                                                                   curr_shader_results);
-                                                    }
-                                                }
-                                            }
-
-                                            // Per-block control-flow graphs.
-                                            if (!config_updated.block_cfg_file.empty())
-                                            {
-                                                for (const RgDxrPipelineResults& curr_pipeline_results : output_mapping)
-                                                {
-                                                    if (!BeProgramBuilderDx12::IsDxrNullPipeline(curr_pipeline_results.pipeline_name))
-                                                    {
-                                                        // Announce the pipeline name in pipeline mode.
-                                                        std::cout << kStrInfoContructingPerBlockCfg1 <<
-                                                            (curr_pipeline_results.isUnified ? kStrInfoDxrOutputPipelineName : kStrInfoDxrOutputPipelineNumber) <<
-                                                            curr_pipeline_results.pipeline_name << "..." << std::endl;
-                                                    }
-
-                                                    for (const RgDxrShaderResults& curr_shader_results : curr_pipeline_results.results)
-                                                    {
-                                                        std::stringstream filename_suffix_stream;
-                                                        if (!BeProgramBuilderDx12::IsDxrNullPipeline(curr_pipeline_results.pipeline_name) &&
-                                                            !curr_pipeline_results.isUnified)
-                                                        {
-                                                            filename_suffix_stream << curr_pipeline_results.pipeline_name << "_";
-                                                        }
-                                                        filename_suffix_stream << curr_shader_results.export_name;
-                                                        if (!is_shader_mode && curr_pipeline_results.isUnified)
-                                                        {
-                                                            filename_suffix_stream << kStrDxrUnifiedSuffix;
-                                                        }
-                                                        std::string filename_suffix = filename_suffix_stream.str();
-
-                                                        // Do not append a suffix in case that the file name is empty,
-                                                        // to prevent a situation where we have the shader name appearing twice.
-                                                        bool should_append_suffix = !KcUtils::IsDirectory(config.block_cfg_file);
-
-                                                        std::string output_filename;
-                                                        KcUtils::ConstructOutFileName(config.block_cfg_file, filename_suffix,
-                                                            target, kStrDefaultExtensionDot, output_filename, should_append_suffix);
-
-                                                        GeneratePerBlockCfgDxr(config_updated, curr_shader_results.isa_disassembly, target,
-                                                            output_filename, filename_suffix, curr_shader_results);
-                                                    }
-                                                }
-                                            }
-
-                                            // Per-instruction control-flow graphs.
-                                            if (!config_updated.inst_cfg_file.empty())
-                                            {
-                                                for (const RgDxrPipelineResults& curr_pipeline_results : output_mapping)
-                                                {
-                                                    if (!BeProgramBuilderDx12::IsDxrNullPipeline(curr_pipeline_results.pipeline_name))
-                                                    {
-                                                        // Announce the pipeline name in pipeline mode.
-                                                        std::cout << kStrInfoContructingPerInstructionCfg1 <<
-                                                            (curr_pipeline_results.isUnified ? kStrInfoDxrOutputPipelineName : kStrInfoDxrOutputPipelineNumber) <<
-                                                            curr_pipeline_results.pipeline_name << "..." << std::endl;
-                                                    }
-
-                                                    for (const RgDxrShaderResults& curr_shader_results : curr_pipeline_results.results)
-                                                    {
-                                                        std::stringstream filename_suffix_stream;
-                                                        if (!BeProgramBuilderDx12::IsDxrNullPipeline(curr_pipeline_results.pipeline_name) &&
-                                                            !curr_pipeline_results.isUnified)
-                                                        {
-                                                            filename_suffix_stream << curr_pipeline_results.pipeline_name << "_";
-                                                        }
-                                                        filename_suffix_stream << curr_shader_results.export_name;
-                                                        if (!is_shader_mode && curr_pipeline_results.isUnified)
-                                                        {
-                                                            filename_suffix_stream << kStrDxrUnifiedSuffix;
-                                                        }
-                                                        std::string filename_suffix = filename_suffix_stream.str();
-
-                                                        // Do not append a suffix in case that the file name is empty,
-                                                        // to prevent a situation where we have the shader name appearing twice.
-                                                        bool should_append_suffix = !KcUtils::IsDirectory(config.inst_cfg_file);
-
-                                                        std::string output_filename;
-                                                        KcUtils::ConstructOutFileName(config.inst_cfg_file, filename_suffix,
-                                                            target, kStrDefaultExtensionDot, output_filename, should_append_suffix);
-
-                                                        GeneratePerInstructionCfgDxr(config_updated, curr_shader_results.isa_disassembly, target,
-                                                            output_filename, filename_suffix, curr_shader_results);
-                                                    }
+                                                    KcUtils::DeleteFileW(curr_pipeline_results.pipeline_binary);
                                                 }
                                             }
                                         }
@@ -803,13 +469,9 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                                             }
                                             else if (!config_updated.elf_dis.empty())
                                             {
-                                                // Construct a name for the output file.
-                                                std::string output_filename;
-                                                is_ok = KcUtils::ConstructOutFileName(config_updated.elf_dis, "",
-                                                    target, kStrDefaultExtensionText, output_filename);
-
                                                 // Disassemble the pipeline binary.
-                                                DisassembleElfBinary(target, binary_file, config_updated, output_filename, error_msg);
+                                                std::string elf_disassembly;
+                                                is_ok = DisassembleElfBinary(config_updated, target, binary_file, elf_disassembly, error_msg, true);
 
                                             }
                                         }
@@ -952,4 +614,151 @@ bool KcCliCommanderDX12::GetDX12DriverAsicList(const Config& config, std::set<st
     return result;
 }
 
+bool KcCliCommanderDX12::DisassembleElfBinary(const Config&      config,
+                                              const std::string& target,
+                                              const std::string& pipeline_elf,
+                                              std::string&       elf_disassembly,
+                                              std::string&       error_msg,
+                                              bool               verbose) const
+{
+    if (verbose)
+    {
+        std::cout << kStrInfoDisassemblingBinaryElfContainer << pipeline_elf << "... "
+                  << "\n";
+    }
+
+    bool ret = false;
+    if (KcUtils::IsNaviTarget(target) || KcUtils::IsVegaTarget(target))
+    {
+        const std::string quoted_binary_path = KcUtils::Quote(pipeline_elf);
+        ret                                  = KcUtils::InvokeAmdgpudis(quoted_binary_path, config.print_process_cmd_line, elf_disassembly, error_msg);
+        if (ret && !elf_disassembly.empty())
+        {
+            if (verbose || config.print_process_cmd_line)
+            {
+                std::cout << kStrInfoDisassemblingBinaryElfContainerSuccess << std::endl;
+            }
+
+            if (!config.elf_dis.empty())
+            {
+                std::string output_filename;
+                bool        is_ok = KcUtils::ConstructOutFileName(config.elf_dis, "", target, kStrDefaultExtensionText, output_filename);
+                if (is_ok)
+                {
+                    bool isElfDisassemblySaved = KcUtils::WriteTextFile(output_filename, elf_disassembly, nullptr);
+                    assert(isElfDisassemblySaved);
+                }
+                else
+                {
+                    ret = false;
+                    if (verbose)
+                    {
+                        std::cout << kStrInfoDisassemblingBinaryElfFailure << "\n";
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (verbose || config.print_process_cmd_line)
+            {
+                std::cout << kStrInfoDisassemblingBinaryElfFailure << "\n";
+            }
+        }
+    }
+    else
+    {
+        if (verbose)
+        {
+            std::cout << kStrInfoDisassemblingBinaryElfContainerOnlyVegaRdna << target << "." << std::endl;
+        }
+    }
+    return ret;
+}
+
+bool KcCliCommanderDX12::PostProcessElfBinary(const Config&           config,
+                                              const std::string&      target,
+                                              const std::string&      pipeline_elf,
+                                              const std::string&      elf_disassembly,
+                                              std::string&            error_msg)
+{
+    bool                               is_success = false;
+    std::map<std::string, std::string> kernel_to_disassembly;
+    beKA::beStatus                     status = ParseAmdgpudisOutputGraphicStrategy{}.ParseAmdgpudisKernels(elf_disassembly, kernel_to_disassembly, error_msg);
+    if (status == beKA::beStatus::kBeStatusSuccess)
+    {
+        RayTracingBinaryWorkflowStrategy processor{pipeline_elf, log_callback_};
+        RaytracingPipelineMetaData       pipeline_md;
+        beKA::beStatus                   md_status = BeAmdPalMetaData::ParseAmdgpudisMetadata(elf_disassembly, pipeline_md);
+        assert(md_status == beKA::beStatus::kBeStatusRayTracingCodeObjMetaDataSuccess);
+        if (md_status == beKA::beStatus::kBeStatusRayTracingCodeObjMetaDataSuccess)
+        {
+            bool ignore_pipeline_binary = true;
+            if (pipeline_md.IsComputePipeline())
+            {
+                if (pipeline_md.IsUnifiedRaygenShader())
+                {
+                    std::cout << kStrInfoDxrUnifiedPipelineGenerated << "\n";
+                    std::cout << kStrInfoDxrExtractedDisassemblyA << BeAmdPalMetaData::GetShaderSubtypeName(BeAmdPalMetaData::ShaderSubtype::kRayGeneration)
+                              << kStrInfoDxrExtractedDisassemblyB << kStrInfoDxrExtractedDisassemblyC;
+                    ignore_pipeline_binary = false;
+                }
+                else
+                {
+                    std::cout << kStrInfoDxrIndirectPipelineGenerated << "\n";
+                }
+            }
+            else if (pipeline_md.IsComputeLibrary())
+            {
+                const auto& shader_function = pipeline_md.shader_functions.front();
+                if (RaytracingPipelineMetaData::IsRayTracingShaderType(shader_function.shader_subtype))
+                {
+                    std::cout << kStrInfoDxrExtractedDisassemblyA << BeAmdPalMetaData::GetShaderSubtypeName(shader_function.shader_subtype)
+                              << kStrInfoDxrExtractedDisassemblyB << shader_function.name << kStrInfoDxrExtractedDisassemblyC;
+                    ignore_pipeline_binary = false;
+                }
+                else
+                {
+                    auto found = kernel_to_disassembly.find(shader_function.name);
+                    if (found != kernel_to_disassembly.end())
+                    {
+                        kernel_to_disassembly.erase(found);
+                    }
+                }
+            }
+
+            if (!ignore_pipeline_binary)
+            {
+                status = processor.WriteOutputFiles(config, target, kernel_to_disassembly, pipeline_md, error_msg);
+                if (status == beKA::beStatus::kBeStatusSuccess)
+                {
+                    std::cout << kStrInfoSuccess << "\n";
+                    // Post-processing.
+                    if (IsDxrPostProcessingRequired(config))
+                    {
+                        std::cout << kStrInfoDx12PostProcessingSeparator << "\n";
+                        std::cout << kStrInfoDx12PostProcessing << "\n";
+                        processor.RunPostProcessingSteps(config, pipeline_md);
+                    }
+                    is_success = true;
+                }
+                else
+                {
+                    std::cout << kStrInfoFailed << "\n";
+                }
+            }
+        }
+    }
+    else
+    {
+        if (elf_disassembly.find(kAmdgpuDisShaderIdentifiersToken) != std::string::npos)
+        {
+            // The current pipeline binary is based on NPRT enabled in 24.20 driver.
+            // This is just an implementation detail, and does not concern the user,
+            // but does NOT indicate a disassemlbly parsing failure.
+            is_success = true;
+        }
+    }
+    return is_success;
+}
 #endif

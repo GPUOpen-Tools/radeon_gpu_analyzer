@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>RgMenuPipelineStateItem</class>
+ <class>rgMenuPipelineStateItem</class>
  <widget class="QWidget" name="rgMenuPipelineStateItem">
   <property name="geometry">
    <rect>
@@ -51,12 +51,11 @@
      </property>
      <property name="font">
       <font>
-       <weight>50</weight>
        <bold>false</bold>
       </font>
      </property>
      <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
+      <enum>Qt::FocusPolicy::NoFocus</enum>
      </property>
      <property name="styleSheet">
       <string notr="true"/>
@@ -67,6 +66,9 @@
      <property name="icon">
       <iconset resource="../resources/radeon_gpu_analyzer_gui.qrc">
        <normaloff>:/icons/state_settings_cube.svg</normaloff>:/icons/state_settings_cube.svg</iconset>
+     </property>
+     <property name="flat">
+      <bool>false</bool>
      </property>
     </widget>
    </item>

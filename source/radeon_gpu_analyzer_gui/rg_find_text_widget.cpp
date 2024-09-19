@@ -1,6 +1,9 @@
 // C++.
 #include <cassert>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_find_text_widget.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_source_code_editor.h"
@@ -8,11 +11,20 @@
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
-RgFindTextWidget::RgFindTextWidget(QWidget* parent) :
-    QWidget(parent)
+RgFindTextWidget::RgFindTextWidget(QWidget* parent)
+    : QWidget(parent)
 {
     // Initialize the interface object.
     ui_.setupUi(this);
+
+    ColorThemeType color_theme = QtCommon::QtUtils::ColorTheme::Get().GetColorTheme();
+
+    if (color_theme == kColorThemeTypeDark)
+    {
+        ui_.filterRowsPushButton->setIcon(QIcon(":/icons/filter_rows_icon_dark_mode.svg"));
+        ui_.findPreviousPushButton->setIcon(QIcon(":/icons/new_file_icon_dark_mode.svg"));
+        ui_.findNextPushButton->setIcon(QIcon(":/icons/find_previous_icon_dark_mode.svg"));
+    }
 
     // Set the tooltip and status tip for the Find next button.
     RgUtils::SetToolAndStatusTip(kStrEditFindNextTooltip, ui_.findNextPushButton);
@@ -25,7 +37,18 @@ RgFindTextWidget::RgFindTextWidget(QWidget* parent) :
 
     // Add a Search magnifying glass to the search textbox.
     ui_.searchLineEdit->setClearButtonEnabled(true);
-    ui_.searchLineEdit->addAction(QIcon(kIconResourceFindMagnifyingGlass), QLineEdit::LeadingPosition);
+
+    if (color_theme == kColorThemeTypeDark)
+    {
+        ui_.filterRowsPushButton->setIcon(QIcon(":/icons/filter_rows_icon_dark_mode.svg"));
+        ui_.findPreviousPushButton->setIcon(QIcon(":/icons/find_previous_icon_dark_mode.svg"));
+        ui_.findNextPushButton->setIcon(QIcon(":/icons/find_next_icon_dark_mode.svg"));
+        ui_.searchLineEdit->addAction(QIcon(kIconResourceFindMagnifyingGlassDark), QLineEdit::LeadingPosition);
+    }
+    else
+    {
+        ui_.searchLineEdit->addAction(QIcon(kIconResourceFindMagnifyingGlass), QLineEdit::LeadingPosition);
+    }
 
     // Create the keyboard actions associated with the Find widget.
     CreateActions();
@@ -235,10 +258,7 @@ void RgFindTextWidget::UpdateSearchOptions()
     if (search_context_ != nullptr)
     {
         // Update the search options by sending the option button states to the search context.
-        search_context_->SetSearchOptions({
-            ui_.filterRowsPushButton->isChecked(),
-            ui_.matchCasePushButton->isChecked()
-        });
+        search_context_->SetSearchOptions({ui_.filterRowsPushButton->isChecked(), ui_.matchCasePushButton->isChecked()});
 
         // Trigger the search.
         search_context_->ResetSearch();

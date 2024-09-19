@@ -71,21 +71,21 @@ namespace rga
     static const char* kStrErrorFailedToWriteOutputFile1 = "Error: failed to write ";
     static const char* kStrErrorFailedToWriteOutputFile2 = " file to ";
     static const char* kStrErrorFailedToWriteOutputFile3 = "make sure that the path is valid.";
-    static const char* kStrErrorFailedToExtractRaytracingDisassembly = "Error: failed to extract disassembly.";
-    static const char* kStrErrorFailedToExtractRaytracingStatistics = "Error: failed to extract hardware resource usage statistics.";
-    static const char* kStrErrorFailedToExtractRaytracingBinary = "Error: failed to extract pipeline binary.";
+    //static const char* kStrErrorFailedToExtractRaytracingDisassembly = "Error: failed to extract disassembly.";
+    //static const char* kStrErrorFailedToExtractRaytracingStatistics = "Error: failed to extract hardware resource usage statistics.";
+    //static const char* kStrErrorFailedToExtractRaytracingBinary = "Error: failed to extract pipeline binary.";
     static const char* kStrErrorFailedToCreateComputePipeline = "Error: compute pipeline state creation failed. ";
-    static const char* kStrErrorDxrShaderModeCompilationFailed = "Error: DXR shader mode compilation failed.";
+    //static const char* kStrErrorDxrShaderModeCompilationFailed = "Error: DXR shader mode compilation failed.";
     static const char* kStrErrorDxrFailedToReadHlslToDxilMappingFile1 = "Error: failed to read ";
     static const char* kStrErrorDxrFailedToParseHlslToDxilMappingFile1 = "Error: failed to parse ";
     static const char* kStrErrorDxrdHlslToDxilMappingFile2 = "HLSL->DXIL mapping file.";
     static const char* kStrErrorAmdDisplayAdapterNotFound = "Error: could not find an AMD display adapter on the system. Consider adding --offline to the rga command to use the AMD driver (amdxc64.dll) that is bundled with the tool.";
-    static const char* kStrErrorDxrFailedToRetrievePipelineShaderName = "Error: failed to retrieve shader name for shader #";
+    //static const char* kStrErrorDxrFailedToRetrievePipelineShaderName = "Error: failed to retrieve shader name for shader #";
 
     // Warnings.
-    static const char* kStrWarningBinaryExtractionNotSupportedInIndirectMode = "Warning: pipeline binary extraction (-b option) is not supported when driver performs Indirect compilation.";
-    static const char* kStrWarningBinaryExtractionNotSupportedMultiplePipelines1 = "Warning: pipeline binary extraction skipped for pipeline #";
-    static const char* kStrWarningBinaryExtractionNotSupportedMultiplePipelines2 = " - there is currently no support for pipeline binary extraction when multiple pipelines are generated.";
+    //static const char* kStrWarningBinaryExtractionNotSupportedInIndirectMode = "Warning: pipeline binary extraction (-b option) is not supported when driver performs Indirect compilation.";
+    //static const char* kStrWarningBinaryExtractionNotSupportedMultiplePipelines1 = "Warning: pipeline binary extraction skipped for pipeline #";
+    //static const char* kStrWarningBinaryExtractionNotSupportedMultiplePipelines2 = " - there is currently no support for pipeline binary extraction when multiple pipelines are generated.";
 
     // Info.
     static const char* kStrInfoExtractComputeShaderDisassemblyAmdil = "Extracting compute shader AMDIL disassembly...";
@@ -105,18 +105,8 @@ namespace rga
     static const char* kStrInfoExtractGraphicsPipelineBinarySuccess = "Graphics pipeline binary extracted successfully.";
     static const char* kStrInfoExtractGraphicsShaderStatsSuccess = " shader statistics extracted successfully.";
     static const char* kStrInfoExtractGraphicsShaderDisassemblySuccess = " shader disassembly extracted successfully.";
-    static const char* kStrInfoExtractRayTracingDisassemblySuccess = "Disassembly extracted successfully.";
-    static const char* kStrInfoExtractRayTracingStatisticsSuccess = "Hardware resource usage statistics extracted successfully.";
     static const char* kStrInfoExtractRayTracingBinarySuccess = "Pipeline binary extracted successfully.";
-    static const char* kStrInfoExtractRayTracingStatsShader = "Extracting statistics for shader ";
-    static const char* kStrInfoExtractRayTracingPipelineBinaryByRaygen = "Extracting pipeline binary for pipeline associated with raygeneration shader ";
-    static const char* kStrInfoExtractRayTracingDisassemblyPipelineByRaygen = "Extracting disassembly for pipeline associated with raygeneration shader ";
-    static const char* kStrInfoExtractRayTracingResourceUsagePipelineByRaygen = "Extracting hardware resource usage for pipeline associated with raygeneration shader ";
-    static const char* kStrInfoExtractRayTracingPipelineBinaryByIndex1 = "Extracting pipeline binary for pipeline #";
-    static const char* kStrInfoExtractRayTracingDisassemblyPipelineByIndex1 = "Extracting disassembly for pipeline #";
-    static const char* kStrInfoExtractRayTracingResourceUsagePipelineByIndex1 = "Extracting hardware resource usage for pipeline #";
-    static const char* kStrInfoExtractRayTracingResultByIndex2 = " for shader ";
-    static const char* kStrInfoExtractRayTracingDisassemblyShader = "Extracting disassembly for shader ";
+    static const char* kStrInfoExtractRayTracingPipelineBinaryByIndex1 = "Extracting pipeline binary for pipeline ";
     static const char* kStrInfoCompilingRootSignatureFromHlsl1 = "Compiling root signature defined in HLSL file ";
     static const char* kStrInfoCompilingRootSignatureFromHlsl2 = " in macro named ";
     static const char* kStrHintRootSignatureFailure = "Hint: this failure could be due to a missing or incompatible root signature.\n"
@@ -124,15 +114,10 @@ namespace rga
         "with the macro name, or use the --rs-macro option.\n2. If your root signature is precompiled into a binary, please use the --rs-bin "
         "option with the full path to the binary file as an argument.";
     static const char* kStrHintUseDebugLayer = "To facilitate troubleshooting, we recommend enabling the --debug-layer option when running RGA.";
-    static const char* kStrInfoDxrPipelineCompiledUnified = "Pipeline compiled in Unified mode, expect a single uber shader in the output.";
-    static const char* kStrInfoDxrPipelineCompiledIndirect1 = "Pipeline compiled in Indirect mode, expect ";
-    static const char* kStrInfoDxrPipelineCompiledIndirect2 = " shaders in the output.";
     static const char* kStrInfoDxrPipelineCompilationGenerated1 = "Compilation generated ";
-    static const char* kStrInfoDxrPipelineCompilationGeneratedMultiplePipelines2 = " pipelines.";
-    static const char* kStrInfoDxrPipelineCompilationGeneratedSinglePipeline2 = " pipeline.";
-    static const char* kStrInfoDxrPipelineTypeReport1 = "Pipeline #";
-    static const char* kStrInfoDxrPipelineTypeReport2 = " associated with raygeneration shader ";
-
+    static const char* kStrInfoDxrPipelineCompilationGeneratedMultiplePipelines2 = " pipeline binaries.";
+    static const char* kStrInfoDxrPipelineCompilationGeneratedSinglePipeline2 = " pipeline binary.";
+    
     // *** CONSTANTS - END ***
 
     // *** STATICALLY-LINKED UTITILIES - START ***
@@ -1542,11 +1527,6 @@ namespace rga
                 {
                     // Assume pipeline mode by default, unless user specified shader mode explicitly.
                     D3D12_STATE_OBJECT_TYPE stateObjectType = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
-                    std::string modeLower = RgDx12Utils::ToLower(config.dxr_mode);
-                    if (modeLower.compare("shader") == 0)
-                    {
-                        stateObjectType = D3D12_STATE_OBJECT_TYPE_COLLECTION;
-                    }
 
                     // Create the State Object descriptor, based upon which the state object would be created.
                     CD3DX12_STATE_OBJECT_DESC dxr_state_desc(stateObjectType);
@@ -1634,419 +1614,57 @@ namespace rga
                                 // Track the results.
                                 std::vector<RgDxrPipelineResults> results_pipeline_mode;
 
-                                const char* kStrModeNameShader = "shader";
-                                const char* kOutputFilenameSuffixUnified = "unified";
-                                std::wstring dxr_export_wide = RgDx12Utils::strToWstr(config.dxrExport);
-                                std::string export_lower = RgDx12Utils::ToLower(config.dxrExport);
-                                std::wstring dxr_export_wide_lower = RgDx12Utils::strToWstr(config.dxrExport);
-                                bool is_shader_mode = modeLower.compare(kStrModeNameShader) == 0;
-                                if (is_shader_mode)
+                                // Pipeline mode: compile and extract the results for all generated pipelines.
+                                // Per-pipeline binary.
+                                std::vector<std::shared_ptr<std::vector<unsigned char>>> pipeline_binaries;
+
+                                // Compile.
+                                ret = backend_.CreateStateObject(dxr_state_desc, pipeline_binaries, error_msg);
+                                assert(ret);
+                                if (ret)
                                 {
-                                    std::vector<std::shared_ptr<RgDx12ShaderResultsRayTracing>> rs;
-                                    std::vector<unsigned char> pipeline_binary;
-                                    bool is_unified_mode = true;
-                                    std::vector<std::string> indirect_shader_names;
-
-                                    // Compile and extract the results for a single shader.
-                                    std::shared_ptr<RgDx12ShaderResultsRayTracing> raytracing_shader_stats = std::make_shared<RgDx12ShaderResultsRayTracing>();
-                                    ret = backend_.CreateStateObjectShader(dxr_state_desc, dxr_export_wide, *raytracing_shader_stats, pipeline_binary, error_msg);
-                                    assert(ret);
-                                    if (ret)
+                                    // For each pipeline, let's extract the results.
+                                    for (uint32_t pipeline_index = 0; pipeline_index < pipeline_binaries.size(); pipeline_index++)
                                     {
-                                        rs.push_back(raytracing_shader_stats);
-                                    }
-                                    else
-                                    {
-                                        if (error_msg.empty())
+                                        // Output metadata.
+                                        RgDxrPipelineResults curr_pipeline_results_metadata;
+
+                                        // Binary files: only if required by user and only once per pipeline.
+                                        if (!config.dxr_binary_output.empty())
                                         {
-                                            std::cerr << kStrErrorDxrShaderModeCompilationFailed << std::endl;
-                                        }
-                                    }
-
-
-                                    if (ret)
-                                    {
-                                        RgDxrPipelineResults pipeline_results;
-                                        pipeline_results.isUnified = is_unified_mode;
-
-                                        // If we are in Pipeline (non All) mode, we would use the export name as the name of the pipeline.
-                                        pipeline_results.pipeline_name = "null";
-
-                                        uint32_t i = 0;
-                                        for (const auto& curr_results : rs)
-                                        {
-                                            // If we are in Unified mode, pipeline name is identical to export name (raygeneration shader name).
-                                            RgDxrShaderResults shader_results_tracking;
-                                            if (is_unified_mode || is_shader_mode)
+                                            assert(pipeline_index < pipeline_binaries.size());
+                                            if (pipeline_index < pipeline_binaries.size())
                                             {
-                                                shader_results_tracking.export_name = config.dxrExport;
-                                            }
-                                            else
-                                            {
-                                                assert(i < indirect_shader_names.size());
-                                                if (i < indirect_shader_names.size())
+                                                // Running number to identify the current pipeline in Indirect mode.
+                                                const std::string pipeline_index_display_name = std::to_string(pipeline_index + 1);
+
+                                                // Generate an index-specific file name.
+                                                std::string bin_output_filename =
+                                                    GenerateSpecificFileName(config.dxr_binary_output, pipeline_index_display_name);
+                                                assert(!bin_output_filename.empty());
+                                                if (!bin_output_filename.empty())
                                                 {
-                                                    shader_results_tracking.export_name = indirect_shader_names[i];
-                                                }
-                                            }
-
-                                            assert(is_unified_mode || i < indirect_shader_names.size());
-                                            if (!config.dxr_isa_output.empty() && curr_results->disassembly != nullptr)
-                                            {
-                                                // Save output files and report to user: disassembly.
-                                                if (is_shader_mode || is_unified_mode)
-                                                {
-                                                    std::cout << (!is_shader_mode ? kStrInfoExtractRayTracingDisassemblyPipelineByRaygen : kStrInfoExtractRayTracingDisassemblyShader)
-                                                        << config.dxrExport << "..." << std::endl;
-                                                }
-                                                else
-                                                {
-                                                    std::cout << kStrInfoExtractRayTracingDisassemblyShader << "#" << (i + 1) << ": " << indirect_shader_names[i] << "..." << std::endl;
-                                                }
-
-                                                std::string output_filename_fixed = config.dxr_isa_output;
-                                                if (!is_shader_mode)
-                                                {
-                                                    output_filename_fixed = GenerateSpecificFileName(output_filename_fixed, (is_unified_mode ? kOutputFilenameSuffixUnified : indirect_shader_names[i]));
-                                                }
-
-                                                bool is_disassembly_saved = RgDx12Utils::WriteTextFile(output_filename_fixed, curr_results->disassembly);
-                                                std::cout << (is_disassembly_saved ? kStrInfoExtractRayTracingDisassemblySuccess :
-                                                    kStrErrorFailedToExtractRaytracingDisassembly) << std::endl;
-                                                assert(is_disassembly_saved);
-                                                ret = ret && is_disassembly_saved;
-                                                if (is_disassembly_saved)
-                                                {
-                                                    shader_results_tracking.isa_disassembly = output_filename_fixed;
-                                                }
-                                            }
-
-                                            if (!config.dxr_statistics_output.empty())
-                                            {
-                                                // Save output files and report to user: statistics.
-                                                if (is_shader_mode)
-                                                {
-                                                    std::cout << kStrInfoExtractRayTracingStatsShader << config.dxrExport << "..." << std::endl;
-                                                }
-                                                else
-                                                {
-                                                    std::cout << kStrInfoExtractRayTracingStatsShader << "#" << (i + 1) << ": " <<
-                                                        indirect_shader_names[i] << "..." << std::endl;
-                                                }
-
-                                                std::string output_filename_fixed = config.dxr_statistics_output;
-                                                if (!is_shader_mode)
-                                                {
-                                                    output_filename_fixed = GenerateSpecificFileName(output_filename_fixed, (is_unified_mode ? kOutputFilenameSuffixUnified : indirect_shader_names[i]));
-                                                }
-
-                                                bool is_statistics_saved = SerializeDx12StatsRayTracing(*curr_results, output_filename_fixed);
-                                                std::cout << (is_statistics_saved ? kStrInfoExtractRayTracingStatisticsSuccess :
-                                                    kStrErrorFailedToExtractRaytracingStatistics) << std::endl;
-                                                assert(is_statistics_saved);
-                                                ret = ret && is_statistics_saved;
-                                                if (is_statistics_saved)
-                                                {
-                                                    shader_results_tracking.stats = output_filename_fixed;
-                                                }
-                                            }
-
-                                            // Track the current results.
-                                            pipeline_results.results.push_back(shader_results_tracking);
-
-                                            // Increment the index for the current result.
-                                            ++i;
-                                        }
-
-                                        // Pipeline binaries extraction is not supported in shader mode.
-                                        if (!is_shader_mode && is_unified_mode && !config.dxr_binary_output.empty())
-                                        {
-                                            // Save output files and report to user: binaries.
-                                            std::cout << kStrInfoExtractRayTracingPipelineBinaryByRaygen << config.dxrExport << "..." << std::endl;
-                                            std::string output_filename_fixed = config.dxr_binary_output;
-                                            output_filename_fixed = GenerateSpecificFileName(output_filename_fixed, (is_unified_mode ? kOutputFilenameSuffixUnified : ""));
-                                            bool is_binary_saved = RgDx12Utils::WriteBinaryFile(output_filename_fixed, pipeline_binary);
-                                            std::cout << (is_binary_saved ? kStrInfoExtractRayTracingBinarySuccess :
-                                                kStrErrorFailedToExtractRaytracingBinary) << std::endl;
-                                            assert(is_binary_saved);
-                                            ret = ret && is_binary_saved;
-                                            if (is_binary_saved)
-                                            {
-                                                pipeline_results.pipeline_binary = output_filename_fixed;
-                                            }
-                                        }
-
-                                        // Track the pipeline results.
-                                        results_pipeline_mode.push_back(pipeline_results);
-                                    }
-                                }
-                                else
-                                {
-                                    // Pipeline mode: compile and extract the results for all generated pipelines.
-                                    // Per-pipeline results.
-                                    std::vector<std::shared_ptr<std::vector<std::shared_ptr<RgDx12ShaderResultsRayTracing>>>> rs;
-
-                                    // Per-pipeline binary.
-                                    std::vector<std::shared_ptr<std::vector<unsigned char>>> pipeline_binaries;
-
-                                    // Per-pipeline flag that specifies whether the pipeline was compiled in Unified mode.
-                                    std::vector<bool> is_unified;
-
-                                    // Container for the raygeneration shader name for each generated pipeline.
-                                    std::vector<std::shared_ptr<std::vector<std::string>>> raygeneration_shader_names;
-
-                                    // Compile.
-                                    ret = backend_.CreateStateObject(dxr_state_desc, rs, pipeline_binaries,
-                                        is_unified, raygeneration_shader_names, error_msg);
-                                    assert(ret);
-                                    assert(!rs.empty());
-                                    if (ret && !rs.empty())
-                                    {
-                                        // Notify the user about the number of pipelines that were generated.
-                                        std::cout << kStrInfoDxrPipelineCompilationGenerated1 << rs.size() <<
-                                           (rs.size() == 1 ? kStrInfoDxrPipelineCompilationGeneratedSinglePipeline2 :
-                                               kStrInfoDxrPipelineCompilationGeneratedMultiplePipelines2) << std::endl;
-
-                                        // For each pipeline, let's extract the results.
-                                        for (uint32_t pipeline_index = 0; pipeline_index < rs.size(); pipeline_index++)
-                                        {
-                                            // Running number to identify the current pipeline in Indirect mode.
-                                            const std::string pipeline_index_display_name = std::to_string(pipeline_index + 1);
-
-                                            // The shader names for the current pipeline. In case we are in Unified mode, there will
-                                            // be only a single shader name (the raygeneration shader).
-                                            std::shared_ptr<std::vector<std::string>> pipeline_shader_names = raygeneration_shader_names[pipeline_index];
-                                            const auto& curr_raygeneration_shader_names = *pipeline_shader_names;
-
-                                            // The raygeneration shader name for this pipeline (essentially, the pipeline identifier).
-                                            // We already have in hand the vector that holds the raygeneration shader name for the current pipeline
-                                            // so we will take the first (and only) element.
-                                            const char* curr_raygeneration_shader_name = curr_raygeneration_shader_names[0].data();
-
-                                            // The results for the current pipeline.
-                                            const auto& curr_results = rs[pipeline_index];
-
-                                            // Report the type of compilation (Unified/Indirect) to the user for the current pipeline.
-                                            std::cout << kStrInfoDxrPipelineTypeReport1 << (pipeline_index + 1);
-                                            if (is_unified[pipeline_index])
-                                            {
-                                                std::cout << kStrInfoDxrPipelineTypeReport2 <<
-                                                    curr_raygeneration_shader_name;
-                                            }
-                                            std::cout << ": " << std::endl;
-
-                                            if (is_unified[pipeline_index])
-                                            {
-                                                // Unified mode - expect a single shader in output.
-                                                assert(curr_results->size() == 1);
-                                                std::cout << kStrInfoDxrPipelineCompiledUnified << std::endl;
-                                            }
-                                            else
-                                            {
-                                                // Indirect mode - expect N shaders in output.
-                                                assert(curr_results->size() >= 1);
-                                                std::cout << kStrInfoDxrPipelineCompiledIndirect1 << curr_results->size() <<
-                                                    kStrInfoDxrPipelineCompiledIndirect2 << std::endl;
-                                            }
-
-                                            // Output metadata.
-                                            RgDxrPipelineResults curr_pipeline_results_metadata;
-                                            if (is_unified[pipeline_index])
-                                            {
-                                                // Since this pipeline was compiled in Unified mode, shader name is pipeline name.
-                                                curr_pipeline_results_metadata.pipeline_name = curr_raygeneration_shader_name;
-                                                curr_pipeline_results_metadata.isUnified = true;
-                                            }
-                                            else
-                                            {
-                                                // In Indirect mode we don't have the name of the raygeneration shader, just an index.
-                                                curr_pipeline_results_metadata.pipeline_name = pipeline_index_display_name;
-                                                curr_pipeline_results_metadata.isUnified = false;
-                                            }
-
-                                            // Go through pipeline's shaders.
-                                            for (uint32_t shader_index = 0; shader_index < rs[pipeline_index]->size(); shader_index++)
-                                            {
-                                                // Metadata to track the output files for this shader.
-                                                RgDxrShaderResults curr_shader_results_metadata;
-
-                                                // Track the export name.
-                                                if (is_unified[pipeline_index])
-                                                {
-                                                    // In unified mode, this is the raygeneration shader name.
-                                                    curr_shader_results_metadata.export_name = curr_raygeneration_shader_name;
-                                                }
-                                                else
-                                                {
-                                                    // In indirect mode, this is the name of the current shader.
-                                                    assert(shader_index < curr_raygeneration_shader_names.size());
-                                                    if (shader_index < curr_raygeneration_shader_names.size())
+                                                    bool is_binary_saved =
+                                                        RgDx12Utils::WriteBinaryFile(bin_output_filename, *pipeline_binaries[pipeline_index]);
+                                                    ret = ret && is_binary_saved;
+                                                    assert(is_binary_saved);
+                                                    if (is_binary_saved)
                                                     {
-                                                        curr_shader_results_metadata.export_name = curr_raygeneration_shader_names[shader_index].data();
+                                                        curr_pipeline_results_metadata.pipeline_binary = bin_output_filename;
                                                     }
                                                     else
                                                     {
-                                                        std::cout << kStrErrorDxrFailedToRetrievePipelineShaderName <<
-                                                            (shader_index + 1) << "." << std::endl;
+                                                        std::cout << kStrErrorFailedToWriteOutputFile1 << "binary" << kStrErrorFailedToWriteOutputFile2
+                                                                  << bin_output_filename << kStrErrorFailedToWriteOutputFile3 << std::endl;
                                                     }
                                                 }
-
-                                                // Build a suffix for this shader's output files.
-                                                std::stringstream shader_output_file_suffix_stream;
-                                                if (is_unified[pipeline_index])
-                                                {
-                                                    shader_output_file_suffix_stream << curr_shader_results_metadata.export_name.c_str() << "_";
-                                                    shader_output_file_suffix_stream << kOutputFilenameSuffixUnified;
-                                                }
-                                                else
-                                                {
-                                                    shader_output_file_suffix_stream << pipeline_index_display_name << "_" <<
-                                                        curr_shader_results_metadata.export_name.c_str();
-                                                }
-                                                const std::string shader_output_file_suffix = shader_output_file_suffix_stream.str().c_str();
-
-                                                // ISA files.
-                                                if (!config.dxr_isa_output.empty())
-                                                {
-                                                    // Generate an index-specific file name.
-                                                    std::string isa_output_filename = GenerateSpecificFileName(config.dxr_isa_output, shader_output_file_suffix);
-                                                    assert(!isa_output_filename.empty());
-                                                    if (!isa_output_filename.empty())
-                                                    {
-                                                        // Save per-pipeline disassembly.
-                                                        if (is_unified[pipeline_index])
-                                                        {
-                                                            std::cout << kStrInfoExtractRayTracingDisassemblyPipelineByRaygen << curr_shader_results_metadata.export_name;
-                                                        }
-                                                        else
-                                                        {
-                                                            std::cout << kStrInfoExtractRayTracingDisassemblyPipelineByIndex1 << pipeline_index_display_name <<
-                                                                kStrInfoExtractRayTracingResultByIndex2 << curr_shader_results_metadata.export_name;
-                                                        }
-                                                        std::cout << "..." << std::endl;
-
-                                                        bool is_disassembly_saved = RgDx12Utils::WriteTextFile(isa_output_filename, (*curr_results)[shader_index]->disassembly);
-                                                        ret = ret && is_disassembly_saved;
-                                                        assert(is_disassembly_saved);
-                                                        if (is_disassembly_saved)
-                                                        {
-                                                            curr_shader_results_metadata.isa_disassembly = isa_output_filename;
-                                                            std::cout << kStrInfoExtractRayTracingDisassemblySuccess << std::endl;
-                                                        }
-                                                        else
-                                                        {
-                                                            std::cerr << kStrErrorFailedToWriteOutputFile1 << "disassembly" <<
-                                                                kStrErrorFailedToWriteOutputFile2 << isa_output_filename <<
-                                                                kStrErrorFailedToWriteOutputFile3 << std::endl;
-                                                        }
-                                                    }
-                                                }
-
-                                                // Statistics files.
-                                                if (!config.dxr_statistics_output.empty())
-                                                {
-                                                    // Generate an index-specific file name.
-                                                    std::string stats_output_filename = GenerateSpecificFileName(config.dxr_statistics_output,
-                                                        shader_output_file_suffix);
-                                                    assert(!stats_output_filename.empty());
-                                                    if (!stats_output_filename.empty())
-                                                    {
-                                                        // Save per-pipeline statistics.
-                                                        if (is_unified[pipeline_index])
-                                                        {
-                                                            std::cout << kStrInfoExtractRayTracingResourceUsagePipelineByRaygen <<
-                                                                curr_shader_results_metadata.export_name;
-                                                        }
-                                                        else
-                                                        {
-                                                            std::cout << kStrInfoExtractRayTracingResourceUsagePipelineByIndex1 << pipeline_index_display_name <<
-                                                                kStrInfoExtractRayTracingResultByIndex2 << curr_shader_results_metadata.export_name;
-                                                        }
-                                                        std::cout << "..." << std::endl;
-
-                                                        bool is_statistics_saved = SerializeDx12StatsRayTracing((*(*curr_results)[shader_index]), stats_output_filename);
-                                                        assert(is_statistics_saved);
-                                                        ret = ret && is_statistics_saved;
-                                                        if (is_statistics_saved)
-                                                        {
-                                                            curr_shader_results_metadata.stats = stats_output_filename;
-                                                            std::cout << kStrInfoExtractRayTracingStatisticsSuccess << std::endl;
-                                                        }
-                                                        else
-                                                        {
-                                                            std::cerr << kStrErrorFailedToWriteOutputFile1 << "statistics" <<
-                                                                kStrErrorFailedToWriteOutputFile2 << stats_output_filename <<
-                                                                kStrErrorFailedToWriteOutputFile3 << std::endl;
-                                                        }
-                                                    }
-                                                }
-
-                                                // Binary files: only if required by user and only once per pipeline.
-                                                if (!config.dxr_binary_output.empty() && (shader_index == 0))
-                                                {
-                                                    assert(pipeline_index < pipeline_binaries.size());
-                                                    if (pipeline_index < pipeline_binaries.size())
-                                                    {
-                                                        // Generate an index-specific file name.
-                                                        std::string bin_output_filename = GenerateSpecificFileName(config.dxr_binary_output,
-                                                            (is_unified[pipeline_index] ? curr_raygeneration_shader_name : pipeline_index_display_name));
-                                                        assert(!bin_output_filename.empty());
-                                                        if (!bin_output_filename.empty())
-                                                        {
-                                                            // Save per-pipeline binary.
-                                                            if (is_unified[pipeline_index])
-                                                            {
-                                                                std::cout << kStrInfoExtractRayTracingPipelineBinaryByRaygen <<
-                                                                    curr_raygeneration_shader_name;
-                                                            }
-                                                            else
-                                                            {
-                                                                std::cout << kStrInfoExtractRayTracingPipelineBinaryByIndex1 << pipeline_index_display_name;
-                                                            }
-                                                            std::cout << "..." << std::endl;
-
-                                                            bool is_binary_saved = RgDx12Utils::WriteBinaryFile(bin_output_filename, *pipeline_binaries[pipeline_index]);
-                                                            ret = ret && is_binary_saved;
-                                                            assert(is_binary_saved);
-                                                            if (is_binary_saved)
-                                                            {
-                                                                curr_pipeline_results_metadata.pipeline_binary = bin_output_filename;
-                                                                std::cout << kStrInfoExtractRayTracingBinarySuccess << std::endl;
-                                                            }
-                                                            else
-                                                            {
-                                                                std::cout << kStrErrorFailedToWriteOutputFile1 << "binary" <<
-                                                                    kStrErrorFailedToWriteOutputFile2 << bin_output_filename <<
-                                                                    kStrErrorFailedToWriteOutputFile3 << std::endl;
-                                                            }
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        bool is_multi_pipeline = (rs.size() > 1);
-                                                        if(!is_multi_pipeline)
-                                                        {
-                                                            // Pipeline generation is supported for a single pipeline.
-                                                            std::cerr << kStrErrorNoPipelineBinaryGeneratedForIndex << pipeline_index_display_name << std::endl;
-                                                        }
-                                                        else
-                                                        {
-                                                            // Pipeline generation is currently not supported by the driver for multiple pipelines.
-                                                            std::cerr << kStrWarningBinaryExtractionNotSupportedMultiplePipelines1 <<
-                                                                pipeline_index_display_name << kStrWarningBinaryExtractionNotSupportedMultiplePipelines2 << std::endl;
-                                                        }
-                                                    }
-                                                }
-
-                                                // Track current shader's results in the pipeline output metadata container.
-                                                curr_pipeline_results_metadata.results.push_back(curr_shader_results_metadata);
                                             }
-
-                                            // Track the current pipeline's results.
-                                            results_pipeline_mode.push_back(curr_pipeline_results_metadata);
                                         }
+
+                                        // Track the current pipeline's results.
+                                        results_pipeline_mode.push_back(curr_pipeline_results_metadata);
                                     }
-                                }
+                                }                        
 
                                 // Output metadata file.
                                 if (!config.output_metadata.empty())
@@ -2070,12 +1688,6 @@ namespace rga
             should_abort = true;
         }
 
-        return ret;
-    }
-
-    bool rgDx12Frontend::CompileRayTracingShader(const RgDx12Config&, std::string&) const
-    {
-        bool ret = false;
         return ret;
     }
 #endif

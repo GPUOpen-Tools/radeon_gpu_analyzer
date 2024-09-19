@@ -32,7 +32,11 @@
 class RgTableFilterProxyModel : public QSortFilterProxyModel
 {
 public:
-    RgTableFilterProxyModel(RgTargetGpusDialog* parent_dialog = nullptr) : QSortFilterProxyModel(parent_dialog), parent_Dialog(parent_dialog) {}
+    RgTableFilterProxyModel(RgTargetGpusDialog* parent_dialog = nullptr)
+        : QSortFilterProxyModel(parent_dialog)
+        , parent_Dialog(parent_dialog)
+    {
+    }
     virtual ~RgTableFilterProxyModel() = default;
 
 protected:
@@ -74,9 +78,9 @@ bool RgTreeEventFilter::eventFilter(QObject* object, QEvent* event)
     return is_handled;
 }
 
-RgTargetGpusDialog::RgTargetGpusDialog(const QString& selected_gpus, QWidget* parent) :
-    QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint),
-    parent_(parent)
+RgTargetGpusDialog::RgTargetGpusDialog(const QString& selected_gpus, QWidget* parent)
+    : QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint)
+    , parent_(parent)
 {
     ui_.setupUi(this);
 
@@ -123,12 +127,10 @@ RgTargetGpusDialog::RgTargetGpusDialog(const QString& selected_gpus, QWidget* pa
     // Preprocess the gpu family names: since we get some family names
     // as a codename without the gfx notation, we would have to add the
     // gfx notation here again.
-    std::transform(selected_gpus_vector.begin(), selected_gpus_vector.end(),
-        selected_gpus_vector.begin(), [&](std::string& familyName)
-    {
+    std::transform(selected_gpus_vector.begin(), selected_gpus_vector.end(), selected_gpus_vector.begin(), [&](std::string& familyName) {
         std::stringstream fixed_name;
-        std::string gfx_notation;
-        bool hasGfxNotation = RgUtils::GetGfxNotation(familyName, gfx_notation);
+        std::string       gfx_notation;
+        bool              hasGfxNotation = RgUtils::GetGfxNotation(familyName, gfx_notation);
         if (hasGfxNotation && familyName.find("/") == std::string::npos)
         {
             fixed_name << gfx_notation << "/" << familyName;
@@ -167,7 +169,7 @@ std::vector<std::string> RgTargetGpusDialog::GetSelectedCapabilityGroups() const
                 auto row_to_group_index_iter = table_row_index_to_group_index_.find(row_index);
                 if (row_to_group_index_iter != table_row_index_to_group_index_.end())
                 {
-                    int group_index = row_to_group_index_iter->second;
+                    int  group_index    = row_to_group_index_iter->second;
                     bool is_valid_index = (group_index >= 0 && group_index < capability_groups_.size());
                     assert(is_valid_index);
                     if (is_valid_index)
@@ -175,8 +177,8 @@ std::vector<std::string> RgTargetGpusDialog::GetSelectedCapabilityGroups() const
                         const CapabilityGroup& group_info = capability_groups_[group_index];
 
                         // Retrieve the compute capability string from the first row of the group.
-                        std::string group_name = group_info.group_rows[0].compute_capability;
-                        auto is_already_added_iter = std::find(selected_families.begin(), selected_families.end(), group_name);
+                        std::string group_name            = group_info.group_rows[0].compute_capability;
+                        auto        is_already_added_iter = std::find(selected_families.begin(), selected_families.end(), group_name);
                         if (is_already_added_iter == selected_families.end())
                         {
                             selected_families.push_back(group_name);
@@ -199,12 +201,12 @@ void RgTargetGpusDialog::HandleItemChanged(QStandardItem* item)
     QModelIndex selected_item_index = item->index();
     if (selected_item_index.isValid())
     {
-        int selected_row = selected_item_index.row();
+        int  selected_row     = selected_item_index.row();
         auto group_index_iter = table_row_index_to_group_index_.find(selected_row);
         if (group_index_iter != table_row_index_to_group_index_.end())
         {
-            int group_index = group_index_iter->second;
-            bool is_checked = (item->checkState() == Qt::Checked);
+            int  group_index = group_index_iter->second;
+            bool is_checked  = (item->checkState() == Qt::Checked);
 
             SetIsGroupChecked(group_index, is_checked);
         }
@@ -212,7 +214,7 @@ void RgTargetGpusDialog::HandleItemChanged(QStandardItem* item)
 
     // Only allow the user to confirm their changes if there's at least one family selected.
     std::vector<std::string> selected_families = GetSelectedCapabilityGroups();
-    bool is_ok_enabled = !selected_families.empty();
+    bool                     is_ok_enabled     = !selected_families.empty();
 
     // Update the enabledness of the dialog's OK button.
     ToggleOKButtonEnabled(is_ok_enabled);
@@ -287,10 +289,10 @@ void RgTargetGpusDialog::HandleSearchTextChanged(const QString& search_text)
 void RgTargetGpusDialog::ComputeGroupColor(int group_index, QColor& color) const
 {
     // Use 25% saturation for a more muted color palette, but 100% value to maintain brightness.
-    static const int kBackgroundColorNumHueSteps = 10;
+    static const int   kBackgroundColorNumHueSteps      = 10;
     static const float kBackgroundColorHueStepIncrement = 1.0f / kBackgroundColorNumHueSteps;
-    static const float kBackgroundColorSaturation = 0.25f;
-    static const float kBackgroundColorValue = 1.0f;
+    static const float kBackgroundColorSaturation       = 0.25f;
+    static const float kBackgroundColorValue            = 1.0f;
 
     // If the number of groups exceeds the number of hue steps, reset the hue to the start of the color wheel.
     int color_group_index = group_index % kBackgroundColorNumHueSteps;
@@ -298,6 +300,11 @@ void RgTargetGpusDialog::ComputeGroupColor(int group_index, QColor& color) const
     // Compute the group's color based on the group index vs. the total group count.
     float hue = color_group_index * kBackgroundColorHueStepIncrement;
     color.setHsvF(hue, kBackgroundColorSaturation, kBackgroundColorValue);
+
+    if (QtCommon::QtUtils::ColorTheme::Get().GetColorTheme() == ColorThemeType::kColorThemeTypeDark)
+    {
+        color = color.darker(300);
+    }
 }
 
 void RgTargetGpusDialog::ConnectSignals()
@@ -316,6 +323,10 @@ void RgTargetGpusDialog::ConnectSignals()
 
     // Connect the Cancel button.
     is_connected = connect(this->ui_.cancelPushButton, &QPushButton::clicked, this, &RgTargetGpusDialog::HandleCancelButtonClicked);
+    assert(is_connected);
+
+    is_connected = connect(
+        &QtCommon::QtUtils::ColorTheme::Get(), &QtCommon::QtUtils::ColorTheme::ColorThemeUpdated, this, &RgTargetGpusDialog::SetDefaultTableBackgroundColors);
     assert(is_connected);
 
     // Connect the tree's model to the check changed handler.
@@ -353,8 +364,8 @@ bool RgTargetGpusDialog::IsRowVisible(int row_index, const QModelIndex& source_p
     auto table_row_to_group_iter = table_row_index_to_group_index_.find(row_index);
     if (table_row_to_group_iter != table_row_index_to_group_index_.end())
     {
-        int group_index = table_row_to_group_iter->second;
-        const CapabilityGroup& group_info = capability_groups_[group_index];
+        int                    group_index = table_row_to_group_iter->second;
+        const CapabilityGroup& group_info  = capability_groups_[group_index];
 
         // Check if any of the cells associated with the group match the user's search string.
         for (const TableRow& current_row : group_info.group_rows)
@@ -368,7 +379,6 @@ bool RgTargetGpusDialog::IsRowVisible(int row_index, const QModelIndex& source_p
                 break;
             }
         }
-
     }
 
     return is_filtered;
@@ -441,7 +451,7 @@ std::string RgTargetGpusDialog::GetItemText(const QStandardItem* item) const
 void RgTargetGpusDialog::PopulateTableData(std::shared_ptr<RgCliVersionInfo> version_info, const std::string& mode)
 {
     // Create the GPU tree model, and fill it.
-    gpu_tree_model_ = new QStandardItemModel(0, ColumnType::kCount, this);
+    gpu_tree_model_                  = new QStandardItemModel(0, ColumnType::kCount, this);
     QStandardItem* selected_checkbox = new QStandardItem();
     selected_checkbox->setCheckable(true);
 
@@ -460,11 +470,11 @@ void RgTargetGpusDialog::PopulateTableData(std::shared_ptr<RgCliVersionInfo> ver
     if (version_info != nullptr)
     {
         int current_row_index = 0;
-        int group_index = 0;
+        int group_index       = 0;
 
         // Search the supported hardware data for the given mode's supported hardware list.
         auto current_mode_architectures_iter = version_info->gpu_architectures.find(mode);
-        bool is_mode_found = (current_mode_architectures_iter != version_info->gpu_architectures.end());
+        bool is_mode_found                   = (current_mode_architectures_iter != version_info->gpu_architectures.end());
         assert(is_mode_found);
         if (is_mode_found)
         {
@@ -480,16 +490,16 @@ void RgTargetGpusDialog::PopulateTableData(std::shared_ptr<RgCliVersionInfo> ver
                 const std::string& currentArchitecture = hardware_architecture.architecture_name;
 
                 // Determine how many families are found within the architecture.
-                std::vector<RgGpuFamily> gpu_families = hardware_architecture.gpu_families;
-                int num_families_in_architecture = static_cast<int>(gpu_families.size());
+                std::vector<RgGpuFamily> gpu_families                 = hardware_architecture.gpu_families;
+                int                      num_families_in_architecture = static_cast<int>(gpu_families.size());
 
                 // Set the gfx notation as prefix if applicable to the family name.
                 // For example, "Tonga" would become "gfx802/Tonga".
-                for(int i = 0; i < num_families_in_architecture; i++)
+                for (int i = 0; i < num_families_in_architecture; i++)
                 {
-                    std::string gfx_notation;
+                    std::string       gfx_notation;
                     std::stringstream family_name_revised;
-                    bool has_gfx_notation = RgUtils::GetGfxNotation(gpu_families[i].family_name, gfx_notation);
+                    bool              has_gfx_notation = RgUtils::GetGfxNotation(gpu_families[i].family_name, gfx_notation);
                     if (has_gfx_notation && !gfx_notation.empty())
                     {
                         family_name_revised << gfx_notation << "/";
@@ -500,15 +510,16 @@ void RgTargetGpusDialog::PopulateTableData(std::shared_ptr<RgCliVersionInfo> ver
 
                 // Sort the GPU families in reverse order so that for the new AMD
                 // GPU naming scheme (gfxABCD) we will have the newer families on top.
-                std::sort(gpu_families.rbegin(), gpu_families.rend(), [&](RgGpuFamily familyA,
-                    RgGpuFamily familyB) { return familyA.family_name < familyB.family_name; });
+                std::sort(gpu_families.rbegin(), gpu_families.rend(), [&](RgGpuFamily familyA, RgGpuFamily familyB) {
+                    return familyA.family_name < familyB.family_name;
+                });
 
                 // Step through each family within the architecture.
                 for (int family_index = 0; family_index < num_families_in_architecture; family_index++)
                 {
                     // Create a copy of the family info and sort by product name.
-                    RgGpuFamily family_sorted_by_product_name = gpu_families[family_index];
-                    const std::string& family_name = family_sorted_by_product_name.family_name;
+                    RgGpuFamily        family_sorted_by_product_name = gpu_families[family_index];
+                    const std::string& family_name                   = family_sorted_by_product_name.family_name;
 
                     // Sort the product name column alphabetically.
                     std::sort(family_sorted_by_product_name.product_names.begin(), family_sorted_by_product_name.product_names.end());
@@ -534,7 +545,7 @@ void RgTargetGpusDialog::PopulateTableData(std::shared_ptr<RgCliVersionInfo> ver
                             checkbox_item->setCheckable(true);
                         }
 
-                        TableRow num_row = { current_row_index, currentArchitecture, product_name, family_name };
+                        TableRow num_row = {current_row_index, currentArchitecture, product_name, family_name};
                         capabilityGroup.group_rows.push_back(num_row);
 
                         // Set the data for each column in the new row.
@@ -594,7 +605,7 @@ void RgTargetGpusDialog::SetTableIndexData(int row, int column, const std::strin
 {
     // Generate an index and verify that it's valid.
     QModelIndex model_index = gpu_tree_model_->index(row, column);
-    bool is_valid = model_index.isValid();
+    bool        is_valid    = model_index.isValid();
     assert(is_valid);
     if (is_valid)
     {
@@ -609,7 +620,7 @@ void RgTargetGpusDialog::SetTableBackgroundColor(int row, const QColor& backgrou
     for (int column_index = ColumnType::kSelectedCheckbox; column_index < ColumnType::kCount; ++column_index)
     {
         QModelIndex model_index = gpu_tree_model_->index(row, column_index);
-        bool is_valid = model_index.isValid();
+        bool        is_valid    = model_index.isValid();
         assert(is_valid);
         if (is_valid)
         {
@@ -639,7 +650,7 @@ void RgTargetGpusDialog::ToggleRowChecked(const QModelIndex& source_model_index)
             if (source_item_model != nullptr)
             {
                 QModelIndex checkbox_column_filtered_index = source_item_model->index(source_model_index.row(), ColumnType::kSelectedCheckbox);
-                bool is_filtered_index_valid = checkbox_column_filtered_index.isValid();
+                bool        is_filtered_index_valid        = checkbox_column_filtered_index.isValid();
                 assert(is_filtered_index_valid);
                 if (is_filtered_index_valid)
                 {
@@ -652,7 +663,7 @@ void RgTargetGpusDialog::ToggleRowChecked(const QModelIndex& source_model_index)
                         if (clicked_item != nullptr)
                         {
                             // Determine the current check state for the row's checkbox item.
-                            int group_index = group_index_iter->second;
+                            int  group_index = group_index_iter->second;
                             bool check_state = (clicked_item->checkState() == Qt::Checked) ? true : false;
 
                             // Toggle the checkbox for the entire group of products.

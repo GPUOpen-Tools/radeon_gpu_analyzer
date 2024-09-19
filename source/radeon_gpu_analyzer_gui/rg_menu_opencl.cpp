@@ -20,7 +20,8 @@
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
-static const char* kStrButtonFocusInStylesheetOpencl = "QPushButton { background: rgb(253,255,174); border: 2px inset rgb(18, 152, 0); }";
+// Stylessheet for the menu buttons.
+static const char* kStrButtonFocusInStylesheetOpencl = "QPushButton { background: palette(highlight); border: 2px inset rgb(18, 152, 0); }";
 
 RgMenuOpencl::RgMenuOpencl(QWidget* parent)
     : RgMenu(parent)

@@ -28,7 +28,7 @@ static const char* kStrErrTextFileWriteFailed          = "Error: unable to write
 static const char* kStrErrNoInputFile = "Error: no input file received.";
 
 // Unsupported devices.
-static const std::set<std::string> kUnsupportedDevicesOpengl = {"gfx900", "gfx902", "gfx904", "gfx906", "gfx908", "gfx90a", "gfx90c", "gfx942"};
+static const std::set<std::string> kUnsupportedDevicesOpengl = {"gfx900", "gfx902", "gfx904", "gfx906", "gfx908", "gfx90a", "gfx90c", "gfx942", "gfx1033"};
 
 void KcCliCommanderOpenGL::GlcStatsToString(const beKA::AnalysisData& stats, std::stringstream& serialized_stats)
 {

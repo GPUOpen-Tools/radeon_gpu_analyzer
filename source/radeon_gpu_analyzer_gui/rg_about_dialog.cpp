@@ -19,6 +19,12 @@
 #include "source/common/rga_version_info.h"
 #include "source/common/rga_shared_utils.h"
 
+// Check for Updates Dialog dimensions. 
+static const int kUpdatesPendingDialogWidth  = 400;
+static const int kUpdatesPendingDialogHeight = 150;
+static const int kUpdatesResultsDialogWidth  = 400;
+static const int kUpdatesResultsDialogHeight = 300;
+
 RgAboutDialog::RgAboutDialog(QWidget* parent) :
     QDialog(parent),
     check_for_updates_dialog_(nullptr),
@@ -27,9 +33,6 @@ RgAboutDialog::RgAboutDialog(QWidget* parent) :
     check_for_updates_thread_(nullptr)
 {
     ui_.setupUi(this);
-
-    // Set the background to white.
-    RgUtils::SetBackgroundColor(this, Qt::white);
 
     // Disable the help button in the title bar, and disable resizing of this dialog.
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint | Qt::MSWindowsFixedSizeDialogHint);
@@ -102,11 +105,8 @@ void RgAboutDialog::HandleCheckForUpdatesClicked()
             check_for_updates_dialog_ = new QDialog(this);
             check_for_updates_dialog_->setWindowTitle(kStrAppName);
             check_for_updates_dialog_->setWindowFlags(check_for_updates_dialog_->windowFlags() & ~Qt::WindowContextHelpButtonHint | Qt::MSWindowsFixedSizeDialogHint);
-            check_for_updates_dialog_->setFixedWidth(250);
-            check_for_updates_dialog_->setFixedHeight(100);
-
-            // Set background to white.
-            RgUtils::SetBackgroundColor(check_for_updates_dialog_, Qt::white);
+            check_for_updates_dialog_->setFixedWidth(kUpdatesPendingDialogWidth);
+            check_for_updates_dialog_->setFixedHeight(kUpdatesPendingDialogHeight);
 
             QVBoxLayout* layout = new QVBoxLayout();
             check_for_updates_dialog_->setLayout(layout);
@@ -199,13 +199,10 @@ void RgAboutDialog::HandleCheckForUpdatesCompleted(UpdateCheck::ThreadController
             // Change from default title.
             results_dialog->setWindowTitle(kStrUpdatesResultsWindowTitle);
 
-            // Set background to white.
-            RgUtils::SetBackgroundColor(results_dialog, Qt::white);
-
             // Set this dialog to get deleted when it is closed.
             results_dialog->setAttribute(Qt::WA_DeleteOnClose, true);
             results_dialog->setWindowFlags(results_dialog->windowFlags() & ~Qt::WindowContextHelpButtonHint);
-            results_dialog->setFixedSize(400, 300);
+            results_dialog->setFixedSize(kUpdatesResultsDialogWidth, kUpdatesResultsDialogHeight);
             QDialogButtonBox* button_box = results_dialog->findChild<QDialogButtonBox*>("button_box_");
             if (button_box != nullptr)
             {

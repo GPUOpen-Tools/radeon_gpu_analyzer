@@ -9,6 +9,9 @@
 #include <QPainter>
 #include <QScrollBar>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_custom_table_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
@@ -16,8 +19,8 @@
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 
-// The highlight color to use for correlated source lines.
-static QColor kCorrelationHighlightColor = QColor(Qt::yellow).lighter(170);
+// The highlight colors to use for selected source lines.
+static QColor kCorrelationHighlightColor[ColorThemeType::kColorThemeTypeCount] = {QColor(Qt::yellow).lighter(170), QColor(80, 80, 40, 100)};
 static QColor kLightBlueSelectionColor = QColor(229, 243, 255);
 
 // Colors for VGPR pressure ranges.
@@ -65,7 +68,7 @@ static void DrawVgprWidget(QPainter* painter, const QStyleOptionViewItem& option
     // Set the background highlight color for the cell when the row is selected.
     if (option.state & QStyle::State_Selected)
     {
-        painter->fillRect(option.rect, kCorrelationHighlightColor);
+        painter->fillRect(option.rect, kCorrelationHighlightColor[QtCommon::QtUtils::ColorTheme::Get().GetColorTheme()]);
     }
 
     // Get the number of VGPR registers.
@@ -208,7 +211,7 @@ public:
             QColor item_foreground_color = model_index.data(Qt::ForegroundRole).value<QColor>();
 
             view_option.palette.setColor(QPalette::HighlightedText, item_foreground_color);
-            QColor background_color(kCorrelationHighlightColor);
+            QColor background_color(kCorrelationHighlightColor[QtCommon::QtUtils::ColorTheme::Get().GetColorTheme()]);
             view_option.palette.setColor(QPalette::Highlight, background_color);
 
             QItemDelegate::paint(painter, view_option, model_index);
@@ -236,7 +239,7 @@ public:
             QColor item_foreground_color = model_index.data(Qt::ForegroundRole).value<QColor>();
 
             view_option.palette.setColor(QPalette::HighlightedText, item_foreground_color);
-            QColor background_color(kCorrelationHighlightColor);
+            QColor background_color(kCorrelationHighlightColor[QtCommon::QtUtils::ColorTheme::Get().GetColorTheme()]);
             view_option.palette.setColor(QPalette::Highlight, background_color);
 
             QItemDelegate::paint(painter, view_option, model_index);
@@ -267,7 +270,7 @@ public:
             QColor item_foreground_color = model_index.data(Qt::ForegroundRole).value<QColor>();
 
             view_option.palette.setColor(QPalette::HighlightedText, item_foreground_color);
-            QColor background_color(kCorrelationHighlightColor);
+            QColor background_color(kCorrelationHighlightColor[QtCommon::QtUtils::ColorTheme::Get().GetColorTheme()]);
             view_option.palette.setColor(QPalette::Highlight, background_color);
 
             QItemDelegate::paint(painter, view_option, model_index);
@@ -396,7 +399,7 @@ void RgIsaDisassemblyCustomTableView::drawRow(QPainter* painter, const QStyleOpt
             if (is_line_correlated_with_input_file)
             {
                 // Paint the row background with the highlight color.
-                painter->fillRect(options.rect, kCorrelationHighlightColor);
+                painter->fillRect(options.rect, kCorrelationHighlightColor[QtCommon::QtUtils::ColorTheme::Get().GetColorTheme()]);
 
                 // If the row background gets painted manually, reset the row's background brush to be transparent.
                 new_options.palette.setBrush(QPalette::Base, Qt::transparent);

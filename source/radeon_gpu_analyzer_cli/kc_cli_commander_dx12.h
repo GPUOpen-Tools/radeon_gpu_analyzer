@@ -37,6 +37,22 @@ private:
     // Print the list of supported targets for DX12 driver.
     bool GetDX12DriverAsicList(const Config& config, std::set<std::string>& target_gpus, bool print = false);
 
+    // Disassembles ELF container and saves it to the requested output file according to the given Config.
+    // pipelineBinary is the full path to the pipeline binary ELF container file.
+    bool DisassembleElfBinary(const Config&      config,
+                              const std::string& target,
+                              const std::string& pipeline_elf,
+                              std::string&       elf_disassembly,
+                              std::string&       error_msg,
+                              bool               verbose = false) const;
+
+    // Extract isa, stats, livereg, etc. from the dxr compiled elf binary.
+    bool PostProcessElfBinary(const Config&           config,
+                              const std::string&      target,
+                              const std::string&      pipeline_elf,
+                              const std::string&      elf_disassembly,
+                              std::string&            error_msg);
+
     std::vector<GDT_GfxCardInfo> dx_default_asic_list_;
     BeProgramBuilderDx12 dx12_backend_;
 };

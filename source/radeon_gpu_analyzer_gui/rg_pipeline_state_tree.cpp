@@ -12,16 +12,10 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_pipeline_state_tree.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_pipeline_state_model.h"
 
-// A stylesheet applied to the entire pipeline state tree.
-static const QString kStrPsoTreeStylesheet = "background-color: rgba(255, 255, 255, 255);";
-
 RgPipelineStateTree::RgPipelineStateTree(QWidget* parent)
     : QScrollArea(parent)
 {
     ui_.setupUi(this);
-
-    // Apply the stylesheet to the custom tree widget.
-    this->setStyleSheet(kStrPsoTreeStylesheet);
 
     // Enable mouse hover events for each row.
     ui_.scrollingPanel->setMouseTracking(true);

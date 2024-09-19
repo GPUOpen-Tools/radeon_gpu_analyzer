@@ -61,7 +61,8 @@ kLcLlvmTargetsToDeviceInfoTargets = { {"gfx801", "carrizo"},
                                        {"gfx1100", "gfx1100"}, 
                                        {"gfx1101", "gfx1101"},
                                        {"gfx1102", "gfx1102"},
-                                       {"gfx1103", "gfx1103"} };
+                                       {"gfx1103", "gfx1103"},
+                                       {"gfx1150", "gfx1150"} };
 
 // For some devices, clang does not accept device names that RGA gets from DeviceInfo.
 // This table maps the DeviceInfo names to names accepted by clang for such devices.
@@ -262,7 +263,7 @@ bool KcCLICommanderLightning::Compile(const Config& config)
         // Generate CSV files with parsed ISA if required.
         if (config.is_parsed_isa_required && (result == beKA::kBeStatusSuccess || targets_.size() > 1))
         {
-            KcCLICommanderLightningUtil util(output_metadata_, should_print_cmd_, log_callback_);
+            KcCLICommanderLightningUtil util(config.binary_codeobj_file, output_metadata_, should_print_cmd_, log_callback_);
             result = util.ParseIsaFilesToCSV(config.is_line_numbers_required) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusParseIsaToCsvFailed;
         }
 
@@ -510,7 +511,7 @@ void KcCLICommanderLightning::RunCompileCommands(const Config& config, LoggingCa
 {
     bool is_multiple_devices = (config.asics.size() > 1);
     bool status = Compile(config);
-    KcCLICommanderLightningUtil util(output_metadata_, should_print_cmd_, log_callback_);
+    KcCLICommanderLightningUtil util(config.binary_codeobj_file, output_metadata_, should_print_cmd_, log_callback_);
     
     // Block post-processing until quality of analysis engine improves when processing llvm disassembly.
     bool is_livereg_required = !config.livereg_analysis_file.empty();
@@ -972,7 +973,7 @@ bool KcCLICommanderLightning::GetSupportedTargets(std::set<std::string>& targets
 
 bool KcCLICommanderLightning::RunPostCompileSteps(const Config& config)
 {
-    KcCLICommanderLightningUtil util(output_metadata_, should_print_cmd_, log_callback_);
+    KcCLICommanderLightningUtil util(config.binary_codeobj_file, output_metadata_, should_print_cmd_, log_callback_);
     return util.RunPostCompileSteps(config, compiler_paths_);
 }
 

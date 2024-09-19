@@ -33,6 +33,9 @@ public:
     // Create a Vulkan-specific file menu.
     virtual RgMenu* CreateFileMenu(QWidget* parent) override;
 
+    // Apply the stylesheet for the Vulkan-specific file menu.
+    virtual void ApplyFileMenuStylesheet(QWidget* widget) override;
+
     // Create a Vulkan-specific start tab.
     virtual RgStartTab* CreateStartTab(QWidget* parent) override;
 

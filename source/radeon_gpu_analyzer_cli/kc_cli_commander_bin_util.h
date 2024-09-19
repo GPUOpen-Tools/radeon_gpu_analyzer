@@ -77,9 +77,11 @@ public:
 class GraphicsBinaryWorkflowStrategy : public BinaryWorkflowStrategy
 {
 public:
-    GraphicsBinaryWorkflowStrategy(LoggingCallbackFunction log_callback)
-        : log_callback_(log_callback)
-    {}
+    GraphicsBinaryWorkflowStrategy(const std::string& binary_codeobj_file, LoggingCallbackFunction log_callback)
+        : binary_codeobj_file_(binary_codeobj_file)
+        , log_callback_(log_callback)
+    {
+    }
 
     // Write Isa file(s) to disk for graphics workflows.
     beKA::beStatus WriteOutputFiles(const Config&                             config,
@@ -95,9 +97,12 @@ public:
     bool RunPostCompileSteps(const Config& config) override;
 
     // The type of Graphics Api.
-    beProgramBuilderBinary::ApiEnum graphics_api_;
+    beProgramBuilderBinary::ApiEnum graphics_api_ = beProgramBuilderBinary::ApiEnum::kUnknown;
 
 private:
+    
+    // CodeObject Binary filename.
+    std::string binary_codeobj_file_;
 
     // Store output file names to the output metadata for graphics workflows.
     void StoreOutputFilesToOutputMD(const Config&      config,
@@ -120,8 +125,9 @@ private:
 class RayTracingBinaryWorkflowStrategy : public BinaryWorkflowStrategy
 {
 public:
-    RayTracingBinaryWorkflowStrategy(LoggingCallbackFunction log_callback)
-        : log_callback_(log_callback)
+    RayTracingBinaryWorkflowStrategy(const std::string& binary_codeobj_file, LoggingCallbackFunction log_callback)
+        : binary_codeobj_file_(binary_codeobj_file)
+        , log_callback_(log_callback)
     {
     }
 
@@ -147,6 +153,9 @@ private:
                                     const std::string& kernel_subtype,
                                     const std::string& isa_filename);
 
+    // CodeObject Binary filename.
+    std::string binary_codeobj_file_;
+
     // Output Metadata for raytracing workflows.
     RgClOutputMetadata output_metadata_;
 
@@ -158,9 +167,11 @@ private:
 class ComputeBinaryWorkflowStrategy : public BinaryWorkflowStrategy
 {
 public:
-    ComputeBinaryWorkflowStrategy(LoggingCallbackFunction log_callback)
-        : log_callback_(log_callback)
-    {}
+    ComputeBinaryWorkflowStrategy(const std::string& binary_codeobj_file, LoggingCallbackFunction log_callback)
+        : binary_codeobj_file_(binary_codeobj_file)
+        , log_callback_(log_callback)
+    {
+    }
 
     // Write Isa file(s) to disk for compute workflows.
     beKA::beStatus WriteOutputFiles(const Config&                             config,
@@ -183,6 +194,9 @@ private:
                                     const std::string& kernel_name,
                                     const std::string& kernel_abbreviation,
                                     const std::string& isa_filename);
+
+    // CodeObject Binary filename.
+    std::string binary_codeobj_file_;
 
     // Output Metadata for compute workflows.
     RgClOutputMetadata output_metadata_;

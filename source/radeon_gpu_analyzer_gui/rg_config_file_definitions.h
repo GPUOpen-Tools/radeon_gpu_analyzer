@@ -250,6 +250,9 @@ static const char* kXmlNodeGlobalFontFamilyType = "Type";
 // The font size element.
 static const char* kXmlNodeGlobalFontSize = "Size";
 
+// The font size element.
+static const char* kXmlNodeGlobalColorTheme = "ColorTheme";
+
 // The default include file viewer.
 static const char* kXmlNodeGlobalIncludeFilesViewer = "IncludeFilesViewer";
 

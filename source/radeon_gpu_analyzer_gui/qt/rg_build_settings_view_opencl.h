@@ -116,6 +116,6 @@ private:
     RgPreprocessorDirectivesDialog* preprocessor_directives_dialog_ = nullptr;
 
     // The generated interface view object.
-    Ui::RgBuildSettingsViewOpenCL ui_;
+    Ui::rgBuildSettingsViewOpenCL ui_;
 };
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_BUILD_SETTINGS_VIEW_OPENCL_H_

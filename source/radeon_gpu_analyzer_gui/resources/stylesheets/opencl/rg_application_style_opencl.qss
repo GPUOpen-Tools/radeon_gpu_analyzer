@@ -1,9 +1,38 @@
 /********************************************************************/
 /* Frame focus border
 /********************************************************************/
-QFrame:focus,
-QLineEdit:focus,
+
+QCheckBox:!focus
+{
+    border-color: palette(text);
+}
+
 QCheckBox:focus
+{
+    border-color: lightGreen;
+}
+
+QCheckBox::indicator
+{
+    border: 1px solid palette(text);
+    background-color: rgb(240, 240, 240);
+    width: 10px;
+    height: 10px;
+}
+
+QCheckBox::indicator:checked
+{
+    image: url(:/icons/checkmark_black.svg);
+}
+
+QLineEdit, 
+QPlainTextEdit
+{
+    border: 1px solid palette(text);
+}
+
+QFrame:focus,
+QLineEdit:focus
 {
     border: 1px solid lightGreen;
 }
@@ -23,8 +52,8 @@ RgBuildSettingsViewOpencl #compilerIncludesBrowseButton:hover,
 RgBuildSettingsViewOpencl #compilerLibrariesBrowseButton:hover,
 RgBuildSettingsViewOpencl #optimizationLevelComboBox:hover
 {
+    background-color: palette(alternate-base);
     border: 1px solid lightGreen;
-    background: rgb(240, 240, 240);
 }
 
 RgViewContainer[viewHovered="true"][viewFocused="false"] RgMenuTitlebar #itemBackground,
@@ -50,13 +79,5 @@ RgViewContainer[viewFocused="true"] #viewTitlebar
 /********************************************************************/
 RgBuildSettingsViewOpencl #targetGPUsLineEdit
 {
-    background-color: rgb(240, 240, 240);
-}
-
-/********************************************************************/
-/* Line edit border color
-/********************************************************************/
-QLineEdit
-{
-    border: 1px solid black;
+    background-color: palette(alternate-base);
 }

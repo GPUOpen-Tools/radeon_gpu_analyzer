@@ -20,7 +20,7 @@
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
-static const char* kStrButtonFocusInStylesheetBinary = "QPushButton { background: rgb(253,255,174); border: 2px inset rgb(128, 0, 128); }";
+static const char* kStrButtonFocusInStylesheetBinary = "QPushButton { background: palette(highlight); border: 2px inset rgb(128, 0, 128); }";
 
 RgMenuBinary::RgMenuBinary(QWidget* parent)
     : RgMenu(parent)

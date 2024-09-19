@@ -10,6 +10,10 @@
 #include <QStandardItemModel>
 #include <QTextStream>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+#include "qt_common/utils/shared_isa_dictionary.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_output_file_utils.h"
@@ -25,22 +29,25 @@
 
 // The color to use for label backgrounds within the table.
 static const QColor kBranchLabelInstructionColor = QColor(37, 36, 225);
-static const QColor kBranchLabelBackgroundColor = QColor("lightGray").lighter(113);
 
-RgIsaDisassemblyTableModel::RgIsaDisassemblyTableModel(uint32_t model_count, QWidget* parent) :
-    ModelViewMapper(model_count)
+RgIsaDisassemblyTableModel::RgIsaDisassemblyTableModel(uint32_t model_count, QWidget* parent)
+    : ModelViewMapper(model_count)
 {
     // Create the table model.
     isa_table_model_ = new QStandardItemModel(0, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCount), parent);
 
     // Add column headers to the table.
-    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress),        new QStandardItem(kStrDisassemblyTableColumnAddress));
-    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOpcode),         new QStandardItem(kStrDisassemblyTableColumnOpcode));
-    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOperands),       new QStandardItem(kStrDisassemblyTableColumnOperands));
-    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kFunctionalUnit), new QStandardItem(kStrDisassemblyTableColumnFunctionalUnit));
-    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCycles),         new QStandardItem(kStrDisassemblyTableColumnCycles));
-    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kBinaryEncoding), new QStandardItem(kStrDisassemblyTableColumnBinaryEncoding));
-    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kLiveVgprs),      new QStandardItem(kStrDisassemblyTableLiveVgprs));
+    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress),
+                                              new QStandardItem(kStrDisassemblyTableColumnAddress));
+    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOpcode), new QStandardItem(kStrDisassemblyTableColumnOpcode));
+    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOperands),
+                                              new QStandardItem(kStrDisassemblyTableColumnOperands));
+    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kFunctionalUnit),
+                                              new QStandardItem(kStrDisassemblyTableColumnFunctionalUnit));
+    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCycles), new QStandardItem(kStrDisassemblyTableColumnCycles));
+    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kBinaryEncoding),
+                                              new QStandardItem(kStrDisassemblyTableColumnBinaryEncoding));
+    isa_table_model_->setHorizontalHeaderItem(GetTableColumnIndex(RgIsaDisassemblyTableColumns::kLiveVgprs), new QStandardItem(kStrDisassemblyTableLiveVgprs));
 }
 
 const std::vector<int>& RgIsaDisassemblyTableModel::GetCorrelatedLineIndices() const
@@ -62,7 +69,7 @@ bool RgIsaDisassemblyTableModel::GetInputSourceLineNumberFromInstructionRow(int 
     {
         // Return the input source file's line number that corresponds with the given disassembly line number.
         input_source_line_number = input_source_line_iter->second;
-        ret = true;
+        ret                      = true;
     }
 
     return ret;
@@ -80,7 +87,7 @@ void RgIsaDisassemblyTableModel::GetLabelNameToLineIndexMap(std::map<std::string
             std::shared_ptr<RgIsaLineLabel> label_line = std::static_pointer_cast<RgIsaLineLabel>(current_line);
 
             // Extract the label name and insert into the output map.
-            std::string label_name = label_line->label_name;
+            std::string label_name  = label_line->label_name;
             link_labels[label_name] = line_index;
         }
     }
@@ -100,7 +107,7 @@ void RgIsaDisassemblyTableModel::GetLineIndexToLabelNameMap(std::map<int, std::s
             if (instruction_line->functional_unit.compare("Branch") == 0)
             {
                 std::string jump_destination = instruction_line->operands;
-                link_labels[line_index] = jump_destination;
+                link_labels[line_index]      = jump_destination;
             }
         }
     }
@@ -110,7 +117,7 @@ void RgIsaDisassemblyTableModel::InsertLabelRows()
 {
     // Try to insert labels into the start column if possible.
     int start_column = GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress);
-    int end_column = GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCount);
+    int end_column   = GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCount);
 
     // The column index to insert the labels into.
     label_column_index_ = start_column;
@@ -146,8 +153,8 @@ void RgIsaDisassemblyTableModel::InsertLabelRows()
             // Add the label text to the model.
             SetTableModelText(label_line->label_name, row_index, label_column_index_);
 
-            // Set the background color to yellow to make the label stand out more.
-            SetTableModelBackgroundColor(kBranchLabelBackgroundColor, row_index, label_column_index_);
+            // Set the background color to make the label stand out more.
+            SetTableModelBackgroundColor(qApp->palette().color(QPalette::AlternateBase), row_index, label_column_index_);
         }
     }
 }
@@ -162,8 +169,8 @@ bool RgIsaDisassemblyTableModel::IsBranchOperandItem(const QModelIndex& model_in
     bool is_label_link_item = false;
 
     // Find the disassembly row for the item.
-    int row_index = model_index.row();
-    std::shared_ptr<RgIsaLine> isa_line = disassembled_isa_lines_[row_index];
+    int                        row_index = model_index.row();
+    std::shared_ptr<RgIsaLine> isa_line  = disassembled_isa_lines_[row_index];
 
     // Determine what kind of instruction is represented in this row.
     if (isa_line->type == RgIsaLineType::kInstruction)
@@ -175,7 +182,7 @@ bool RgIsaDisassemblyTableModel::IsBranchOperandItem(const QModelIndex& model_in
         if (instruction_line->functional_unit.compare("Branch") == 0)
         {
             // Is the given index in the Operands column? That's the column a label needs to be painted in.
-            int column_index = model_index.column();
+            int  column_index       = model_index.column();
             bool is_operands_column = column_index == GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOperands);
             if (is_operands_column)
             {
@@ -192,7 +199,7 @@ bool RgIsaDisassemblyTableModel::IsColumnVisible(int column_index) const
     bool is_visible = false;
 
     // Check the global config settings to see if the column should be visible.
-    RgConfigManager& config_manager = RgConfigManager::Instance();
+    RgConfigManager&                  config_manager  = RgConfigManager::Instance();
     std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
     assert(global_settings != nullptr);
     if (global_settings != nullptr)
@@ -283,11 +290,7 @@ bool RgIsaDisassemblyTableModel::LoadLiveVgprsData(const std::string& live_vgpr_
     if (!live_vgpr_file_full_path.empty())
     {
         // Parse the live VGPR data.
-        status = RgOutputFileUtils::ParseLiveVgprsData(live_vgpr_file_full_path,
-                                                       disassembled_isa_lines_,
-                                                       vgpr_isa_lines_,
-                                                       vgpr_file_lines_,
-                                                       livereg_data_);
+        status = RgOutputFileUtils::ParseLiveVgprsData(live_vgpr_file_full_path, disassembled_isa_lines_, vgpr_isa_lines_, vgpr_file_lines_, livereg_data_);
         assert(status);
 
         // Populate the view with live VGPR data.
@@ -369,7 +372,7 @@ bool RgIsaDisassemblyTableModel::GetDisassemblyLineIndicesFromInputSourceLine(in
     {
         // Return the list of disassembly line indices.
         disassembly_lines = disassembly_instruction_lines_iter->second;
-        ret = true;
+        ret               = true;
     }
 
     return ret;
@@ -382,17 +385,28 @@ int RgIsaDisassemblyTableModel::GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns
 
 QColor RgIsaDisassemblyTableModel::GetFunctionalUnitColor(const std::string& functional_unit) const
 {
-    QColor color;
+    QColor color = QtCommon::QtUtils::ColorTheme::Get().GetCurrentThemeColors().graphics_scene_text_color;
 
-    static const std::map<std::string, QColor> kFunctionalUnitColors =
-    {
-        { FUNC_UNIT_SALU, QColor(28, 124, 84) },
-        { FUNC_UNIT_VALU, QColor(75, 124, 140) },
-        { FUNC_UNIT_SMEM, QColor(227, 29, 63).darker(110) },
-        { FUNC_UNIT_VMEM, QColor(227, 29, 63).darker(90) },
-        { FUNC_UNIT_INTERNAL_FLOW, QColor("black").lighter(150) },
-        { FUNC_UNIT_BRANCH, kBranchLabelInstructionColor },
+    static std::map<std::string, QColor> kFunctionalUnitColors = {
+        {FUNC_UNIT_SALU, QColor(28, 124, 84)},
+        {FUNC_UNIT_VALU, QColor(75, 124, 140)},
+        {FUNC_UNIT_SMEM, QColor(227, 29, 63).darker(110)},
+        {FUNC_UNIT_VMEM, QColor(227, 29, 63).darker(90)},
+        {FUNC_UNIT_INTERNAL_FLOW, QColor("black").lighter(150)},
+        {FUNC_UNIT_BRANCH, kBranchLabelInstructionColor},
     };
+
+    if (QtCommon::QtUtils::ColorTheme::Get().GetColorTheme() == ColorThemeType::kColorThemeTypeDark)
+    {
+        kFunctionalUnitColors = {
+            {FUNC_UNIT_SALU, QtCommon::QtUtils::kIsaDarkThemeColorLightGreen},
+            {FUNC_UNIT_VALU, QtCommon::QtUtils::kIsaDarkThemeColorLightBlue},
+            {FUNC_UNIT_SMEM, QtCommon::QtUtils::kIsaDarkThemeColorRed},
+            {FUNC_UNIT_VMEM, QtCommon::QtUtils::kIsaDarkThemeColorRed},
+            {FUNC_UNIT_INTERNAL_FLOW, QtCommon::QtUtils::ColorTheme::Get().GetCurrentThemeColors().graphics_scene_text_color},
+            {FUNC_UNIT_BRANCH, QtCommon::QtUtils::kIsaDarkThemeColorBlue},
+        };
+    }
 
     auto unit = kFunctionalUnitColors.find(functional_unit);
     if (unit != kFunctionalUnitColors.end())
@@ -410,7 +424,7 @@ bool RgIsaDisassemblyTableModel::LoadCsvData(const std::string& csv_file_full_pa
     // Clear out existing data.
     disassembled_isa_lines_.clear();
 
-    QFile csv_file(csv_file_full_path.c_str());
+    QFile       csv_file(csv_file_full_path.c_str());
     QTextStream file_stream(&csv_file);
 
     // Attempt to open the file to read each instruction line.
@@ -429,9 +443,9 @@ bool RgIsaDisassemblyTableModel::LoadCsvData(const std::string& csv_file_full_pa
             if (!isa_line.isEmpty())
             {
                 // Parse the line that was just read into a new RgIsaLine.
-                std::shared_ptr<RgIsaLine> new_line = nullptr;
-                int input_source_line_index = kInvalidCorrelationLineIndex;
-                bool is_split_successful = ParseCsvIsaLine(isa_line.toStdString(), new_line, input_source_line_index);
+                std::shared_ptr<RgIsaLine> new_line                = nullptr;
+                int                        input_source_line_index = kInvalidCorrelationLineIndex;
+                bool                       is_split_successful     = ParseCsvIsaLine(isa_line.toStdString(), new_line, input_source_line_index);
 
                 // Was the line processed correctly?
                 assert(is_split_successful);
@@ -444,7 +458,7 @@ bool RgIsaDisassemblyTableModel::LoadCsvData(const std::string& csv_file_full_pa
                         if (input_source_line_index != kInvalidCorrelationLineIndex)
                         {
                             // Use a map to associate the current line of disassembly with the input source line index.
-                            int disassembly_line_index = static_cast<int>(disassembled_isa_lines_.size());
+                            int disassembly_line_index                                                   = static_cast<int>(disassembled_isa_lines_.size());
                             instruction_line_number_to_input_source_line_number_[disassembly_line_index] = input_source_line_index;
 
                             // Find the minimum line number of the entry point in the input file.
@@ -520,7 +534,7 @@ bool RgIsaDisassemblyTableModel::ParseCsvIsaLine(const std::string& disassembled
     input_source_line_index = kInvalidCorrelationLineIndex;
 
     std::vector<std::string> line_tokens;
-    std::stringstream line_stream;
+    std::stringstream        line_stream;
     line_stream.str(disassembled_line);
     std::string substr;
 
@@ -532,83 +546,83 @@ bool RgIsaDisassemblyTableModel::ParseCsvIsaLine(const std::string& disassembled
         switch (num_quotes_in_token)
         {
         case 0:
-            {
-                // If there are no quotes, just add the token to the line tokens list.
-                line_tokens.push_back(substr);
-            }
-            break;
+        {
+            // If there are no quotes, just add the token to the line tokens list.
+            line_tokens.push_back(substr);
+        }
+        break;
         case 1:
+        {
+            // Found a start quote. Keep reading new tokens to find the matching end quote.
+            std::stringstream token_stream;
+            do
             {
-                // Found a start quote. Keep reading new tokens to find the matching end quote.
-                std::stringstream token_stream;
-                do
-                {
-                    // Add the token to the quoted column string.
-                    token_stream << substr << ',';
-                    std::getline(line_stream, substr, ',');
-                } while (!(substr.find('"') != substr.npos));
+                // Add the token to the quoted column string.
+                token_stream << substr << ',';
+                std::getline(line_stream, substr, ',');
+            } while (!(substr.find('"') != substr.npos));
 
-                // Add the final portion of the token to the stream.
-                token_stream << substr;
+            // Add the final portion of the token to the stream.
+            token_stream << substr;
 
-                // Remove the quotation marks from the final token string.
-                std::string quoted_token = token_stream.str();
-                quoted_token.erase(std::remove(quoted_token.begin(), quoted_token.end(), '\"'), quoted_token.end());
+            // Remove the quotation marks from the final token string.
+            std::string quoted_token = token_stream.str();
+            quoted_token.erase(std::remove(quoted_token.begin(), quoted_token.end(), '\"'), quoted_token.end());
 
-                // Add the token to the line tokens list.
-                line_tokens.push_back(quoted_token);
-            }
-            break;
+            // Add the token to the line tokens list.
+            line_tokens.push_back(quoted_token);
+        }
+        break;
         case 2:
-            {
-                // There's a single token surrounded with 2 quotes. Just remove the quotes and add the token to the lines.
-                substr.erase(std::remove(substr.begin(), substr.end(), '\"'), substr.end());
-                line_tokens.push_back(substr);
-            }
-            break;
+        {
+            // There's a single token surrounded with 2 quotes. Just remove the quotes and add the token to the lines.
+            substr.erase(std::remove(substr.begin(), substr.end(), '\"'), substr.end());
+            line_tokens.push_back(substr);
+        }
+        break;
         default:
             // If this happens, the format of the ISA line likely wasn't handled correctly.
             assert(false);
         }
     }
 
-    int num_columns = static_cast<int>(line_tokens.size());
+    int       num_columns     = static_cast<int>(line_tokens.size());
     const int num_csv_columns = static_cast<int>(RgIsaDisassemblyCsvFileColumns::kCount);
     switch (num_columns)
     {
     case 1:
-        {
-            // This line is a label line that indicates a new section of instructions.
-            std::shared_ptr<RgIsaLineLabel> label_line = std::make_shared<RgIsaLineLabel>();
-            label_line->label_name = line_tokens[0];
-            label_line->type       = RgIsaLineType::kLabel;
+    {
+        // This line is a label line that indicates a new section of instructions.
+        std::shared_ptr<RgIsaLineLabel> label_line = std::make_shared<RgIsaLineLabel>();
+        label_line->label_name                     = line_tokens[0];
+        label_line->type                           = RgIsaLineType::kLabel;
 
-            // The line was parsed successfully.
-            parsed_line = std::static_pointer_cast<RgIsaLine>(label_line);
-            ret = true;
-        }
-        break;
+        // The line was parsed successfully.
+        parsed_line = std::static_pointer_cast<RgIsaLine>(label_line);
+        ret         = true;
+    }
+    break;
     case num_csv_columns:
-        {
-            // Add each token to the output structure.
-            std::shared_ptr<RgIsaLineInstruction> instruction_line = std::make_shared<RgIsaLineInstruction>();
+    {
+        // Add each token to the output structure.
+        std::shared_ptr<RgIsaLineInstruction> instruction_line = std::make_shared<RgIsaLineInstruction>();
 
-            // Assign the values into the instruction line object.
-            instruction_line->address             = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kAddress)];
-            instruction_line->opcode              = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kOpcode)];
-            instruction_line->operands            = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kOperands)];
-            instruction_line->functional_unit     = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kFunctionalUnit)];
-            instruction_line->cycles              = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kCycles)];
-            instruction_line->binary_encoding     = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kBinaryEncoding)];
+        // Assign the values into the instruction line object.
+        instruction_line->address         = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kAddress)];
+        instruction_line->opcode          = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kOpcode)];
+        instruction_line->operands        = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kOperands)];
+        instruction_line->functional_unit = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kFunctionalUnit)];
+        instruction_line->cycles          = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kCycles)];
+        instruction_line->binary_encoding = line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kBinaryEncoding)];
 
-            // Extract the source line number as an integer.
-            input_source_line_index = std::stoi(line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kSourceLineNumber)].c_str());
+        // Extract the source line number as an integer.
+        input_source_line_index = std::stoi(line_tokens[GetCsvColumnIndex(RgIsaDisassemblyCsvFileColumns::kSourceLineNumber)].c_str());
 
-            // The line was parsed successfully, so assign it to the output instance.
-            parsed_line = std::static_pointer_cast<RgIsaLineInstruction>(instruction_line);
-            ret = true;
-        }
-        break;
+        // The line was parsed successfully, so assign it to the output instance.
+        parsed_line = std::static_pointer_cast<RgIsaLineInstruction>(instruction_line);
+        ret         = true;
+    }
+    break;
     default:
         // Catch cases where the type of line format is unhandled.
         assert(false);
@@ -630,8 +644,8 @@ void RgIsaDisassemblyTableModel::ClearLabelLines()
             // Add the label text to the model.
             SetTableModelText("", row_index, label_column_index_);
 
-            // Set the background color to white, because the data was erased.
-            SetTableModelBackgroundColor(QColor(Qt::white), row_index, label_column_index_);
+            // Set the background color, because the data was erased.
+            SetTableModelBackgroundColor(qApp->palette().color(QPalette::Base), row_index, label_column_index_);
         }
     }
 }
@@ -650,8 +664,8 @@ void RgIsaDisassemblyTableModel::GetColumnMaxWidths(const QVector<int>& selected
                 {
                     if (disassembled_isa_lines_[row]->type == RgIsaLineType::kInstruction)
                     {
-                        QVariant  call_text = isa_table_model_->data(isa_table_model_->index(row, col));
-                        max_width = std::max(max_width, static_cast<int>(call_text.toString().size()));
+                        QVariant call_text = isa_table_model_->data(isa_table_model_->index(row, col));
+                        max_width          = std::max(max_width, static_cast<int>(call_text.toString().size()));
                     }
                 }
             }
@@ -662,11 +676,11 @@ void RgIsaDisassemblyTableModel::GetColumnMaxWidths(const QVector<int>& selected
 
 void RgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selected_row_numbers)
 {
-    const int MIN_COLUMN_OFFSET = 4;
-    std::shared_ptr<RgGlobalSettings> global_settings = RgConfigManager::Instance().GetGlobalConfig();
+    const int                         MIN_COLUMN_OFFSET = 4;
+    std::shared_ptr<RgGlobalSettings> global_settings   = RgConfigManager::Instance().GetGlobalConfig();
 
     // Calculate maximum width for each column in the selected ISA region.
-    std::vector<int>  max_column_width;
+    std::vector<int> max_column_width;
     GetColumnMaxWidths(selected_row_numbers, max_column_width);
 
     // Add a tab as a delimiter between each column.
@@ -674,14 +688,14 @@ void RgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selecte
 
     // Build a string including each line in the selected range.
     std::stringstream clipboard_text;
-    foreach(auto row_index, selected_row_numbers)
+    foreach (auto row_index, selected_row_numbers)
     {
         // Is the current row an instruction or a label?
         std::shared_ptr<RgIsaLine> isa_line = disassembled_isa_lines_[row_index];
         if (isa_line->type == RgIsaLineType::kInstruction)
         {
-            bool is_first_token_in_line = true;
-            std::string  prev_column_text = "";
+            bool        is_first_token_in_line = true;
+            std::string prev_column_text       = "";
 
             // Add the contents of visible columns to the clipboard text.
             for (int column_index = 0, prev_visible_column_index = 0; column_index < global_settings->visible_disassembly_view_columns.size(); ++column_index)
@@ -700,9 +714,10 @@ void RgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selecte
                         // Append sufficient number of spaces so that the columns are aligned.
                         // The number of needed spaces is based on the width of the text in the previous column and its maximum width.
                         assert(prev_visible_column_index < max_column_width.size());
-                        std::string  delimiter = "";
+                        std::string delimiter = "";
                         for (size_t i = 0, num_spaces = MIN_COLUMN_OFFSET + max_column_width[prev_visible_column_index++] - prev_column_text.size();
-                            i < num_spaces; ++i)
+                             i < num_spaces;
+                             ++i)
                         {
                             delimiter += COLUMN_DELIMITER_SYMBOL;
                         }
@@ -711,14 +726,16 @@ void RgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selecte
 
                     // Get the cell data.
                     QModelIndex cell_index = isa_table_model_->index(row_index, column_index);
-                    QVariant cell_text = isa_table_model_->data(cell_index);
+                    QVariant    cell_text  = isa_table_model_->data(cell_index);
 
                     // If the data is invalid, get it from somewhere else.
                     if (!cell_text.isValid())
                     {
                         // Check if the functional unit is set to "Branch".
                         // If it is, get the data from Operands column from disassembled ISA Lines instead.
-                        QString cell_text_string = isa_table_model_->data(isa_table_model_->index(row_index, static_cast<int>(RgIsaDisassemblyTableColumns::kFunctionalUnit))).toString();
+                        QString cell_text_string =
+                            isa_table_model_->data(isa_table_model_->index(row_index, static_cast<int>(RgIsaDisassemblyTableColumns::kFunctionalUnit)))
+                                .toString();
                         if (cell_text_string.compare("Branch") == 0)
                         {
                             isa_line = disassembled_isa_lines_[row_index];
@@ -744,7 +761,7 @@ void RgIsaDisassemblyTableModel::CopyRowsToClipboard(const QVector<int>& selecte
         {
             // Extract the label text from whatever column the label is in.
             QModelIndex cell_index = isa_table_model_->index(row_index, label_column_index_);
-            QVariant cell_text = isa_table_model_->data(cell_index);
+            QVariant    cell_text  = isa_table_model_->data(cell_index);
 
             // Append the label name to the clipboard text.
             clipboard_text << cell_text.toString().toStdString();
@@ -775,11 +792,11 @@ void RgIsaDisassemblyTableModel::InitializeModelData()
             std::shared_ptr<RgIsaLineInstruction> instruction_line = std::static_pointer_cast<RgIsaLineInstruction>(isa_line);
 
             // Update the model cells with data from each disassembled ISA instruction line.
-            SetTableModelText(instruction_line->address,            line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress));
-            SetTableModelText(instruction_line->opcode,             line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOpcode));
-            SetTableModelText(instruction_line->functional_unit,    line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kFunctionalUnit));
-            SetTableModelText(instruction_line->cycles,             line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCycles));
-            SetTableModelText(instruction_line->binary_encoding,    line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kBinaryEncoding));
+            SetTableModelText(instruction_line->address, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress));
+            SetTableModelText(instruction_line->opcode, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kOpcode));
+            SetTableModelText(instruction_line->functional_unit, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kFunctionalUnit));
+            SetTableModelText(instruction_line->cycles, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCycles));
+            SetTableModelText(instruction_line->binary_encoding, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kBinaryEncoding));
             SetTableModelText(instruction_line->num_live_registers, line_index, GetTableColumnIndex(RgIsaDisassemblyTableColumns::kLiveVgprs));
 
             // Set the tooltip for the live VGPR cell.
@@ -799,8 +816,8 @@ void RgIsaDisassemblyTableModel::InitializeModelData()
         }
         else if (isa_line->type == RgIsaLineType::kLabel)
         {
-        	// Get the instruction line.
-                                                  isa_line         = disassembled_isa_lines_[line_index];
+            // Get the instruction line.
+            isa_line                                               = disassembled_isa_lines_[line_index];
             std::shared_ptr<RgIsaLineInstruction> instruction_line = std::static_pointer_cast<RgIsaLineInstruction>(isa_line);
 
             // Update the model cells with data from each disassembled ISA instruction line.
@@ -814,7 +831,7 @@ void RgIsaDisassemblyTableModel::InitializeModelData()
 void RgIsaDisassemblyTableModel::CreateTooltip(std::string& tooltip, const std::string& num_live_registers) const
 {
     // Extract live VGPRs and granularity values.
-    QStringList values     = QString::fromStdString(num_live_registers).split(",");
+    QStringList values = QString::fromStdString(num_live_registers).split(",");
 
     // Verify the split.
     if (values.size() == 2)
@@ -873,7 +890,7 @@ void RgIsaDisassemblyTableModel::UpdateCurrentMaxVgprLine()
 void RgIsaDisassemblyTableModel::ResetCurrentMaxVgprValues()
 {
     // Reset the maximum VGPR values.
-    current_max_vgpr_index_ = 0;
+    current_max_vgpr_index_           = 0;
     is_show_current_max_vgpr_enabled_ = false;
 
     // Set all lines to be not current max VGPR lines.
@@ -909,7 +926,7 @@ bool RgIsaDisassemblyTableModel::GetNextMaxVgprLineNumber(int& line_number)
             is_show_current_max_vgpr_enabled_ = true;
         }
 
-        line_number = livereg_data_.max_vgpr_line_numbers.at(current_max_vgpr_index_);
+        line_number   = livereg_data_.max_vgpr_line_numbers.at(current_max_vgpr_index_);
         is_valid_line = true;
     }
 

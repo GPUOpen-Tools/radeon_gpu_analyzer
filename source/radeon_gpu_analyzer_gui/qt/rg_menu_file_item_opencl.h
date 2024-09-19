@@ -192,6 +192,6 @@ protected:
     std::string last_selected_entry__name_;
 
     // The generated view object.
-    Ui::RgMenuFileItemOpenCL ui_;
+    Ui::rgMenuFileItemOpenCL ui_;
 };
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_OPENCL_H_

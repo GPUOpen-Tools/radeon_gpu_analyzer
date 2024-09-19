@@ -32,12 +32,6 @@ RgSettingsButtonsView::RgSettingsButtonsView(QWidget* parent) :
     // Setup the UI.
     ui_.setupUi(this);
 
-    // Set the background to white.
-    QPalette pal = palette();
-    pal.setColor(QPalette::Window, Qt::white);
-    this->setAutoFillBackground(true);
-    this->setPalette(pal);
-
     // Connect the signals.
     ConnectSignals();
 

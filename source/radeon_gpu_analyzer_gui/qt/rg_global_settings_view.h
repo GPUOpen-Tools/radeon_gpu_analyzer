@@ -96,6 +96,23 @@ public slots:
     // Handler for when include files viewer text box editing is finished.
     void HandleIncludeFilesViewerEditingFinished();
 
+    /// @brief Handle Color theme changed in the settings.
+    ///
+    /// color_theme_option Color theme option that was selected.
+    void HandleColorThemeComboBoxChanged(QListWidgetItem* color_theme_option);
+
+    /// @brief Set the color theme for the application.
+    ///
+    /// @return Whether the the user wanted to restart the application.
+    bool SetColorTheme();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    /// @brief Handle Color scheme changed in the OS.
+    ///
+    /// color_scheme The color scheme selected by the OS.
+    void HandleOsColorSchemeChanged(Qt::ColorScheme color_scheme);
+#endif
+
 private slots:
     // Handler for when the line edits lose focus.
     void HandleFocusOutEvent();

@@ -67,12 +67,17 @@ static std::string GetShaeIsaCmd(const gtString& target)
     const gtString kShaeGfx90a  = L"gfx90a";
     const gtString kShaeGfx942  = L"gfx942";
     const gtString kShaeGfx10_1 = L"gfx10_1";
-    const gtString kShaeGfx10_3 = L"gfx10_3";
-    const gtString kShaeGfx11   = L"gfx11";
+	const gtString kShaeGfx10_3 = L"gfx10_3";
+	const gtString kShaeGfx11   = L"gfx11";
+    const gtString kShaeGfx11_5 = L"gfx11_5";
 
 	std::stringstream    shae_gfx_generation;
 	shae_gfx_generation << "--isa ";
-	if (KcUtils::IsNavi3Target(target.asASCIICharArray()))
+    if (KcUtils::IsStrix(target.asASCIICharArray()))
+    {
+        shae_gfx_generation << kShaeGfx11_5.asASCIICharArray();
+    }
+	else if (KcUtils::IsNavi3Target(target.asASCIICharArray()))
 	{
 		shae_gfx_generation << kShaeGfx11.asASCIICharArray();
 	}

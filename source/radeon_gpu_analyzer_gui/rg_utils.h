@@ -109,9 +109,6 @@ public:
     // Re-polish the widget from it's style (this is useful for applying style changes after modifying a dynamic property).
     static void StyleRepolish(QWidget* widget, bool repolish_children = false);
 
-    // Set the background color for the given widget to the given color.
-    static void SetBackgroundColor(QWidget* widget, const QColor& color);
-
     // ***********
     // Qt - END.
     // ***********

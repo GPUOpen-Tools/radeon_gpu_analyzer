@@ -387,6 +387,9 @@ void RgConfigManager::ResetToFactoryDefaults(RgGlobalSettings& global_settings)
     // Default font size.
     global_settings.font_size = 10;
 
+    // Default color theme.
+    global_settings.color_theme = 2;
+
     // Default app to open include files.
     global_settings.include_files_viewer = kStrGlobalSettingsSrcViewIncludeViewerDefault;
 

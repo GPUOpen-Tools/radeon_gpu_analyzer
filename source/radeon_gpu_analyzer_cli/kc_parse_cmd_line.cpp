@@ -358,10 +358,6 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         // DXR-specific.
         opts.add_options(dxr_opt)
             ("hlsl", "Full path to DXR HLSL input file that contains the state definition.", po::value<std::string>(config.dxr_hlsl))
-            ("mode", "DXR mode: 'shader' to compile a specific shader, or 'pipeline' to compile all pipelines in the State Object. By default, shader mode is assumed.", po::value<std::string>(config.dxr_mode))
-            ("export", "The export name of the shader for which to retrieve results - only relevant to shader mode (--mode shader)."
-                " this can be an export name of any shader in the state object.",
-                po::value<std::vector<std::string>>(config.dxr_exports))
             ("dxr-model", "Shader model used for DXR HLSL compilation. Use this option to override "
                 "the shader model that is used for HLSL compilation by default (lib_6_3).",
                 po::value<std::string>(config.dxr_shader_model))
@@ -805,15 +801,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             std::cout << "Examples:" << std::endl;
             std::cout << "  View supported targets for DXR:" << std::endl;
             std::cout << "    " << program_name << " -s dxr -l" << std::endl;
-            std::cout << "  Compile and generate RDNA ISA disassembly for a shader named MyRaygenShader which is defined in C:\\shaders\\Raytracing.hlsl:" << std::endl;
-            std::cout << "    " << program_name << " -s dxr --hlsl C:\\shaders\\Raytracing.hlsl --export MyRaygenShader --isa C:\\output\\isa.txt" << std::endl;
-            std::cout << "  Compile and generate RDNA ISA disassembly and HW resource usage statistics for a shader named MyClosestHitShader which is defined in C:\\shaders\\Raytracing.hlsl:" << std::endl;
-            std::cout << "    " << program_name << " -s dxr --hlsl C:\\shaders\\Raytracing.hlsl --export MyClosestHitShader --isa C:\\output\\isa.txt -a C:\\output\\stats.txt" << std::endl;
             std::cout << "  Compile and generate RDNA ISA disassembly for all DXR pipelines defined in C:\\shaders\\Raytracing.hlsl:" << std::endl;
-            std::cout << "    " << program_name << " -s dxr --mode pipeline --hlsl C:\\shaders\\Raytracing.hlsl --isa C:\\output\\isa.txt" << std::endl;
+            std::cout << "    " << program_name << " -s dxr --hlsl C:\\shaders\\Raytracing.hlsl --isa C:\\output\\isa.txt" << std::endl;
             std::cout << "  Compile and generate RDNA ISA disassembly for all DXR pipelines which are defined in C:\\shaders\\rt.hlsl with additional headers that are located in C:\\shaders\\include:" << std::endl;
-            std::cout << "    " << program_name << " -s dxr --mode pipeline --hlsl C:\\shaders\\rt.hlsl -I C:\\shaders\\include --isa C:\\output\\isa.txt" << std::endl;
-
+            std::cout << "    " << program_name << " -s dxr --hlsl C:\\shaders\\rt.hlsl -I C:\\shaders\\include --isa C:\\output\\isa.txt" << std::endl;
         }
         else if ((config.requested_command == Config::kHelp) && (config.mode == beKA::RgaMode::kModeOpenclOffline))
         {

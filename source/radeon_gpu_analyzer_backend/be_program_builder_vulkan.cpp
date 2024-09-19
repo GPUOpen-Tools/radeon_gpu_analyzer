@@ -6,17 +6,6 @@
 #include <cassert>
 #include <stdlib.h>
 
-// Yaml.
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning(disable : 4996)
-#pragma warning(disable : 4127)
-#endif
-#include "yaml-cpp/yaml.h"
-#ifdef _WIN32
-#pragma warning(pop)
-#endif
-
 // Infra.
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
@@ -153,48 +142,6 @@ static const std::string  kVulkanBackendOptLayersFile = "--layers-file";
 // VulkanBackend options: target GPU.
 static const std::string  kVulkanBackendOptTarget = "--target";
 
-// Amdgpudis dot tokens.
-static const std::string kStrLcCodeObjectMetadataTokenStart      = "---\n";
-static const std::string kStrLcCodeObjectMetadataTokenEnd        = "\n...";
-static const std::string kStrCodeObjectMetadataKeyKernels        = "amdhsa.kernels";
-static const std::string kStrCodeObjectMetadataKeyPipelines      = "amdpal.pipelines";
-static const std::string kAmdgpuDisDotApiToken                   = ".api";
-static const std::string kAmdgpuDisDotHardwareStagesToken        = ".hardware_stages";
-static const std::string kAmdgpuDisDotScratchMemorySizeToken     = ".scratch_memory_size";
-static const std::string kAmdgpuDisDotSgprCountToken             = ".sgpr_count";
-static const std::string kAmdgpuDisDotSgprLimitToken             = ".sgpr_limit";
-static const std::string kAmdgpuDisDotVgprCountToken             = ".vgpr_count";
-static const std::string kAmdgpuDisDotVgprLimitToken             = ".vgpr_limit";
-static const std::string kAmdgpuDisDotShaderFunctionsToken       = ".shader_functions";
-static const std::string kAmdgpuDisDotLdsSizeToken               = ".lds_size";
-static const std::string kAmdgpuDisDotShaderSubtypeToken         = ".shader_subtype";
-static const std::string kAmdgpuDisDotShadersToken               = ".shaders";
-static const std::string kAmdgpuDisDotHardwareMappingToken       = ".hardware_mapping";
-
-const std::string kStrLS = ".ls";
-const std::string kStrHS = ".hs";
-const std::string kStrES = ".es";
-const std::string kStrGS = ".gs";
-const std::string kStrVS = ".vs";
-const std::string kStrPS = ".ps";
-const std::string kStrCS = ".cs";
-
-const std::string kStrVertex   = ".vertex";
-const std::string kStrHull     = ".hull";
-const std::string kStrDomain   = ".domain";
-const std::string kStrGeometry = ".geometry";
-const std::string kStrPixel    = ".pixel";
-const std::string kStrCompute  = ".compute";
-
-const std::string kStrUnknown       = "Unknown";
-const std::string kStrRayGeneration = "RayGeneration";
-const std::string kStrMiss          = "Miss";
-const std::string kStrAnyHit        = "AnyHit";
-const std::string kStrClosestHit    = "ClosestHit";
-const std::string kStrIntersection  = "Intersection";
-const std::string kStrCallable      = "Callable";
-const std::string kStrTraversal     = "Traversal";
-
 
 // Copy the Vulkan Validation layers info from temp file ("tempInfoFile") to the Log file and user-provided validation info file ("outputFile").
 // Delete the temp info file after copying its content.
@@ -265,7 +212,7 @@ static std::string ConstructVulkanBackendOptions(const std::string& loader_debug
     // Output binary file name.
     // Needed if the target is gfx11 or above since ISA disassembly has to be extracted from CodeObject.
     // For older architectures this is only needed when explicitly requested by the user.
-    if (!bin_file.empty() || (KcUtils::IsNavi3Target(device) && !isa_files.empty()))
+    if (!bin_file.empty() || (KcUtils::IsNavi3AndBeyond(device) && !isa_files.empty()))
     {
         opts << " " << kVulkanBackendOptBinFile << " " << KcUtils::Quote(bin_file);
     }
@@ -783,31 +730,6 @@ beStatus beProgramBuilderVulkan::InvokeVulkanBackend(const std::string& cmd_line
     return (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusVulkanBackendLaunchFailed);
 }
 
-beKA::beStatus beProgramBuilderVulkan::InvokeAmdgpudis(const std::string& cmd_line_options, bool should_print_cmd, std::string& out_txt, std::string& error_msg)
-{
-    osFilePath amdgpu_dis_exe;
-    long exit_code = 0;
-
-    // Construct the path to the amdgpu-dis executable.
-    osGetCurrentApplicationPath(amdgpu_dis_exe, false);
-    amdgpu_dis_exe.appendSubDirectory(kAmdgpudisRootDir);
-    amdgpu_dis_exe.setFileName(kAmdgpudisExecutable);
-#ifdef _WIN32
-    amdgpu_dis_exe.setFileExtension(kAmdgpudisExecutableExtension);
-#endif
-
-    KcUtils::ProcessStatus status = KcUtils::LaunchProcess(amdgpu_dis_exe.asString().asASCIICharArray(),
-        cmd_line_options,
-        "",
-        kProcessWaitInfinite,
-        should_print_cmd,
-        out_txt,
-        error_msg,
-        exit_code);
-
-    return (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusVulkanAmdgpudisLaunchFailed);
-}
-
 bool beProgramBuilderVulkan::WriteIsaFileWithHwMapping(uint32_t                                  stage,
                                                        const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
                                                        const std::map<std::string, std::string>& shader_to_disassembly,
@@ -912,7 +834,9 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
             std::string amdgpu_dis_stderr;
             std::stringstream bin_file_with_quotes;
             bin_file_with_quotes << "\"" << bin_file << "\"";
-            status = InvokeAmdgpudis(bin_file_with_quotes.str(), should_print_cmd, amdgpu_dis_stdout, amdgpu_dis_stderr);
+            status = KcUtils::InvokeAmdgpudis(bin_file_with_quotes.str(), should_print_cmd, amdgpu_dis_stdout, amdgpu_dis_stderr)
+                         ? beKA::kBeStatusSuccess
+                         : beKA::kBeStatusVulkanAmdgpudisLaunchFailed;
             assert(status == beKA::kBeStatusSuccess);
             if (status == beKA::kBeStatusSuccess)
             {
@@ -923,9 +847,9 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
                 if (is_amdgpu_dis_output_parsed && !shader_to_disassembly.empty())
                 {
                     BeAmdPalMetaData::PipelineMetaData pipeline;
-                    beKA::beStatus md_status = beProgramBuilderVulkan::ParseAmdgpudisMetadata(amdgpu_dis_stdout, pipeline);
-                    assert(md_status == beKA::beStatus::kBeStatusVulkanGraphicsCodeObjMetaDataSuccess);
-                    if (md_status == beKA::beStatus::kBeStatusVulkanGraphicsCodeObjMetaDataSuccess)
+                    beKA::beStatus                     md_status = BeAmdPalMetaData::ParseAmdgpudisMetadata(amdgpu_dis_stdout, pipeline);
+                    assert(md_status == beKA::beStatus::kBeStatusGraphicsCodeObjMetaDataSuccess);
+                    if (md_status == beKA::beStatus::kBeStatusGraphicsCodeObjMetaDataSuccess)
                     {
                         // Write the ISA disassembly files.
                         for (uint32_t stage = BePipelineStage::kVertex; stage < BePipelineStage::kCount; stage++)
@@ -1046,7 +970,7 @@ beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string& loader_de
 
         // Disassemble the binaries to get the ISA disassembly from the CodeObject's .text section.
         // For gfx11 targets we need to disassemble the binary CodeObject and extract the disassembly from there.
-        if (KcUtils::IsNavi3Target(device) && !isa_files.empty())
+        if (KcUtils::IsNavi3AndBeyond(device) && !isa_files.empty())
         {
             std::string                        amdgpu_dis_stdout;
             std::map<std::string, std::string> shader_to_disassembly;
@@ -1115,251 +1039,6 @@ beKA::beStatus beProgramBuilderVulkan::PreprocessSource(const Config& config, co
     if (!opts.empty())
     {
         status = InvokeGlslang(glslang_bin_dir, opts, should_print_cmd, output, error_msg);
-    }
-
-    return status;
-}
-
-
-BeAmdPalMetaData::StageType BeAmdPalMetaData::GetStageType(const std::string& stage_name)
-{
-    static const std::unordered_map<std::string, StageType> stageMap = {{kStrLS, StageType::kLS},
-                                                                        {kStrHS, StageType::kHS},
-                                                                        {kStrES, StageType::kES},
-                                                                        {kStrGS, StageType::kGS},
-                                                                        {kStrVS, StageType::kVS},
-                                                                        {kStrPS, StageType::kPS},
-                                                                        {kStrCS, StageType::kCS}};
-
-    auto it = stageMap.find(stage_name);
-    if (it != stageMap.end())
-    {
-        return it->second;
-    }
-    throw std::runtime_error("Unknown stage type: " + stage_name);
-}
-
-BeAmdPalMetaData::ShaderType BeAmdPalMetaData::GetShaderType(const std::string& shader_name)
-{
-    static const std::unordered_map<std::string, ShaderType> shaderMap = {{kStrVertex,   ShaderType::kVertex},
-                                                                          {kStrHull,     ShaderType::kHull},
-                                                                          {kStrDomain,   ShaderType::kDomain},
-                                                                          {kStrGeometry, ShaderType::kGeometry},
-                                                                          {kStrPixel,    ShaderType::kPixel},
-                                                                          {kStrCompute,  ShaderType::kCompute}};
-
-    auto it = shaderMap.find(shader_name);
-    if (it != shaderMap.end())
-    {
-        return it->second;
-    }
-    throw std::runtime_error("Unknown shader type: " + shader_name);
-}
-
-BeAmdPalMetaData::ShaderSubtype BeAmdPalMetaData::GetShaderSubtype(const std::string& subtype_name)
-{
-    static const std::unordered_map<std::string, ShaderSubtype> subtypeMap = {{kStrUnknown,       ShaderSubtype::kUnknown},
-                                                                              {kStrRayGeneration, ShaderSubtype::kRayGeneration},
-                                                                              {kStrMiss,          ShaderSubtype::kMiss},
-                                                                              {kStrAnyHit,        ShaderSubtype::kAnyHit},
-                                                                              {kStrClosestHit,    ShaderSubtype::kClosestHit},
-                                                                              {kStrIntersection,  ShaderSubtype::kIntersection},
-                                                                              {kStrCallable,      ShaderSubtype::kCallable},
-                                                                              {kStrTraversal,     ShaderSubtype::kTraversal}};
-
-    auto it = subtypeMap.find(subtype_name);
-    if (it != subtypeMap.end())
-    {
-        return it->second;
-    }
-    throw std::runtime_error("Unknown shader subtype: " + subtype_name);
-}
-
-std::string BeAmdPalMetaData::GetStageName(StageType stage_type)
-{
-    static const std::unordered_map<StageType, const std::string&> inverseStageMap = {{StageType::kLS, kStrLS},
-                                                                                      {StageType::kHS, kStrHS},
-                                                                                      {StageType::kES, kStrES},
-                                                                                      {StageType::kGS, kStrGS},
-                                                                                      {StageType::kVS, kStrVS},
-                                                                                      {StageType::kPS, kStrPS},
-                                                                                      {StageType::kCS, kStrCS}};
-
-    auto it = inverseStageMap.find(stage_type);
-    if (it != inverseStageMap.end())
-    {
-        return it->second;
-    }
-    throw std::runtime_error("Unknown stage type: " + std::to_string(static_cast<int>(stage_type)));
-}
-
-std::string BeAmdPalMetaData::GetShaderName(ShaderType shader_type)
-{
-    static const std::unordered_map<ShaderType, const std::string&> inverseShaderMap = {{ShaderType::kVertex,   kStrVertex},
-                                                                                        {ShaderType::kHull,     kStrHull},
-                                                                                        {ShaderType::kDomain,   kStrDomain},
-                                                                                        {ShaderType::kGeometry, kStrGeometry},
-                                                                                        {ShaderType::kPixel,    kStrPixel},
-                                                                                        {ShaderType::kCompute,  kStrCompute}};
-
-    auto it = inverseShaderMap.find(shader_type);
-    if (it != inverseShaderMap.end())
-    {
-        return it->second;
-    }
-    throw std::runtime_error("Unknown shader type: " + std::to_string(static_cast<int>(shader_type)));
-}
-
-std::string BeAmdPalMetaData::GetShaderSubtypeName(ShaderSubtype subtype)
-{
-    static const std::unordered_map<ShaderSubtype, const std::string&> inverseSubtypeMap = {{ShaderSubtype::kUnknown,       kStrUnknown},
-                                                                                            {ShaderSubtype::kRayGeneration, kStrRayGeneration},
-                                                                                            {ShaderSubtype::kMiss,          kStrMiss},
-                                                                                            {ShaderSubtype::kAnyHit,        kStrAnyHit},
-                                                                                            {ShaderSubtype::kClosestHit,    kStrClosestHit},
-                                                                                            {ShaderSubtype::kIntersection,  kStrIntersection},
-                                                                                            {ShaderSubtype::kCallable,      kStrCallable},
-                                                                                            {ShaderSubtype::kTraversal,     kStrTraversal}};
-
-    auto it = inverseSubtypeMap.find(subtype);
-    if (it != inverseSubtypeMap.end())
-    {
-        return it->second;
-    }
-    throw std::runtime_error("Unknown shader subtype: " + std::to_string(static_cast<int>(subtype)));
-}
-
-uint64_t GetHardwareStageProperty(const YAML::Node& node, const std::string& key)
-{
-    uint64_t ret = static_cast<uint64_t>(-1);
-    if (node[key])
-    {
-        ret = node[key].as<uint64_t>();
-    }
-    return ret;
-}
-
-beKA::beStatus beProgramBuilderVulkan::ParseAmdgpudisMetadata(const std::string& amdgpu_dis_output, BeAmdPalMetaData::PipelineMetaData& pipeline_md)
-{
-    beKA::beStatus status       = beKA::beStatus::kBeStatusSuccess;
-    size_t         start_offset = amdgpu_dis_output.find(kStrLcCodeObjectMetadataTokenStart);
-    size_t         end_offset;
-
-    std::vector<BeAmdPalMetaData::PipelineMetaData> pipelines;
-    while ((end_offset = amdgpu_dis_output.find(kStrLcCodeObjectMetadataTokenEnd, start_offset)) != std::string::npos)
-    {
-        try
-        {
-            const std::string& kernel_metadata_text =
-                amdgpu_dis_output.substr(start_offset, end_offset - start_offset + kStrLcCodeObjectMetadataTokenEnd.size());
-            YAML::Node codeobj_metadata_node = YAML::Load(kernel_metadata_text);
-
-            if (!codeobj_metadata_node.IsMap())
-            {
-                status = beKA::beStatus::kBeStatusVulkanCodeObjMdParsingFailed;
-                break;
-            }
-
-            if (codeobj_metadata_node[kStrCodeObjectMetadataKeyKernels])
-            {
-                status = beKA::beStatus::kBeStatusVulkanComputeCodeObjMetaDataSuccess;
-                break;
-            }
-
-            for (const auto& pipelineNode : codeobj_metadata_node[kStrCodeObjectMetadataKeyPipelines])
-            {
-                BeAmdPalMetaData::PipelineMetaData pipeline;
-                pipeline.api = pipelineNode[kAmdgpuDisDotApiToken].as<std::string>();
-
-                for (const auto& stageNode : pipelineNode[kAmdgpuDisDotHardwareStagesToken])
-                {
-                    BeAmdPalMetaData::HardwareStageMetaData stage;
-
-                    stage.stage_type                = BeAmdPalMetaData::GetStageType(stageNode.first.as<std::string>());
-                    stage.stats.lds_size_used       = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotLdsSizeToken);
-                    stage.stats.scratch_memory_used = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotScratchMemorySizeToken);
-                    stage.stats.num_sgprs_used      = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotSgprCountToken);
-                    stage.stats.num_sgprs_available = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotSgprLimitToken);
-                    stage.stats.num_vgprs_used      = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotVgprCountToken);
-                    stage.stats.num_vgprs_available = GetHardwareStageProperty(stageNode.second, kAmdgpuDisDotVgprLimitToken);
-                    
-                    pipeline.hardware_stages.push_back(stage);
-                }
-
-                if (pipelineNode[kAmdgpuDisDotShaderFunctionsToken])
-                {
-                    for (const auto& functionNode : pipelineNode[kAmdgpuDisDotShaderFunctionsToken])
-                    {
-                        BeAmdPalMetaData::ShaderFunctionMetaData function;
-
-                        function.name                            = functionNode.first.as<std::string>();
-                        function.shader_subtype                  = BeAmdPalMetaData::GetShaderSubtype(functionNode.second[kAmdgpuDisDotShaderSubtypeToken].as<std::string>());
-
-                        function.stats.lds_size_used       = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotLdsSizeToken);
-                        function.stats.scratch_memory_used = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotScratchMemorySizeToken);
-                        function.stats.num_sgprs_used      = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotSgprCountToken);
-                        function.stats.num_sgprs_available = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotSgprLimitToken);
-                        function.stats.num_vgprs_used      = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotVgprCountToken);
-                        function.stats.num_vgprs_available = GetHardwareStageProperty(functionNode.second, kAmdgpuDisDotVgprLimitToken);
-                    
-                        pipeline.shader_functions.push_back(function);
-                    }
-                    status = beKA::beStatus::kBeStatusVulkanRayTracingCodeObjMetaDataSuccess;
-                }
-                else
-                {
-                    status = beKA::beStatus::kBeStatusVulkanGraphicsCodeObjMetaDataSuccess;
-                }
-
-                for (const auto& shaderNode : pipelineNode[kAmdgpuDisDotShadersToken])
-                {
-                    BeAmdPalMetaData::ShaderMetaData shader;
-                    shader.shader_type                    = BeAmdPalMetaData::GetShaderType(shaderNode.first.as<std::string>());
-                    const YAML::Node& hardwareMappingNode = shaderNode.second[kAmdgpuDisDotHardwareMappingToken];
-                    if (hardwareMappingNode.IsSequence() && hardwareMappingNode.size() > 0)
-                    {
-                        shader.hardware_mapping = BeAmdPalMetaData::GetStageType(hardwareMappingNode[0].as<std::string>());
-                    }
-                    else
-                    {
-                        status = beKA::beStatus::kBeStatusVulkanCodeObjMdParsingFailed;
-                        break;
-                    }
-                    if (shaderNode.second[kAmdgpuDisDotShaderSubtypeToken])
-                    {
-                        shader.shader_subtype = BeAmdPalMetaData::GetShaderSubtype(shaderNode.second[kAmdgpuDisDotShaderSubtypeToken].as<std::string>());
-                        if (shader.shader_subtype != BeAmdPalMetaData::ShaderSubtype::kUnknown)
-                        {
-                            status = beKA::beStatus::kBeStatusVulkanRayTracingCodeObjMetaDataSuccess;
-                        }
-                    }
-                    pipeline.shaders.push_back(shader);
-                }
-
-                pipelines.push_back(pipeline);
-            }
-        }
-        catch (const YAML::ParserException&)
-        {
-            status = beKA::beStatus::kBeStatusVulkanCodeObjMdParsingFailed;
-            break;
-        }
-        catch (const std::runtime_error&)
-        {
-            status = beKA::beStatus::kBeStatusVulkanCodeObjMdParsingFailed;
-            break;
-        }
-
-        start_offset = amdgpu_dis_output.find(kStrLcCodeObjectMetadataTokenStart, end_offset);
-        if (start_offset == std::string::npos)
-        {
-            break;
-        }
-    }
-
-    if (status != beKA::beStatus::kBeStatusVulkanCodeObjMdParsingFailed && pipelines.size() > 0)
-    {
-        pipeline_md = std::move(pipelines[0]);
     }
 
     return status;

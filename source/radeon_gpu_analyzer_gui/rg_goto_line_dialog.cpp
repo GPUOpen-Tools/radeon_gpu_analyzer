@@ -20,12 +20,6 @@ RgGoToLineDialog::RgGoToLineDialog(int maxLineNumber, QWidget* parent) :
     // Disable the help button in the title bar.
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
-    // Set the background to white.
-    QPalette pal = palette();
-    pal.setColor(QPalette::Window, Qt::white);
-    this->setAutoFillBackground(true);
-    this->setPalette(pal);
-
     // Set the validator for the line number edit box.
     QValidator *validator = new QIntValidator(0, max_line_number_, this);
 

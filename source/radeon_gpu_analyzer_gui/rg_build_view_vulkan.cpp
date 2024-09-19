@@ -10,6 +10,9 @@
 #include <QTextStream>
 #include <QWidget>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+
 // Infra.
 #include "source/common/vulkan/rg_pso_factory_vulkan.h"
 #include "source/common/vulkan/rg_pso_serializer_vulkan.h"
@@ -39,9 +42,10 @@
 #include "radeon_gpu_analyzer_gui/rg_xml_session_config.h"
 
 // PSO editor container frame name.
-static const char* kStrPsoEditorFrameName = "PSOEditorContainerFrame";
+static const char* kStrPsoEditorFrameName            = "PSOEditorContainerFrame";
 static const char* kStrApplicationInformationMessage = "Used vk-spv-offline mode.";
-static const char* kStrApplicationInformationTooltip = "Compilation failed with AMD's Vulkan ICD (amdvlk), used vk-spv-offline mode instead. Check the build output window for more details.";
+static const char* kStrApplicationInformationTooltip =
+    "Compilation failed with AMD's Vulkan ICD (amdvlk), used vk-spv-offline mode instead. Check the build output window for more details.";
 
 RgBuildViewVulkan::RgBuildViewVulkan(QWidget* parent)
     : RgBuildViewGraphics(RgProjectAPI::kVulkan, parent)
@@ -62,19 +66,31 @@ void RgBuildViewVulkan::ConnectBuildSettingsSignals()
     RgBuildView::ConnectBuildSettingsSignals();
 
     // Connect the notification of pending state changes from the Vulkan build settings to the build view.
-    bool is_connected = connect(static_cast<RgBuildSettingsViewVulkan*>(build_settings_view_), &RgBuildSettingsViewVulkan::PendingChangesStateChanged, this, &RgBuildView::HandleBuildSettingsPendingChangesStateChanged);
+    bool is_connected = connect(static_cast<RgBuildSettingsViewVulkan*>(build_settings_view_),
+                                &RgBuildSettingsViewVulkan::PendingChangesStateChanged,
+                                this,
+                                &RgBuildView::HandleBuildSettingsPendingChangesStateChanged);
     assert(is_connected);
 
     // Connect the notification that the build settings have been saved from the Vulkan build settings to the build view.
-    is_connected = connect(static_cast<RgBuildSettingsViewVulkan*>(build_settings_view_), &RgBuildSettingsViewVulkan::ProjectBuildSettingsSaved, this, &RgBuildView::HandleBuildSettingsSaved);
+    is_connected = connect(static_cast<RgBuildSettingsViewVulkan*>(build_settings_view_),
+                           &RgBuildSettingsViewVulkan::ProjectBuildSettingsSaved,
+                           this,
+                           &RgBuildView::HandleBuildSettingsSaved);
     assert(is_connected);
 
     // Connect to build settings view's edit line's "focus in" event to color the frame red.
-    is_connected = connect(static_cast<RgBuildSettingsViewVulkan*>(build_settings_view_), &RgBuildSettingsViewVulkan::SetFrameBorderRedSignal, this, &RgBuildView::HandleSetFrameBorderRed);
+    is_connected = connect(static_cast<RgBuildSettingsViewVulkan*>(build_settings_view_),
+                           &RgBuildSettingsViewVulkan::SetFrameBorderRedSignal,
+                           this,
+                           &RgBuildView::HandleSetFrameBorderRed);
     assert(is_connected);
 
     // Connect to build settings view's edit line's "focus out" event to color the frame black.
-    is_connected = connect(static_cast<RgBuildSettingsViewVulkan*>(build_settings_view_), &RgBuildSettingsViewVulkan::SetFrameBorderBlackSignal, this, &RgBuildView::HandleSetFrameBorderBlack);
+    is_connected = connect(static_cast<RgBuildSettingsViewVulkan*>(build_settings_view_),
+                           &RgBuildSettingsViewVulkan::SetFrameBorderBlackSignal,
+                           this,
+                           &RgBuildView::HandleSetFrameBorderBlack);
     assert(is_connected);
 }
 
@@ -160,7 +176,8 @@ bool RgBuildViewVulkan::ConnectMenuSignals()
         assert(pipeline_state_item != nullptr);
         if (pipeline_state_item != nullptr)
         {
-            is_connected = connect(pipeline_state_item, &RgMenuPipelineStateItem::PipelineStateButtonClicked, this, &RgBuildViewVulkan::HandlePipelineStateMenuItemClicked);
+            is_connected = connect(
+                pipeline_state_item, &RgMenuPipelineStateItem::PipelineStateButtonClicked, this, &RgBuildViewVulkan::HandlePipelineStateMenuItemClicked);
             assert(is_connected);
         }
 
@@ -186,11 +203,10 @@ void RgBuildViewVulkan::HandleBuildSettingsMenuItemClicked()
 
 bool RgBuildViewVulkan::HandlePipelineStateFileSaved()
 {
-    bool is_ok = false;
+    bool        is_ok = false;
     std::string error_string;
 
-    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone =
-        std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
     assert(vulkan_clone != nullptr);
     if (vulkan_clone != nullptr)
@@ -229,21 +245,18 @@ void RgBuildViewVulkan::HandlePipelineStateFileLoaded()
     // Open the file browser in the last selected directory.
     std::string pipeline_state_file_path = RgConfigManager::Instance().GetLastSelectedFolder();
 
-    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone =
-        std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
     assert(vulkan_clone != nullptr);
     if (vulkan_clone != nullptr)
     {
         // Select the relevant file filter based on the pipeline type (compute, graphics).
-        bool is_graphics_pipeline = (vulkan_clone->pipeline.type == RgPipelineType::kGraphics);
-        const char* pso_file_filter = is_graphics_pipeline ? kStrDefaultPipelineFileExtensionFilterGraphics :
-            kStrDefaultPipelineFileExtensionFilterCompute;
+        bool        is_graphics_pipeline = (vulkan_clone->pipeline.type == RgPipelineType::kGraphics);
+        const char* pso_file_filter = is_graphics_pipeline ? kStrDefaultPipelineFileExtensionFilterGraphics : kStrDefaultPipelineFileExtensionFilterCompute;
 
         // Display an "Open file" dialog to let the user choose
         // which pipeline state configuration file to use.
-        bool is_ok = RgUtils::OpenFileDialog(this, pipeline_state_file_path,
-            kStrPipelineStateFileDialogCaption, pso_file_filter);
+        bool is_ok = RgUtils::OpenFileDialog(this, pipeline_state_file_path, kStrPipelineStateFileDialogCaption, pso_file_filter);
 
         if (is_ok)
         {
@@ -256,8 +269,7 @@ bool RgBuildViewVulkan::LoadPipelineStateFile(const std::string& pipeline_state_
 {
     bool is_ok = false;
 
-    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone =
-        std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
     std::string error_string;
     assert(vulkan_clone != nullptr);
@@ -353,8 +365,7 @@ bool RgBuildViewVulkan::PopulateMenu()
 {
     bool is_file_loaded = false;
 
-    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone =
-        std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
     assert(vulkan_clone != nullptr);
     if (vulkan_clone != nullptr)
@@ -367,7 +378,7 @@ bool RgBuildViewVulkan::PopulateMenu()
 
         // Step through each stage type in a graphics pipeline by default.
         size_t first_stage = static_cast<size_t>(RgPipelineStage::kVertex);
-        size_t last_stage = static_cast<size_t>(RgPipelineStage::kFragment);
+        size_t last_stage  = static_cast<size_t>(RgPipelineStage::kFragment);
 
         // If a compute pipeline is being loaded, only attempt to load the single Compute stage.
         if (!is_graphics_pipeline)
@@ -427,8 +438,7 @@ bool RgBuildViewVulkan::IsGcnDisassemblyGenerated(const std::string& input_file_
     auto targetGpuOutputsIter = build_outputs_.find(current_target_gpu_);
     if (targetGpuOutputsIter != build_outputs_.end())
     {
-        std::shared_ptr<RgCliBuildOutputPipeline> build_output =
-            std::dynamic_pointer_cast<RgCliBuildOutputPipeline>(targetGpuOutputsIter->second);
+        std::shared_ptr<RgCliBuildOutputPipeline> build_output = std::dynamic_pointer_cast<RgCliBuildOutputPipeline>(targetGpuOutputsIter->second);
 
         assert(build_output != nullptr);
         if (build_output != nullptr)
@@ -436,7 +446,7 @@ bool RgBuildViewVulkan::IsGcnDisassemblyGenerated(const std::string& input_file_
             auto input_file_iter = build_output->per_file_output.find(input_file_path);
             if (input_file_iter != build_output->per_file_output.end())
             {
-                RgFileOutputs& file_outputs = input_file_iter->second;
+                RgFileOutputs& file_outputs  = input_file_iter->second;
                 is_current_file_disassembled = !file_outputs.outputs.empty();
             }
         }
@@ -448,7 +458,9 @@ bool RgBuildViewVulkan::IsGcnDisassemblyGenerated(const std::string& input_file_
 bool RgBuildViewVulkan::LoadSessionMetadata(const std::string& metadata_file_path, std::shared_ptr<RgCliBuildOutput>& build_output)
 {
     bool ret = false;
+
     std::shared_ptr<RgCliBuildOutputPipeline> gpu_output_vulkan = nullptr;
+
     ret = RgXMLSessionConfig::ReadSessionMetadataVulkan(metadata_file_path, gpu_output_vulkan);
     assert(ret);
     if (ret)
@@ -471,14 +483,13 @@ void RgBuildViewVulkan::ReloadFile(const std::string& file_path)
             // If it's a SPIR-V binary file, disassemble it and update the disassembly text in the code editor.
             if (file_item->GetFileType() == RgVulkanInputType::kSpirv)
             {
-                std::string cli_output, compiler_path;
+                std::string        cli_output, compiler_path;
                 const std::string& disasm_file_path = spv_disasm_files_[file_item->GetStage()];
                 assert(!disasm_file_path.empty());
                 if (!disasm_file_path.empty())
                 {
                     // Get the "alternative compiler path" setting value.
-                    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone =
-                        std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+                    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
                     assert(vulkan_clone != nullptr && vulkan_clone->build_settings != nullptr);
                     if (vulkan_clone != nullptr && vulkan_clone->build_settings != nullptr)
@@ -511,8 +522,8 @@ void RgBuildViewVulkan::ShowCurrentFileDisassembly()
     bool is_current_file_disassembled = false;
 
     // Show the currently selected file's first entry point disassembly (if there is no currently selected entry).
-    const std::string& input_filepath = file_menu_->GetSelectedFilePath();
-    RgMenuFileItem* selected_file_item = file_menu_->GetSelectedFileItem();
+    const std::string& input_filepath     = file_menu_->GetSelectedFilePath();
+    RgMenuFileItem*    selected_file_item = file_menu_->GetSelectedFileItem();
     assert(selected_file_item != nullptr);
 
     if (selected_file_item != nullptr)
@@ -543,8 +554,8 @@ void RgBuildViewVulkan::SaveFile(RgMenuFileItemGraphics* file_item)
 {
     // Get the file editor for the file menu item.
     RgSourceCodeEditor* file_editor = nullptr;
-    const std::string file_path = file_item->GetFilename();
-    auto iter = source_code_editors_.find(file_path);
+    const std::string   file_path   = file_item->GetFilename();
+    auto                iter        = source_code_editors_.find(file_path);
     assert(iter != source_code_editors_.end());
     if (iter != source_code_editors_.end())
     {
@@ -553,8 +564,7 @@ void RgBuildViewVulkan::SaveFile(RgMenuFileItemGraphics* file_item)
 
     assert(file_editor != nullptr);
     assert(clone_index_ < project_->clones.size());
-    if (file_editor != nullptr && file_menu_ != nullptr &&
-        (clone_index_ < project_->clones.size()))
+    if (file_editor != nullptr && file_menu_ != nullptr && (clone_index_ < project_->clones.size()))
     {
         // Check if the file needs reassembling (modified SPIR-V disassembly).
         bool need_reassemble = false;
@@ -568,9 +578,9 @@ void RgBuildViewVulkan::SaveFile(RgMenuFileItemGraphics* file_item)
         // If so, we have to replace the original spv binary with the modified disassembly file in the Project.
         if (need_reassemble && file_editor->document()->isModified())
         {
-            RgPipelineStage stage = file_item->GetStage();
+            RgPipelineStage    stage                = file_item->GetStage();
             const std::string& spv_disasm_file_path = spv_disasm_files_[stage];
-            QFileInfo file_info(spv_disasm_file_path.c_str());
+            QFileInfo          file_info(spv_disasm_file_path.c_str());
 
             // Write the editor text to file if the file path is valid.
             if (!spv_disasm_file_path.empty())
@@ -581,7 +591,7 @@ void RgBuildViewVulkan::SaveFile(RgMenuFileItemGraphics* file_item)
             // Show the Code Editor title message warning the user about replacing original spv binary file
             // with its disassembly in the project.
             const std::string msg = file_info.fileName().toStdString() + ". " + kStrSourceEditorTitlebarSpirvDisasmSavedA + " " +
-                kStrFileContextMenuRestoreSpv + " " + kStrSourceEditorTitlebarSpirvDisasmSavedB;
+                                    kStrFileContextMenuRestoreSpv + " " + kStrSourceEditorTitlebarSpirvDisasmSavedB;
             file_editor->SetTitleBarText(msg);
 
             // If it's the current item, display the message on the title bar.
@@ -595,7 +605,7 @@ void RgBuildViewVulkan::SaveFile(RgMenuFileItemGraphics* file_item)
 
             // Replace the spv binary file with its disassembly in the project, File Menu and in the Code Editor map.
             const std::string& spv_file_path = file_item->GetFilename();
-            auto editor = source_code_editors_.find(spv_file_path);
+            auto               editor        = source_code_editors_.find(spv_file_path);
             assert(editor != source_code_editors_.end());
             if (editor != source_code_editors_.end())
             {
@@ -605,12 +615,11 @@ void RgBuildViewVulkan::SaveFile(RgMenuFileItemGraphics* file_item)
             }
 
             // Store the original spv binary path to the project so that a user can restore it later.
-            std::shared_ptr<RgProjectCloneVulkan> vulkan_clone =
-                std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+            std::shared_ptr<RgProjectCloneVulkan> vulkan_clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
             assert(vulkan_clone != nullptr);
             if (vulkan_clone != nullptr)
             {
-                vulkan_clone->spv_backup_.type = vulkan_clone->pipeline.type;
+                vulkan_clone->spv_backup_.type                 = vulkan_clone->pipeline.type;
                 vulkan_clone->spv_backup_.shader_stages[stage] = spv_file_path;
 
                 // Replace file path in the project.
@@ -829,7 +838,8 @@ void RgBuildViewVulkan::ConnectPipelineStateViewSignals()
         assert(is_connected);
 
         // Connect the pipeline state tree focus out signal.
-        is_connected = connect(pipeline_state_view_, &RgPipelineStateView::PipelineStateTreeFocusOut, this, &RgBuildViewVulkan::HandlePipelineStateTreeFocusOut);
+        is_connected =
+            connect(pipeline_state_view_, &RgPipelineStateView::PipelineStateTreeFocusOut, this, &RgBuildViewVulkan::HandlePipelineStateTreeFocusOut);
         assert(is_connected);
 
         is_connected = connect(view_manager_, &RgViewManager::PsoEditorWidgetFocusOutSignal, this, &RgBuildViewVulkan::HandlePipelineStateTreeFocusOut);
@@ -926,7 +936,7 @@ void RgBuildViewVulkan::HandleSelectedFileChanged(const std::string& old_file_pa
 
                     // Make the disassembly view visible because the file has build outputs to display.
                     std::string selected_entrypoint_name = kStrDefaultVulkanGlslEntrypointName;
-                    emit SelectedEntrypointChanged(current_target_gpu_, new_file_path, selected_entrypoint_name);
+                    emit        SelectedEntrypointChanged(current_target_gpu_, new_file_path, selected_entrypoint_name);
 
                     // Update the titlebar for the current source editor.
                     UpdateSourceEditorTitlebar(editor);
@@ -957,7 +967,7 @@ void RgBuildViewVulkan::HandleSourceFileSelectedLineChanged(RgSourceCodeEditor* 
         if (disassembly_view_ != nullptr && !disassembly_view_->IsEmpty())
         {
             const std::string& input_filename = GetFilepathForEditor(editor);
-            bool isDisassembled = IsGcnDisassemblyGenerated(input_filename);
+            bool               isDisassembled = IsGcnDisassemblyGenerated(input_filename);
             if (isDisassembled)
             {
                 int correlated_line_number = kInvalidCorrelationLineIndex;
@@ -991,9 +1001,8 @@ void RgBuildViewVulkan::HandleAddExistingFile()
     if (file_menu_ != nullptr)
     {
         std::string file_path_to_add;
-        bool is_ok = RgUtils::OpenFileDialog(this, RgProjectAPI::kVulkan, file_path_to_add);
-        if (is_ok && !file_path_to_add.empty() && RgUtils::IsFileExists(file_path_to_add) &&
-            !file_menu_->IsFileInMenu(file_path_to_add))
+        bool        is_ok = RgUtils::OpenFileDialog(this, RgProjectAPI::kVulkan, file_path_to_add);
+        if (is_ok && !file_path_to_add.empty() && RgUtils::IsFileExists(file_path_to_add) && !file_menu_->IsFileInMenu(file_path_to_add))
         {
             // Convert the path separators to match the style used in the session metadata.
             std::string native_file_path = QDir::toNativeSeparators(file_path_to_add.c_str()).toStdString();
@@ -1050,8 +1059,7 @@ void RgBuildViewVulkan::HandleExistingFileDragAndDrop(RgPipelineStage stage, con
     assert(file_menu_ != nullptr);
     if (file_menu_ != nullptr && !file_path_to_add.empty())
     {
-        if (!file_menu_->IsFileInMenu(file_path_to_add) &&
-            RgUtils::IsFileExists(file_path_to_add))
+        if (!file_menu_->IsFileInMenu(file_path_to_add) && RgUtils::IsFileExists(file_path_to_add))
         {
             // Convert the path separators to match the style used in the session metadata.
             std::string native_file_path = QDir::toNativeSeparators(file_path_to_add.c_str()).toStdString();
@@ -1091,11 +1099,10 @@ void RgBuildViewVulkan::HandleRemoveFileButtonClicked(RgPipelineStage stage)
 
             if (is_valid_range)
             {
-                std::shared_ptr<RgGraphicsProjectClone> graphics_clone
-                    = std::dynamic_pointer_cast<RgGraphicsProjectClone>(project_->clones[clone_index_]);
+                std::shared_ptr<RgGraphicsProjectClone> graphics_clone = std::dynamic_pointer_cast<RgGraphicsProjectClone>(project_->clones[clone_index_]);
 
                 std::string stage_file_path;
-                bool is_stage_occupied = RgConfigManager::Instance().GetShaderStageFilePath(stage, graphics_clone, stage_file_path);
+                bool        is_stage_occupied = RgConfigManager::Instance().GetShaderStageFilePath(stage, graphics_clone, stage_file_path);
 
                 assert(is_stage_occupied);
                 if (is_stage_occupied)
@@ -1151,7 +1158,7 @@ void RgBuildViewVulkan::HandleRemoveFileButtonClicked(RgPipelineStage stage)
 
                             // Emit a signal to update various menu items.
                             const bool is_menu_empty = vulkan_file_menu->IsEmpty();
-                            emit vulkan_file_menu->FileMenuItemCountChanged(is_menu_empty);
+                            emit       vulkan_file_menu->FileMenuItemCountChanged(is_menu_empty);
                         }
 
                         DestroyBuildOutputsForFile(stage_file_path);
@@ -1187,7 +1194,7 @@ void RgBuildViewVulkan::HandleRestoreOriginalSpvClicked(RgPipelineStage stage)
     if (file_item != nullptr && file_menu_ != nullptr)
     {
         const std::string spv_disasm = file_item->GetFilename();
-        const std::string orig_spv = vulkan_clone->spv_backup_.shader_stages[stage];
+        const std::string orig_spv   = vulkan_clone->spv_backup_.shader_stages[stage];
 
         if (ShowRevertToSpvBinaryConfirmation(orig_spv))
         {
@@ -1254,11 +1261,18 @@ bool RgBuildViewVulkan::CreateMenu(QWidget* parent)
     bool is_connected = connect(file_menu_, &RgMenuVulkan::EnablePipelineMenuItem, this, &RgBuildViewVulkan::EnablePipelineMenuItem);
     assert(is_connected);
 
-     // Connect disable build settings menu item signals.
+    // Connect disable build settings menu item signals.
     is_connected = connect(file_menu_, &RgMenuVulkan::EnableBuildSettingsMenuItem, this, &RgBuildViewVulkan::EnableBuildSettingsMenuItem);
     assert(is_connected);
 
+    connect(&QtCommon::QtUtils::ColorTheme::Get(), &QtCommon::QtUtils::ColorTheme::ColorThemeUpdated, this, &RgBuildViewVulkan::ReapplyMenuStyleSheet);
+
     return file_menu_ != nullptr;
+}
+
+void RgBuildViewVulkan::ReapplyMenuStyleSheet()
+{
+    factory_->ApplyFileMenuStylesheet(file_menu_);
 }
 
 void RgBuildViewVulkan::HandleEnumListWidgetStatus(bool is_open)
@@ -1284,7 +1298,8 @@ bool RgBuildViewVulkan::CreatePipelineStateModel()
         if (pipeline_state_model_ != nullptr)
         {
             // Connect the list widget status signal.
-            bool is_connected = connect(pipeline_state_model_, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal, this, &RgBuildViewVulkan::HandleEnumListWidgetStatus);
+            bool is_connected =
+                connect(pipeline_state_model_, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal, this, &RgBuildViewVulkan::HandleEnumListWidgetStatus);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
@@ -1300,20 +1315,19 @@ bool RgBuildViewVulkan::CreatePipelineStateModel()
 
                 if (res)
                 {
-                    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone =
-                        std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+                    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
                     assert(vulkan_clone != nullptr);
                     if (vulkan_clone != nullptr)
                     {
-                        bool is_pipeline_state_initialized = false;
+                        bool        is_pipeline_state_initialized = false;
                         std::string error_string;
 
                         assert(pipeline_state_index_ < vulkan_clone->pso_states.size());
                         if (pipeline_state_index_ < vulkan_clone->pso_states.size())
                         {
                             RgPipelineState& currentPipelineState = vulkan_clone->pso_states[pipeline_state_index_];
-                            bool             is_state_file_exists    = RgUtils::IsFileExists(currentPipelineState.pipeline_state_file_path);
+                            bool             is_state_file_exists = RgUtils::IsFileExists(currentPipelineState.pipeline_state_file_path);
                             if (is_state_file_exists)
                             {
                                 // Load the state file from disk.
@@ -1404,8 +1418,7 @@ void RgBuildViewVulkan::CreatePipelineStateView(QWidget* parent)
 
             if (res)
             {
-                std::shared_ptr<RgProjectCloneVulkan> clone =
-                    std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+                std::shared_ptr<RgProjectCloneVulkan> clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
                 assert(clone != nullptr);
                 if (clone != nullptr)
@@ -1430,13 +1443,12 @@ void RgBuildViewVulkan::ConnectDisassemblyViewApiSpecificSignals()
     if (disassembly_view_ != nullptr)
     {
         // Connect the handler invoked when the user changes the selected entry point.
-        bool is_connected = connect(this, &RgBuildViewVulkan::SelectedEntrypointChanged,
-            disassembly_view_, &RgIsaDisassemblyView::HandleSelectedEntrypointChanged);
+        bool is_connected =
+            connect(this, &RgBuildViewVulkan::SelectedEntrypointChanged, disassembly_view_, &RgIsaDisassemblyView::HandleSelectedEntrypointChanged);
         assert(is_connected);
 
         // Connect the remove button focus events.
-        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::RemoveFileMenuButtonFocus,
-            file_menu_, &RgMenuVulkan::HandleRemoveFileMenuButtonFocus);
+        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::RemoveFileMenuButtonFocus, file_menu_, &RgMenuVulkan::HandleRemoveFileMenuButtonFocus);
         assert(is_connected);
     }
 }
@@ -1455,7 +1467,7 @@ bool RgBuildViewVulkan::IsSourceFileInProject(const std::string& source_file_pat
 
     // Step through all possible pipeline stages to check if the given source file exists.
     uint32_t first_stage = static_cast<uint32_t>(RgPipelineStage::kVertex);
-    uint32_t last_stage = static_cast<uint32_t>(RgPipelineStage::kCompute);
+    uint32_t last_stage  = static_cast<uint32_t>(RgPipelineStage::kCompute);
 
     assert(project_ != nullptr);
     if (project_ != nullptr)
@@ -1504,10 +1516,10 @@ bool RgBuildViewVulkan::ReplaceInputFileInBuildOutput(const std::string& old_fil
     if (ret)
     {
         auto first_target_gpu = build_outputs_.begin();
-        auto last_target_gpu = build_outputs_.end();
+        auto last_target_gpu  = build_outputs_.end();
         for (auto targetGpuIter = first_target_gpu; targetGpuIter != last_target_gpu; ++targetGpuIter)
         {
-            ret = false;
+            ret                                            = false;
             std::shared_ptr<RgCliBuildOutput> build_output = targetGpuIter->second;
 
             // Search for outputs for the given source file and replace its key (input file path) with the new one.
@@ -1520,7 +1532,7 @@ bool RgBuildViewVulkan::ReplaceInputFileInBuildOutput(const std::string& old_fil
                     auto outputs = it->second;
                     build_output->per_file_output.erase(it);
                     build_output->per_file_output[new_file_path] = outputs;
-                    ret = true;
+                    ret                                          = true;
                 }
             }
         }
@@ -1549,7 +1561,8 @@ bool RgBuildViewVulkan::CreateNewSourceFile(RgPipelineStage stage, const std::st
 
             // Generate a path to where the new empty file will live in the projects directory.
             std::string new_file_name;
-            RgConfigManager::GenerateNewSourceFilepath(project_->project_name, clone_index_, source_file_name, file_extension.str(), new_file_name, full_source_file_path);
+            RgConfigManager::GenerateNewSourceFilepath(
+                project_->project_name, clone_index_, source_file_name, file_extension.str(), new_file_name, full_source_file_path);
 
             // Ensure that the folder where the file will be saved already exists.
             std::string sourcefile_folder;
@@ -1622,8 +1635,7 @@ bool RgBuildViewVulkan::CreateProject(RgPipelineType pipeline_type)
 
                 if (res)
                 {
-                    std::shared_ptr<RgProjectCloneVulkan> clone =
-                        std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+                    std::shared_ptr<RgProjectCloneVulkan> clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
                     // Initialize the clone's pipeline type.
                     clone->pipeline.type = pipeline_type;
@@ -1659,8 +1671,7 @@ void RgBuildViewVulkan::CreatePipelineStateFile()
 
         if (res)
         {
-            std::shared_ptr<RgProjectCloneVulkan> clone =
-                std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+            std::shared_ptr<RgProjectCloneVulkan> clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
             assert(clone != nullptr);
             if (clone != nullptr)
@@ -1673,19 +1684,19 @@ void RgBuildViewVulkan::CreatePipelineStateFile()
                 pipeline_name_stream << pipeline_count;
                 std::string pipeline_state_name = pipeline_name_stream.str();
 
-                bool is_graphics_pipeline = (clone->pipeline.type == RgPipelineType::kGraphics);
-                const char* pso_file_extension = is_graphics_pipeline ? kStrDefaultPipelineFileExtensionGraphics :
-                    kStrDefaultPipelineFileExtensionCompute;
+                bool        is_graphics_pipeline = (clone->pipeline.type == RgPipelineType::kGraphics);
+                const char* pso_file_extension   = is_graphics_pipeline ? kStrDefaultPipelineFileExtensionGraphics : kStrDefaultPipelineFileExtensionCompute;
 
                 // Build a file path to a new pipeline state file.
                 std::string pipeline_state_file_path;
-                RgConfigManager::GenerateNewPipelineFilepath(project_->project_name, clone_index_, pipeline_state_name, pso_file_extension, pipeline_state_file_path);
+                RgConfigManager::GenerateNewPipelineFilepath(
+                    project_->project_name, clone_index_, pipeline_state_name, pso_file_extension, pipeline_state_file_path);
 
                 // Does the Pipeline State File's target directory already exist? Pipeline State
                 // files are stored alongside the clone's source files. If the directory does not
                 // yet exist, it needs to be created before attempting to write the file.
                 std::string directory_path;
-                bool is_ok = RgUtils::ExtractFileDirectory(pipeline_state_file_path, directory_path);
+                bool        is_ok = RgUtils::ExtractFileDirectory(pipeline_state_file_path, directory_path);
                 if (is_ok)
                 {
                     bool directory_exists = RgUtils::IsDirExists(directory_path);
@@ -1697,10 +1708,10 @@ void RgBuildViewVulkan::CreatePipelineStateFile()
 
                 if (is_ok)
                 {
-                    RgPipelineState pipeline_state_file = {};
-                    pipeline_state_file.name = pipeline_state_name;
+                    RgPipelineState pipeline_state_file          = {};
+                    pipeline_state_file.name                     = pipeline_state_name;
                     pipeline_state_file.pipeline_state_file_path = pipeline_state_file_path;
-                    pipeline_state_file.is_active = true;
+                    pipeline_state_file.is_active                = true;
 
                     // Add the new PSO file to the current clone's PSO states vector.
                     clone->pso_states.push_back(pipeline_state_file);
@@ -1732,8 +1743,7 @@ void RgBuildViewVulkan::SetStageSourceFile(RgPipelineStage stage, const std::str
                 // Enable reverting to original SPIR-V binary if it's present in the Project Clone.
                 if (fileAdded && file_type.first == RgVulkanInputType::kSpirvTxt)
                 {
-                    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone =
-                        std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+                    std::shared_ptr<RgProjectCloneVulkan> vulkan_clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
                     assert(vulkan_clone != nullptr);
                     if (vulkan_clone != nullptr)
@@ -1779,7 +1789,7 @@ void RgBuildViewVulkan::SetStageSourceFile(RgPipelineStage stage, const std::str
 bool RgBuildViewVulkan::DisasmSpvFile(const std::string& spv_file, std::string& spv_disasm_file)
 {
     std::string proj_dir;
-    bool is_ok = RgUtils::ExtractFileDirectory(project_->project_file_full_path, proj_dir);
+    bool        is_ok = RgUtils::ExtractFileDirectory(project_->project_file_full_path, proj_dir);
     assert(is_ok);
     if (is_ok && RgUtils::ConstructSpvDisasmFileName(proj_dir, spv_file, spv_disasm_file))
     {
@@ -1790,8 +1800,7 @@ bool RgBuildViewVulkan::DisasmSpvFile(const std::string& spv_file, std::string& 
         if (is_ok)
         {
             // Get the "alternative compiler path" setting value.
-            std::shared_ptr<RgProjectCloneVulkan> vulkan_clone =
-                std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+            std::shared_ptr<RgProjectCloneVulkan> vulkan_clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
 
             assert(vulkan_clone != nullptr && vulkan_clone->build_settings != nullptr);
             if (vulkan_clone != nullptr && vulkan_clone->build_settings != nullptr)
@@ -1839,7 +1848,7 @@ void RgBuildViewVulkan::HandlePipelineStateTreeFocusOut()
     assert(pso_editor_frame_ != nullptr);
     if (pso_editor_frame_ != nullptr)
     {
-        QString style_sheet_string = QString("#") + kStrPsoEditorFrameName + QString(" { border: 1px solid black }");
+        QString style_sheet_string = QString("#") + kStrPsoEditorFrameName + QString(" { border: 1px solid palette(text) }");
         pso_editor_frame_->setStyleSheet(style_sheet_string);
     }
 }
@@ -1848,7 +1857,7 @@ void RgBuildViewVulkan::UpdateApplicationNotificationMessage()
 {
     std::string message = "";
     std::string tooltip = "";
-    size_t pos = cli_output_window_->GetText().find("vk-spv-offline");
+    size_t      pos     = cli_output_window_->GetText().find("vk-spv-offline");
     if (pos != std::string::npos)
     {
         message = kStrApplicationInformationMessage;

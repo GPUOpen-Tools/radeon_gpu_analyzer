@@ -73,7 +73,7 @@ private:
     void LostFocus();
 
     // The Build Settings file item interface.
-    Ui::RgMenuPipelineStateItem ui_;
+    Ui::rgMenuPipelineStateItem ui_;
 
     // Flag to keep track of whether this item is currently selected.
     bool current_ = false;

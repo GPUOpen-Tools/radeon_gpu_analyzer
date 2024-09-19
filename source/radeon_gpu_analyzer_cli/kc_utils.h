@@ -328,6 +328,12 @@ public:
 
     // Checks for available updates.
     static void CheckForUpdates();
+    
+    // Returns true if the target is Navi3 or beyond and false otherwise.
+    static bool IsStrix(const std::string& target_name);
+
+    // Returns true if the target is Navi3 or beyond and false otherwise.
+    static bool IsNavi3AndBeyond(const std::string& target_name);
 
     // Returns true if the target is of the Navi3 generation and false otherwise.
     static bool IsNavi3Target(const std::string& target_name);
@@ -382,6 +388,9 @@ public:
 
     // Returns true if the compute bit is set for given entry_type.
     static bool IsComputeBitSet(RgEntryType rga_entry_type);
+
+    // Invoke the amdgpu-dis executable.
+    static bool InvokeAmdgpudis(const std::string& cmd_line_options, bool should_print_cmd, std::string& out_text, std::string& error_txt);
 
 private:
     // This is a static class (no instances).

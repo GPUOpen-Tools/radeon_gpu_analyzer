@@ -36,8 +36,8 @@
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
 // Names of special widgets within the disassembly view.
-static const char* kStrDisassemblyColumnVisibilityList = "DisassemblyColumnVisibilityList";
-static const char* kStrDisassemblyColumnListItemCheckbox = "ListWidgetCheckBox";
+static const char* kStrDisassemblyColumnVisibilityList      = "DisassemblyColumnVisibilityList";
+static const char* kStrDisassemblyColumnListItemCheckbox    = "ListWidgetCheckBox";
 static const char* kStrDisassemblyColumnListItemAllCheckbox = "ListWidgetAllCheckBox";
 
 // Object name associated with the target GPU dropdown list.
@@ -49,8 +49,8 @@ const int kPushButtonFontSize = 11;
 // Error message for missing live VGPR output file.
 const QString kStrLiveVgprFileMissingError = "Live VGPR output file missing.";
 
-RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent) :
-    QWidget(parent)
+RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent)
+    : QWidget(parent)
 {
     ui_.setupUi(this);
 
@@ -95,14 +95,13 @@ RgIsaDisassemblyView::~RgIsaDisassemblyView()
     }
 }
 
-
 void RgIsaDisassemblyView::ClearBuildOutput()
 {
     if (!gpu_tab_views_.empty())
     {
         // Destroy all existing GPU tabs.
         auto first_gpu_tab = gpu_tab_views_.begin();
-        auto last_gpu_tab = gpu_tab_views_.end();
+        auto last_gpu_tab  = gpu_tab_views_.end();
         for (auto gpu_tab_iter = first_gpu_tab; gpu_tab_iter != last_gpu_tab; ++gpu_tab_iter)
         {
             ui_.disassemblyTableHostWidget->removeWidget(gpu_tab_iter->second);
@@ -135,7 +134,10 @@ void RgIsaDisassemblyView::RemoveInputFileEntries(const std::string& input_file_
     DestroyResourceUsageViewsForFile(input_file_path);
 }
 
-void RgIsaDisassemblyView::HandleInputFileSelectedLineChanged(const std::string& target_gpu, const std::string& input_file_path, std::string& entry_name, int line_index)
+void RgIsaDisassemblyView::HandleInputFileSelectedLineChanged(const std::string& target_gpu,
+                                                              const std::string& input_file_path,
+                                                              std::string&       entry_name,
+                                                              int                line_index)
 {
     // Get the currently active stacked view.
     RgIsaDisassemblyTabView* current_tab_view = GetTargetGpuTabWidgetByTabName(target_gpu);
@@ -147,7 +149,9 @@ void RgIsaDisassemblyView::HandleInputFileSelectedLineChanged(const std::string&
     }
 }
 
-void RgIsaDisassemblyView::HandleSelectedEntrypointChanged(const std::string& target_gpu, const std::string& input_file_path, const std::string& selected_entrypoint_name)
+void RgIsaDisassemblyView::HandleSelectedEntrypointChanged(const std::string& target_gpu,
+                                                           const std::string& input_file_path,
+                                                           const std::string& selected_entrypoint_name)
 {
     // Get the currently active stacked view.
     RgIsaDisassemblyTabView* target_tab_view = GetTargetGpuTabWidgetByTabName(target_gpu);
@@ -210,14 +214,14 @@ void RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(QCheckBox* 
     if (all_checked)
     {
         // All the items were checked, so disable the "All" option.
-        QListWidgetItem* all_item = ui_.columnVisibilityArrowPushButton->FindItem(0);
-        QCheckBox* all_check_box = (QCheckBox*)all_item->listWidget()->itemWidget(all_item);
+        QListWidgetItem* all_item      = ui_.columnVisibilityArrowPushButton->FindItem(0);
+        QCheckBox*       all_check_box = (QCheckBox*)all_item->listWidget()->itemWidget(all_item);
         all_check_box->setDisabled(true);
     }
     else
     {
-        QListWidgetItem* all_item = ui_.columnVisibilityArrowPushButton->FindItem(0);
-        QCheckBox* all_check_box = (QCheckBox*)all_item->listWidget()->itemWidget(all_item);
+        QListWidgetItem* all_item      = ui_.columnVisibilityArrowPushButton->FindItem(0);
+        QCheckBox*       all_check_box = (QCheckBox*)all_item->listWidget()->itemWidget(all_item);
         all_check_box->setDisabled(false);
     }
 
@@ -304,15 +308,18 @@ void RgIsaDisassemblyView::HandleTargetGpuChanged()
 void RgIsaDisassemblyView::ConnectDisassemblyTabViewSignals(RgIsaDisassemblyTabView* entry_view)
 {
     // Connect the new disassembly GPU tab's source input file highlight line changed signal.
-    bool is_connected = connect(entry_view, &RgIsaDisassemblyTabView::InputSourceHighlightedLineChanged, this, &RgIsaDisassemblyView::InputSourceHighlightedLineChanged);
+    bool is_connected =
+        connect(entry_view, &RgIsaDisassemblyTabView::InputSourceHighlightedLineChanged, this, &RgIsaDisassemblyView::InputSourceHighlightedLineChanged);
     assert(is_connected);
 
     // Connect the disassembly table's resized event handler.
-    is_connected = connect(entry_view, &RgIsaDisassemblyTabView::DisassemblyTableWidthResizeRequested, this, &RgIsaDisassemblyView::DisassemblyTableWidthResizeRequested);
+    is_connected =
+        connect(entry_view, &RgIsaDisassemblyTabView::DisassemblyTableWidthResizeRequested, this, &RgIsaDisassemblyView::DisassemblyTableWidthResizeRequested);
     assert(is_connected);
 
     // Connect the disassembly view's column visibility updated signal.
-    is_connected = connect(this, &RgIsaDisassemblyView::DisassemblyColumnVisibilityUpdated, entry_view, &RgIsaDisassemblyTabView::HandleColumnVisibilityFilterStateChanged);
+    is_connected = connect(
+        this, &RgIsaDisassemblyView::DisassemblyColumnVisibilityUpdated, entry_view, &RgIsaDisassemblyTabView::HandleColumnVisibilityFilterStateChanged);
     assert(is_connected);
 
     // Connect the disassembly view's set frame border red signal.
@@ -456,7 +463,8 @@ void RgIsaDisassemblyView::CreateTargetGpuListControls()
     ui_.targetGpuPushButton->InitSingleSelect(this, "Target GPU", false);
 
     // Connect the signal used to handle a change in the selected target GPU.
-    [[maybe_unused]] bool is_connected = connect(ui_.targetGpuPushButton, &ArrowIconComboBox::SelectionChanged, this, &RgIsaDisassemblyView::HandleTargetGpuChanged);
+    [[maybe_unused]] bool is_connected =
+        connect(ui_.targetGpuPushButton, &ArrowIconComboBox::SelectionChanged, this, &RgIsaDisassemblyView::HandleTargetGpuChanged);
     assert(is_connected);
 }
 
@@ -476,7 +484,7 @@ QString RgIsaDisassemblyView::GetDisassemblyColumnName(RgIsaDisassemblyTableColu
         {RgIsaDisassemblyTableColumns::kFunctionalUnit, kStrDisassemblyTableColumnFunctionalUnit},
         {RgIsaDisassemblyTableColumns::kCycles, kStrDisassemblyTableColumnCycles},
         {RgIsaDisassemblyTableColumns::kBinaryEncoding, kStrDisassemblyTableColumnBinaryEncoding},
-        { RgIsaDisassemblyTableColumns::kLiveVgprs,      kStrDisassemblyTableLiveVgprHeaderPart},
+        {RgIsaDisassemblyTableColumns::kLiveVgprs, kStrDisassemblyTableLiveVgprHeaderPart},
     };
 
     auto column_name_iter = kColumnNameMap.find(column);
@@ -511,7 +519,7 @@ void RgIsaDisassemblyView::PopulateTargetGpuList(const RgBuildOutputsMap& build_
 {
     // Get a mapping of the compute capability to architecture.
     std::map<std::string, std::string> compute_capability_to_arch;
-    bool has_arch_mapping = RgUtils::GetComputeCapabilityToArchMapping(compute_capability_to_arch);
+    bool                               has_arch_mapping = RgUtils::GetComputeCapabilityToArchMapping(compute_capability_to_arch);
 
     // Block signals to stop updates when each new GPU is added to the list.
     ui_.targetGpuPushButton->blockSignals(true);
@@ -532,7 +540,7 @@ void RgIsaDisassemblyView::PopulateTargetGpuList(const RgBuildOutputsMap& build_
 
             // If applicable, prepend the gfx notation (for example, "gfx802/Tonga" for "Tonga").
             std::string gfx_notation;
-            bool has_gfx_notation = RgUtils::GetGfxNotation(target_gpu, gfx_notation);
+            bool        has_gfx_notation = RgUtils::GetGfxNotation(target_gpu, gfx_notation);
             if (has_gfx_notation && !gfx_notation.empty())
             {
                 presented_name << gfx_notation << "/";
@@ -557,13 +565,11 @@ void RgIsaDisassemblyView::PopulateTargetGpuList(const RgBuildOutputsMap& build_
     assert(!targets.empty());
 
     // Sort and choose the latest target.
-    std::sort(targets.begin(),
-        targets.end(), [&](const std::string& a, const std::string& b)
-    {
+    std::sort(targets.begin(), targets.end(), [&](const std::string& a, const std::string& b) {
         const char* kGfxNotationToken = "gfx";
-        bool ret = true;
-        size_t sz_a = a.find(kGfxNotationToken);
-        size_t sz_b = b.find(kGfxNotationToken);
+        bool        ret               = true;
+        size_t      sz_a              = a.find(kGfxNotationToken);
+        size_t      sz_b              = b.find(kGfxNotationToken);
         if (sz_a == std::string::npos && sz_b == std::string::npos)
         {
             // Neither name is in gfx-notation, compare using standard string logic.
@@ -585,16 +591,16 @@ void RgIsaDisassemblyView::PopulateTargetGpuList(const RgBuildOutputsMap& build_
             assert(split_b.size() > 1);
             if (split_a.size() > 1 && split_b.size() > 1)
             {
-                 try
-                 {
-                     int numA = std::stoi(split_a[1], nullptr, 16);
-                     int numB = std::stoi(split_b[1], nullptr, 16);
-                     ret = ((numB - numA) > 0);
-                 }
-                 catch (...)
-                 {
-                     ret = false;
-                 }
+                try
+                {
+                    int numA = std::stoi(split_a[1], nullptr, 16);
+                    int numB = std::stoi(split_b[1], nullptr, 16);
+                    ret      = ((numB - numA) > 0);
+                }
+                catch (...)
+                {
+                    ret = false;
+                }
             }
         }
         return !ret;
@@ -624,7 +630,7 @@ bool RgIsaDisassemblyView::PopulateDisassemblyEntries(const GpuToEntryVector& gp
         // Step through each GPU and insert a new RgIsaDisassemblyTabView into a new tab.
         for (auto gpu_entry_iter = gpu_to_disassembly_csv_entries.begin(); gpu_entry_iter != gpu_to_disassembly_csv_entries.end(); ++gpu_entry_iter)
         {
-            const std::string& gpu_name = gpu_entry_iter->first;
+            const std::string&                gpu_name    = gpu_entry_iter->first;
             const std::vector<RgEntryOutput>& gpu_entries = gpu_entry_iter->second;
 
             // Does a tab already exist for the target GPU we're loading results for?
@@ -670,7 +676,7 @@ bool RgIsaDisassemblyView::PopulateResourceUsageEntries(const GpuToEntryVector& 
         // Step through each GPU and insert a new RgResourceView underneath the disassembly table.
         for (auto gpu_entry_iter = gpu_to_resource_usage_csv_entries.begin(); gpu_entry_iter != gpu_to_resource_usage_csv_entries.end(); ++gpu_entry_iter)
         {
-            const std::string& gpu_name = gpu_entry_iter->first;
+            const std::string&                gpu_name    = gpu_entry_iter->first;
             const std::vector<RgEntryOutput>& gpu_entries = gpu_entry_iter->second;
 
             // Create a resource usage disassembly table for each entry, and add it to the layout.
@@ -678,7 +684,7 @@ bool RgIsaDisassemblyView::PopulateResourceUsageEntries(const GpuToEntryVector& 
             for (const RgEntryOutput& entry : gpu_entries)
             {
                 OutputFileTypeFinder outputFileTypeSearcher(RgCliOutputFileType::kHwResourceUsageFile);
-                auto csv_file_iter = std::find_if(entry.outputs.begin(), entry.outputs.end(), outputFileTypeSearcher);
+                auto                 csv_file_iter = std::find_if(entry.outputs.begin(), entry.outputs.end(), outputFileTypeSearcher);
                 if (csv_file_iter != entry.outputs.end())
                 {
                     // Create a CSV parser to read the resource usage file.
@@ -686,12 +692,12 @@ bool RgIsaDisassemblyView::PopulateResourceUsageEntries(const GpuToEntryVector& 
 
                     // Attempt to parse the file.
                     std::string parse_error_string;
-                    bool parsed_successfully = resource_usage_file_parser.Parse(parse_error_string);
+                    bool        parsed_successfully = resource_usage_file_parser.Parse(parse_error_string);
                     if (parsed_successfully)
                     {
                         // Extract the parsed data, and populate the resource usage view.
                         const RgResourceUsageData& resource_usage_data = resource_usage_file_parser.GetData();
-                        RgResourceUsageView* resource_usage_view = new RgResourceUsageView();
+                        RgResourceUsageView*       resource_usage_view = new RgResourceUsageView();
                         resource_usage_view->PopulateView(resource_usage_data);
                         resource_usage_text_ = resource_usage_view->GetResourceUsageText();
                         resource_usage_font_ = resource_usage_view->GetResourceUsageFont();
@@ -761,14 +767,15 @@ void RgIsaDisassemblyView::PopulateColumnVisibilityList()
     {
         // Add an item for each possible column in the table.
         QString    column_name = GetDisassemblyColumnName(static_cast<RgIsaDisassemblyTableColumns>(column_index));
-        bool is_checked = global_settings->visible_disassembly_view_columns[column_index];
+        bool       is_checked  = global_settings->visible_disassembly_view_columns[column_index];
         QCheckBox* check_box   = ui_.columnVisibilityArrowPushButton->AddCheckboxItem(column_name, column_index, is_checked, false);
 
         // Set list widget's check box's focus proxy to be the frame.
         SetCheckBoxFocusProxies(check_box);
     }
 
-    bool is_connected = connect(ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::CheckboxChanged, this, &RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked);
+    bool is_connected = connect(
+        ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::CheckboxChanged, this, &RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked);
     Q_ASSERT(is_connected);
 
     UpdateAllCheckBox();
@@ -842,7 +849,7 @@ void RgIsaDisassemblyView::DestroyDisassemblyViewsForFile(const std::string& inp
 
     // Step through each GPU tab and try to remove the entries associated with the given input file.
     auto start_tab = gpu_tab_views_.begin();
-    auto end_tab = gpu_tab_views_.end();
+    auto end_tab   = gpu_tab_views_.end();
     for (auto tab_iter = start_tab; tab_iter != end_tab; ++tab_iter)
     {
         // Search the tab for entries to remove.
@@ -887,8 +894,8 @@ void RgIsaDisassemblyView::DestroyResourceUsageViewsForFile(const std::string& i
     for (auto gpu_iter = gpu_resource_usage_views_.begin(); gpu_iter != gpu_resource_usage_views_.end(); ++gpu_iter)
     {
         // Find all resource views related to the given input file.
-        InputToEntrypointViews& input_file_to_views_iter = gpu_iter->second;
-        auto entrypoint_resource_usageviews_iter = input_file_to_views_iter.find(input_file_path);
+        InputToEntrypointViews& input_file_to_views_iter            = gpu_iter->second;
+        auto                    entrypoint_resource_usageviews_iter = input_file_to_views_iter.find(input_file_path);
         if (entrypoint_resource_usageviews_iter != input_file_to_views_iter.end())
         {
             // Step through each entrypoint's resource usage view, and destroy it.
@@ -1039,7 +1046,10 @@ void RgIsaDisassemblyView::ConnectTitleBarDoubleClick(const RgViewContainer* dis
     assert(disassembly_view_container != nullptr);
     if (disassembly_view_container != nullptr)
     {
-        [[maybe_unused]] bool is_connected = connect(ui_.viewTitlebar, &RgIsaDisassemblyViewTitlebar::ViewTitleBarDoubleClickedSignal, disassembly_view_container, &RgViewContainer::MaximizeButtonClicked);
+        [[maybe_unused]] bool is_connected = connect(ui_.viewTitlebar,
+                                                     &RgIsaDisassemblyViewTitlebar::ViewTitleBarDoubleClickedSignal,
+                                                     disassembly_view_container,
+                                                     &RgViewContainer::MaximizeButtonClicked);
         assert(is_connected);
     }
 }
@@ -1065,7 +1075,7 @@ bool RgIsaDisassemblyView::ReplaceInputFilePath(const std::string& old_file_path
         for (auto& gpu_and_resource_usage : gpu_resource_usage_views_)
         {
             auto& file_and_resource_usage = gpu_and_resource_usage.second;
-            auto it = file_and_resource_usage.find(old_file_path);
+            auto  it                      = file_and_resource_usage.find(old_file_path);
             if ((result = (it != file_and_resource_usage.end())) == true)
             {
                 std::map<std::string, RgResourceUsageView*> resUsageView = it->second;

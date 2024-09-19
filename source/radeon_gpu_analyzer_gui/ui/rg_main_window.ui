@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>RgMainWindow</class>
- <widget class="QMainWindow" name="rgMainWindow">
+ <widget class="QMainWindow" name="RgMainWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -79,12 +79,12 @@
            <number>0</number>
           </property>
           <widget class="QWidget" name="startTab">
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
            <attribute name="title">
             <string>START</string>
            </attribute>
-           <property name="styleSheet">
-           <string notr="true">background-color: rgb(255, 255, 255);</string>
-          </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <property name="spacing">
              <number>0</number>
@@ -111,10 +111,7 @@
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">QWidget#settingsTab
-{
-background:white;
-}</string>
+            <string notr="true"/>
            </property>
            <attribute name="title">
             <string>SETTINGS</string>
@@ -176,7 +173,7 @@ background:white;
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>31</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

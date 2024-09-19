@@ -39,9 +39,6 @@ namespace rga
 #ifdef RGA_DXR_ENABLED
         // Compile ray tracing pipeline.
         bool CompileRayTracingPipeline(const RgDx12Config& config, std::string& error_msg) const;
-
-        // Compile ray tracing shader.
-        bool CompileRayTracingShader(const RgDx12Config& config, std::string& error_msg) const;
 #endif
 
     private:

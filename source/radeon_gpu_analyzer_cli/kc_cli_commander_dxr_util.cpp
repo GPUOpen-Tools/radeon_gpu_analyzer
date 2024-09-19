@@ -1,5 +1,6 @@
 
 // C++
+#include <filesystem>
 #include <sstream>
 
 // External.
@@ -23,12 +24,21 @@
 
 static const char* kStrKernelName                                 = "Kernel name: ";
 static const char* kStrErrorFailedToCreateOutputFilenameForKernel = "Error: failed to construct output file name for kernel: ";
-static const char* kStrInfoKernelForKernel                        = " for kernel ";
+static const char* kStrInfoForShaderA                             = " shader";
+static const char* kStrInfoForShaderB                             = " ... ";
+static const char* kStrInfoExtractRayTracingResourceUsage         = "Extracting hardware resource usage for ";
+
+// Shader stage suffix.
+static const std::string kStrCS      = "cs";
+static const std::string kStrUnified = "unified";
 
 static void LogResult(bool result)
 {
     std::cout << (result ? kStrInfoSuccess : kStrInfoFailed) << std::endl;
 }
+
+// Initialize CLI session files.
+std::set<std::string> KcCLICommanderDxrUtil::session_output_files_ = {};
 
 bool KcCLICommanderDxrUtil::ParseIsaFilesToCSV(bool line_numbers) const
 {
@@ -89,16 +99,21 @@ bool KcCLICommanderDxrUtil::PerformLiveVgprAnalysis(const Config& config) const
             device_gtstr << device.c_str();
 
             // Inform the user.
-            std::cout << kStrInfoPerformingLiveregAnalysisVgpr << device << kStrInfoKernelForKernel << entry_name << "... ";
+            const auto&        p              = SeparateKernelAndKernelSubtype(entry_name);
+            const std::string& kernel_name    = p.first;
+            const std::string& kernel_subtype = p.second;
+            std::cout << kStrInfoPerformingLiveregAnalysisVgpr << kernel_subtype << kStrInfoForShaderA;
+            if (kernel_name != kStrCS)
+            {
+                std::cout << " " << kernel_name;
+            }
+            std::cout << kStrInfoForShaderB;
 
             // Construct a name for the output livereg file.
-            KcUtils::ConstructOutputFileName(config.livereg_analysis_file, 
-                                             kStrDefaultExtensionLivereg, 
-                                             kStrDefaultExtensionText, 
-                                             entry_name, 
-                                             device, 
-                                             livereg_out_filename);
-
+            std::string livereg_out_filename_std_string;
+            KcCLICommanderDxrUtil::ConstructOutputFileName(
+                config.livereg_analysis_file, kStrDefaultExtensionLivereg, kStrDefaultExtensionText, entry_name, device, livereg_out_filename_std_string);
+            livereg_out_filename << livereg_out_filename_std_string.c_str();
             if (!livereg_out_filename.isEmpty())
             {
                 KcUtils::PerformLiveRegisterAnalysis(isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line, false);
@@ -150,12 +165,25 @@ bool KcCLICommanderDxrUtil::PerformLiveSgprAnalysis(const Config& config) const
             device_gtstr << device.c_str();
 
             // Inform the user.
-            std::cout << kStrInfoPerformingLiveregAnalysisSgpr << device << kStrInfoKernelForKernel << entry_name << "... ";
+            const auto&        p              = SeparateKernelAndKernelSubtype(entry_name);
+            const std::string& kernel_name    = p.first;
+            const std::string& kernel_subtype = p.second;
+            std::cout << kStrInfoPerformingLiveregAnalysisSgpr << kernel_subtype << kStrInfoForShaderA;
+            if (kernel_name != kStrCS)
+            {
+                std::cout << " " << kernel_name;
+            }
+            std::cout << kStrInfoForShaderB;
 
             // Construct a name for the output livereg file.
-            KcUtils::ConstructOutputFileName(
-                config.sgpr_livereg_analysis_file, kStrDefaultExtensionLiveregSgpr, kStrDefaultExtensionText, entry_name, device, livereg_out_filename);
-
+            std::string livereg_out_filename_std_string;
+            KcCLICommanderDxrUtil::ConstructOutputFileName(config.sgpr_livereg_analysis_file,
+                                                           kStrDefaultExtensionLiveregSgpr,
+                                                           kStrDefaultExtensionText,
+                                                           entry_name,
+                                                           device,
+                                                           livereg_out_filename_std_string);
+            livereg_out_filename << livereg_out_filename_std_string.c_str();
             if (!livereg_out_filename.isEmpty())
             {
                 KcUtils::PerformLiveRegisterAnalysis(isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line, true);
@@ -207,13 +235,25 @@ bool KcCLICommanderDxrUtil::ExtractCFG(const Config& config) const
             gtString device_gtstr;
             device_gtstr << device.c_str();
 
-            bool is_per_basic_block_cfg = !config.block_cfg_file.empty();
-            std::cout << (is_per_basic_block_cfg ? kStrInfoContructingPerBlockCfg1 : kStrInfoContructingPerInstructionCfg1) << device << kStrInfoKernelForKernel
-                      << entry_name << "... ";
+            // Inform the user.
+            bool               is_per_basic_block_cfg = !config.block_cfg_file.empty();
+            const auto&        p                      = SeparateKernelAndKernelSubtype(entry_name);
+            const std::string& kernel_name            = p.first;
+            const std::string& kernel_subtype         = p.second;
+            std::cout << (is_per_basic_block_cfg ? kStrInfoContructingPerBlockCfg1 : kStrInfoContructingPerInstructionCfg1) << kernel_subtype
+                      << kStrInfoForShaderA;
+            if (kernel_name != kStrCS)
+            {
+                std::cout << " " << kernel_name;
+            }
+            std::cout << kStrInfoForShaderB;
 
             // Construct a name for the output CFG file.
             std::string base_file = (is_per_basic_block_cfg ? config.block_cfg_file : config.inst_cfg_file);
-            KcUtils::ConstructOutputFileName(base_file, KC_STR_DEFAULT_CFG_SUFFIX, kStrDefaultExtensionDot, entry_name, device, cfg_out_filename);
+            std::string cfg_out_filename_std_string;
+            KcCLICommanderDxrUtil::ConstructOutputFileName(
+                base_file, KC_STR_DEFAULT_CFG_SUFFIX, kStrDefaultExtensionDot, entry_name, device, cfg_out_filename_std_string);
+            cfg_out_filename << cfg_out_filename_std_string.c_str();
             if (!cfg_out_filename.isEmpty())
             {
                 KcUtils::GenerateControlFlowGraph(
@@ -292,8 +332,15 @@ beKA::beStatus KcCLICommanderDxrUtil::ExtractStatistics(const Config& config, co
 
             if (success)
             {
+                std::cout << kStrInfoExtractRayTracingResourceUsage << kernel_subtype << kStrInfoForShaderA;
+                if (kernel_name != kStrCS)
+                {
+                    std::cout << " " << kernel_name;
+                }
+                std::cout << kStrInfoForShaderB;
+
                 std::string stats_filename;
-                KcUtils::ConstructOutputFileName(
+                KcCLICommanderDxrUtil::ConstructOutputFileName(
                     base_stats_filename, kStrDefaultExtensionStats, kStrDefaultExtensionCsv, concat_kernel_name, current_device, stats_filename);
                 if (!outputMDItem.second.isa_file.empty() && !stats_filename.empty())
                 {
@@ -322,7 +369,7 @@ beKA::beStatus KcCLICommanderDxrUtil::ExtractStatistics(const Config& config, co
                         }
                     }
                 }
-            }            
+            }
 
             device = outputMDItem.first.first;
         }
@@ -341,7 +388,7 @@ bool KcCLICommanderDxrUtil::GenerateSessionMetadata(const Config& config) const
 
     if (ret && !output_metadata_.empty())
     {
-        ret = KcXmlWriter::GenerateClSessionMetadataFile(config.session_metadata_file, config.binary_codeobj_file, file_kernel_data, output_metadata_);
+        ret = KcXmlWriter::GenerateClSessionMetadataFile(config.session_metadata_file, binary_codeobj_file_, file_kernel_data, output_metadata_);
     }
 
     return ret;
@@ -389,16 +436,33 @@ bool KcCLICommanderDxrUtil::RunPostCompileSteps(const Config& config)
 std::string KcCLICommanderDxrUtil::CombineKernelAndKernelSubtype(const std::string& kernel, const std::string& kernel_subtype)
 {
     std::stringstream ss;
-    ss << kernel_subtype << "_" << kernel;
+    ss << kernel_subtype << "_";
+    if (kernel == kStrCS)
+    {
+        ss << kStrUnified;
+    }
+    else
+    {
+        ss << kernel;
+    }
     return ss.str();
 }
 
 std::pair<std::string, std::string> KcCLICommanderDxrUtil::SeparateKernelAndKernelSubtype(const std::string& combined_name)
 {
+    std::pair<std::string, std::string> ret;
     size_t             offset = combined_name.find('_');
     const std::string& ext    = (offset != std::string::npos &&   offset < combined_name.size()) ? combined_name.substr(0, offset) : "";
     const std::string& kernel = (offset != std::string::npos && ++offset < combined_name.size()) ? combined_name.substr(offset)    : "";
-    return {kernel, ext};
+    if (kernel == kStrUnified)
+    {
+        ret = {kStrCS, ext};
+    }
+    else
+    {
+        ret = {kernel, ext};
+    }
+    return ret;
 }
 
 beKA::beStatus KcCLICommanderDxrUtil::ConvertStats(const BeRtxPipelineFiles& isaFiles,
@@ -415,4 +479,35 @@ beKA::beStatus KcCLICommanderDxrUtil::ConvertStats(const BeRtxPipelineFiles& isa
         }
     }
     return status;
+}
+
+void KcCLICommanderDxrUtil::ConstructOutputFileName(const std::string& base_output_filename,
+                                                    const std::string& default_suffix,
+                                                    const std::string& default_extension,
+                                                    const std::string& entry_point_name,
+                                                    const std::string& device_name,
+                                                    std::string&       generated_filename)
+{
+    KcUtils::ConstructOutputFileName(base_output_filename, default_suffix, default_extension, entry_point_name, device_name, generated_filename);
+    auto found = session_output_files_.find(generated_filename);
+    if (found == session_output_files_.end())
+    {
+        session_output_files_.insert(generated_filename);
+    }
+    else
+    {
+        unsigned int counter = 1;
+        do
+        {
+            std::filesystem::path generated_filepath(generated_filename);
+            std::filesystem::path directory       = generated_filepath.parent_path();
+            std::string           filename_no_ext = generated_filepath.stem().string();
+            std::string           extension       = generated_filepath.extension().string();
+            generated_filepath                    = directory / (filename_no_ext + '_' + std::to_string(counter) + extension);
+            generated_filename                    = generated_filepath.string();
+            counter++;
+            found = session_output_files_.find(generated_filename);
+        } while (found != session_output_files_.end());
+        session_output_files_.insert(generated_filename);
+    }
 }

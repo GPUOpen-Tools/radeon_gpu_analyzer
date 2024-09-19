@@ -82,13 +82,18 @@ RgMenu* RgFactoryOpencl::CreateFileMenu(QWidget* parent)
     RgMenu* menu = new RgMenuOpencl(parent);
 
     // Apply the file menu stylesheet.
+    ApplyFileMenuStylesheet(menu);
+
+    return menu;
+}
+
+void RgFactoryOpencl::ApplyFileMenuStylesheet(QWidget* widget)
+{
     std::vector<std::string> stylesheet_file_names;
     stylesheet_file_names.push_back(kStylesheetPackage.file_menu_stylesheet);
     stylesheet_file_names.push_back(kStylesheetPackage.file_menu_api_stylesheet);
-    [[maybe_unused]] bool status = RgUtils::LoadAndApplyStyle(stylesheet_file_names, menu);
+    [[maybe_unused]] bool status = RgUtils::LoadAndApplyStyle(stylesheet_file_names, widget);
     assert(status);
-
-    return menu;
 }
 
 RgStartTab* RgFactoryOpencl::CreateStartTab(QWidget* parent)

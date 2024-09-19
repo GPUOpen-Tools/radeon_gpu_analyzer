@@ -5,9 +5,10 @@
 #include "common/rg_log.h"
 
 // Backend.
-#include "radeon_gpu_analyzer_backend/be_utils.h"
+#include "radeon_gpu_analyzer_backend/be_metadata_parser.h"
 #include "radeon_gpu_analyzer_backend/be_opencl_definitions.h"
 #include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
+#include "radeon_gpu_analyzer_backend/be_utils.h"
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_bin_util.h"
@@ -44,13 +45,15 @@ kRtxStageEntryTypes =
     RgEntryType::kDxrTraversal
 };
 
-static const char* kStrErrorCannotParseDisassembly     = "Error: failed to parse LLVM disassembly.";
-static const char* kStrErrorNoShaderFoundInDisassembly = "Error: LLVM disassembly does not contatin valid kernels.";
-static const char* kAmdgpuDisDotTextToken              = ".text";
-static const char* kAmdgpuDisShaderEndToken            = "_symend:";
-static const char* kAmdgpuDisDotSizeToken              = ".size";
-static const char* kAmdgpuDisKernelNameStartToken      = "_symend-";
-static const char* kAmdgpuDisKernelName                = "amdgpu_kernel_";
+static const char* kStrErrorCannotParseDisassembly          = "Error: failed to parse LLVM disassembly.";
+static const char* kStrErrorNoShaderFoundInDisassembly      = "Error: LLVM disassembly does not contatin valid kernels.";
+static const char* kAmdgpuDisDotTextToken                   = ".text";
+static const char* kAmdgpuDisShaderEndToken                 = "_symend:";
+static const char* kAmdgpuDisDotSizeToken                   = ".size";
+static const char* kAmdgpuDisKernelNameStartToken           = "_symend-";
+static const char* kAmdgpuDisKernelNameStartTokenWithQuotes = "_symend\"-";
+static const char* kAmdgpuDisShaderEndTokenNoColon          = "_symend";
+static const char* kAmdgpuDisKernelName                     = "amdgpu_kernel_";
 
 beKA::beStatus ParseAmdgpudisOutputGraphicStrategy::ParseAmdgpudisKernels(const std::string&                  amdgpu_dis_output,
                                                                           std::map<std::string, std::string>& kernel_to_disassembly,
@@ -99,6 +102,8 @@ beKA::beStatus ParseAmdgpudisOutputComputeStrategy::ParseAmdgpudisKernels(const 
 
             while (curr_pos != std::string::npos)
             {
+                bool is_kernel_name_in_quotes = false;
+
                 // Find the name of the kernel.
                 std::string kernel_name;
                 size_t      end_of_line = amdgpu_dis_output.find("\n", curr_pos);
@@ -110,12 +115,31 @@ beKA::beStatus ParseAmdgpudisOutputComputeStrategy::ParseAmdgpudisKernels(const 
                     kernel_name  = line.substr(start, end_of_line - start);
                     curr_pos     = end_of_line;
                 }
+                else
+                {
+                    found = line.find(kAmdgpuDisKernelNameStartTokenWithQuotes);
+                    if (found != std::string::npos)
+                    {
+                        is_kernel_name_in_quotes = true;
+                        size_t start             = found + strlen(kAmdgpuDisKernelNameStartTokenWithQuotes);
+                        kernel_name              = line.substr(start, end_of_line - start);
+                        kernel_name              = BeMangledKernelUtils::UnQuote(kernel_name);
+                        curr_pos                 = end_of_line;
+                    }
+                }
 
                 if (!kernel_name.empty() && curr_pos != std::string::npos)
                 {
                     // Construct the shader end token "kernel_name_symend:".
                     std::stringstream kernel_end_token_stream;
-                    kernel_end_token_stream << kernel_name << kAmdgpuDisShaderEndToken;
+                    if (is_kernel_name_in_quotes)
+                    {
+                        kernel_end_token_stream << BeMangledKernelUtils::Quote(kernel_name + kAmdgpuDisShaderEndTokenNoColon) << ":";
+                    }
+                    else
+                    {
+                        kernel_end_token_stream << kernel_name << kAmdgpuDisShaderEndToken;
+                    }
                     std::string kernel_token_end = kernel_end_token_stream.str();
 
                     // Extract the kernel disassembly.
@@ -123,6 +147,7 @@ beKA::beStatus ParseAmdgpudisOutputComputeStrategy::ParseAmdgpudisKernels(const 
                     kernel_offset_end              = amdgpu_dis_output.find(kernel_token_end, kernel_offset_begin);
                     std::string kernel_disassembly = amdgpu_dis_output.substr(curr_pos, kernel_offset_end - curr_pos);
                     BeUtils::TrimLeadingAndTrailingWhitespace(kernel_disassembly, kernel_disassembly);
+                    kernel_name                        = BeMangledKernelUtils::DemangleShaderName(kernel_name);
                     kernel_to_disassembly[kernel_name] = KcCLICommanderLightningUtil::PrefixWithISAHeader(kernel_name, kernel_disassembly);
                 }
                 else
@@ -271,7 +296,7 @@ void GraphicsBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config&   
         RgOutputFiles& stage_md = device_md[stage];
         if (stage_md.input_file.empty())
         {
-            stage_md.input_file = config.binary_codeobj_file;
+            stage_md.input_file = binary_codeobj_file_;
             stage_md.entry_type = GetEntryType(graphics_api_, stage);
             stage_md.device     = asic;
         }
@@ -353,7 +378,7 @@ beKA::beStatus RayTracingBinaryWorkflowStrategy::WriteOutputFiles(const Config& 
     assert(!kernel_to_disassembly.empty());
     if (!kernel_to_disassembly.empty())
     {
-        const std::string& isa_file = config.isa_file;
+        std::string base_isa_filename = config.isa_file;
         for (const auto& kernel : kernel_to_disassembly)
         {
             const auto& amdgpu_kernel_name    = kernel.first;
@@ -362,27 +387,26 @@ beKA::beStatus RayTracingBinaryWorkflowStrategy::WriteOutputFiles(const Config& 
             if (ExtractShaderSubtype(amdpal_pipeline_md, amdgpu_kernel_name, shader_kernel_subtype))
             {
                 std::string concat_kernel_name = KcCLICommanderDxrUtil::CombineKernelAndKernelSubtype(amdgpu_kernel_name, shader_kernel_subtype);
-                std::string amdgpu_out_file_name;
-                if (KcUtils::ConstructOutFileName(isa_file, concat_kernel_name, asic, kStrDefaultFilenameIsa, amdgpu_out_file_name))
+                std::string isa_filename;
+                KcCLICommanderDxrUtil::ConstructOutputFileName(
+                    base_isa_filename, kStrDefaultFilenameIsa, kStrDefaultExtensionText, concat_kernel_name, asic, isa_filename);
+                if (!isa_filename.empty())
                 {
-                    if (!amdgpu_out_file_name.empty())
-                    {
-                        KcUtils::DeleteFile(amdgpu_out_file_name);
-                    }
+                    KcUtils::DeleteFile(isa_filename);
 
-                    [[maybe_unused]] bool is_file_written = KcUtils::WriteTextFile(amdgpu_out_file_name, shader_kernel_content, nullptr);
+                    [[maybe_unused]] bool is_file_written = KcUtils::WriteTextFile(isa_filename, shader_kernel_content, nullptr);
                     assert(is_file_written);
-                    if (!KcUtils::FileNotEmpty(amdgpu_out_file_name))
+                    if (!KcUtils::FileNotEmpty(isa_filename))
                     {
                         status = beKA::beStatus::kBeStatusWriteToFileFailed;
                         std::stringstream error_stream;
-                        error_stream << concat_kernel_name << ", output file name " << amdgpu_out_file_name;
+                        error_stream << concat_kernel_name << ", output file name " << isa_filename;
                         error_msg = error_stream.str();
                     }
                     else
                     {
                         // Store output metadata.
-                        StoreOutputFilesToOutputMD(config, asic, amdgpu_kernel_name, shader_kernel_subtype, amdgpu_out_file_name);
+                        StoreOutputFilesToOutputMD(config, asic, amdgpu_kernel_name, shader_kernel_subtype, isa_filename);
                         status = beKA::beStatus::kBeStatusSuccess;
                     }
                 }
@@ -394,7 +418,7 @@ beKA::beStatus RayTracingBinaryWorkflowStrategy::WriteOutputFiles(const Config& 
 
 void RayTracingBinaryWorkflowStrategy::RunPostProcessingSteps(const Config& config, const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md)
 {
-    KcCLICommanderDxrUtil util(output_metadata_, config.print_process_cmd_line, log_callback_);
+    KcCLICommanderDxrUtil util(binary_codeobj_file_, output_metadata_, config.print_process_cmd_line, log_callback_);
     beKA::beStatus        status = beKA::beStatus::kBeStatusSuccess;
 
     // Generate CSV files with parsed ISA if required.
@@ -434,7 +458,7 @@ void RayTracingBinaryWorkflowStrategy::RunPostProcessingSteps(const Config& conf
 bool RayTracingBinaryWorkflowStrategy::RunPostCompileSteps(const Config& config)
 {
     // Compute workflows rely on output_metadata for cleaningup temp files.
-    KcCLICommanderDxrUtil util(output_metadata_, config.print_process_cmd_line, log_callback_);
+    KcCLICommanderDxrUtil util(binary_codeobj_file_, output_metadata_, config.print_process_cmd_line, log_callback_);
     return util.RunPostCompileSteps(config);
 }
 
@@ -467,7 +491,7 @@ void RayTracingBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config& 
     RgOutputFiles outFiles                       = RgOutputFiles(entry, isa_filename);
     outFiles.input_file                          = concat_kernel_name;
     outFiles.is_isa_file_temp                    = config.isa_file.empty();
-    outFiles.bin_file                            = config.binary_codeobj_file;
+    outFiles.bin_file                            = binary_codeobj_file_;
     output_metadata_[{asic, concat_kernel_name}] = outFiles;
 }
 
@@ -537,7 +561,7 @@ void ComputeBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config&    
     RgOutputFiles outFiles                = RgOutputFiles(RgEntryType::kOpenclKernel, isa_filename);
     outFiles.input_file                   = kernel_name;
     outFiles.is_isa_file_temp             = config.isa_file.empty();
-    outFiles.bin_file                     = config.binary_codeobj_file;
+    outFiles.bin_file                     = binary_codeobj_file_;
     outFiles.entry_abbreviation           = kernel_abbreviation;
     output_metadata_[{asic, kernel_name}] = outFiles;
 }
@@ -547,7 +571,7 @@ void ComputeBinaryWorkflowStrategy::RunPostProcessingSteps(const Config& config,
     CmpilerPaths compiler_paths = {config.compiler_bin_path, config.compiler_inc_path, config.compiler_lib_path};
     bool should_print_cmd       = config.print_process_cmd_line;
 
-    KcCLICommanderLightningUtil util(output_metadata_, should_print_cmd, log_callback_);
+    KcCLICommanderLightningUtil util(binary_codeobj_file_, output_metadata_, should_print_cmd, log_callback_);
     beKA::beStatus              status = beKA::beStatus::kBeStatusSuccess;
 
     // Generate CSV files with parsed ISA if required.
@@ -594,7 +618,7 @@ void ComputeBinaryWorkflowStrategy::RunPostProcessingSteps(const Config& config,
 bool ComputeBinaryWorkflowStrategy::RunPostCompileSteps(const Config& config)
 {
     // Compute workflows rely on output_metadata for cleaningup temp files.
-    KcCLICommanderLightningUtil util(output_metadata_, config.print_process_cmd_line, log_callback_);
+    KcCLICommanderLightningUtil util(binary_codeobj_file_, output_metadata_, config.print_process_cmd_line, log_callback_);
     CmpilerPaths                compiler_paths = {config.compiler_bin_path, config.compiler_inc_path, config.compiler_lib_path};
     return util.RunPostCompileSteps(config, compiler_paths);
 }

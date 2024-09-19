@@ -175,7 +175,7 @@ void RgPipelineStateEditorWidgetNumeric::UpdateStringMatchingLocation(int start_
         string_highlight_data.start_location = start_location;
         string_highlight_data.end_location = start_location + length;
         string_highlight_data.highlight_string = search_string;
-        string_highlight_data.highlight_color = Qt::yellow;
+        string_highlight_data.highlight_color = Qt::magenta;
         string_highlight_data_.push_back(string_highlight_data);
     }
 }

@@ -22,10 +22,12 @@ class KcCLICommanderDxrUtil
 {
 public:
 
-    KcCLICommanderDxrUtil(RgClOutputMetadata&     output_metadata, 
-                          bool                    should_print_cmd, 
+    KcCLICommanderDxrUtil(const std::string&      binary_codeobj_file,
+                          RgClOutputMetadata&     output_metadata,
+                          bool                    should_print_cmd,
                           LoggingCallbackFunction log_callback)
-        : output_metadata_(output_metadata)
+        : binary_codeobj_file_(binary_codeobj_file)
+        , output_metadata_(output_metadata)
         , should_print_cmd_(should_print_cmd)
         , log_callback_(log_callback)
     {}
@@ -60,6 +62,14 @@ public:
                                        const Config&            config,
                                        const std::string&       device);
 
+    // Wrapper around KcUtils::ConstructOutputFileName() to keep track of session output files.
+    static void ConstructOutputFileName(const std::string& base_output_filename,
+                                        const std::string& default_suffix,
+                                        const std::string& default_extension,
+                                        const std::string& entry_point_name,
+                                        const std::string& device_name,
+                                        std::string&       generated_filename); 
+
 private:
 
     // Generate RGA CLI session metadata file.
@@ -70,6 +80,9 @@ private:
 
     // ---- DATA ----
 
+    // CodeObject Binary filename.
+    std::string binary_codeobj_file_;
+
     // Output Metadata.
     RgClOutputMetadata& output_metadata_;
 
@@ -78,6 +91,9 @@ private:
 
     // Log callback function.
     LoggingCallbackFunction log_callback_;
+
+    // Ouput files generated for the CLI session.
+    static std::set<std::string> session_output_files_;
 
 };
 

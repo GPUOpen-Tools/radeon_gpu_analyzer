@@ -29,7 +29,9 @@ kStrXmlNodeRtxVec =
     kStrXmlNodeDxrTraversal
 };
 
-static const char* kStrFileMenuItemColor = "#itemBackground[current = true] {background-color: rgb(253, 255, 215); border-style: solid; border-width: 1px; border-color: rgb(18, 152, 0);}";
+// Stylesheet for file menu items for when they are selcted and not selected.
+static const char* kStrFileMenuItemColor = "#itemBackground[current = false] {background-color: palette(midlight)} #itemBackground[current = true] {background-color: palette(base); border-style: solid; border-width: 1px;}";
+
 static const int s_FILE_MENU_KERNEL_ITEM_HEIGHT = 20;
 static const int s_FILE_MENU_DXR_KERNEL_ITEM_HEIGHT = s_FILE_MENU_KERNEL_ITEM_HEIGHT * 2;
 
@@ -230,6 +232,8 @@ RgMenuFileItemOpencl::RgMenuFileItemOpencl(const std::string& file_full_path, Rg
     RgMenuFileItem(file_full_path, parent)
 {
     ui_.setupUi(this);
+
+    setStyleSheet(kStrFileMenuItemColor);
 
     UpdateFilepath(full_file_path_);
 

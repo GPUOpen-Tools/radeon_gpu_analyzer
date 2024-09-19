@@ -347,7 +347,7 @@ static bool ConstructVkOutputFileNames(const Config& config,
         status = KcUtils::ConstructOutFileName(base_bin_filename, "", (!config.should_avoid_binary_device_prefix ? device : ""),
             (config.should_avoid_binary_suffix ? "" : kStrVulkanBinaryFileExtension), bin_filename);
     }
-    else if (KcUtils::IsNavi3Target(device) && !base_isa_filename.empty())
+    else if (KcUtils::IsNavi3AndBeyond(device) && !base_isa_filename.empty())
     {
         status = KcUtils::ConstructOutFileName(kStrDefaultFilenameOutputBinaryFileName,
                                                "",
@@ -368,7 +368,7 @@ static bool ConstructVkOutputFileNames(const Config& config,
         }
     }
 
-    if (KcUtils::IsNavi3Target(device) && !isa_filenames.empty())
+    if (KcUtils::IsNavi3AndBeyond(device) && !isa_filenames.empty())
     {
         status = KcUtils::ConstructOutFileName(base_bin_filename,
                                                "",
@@ -1280,7 +1280,7 @@ void KcCliCommanderVulkan::CompileSpvToIsaForDevice(const Config& config, const 
             std::copy_if(isa_files.cbegin(), isa_files.cend(), std::back_inserter(temp_files_),
                 [&](const std::string& s) { return !s.empty(); });
 
-            if (KcUtils::IsNavi3Target(device))
+            if (KcUtils::IsNavi3AndBeyond(device))
             {
                 temp_files_.push_back(bin_file_name);
             }            

@@ -59,7 +59,7 @@ void RgLabel::paintEvent(QPaintEvent* event)
 
     // Set properties for the text.
     QPen pen;
-    pen.setColor(Qt::black);
+    pen.setColor(QtCommon::QtUtils::ColorTheme::Get().GetCurrentThemeColors().graphics_scene_text_color);
     pen.setWidth(1);
     painter.setPen(pen);
 

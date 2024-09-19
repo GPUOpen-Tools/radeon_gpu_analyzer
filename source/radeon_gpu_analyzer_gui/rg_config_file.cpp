@@ -1011,6 +1011,9 @@ bool RgXmlConfigFile::WriteGlobalSettings(std::shared_ptr<RgGlobalSettings> glob
                 global_settings_elem->InsertEndChild(font_family_element);
             }
 
+            // Write the font size into the font element.
+            RgXMLUtils::AppendXMLElement(doc, global_settings_elem, kXmlNodeGlobalColorTheme, global_settings->color_theme);
+
             // Write the include files viewer.
             RgXMLUtils::AppendXMLElement(doc, global_settings_elem, kXmlNodeGlobalIncludeFilesViewer, global_settings->include_files_viewer.c_str());
 
@@ -1763,6 +1766,19 @@ static bool ExtractGlobalSettings_2_3(tinyxml2::XMLNode* global_settings_node, s
         elem = elem->NextSiblingElement(kXmlNodeGlobalFontFamilyRoot);
         ret &= (elem != nullptr);
         ret = ret && ExtractFontInformation(elem, global_settings);
+    }
+    if (ret)
+    {
+        tinyxml2::XMLElement* test_elem = elem->NextSiblingElement(kXmlNodeGlobalColorTheme);
+        unsigned color_theme_number = 2;
+        
+        if (test_elem != nullptr)
+        {
+            ret  = ret && RgXMLUtils::ReadNodeTextUnsigned(test_elem, color_theme_number);
+            elem = test_elem;
+        }
+        
+        global_settings->color_theme = color_theme_number;
     }
     if (ret)
     {

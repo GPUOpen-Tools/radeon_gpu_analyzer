@@ -45,7 +45,6 @@ static const char* kStrApiModeTreeWidgetStylesheet = "border: 1px solid black";
 static const char* kStrApiModeTreeWidgetObjectName = "modeAPIList";
 static const char* kStrCheckBoxDisabledIconFile = ":/icons/checked_disabled_icon.svg";
 static const char* kStrCheckBoxIconLabelStylesheet = "border: none";
-static const QColor kApiModeTreeWidgetFirstColumnBackgroundColor = QColor(240, 240, 240);
 
 class RgApiTreeWidgetItemStyleDelegate : public QStyledItemDelegate
 {
@@ -242,7 +241,6 @@ void RgStatusBar::CreateApiTreeWidget()
                 QString toolTip = kStrApiButtonTooltipA + QString::fromStdString(display_string) + kStrApiButtonTooltipB;
                 item->setToolTip(kTreeWidgetIconColumnId, toolTip);
                 item->setToolTip(kTreeWidgetApiColumnId, toolTip);
-                item->setBackground(kTreeWidgetIconColumnId, kApiModeTreeWidgetFirstColumnBackgroundColor);
             }
         }
         api_mode_tree_widget_->resizeColumnToContents(kTreeWidgetApiColumnId);
@@ -593,14 +591,13 @@ void RgStatusBar::HandleTreeWidgetItemEntered(QTreeWidgetItem* item, const int c
     }
 
     // Set the background color for the current item to light blue.
-    QColor light_blue(229, 243, 255);
     assert(item != nullptr);
     if (item != nullptr)
     {
         const int column_count = item->columnCount();
         for (int column_number = 0; column_number < column_count; column_number++)
         {
-            item->setBackground(column_number, light_blue);
+            item->setBackground(column_number, qApp->palette().color(QPalette::Highlight));
         }
     }
 }

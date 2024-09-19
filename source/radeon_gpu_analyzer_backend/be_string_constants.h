@@ -5,24 +5,6 @@
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_STRING_CONSTANTS_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_STRING_CONSTANTS_H_
 
-// Device Names.
-static const char* kDeviceNameGfx900 = "gfx900";
-static const char* kDeviceNameGfx902 = "gfx902";
-static const char* kDeviceNameGfx906 = "gfx906";
-static const char* kDeviceNameGfx1010 = "gfx1010";
-static const char* kDeviceNameGfx1011 = "gfx1011";
-static const char* kDeviceNameGfx1012 = "gfx1012";
-static const char* kDeviceNameGfx1030 = "gfx1030";
-static const char* kDeviceNameGfx1031 = "gfx1031";
-static const char* kDeviceNameGfx1032 = "gfx1032";
-static const char* kDeviceNameGfx1034 = "gfx1034";
-static const char* kDeviceNameGfx1035 = "gfx1035";
-static const char* kDeviceNameGfx1100 = "gfx1100";
-static const char* kDeviceNameGfx1101 = "gfx1101";
-static const char* kDeviceNameGfx1102 = "gfx1102";
-static const char* kDeviceNameGfx1103 = "gfx1103";
-
-
 // LLVM Lightning Compiler.
 #if defined(_WIN64) || defined(__linux)
 static const wchar_t* kLcOpenclRootDir = L"utils/lc/opencl";

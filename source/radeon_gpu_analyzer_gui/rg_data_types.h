@@ -344,13 +344,13 @@ struct RgResourceUsageData
 // A structure used to hold data parsed from a livereg output file.
 struct RgLiveregData
 {
-    int total_vgprs;
-    int vgprs_granularity;
-    int used;
-    int allocated;
-    int max_vgprs;
-    int unmatched_count;
-    std::vector<int> max_vgpr_line_numbers;
+    int               total_vgprs;
+    int               vgprs_granularity;
+    int               used;
+    int               allocated;
+    int               max_vgprs;
+    int               unmatched_count;
+    std::vector<int>  max_vgpr_line_numbers;
     std::vector<bool> is_current_max_vgpr_line_number;
 };
 
@@ -383,6 +383,7 @@ struct RgGlobalSettings
         , default_api(other.default_api)
         , font_family(other.font_family)
         , font_size(other.font_size)
+        , color_theme(other.color_theme)
         , include_files_viewer(other.include_files_viewer)
         , input_file_ext_glsl(other.input_file_ext_glsl)
         , input_file_ext_hlsl(other.input_file_ext_hlsl)
@@ -398,9 +399,10 @@ struct RgGlobalSettings
                       (visible_disassembly_view_columns == other.visible_disassembly_view_columns) &&
                       (use_default_project_name == other.use_default_project_name) && (should_prompt_for_api == other.should_prompt_for_api) &&
                       (default_api == other.default_api) && (font_family == other.font_family) && (font_size == other.font_size) &&
-                      (include_files_viewer == other.include_files_viewer) && (input_file_ext_glsl == other.input_file_ext_glsl) &&
-                      (input_file_ext_hlsl == other.input_file_ext_hlsl) && (input_file_ext_spv_txt == other.input_file_ext_spv_txt) &&
-                      (input_file_ext_spv_bin == other.input_file_ext_spv_bin) && (default_lang == other.default_lang);
+                      (color_theme == other.color_theme) && (include_files_viewer == other.include_files_viewer) &&
+                      (input_file_ext_glsl == other.input_file_ext_glsl) && (input_file_ext_hlsl == other.input_file_ext_hlsl) &&
+                      (input_file_ext_spv_txt == other.input_file_ext_spv_txt) && (input_file_ext_spv_bin == other.input_file_ext_spv_bin) &&
+                      (default_lang == other.default_lang);
 
         return isSame;
     }
@@ -447,6 +449,9 @@ struct RgGlobalSettings
 
     // The font size.
     int font_size = 0;
+
+    // The application's default color theme.
+    int color_theme = 2;
 
     // The app to use to open include files.
     std::string include_files_viewer = kStrGlobalSettingsSrcViewIncludeViewerDefault;
@@ -657,4 +662,3 @@ struct RgIsaLineLabel : RgIsaLine
 };
 
 #endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DATA_TYPES_H_
-

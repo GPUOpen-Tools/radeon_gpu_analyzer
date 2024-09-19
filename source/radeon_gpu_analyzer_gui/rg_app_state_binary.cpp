@@ -240,7 +240,7 @@ std::string RgAppStateBinary::GetGlobalSettingsViewStylesheet() const
         "RgGlobalSettingsView #defaultLangComboBox:hover"
         "{"
         "border: 1px solid rgb(128, 0, 128);"
-        "background: rgb(240, 240, 240);"
+        "background-color: palette(alternate-base);"
         "}";
     return kStrBinaryAppSettingsStylesheet;
 }

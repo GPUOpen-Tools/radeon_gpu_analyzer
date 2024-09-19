@@ -69,7 +69,8 @@ enum BeRtxPipelineStage : char
     kClosestHit,
     kMiss,
     kCallable,
-    kTraversal, 
+    kTraversal,
+    kLaunchKernel,
 
     kCountRtx
 };
@@ -86,7 +87,8 @@ static const BeRtxPipelineFiles kStrRtxStageNames =
     "ClosestHit",
     "Miss",
     "Callable",  
-    "Traversal"
+    "Traversal", 
+    "LaunchKernel"
 };
 
 // Rtx Suffixes for stage-specific output files.

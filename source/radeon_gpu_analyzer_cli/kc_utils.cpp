@@ -21,6 +21,7 @@
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_static_isa_analyzer.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
+#include "radeon_gpu_analyzer_backend/be_string_constants.h"
 
 // Shared.
 #include "common/rga_shared_utils.h"
@@ -1766,6 +1767,16 @@ void KcUtils::CheckForUpdates()
     }
 }
 
+bool KcUtils::IsStrix(const std::string& target_name)
+{
+    return target_name == "gfx1150";
+}
+
+bool KcUtils::IsNavi3AndBeyond(const std::string& target_name)
+{
+    return IsStrix(target_name) || IsNavi3Target(target_name);
+}
+
 bool KcUtils::IsNavi3Target(const std::string& target_name)
 {
 	// Token to identify Navi3 targets.
@@ -1884,4 +1895,23 @@ bool KcUtils::IsComputeBitSet(RgEntryType rga_entry_type)
         break;
     }
     return ret;
+}
+
+bool KcUtils::InvokeAmdgpudis(const std::string& cmd_line_options, bool should_print_cmd, std::string& out_txt, std::string& error_msg)
+{
+    osFilePath amdgpu_dis_exe;
+    long       exit_code = 0;
+
+    // Construct the path to the amdgpu-dis executable.
+    osGetCurrentApplicationPath(amdgpu_dis_exe, false);
+    amdgpu_dis_exe.appendSubDirectory(kAmdgpudisRootDir);
+    amdgpu_dis_exe.setFileName(kAmdgpudisExecutable);
+#ifdef _WIN32
+    amdgpu_dis_exe.setFileExtension(kAmdgpudisExecutableExtension);
+#endif
+
+    KcUtils::ProcessStatus status = KcUtils::LaunchProcess(
+        amdgpu_dis_exe.asString().asASCIICharArray(), cmd_line_options, "", kProcessWaitInfinite, should_print_cmd, out_txt, error_msg, exit_code);
+
+    return status == KcUtils::ProcessStatus::kSuccess;
 }

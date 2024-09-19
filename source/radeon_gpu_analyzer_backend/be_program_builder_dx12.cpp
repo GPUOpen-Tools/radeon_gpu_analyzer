@@ -1476,7 +1476,9 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
 
 beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&                      config,
                                                         const std::string&                 target_device,
-    std::string& out_text, std::vector<RgDxrPipelineResults>& output_mapping, std::string& error_msg)
+                                                        std::string&                       out_text,
+                                                        std::vector<RgDxrPipelineResults>& output_mapping,
+                                                        std::string&                       error_msg)
 {
     beKA::beStatus ret = beStatus::kBeStatusInvalid;
     bool rc = EnableNullBackendForDevice(config, target_device);
@@ -1503,8 +1505,8 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
             // If an HLSL input was given, we will only use the HLSL as an input, without
             // reading the state data.
             std::shared_ptr<RgDxrDxilLibrary> dxil_lib = std::make_shared<RgDxrDxilLibrary>();
-            dxil_lib->input_type = DxrSourceType::kHlsl;
-            dxil_lib->full_path = config.dxr_hlsl;
+            dxil_lib->input_type                       = DxrSourceType::kHlsl;
+            dxil_lib->full_path                        = config.dxr_hlsl;
             state_desc.input_files.push_back(dxil_lib);
         }
 
@@ -1564,110 +1566,33 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
                 cmd << "--hlsl " << "\"" << config.dxr_hlsl << "\"";
             }
 
-            // Mode.
-            cmd << " --mode " << config.dxr_mode << " ";
+            // Launch Dx12 backend in Dxr mode.
+            cmd << " --dxr ";
 
             // Metadata output file, generate a temporary file for that.
             std::string metadata_filename = KcUtils::ConstructTempFileName("rga-dxr-output", kStrDefaultExtensionText);
             cmd << "--output-metadata " << "\"" << metadata_filename << "\"" << " ";
 
-            for (const std::string& currExport : config.dxr_exports)
+            // Add the required output files to the command.
+            std::string target_device_lower = target_device;
+            std::transform(target_device_lower.begin(), target_device_lower.end(), target_device_lower.begin(), [](const char& c) {
+                return static_cast<char>(std::tolower(c));
+            });
+
+            // Binary files.
+            std::string generated_binary_file;
+            bool        is_filename_constructed =
+                KcUtils::ConstructOutFileName(config.binary_output_file, FILE_NAME_TOKEN_DXR, target_device_lower, "bin", generated_binary_file);
+            if (is_filename_constructed && !generated_binary_file.empty())
             {
-                cmd << "--export " << currExport << " ";
+                cmd << "--dxr-bin "
+                    << "\"" << generated_binary_file << "\" ";
+            }
 
-                // In "all" mode, we need to generate the results for all generated pipelines, therefore we need
-                // to generate the file names with a special token '*' which would be replaced by the backend
-                // with the relevant index of that pipeline.
-                bool is_all_mode = (config.dxr_exports.size() == 1 && config.dxr_exports[0].compare("all") == 0);
-                bool is_pipeline_mode = (RgaSharedUtils::ToLower(config.dxr_mode).compare("pipeline") == 0);
-
-                // ISA.
-                if (!config.isa_file.empty())
-                {
-                    bool is_dir_output = KcUtils::IsDirectory(config.isa_file);
-                    std::string patched_export_name = is_all_mode ? FILE_NAME_TOKEN_DXR : currExport;
-                    if (!is_all_mode && is_pipeline_mode)
-                    {
-                        patched_export_name.append("_");
-                        patched_export_name.append(FILE_NAME_TOKEN_DXR);
-                    }
-
-                    std::string generated_isa_filename;
-                    bool is_filename_constructed = KcUtils::ConstructOutFileName(config.isa_file,
-                        patched_export_name, target_device, "isa", generated_isa_filename, (is_pipeline_mode || !is_dir_output));
-                    assert(is_filename_constructed);
-                    if (is_filename_constructed && !generated_isa_filename.empty())
-                    {
-                        cmd << "--dxr-isa " << "\"" << generated_isa_filename << "\" ";
-
-                        // Delete that file if it already exists.
-                        if (BeUtils::IsFilePresent(generated_isa_filename))
-                        {
-                            BeUtils::DeleteFileFromDisk(generated_isa_filename);
-                        }
-                    }
-                }
-
-                // Add the required output files to the command.
-                std::string target_device_lower = target_device;
-                std::transform(target_device_lower.begin(), target_device_lower.end(), target_device_lower.begin(), [](const char& c) {
-                    return static_cast<char>(std::tolower(c));
-                });
-
-                // Statistics files.
-                if (!config.analysis_file.empty())
-                {
-                    bool is_dir_output = KcUtils::IsDirectory(config.analysis_file);
-                    std::string patched_export_name = is_all_mode ? FILE_NAME_TOKEN_DXR : currExport;
-                    if (!is_all_mode && is_pipeline_mode)
-                    {
-                        patched_export_name.append("_");
-                        patched_export_name.append(FILE_NAME_TOKEN_DXR);
-                    }
-
-                    std::string generated_stats_filename;
-                    bool is_filename_constructed = KcUtils::ConstructOutFileName(config.analysis_file,
-                        patched_export_name, target_device_lower,
-                        kStrDefaultExtensionStats, generated_stats_filename, (is_pipeline_mode || !is_dir_output));
-                    assert(is_filename_constructed);
-                    if (is_filename_constructed && !generated_stats_filename.empty())
-                    {
-                        cmd << "--dxr-stats " << "\"" << generated_stats_filename << "\" ";
-
-                        // Delete that file if it already exists.
-                        if (BeUtils::IsFilePresent(generated_stats_filename))
-                        {
-                            BeUtils::DeleteFileFromDisk(generated_stats_filename);
-                        }
-                    }
-                }
-
-                // Binary files.
-                if (!config.binary_output_file.empty())
-                {
-                    std::string patched_export_name = is_all_mode ? FILE_NAME_TOKEN_DXR : currExport;
-                    if (!is_all_mode && is_pipeline_mode)
-                    {
-                        patched_export_name.append("_");
-                        patched_export_name.append(FILE_NAME_TOKEN_DXR);
-                    }
-
-                    std::string generated_binary_file;
-                    bool is_filename_constructed = KcUtils::ConstructOutFileName(config.binary_output_file,
-                        patched_export_name, target_device_lower,
-                        "bin", generated_binary_file);
-                    assert(is_filename_constructed);
-                    if (is_filename_constructed && !generated_binary_file.empty())
-                    {
-                        cmd << "--dxr-bin " << "\"" << generated_binary_file << "\" ";
-                    }
-
-                    // Delete that file if it already exists.
-                    if (BeUtils::IsFilePresent(generated_binary_file))
-                    {
-                        BeUtils::DeleteFileFromDisk(generated_binary_file);
-                    }
-                }
+            // Delete that file if it already exists.
+            if (BeUtils::IsFilePresent(generated_binary_file))
+            {
+                BeUtils::DeleteFileFromDisk(generated_binary_file);
             }
 
             // HLSL->DXIL mapping.

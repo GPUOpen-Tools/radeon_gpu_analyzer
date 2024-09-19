@@ -77,23 +77,14 @@ namespace rga
         // Full path to the file that describes the pipeline state.
         std::string rs_pso;
 
-        // DXR compilation mode (Pipeline or Shader).
-        std::string dxr_mode;
-
-        // DXR ISA disassembly output file.
-        std::string dxr_isa_output;
-
-        // DXR statistics output file.
-        std::string dxr_statistics_output;
+        // Compilation mode (DXR or DX12 (default)).
+        bool is_config_dxr = false;
 
         // DXR binary output file.
         std::string dxr_binary_output;
 
         // Full path to the DXR state description file.
         std::string dxr_state_file;
-
-        // DXR export (raygeneration shader name in Pipeline mode or shader name in Shader mode).
-        std::string dxrExport;
 
         // Full path to the pipeline binary output file.
         std::string pipeline_binary;
@@ -266,27 +257,10 @@ namespace rga
         RgDx12DxrPipelineConfig pipeline_config;
     };
 
-    // The results per DXR shader.
-    struct RgDxrShaderResults
-    {
-        std::string export_name;
-        std::string isa_disassembly;
-        std::string stats;
-    };
-
     struct RgDxrPipelineResults
     {
-        // Pipeline name is either a raygeneration shader name or an index (in All mode).
-        std::string pipeline_name;
-
         // Full path to pipeline binary output file.
         std::string pipeline_binary;
-
-        // Results for all of the pipeline's shaders.
-        std::vector<RgDxrShaderResults> results;
-
-        // True if pipeline was compiled in unified mode, false otherwise.
-        bool isUnified = true;
     };
 
     // *** DXR-SPECIFIC TYPES - END ***

@@ -878,7 +878,7 @@ bool KcCLICommanderLightningUtil::GenerateSessionMetadata(const Config& config, 
 
     if (ret && !output_metadata_.empty())
     {
-        ret = KcXmlWriter::GenerateClSessionMetadataFile(config.session_metadata_file, config.binary_codeobj_file, file_kernel_data, output_metadata_);
+        ret = KcXmlWriter::GenerateClSessionMetadataFile(config.session_metadata_file, binary_codeobj_file_, file_kernel_data, output_metadata_);
     }
 
     return ret;

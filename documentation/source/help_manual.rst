@@ -113,6 +113,8 @@ The Application Settings view is used to configure global application settings t
 
 	* Default API on startup: RGA will always enter the selected API Mode upon startup.
 
+	* Color theme: "Detect OS" is the default. This will use the system's setting for the color theme.
+
 * **Disassembly View**
 
 	* Disassembly view columns: The set of disassembly view columns which will be visible by default.
@@ -458,6 +460,8 @@ The Application Settings view is used to configure global application settings t
 
 	* Default API on startup: RGA will always enter the selected API Mode upon startup.
 
+	* Color theme: "Detect OS" is the default. This will use the system's setting for the color theme.
+
 * **Disassembly View**
 
 	* Disassembly view columns: The set of disassembly view columns which will be visible by default.
@@ -738,6 +742,8 @@ The Application Settings view is used to configure global application settings t
 	* Always use auto-generated project names: If checked, RGA will always use the auto-generated project name, without prompting for a rename when creating a new project.
 
 	* Default API on startup: RGA will always enter the selected API Mode upon startup.
+
+	* Color theme: "Detect OS" is the default. This will use the system's setting for the color theme.
 
 * **Disassembly View**
 
@@ -1028,6 +1034,23 @@ By default, RGA will use the compiler that is bundled with the package. You can 
 
 	* **Libraries folder:**
 		Path to alternative compiler's OpenCL™ device libraries folder. The following bitcode files are expected to be in the specified folder: irif.amdgcn.bc, ockl.amdgcn.bc, oclc_correctly_rounded_sqrt_off.amdgcn.bc, oclc_correctly_rounded_sqrt_on.amdgcn.bc, oclc_daz_opt_off.amdgcn.bc, oclc_daz_opt_on.amdgcn.bc, oclc_finite_only_off.amdgcn.bc, oclc_finite_only_on.amdgcn.bc, oclc_isa_version_900.amdgcn.bc, oclc_isa_version_901.amdgcn.bc, oclc_isa_version_902.amdgcn.bc, oclc_unsafe_math_off.amdgcn.bc, oclc_unsafe_math_on.amdgcn.bc, ocml.amdgcn.bc, opencl.amdgcn.bc
+
+Change the Color Theme
+^^^^^^^^^^^^^^^^^^^^^^
+
+RGA now supports switching between dark and light color themes. 
+
+.. image:: images/2_1/rga_dark_mode_example.png
+	
+#. Navigate to the "Application settings" section of the Settings tab and select the color theme drop down.
+
+.. image:: images/2_1/rga_color_theme_setting.png
+
+#. "Detect OS" is the default option and will use the system's setting for the color theme. "Light" theme uses light backgrounds and dark text, while in "Dark" theme RGA will have dark backgrounds with lighter colored text.
+	
+#. After setting the color theme and saving you will be prompted to restart the application. If the application is not restarted not all ui elements will update to reflect the new color theme.
+
+.. image:: images/2_1/color_theme_changed_restart_application_dialog.png
 
 Keyboard Shortcuts
 ------------------

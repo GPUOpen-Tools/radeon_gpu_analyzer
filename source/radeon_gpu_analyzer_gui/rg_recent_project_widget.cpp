@@ -3,25 +3,14 @@
 
 // Qt.
 #include <QHBoxLayout>
+#include <QColor>
+
+// QtCommon.
+#include "qt_common/utils/common_definitions.h"
+#include "qt_common/utils/qt_util.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_recent_project_widget.h"
-
-const static QString kStrProjectButtonStylesheet(
-    "QPushButton"
-    "{"
-    "color: rgb(0, 0, 255);"
-    "padding: 0 0 0 0;"
-    "border: none;"
-    "text-align: left;"
-    "font: 10pt;"
-    "spacing : 10;"
-    "}"
-    "QPushButton:hover"
-    "{"
-    "color: rgb(255, 128, 0);"
-    "}"
-);
 
 static const int kApiIconWidth = 50;
 static const int kApiIconHeight = 25;
@@ -45,13 +34,38 @@ RgRecentProjectWidget::RgRecentProjectWidget(QWidget* parent) :
     horizontal_layout_->addWidget(project_button_);
     horizontal_layout_->addWidget(icon_button_);
 
-    project_button_->setStyleSheet(kStrProjectButtonStylesheet);
-    icon_button_->setStyleSheet(kStrProjectButtonStylesheet);
+    if (QtCommon::QtUtils::ColorTheme::Get().GetColorTheme() == ColorThemeType::kColorThemeTypeDark)
+    {
+        project_button_->setStyleSheet(kDarkLinkButtonStylesheet);
+        icon_button_->setStyleSheet(kDarkLinkButtonStylesheet);
+    }
+    else
+    {
+        project_button_->setStyleSheet(kLinkButtonStylesheet);
+        icon_button_->setStyleSheet(kLinkButtonStylesheet);
+    }
+
+    connect(&QtCommon::QtUtils::ColorTheme::Get(), &QtCommon::QtUtils::ColorTheme::ColorThemeUpdated, this, &RgRecentProjectWidget::UpdateLinkButtonStyleSheet);
+
     icon_button_->setFocusPolicy(Qt::NoFocus);
 
     // Set the icon size.
     QSize size(kApiIconWidth, kApiIconHeight);
     icon_button_->setIconSize(size);
+}
+
+void RgRecentProjectWidget::UpdateLinkButtonStyleSheet()
+{
+    if (QtCommon::QtUtils::ColorTheme::Get().GetColorTheme() == ColorThemeType::kColorThemeTypeDark)
+    {
+        project_button_->setStyleSheet(kDarkLinkButtonStylesheet);
+        icon_button_->setStyleSheet(kDarkLinkButtonStylesheet);
+    }
+    else
+    {
+        project_button_->setStyleSheet(kLinkButtonStylesheet);
+        icon_button_->setStyleSheet(kLinkButtonStylesheet);
+    }
 }
 
 void RgRecentProjectWidget::SetProjectName(const QString& filename)

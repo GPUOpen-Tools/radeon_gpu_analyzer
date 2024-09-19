@@ -442,6 +442,9 @@ protected:
     // Create an API-specific file menu.
     virtual bool CreateMenu(QWidget* parent) = 0;
 
+    // Reapply the stylesheet for the API-specific file menu when the color theme has changed.
+    virtual void ReapplyMenuStyleSheet() = 0;
+
     // Connect API-specific RgBuildView signals to the disassembly view.
     virtual void ConnectDisassemblyViewApiSpecificSignals() {}
 

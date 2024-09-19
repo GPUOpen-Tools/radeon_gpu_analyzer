@@ -37,6 +37,9 @@ public:
     // Return the icon button name.
     QString GetIconProjectType() const;
 
+    // Update the link button stylesheets after the color theme has been updated.
+    void UpdateLinkButtonStyleSheet();
+
 private:
     // The project name button.
     QPushButton* project_button_ = nullptr;

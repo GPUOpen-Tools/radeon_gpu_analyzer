@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>RgMenuFileItemOpenCL</class>
+ <class>rgMenuFileItemOpenCL</class>
  <widget class="QWidget" name="rgMenuFileItemOpenCL">
   <property name="geometry">
    <rect>
@@ -134,7 +134,6 @@
                </property>
                <property name="font">
                 <font>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -167,7 +166,7 @@
               </size>
              </property>
              <property name="focusPolicy">
-              <enum>Qt::NoFocus</enum>
+              <enum>Qt::FocusPolicy::NoFocus</enum>
              </property>
              <property name="text">
               <string/>
@@ -187,7 +186,7 @@
            <item>
             <spacer name="closeButtonVerticalSpacer">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -234,39 +233,13 @@
            <bool>false</bool>
           </property>
           <property name="styleSheet">
-           <string notr="true">QTreeView
-{
-background: rgb(246, 246, 246);
-}
-
-QTreeView::item:hover
-{
-	/* Grey when hovering over an item.*/
-    color: #000000;
-    background:#d3d3d3;
-}
-
-QTreeView::item:selected:active
-{
-	/* Light yellow when the item is actively selected.*/
-    color: #000000;
-    background:#ffffb2;
-}
-
-QTreeView::item:selected:!active
-{
-	/* Light yellow when the item is selected but active.*/
-    color: #000000;
-    background:#ffffb2;
-}
-
-</string>
+           <string notr="true"/>
           </property>
           <property name="sizeAdjustPolicy">
-           <enum>QAbstractScrollArea::AdjustToContents</enum>
+           <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
           </property>
           <property name="editTriggers">
-           <set>QAbstractItemView::NoEditTriggers</set>
+           <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
           </property>
           <property name="indentation">
            <number>11</number>

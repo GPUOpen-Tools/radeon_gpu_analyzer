@@ -55,11 +55,6 @@ static const char* kStrErrorDxrStateDescAndHlslFileMix =
     "Error: cannot mix --state-desc and --hlsl options.If --hlsl option is used, it must contain the entire state definition in the HLSL source code.";
 static const char* kStrErrorDxrStateDescFileNotFoundOrEmpty = "Error: DXR state JSON file not found or empty: ";
 static const char* kStrErrorDxrHlslFileNotFoundOrEmpty      = "Error: HLSL input file not found or empty: ";
-static const char* kStrErrorDxrModeNotProvided              = "Error: no DXR mode provided (use --mode with either 'pipeline' or 'shader' as the argument).";
-static const char* kStrErrorDxrModeNotRecognizedA           = "Error: unrecognized DXR mode given: ";
-static const char* kStrErrorDxrExportNotProvided            = "Error: DXR export not provided (use --export option).";
-static const char* kStrErrorDxrExportNotSupportedInPipelineMode = "Error: --export option not supported in pipeline mode.";
-static const char* kStrErrorDxrModeNotRecognizedB               = ". Expected: pipeline or shader.";
 static const char* kStrWarningDxrBinaryExtractionNotSupportedInShaderMode =
     "Warning: pipeline binary extraction (-b option) "
     "is not supported in Shader mode.";
@@ -380,49 +375,6 @@ static bool IsInputValidDxr(const Config& config)
         // Empty HLSL input file.
         std::cout << kStrErrorDxrHlslFileNotFoundOrEmpty << config.dxr_hlsl << std::endl;
         ret = false;
-    }
-    else if (config.dxr_mode.empty())
-    {
-        // Mode not provided.
-        std::cout << kStrErrorDxrModeNotProvided << std::endl;
-        ret = false;
-    }
-    else if (BeDx12Utils::IsDxrShaderMode(config) && config.dxr_exports.empty())
-    {
-        // Export not provided in Shader mode.
-        std::cout << kStrErrorDxrExportNotProvided << std::endl;
-        ret = false;
-    }
-    else if (!BeDx12Utils::IsDxrShaderMode(config) && !config.dxr_exports.empty())
-    {
-        // Export not supported in Pipeline mode.
-        std::cout << kStrErrorDxrExportNotSupportedInPipelineMode << std::endl;
-        ret = false;
-    }
-    else
-    {
-        std::string dxr_mode = RgaSharedUtils::ToLower(config.dxr_mode);
-        ;
-        if (dxr_mode.compare(kStrDxrModePipeline) != 0 && dxr_mode.compare(kStrDxrModeShader) != 0)
-        {
-            // Unrecognized mode.
-            std::cout << kStrErrorDxrModeNotRecognizedA << dxr_mode << kStrErrorDxrModeNotRecognizedB << std::endl;
-            ret = false;
-        }
-        if (ret && dxr_mode.compare(kStrDxrModeShader) == 0 && !config.dxr_exports.empty() &&
-            std::find_if(config.dxr_exports.begin(), config.dxr_exports.end(), [&](const std::string currExp) {
-                std::string curr_export_lower = RgaSharedUtils::ToLower(currExp);
-                return (curr_export_lower.compare("all") == 0);
-            }) != config.dxr_exports.end())
-        {
-            std::cout << "Error: 'all' is not a valid argument for --export in Shader mode (only valid in Pipeline mode). Please specify a shader name."
-                      << std::endl;
-            ret = false;
-        }
-        if (ret && dxr_mode.compare(kStrDxrModeShader) == 0 && !config.binary_output_file.empty())
-        {
-            std::cout << kStrWarningDxrBinaryExtractionNotSupportedInShaderMode << std::endl;
-        }
     }
 
     // In Offline mode, the target device must be specified.

@@ -8,6 +8,9 @@
 #include <QTextStream>
 #include <QFile>
 
+// QtCommon.
+#include "qt_common/utils/qt_util.h"
+
 // Infra.
 #include "source/common/rga_shared_utils.h"
 
@@ -209,7 +212,14 @@ bool RgBuildViewOpencl::CreateMenu(QWidget* parent)
     is_connected = connect(this, &RgBuildViewOpencl::UpdateFileColoring, file_menu_, &RgMenuOpencl::ProjectBuildSuccess);
     assert(is_connected);
 
+    connect(&QtCommon::QtUtils::ColorTheme::Get(), &QtCommon::QtUtils::ColorTheme::ColorThemeUpdated, this, &RgBuildViewOpencl::ReapplyMenuStyleSheet);
+
     return file_menu_ != nullptr;
+}
+
+void RgBuildViewOpencl::ReapplyMenuStyleSheet()
+{
+    factory_->ApplyFileMenuStylesheet(file_menu_);
 }
 
 void RgBuildViewOpencl::ConnectDisassemblyViewApiSpecificSignals()
