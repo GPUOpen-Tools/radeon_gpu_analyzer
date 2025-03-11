@@ -62,7 +62,7 @@ void RgLineEdit::paintEvent(QPaintEvent* event)
 
     // Set the font size.
     QFont font = this->font();
-    font.setPointSize(8);
+    font.setPointSize(9);
     painter.setFont(font);
 
     // Highlight substring if it is requested.

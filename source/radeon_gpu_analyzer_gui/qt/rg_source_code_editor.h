@@ -54,6 +54,9 @@ public:
     // Set the text of title bar notification for this editor.
     void SetTitleBarText(const std::string& text);
 
+    // Lines in the source code were highlighted. Apply a colored highlight to the background of each given row and notify the disassembly view.
+    void SetHighlightedLines(const QList<int>& line_indices);
+
 signals:
     // A signal emitted when the source editor is hidden.
     void EditorHidden();
@@ -77,8 +80,8 @@ signals:
     void OpenHeaderFileRequested(const QString& header_file_path);
 
 public slots:
-    // Apply a colored highlight to the background of each given row.
-    void SetHighlightedLines(const QList<int>& line_indices);
+    // Lines in the disassembly view were highlighted. Apply a colored highlight to the background of each given row in the source code. Don't notify the disassembly view.
+    void HandleHighlightedLinesSet(const QList<int>& line_indices);
 
 protected:
     // An overridden paint handler responsible for painting a blinking cursor when the editor doesn't have focus.

@@ -344,14 +344,14 @@ struct RgResourceUsageData
 // A structure used to hold data parsed from a livereg output file.
 struct RgLiveregData
 {
-    int               total_vgprs;
-    int               vgprs_granularity;
-    int               used;
-    int               allocated;
-    int               max_vgprs;
-    int               unmatched_count;
-    std::vector<int>  max_vgpr_line_numbers;
-    std::vector<bool> is_current_max_vgpr_line_number;
+    int                              total_vgprs;
+    int                              vgprs_granularity;
+    int                              used;
+    int                              allocated;
+    int                              max_vgprs;
+    int                              unmatched_count;
+    std::vector<std::pair<int, int>> max_vgpr_line_numbers;
+    int                              current_max_vgpr_line_numbers_index = -1;
 };
 
 // A structure used to hold project path and api type for each RGA project.
@@ -643,12 +643,6 @@ struct RgIsaLineInstruction : RgIsaLine
 
     // The instruction operands.
     std::string operands;
-
-    // The cycle count of the instruction.
-    std::string cycles;
-
-    // The functional unit responsible for execution.
-    std::string functional_unit;
 
     // The hex representation of the instruction.
     std::string binary_encoding;

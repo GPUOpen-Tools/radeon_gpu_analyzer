@@ -178,7 +178,7 @@ beKA::beStatus GraphicsBinaryWorkflowStrategy::WriteOutputFiles(const Config&   
                                                                 const std::string&                        asic,
                                                                 const std::map<std::string, std::string>& kernel_to_disassembly,
                                                                 const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md,
-                                                                std::string&                              )
+                                                                std::string&)
 {
     beKA::beStatus status = beKA::beStatus::kBeStatusGeneralFailed;
     assert(!kernel_to_disassembly.empty());
@@ -186,7 +186,7 @@ beKA::beStatus GraphicsBinaryWorkflowStrategy::WriteOutputFiles(const Config&   
     {
         // Retrive graphics api for current binary.
         graphics_api_ = beProgramBuilderBinary::GetApiFromPipelineMetadata(amdpal_pipeline_md);
-        
+
         // Write the ISA disassembly files.
         for (uint32_t stage = BePipelineStage::kVertex; stage < BePipelineStage::kCount; stage++)
         {
@@ -199,7 +199,8 @@ beKA::beStatus GraphicsBinaryWorkflowStrategy::WriteOutputFiles(const Config&   
                     KcUtils::DeleteFile(isa_file);
                 }
 
-                bool is_file_written = beProgramBuilderVulkan::WriteIsaFileWithHwMapping(stage, amdpal_pipeline_md, kernel_to_disassembly, isa_file);
+                beWaveSize wave_size;
+                bool is_file_written = beProgramBuilderVulkan::WriteIsaFileWithHwMapping(stage, amdpal_pipeline_md, kernel_to_disassembly, isa_file, wave_size);
                 if (is_file_written)
                 {
                     // For graphics workflows, also extract stats.
@@ -213,7 +214,7 @@ beKA::beStatus GraphicsBinaryWorkflowStrategy::WriteOutputFiles(const Config&   
                                                           kStrVulkanStatsFileExtension,
                                                           stats_file))
                         {
-                            StoreOutputFilesToOutputMD(config, asic, stage, isa_file, stats_file);
+                            StoreOutputFilesToOutputMD(config, asic, stage, isa_file, stats_file, wave_size);
 
                             if (!stats_file.empty())
                             {
@@ -223,7 +224,7 @@ beKA::beStatus GraphicsBinaryWorkflowStrategy::WriteOutputFiles(const Config&   
                     }
                     else
                     {
-                        StoreOutputFilesToOutputMD(config, asic, stage, isa_file, "");
+                        StoreOutputFilesToOutputMD(config, asic, stage, isa_file, "", wave_size);
                     }
 
                     status = beKA::beStatus::kBeStatusSuccess;
@@ -233,7 +234,6 @@ beKA::beStatus GraphicsBinaryWorkflowStrategy::WriteOutputFiles(const Config&   
 
         KcCLICommanderVulkanUtil vk_util(output_metadata_, "", log_callback_, beProgramBuilderBinary::GetStageFileSuffixesFromApi(graphics_api_));
         vk_util.ExtractStatistics(config, asic, amdpal_pipeline_md, kernel_to_disassembly);
-
     }
 
     return status;
@@ -279,7 +279,8 @@ void GraphicsBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config&   
                                                                 const std::string& asic,
                                                                 uint32_t           stage,
                                                                 const std::string& isa_filename,
-                                                                const std::string& stats_filename)
+                                                                const std::string& stats_filename,
+                                                                beWaveSize         wave_size)
 {
     bool device_md_exists = (output_metadata_.find(asic) != output_metadata_.end());
     if (!device_md_exists)
@@ -300,11 +301,12 @@ void GraphicsBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config&   
             stage_md.entry_type = GetEntryType(graphics_api_, stage);
             stage_md.device     = asic;
         }
-        stage_md.isa_file   = isa_filename;
+        stage_md.isa_file = isa_filename;
         if (!config.analysis_file.empty())
         {
             stage_md.stats_file = stats_filename;
         }
+        stage_md.wave_size = wave_size;
     }
 
     // If user does not provide an isa filename explicitly.
@@ -346,7 +348,23 @@ bool GraphicsBinaryWorkflowStrategy::RunPostCompileSteps(const Config& config)
     return ret;
 }
 
-bool ExtractShaderSubtype(const BeAmdPalMetaData::PipelineMetaData& pipeline, const std::string& kernel, std::string& shader_subtype)
+beWaveSize ExtractWaveSizeForShaderSubtype(const BeAmdPalMetaData::PipelineMetaData& pipeline, BeAmdPalMetaData::ShaderSubtype shader_subtype)
+{
+    beWaveSize wave_size = beWaveSize::kWave64;
+    if (shader_subtype != BeAmdPalMetaData::ShaderSubtype::kUnknown)
+    {
+        for (const auto& stage : pipeline.hardware_stages)
+        {
+            if (BeAmdPalMetaData::StageType::kCS == stage.stage_type)
+            {
+                wave_size = BeAmdPalMetaData::GetWaveSize(stage.stats.wavefront_size);
+            }
+        }
+    }
+    return wave_size;
+}
+
+bool ExtractShaderSubtype(const BeAmdPalMetaData::PipelineMetaData& pipeline, const std::string& kernel, std::string& shader_subtype, beWaveSize& wave_size)
 {
     bool ret = false;
     for (const auto& shader_function : pipeline.shader_functions)
@@ -354,6 +372,7 @@ bool ExtractShaderSubtype(const BeAmdPalMetaData::PipelineMetaData& pipeline, co
         if (kernel == shader_function.name)
         {
             shader_subtype = BeAmdPalMetaData::GetShaderSubtypeName(shader_function.shader_subtype);
+            wave_size      = ExtractWaveSizeForShaderSubtype(pipeline, shader_function.shader_subtype);
             ret            = true;
         }
     }
@@ -362,9 +381,11 @@ bool ExtractShaderSubtype(const BeAmdPalMetaData::PipelineMetaData& pipeline, co
         if (shader.shader_subtype != BeAmdPalMetaData::ShaderSubtype::kUnknown)
         {
             shader_subtype = BeAmdPalMetaData::GetShaderSubtypeName(shader.shader_subtype);
+            wave_size      = ExtractWaveSizeForShaderSubtype(pipeline, shader.shader_subtype);
             ret            = true;
         }
     }
+
     return ret;
 }
 
@@ -384,7 +405,8 @@ beKA::beStatus RayTracingBinaryWorkflowStrategy::WriteOutputFiles(const Config& 
             const auto& amdgpu_kernel_name    = kernel.first;
             const auto& shader_kernel_content = kernel.second;
             std::string shader_kernel_subtype;
-            if (ExtractShaderSubtype(amdpal_pipeline_md, amdgpu_kernel_name, shader_kernel_subtype))
+            beWaveSize  wave_size;
+            if (ExtractShaderSubtype(amdpal_pipeline_md, amdgpu_kernel_name, shader_kernel_subtype, wave_size))
             {
                 std::string concat_kernel_name = KcCLICommanderDxrUtil::CombineKernelAndKernelSubtype(amdgpu_kernel_name, shader_kernel_subtype);
                 std::string isa_filename;
@@ -406,7 +428,7 @@ beKA::beStatus RayTracingBinaryWorkflowStrategy::WriteOutputFiles(const Config& 
                     else
                     {
                         // Store output metadata.
-                        StoreOutputFilesToOutputMD(config, asic, amdgpu_kernel_name, shader_kernel_subtype, isa_filename);
+                        StoreOutputFilesToOutputMD(config, asic, amdgpu_kernel_name, shader_kernel_subtype, isa_filename, wave_size);
                         status = beKA::beStatus::kBeStatusSuccess;
                     }
                 }
@@ -477,13 +499,12 @@ uint32_t GetRaytracingStage(const std::string& curr_kernel_subtype)
     return stage;
 }
 
-
-
 void RayTracingBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config&      config,
                                                                   const std::string& asic,
                                                                   const std::string& kernel,
                                                                   const std::string& kernel_subtype,
-                                                                  const std::string& isa_filename)
+                                                                  const std::string& isa_filename,
+                                                                  beWaveSize         wave_size)
 {
     std::string   concat_kernel_name             = KcCLICommanderDxrUtil::CombineKernelAndKernelSubtype(kernel, kernel_subtype);
     uint32_t      stage                          = GetRaytracingStage(kernel_subtype);
@@ -492,6 +513,7 @@ void RayTracingBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config& 
     outFiles.input_file                          = concat_kernel_name;
     outFiles.is_isa_file_temp                    = config.isa_file.empty();
     outFiles.bin_file                            = binary_codeobj_file_;
+    outFiles.wave_size                           = wave_size;
     output_metadata_[{asic, concat_kernel_name}] = outFiles;
 }
 
@@ -563,6 +585,7 @@ void ComputeBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config&    
     outFiles.is_isa_file_temp             = config.isa_file.empty();
     outFiles.bin_file                     = binary_codeobj_file_;
     outFiles.entry_abbreviation           = kernel_abbreviation;
+    outFiles.wave_size                    = beWaveSize::kWave64;
     output_metadata_[{asic, kernel_name}] = outFiles;
 }
 

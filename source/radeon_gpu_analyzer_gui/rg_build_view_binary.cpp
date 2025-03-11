@@ -662,7 +662,7 @@ bool RgBuildViewBinary::GetEntrypointNameForLineNumber(const std::string& file_p
 {
     bool found = false;
 
-    // 1. Check if "line_number" is within some kernel code.
+    // Check if "line_number" is within some kernel code.
     const auto& file_src_line_data = entrypoint_line_numbers_.find(file_path);
     if (file_src_line_data != entrypoint_line_numbers_.end())
     {
@@ -678,15 +678,13 @@ bool RgBuildViewBinary::GetEntrypointNameForLineNumber(const std::string& file_p
         }
     }
 
-    // 2. Check if "line_number" is present in the line correlation table for currently active entry.
+    // Fall back to selecting the current entry point in the selected file item.
     if (!found)
     {
-        found = disassembly_view_->IsLineCorrelatedInEntry(file_path, current_target_gpu_, entry_name, line_number);
-
         assert(file_menu_ != nullptr);
         if (file_menu_ != nullptr)
         {
-            // Fall back to selecting the current entry point in the selected file item.
+            
             RgMenuFileItem* file_item = file_menu_->GetFileItemFromPath(file_path);
             assert(file_item != nullptr);
             if (file_item != nullptr)
@@ -699,6 +697,7 @@ bool RgBuildViewBinary::GetEntrypointNameForLineNumber(const std::string& file_p
                     if (file_item_opencl->GetSelectedEntrypointName(entrypoint_name))
                     {
                         entry_name = entrypoint_name;
+                        found      = true;
                     }
                 }
             }
@@ -1002,6 +1001,10 @@ void RgBuildViewBinary::HandleExternalFileModification(const QFileInfo& file_inf
 
         RemoveInputFile(modified_file_path);
     }
+
+    // Once the user has responded to a file modification dialog,
+    // reset the pending modification status for this file.
+    pending_file_modifications_.erase(modified_file_path);
 }
 
 void RgBuildViewBinary::ToggleDisassemblyViewKernelLabelVisiblity(RgMenuFileItemOpencl* file_item, const std::string& selected_entrypoint_name)

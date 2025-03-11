@@ -66,6 +66,9 @@ signals:
     // Signal emitted when the user triggers the Edit menu's Find action.
     void FindTriggered();
 
+    // Signal emitted when the user triggers the Edit menu's Go To Line action.
+    void GoToLineTriggered();
+
     // A signal emitted when the project build status changes.
     void IsBuildInProgress(bool is_building);
 
@@ -287,9 +290,6 @@ protected slots:
 
     // Handler for the build view edit mode changed signal.
     void HandleEditModeChanged(EditMode mode);
-
-    // Handler for the Go To line button click.
-    void HandleGoToLineEvent();
 
     // Handler for the show max VGPRs event.
     void HandleShowMaxVgprsEvent();

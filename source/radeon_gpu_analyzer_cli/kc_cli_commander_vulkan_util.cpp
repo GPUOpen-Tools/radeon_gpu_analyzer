@@ -103,7 +103,8 @@ bool KcCLICommanderVulkanUtil::PerformLiveVgprAnalysis(const Config& conf, const
                 out_filename_gtstr << out_file_name.c_str();
                 isa_filename_gtstr << stage_md.isa_file.c_str();
 
-                KcUtils::PerformLiveRegisterAnalysis(isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, conf.print_process_cmd_line);
+                KcUtils::PerformLiveRegisterAnalysis(
+                    isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, conf.print_process_cmd_line, false, stage_md.wave_size);
                 ret                   = BeUtils::IsFilePresent(out_file_name);
                 stage_md.livereg_file = out_file_name;
             }
@@ -151,8 +152,9 @@ bool KcCLICommanderVulkanUtil::PerformLiveSgprAnalysis(const Config& conf, const
                 out_filename_gtstr << out_file_name.c_str();
                 isa_filename_gtstr << stage_md.isa_file.c_str();
 
-                KcUtils::PerformLiveRegisterAnalysis(isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, conf.print_process_cmd_line, true);
-                ret                   = BeUtils::IsFilePresent(out_file_name);
+                KcUtils::PerformLiveRegisterAnalysis(
+                    isa_filename_gtstr, device_gtstr, out_filename_gtstr, log_callback_, conf.print_process_cmd_line, stage_md.wave_size);
+                ret                        = BeUtils::IsFilePresent(out_file_name);
                 stage_md.livereg_sgpr_file = out_file_name;
             }
             else
@@ -496,7 +498,8 @@ bool WriteStatsFileWithHwMapping(uint32_t                                  stage
     bool        ret             = false;
     const auto& dx12_stage_name = kStrDx12StageNames[stage];
     std::string hw_mapping_name;
-    bool        valid_hw_mapping_found = beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdpal_pipeline_md, dx12_stage_name, hw_mapping_name);
+    beWaveSize  wave_size;
+    bool valid_hw_mapping_found = beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdpal_pipeline_md, dx12_stage_name, hw_mapping_name, wave_size);
     if (valid_hw_mapping_found && shader_to_disassembly.find(hw_mapping_name) != shader_to_disassembly.end())
     {
         [[maybe_unused]] bool is_file_written = WriteStatsFile(amdpal_pipeline_md, hw_mapping_name, stage, device_md, callback, isa_files, stats_files);
@@ -587,9 +590,9 @@ void KcCLICommanderVulkanUtil::ExtractStatistics(const Config&                  
     if (itr != output_metadata_.end())
     {
         // device md exists.
-        const std::string& device_string = itr->first;
-        auto&              device_md     = itr->second;
-        BeVkPipelineFiles  isa_files, stats_files;
+        const std::string&    device_string = itr->first;
+        auto&                 device_md     = itr->second;
+        BeVkPipelineFiles     isa_files, stats_files;
 
         // Parse amdgpu-dis output.
         if (!shader_to_disassembly.empty())
@@ -599,8 +602,8 @@ void KcCLICommanderVulkanUtil::ExtractStatistics(const Config&                  
             {
                 if (!device_md[stage].stats_file.empty())
                 {
-                    bool is_file_written =
-                        WriteStatsFileWithHwMapping(stage, amdpal_pipeline_md, shader_to_disassembly, device_md, isa_files, stats_files, log_callback_);
+                    bool is_file_written = WriteStatsFileWithHwMapping(
+                        stage, amdpal_pipeline_md, shader_to_disassembly, device_md, isa_files, stats_files, log_callback_);
                     if (!is_file_written)
                     {
                         std::string amdgpu_stage_name;
@@ -613,7 +616,8 @@ void KcCLICommanderVulkanUtil::ExtractStatistics(const Config&                  
                             std::cout << kWarnCannotWriteStatsFileA << amdgpu_stage_name << kWarnCannotWriteStatsFileB << "\n";
                         }
 
-                        WriteIsaFileWithHardcodedMapping(stage, amdpal_pipeline_md, shader_to_disassembly, device_md, isa_files, stats_files, log_callback_);
+                        WriteIsaFileWithHardcodedMapping(
+                            stage, amdpal_pipeline_md, shader_to_disassembly, device_md, isa_files, stats_files, log_callback_);
                     }
                 }
             }

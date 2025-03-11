@@ -7,7 +7,7 @@
 
 // QtCommon.
 #include "qt_common/utils/qt_util.h"
-#include "qt_common/utils/shared_isa_dictionary.h"
+#include "qt_isa_gui/utility/isa_dictionary.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_syntax_highlighter.h"

@@ -204,3 +204,61 @@ std::string RgaSharedUtils::ToUpper(const std::string& str)
     std::transform(ustr.begin(), ustr.end(), ustr.begin(), [](const char& c) { return static_cast<char>(std::toupper(c)); });
     return ustr;
 }
+
+bool RgaSharedUtils::IsNavi4Target(const std::string& target_name)
+{
+    // Token to identify Navi4 targets.
+    static const char* kNavi4TargetToken = "gfx12";
+    return (target_name.find(kNavi4TargetToken) != std::string::npos);
+}
+
+bool RgaSharedUtils::IsStrix(const std::string& target_name)
+{
+    return target_name == "gfx1150" || target_name == "gfx1151" || target_name == "gfx1152";
+}
+
+bool RgaSharedUtils::IsNavi3AndBeyond(const std::string& target_name)
+{
+    return IsNavi4Target(target_name) || IsStrix(target_name) || IsNavi3Target(target_name);
+}
+
+bool RgaSharedUtils::IsNavi3Target(const std::string& target_name)
+{
+	// Token to identify Navi3 targets.
+	static const char* kNavi3TargetToken = "gfx11";
+	return (target_name.find(kNavi3TargetToken) != std::string::npos);
+}
+
+bool RgaSharedUtils::IsNaviTarget(const std::string& target_name)
+{
+    // Token to identify Navi targets.
+    static const char* kNaviTargetToken = "gfx1";
+    return (target_name.find(kNaviTargetToken) != std::string::npos);
+}
+
+bool RgaSharedUtils::IsNavi21AndBeyond(const std::string& target_name)
+{
+    return(IsNaviTarget(target_name) && target_name >= "gfx1030");
+}
+
+bool RgaSharedUtils::IsNavi21(const std::string& target_name)
+{
+    return target_name == "gfx1030";
+}
+
+bool RgaSharedUtils::IsMi200Target(const std::string& target_name)
+{
+    return target_name == "gfx90a";
+}
+
+bool RgaSharedUtils::IsMi300Target(const std::string& target_name)
+{
+    return target_name == "gfx942";
+}
+
+bool RgaSharedUtils::IsVegaTarget(const std::string& target_name)
+{
+    // Token to identify Vega targets.
+    static const char* kVegaTargetToken = "gfx9";
+    return (target_name.find(kVegaTargetToken) != std::string::npos);
+}

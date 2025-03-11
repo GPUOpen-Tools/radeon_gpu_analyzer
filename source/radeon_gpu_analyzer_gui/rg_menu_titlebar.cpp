@@ -15,7 +15,7 @@
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 
 // Fixed height of the project title item.
-static const int kProjectTitleItemHeight = 28;
+static const int kProjectTitleItemHeight = 32;
 
 // File menu bar stylesheets.
 static const char* kStrFilemenuTitleBarTooltipWidth = "min-width: %1px; width: %2px;";

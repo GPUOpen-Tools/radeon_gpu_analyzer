@@ -5,6 +5,10 @@ project (radeon_gpu_analyzer_cli)
 set (RadeonGPUAnalyzerCLI_VERSION_MAJOR 2)
 set (RadeonGPUAnalyzerCLI_VERSION_MINOR 0)
 
+if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(TINYXML2_DIR "${PROJECT_SOURCE_DIR}/../../external/qt_isa_gui/external/isa_spec_manager/source/third_party/tinyxml2")
+endif()
+
 # Windows-specific preprocessor directives
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -122,7 +126,6 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "D
         find_library(BOOST_LIBRARY3 "libboost_program_options.a" HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/Boost/boost_1_59_0/lib/RHEL6/x86_64")
         find_library(BOOST_LIBRARY4 "libboost_regex.a" HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/Boost/boost_1_59_0/lib/RHEL6/x86_64")
     endif()
-
 endif()
 
 # Set Visual C++ warning level to 4
@@ -132,16 +135,14 @@ endif()
 
 # Other libraries
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/tinyxml2/Lib/VS2015/Win64/Release/MD")
     find_library(YAMLCPP_LIB "libyaml-cppmd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/yaml-cpp/lib/win64/Release")
     find_library(SPIRVCROSS_LIB "spirv-cross-core.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/vulkan/tools/windows/lib/Release")
-    find_library(TINYXML_LIBD "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
     find_library(YAMLCPP_LIBD "libyaml-cppmdd.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/yaml-cpp/lib/win64/Debug")
     find_library(SPIRVCROSS_LIBD "spirv-cross-core.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/vulkan/tools/windows/lib/Debug")
 else()
-    find_library(TINYXML_LIB "libtinyxml2.a" HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/tinyxml2/Lib/Linux/x64/Release")
     find_library(YAMLCPP_LIB "libyaml-cpp.a" HINTS "${PROJECT_SOURCE_DIR}/../../external/yaml-cpp/lib/linux/gcc5")
     find_library(SPIRVCROSS_LIB "libspirv-cross-core.a" HINTS "${PROJECT_SOURCE_DIR}/../../external/vulkan/tools/linux/lib")
+    add_library(tinyxml2 ${TINYXML2_DIR}/tinyxml2.cpp)
 endif()
 
 # Set the name of the executable
@@ -161,6 +162,8 @@ else()
     endif()
 endif()
 
+target_include_directories(tinyxml2 PUBLIC ${TINYXML2_DIR})
+
 # Link settings
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools d3d12.lib
@@ -168,28 +171,27 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
                            optimized ${BOOST_LIBRARY2}
                            optimized ${BOOST_LIBRARY3}
                            optimized ${BOOST_LIBRARY4}
-                           optimized ${TINYXML_LIB}
                            optimized ${YAMLCPP_LIB}
                            optimized ${SPIRVCROSS_LIB}
                            debug ${BOOST_LIBRARY1D}
                            debug ${BOOST_LIBRARY2D}
                            debug ${BOOST_LIBRARY3D}
                            debug ${BOOST_LIBRARY4D}
-                           debug ${TINYXML_LIBD}
                            debug ${YAMLCPP_LIBD}
                            debug ${SPIRVCROSS_LIBD}
-                           general ${UPDATECHECKAPI_LIBS})
+                           general ${UPDATECHECKAPI_LIBS}
+                           general tinyxml2)
 else()
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools
                                ${Boost_LIBRARIES}
                                ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB}
-                               ${UPDATECHECKAPI_LIBS})
+                               ${UPDATECHECKAPI_LIBS} tinyxml2)
     else()
         target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools
                                ${BOOST_LIBRARY1} ${BOOST_LIBRARY3}
                                ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB}
-                               ${UPDATECHECKAPI_LIBS})
+                               ${UPDATECHECKAPI_LIBS} tinyxml2)
     endif()
 endif()
 

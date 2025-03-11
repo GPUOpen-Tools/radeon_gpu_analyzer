@@ -49,7 +49,7 @@ static const std::string  kStrLcObjDumpMetdataOptionToken = "-amdgpu-code-object
 static const std::string  kStrLcCompilerOpenclSwitchTriple = "--target=amdgcn-amd-amdhsa";
 static const std::string  kStrLcCompilerOpenclSwitchInclude = "-include ";
 static const std::string  kStrLcCompilerOpenclSwitchDevice = "-mcpu=";
-static const std::string  kStrLcCompilerOpenclDefaultDevice = "gfx1100";
+static const std::string  kStrLcCompilerOpenclDefaultDevice = "gfx1201";
 static const std::string  kStrLcCompilerOpenclSwitchVersion = "--version";
 static const std::string  kStrLcCompilerOpenclSwitchPreprocessor = "-E";
 static const std::string  kStrLcCompilerOpenclSwitchRcomLibPath  = "--rocm-device-lib-path=";

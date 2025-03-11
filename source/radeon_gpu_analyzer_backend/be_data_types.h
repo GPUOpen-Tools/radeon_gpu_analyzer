@@ -143,4 +143,10 @@ enum beWaveSize
     kWave64
 };
 
+// An array containing per-stage wave size.
+typedef std::array<beWaveSize, BePipelineStage::kCount> BeVkPipelineWaveSizes;
+
+// An array containing per-stage wave size.
+typedef std::array<beWaveSize, BeRtxPipelineStage::kCountRtx> BeRtxPipelineWaveSizes;
+
 #endif // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_DATA_TYPES_H_

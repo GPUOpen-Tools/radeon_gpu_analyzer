@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>644</width>
-    <height>621</height>
+    <width>1088</width>
+    <height>849</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -68,10 +68,10 @@
          <number>6</number>
         </property>
         <property name="leftMargin">
-         <number>6</number>
+         <number>0</number>
         </property>
         <property name="topMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <property name="rightMargin">
          <number>6</number>
@@ -106,10 +106,10 @@
          </widget>
         </item>
         <item>
-         <widget class="ArrowIconComboBox" name="columnVisibilityArrowPushButton">
+         <widget class="QPushButton" name="rawTextPushButton">
           <property name="minimumSize">
            <size>
-            <width>80</width>
+            <width>55</width>
             <height>0</height>
            </size>
           </property>
@@ -123,7 +123,10 @@
            <string notr="true"/>
           </property>
           <property name="text">
-           <string>Columns</string>
+           <string>Raw</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -237,10 +240,10 @@
        <number>0</number>
       </property>
       <property name="leftMargin">
-       <number>0</number>
+       <number>6</number>
       </property>
       <property name="topMargin">
-       <number>0</number>
+       <number>6</number>
       </property>
       <property name="rightMargin">
        <number>0</number>
@@ -259,7 +262,7 @@
         <property name="handleWidth">
          <number>0</number>
         </property>
-        <widget class="QStackedWidget" name="disassemblyTableHostWidget">
+        <widget class="QStackedWidget" name="disassemblyHostWidget">
          <property name="styleSheet">
           <string notr="true">QStackedWidget#disassemblyTableHostWidget
 {

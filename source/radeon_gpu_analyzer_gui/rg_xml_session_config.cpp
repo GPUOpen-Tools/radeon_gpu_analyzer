@@ -3,7 +3,7 @@
 #include <algorithm>
 
 // XML.
-#include <tinyxml2/Include/tinyxml2.h>
+#include "tinyxml2.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_resource_usage_csv_file_parser.h"

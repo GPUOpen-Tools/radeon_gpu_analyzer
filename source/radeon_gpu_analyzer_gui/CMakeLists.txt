@@ -70,16 +70,10 @@ if (GUI_AUTOMATION)
     include_directories("${PROJECT_SOURCE_DIR}/../../external/rga_internal_utils/tests_gui/include")
 endif()
 include_directories("${PROJECT_SOURCE_DIR}/../../external/qt_common/")
+include_directories("${PROJECT_SOURCE_DIR}/../../external/qt_isa_gui/")
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/../../external/qt_common" "../qt_common")
-
-# TinyXML library
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    find_library(TINYXML_LIB "tinyxml2.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/tinyxml2/Lib/VS2015/Win64/Release/MD")
-    find_library(TINYXML_LIBD "tinyxml2-d.lib" HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/tinyxml2/Lib/VS2015/Win64/Debug/MDd")
-else()
-    find_library(TINYXML_LIB "libtinyxml2.a" HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/tinyxml2/Lib/Linux/x64/Release")
-endif()
+add_subdirectory("${PROJECT_SOURCE_DIR}/../../external/qt_isa_gui" "../qt_isa_gui")
 
 file(GLOB  CPP_INC
      "*.h"
@@ -171,10 +165,12 @@ if (GUI_AUTOMATION)
     set(AUTO_ARG "-automation")
 endif()
 
+target_include_directories(tinyxml2 PUBLIC ${TINYXML2_DIR})
+
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers optimized ${TINYXML_LIB} debug ${TINYXML_LIBD} general Qt6::Gui Qt6::Widgets Qt6::Core QtCustomWidgets QtUtils ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
+    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers general Qt6::Gui Qt6::Widgets Qt6::Core QtCustomWidgets QtUtils qt_isa_widgets qt_isa_utility ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} tinyxml2 ${EXTRA_LIBS})
 else()
-    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers ${TINYXML_LIB} Qt6::Gui Qt6::Widgets Qt6::Core QtCustomWidgets QtUtils ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} ${EXTRA_LIBS})
+    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers Qt6::Gui Qt6::Widgets Qt6::Core QtCustomWidgets QtUtils qt_isa_widgets qt_isa_utility ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} tinyxml2 ${EXTRA_LIBS})
 endif()
 
 # Copy the RGA-Updates file into the output directory for ease of testing.
@@ -183,11 +179,16 @@ add_custom_command(TARGET radeon_gpu_analyzer_gui POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../../updates/RGA-Updates.json $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
 
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E echo "Copying external files to $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/../../external/qt_isa_gui/external/isa_spec_manager_xml/ $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/isa_spec/
+)
+
 # Setup the post-build script.
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set(DEBUG_ARG "-debug")
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "Copying external files to $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils"
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying rtda to $<TARGET_FILE_DIR:${PROJECT_NAME}>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/../../external/update_check_api/rtda/windows/rtda.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/rtda.exe
     )
     if (GUI_AUTOMATION)

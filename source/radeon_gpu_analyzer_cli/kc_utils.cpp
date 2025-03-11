@@ -3,7 +3,7 @@
 //=================================================================
 
 // XML.
-#include "tinyxml2/Include/tinyxml2.h"
+#include "tinyxml2.h"
 
 // Infra.
 #include "external/amdt_base_tools/Include/gtString.h"
@@ -1765,57 +1765,6 @@ void KcUtils::CheckForUpdates()
             }
         }
     }
-}
-
-bool KcUtils::IsStrix(const std::string& target_name)
-{
-    return target_name == "gfx1150";
-}
-
-bool KcUtils::IsNavi3AndBeyond(const std::string& target_name)
-{
-    return IsStrix(target_name) || IsNavi3Target(target_name);
-}
-
-bool KcUtils::IsNavi3Target(const std::string& target_name)
-{
-	// Token to identify Navi3 targets.
-	static const char* kNavi3TargetToken = "gfx11";
-	return (target_name.find(kNavi3TargetToken) != std::string::npos);
-}
-
-bool KcUtils::IsNaviTarget(const std::string& target_name)
-{
-    // Token to identify Navi targets.
-    static const char* kNaviTargetToken = "gfx1";
-    return (target_name.find(kNaviTargetToken) != std::string::npos);
-}
-
-bool KcUtils::IsNavi21AndBeyond(const std::string& target_name)
-{
-    return(IsNaviTarget(target_name) && target_name >= "gfx1030");
-}
-
-bool KcUtils::IsNavi21(const std::string& target_name)
-{
-    return target_name == "gfx1030";
-}
-
-bool KcUtils::IsMi200Target(const std::string& target_name)
-{
-    return target_name == "gfx90a";
-}
-
-bool KcUtils::IsMi300Target(const std::string& target_name)
-{
-    return target_name == "gfx942";
-}
-
-bool KcUtils::IsVegaTarget(const std::string& target_name)
-{
-    // Token to identify Vega targets.
-    static const char* kVegaTargetToken = "gfx9";
-    return (target_name.find(kVegaTargetToken) != std::string::npos);
 }
 
 bool KcUtils::IsPostPorcessingSupported(const std::string& isa_file_path)

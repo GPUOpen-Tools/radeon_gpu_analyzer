@@ -57,7 +57,7 @@ signals:
     void FocusOutputWindow();
 
     // Focus column push button in disassembly view.
-    void FocusColumnPushButton();
+    void FocusRawTextDisassemblyPushButton();
 
     // A signal used by RgCliOutputView to make File Menu and Main Menu to switch to required file/line.
     void SwitchToFile(const std::string& file_path, int line_num) const;

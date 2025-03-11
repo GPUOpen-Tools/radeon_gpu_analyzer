@@ -6,10 +6,11 @@
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_UTILS_H_
 
 // C++.
-#include <vector>
+#include <map>
 #include <set>
 #include <string>
-#include <map>
+#include <utility>
+#include <vector>
 
 // Device info.
 #include "DeviceInfo.h"

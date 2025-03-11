@@ -116,7 +116,8 @@ bool KcCLICommanderDxrUtil::PerformLiveVgprAnalysis(const Config& config) const
             livereg_out_filename << livereg_out_filename_std_string.c_str();
             if (!livereg_out_filename.isEmpty())
             {
-                KcUtils::PerformLiveRegisterAnalysis(isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line, false);
+                KcUtils::PerformLiveRegisterAnalysis(
+                    isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line, false, output_files.wave_size);
                 if (BeUtils::IsFilePresent(livereg_out_filename.asASCIICharArray()))
                 {
                     // Store the name of livereg output file in the RGA output files metadata.
@@ -186,7 +187,8 @@ bool KcCLICommanderDxrUtil::PerformLiveSgprAnalysis(const Config& config) const
             livereg_out_filename << livereg_out_filename_std_string.c_str();
             if (!livereg_out_filename.isEmpty())
             {
-                KcUtils::PerformLiveRegisterAnalysis(isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line, true);
+                KcUtils::PerformLiveRegisterAnalysis(
+                    isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line, true, output_files.wave_size);
                 if (BeUtils::IsFilePresent(livereg_out_filename.asASCIICharArray()))
                 {
                     // Store the name of livereg output file in the RGA output files metadata.

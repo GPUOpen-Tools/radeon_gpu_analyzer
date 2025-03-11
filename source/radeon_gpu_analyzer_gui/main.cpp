@@ -76,18 +76,7 @@ int main(int argc, char *argv[])
 
     QtCommon::QtUtils::ColorTheme::Get().SetColorTheme(static_cast<ColorThemeType>(color_mode));
 
-    QPalette common_palette = QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette();
-    if (color_mode == kColorThemeTypeDark)
-    {
-        common_palette.setColor(QPalette::Midlight, QColor(60, 60, 60));
-        common_palette.setColor(QPalette::Highlight, QColor(100, 100, 50, 130));
-    }
-    else
-    {
-        common_palette.setColor(QPalette::Midlight, QColor(200, 200, 200));
-        common_palette.setColor(QPalette::Highlight, QColor(255, 255, 178));
-    }
-    qApp->setPalette(common_palette);
+    qApp->setPalette(QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette());
 
     bool enable_feature_interop = QCoreApplication::arguments().count() == 2;
     if (enable_feature_interop)

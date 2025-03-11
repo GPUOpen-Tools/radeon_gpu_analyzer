@@ -3,7 +3,7 @@
 #include <cassert>
 
 // XML.
-#include <tinyxml2/Include/tinyxml2.h>
+#include "tinyxml2.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_config_file.h"

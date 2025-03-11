@@ -1,16 +1,17 @@
-Radeon™ GPU Analyzer 2.11 Release Notes
+Radeon™ GPU Analyzer 2.12 Release Notes
 =======================================
 Highlights
 ==========
--	Added support for gfx1150 as a compiler target across all modes.
--	DXR mode now supports AMD compiler’s raytracing updates. With Radeon Adrenalin™ driver version 24.9.1, the AMD compiler includes changes to the way raytracing state objects are being compiled. Use this new version of RGA to ensure compatibility with the new compiler.
--	Dark mode: the RGA GUI application now lets you choose between Light and Dark themes or have the UI follow the OS theme. To control this behavior, visit the tool’s Settings menu.
--	Updated DXC to version v1.8.2407.
--	Updated the offline Vulkan and OpenGL compilers.
+-     Added support for RDNA™ 4 (gfx1201) as well as gfx1151 and gfx1152 architectures as compiler targets across all RGA's modes.
+-     Upgraded ISA disassembly view: you can now navigate through the disassembly more easily and identify areas with higher VGPR pressure in your shaders and kernels. 
+-     The new disassembly view presents tooltips when hovering over opcodes in the view.
+-     Updated the offline OpenCL, Vulkan and OpenGL compilers.
 
 Notes: 
-•	As part of adding support for AMD compiler’s raytracing updates, the DXR invocation command is now simplified, removing support for the --mode and --export command line options. Any DXR state object compilation would be considered a Pipeline compilation, and it is up to the driver to decide on the compilation type (Indirect vs. Unified). For more information and usage examples, run rga -s dxr -h.
-•	This release removes support for pre-RDNA targets in the Vulkan offline mode.
+-     Clock cycle estimates are no longer presented by the upgraded ISA disassembly view in RGA GUI application.
+-     The new disassembly view presents Functional Groups, leveraging the AMD GPU machine-readable ISA documentation.
+-     For backward compatibility, the RGA CLI output presents Cycle estimates and Functional Unit fields similar to RGA 2.11. 
+-     We are working on a revised performance estimate mechanism and will share more details in a future RGA release.
 
 Known Issues
 ============
@@ -24,7 +25,7 @@ Vulkan Live Driver Mode
 Offline OpenCL Mode
 -------------------
 -	OpenCL C++ kernels are not yet supported by the Lightning Compiler.
--	Cycle estimate for certain VALU instructions appears as “Varies” instead of 4.
+-   In OpenCL mode, the VGPR allocation granularity assumes Wave64 for all kernels. This may result in VGPR allocation granularity of 12 VGPRs instead of 24 VGPRs for Wave32 kernels compiled for the following targets: gfx1201, gfx1151, gfx1150, gfx1101 and gfx1100.
 
 DirectX 12 Mode
 ---------------
@@ -218,14 +219,12 @@ GUI Application
 ---------------
 -	VGPR Pressure feature: certain instructions (image_* in particular) may report more live registers than actually used.
 -	“Correlation Disabled” notification in the source code editor is not being saved for projects after they were closed.
--	Certain SALU instructions are being misclassified as VALU instructions. 
--	Certain GDS instructions are being misclassified as SALU.
 -	Changing disassembly columns can be sluggish on certain systems in projects with multiple .cl files.
 -	On systems with default Unicode path for the RGA projects folder, the tool will not be able to save files. A workaround has been provided in version 2.6.1 (allowing the user to change the folder in which projects are saved).
 -	On Linux, if the OS color theme is updated while the RGA GUI application is running, the RGA GUI application will not immediately reflect these changes (the changes will be reflected the next time that you launch the application).
+-   Tooltips and Functional Groups are not supported for pre-RDNA targets.
 
 General
--	RGA compilation is not impacted by Driver Experiments. Activating driver experiments would generally have no impact on RGA’s behavior and the compiled shaders, kernels and pipelines.
 
 
 Notes for OpenCL Mode Users 

@@ -24,7 +24,6 @@
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_global_settings_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_hide_list_widget_event_filter.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_line_edit.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
@@ -63,14 +62,14 @@ RgGlobalSettingsView::RgGlobalSettingsView(QWidget* parent, const RgGlobalSettin
     // Initialize the combo box for font size.
     PopulateFontSizeDropdown();
 
-    ui_.color_theme_combo_box_->InitSingleSelect(this, kLightThemeOption, false, "Color Theme: ");
-    ui_.color_theme_combo_box_->AddItem(kLightThemeOption, kColorThemeTypeLight);
-    ui_.color_theme_combo_box_->AddItem(kDarkThemeOption, kColorThemeTypeDark);
-    ui_.color_theme_combo_box_->AddItem(kDetectOsOption, kColorThemeTypeCount);
+    ui_.colorThemeComboBox->InitSingleSelect(this, kLightThemeOption, false);
+    ui_.colorThemeComboBox->AddItem(kLightThemeOption, kColorThemeTypeLight);
+    ui_.colorThemeComboBox->AddItem(kDarkThemeOption, kColorThemeTypeDark);
+    ui_.colorThemeComboBox->AddItem(kDetectOsOption, kColorThemeTypeCount);
 
-    ui_.color_theme_combo_box_->SetSelectedRow(initial_settings_.color_theme);
+    ui_.colorThemeComboBox->SetSelectedRow(initial_settings_.color_theme);
 
-    connect(ui_.color_theme_combo_box_, &ArrowIconComboBox::SelectedItem, this, &RgGlobalSettingsView::HandleColorThemeComboBoxChanged);
+    connect(ui_.colorThemeComboBox, &ArrowIconComboBox::SelectedItem, this, &RgGlobalSettingsView::HandleColorThemeComboBoxChanged);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
     connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this, &RgGlobalSettingsView::HandleOsColorSchemeChanged);
 #endif
@@ -146,16 +145,22 @@ RgGlobalSettingsView::RgGlobalSettingsView(QWidget* parent, const RgGlobalSettin
     {
         ui_.columnVisibilityArrowPushButton->SetBorderColor(kApiColorOpencl);
         ui_.columnVisibilityArrowPushButton->SetShowBorder(true);
+        ui_.colorThemeComboBox->SetBorderColor(kApiColorOpencl);
+        ui_.colorThemeComboBox->SetShowBorder(true);
     }
     else if (current_api == RgProjectAPI::kVulkan)
     {
         ui_.columnVisibilityArrowPushButton->SetBorderColor(kApiColorVulkan);
         ui_.columnVisibilityArrowPushButton->SetShowBorder(true);
+        ui_.colorThemeComboBox->SetBorderColor(kApiColorVulkan);
+        ui_.colorThemeComboBox->SetShowBorder(true);
     }
     else if(current_api == RgProjectAPI::kBinary)
     {
         ui_.columnVisibilityArrowPushButton->SetBorderColor(kApiColorBinary);
         ui_.columnVisibilityArrowPushButton->SetShowBorder(true);
+        ui_.colorThemeComboBox->SetBorderColor(kApiColorBinary);
+        ui_.colorThemeComboBox->SetShowBorder(true);
     }    
     else
     {
@@ -245,7 +250,7 @@ void RgGlobalSettingsView::PushToWidgets(const RgGlobalSettings& global_settings
         ui_.fontSizeComboBox->setCurrentIndex(index);
     }
 
-    ui_.color_theme_combo_box_->SetSelectedRow(global_settings.color_theme);
+    ui_.colorThemeComboBox->SetSelectedRow(global_settings.color_theme);
 
     // Include files viewer.
     ui_.includeFilesViewerLineEdit->setText(global_settings.include_files_viewer.c_str());
@@ -296,7 +301,7 @@ RgGlobalSettings RgGlobalSettingsView::PullFromWidgets() const
     // Font size.
     settings.font_size = ui_.fontSizeComboBox->itemData(ui_.fontSizeComboBox->currentIndex()).toInt();
 
-    settings.color_theme = ui_.color_theme_combo_box_->CurrentRow();
+    settings.color_theme = ui_.colorThemeComboBox->CurrentRow();
 
     // Include files viewer.
     settings.include_files_viewer = ui_.includeFilesViewerLineEdit->text().toStdString();
@@ -583,6 +588,7 @@ void RgGlobalSettingsView::SetCursor()
     ui_.fontFamilyComboBox->setCursor(Qt::PointingHandCursor);
     ui_.fontSizeComboBox->setCursor(Qt::PointingHandCursor);
     ui_.includeFilesViewerBrowseButton->setCursor(Qt::PointingHandCursor);
+    ui_.colorThemeComboBox->setCursor(Qt::PointingHandCursor);
 }
 
 void RgGlobalSettingsView::HandleColumnVisibilityComboBoxItemClicked(QCheckBox* check_box)
@@ -597,13 +603,15 @@ void RgGlobalSettingsView::HandleColumnVisibilityComboBoxItemClicked(QCheckBox* 
     // The "All" option can be re-enabled whenever one of the other options has been unchecked.
 
     // Get the column visibility state.
-    int first_column = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress);
-    int last_column = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCount);
+    int               first_column      = static_cast<int>(IsaItemModel::Columns::kPcAddress);
+    int               last_column       = static_cast<int>(RgIsaItemModel::Columns::kColumnCount);
     std::vector<bool> column_visibility = RgUtils::GetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton);
     if (checked == true)
     {
         // Disable the "All" option if all of the items are checked.
-        bool all_checked = std::all_of(column_visibility.begin() + first_column, column_visibility.begin() + last_column, [](bool b) { return b == true; });
+        bool all_checked = std::all_of(column_visibility.begin(),
+                                       column_visibility.begin() + (last_column - first_column),
+                                       [](bool b) { return b == true; });
         if (all_checked)
         {
             QListWidgetItem* item           = ui_.columnVisibilityArrowPushButton->FindItem(0);
@@ -621,16 +629,18 @@ void RgGlobalSettingsView::HandleColumnVisibilityComboBoxItemClicked(QCheckBox* 
         }
 
         // Make sure that at least one item is still enabled.
-        bool is_at_least_one_checked = std::any_of(column_visibility.begin() + first_column, column_visibility.begin() + last_column, [](bool b) { return b == true; });
+        bool is_at_least_one_checked = std::any_of(column_visibility.begin(),
+                                                   column_visibility.begin() + (last_column - first_column),
+                                                   [](bool b) { return b == true; });
         if (!is_at_least_one_checked)
         {
             // The user tried to uncheck the last check box, but at least one box
             // MUST be checked, so find that item in the ListWidget, and set it back to checked.
             for (int row = 0; row < ui_.columnVisibilityArrowPushButton->RowCount(); row++)
             {
-                QListWidgetItem* item = ui_.columnVisibilityArrowPushButton->FindItem(row);
-                QCheckBox* check_box_item = static_cast<QCheckBox*>(item->listWidget()->itemWidget(item));
-                QString check_box_text = check_box_item->text();
+                QListWidgetItem* item           = ui_.columnVisibilityArrowPushButton->FindItem(row);
+                QCheckBox*       check_box_item = static_cast<QCheckBox*>(item->listWidget()->itemWidget(item));
+                QString          check_box_text = check_box_item->text();
                 if (check_box_text.compare(text) == 0)
                 {
                     check_box_item->setChecked(true);
@@ -643,58 +653,31 @@ void RgGlobalSettingsView::HandleColumnVisibilityComboBoxItemClicked(QCheckBox* 
     HandlePendingChangesStateChanged(GetHasPendingChanges());
 }
 
-QString RgGlobalSettingsView::GetDisassemblyColumnName(RgIsaDisassemblyTableColumns column) const
-{
-    QString result;
-
-    static std::map<RgIsaDisassemblyTableColumns, QString> column_name_map =
-    {
-        { RgIsaDisassemblyTableColumns::kAddress,                   kStrDisassemblyTableColumnAddress },
-        { RgIsaDisassemblyTableColumns::kOpcode,                    kStrDisassemblyTableColumnOpcode },
-        { RgIsaDisassemblyTableColumns::kOperands,                  kStrDisassemblyTableColumnOperands },
-        { RgIsaDisassemblyTableColumns::kFunctionalUnit,            kStrDisassemblyTableColumnFunctionalUnit },
-        { RgIsaDisassemblyTableColumns::kCycles,                    kStrDisassemblyTableColumnCycles },
-        { RgIsaDisassemblyTableColumns::kBinaryEncoding,            kStrDisassemblyTableColumnBinaryEncoding },
-        { RgIsaDisassemblyTableColumns::kLiveVgprs,                 kStrDisassemblyTableLiveVgprHeaderPart},
-    };
-
-    auto column_name_iter = column_name_map.find(column);
-    if (column_name_iter != column_name_map.end())
-    {
-        result = column_name_iter->second;
-    }
-    else
-    {
-        // The incoming column doesn't have a name string mapped to it.
-        assert(false);
-    }
-
-    return result;
-}
-
 void RgGlobalSettingsView::PopulateColumnVisibilityList()
 {
     // Remove the existing items first.
     ui_.columnVisibilityArrowPushButton->ClearItems();
 
     // Add the "All" entry.
-    QCheckBox* all_check_box = ui_.columnVisibilityArrowPushButton->AddCheckboxItem(kStrDisassemblyTableColumnAll, QVariant(), false, true);
+    QCheckBox* all_check_box = ui_.columnVisibilityArrowPushButton->AddCheckboxItem(kStrDisassemblyColumnAll, QVariant(), false, true);
     all_check_box->setObjectName(kStrGlobalSettingsColumnListItemAllCheckbox);
 
-    // Loop through each column enum member.
-    int start_column = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress);
-    int end_column   = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCount);
-
-    // Add an item for each column in the table.
-    for (int column_index = start_column; column_index < end_column; ++column_index)
-    {
-        // Add an item for each possible column in the table.
-        QString column_name = GetDisassemblyColumnName(static_cast<RgIsaDisassemblyTableColumns>(column_index));
-        ui_.columnVisibilityArrowPushButton->AddCheckboxItem(column_name, QVariant(), false, false);
-    }
-
+    ui_.columnVisibilityArrowPushButton->AddCheckboxItem(IsaItemModel::kColumnNames[IsaItemModel::Columns::kPcAddress].c_str(), QVariant(), false, false);
+    ui_.columnVisibilityArrowPushButton->AddCheckboxItem(IsaItemModel::kColumnNames[IsaItemModel::Columns::kOpCode].c_str(), QVariant(), false, false);
+    ui_.columnVisibilityArrowPushButton->AddCheckboxItem(IsaItemModel::kColumnNames[IsaItemModel::Columns::kOperands].c_str(), QVariant(), false, false);
+    ui_.columnVisibilityArrowPushButton->AddCheckboxItem(
+        IsaItemModel::kColumnNames[IsaItemModel::Columns::kBinaryRepresentation].c_str(), QVariant(), false, false);
+    ui_.columnVisibilityArrowPushButton->AddCheckboxItem(
+        RgIsaItemModel::kColumnNames[RgIsaItemModel::Columns::kIsaColumnVgprPressure - IsaItemModel::Columns::kColumnCount].c_str(), QVariant(), false, false);
+    ui_.columnVisibilityArrowPushButton->AddCheckboxItem(
+        RgIsaItemModel::kColumnNames[RgIsaItemModel::Columns::kIsaColumnFunctionalUnit - IsaItemModel::Columns::kColumnCount].c_str(),
+        QVariant(),
+        false,
+        false);
+    
     // Get notified when checkboxes are changed.
-    bool is_connected = connect(ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::CheckboxChanged, this, &RgGlobalSettingsView::HandleColumnVisibilityComboBoxItemClicked);
+    bool is_connected = connect(
+        ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::CheckboxChanged, this, &RgGlobalSettingsView::HandleColumnVisibilityComboBoxItemClicked);
     Q_ASSERT(is_connected);
 
     // If the initial settings are different than the global settings, then we know the checkbox values were
@@ -704,9 +687,8 @@ void RgGlobalSettingsView::PopulateColumnVisibilityList()
     {
         if (settings != nullptr)
         {
-           RgUtils::SetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton, settings->visible_disassembly_view_columns);
+            RgUtils::SetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton, settings->visible_disassembly_view_columns);
         }
-
     }
 }
 
@@ -933,7 +915,7 @@ bool RgGlobalSettingsView::SetColorTheme()
         {
             if (i == old_color_theme)
             {
-                ui_.color_theme_combo_box_->SetSelectedRow(i);
+                ui_.colorThemeComboBox->SetSelectedRow(i);
             }
         }
         initial_settings_.color_theme = old_color_theme;
@@ -948,19 +930,7 @@ bool RgGlobalSettingsView::SetColorTheme()
         }
         else if (ret == QMessageBox::No)
         {
-        
-            QPalette common_palette = QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette();
-            if (color_mode == kColorThemeTypeDark)
-            {
-                common_palette.setColor(QPalette::Midlight, QColor(60, 60, 60));
-                common_palette.setColor(QPalette::Highlight, QColor(100, 100, 50, 130));
-            }
-            else
-            {
-                common_palette.setColor(QPalette::Midlight, QColor(200, 200, 200));
-                common_palette.setColor(QPalette::Highlight, QColor(255, 255, 178));
-            }
-            qApp->setPalette(common_palette);
+            qApp->setPalette(QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette());
 
             emit QtCommon::QtUtils::ColorTheme::Get().ColorThemeUpdated();
         }

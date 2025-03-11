@@ -668,11 +668,19 @@ void KcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
 
                     std::string                        amdgpu_dis_stdout;
                     std::map<std::string, std::string> shader_to_disassembly;
-                    compilation_status = beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(
-                        vulkan_options.pipeline_binary, isa_files, config.print_process_cmd_line, amdgpu_dis_stdout, shader_to_disassembly, error_msg);
+                    BeVkPipelineWaveSizes              wave_sizes;
+                    wave_sizes.fill(beWaveSize::kWave64);
+
+                    compilation_status = beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(vulkan_options.pipeline_binary,
+                                                                                              isa_files,
+                                                                                              config.print_process_cmd_line,
+                                                                                              amdgpu_dis_stdout,
+                                                                                              shader_to_disassembly,
+                                                                                              wave_sizes,
+                                                                                              error_msg);
                     if (compilation_status == kBeStatusSuccess)
                     {
-                        StoreOutputFilesToOutputMD(device, spv_files, isa_files, stats_files);
+                        StoreOutputFilesToOutputMD(device, spv_files, isa_files, stats_files, wave_sizes);
 
                         BeAmdPalMetaData::PipelineMetaData pipeline;
                         auto                               md_status = BeAmdPalMetaData::ParseAmdgpudisMetadata(amdgpu_dis_stdout, pipeline);
@@ -721,10 +729,11 @@ bool KcCLICommanderVkOffline::PrintAsicList(const Config&)
     return KcUtils::PrintAsicList(targets, kUnsupportedDevicesVkOffline);
 }
 
-void KcCLICommanderVkOffline::StoreOutputFilesToOutputMD(const std::string&       device,
-                                                         const BeVkPipelineFiles& spvFiles,
-                                                         const BeVkPipelineFiles& isaFiles,
-                                                         const BeVkPipelineFiles& statsFiles)
+void KcCLICommanderVkOffline::StoreOutputFilesToOutputMD(const std::string&           device,
+                                                         const BeVkPipelineFiles&     spvFiles,
+                                                         const BeVkPipelineFiles&     isaFiles,
+                                                         const BeVkPipelineFiles&     statsFiles,
+                                                         const BeVkPipelineWaveSizes& wave_sizes)
 {
     // Check if the output Metadata for this device already exists.
     // It exists if some of shader files are GLSL/HLSL or SPIR-V text files. In that case,
@@ -755,6 +764,7 @@ void KcCLICommanderVkOffline::StoreOutputFilesToOutputMD(const std::string&     
             }
             stage_md.isa_file   = isaFiles[stage];
             stage_md.stats_file = statsFiles[stage];
+            stage_md.wave_size  = wave_sizes[stage]; 
         }
     }
 }

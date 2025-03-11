@@ -229,6 +229,11 @@ void RgViewManager::SetDisassemblyViewFocus()
     ApplyViewFocus();
 }
 
+bool RgViewManager::IsDisassemblyViewFocused() const
+{
+    return focus_view_index_ == RgViewManagerViewContainerIndex::kDisassemblyView;
+}
+
 void RgViewManager::FocusPrevView()
 {
     // If the current view is output window, and it is

@@ -384,11 +384,8 @@ void RgStartTab::OnColorThemeChanged()
         QLayout* recent_projects_list = ui_.recentProgramsWrapper->layout();
         assert(recent_projects_list != nullptr);
 
-        int num_recent_projects = static_cast<int>(recent_projects.size());
-
         // The index of the button in the QButtonGroup. This is how the
         // button is being identified within the group when signals are being fired.
-        int button_index = num_recent_projects;
         for (std::vector<std::shared_ptr<RgRecentProject>>::const_reverse_iterator project_iter = recent_projects.rbegin();
              project_iter != recent_projects.rend();
              ++project_iter)

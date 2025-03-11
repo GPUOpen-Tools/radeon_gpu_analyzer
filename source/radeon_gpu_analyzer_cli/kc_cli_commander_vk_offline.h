@@ -37,10 +37,11 @@ private:
     bool GetSupportedDevices();
 
     // Store output file names to the output metadata.
-    void StoreOutputFilesToOutputMD(const std::string&       device,
-                                    const BeVkPipelineFiles& spv_files,
-                                    const BeVkPipelineFiles& isa_files,
-                                    const BeVkPipelineFiles& stats_files);
+    void StoreOutputFilesToOutputMD(const std::string&           device,
+                                    const BeVkPipelineFiles&     spv_files,
+                                    const BeVkPipelineFiles&     isa_files,
+                                    const BeVkPipelineFiles&     stats_files,
+                                    const BeVkPipelineWaveSizes& wave_sizes);
 
     // The builder.
     BeProgramBuilderVkOffline* vulkan_builder_;

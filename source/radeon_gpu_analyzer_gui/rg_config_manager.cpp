@@ -16,7 +16,6 @@
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
 #include "radeon_gpu_analyzer_gui/rg_config_manager.h"
 #include "radeon_gpu_analyzer_gui/rg_config_file.h"
 #include "radeon_gpu_analyzer_gui/rg_cli_launcher.h"
@@ -362,13 +361,12 @@ void RgConfigManager::ResetToFactoryDefaults(RgGlobalSettings& global_settings)
     // Initialize the visible columns in the ISA disassembly table.
     // Only the Address, Opcode, Operands and Live VGPR columns are visible by default.
     global_settings.visible_disassembly_view_columns = {
-        true,   // RgIsaDisassemblyTableColumns::kAddress
-        true,   // RgIsaDisassemblyTableColumns::kOpcode
-        true,   // RgIsaDisassemblyTableColumns::kOperands
-        true,   // RgIsaDisassemblyTableColumns::kLiveVgprs
-        false,  // RgIsaDisassemblyTableColumns::kFunctionalUnit
-        false,  // RgIsaDisassemblyTableColumns::kCycles
-        false,  // RgIsaDisassemblyTableColumns::kBinaryEncoding
+        true,   // SharedIsaItemModel::Columns::kPcAddress
+        true,   // SharedIsaItemModel::Columns::kOpCode
+        true,   // SharedIsaItemModel::Columns::kOperands
+        false,  // SharedIsaItemModel::Columns::BinaryRepresentation
+        true,   // RgIsaItemModel::Columns::kIsaColumnVgprPressure
+        false,  // RgIsaItemModel::Columns::kIsaColumnFunctionalUnit
     };
 
     // Default to always asking the user for a name when creating a new project.
@@ -385,7 +383,7 @@ void RgConfigManager::ResetToFactoryDefaults(RgGlobalSettings& global_settings)
     global_settings.font_family = kStrBuildViewFontFamily;
 
     // Default font size.
-    global_settings.font_size = 10;
+    global_settings.font_size = 9;
 
     // Default color theme.
     global_settings.color_theme = 2;

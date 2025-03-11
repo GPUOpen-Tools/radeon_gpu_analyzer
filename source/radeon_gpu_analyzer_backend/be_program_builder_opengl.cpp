@@ -504,6 +504,9 @@ bool BeProgramBuilderOpengl::GetDeviceGLName(const std::string& device_name, std
         gl_backend_values["gfx1102"]       = "1102";
         gl_backend_values["gfx1103"]       = "1103";
         gl_backend_values["gfx1150"]       = "1150";
+        gl_backend_values["gfx1151"]       = "1151";
+        gl_backend_values["gfx1152"]       = "1152";
+        gl_backend_values["gfx1201"]       = "1201";
     }
 
     // Fetch the relevant value.

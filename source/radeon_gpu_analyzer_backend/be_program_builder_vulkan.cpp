@@ -11,6 +11,9 @@
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
 #include "external/amdt_os_wrappers/Include/osApplication.h"
 
+// Shared.
+#include "common/rga_shared_utils.h"
+
 // Local.
 #include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
 #include "radeon_gpu_analyzer_backend/be_string_constants.h"
@@ -28,120 +31,91 @@ using namespace beKA;
 // Constants.
 
 // Glslang option: output file.
-static const std::string  kStrGlslangOptOutput       = "-o";
+static const std::string kStrGlslangOptOutput = "-o";
 
 // Glslang option: SPIR-V binary output file.
-static const std::string  kStrGlslangOptSpirvOutput = "-V";
+static const std::string kStrGlslangOptSpirvOutput = "-V";
 
 // Glslang option: Input file is an HLSL shader.
-static const std::string  kStrGlslangOptHlslInput   = "-D";
+static const std::string kStrGlslangOptHlslInput = "-D";
 
 // Glslang option: Macro (yes, it is the same as HLSL shader).
 // For macros, the usage a different as an argument is being
 // appended to the command line switch of glslang.
-static const std::string  kStrGlslangOptMacroDefine = "-D";
+static const std::string kStrGlslangOptMacroDefine = "-D";
 
 // Glslang option: explicitly specify shader stage.
-static const std::string  kStrGlslangOptShaderStage = "-S";
+static const std::string kStrGlslangOptShaderStage = "-S";
 
 // Glslang option: Include directory.
-static const std::string  kStrGlslangOptIncludeDir = "-I";
+static const std::string kStrGlslangOptIncludeDir = "-I";
 
 // Glslang option: Preprocess input GLSL/HLSL file to stdout.
-static const std::string  kStrGlslangOptPreprocess   = "-E";
+static const std::string kStrGlslangOptPreprocess = "-E";
 
 // Glslang option: Pipeline stage.
-static const std::string  kStrGlslangOptGlslangStage        = "-S";
+static const std::string kStrGlslangOptGlslangStage = "-S";
 
 // Glslang options: Pipeline stage names.
-static const std::string  kStrGlslangOptStageVert   = "vert";
-static const std::string  kStrGlslangOptStageTessellationControl   = "tesc";
-static const std::string  kStrGlslangOptStageTessellationEvaluation   = "tese";
-static const std::string  kStrGlslangOptStageGeometry   = "geom";
-static const std::string  kStrGlslangOptStageFragment   = "frag";
-static const std::string  kStrGlslangOptStageCompute   = "comp";
+static const std::string kStrGlslangOptStageVert                   = "vert";
+static const std::string kStrGlslangOptStageTessellationControl    = "tesc";
+static const std::string kStrGlslangOptStageTessellationEvaluation = "tese";
+static const std::string kStrGlslangOptStageGeometry               = "geom";
+static const std::string kStrGlslangOptStageFragment               = "frag";
+static const std::string kStrGlslangOptStageCompute                = "comp";
 
 // Info messages.
 static const char* kStrGlslangOptDebugInfoBegin = "*** Loader debug info - BEGIN ***";
-static const char* kStrGlslangOptDebugInfoEnd = "*** Loader debug info - END ***";
+static const char* kStrGlslangOptDebugInfoEnd   = "*** Loader debug info - END ***";
 
 // A container for all valid glslang extensions for GLSL automatic stage detection.
-static const std::vector<std::string> kValidGlslangGlslExtensions =
-{
-    kStrGlslangOptStageVert,
-    kStrGlslangOptStageTessellationControl,
-    kStrGlslangOptStageTessellationEvaluation,
-    kStrGlslangOptStageGeometry,
-    kStrGlslangOptStageFragment,
-    kStrGlslangOptStageCompute
-};
+static const std::vector<std::string> kValidGlslangGlslExtensions = {kStrGlslangOptStageVert,
+                                                                     kStrGlslangOptStageTessellationControl,
+                                                                     kStrGlslangOptStageTessellationEvaluation,
+                                                                     kStrGlslangOptStageGeometry,
+                                                                     kStrGlslangOptStageFragment,
+                                                                     kStrGlslangOptStageCompute};
 
 // SPIR-V disassembler option: output file.
-static const std::string  kStrSpvDisOptOutput = "-o";
+static const std::string kStrSpvDisOptOutput = "-o";
 
 // VulkanBackend options: input spv files.
-static const std::array<std::string, BePipelineStage::kCount>
-kStrVulkanBackendOptStageInputFile =
-{
-    "--vert",
-    "--tesc",
-    "--tese",
-    "--geom",
-    "--frag",
-    "--comp"
-};
+static const std::array<std::string, BePipelineStage::kCount> kStrVulkanBackendOptStageInputFile = {"--vert", "--tesc", "--tese", "--geom", "--frag", "--comp"};
 
 // VulkanBackend options: output ISA disassembly files.
-static const std::array<std::string, BePipelineStage::kCount>
-kVulkanBackendOptStageIsaFile =
-{
-    "--vert-isa",
-    "--tesc-isa",
-    "--tese-isa",
-    "--geom-isa",
-    "--frag-isa",
-    "--comp-isa"
-};
+static const std::array<std::string, BePipelineStage::kCount> kVulkanBackendOptStageIsaFile =
+    {"--vert-isa", "--tesc-isa", "--tese-isa", "--geom-isa", "--frag-isa", "--comp-isa"};
 
 // VulkanBackend options: output statistics files.
-static const std::array<std::string, BePipelineStage::kCount>
-kVulkanBackendOptStageStatsFile =
-{
-    "--vert-stats",
-    "--tesc-stats",
-    "--tese-stats",
-    "--geom-stats",
-    "--frag-stats",
-    "--comp-stats"
-};
+static const std::array<std::string, BePipelineStage::kCount> kVulkanBackendOptStageStatsFile =
+    {"--vert-stats", "--tesc-stats", "--tese-stats", "--geom-stats", "--frag-stats", "--comp-stats"};
 
 // VulkanBackend options: output binary file.
-static const std::string  kVulkanBackendOptBinFile = "--bin";
+static const std::string kVulkanBackendOptBinFile = "--bin";
 
 // VulkanBackend options: input pipeline object file.
-static const std::string  kVulkanBackendOptPsoFile = "--pso";
+static const std::string kVulkanBackendOptPsoFile = "--pso";
 
 // VulkanBackend options: input alternative ICD path.
-static const std::string  kVulkanBackendOptIcdPath = "--icd";
+static const std::string kVulkanBackendOptIcdPath = "--icd";
 
 // VulkanBackend options: value for VK_LOADER_DEBUG environment variable.
-static const std::string  kVulkanBackendOptVkLoaderDebug = "--loader-debug";
+static const std::string kVulkanBackendOptVkLoaderDebug = "--loader-debug";
 
 // VulkanBackend options: list target GPUs.
-static const std::string  kVulkanBackendOptListTargets = "--list-targets";
+static const std::string kVulkanBackendOptListTargets = "--list-targets";
 
 // VulkanBackend options: list physical GPU adapters.
-static const std::string  kVulkanBackendOptListAdapters = "--list-adapters";
+static const std::string kVulkanBackendOptListAdapters = "--list-adapters";
 
 // VulkanBackend options: enable Vulkan validation layers.
-static const std::string  kVulkanBackendOptEnableLayers = "--enable-layers";
+static const std::string kVulkanBackendOptEnableLayers = "--enable-layers";
 
 // VulkanBackend options: path to the validation output text file.
-static const std::string  kVulkanBackendOptLayersFile = "--layers-file";
+static const std::string kVulkanBackendOptLayersFile = "--layers-file";
 
 // VulkanBackend options: target GPU.
-static const std::string  kVulkanBackendOptTarget = "--target";
-
+static const std::string kVulkanBackendOptTarget = "--target";
 
 // Copy the Vulkan Validation layers info from temp file ("tempInfoFile") to the Log file and user-provided validation info file ("outputFile").
 // Delete the temp info file after copying its content.
@@ -149,7 +123,7 @@ static void CopyValidatioInfo(const std::string& temp_info_file, const std::stri
 {
     static const char* kStrWarningFailedExtractValidationInfo = "<stdout>";
 
-    bool result = false;
+    bool        result = false;
     std::string info;
     if ((result = KcUtils::ReadTextFile(temp_info_file, info, nullptr)) == true)
     {
@@ -176,15 +150,15 @@ static void CopyValidatioInfo(const std::string& temp_info_file, const std::stri
 }
 
 // Construct command line options for Vulkan Backend.
-static std::string ConstructVulkanBackendOptions(const std::string& loader_debug,
-    const BeVkPipelineFiles& spv_files,
-    const BeVkPipelineFiles& isa_files,
-    const BeVkPipelineFiles& stats_files,
-    const std::string& bin_file,
-    const std::string& pso_file,
-    const std::string& icd_file,
-    const std::string& validation_output,
-    const std::string& device)
+static std::string ConstructVulkanBackendOptions(const std::string&       loader_debug,
+                                                 const BeVkPipelineFiles& spv_files,
+                                                 const BeVkPipelineFiles& isa_files,
+                                                 const BeVkPipelineFiles& stats_files,
+                                                 const std::string&       bin_file,
+                                                 const std::string&       pso_file,
+                                                 const std::string&       icd_file,
+                                                 const std::string&       validation_output,
+                                                 const std::string&       device)
 {
     std::stringstream opts;
 
@@ -203,8 +177,8 @@ static std::string ConstructVulkanBackendOptions(const std::string& loader_debug
             if (!isa_files[stage].empty() && !stats_files[stage].empty())
             {
                 opts << " " << kStrVulkanBackendOptStageInputFile[stage] << " " << KcUtils::Quote(spv_files[stage]) << " "
-                    << kVulkanBackendOptStageIsaFile[stage] << " " << KcUtils::Quote(isa_files[stage]) << " "
-                    << kVulkanBackendOptStageStatsFile[stage] << " " << KcUtils::Quote(stats_files[stage]) << " ";
+                     << kVulkanBackendOptStageIsaFile[stage] << " " << KcUtils::Quote(isa_files[stage]) << " " << kVulkanBackendOptStageStatsFile[stage] << " "
+                     << KcUtils::Quote(stats_files[stage]) << " ";
             }
         }
     }
@@ -212,7 +186,7 @@ static std::string ConstructVulkanBackendOptions(const std::string& loader_debug
     // Output binary file name.
     // Needed if the target is gfx11 or above since ISA disassembly has to be extracted from CodeObject.
     // For older architectures this is only needed when explicitly requested by the user.
-    if (!bin_file.empty() || (KcUtils::IsNavi3AndBeyond(device) && !isa_files.empty()))
+    if (!bin_file.empty() || (RgaSharedUtils::IsNavi3AndBeyond(device) && !isa_files.empty()))
     {
         opts << " " << kVulkanBackendOptBinFile << " " << KcUtils::Quote(bin_file);
     }
@@ -280,8 +254,12 @@ static std::string ConstructSpvAsmOptions(const std::string& spv_txt_filename, c
 }
 
 // Construct command line options for Glslang compiler.
-static std::string ConstructGlslangOptions(const Config& config, const std::string& src_filename,
-    const std::string& spv_filename, size_t stage, bool is_hlsl, bool is_preprocess = false)
+static std::string ConstructGlslangOptions(const Config&      config,
+                                           const std::string& src_filename,
+                                           const std::string& spv_filename,
+                                           size_t             stage,
+                                           bool               is_hlsl,
+                                           bool               is_preprocess = false)
 {
     std::stringstream opts;
 
@@ -290,8 +268,7 @@ static std::string ConstructGlslangOptions(const Config& config, const std::stri
     {
         // Unwrap the argument from the token.
         std::string fixed_options = config.glslang_opt;
-        fixed_options.erase(std::remove(fixed_options.begin(),
-            fixed_options.end(), kStrCliOptGlslangToken), fixed_options.end());
+        fixed_options.erase(std::remove(fixed_options.begin(), fixed_options.end(), kStrCliOptGlslangToken), fixed_options.end());
         opts << fixed_options;
     }
 
@@ -333,14 +310,12 @@ static std::string ConstructGlslangOptions(const Config& config, const std::stri
 
         // If the file extension is not one of the "default" file extensions:
         // vert, tesc, tese, geom, frag, comp, we need to explicitly specify for glslang the stage.
-        if (std::find(kValidGlslangGlslExtensions.cbegin(),
-            kValidGlslangGlslExtensions.cend(), ext) == kValidGlslangGlslExtensions.cend())
+        if (std::find(kValidGlslangGlslExtensions.cbegin(), kValidGlslangGlslExtensions.cend(), ext) == kValidGlslangGlslExtensions.cend())
         {
             assert(stage < kValidGlslangGlslExtensions.size());
-            if(stage < kValidGlslangGlslExtensions.size())
+            if (stage < kValidGlslangGlslExtensions.size())
             {
-                opts << " " << kStrGlslangOptShaderStage << " " <<
-                    kValidGlslangGlslExtensions[stage] << " ";
+                opts << " " << kStrGlslangOptShaderStage << " " << kValidGlslangGlslExtensions[stage] << " ";
             }
         }
 
@@ -354,9 +329,7 @@ static std::string ConstructGlslangOptions(const Config& config, const std::stri
 }
 
 // Check if ISA disassembly and statistics files are not empty for corresponding input spv files.
-static bool VerifyOutputFiles(const BeVkPipelineFiles& spv_files,
-    const BeVkPipelineFiles& isa_files,
-    const BeVkPipelineFiles& stats_files)
+static bool VerifyOutputFiles(const BeVkPipelineFiles& spv_files, const BeVkPipelineFiles& isa_files, const BeVkPipelineFiles& stats_files)
 {
     bool result = true;
     for (int stage = 0; stage < BePipelineStage::kCount; stage++)
@@ -378,7 +351,7 @@ static void FilterRelocInstructions(std::string& shader_disassembly)
 {
     // Find .reloc line.
     const char* kAmdgpuDisShaderRelocToken = ".reloc";
-    size_t beg_of_line = shader_disassembly.find(kAmdgpuDisShaderRelocToken);
+    size_t      beg_of_line                = shader_disassembly.find(kAmdgpuDisShaderRelocToken);
     while (beg_of_line != std::string::npos)
     {
         size_t end_of_line = shader_disassembly.find("\n", beg_of_line);
@@ -389,7 +362,7 @@ static void FilterRelocInstructions(std::string& shader_disassembly)
         }
         else
         {
-            assert(false); // never reach here.
+            assert(false);  // never reach here.
             break;
         }
         beg_of_line = shader_disassembly.find(kAmdgpuDisShaderRelocToken);
@@ -424,18 +397,18 @@ beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&        
             curr_pos = amdgpu_dis_output.find(kAmdgpuDisDotSizeToken);
             while (curr_pos != std::string::npos)
             {
-                size_t      end_of_line = amdgpu_dis_output.find("\n", curr_pos);
-                size_t      found       = amdgpu_dis_output.substr(curr_pos, end_of_line - curr_pos).find(kAmdgpuDisShaderNameStartToken);
-                if (found !=  std::string::npos)
+                size_t end_of_line = amdgpu_dis_output.find("\n", curr_pos);
+                size_t found       = amdgpu_dis_output.substr(curr_pos, end_of_line - curr_pos).find(kAmdgpuDisShaderNameStartToken);
+                if (found != std::string::npos)
                 {
                     curr_pos = end_of_line;
                 }
                 else
                 {
                     shader_offset_end = curr_pos + strlen(kAmdgpuDisDotSizeToken);
-                    status = kBeStatusCannotParseDisassemblyShaderStage;
+                    status            = kBeStatusCannotParseDisassemblyShaderStage;
                 }
-                
+
                 bool success            = false;
                 bool is_graphics_shader = curr_pos != std::string::npos && status != kBeStatusCannotParseDisassemblyShaderStage;
                 if (is_graphics_shader)
@@ -456,10 +429,10 @@ beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&        
                             std::string shader_token_end = shader_end_token_stream.str();
 
                             // Extract the shader disassembly.
-                            shader_offset_begin            = amdgpu_dis_output.find("\n", curr_pos + strlen(kAmdgpuDisShaderNameStartToken));
+                            shader_offset_begin = amdgpu_dis_output.find("\n", curr_pos + strlen(kAmdgpuDisShaderNameStartToken));
                             assert(shader_offset_begin != std::string::npos);
 
-                            shader_offset_end              = amdgpu_dis_output.find(shader_token_end, shader_offset_begin);
+                            shader_offset_end = amdgpu_dis_output.find(shader_token_end, shader_offset_begin);
                             if (shader_offset_end == std::string::npos)
                             {
                                 // Construct the shader end token "_amdgpu_<stage_name>_main_fetchless_symend:".
@@ -498,13 +471,16 @@ beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&        
 
     if (!shader_to_disassembly.empty())
     {
-        status = kBeStatusSuccess; 
+        status = kBeStatusSuccess;
     }
     return status;
 }
 
-beKA::beStatus beProgramBuilderVulkan::GetVulkanDriverTargetGPUs(const std::string&, const std::string& icd_file, std::set<std::string>& target_gpus,
-    bool should_print_cmd, std::string&)
+beKA::beStatus beProgramBuilderVulkan::GetVulkanDriverTargetGPUs(const std::string&,
+                                                                 const std::string&     icd_file,
+                                                                 std::set<std::string>& target_gpus,
+                                                                 bool                   should_print_cmd,
+                                                                 std::string&)
 {
     std::string std_out_text, std_err_text;
     std::string opts = kVulkanBackendOptListTargets;
@@ -533,7 +509,7 @@ beKA::beStatus beProgramBuilderVulkan::GetVulkanDriverTargetGPUs(const std::stri
 
     if (status == kBeStatusSuccess)
     {
-        size_t start = 0, end = 0;
+        size_t      start = 0, end = 0;
         std::string devices_str = RgaSharedUtils::ToLower(std_out_text);
 
         while (start < devices_str.size() && (end = devices_str.find_first_of(":\n", start)) != std::string::npos)
@@ -546,8 +522,10 @@ beKA::beStatus beProgramBuilderVulkan::GetVulkanDriverTargetGPUs(const std::stri
     return status;
 }
 
-beStatus beProgramBuilderVulkan::GetPhysicalGPUs(const std::string& icd_file, std::vector<BeVkPhysAdapterInfo>& gpu_info,
-    bool should_print_cmd, std::string& error_text)
+beStatus beProgramBuilderVulkan::GetPhysicalGPUs(const std::string&                icd_file,
+                                                 std::vector<BeVkPhysAdapterInfo>& gpu_info,
+                                                 bool                              should_print_cmd,
+                                                 std::string&                      error_text)
 {
     // The format of physical adapter list returned by VulkanBackend:
     //
@@ -571,9 +549,9 @@ beStatus beProgramBuilderVulkan::GetPhysicalGPUs(const std::string& icd_file, st
     {
         error_text = std_err_text;
         std::stringstream out_stream(std_out_text);
-        std::string line;
-        uint32_t id = 0;
-        size_t offset = 0;
+        std::string       line;
+        uint32_t          id     = 0;
+        size_t            offset = 0;
 
         // Parse the VulkanBackend output.
         while (std::getline(out_stream, line))
@@ -602,14 +580,14 @@ beStatus beProgramBuilderVulkan::GetPhysicalGPUs(const std::string& icd_file, st
     return status;
 }
 
-beKA::beStatus beProgramBuilderVulkan::CompileSrcToSpirvBinary(const Config& config,
-    const std::string& src_file,
-    const std::string& spv_file,
-    BePipelineStage stage,
-    bool is_hlsl,
-    std::string& error_text)
+beKA::beStatus beProgramBuilderVulkan::CompileSrcToSpirvBinary(const Config&      config,
+                                                               const std::string& src_file,
+                                                               const std::string& spv_file,
+                                                               BePipelineStage    stage,
+                                                               bool               is_hlsl,
+                                                               std::string&       error_text)
 {
-    beStatus status = kBeStatusVulkanEmptyInputFile;
+    beStatus    status = kBeStatusVulkanEmptyInputFile;
     std::string out_text;
 
     if (!src_file.empty())
@@ -618,19 +596,21 @@ beKA::beStatus beProgramBuilderVulkan::CompileSrcToSpirvBinary(const Config& con
         assert(!glslang_opts.empty());
         if (!glslang_opts.empty())
         {
-            status = InvokeGlslang(config.compiler_bin_path, glslang_opts,
-                config.print_process_cmd_line, out_text, error_text);
+            status = InvokeGlslang(config.compiler_bin_path, glslang_opts, config.print_process_cmd_line, out_text, error_text);
         }
     }
 
     return status;
 }
 
-beStatus beProgramBuilderVulkan::InvokeGlslang(const std::string& glslang_bin_dir, const std::string& cmd_line_options,
-    bool should_print_cmd, std::string& out_text, std::string& error_text)
+beStatus beProgramBuilderVulkan::InvokeGlslang(const std::string& glslang_bin_dir,
+                                               const std::string& cmd_line_options,
+                                               bool               should_print_cmd,
+                                               std::string&       out_text,
+                                               std::string&       error_text)
 {
     osFilePath glslang_exec;
-    long exitCode = 0;
+    long       exitCode = 0;
 
     // Use the glslang folder provided by user if it's not empty.
     // Otherwise, use the default location.
@@ -651,14 +631,8 @@ beStatus beProgramBuilderVulkan::InvokeGlslang(const std::string& glslang_bin_di
     // Clear the error message buffer.
     error_text.clear();
 
-    KcUtils::ProcessStatus  status = KcUtils::LaunchProcess(glslang_exec.asString().asASCIICharArray(),
-        cmd_line_options,
-        "",
-        kProcessWaitInfinite,
-        should_print_cmd,
-        out_text,
-        error_text,
-        exitCode);
+    KcUtils::ProcessStatus status = KcUtils::LaunchProcess(
+        glslang_exec.asString().asASCIICharArray(), cmd_line_options, "", kProcessWaitInfinite, should_print_cmd, out_text, error_text, exitCode);
 
     // If the output was streamed to stdout, grab it from there.
     if (error_text.empty() && !out_text.empty())
@@ -669,11 +643,15 @@ beStatus beProgramBuilderVulkan::InvokeGlslang(const std::string& glslang_bin_di
     return (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusVulkanGlslangLaunchFailed);
 }
 
-beStatus beProgramBuilderVulkan::InvokeSpvTool(BeVulkanSpirvTool tool, const std::string& spv_tools_bin_dir, const std::string& cmd_line_options,
-    bool should_print_cmd, std::string& out_msg, std::string& error_msg)
+beStatus beProgramBuilderVulkan::InvokeSpvTool(BeVulkanSpirvTool  tool,
+                                               const std::string& spv_tools_bin_dir,
+                                               const std::string& cmd_line_options,
+                                               bool               should_print_cmd,
+                                               std::string&       out_msg,
+                                               std::string&       error_msg)
 {
     osFilePath spv_dis_exec;
-    long exit_code = 0;
+    long       exit_code = 0;
 
     if (!spv_tools_bin_dir.empty())
     {
@@ -687,30 +665,23 @@ beStatus beProgramBuilderVulkan::InvokeSpvTool(BeVulkanSpirvTool tool, const std
         spv_dis_exec.appendSubDirectory(kGlslangRootDir);
     }
 
-    const gtString spv_tool_exec_name = (tool == BeVulkanSpirvTool::kAssembler ? kSpirvAsExecutable :
-        tool == BeVulkanSpirvTool::kDisassembler ? kSpirvDisExecutable  :
-        L"");
+    const gtString spv_tool_exec_name = (tool == BeVulkanSpirvTool::kAssembler      ? kSpirvAsExecutable
+                                         : tool == BeVulkanSpirvTool::kDisassembler ? kSpirvDisExecutable
+                                                                                    : L"");
 
     spv_dis_exec.setFileName(spv_tool_exec_name);
     spv_dis_exec.setFileExtension(kVulkanBackendExecutableExtension);
 
-    KcUtils::ProcessStatus  status = KcUtils::LaunchProcess(spv_dis_exec.asString().asASCIICharArray(),
-        cmd_line_options,
-        "",
-        kProcessWaitInfinite,
-        should_print_cmd,
-        out_msg,
-        error_msg,
-        exit_code);
+    KcUtils::ProcessStatus status = KcUtils::LaunchProcess(
+        spv_dis_exec.asString().asASCIICharArray(), cmd_line_options, "", kProcessWaitInfinite, should_print_cmd, out_msg, error_msg, exit_code);
 
     return (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusVulkanSpvToolLaunchFailed);
 }
 
-beStatus beProgramBuilderVulkan::InvokeVulkanBackend(const std::string& cmd_line_options, bool should_print_cmd,
-    std::string& out_text, std::string& error_text)
+beStatus beProgramBuilderVulkan::InvokeVulkanBackend(const std::string& cmd_line_options, bool should_print_cmd, std::string& out_text, std::string& error_text)
 {
     osFilePath vk_backend_exec;
-    long exit_code = 0;
+    long       exit_code = 0;
 
     // Construct the path to the VulkanBackend executable.
     osGetCurrentApplicationPath(vk_backend_exec, false);
@@ -718,14 +689,8 @@ beStatus beProgramBuilderVulkan::InvokeVulkanBackend(const std::string& cmd_line
     vk_backend_exec.setFileName(kVulkanBackendExecutable);
     vk_backend_exec.setFileExtension(kVulkanBackendExecutableExtension);
 
-    KcUtils::ProcessStatus status = KcUtils::LaunchProcess(vk_backend_exec.asString().asASCIICharArray(),
-        cmd_line_options,
-        "",
-        kProcessWaitInfinite,
-        should_print_cmd,
-        out_text,
-        error_text,
-        exit_code);
+    KcUtils::ProcessStatus status = KcUtils::LaunchProcess(
+        vk_backend_exec.asString().asASCIICharArray(), cmd_line_options, "", kProcessWaitInfinite, should_print_cmd, out_text, error_text, exit_code);
 
     return (status == KcUtils::ProcessStatus::kSuccess ? kBeStatusSuccess : kBeStatusVulkanBackendLaunchFailed);
 }
@@ -733,12 +698,13 @@ beStatus beProgramBuilderVulkan::InvokeVulkanBackend(const std::string& cmd_line
 bool beProgramBuilderVulkan::WriteIsaFileWithHwMapping(uint32_t                                  stage,
                                                        const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
                                                        const std::map<std::string, std::string>& shader_to_disassembly,
-                                                       const std::string&                        isa_file)
+                                                       const std::string&                        isa_file,
+                                                       beWaveSize&                               wave_size)
 {
     bool        ret             = false;
     const auto& dx12_stage_name = kStrDx12StageNames[stage];
     std::string hw_mapping_name;
-    bool        valid_hw_mapping_found = beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdpal_pipeline, dx12_stage_name, hw_mapping_name);
+    bool        valid_hw_mapping_found = beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdpal_pipeline, dx12_stage_name, hw_mapping_name, wave_size);
     auto        itr                    = shader_to_disassembly.find(hw_mapping_name);
     if (valid_hw_mapping_found && itr != shader_to_disassembly.end())
     {
@@ -815,13 +781,12 @@ void WriteIsaFileWithHardcodedMapping(uint32_t                            stage,
     }
 }
 
-
-
 beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::string&                  bin_file,
                                                                     const BeVkPipelineFiles&            isa_files,
-                                                                    bool                                should_print_cmd, 
+                                                                    bool                                should_print_cmd,
                                                                     std::string&                        amdgpu_dis_stdout,
                                                                     std::map<std::string, std::string>& shader_to_disassembly,
+                                                                    BeVkPipelineWaveSizes&              wave_sizes,
                                                                     std::string&                        error_msg)
 {
     beStatus status = kBeStatusVulkanBackendLaunchFailed;
@@ -831,7 +796,7 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
         assert(is_binary_exists);
         if (is_binary_exists)
         {
-            std::string amdgpu_dis_stderr;
+            std::string       amdgpu_dis_stderr;
             std::stringstream bin_file_with_quotes;
             bin_file_with_quotes << "\"" << bin_file << "\"";
             status = KcUtils::InvokeAmdgpudis(bin_file_with_quotes.str(), should_print_cmd, amdgpu_dis_stdout, amdgpu_dis_stderr)
@@ -857,7 +822,7 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
                             if (!isa_files[stage].empty())
                             {
                                 bool is_file_written =
-                                    beProgramBuilderVulkan::WriteIsaFileWithHwMapping(stage, pipeline, shader_to_disassembly, isa_files[stage]);
+                                    beProgramBuilderVulkan::WriteIsaFileWithHwMapping(stage, pipeline, shader_to_disassembly, isa_files[stage], wave_sizes[stage]);
                                 if (!is_file_written)
                                 {
                                     std::string amdgpu_stage_name;
@@ -892,9 +857,10 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
 
 bool beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
                                                               const std::string&                        api_shader_stage_name,
-                                                              std::string&                              hw_mapping_str)
+                                                              std::string&                              hw_mapping_str,
+                                                              beWaveSize&                               wave_size)
 {
-    bool ret              = false;
+    bool              ret = false;
     std::stringstream dot_shader_name_token;
     dot_shader_name_token << "." << api_shader_stage_name;
     auto shader_type = BeAmdPalMetaData::GetShaderType(dot_shader_name_token.str());
@@ -908,12 +874,13 @@ bool beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(const BeAmdPalMeta
                 if (stage_type == stage.stage_type)
                 {
                     std::string stage_name = hw_mapping_str = BeAmdPalMetaData::GetStageName(stage.stage_type);
-                    auto        beg        = stage_name.find(".");
+                    auto        beg                         = stage_name.find(".");
                     if (beg != std::string::npos)
                     {
                         hw_mapping_str = stage_name.substr(beg + 1);
-                        ret            = true;
-                    }     
+                        wave_size      = BeAmdPalMetaData::GetWaveSize(stage.stats.wavefront_size);
+                        ret = true;
+                    }
                 }
             }
         }
@@ -921,24 +888,26 @@ bool beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(const BeAmdPalMeta
     return ret;
 }
 
-beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string& loader_debug,
-    const BeVkPipelineFiles& spirv_files,
-    const BeVkPipelineFiles& isa_files,
-    const BeVkPipelineFiles& stats_files,
-    const std::string& bin_file,
-    const std::string& pso_file,
-    const std::string& icd_file,
-    const std::string& validation_output,
-    const std::string& validation_output_redirection,
-    const std::string& device,
-    bool should_print_cmd,
-    std::string& error_msg)
+beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string&       loader_debug,
+                                                    const BeVkPipelineFiles& spirv_files,
+                                                    const BeVkPipelineFiles& isa_files,
+                                                    const BeVkPipelineFiles& stats_files,
+                                                    const std::string&       bin_file,
+                                                    const std::string&       pso_file,
+                                                    const std::string&       icd_file,
+                                                    const std::string&       validation_output,
+                                                    const std::string&       validation_output_redirection,
+                                                    const std::string&       device,
+                                                    bool                     should_print_cmd,
+                                                    BeVkPipelineWaveSizes&   wave_sizes,
+                                                    std::string&             error_msg)
 {
-    beStatus  status = kBeStatusVulkanBackendLaunchFailed;
+    beStatus    status = kBeStatusVulkanBackendLaunchFailed;
     std::string std_out_text, std_err_text;
 
     // Construct the command for invoking the Vulkan backend.
-    std::string opts = ConstructVulkanBackendOptions(loader_debug, spirv_files, isa_files, stats_files, bin_file, pso_file, icd_file, validation_output, device);
+    std::string opts =
+        ConstructVulkanBackendOptions(loader_debug, spirv_files, isa_files, stats_files, bin_file, pso_file, icd_file, validation_output, device);
     assert(!opts.empty());
     if (!opts.empty())
     {
@@ -947,13 +916,16 @@ beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string& loader_de
         // Check if some output files have not been generated for some reason.
         if (status == kBeStatusSuccess && !VerifyOutputFiles(spirv_files, isa_files, stats_files))
         {
-            status = kBeStatusVulkanBackendCompileFailed;
+            status    = kBeStatusVulkanBackendCompileFailed;
             error_msg = std_err_text;
         }
         else if (!loader_debug.empty())
         {
-            RgLog::stdOut << std::endl << kStrGlslangOptDebugInfoBegin << std::endl <<
-                std::endl << std_err_text << std::endl << kStrGlslangOptDebugInfoEnd << std::endl;
+            RgLog::stdOut << std::endl
+                          << kStrGlslangOptDebugInfoBegin << std::endl
+                          << std::endl
+                          << std_err_text << std::endl
+                          << kStrGlslangOptDebugInfoEnd << std::endl;
         }
 
         // Print the Vulkan backend's output.
@@ -970,23 +942,25 @@ beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string& loader_de
 
         // Disassemble the binaries to get the ISA disassembly from the CodeObject's .text section.
         // For gfx11 targets we need to disassemble the binary CodeObject and extract the disassembly from there.
-        if (KcUtils::IsNavi3AndBeyond(device) && !isa_files.empty())
+        if (RgaSharedUtils::IsNavi3AndBeyond(device) && !isa_files.empty())
         {
             std::string                        amdgpu_dis_stdout;
             std::map<std::string, std::string> shader_to_disassembly;
-            status = AmdgpudisBinaryToDisassembly(bin_file, isa_files, should_print_cmd, amdgpu_dis_stdout, shader_to_disassembly, error_msg);
+            status = AmdgpudisBinaryToDisassembly(bin_file, isa_files, should_print_cmd, amdgpu_dis_stdout, shader_to_disassembly, wave_sizes, error_msg);
         }
-
     }
 
     return status;
 }
 
-beStatus beProgramBuilderVulkan::DisassembleSpv(const std::string& spv_tools_bin_dir, const std::string& spv_file_path,
-    const std::string& spv_dis_file_path, bool printCmd, std::string& error_msg)
+beStatus beProgramBuilderVulkan::DisassembleSpv(const std::string& spv_tools_bin_dir,
+                                                const std::string& spv_file_path,
+                                                const std::string& spv_dis_file_path,
+                                                bool               printCmd,
+                                                std::string&       error_msg)
 {
-    beStatus status = kBeStatusVulkanSpvDisasmFailed;
-    const std::string& opts = ConstructSpvDisOptions(spv_file_path, spv_dis_file_path);
+    beStatus           status = kBeStatusVulkanSpvDisasmFailed;
+    const std::string& opts   = ConstructSpvDisOptions(spv_file_path, spv_dis_file_path);
     if (!opts.empty())
     {
         std::string out_msg;
@@ -1010,11 +984,14 @@ beStatus beProgramBuilderVulkan::DisassembleSpv(const std::string& spv_tools_bin
     return status;
 }
 
-beStatus beProgramBuilderVulkan::AssembleSpv(const std::string& spv_tools_bin_dir, const std::string& spv_txt_file_path,
-    const std::string& spv_file_path, bool should_print_cmd, std::string& error_msg)
+beStatus beProgramBuilderVulkan::AssembleSpv(const std::string& spv_tools_bin_dir,
+                                             const std::string& spv_txt_file_path,
+                                             const std::string& spv_file_path,
+                                             bool               should_print_cmd,
+                                             std::string&       error_msg)
 {
-    beStatus status = kBeStatusVulkanSpvAsmFailed;
-    const std::string& opts = ConstructSpvAsmOptions(spv_txt_file_path, spv_file_path);
+    beStatus           status = kBeStatusVulkanSpvAsmFailed;
+    const std::string& opts   = ConstructSpvAsmOptions(spv_txt_file_path, spv_file_path);
     if (!opts.empty())
     {
         std::string out_msg;
@@ -1030,11 +1007,16 @@ beStatus beProgramBuilderVulkan::AssembleSpv(const std::string& spv_tools_bin_di
     return status;
 }
 
-beKA::beStatus beProgramBuilderVulkan::PreprocessSource(const Config& config, const std::string& glslang_bin_dir, const std::string& input_file,
-    bool is_hlsl, bool should_print_cmd, std::string& output, std::string& error_msg)
+beKA::beStatus beProgramBuilderVulkan::PreprocessSource(const Config&      config,
+                                                        const std::string& glslang_bin_dir,
+                                                        const std::string& input_file,
+                                                        bool               is_hlsl,
+                                                        bool               should_print_cmd,
+                                                        std::string&       output,
+                                                        std::string&       error_msg)
 {
-    beStatus status = kBeStatusVulkanPreprocessFailed;
-    const std::string& opts = ConstructGlslangOptions(config, input_file, "", BePipelineStage::kCount, is_hlsl, true);
+    beStatus           status = kBeStatusVulkanPreprocessFailed;
+    const std::string& opts   = ConstructGlslangOptions(config, input_file, "", BePipelineStage::kCount, is_hlsl, true);
     assert(!opts.empty());
     if (!opts.empty())
     {

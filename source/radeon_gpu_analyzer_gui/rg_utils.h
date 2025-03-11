@@ -306,14 +306,10 @@ public:
     // List widgets - BEGIN.
     // *********************
 
-    /// @brief Helper function to get the selected Column Visibility checkboxes.
-    /// @param combo_box The ArrowIconComboBox to scan.
-    /// @return A vector of booleans which correspond to the checked items in the combo box.
+    // Helper function to get the selected Column Visibility checkboxes.
     static std::vector<bool> GetColumnVisibilityCheckboxes(const ArrowIconComboBox* combo_box);
 
-    /// @brief Helper function to set the selected Column Visibility checkboxes.
-    /// @param combo_box The ArrowIconComboBox to update.
-    /// @param column_visibility A vector of booleans which correspond to the checked items in the combo box.
+    // Helper function to set the selected Column Visibility checkboxes.
     static void SetColumnVisibilityCheckboxes(ArrowIconComboBox*& combo_box, const std::vector<bool>& column_visibility);
 
     // *******************

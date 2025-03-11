@@ -309,6 +309,9 @@ public slots:
     // Handler invoked when the use triggers the Edit menu's Find action.
     void HandleFindTriggered();
 
+    // Handler for the Go To line button click.
+    void HandleGoToLineTriggered();
+
     // Handler invoked when the project building status is changed.
     void HandleIsBuildInProgressChanged(bool is_building);
 
@@ -653,6 +656,9 @@ protected:
 
     // Map of editors to the last modification times of the underlying files.
     std::map<RgSourceCodeEditor*, QDateTime> file_modified_time_map_;
+
+    // Tracks files that have external modifications and require a dialog.
+    std::unordered_map<std::string, bool> pending_file_modifications_;  
 
     // A find widget used to edit source code.
     RgFindTextWidget* find_widget_ = nullptr;

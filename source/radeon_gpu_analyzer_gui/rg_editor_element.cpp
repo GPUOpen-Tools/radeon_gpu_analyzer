@@ -712,11 +712,9 @@ void RgEditorElement::SetHighlightColor(StringHighlightData& string_highlight_da
 {
     // The color in which the current match would be highlighted.
     static const QColor kHighlightColorMatchOther = QtCommon::QtUtils::ColorTheme::Get().GetCurrentThemeColors().row_selected_color;
-    //QColor::fromRgba(qRgba(254, 206, 0, 200));
 
     // The color in which any match would be highlighted.
     static QColor kHighlightColorMatchCurrent = qApp->palette().color(QPalette::Highlight);
-    //QColor::fromRgba(qRgba(165, 175, 146, 200));
 
     if (is_current_match_)
     {

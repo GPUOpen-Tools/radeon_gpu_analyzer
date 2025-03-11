@@ -22,7 +22,6 @@
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_settings_buttons_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_hide_list_widget_event_filter.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 

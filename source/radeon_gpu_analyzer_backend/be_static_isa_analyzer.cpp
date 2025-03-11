@@ -15,6 +15,9 @@
 #include "external/amdt_os_wrappers/Include/osApplication.h"
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
 
+// Shared.
+#include "common/rga_shared_utils.h"
+
 // Local.
 #include "radeon_gpu_analyzer_backend/be_static_isa_analyzer.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
@@ -67,35 +70,64 @@ static std::string GetShaeIsaCmd(const gtString& target)
     const gtString kShaeGfx90a  = L"gfx90a";
     const gtString kShaeGfx942  = L"gfx942";
     const gtString kShaeGfx10_1 = L"gfx10_1";
-	const gtString kShaeGfx10_3 = L"gfx10_3";
-	const gtString kShaeGfx11   = L"gfx11";
+    const gtString kShaeGfx10_3 = L"gfx10_3";
+    const gtString kShaeGfx11   = L"gfx11";
     const gtString kShaeGfx11_5 = L"gfx11_5";
+    const gtString kShaeGfx12   = L"gfx12";
 
-	std::stringstream    shae_gfx_generation;
-	shae_gfx_generation << "--isa ";
-    if (KcUtils::IsStrix(target.asASCIICharArray()))
+    const gtString kShaeGfx1100 = L"gfx1100";
+    const gtString kShaeGfx1101 = L"gfx1101";
+    const gtString kShaeGfx1151 = L"gfx1151";
+    const gtString kShaeGfx1201 = L"gfx1201";
+
+    const gtString kShaeOptionIsa  = L"--isa";
+    const gtString kShaeOptionArch = L"--arch";
+
+    bool              should_add_arch_option = false;
+    std::stringstream shae_gfx_generation;
+    shae_gfx_generation << kShaeOptionIsa.asASCIICharArray() << " ";
+    if (RgaSharedUtils::IsNavi4Target(target.asASCIICharArray()))
+    {
+        shae_gfx_generation << kShaeGfx12.asASCIICharArray();
+
+        if (target.isEqualNoCase(kShaeGfx1201))
+        {
+            should_add_arch_option = true;
+        }
+    }
+    else if (RgaSharedUtils::IsStrix(target.asASCIICharArray()))
     {
         shae_gfx_generation << kShaeGfx11_5.asASCIICharArray();
+
+        if (target.isEqualNoCase(kShaeGfx1151))
+        {
+            should_add_arch_option = true;
+        }
     }
-	else if (KcUtils::IsNavi3Target(target.asASCIICharArray()))
-	{
-		shae_gfx_generation << kShaeGfx11.asASCIICharArray();
-	}
-	else if (KcUtils::IsNavi21AndBeyond(target.asASCIICharArray()))
-	{
-		shae_gfx_generation << kShaeGfx10_3.asASCIICharArray();
-	}
-    else if (KcUtils::IsNaviTarget(target.asASCIICharArray()))
+    else if (RgaSharedUtils::IsNavi3Target(target.asASCIICharArray()))
+    {
+        shae_gfx_generation << kShaeGfx11.asASCIICharArray();
+
+        if (target.isEqualNoCase(kShaeGfx1100) || target.isEqualNoCase(kShaeGfx1101))
+        {
+            should_add_arch_option = true;
+        }
+    }
+    else if (RgaSharedUtils::IsNavi21AndBeyond(target.asASCIICharArray()))
+    {
+        shae_gfx_generation << kShaeGfx10_3.asASCIICharArray();
+    }
+    else if (RgaSharedUtils::IsNaviTarget(target.asASCIICharArray()))
     {
         shae_gfx_generation << kShaeGfx10_1.asASCIICharArray();
     }
-    else if (KcUtils::IsVegaTarget(target.asASCIICharArray()))
+    else if (RgaSharedUtils::IsVegaTarget(target.asASCIICharArray()))
     {
-        if (KcUtils::IsMi300Target(target.asASCIICharArray()))
+        if (RgaSharedUtils::IsMi300Target(target.asASCIICharArray()))
         {
             shae_gfx_generation << kShaeGfx942.asASCIICharArray();
         }
-        else if (KcUtils::IsMi200Target(target.asASCIICharArray()))
+        else if (RgaSharedUtils::IsMi200Target(target.asASCIICharArray()))
         {
             shae_gfx_generation << kShaeGfx90a.asASCIICharArray();
         }
@@ -109,6 +141,12 @@ static std::string GetShaeIsaCmd(const gtString& target)
         // Fall back to GFX8.
         shae_gfx_generation << kShaeGfx8.asASCIICharArray();
     }
+
+    if (should_add_arch_option)
+    {
+        shae_gfx_generation << " " << kShaeOptionArch.asASCIICharArray() << " " << target.asASCIICharArray();
+    }
+
     return shae_gfx_generation.str().c_str();
 }
 

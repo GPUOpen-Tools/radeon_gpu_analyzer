@@ -107,3 +107,17 @@ RgBuildSettingsViewVulkan #allOptionsTextEdit
 {
     border: 1px solid palette(text);
 }
+
+/********************************************************************/
+/* Disassemblyview Frame (RgIsaDisassemblyView)
+/********************************************************************/
+RgIsaDisassemblyView #frame[selected=true]
+{
+    border: 1px solid rgb(224, 30, 55);
+}
+
+RgIsaDisassemblyView #frame[selected=false]
+{
+    border: 1px solid palette(text);
+
+}

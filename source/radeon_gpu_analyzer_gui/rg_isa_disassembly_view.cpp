@@ -23,9 +23,6 @@
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_hide_list_widget_event_filter.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_view.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_tab_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_resource_usage_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_view_container.h"
@@ -35,19 +32,10 @@
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
-// Names of special widgets within the disassembly view.
-static const char* kStrDisassemblyColumnVisibilityList      = "DisassemblyColumnVisibilityList";
-static const char* kStrDisassemblyColumnListItemCheckbox    = "ListWidgetCheckBox";
-static const char* kStrDisassemblyColumnListItemAllCheckbox = "ListWidgetAllCheckBox";
-
-// Object name associated with the target GPU dropdown list.
-static const char* kStrDisassemblyTargetGpuList = "TargetGpuList";
-
-// Columns push button font size.
-const int kPushButtonFontSize = 11;
-
-// Error message for missing live VGPR output file.
-const QString kStrLiveVgprFileMissingError = "Live VGPR output file missing.";
+// A separator used in joining an input source file path, target asic and an entry point name.
+// Such a string is used to uniquely identify an entry point with potential for
+// name collisions between separate source files and gpus.
+static const char kEntrypointKeySeparator = '|';
 
 RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent)
     : QWidget(parent)
@@ -58,11 +46,10 @@ RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent)
     ui_.verticalSplitterWidget->setStretchFactor(1, 0);
     ui_.verticalSplitterWidget->handle(1)->setDisabled(true);
 
-    // Create the widget used to control column visibility.
-    CreateColumnVisibilityControls();
+    ui_.rawTextPushButton->hide();
 
-    // Fill the column visibility dropdown with all of the possible column names.
-    PopulateColumnVisibilityList();
+    // Create the isa view widget.
+    CreateIsaTreeView(parent);
 
     // Create the dropdown list used to select the current target GPU.
     CreateTargetGpuListControls();
@@ -70,11 +57,14 @@ RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent)
     // Connect the signals for the disassembly view.
     ConnectSignals();
 
+    // Connect the signals for the tree view view.
+    ConnectIsaTreeViewSignals();
+
     // Set mouse pointer to pointing hand cursor.
     SetCursor();
 
     // Block recursively repolishing child tables in the disassembly view.
-    ui_.disassemblyTableHostWidget->setProperty(kIsRepolishingBlocked, true);
+    ui_.disassemblyHostWidget->setProperty(kIsRepolishingBlocked, true);
 
     // Create Full kernel Name Label.
     CreateKernelNameLabel();
@@ -87,31 +77,28 @@ RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent)
 
 RgIsaDisassemblyView::~RgIsaDisassemblyView()
 {
-    // Remove the column dropdown focus event filters if they exist.
-    if (ui_.columnVisibilityArrowPushButton != nullptr && disassembly_columns_list_event_filter_ != nullptr)
-    {
-        ui_.columnVisibilityArrowPushButton->removeEventFilter(disassembly_columns_list_event_filter_);
-        qApp->removeEventFilter(disassembly_columns_list_event_filter_);
-    }
 }
 
 void RgIsaDisassemblyView::ClearBuildOutput()
 {
-    if (!gpu_tab_views_.empty())
+    auto start = disassembly_view_input_files_map_.begin();
+    auto end   = disassembly_view_input_files_map_.end();
+    for (auto iter = start; iter != end; ++iter)
     {
-        // Destroy all existing GPU tabs.
-        auto first_gpu_tab = gpu_tab_views_.begin();
-        auto last_gpu_tab  = gpu_tab_views_.end();
-        for (auto gpu_tab_iter = first_gpu_tab; gpu_tab_iter != last_gpu_tab; ++gpu_tab_iter)
-        {
-            ui_.disassemblyTableHostWidget->removeWidget(gpu_tab_iter->second);
-        }
+        // Mark Entry for evition from the cache.        
+        RgIsaItemModel::EntryData entry_data{};
+        entry_data.isa_file_path  = iter->second.first;
+        entry_data.vgpr_file_path = iter->second.second;
+        entry_data.operation      = RgIsaItemModel::EntryData::Operation::kEvictData;
+        rg_isa_item_model_->UpdateData(&entry_data);
     }
 
-    // Clear all state data in the view.
-    gpu_tab_views_.clear();
+    disassembly_view_input_files_map_.clear();
+
     gpu_resource_usage_views_.clear();
     resource_usage_text_.clear();
+
+    current_disassembly_view_data_key_.clear();
 }
 
 void RgIsaDisassemblyView::GetResourceUsageTextBounds(QRect& tab_bounds) const
@@ -122,13 +109,13 @@ void RgIsaDisassemblyView::GetResourceUsageTextBounds(QRect& tab_bounds) const
 
 bool RgIsaDisassemblyView::IsEmpty() const
 {
-    return gpu_tab_views_.empty();
+    return disassembly_view_input_files_map_.empty();
 }
 
 void RgIsaDisassemblyView::RemoveInputFileEntries(const std::string& input_file_path)
 {
     // Clean up disassembly tables associated with the given file.
-    DestroyDisassemblyViewsForFile(input_file_path);
+    DestroyDisassemblyViewDataForFile(input_file_path);
 
     // Clean up resource usage views associated with the given file.
     DestroyResourceUsageViewsForFile(input_file_path);
@@ -139,46 +126,60 @@ void RgIsaDisassemblyView::HandleInputFileSelectedLineChanged(const std::string&
                                                               std::string&       entry_name,
                                                               int                line_index)
 {
-    // Get the currently active stacked view.
-    RgIsaDisassemblyTabView* current_tab_view = GetTargetGpuTabWidgetByTabName(target_gpu);
+    HandleSelectedEntrypointChanged(target_gpu, input_file_path, entry_name);
 
-    if (current_tab_view != nullptr && current_tab_view->GetTableCount() > 0)
-    {
-        HandleSelectedEntrypointChanged(target_gpu, input_file_path, entry_name);
-        current_tab_view->UpdateCorrelatedSourceFileLine(input_file_path, line_index, entry_name);
-    }
+    emit InputSourceHighlightedLineChanged(line_index);
 }
 
 void RgIsaDisassemblyView::HandleSelectedEntrypointChanged(const std::string& target_gpu,
                                                            const std::string& input_file_path,
                                                            const std::string& selected_entrypoint_name)
 {
-    // Get the currently active stacked view.
-    RgIsaDisassemblyTabView* target_tab_view = GetTargetGpuTabWidgetByTabName(target_gpu);
+    // Generate a key string used to identify a named entry point within a given input source file.
+    std::string entrypoint_name_key = GenerateEntrypointKey(input_file_path, target_gpu, selected_entrypoint_name);
 
-    // Switch the target GPU tab if necessary.
-    if (target_tab_view != current_tab_view_)
+    if (current_disassembly_view_data_key_ != entrypoint_name_key)
     {
-        SetCurrentTargetGpuTabView(target_tab_view);
-    }
-
-    if (target_tab_view != nullptr)
-    {
-        // Switch the table to show the disassembly for the given entrypoint.
-        target_tab_view->SwitchToEntryPoint(input_file_path, selected_entrypoint_name);
-
-        // Reset the show maximum VGPR feature.
-        RgIsaDisassemblyTableView* current_table_view = target_tab_view->GetCurrentTableView();
-        if (current_table_view != nullptr)
+        // Search the map to find the relevant view data associated with the given entrypoint.
+        auto view_data_iter = disassembly_view_input_files_map_.find(entrypoint_name_key);
+        if (view_data_iter != disassembly_view_input_files_map_.end())
         {
-            // Reset the current max VGPR line number.
-            current_table_view->ResetCurrentMaxVgprIndex();
+            // Set the data model associated with the given entrypoint.
+            const auto&               input_file_pair = view_data_iter->second;
+            RgIsaItemModel::EntryData entry_data{};
+            entry_data.target_gpu     = target_gpu;
+            entry_data.isa_file_path  = input_file_pair.first;
+            entry_data.vgpr_file_path = input_file_pair.second;
+            entry_data.operation      = RgIsaItemModel::EntryData::Operation::kLoadData;
+            if (rg_isa_widget_ && rg_isa_item_model_)
+            {
+                rg_isa_item_model_->UpdateData(&entry_data);
 
-            // Disable the Edit->Go to next maximum live VGPR line option.
-            emit EnableShowMaxVgprOptionSignal(IsMaxVgprColumnVisible());
+                rg_isa_widget_->UpdateSpannedColumns();
 
-            // Disable the context menu item.
-            current_table_view->EnableShowMaxVgprContextOption(IsMaxVgprColumnVisible());
+                const int max_line_number = rg_isa_item_model_->GetLineCount() > 0 ? rg_isa_item_model_->GetLineCount() - 1 : 0;
+                rg_isa_widget_->SetGoToLineValidatorLineCount(max_line_number);
+
+                rg_isa_widget_->Search();
+
+                rg_isa_widget_->ClearHistory();
+
+                // Don't bother updating the max vgpr indices until the expand/collapse state is set.
+                rg_isa_tree_view_->blockSignals(true);
+
+                rg_isa_widget_->ExpandCollapseAll();
+
+                rg_isa_tree_view_->blockSignals(false);
+
+                std::vector<QModelIndex> source_indices;
+                rg_isa_item_model_->GetMaxVgprPressureIndices(source_indices);
+                std::set<QModelIndex> source_indices_set(source_indices.begin(), source_indices.end());
+
+                rg_isa_tree_view_->SetHotSpotLineNumbers(source_indices_set);
+            }
+
+            // Update current key for the isa disassembly view data.
+            current_disassembly_view_data_key_ = entrypoint_name_key;
         }
     }
 
@@ -198,78 +199,43 @@ void RgIsaDisassemblyView::HandleSelectedEntrypointChanged(const std::string& ta
     }
 }
 
-void RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked(QCheckBox* check_box)
-{
-    const QString& text = check_box->text();
-
-    RgConfigManager& config_manager = RgConfigManager::Instance();
-    const int        first_column   = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress);
-    const int        last_column    = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCount);
-
-    // Get the current checked state of the ui_.
-    // This will include changes from the check/uncheck that triggered this callback.
-    std::vector<bool> column_visibility = RgUtils::GetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton);
-
-    bool all_checked = std::all_of(column_visibility.begin() + first_column, column_visibility.begin() + last_column, [](bool b) { return b == true; });
-    if (all_checked)
-    {
-        // All the items were checked, so disable the "All" option.
-        QListWidgetItem* all_item      = ui_.columnVisibilityArrowPushButton->FindItem(0);
-        QCheckBox*       all_check_box = (QCheckBox*)all_item->listWidget()->itemWidget(all_item);
-        all_check_box->setDisabled(true);
-    }
-    else
-    {
-        QListWidgetItem* all_item      = ui_.columnVisibilityArrowPushButton->FindItem(0);
-        QCheckBox*       all_check_box = (QCheckBox*)all_item->listWidget()->itemWidget(all_item);
-        all_check_box->setDisabled(false);
-    }
-
-    // Make sure at least one check box is still checked.
-    bool isAtLeastOneChecked = std::any_of(column_visibility.begin() + first_column, column_visibility.begin() + last_column, [](bool b) { return b == true; });
-
-    if (isAtLeastOneChecked)
-    {
-        // Save the changes.
-        config_manager.Instance().SetDisassemblyColumnVisibility(column_visibility);
-        config_manager.SaveGlobalConfigFile();
-    }
-    else
-    {
-        // The user tried to uncheck the last check box, but at least one box
-        // MUST be checked, so find that item in the ListWidget, and set it back to checked.
-        for (int row = 0; row < ui_.columnVisibilityArrowPushButton->RowCount(); row++)
-        {
-            QListWidgetItem* item                = ui_.columnVisibilityArrowPushButton->FindItem(row);
-            QCheckBox*       check_box_item      = static_cast<QCheckBox*>(item->listWidget()->itemWidget(item));
-            QString          check_box_item_text = check_box_item->text();
-            if (check_box_item_text.compare(text) == 0)
-            {
-                check_box->setChecked(true);
-            }
-        }
-    }
-
-    // Update the "All" checkbox.
-    UpdateAllCheckBox();
-
-    // Emit a signal to trigger a refresh of the disassembly table's filter.
-    emit DisassemblyColumnVisibilityUpdated();
-}
-
 void RgIsaDisassemblyView::EnableShowMaxVgprContextOption() const
 {
-    if (current_tab_view_ != nullptr)
-    {
-        // Get the current table view.
-        RgIsaDisassemblyTableView* current_table_view = current_tab_view_->GetCurrentTableView();
+    emit EnableShowMaxVgprOptionSignal(IsMaxVgprColumnVisible());
+}
 
-        // Enable/Disable the show max VGPR context menu item.
-        if (current_table_view != nullptr)
+void RgIsaDisassemblyView::SetFocusOnGoToLineWidget()
+{
+    if (ui_.disassemblyHostWidget != nullptr && rg_isa_widget_ != nullptr)
+    {
+        auto current_widget = ui_.disassemblyHostWidget->currentWidget();
+        if (current_widget == rg_isa_widget_)
         {
-            current_table_view->EnableShowMaxVgprContextOption(IsMaxVgprColumnVisible());
+            rg_isa_widget_->SetFocusOnGoToLineWidget();
         }
     }
+}
+
+void RgIsaDisassemblyView::SetFocusOnSearchWidget()
+{
+    if (ui_.disassemblyHostWidget != nullptr && rg_isa_widget_ != nullptr)
+    {
+        auto current_widget = ui_.disassemblyHostWidget->currentWidget();
+        if (current_widget == rg_isa_widget_)
+        {
+            rg_isa_widget_->SetFocusOnSearchWidget();
+        }
+    }
+}
+
+RgIsaTreeView* RgIsaDisassemblyView::GetTreeView() const
+{
+    return rg_isa_tree_view_;
+}
+
+bool RgIsaDisassemblyView::IsLineCorrelationSupported() const
+{
+    return false;
 }
 
 void RgIsaDisassemblyView::HandleTargetGpuChanged()
@@ -305,80 +271,41 @@ void RgIsaDisassemblyView::HandleTargetGpuChanged()
     setFocus();
 }
 
-void RgIsaDisassemblyView::ConnectDisassemblyTabViewSignals(RgIsaDisassemblyTabView* entry_view)
+
+void RgIsaDisassemblyView::CreateIsaTreeView(QWidget* disassembly_view_parent)
 {
-    // Connect the new disassembly GPU tab's source input file highlight line changed signal.
-    bool is_connected =
-        connect(entry_view, &RgIsaDisassemblyTabView::InputSourceHighlightedLineChanged, this, &RgIsaDisassemblyView::InputSourceHighlightedLineChanged);
-    assert(is_connected);
+    // Get global config to see which columns should be visible initially.
+    RgConfigManager&                  configManager   = RgConfigManager::Instance();
+    std::shared_ptr<RgGlobalSettings> global_settings = configManager.GetGlobalConfig();
 
-    // Connect the disassembly table's resized event handler.
-    is_connected =
-        connect(entry_view, &RgIsaDisassemblyTabView::DisassemblyTableWidthResizeRequested, this, &RgIsaDisassemblyView::DisassemblyTableWidthResizeRequested);
-    assert(is_connected);
+    auto              visible_disassembly_view_columns = global_settings->visible_disassembly_view_columns;
+    std::vector<bool> column_visiblity                 = {true};
+    for (auto column : visible_disassembly_view_columns)
+    {
+        column_visiblity.push_back(column);
+    }
 
-    // Connect the disassembly view's column visibility updated signal.
-    is_connected = connect(
-        this, &RgIsaDisassemblyView::DisassemblyColumnVisibilityUpdated, entry_view, &RgIsaDisassemblyTabView::HandleColumnVisibilityFilterStateChanged);
-    assert(is_connected);
+    rg_isa_widget_ = new IsaWidget(ui_.disassemblyHostWidget);
 
-    // Connect the disassembly view's set frame border red signal.
-    is_connected = connect(entry_view, &RgIsaDisassemblyTabView::FrameFocusInSignal, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
-    assert(is_connected);
+    rg_isa_proxy_model_ = new RgIsaProxyModel(rg_isa_widget_, column_visiblity);
 
-    // Connect the disassembly view's set frame border black signal.
-    is_connected = connect(entry_view, &RgIsaDisassemblyTabView::FrameFocusOutSignal, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewLostFocus);
-    assert(is_connected);
+    rg_isa_item_model_ = new RgIsaItemModel(rg_isa_widget_);
 
-    // Connect the disassembly view's title bar's set frame border red signal.
-    is_connected = connect(ui_.viewTitlebar, &RgIsaDisassemblyViewTitlebar::FrameFocusInSignal, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
-    assert(is_connected);
+    rg_isa_tree_view_ = new RgIsaTreeView(rg_isa_widget_, this);
 
-    // Connect the disassembly view's enable scroll bar signal.
-    is_connected = connect(this, &RgIsaDisassemblyView::EnableScrollbarSignals, entry_view, &RgIsaDisassemblyTabView::EnableScrollbarSignals);
-    assert(is_connected);
+    // Pass a pointer to the disassembly view's parent widget to the nav widget so it can render its combo box correctly.
+    rg_isa_widget_->SetModelAndView(disassembly_view_parent, rg_isa_item_model_, rg_isa_tree_view_, rg_isa_proxy_model_);
 
-    // Connect the disassembly view's disable scroll bar signal.
-    is_connected = connect(this, &RgIsaDisassemblyView::DisableScrollbarSignals, entry_view, &RgIsaDisassemblyTabView::DisableScrollbarSignals);
-    assert(is_connected);
-
-    // Connect the disassembly table's target GPU push button focus in signal.
-    is_connected = connect(entry_view, &RgIsaDisassemblyTabView::FocusTargetGpuPushButton, this, &RgIsaDisassemblyView::HandleFocusTargetGpuPushButton);
-    assert(is_connected);
-
-    // Connect the disassembly table's switch disassembly view size signal.
-    is_connected = connect(entry_view, &RgIsaDisassemblyTabView::SwitchDisassemblyContainerSize, this, &RgIsaDisassemblyView::SwitchDisassemblyContainerSize);
-    assert(is_connected);
-
-    // Connect the disassembly table's columns push button focus in signal.
-    is_connected = connect(entry_view, &RgIsaDisassemblyTabView::FocusColumnPushButton, this, &RgIsaDisassemblyView::HandleFocusColumnsPushButton);
-    assert(is_connected);
-
-    // Connect the disassembly table's cli output window focus in signal.
-    is_connected = connect(entry_view, &RgIsaDisassemblyTabView::FocusSourceWindow, this, &RgIsaDisassemblyView::FocusSourceWindow);
-    assert(is_connected);
-
-    // Connect the disassembly view's update current sub widget signal.
-    is_connected = connect(this, &RgIsaDisassemblyView::UpdateCurrentSubWidget, entry_view, &RgIsaDisassemblyTabView::UpdateCurrentSubWidget);
-    assert(is_connected);
-
-    // Connect the enable show max VGPR options signal.
-    is_connected = connect(entry_view, &RgIsaDisassemblyTabView::EnableShowMaxVgprOptionSignal, this, &RgIsaDisassemblyView::EnableShowMaxVgprOptionSignal);
-    assert(is_connected);
+    rg_isa_item_model_->SetFixedFont(rg_isa_tree_view_->font(), rg_isa_tree_view_);
+    
+    ui_.disassemblyHostWidget->addWidget(rg_isa_widget_);
+    ui_.disassemblyHostWidget->setCurrentWidget(rg_isa_widget_);
 }
 
 void RgIsaDisassemblyView::ConnectSignals()
 {
     // Connect the handler to give focus to frame on view maximize button click.
-    bool is_connected = connect(ui_.viewMaximizeButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
-    assert(is_connected);
-
-    // Connect the handler to give focus to frame on disassembly column list widget's gain of focus.
-    is_connected = connect(ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::FocusInEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusInEvent);
-    assert(is_connected);
-
-    // Connect the handler to remove focus from frame on disassembly column list widget's loss of focus.
-    is_connected = connect(ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::FocusOutEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
+    bool is_connected = connect(ui_.viewMaximizeButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleDisassemblyViewClicked);
     assert(is_connected);
 
     // Connect the handler to give focus to frame on target GPUs list widget's gain of focus.
@@ -390,15 +317,15 @@ void RgIsaDisassemblyView::ConnectSignals()
     assert(is_connected);
 
     // Connect the handler to give focus to frame on columns push button click.
-    is_connected = connect(ui_.columnVisibilityArrowPushButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+    is_connected = connect(ui_.rawTextPushButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleRawTextButtonClicked);
+    assert(is_connected);
+
+    // Connect the handler to give focus to frame on columns push button click.
+    is_connected = connect(ui_.rawTextPushButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleDisassemblyViewClicked);
     assert(is_connected);
 
     // Connect the handler to give focus to frame on target GPUs push button click.
-    is_connected = connect(ui_.targetGpuPushButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
-    assert(is_connected);
-
-    // Connect the handler to remove focus from frame on columns push button loss of focus.
-    is_connected = connect(ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::FocusOutEvent, this, &RgIsaDisassemblyView::HandleListWidgetFocusOutEvent);
+    is_connected = connect(ui_.targetGpuPushButton, &QPushButton::clicked, this, &RgIsaDisassemblyView::HandleDisassemblyViewClicked);
     assert(is_connected);
 
     // Connect the handler to give focus to frame on target GPUs push button loss of focus.
@@ -422,11 +349,7 @@ void RgIsaDisassemblyView::ConnectSignals()
     addAction(select_next_max_vgpr_line_);
 
     // Connect the handler to process the hot key press.
-    is_connected = connect(select_next_max_vgpr_line_, &QAction::triggered, this, &RgIsaDisassemblyView::HandleSelectNextMaxVgprLineAction);
-    assert(is_connected);
-
-    // Connect the F4 hotkey pressed signal.
-    is_connected = connect(this, &RgIsaDisassemblyView::ShowMaximumVgprClickedSignal, this, &RgIsaDisassemblyView::HandleSelectNextMaxVgprLineAction);
+    is_connected = connect(select_next_max_vgpr_line_, &QAction::triggered, this, &RgIsaDisassemblyView::ShowNextMaxVgprClickedSignal);
     assert(is_connected);
 
     // Select previous max VGPR line.
@@ -436,7 +359,22 @@ void RgIsaDisassemblyView::ConnectSignals()
     addAction(select_previous_max_vgpr_line_);
 
     // Connect the handler to process the hot key press.
-    is_connected = connect(select_previous_max_vgpr_line_, &QAction::triggered, this, &RgIsaDisassemblyView::HandleSelectPreviousMaxVgprLineAction);
+    is_connected = connect(select_previous_max_vgpr_line_, &QAction::triggered, this, &RgIsaDisassemblyView::ShowPrevMaxVgprClickedSignal);
+    assert(is_connected);
+}
+
+void RgIsaDisassemblyView::ConnectIsaTreeViewSignals()
+{
+    // Connect the handler to ope disassembly file in explorer.
+    bool is_connected =
+        connect(rg_isa_tree_view_, &RgIsaTreeView::OpenDisassemblyInFileBrowserSignal, this, &RgIsaDisassemblyView::HandleOpenDisassemblyInFileBrowser);
+    assert(is_connected);
+
+    // Connect the enable show max VGPR options signal.
+    is_connected = connect(rg_isa_proxy_model_, &RgIsaProxyModel::EnableShowMaxVgprOptionSignal, this, &RgIsaDisassemblyView::EnableShowMaxVgprOptionSignal);
+    assert(is_connected);
+
+    is_connected = connect(this, &RgIsaDisassemblyView::EnableShowMaxVgprOptionSignal, rg_isa_tree_view_, &RgIsaTreeView::HandleEnableShowMaxVgprOptionSignal);
     assert(is_connected);
 }
 
@@ -444,17 +382,6 @@ void RgIsaDisassemblyView::CreateKernelNameLabel()
 {
     ui_.horizontalSpacer_2->changeSize(0, 0);
     HandleSetKernelNameLabel(false);
-}
-
-void RgIsaDisassemblyView::CreateColumnVisibilityControls()
-{
-    // Setup the list widget that opens when the user clicks the column visibility arrow.
-    ui_.columnVisibilityArrowPushButton->InitMultiSelect(this, "Columns");
-}
-
-void RgIsaDisassemblyView::HandleOpenColumnListWidget()
-{
-    ui_.columnVisibilityArrowPushButton->clicked();
 }
 
 void RgIsaDisassemblyView::CreateTargetGpuListControls()
@@ -471,48 +398,6 @@ void RgIsaDisassemblyView::CreateTargetGpuListControls()
 void RgIsaDisassemblyView::HandleOpenGpuListWidget()
 {
     ui_.targetGpuPushButton->clicked();
-}
-
-QString RgIsaDisassemblyView::GetDisassemblyColumnName(RgIsaDisassemblyTableColumns column) const
-{
-    QString result;
-
-    static std::map<RgIsaDisassemblyTableColumns, QString> kColumnNameMap = {
-        {RgIsaDisassemblyTableColumns::kAddress, kStrDisassemblyTableColumnAddress},
-        {RgIsaDisassemblyTableColumns::kOpcode, kStrDisassemblyTableColumnOpcode},
-        {RgIsaDisassemblyTableColumns::kOperands, kStrDisassemblyTableColumnOperands},
-        {RgIsaDisassemblyTableColumns::kFunctionalUnit, kStrDisassemblyTableColumnFunctionalUnit},
-        {RgIsaDisassemblyTableColumns::kCycles, kStrDisassemblyTableColumnCycles},
-        {RgIsaDisassemblyTableColumns::kBinaryEncoding, kStrDisassemblyTableColumnBinaryEncoding},
-        {RgIsaDisassemblyTableColumns::kLiveVgprs, kStrDisassemblyTableLiveVgprHeaderPart},
-    };
-
-    auto column_name_iter = kColumnNameMap.find(column);
-    if (column_name_iter != kColumnNameMap.end())
-    {
-        result = column_name_iter->second;
-    }
-    else
-    {
-        // The incoming column doesn't have a name string mapped to it.
-        assert(false);
-    }
-
-    return result;
-}
-
-RgIsaDisassemblyTabView* RgIsaDisassemblyView::GetTargetGpuTabWidgetByTabName(const std::string& tab_text) const
-{
-    RgIsaDisassemblyTabView* result = nullptr;
-
-    // If a matching view exists return it.
-    auto gpu_tab_iter = gpu_tab_views_.find(tab_text);
-    if (gpu_tab_iter != gpu_tab_views_.end())
-    {
-        result = gpu_tab_iter->second;
-    }
-
-    return result;
 }
 
 void RgIsaDisassemblyView::PopulateTargetGpuList(const RgBuildOutputsMap& build_output)
@@ -632,36 +517,33 @@ bool RgIsaDisassemblyView::PopulateDisassemblyEntries(const GpuToEntryVector& gp
         {
             const std::string&                gpu_name    = gpu_entry_iter->first;
             const std::vector<RgEntryOutput>& gpu_entries = gpu_entry_iter->second;
-
-            // Does a tab already exist for the target GPU we're loading results for?
-            RgIsaDisassemblyTabView* entry_view = GetTargetGpuTabWidgetByTabName(gpu_name);
-
-            // Create a new tab for the target GPU, and add a new disassembly table viewer.
-            if (entry_view == nullptr)
+            for (const RgEntryOutput& entry : gpu_entries)
             {
-                // Create a new entry view for each unique GPU.
-                entry_view = new RgIsaDisassemblyTabView();
+                OutputFileTypeFinder output_file_type_searcher(RgCliOutputFileType::kIsaDisassemblyCsv);
+                auto                 csv_file_iter         = std::find_if(entry.outputs.begin(), entry.outputs.end(), output_file_type_searcher);
+                output_file_type_searcher.target_file_type = RgCliOutputFileType::kLiveRegisterAnalysisReport;
+                auto live_Vgprs_file_iter                  = std::find_if(entry.outputs.begin(), entry.outputs.end(), output_file_type_searcher);
+                if (csv_file_iter != entry.outputs.end() && live_Vgprs_file_iter != entry.outputs.end())
+                {
+                    // Get the path to the disassembly CSV file to load into the model.
+                    std::string disassembly_csv_file_path = csv_file_iter->file_path;
 
-                // Connect signals for the new tab.
-                ConnectDisassemblyTabViewSignals(entry_view);
+                    // Get the path to the live Vgprs file to load into the model.
+                    const std::string& live_vgprs_file_path = live_Vgprs_file_iter->file_path;
 
-                // Add the new entry view to the map.
-                gpu_tab_views_[gpu_name] = entry_view;
+                    // Generate a key string used to identify a named entry point within a given input source file.
+                    std::string entrypoint_name_key = GenerateEntrypointKey(entry.input_file_path, gpu_name, entry.entrypoint_name);
 
-                // Add the new disassembly table as a tab page in the array of GPU results.
-                ui_.disassemblyTableHostWidget->addWidget(entry_view);
-            }
-
-            // Send the CSV file paths to the GPU-specific entry viewer.
-            bool is_table_populated = entry_view->PopulateEntries(gpu_entries);
-
-            // Verify that the table was populated correctly.
-            assert(is_table_populated);
-            if (!is_table_populated)
-            {
-                ret = false;
+                    // Associate the kernel name with the data for the disassembly view.
+                    disassembly_view_input_files_map_[entrypoint_name_key] = {disassembly_csv_file_path, live_vgprs_file_path};
+                }
             }
         }
+    }
+
+    if (disassembly_view_input_files_map_.empty())
+    {
+        ret = false;
     }
 
     return ret;
@@ -734,86 +616,13 @@ void RgIsaDisassemblyView::ConnectResourceUsageViewSignals(RgResourceUsageView* 
 {
     // Connect to the resource usage view's mouse press event.
     bool is_connected =
-        connect(resource_usage_view, &RgResourceUsageView::ResourceUsageViewClickedSignal, this, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+        connect(resource_usage_view, &RgResourceUsageView::ResourceUsageViewClickedSignal, this, &RgIsaDisassemblyView::HandleDisassemblyViewClicked);
     assert(is_connected);
 
     // Connect to the resource usage view's focus out event.
     is_connected = connect(
         resource_usage_view, &RgResourceUsageView::ResourceUsageViewFocusOutEventSignal, this, &RgIsaDisassemblyView::HandleResourceUsageViewFocusOutEvent);
     assert(is_connected);
-}
-
-void RgIsaDisassemblyView::PopulateColumnVisibilityList()
-{
-    // Remove the existing items first
-    ui_.columnVisibilityArrowPushButton->ClearItems();
-
-    // Add the "All" entry, use index (0) as the user data, default to not checked.
-    QCheckBox* all_check_box = ui_.columnVisibilityArrowPushButton->AddCheckboxItem(kStrDisassemblyTableColumnAll, 0, false, true);
-
-    // Set list widget's check box's focus proxy to be the frame.
-    SetCheckBoxFocusProxies(all_check_box);
-
-    // Get global config to see which columns should be visible initially.
-    RgConfigManager&                  configManager   = RgConfigManager::Instance();
-    std::shared_ptr<RgGlobalSettings> global_settings = configManager.GetGlobalConfig();
-
-    // Loop through each column enum member.
-    int start_column = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kAddress);
-    int end_column   = RgIsaDisassemblyTableModel::GetTableColumnIndex(RgIsaDisassemblyTableColumns::kCount);
-
-    // Add an item for each column in the table.
-    for (int column_index = start_column; column_index < end_column; ++column_index)
-    {
-        // Add an item for each possible column in the table.
-        QString    column_name = GetDisassemblyColumnName(static_cast<RgIsaDisassemblyTableColumns>(column_index));
-        bool       is_checked  = global_settings->visible_disassembly_view_columns[column_index];
-        QCheckBox* check_box   = ui_.columnVisibilityArrowPushButton->AddCheckboxItem(column_name, column_index, is_checked, false);
-
-        // Set list widget's check box's focus proxy to be the frame.
-        SetCheckBoxFocusProxies(check_box);
-    }
-
-    bool is_connected = connect(
-        ui_.columnVisibilityArrowPushButton, &ArrowIconComboBox::CheckboxChanged, this, &RgIsaDisassemblyView::HandleColumnVisibilityComboBoxItemClicked);
-    Q_ASSERT(is_connected);
-
-    UpdateAllCheckBox();
-}
-
-void RgIsaDisassemblyView::UpdateAllCheckBox()
-{
-    bool are_all_items_checked = true;
-
-    // Scan to see if any of the boxes are not checked.
-    for (int i = 1; i < ui_.columnVisibilityArrowPushButton->RowCount(); i++)
-    {
-        if (ui_.columnVisibilityArrowPushButton->IsChecked(i) == false)
-        {
-            are_all_items_checked = false;
-            break;
-        }
-    }
-
-    // If all boxes are checked, update the text color of the All check box.
-    QListWidgetItem* item = ui_.columnVisibilityArrowPushButton->FindItem(0);
-    if (item != nullptr)
-    {
-        QCheckBox* check_box = qobject_cast<QCheckBox*>(item->listWidget()->itemWidget(item));
-        if (check_box != nullptr)
-        {
-            if (are_all_items_checked)
-            {
-                check_box->setChecked(true);
-                check_box->setStyleSheet("QCheckBox#ListWidgetAllCheckBox {color: grey;}");
-            }
-            else
-            {
-                check_box->setChecked(false);
-                check_box->setStyleSheet("QCheckBox#ListWidgetAllCheckBox {color: black;}");
-            }
-        }
-    }
 }
 
 void RgIsaDisassemblyView::HandleSetKernelNameLabel(bool show, const std::string& setLabelText)
@@ -835,6 +644,10 @@ void RgIsaDisassemblyView::HandleSetKernelNameLabel(bool show, const std::string
     }
 }
 
+void RgIsaDisassemblyView::HandleRawTextButtonClicked()
+{
+}
+
 void RgIsaDisassemblyView::SetCheckBoxFocusProxies(QCheckBox* check_box)
 {
     assert(check_box != nullptr);
@@ -842,48 +655,40 @@ void RgIsaDisassemblyView::SetCheckBoxFocusProxies(QCheckBox* check_box)
     check_box->setFocusProxy(ui_.frame);
 }
 
-void RgIsaDisassemblyView::DestroyDisassemblyViewsForFile(const std::string& input_file_path)
+void RgIsaDisassemblyView::DestroyDisassemblyViewDataForFile(const std::string& input_file_path)
 {
-    // Keep a list of tabs that should be destroyed after removing the input file.
-    std::vector<std::string> gpu_tabs_to_remove;
-
-    // Step through each GPU tab and try to remove the entries associated with the given input file.
-    auto start_tab = gpu_tab_views_.begin();
-    auto end_tab   = gpu_tab_views_.end();
-    for (auto tab_iter = start_tab; tab_iter != end_tab; ++tab_iter)
+    // Keep a list of entry data that should be destroyed after removing the input file.
+    std::vector<std::string> view_data_to_remove;
+    
+    // Step through each entry and try to remove the entries associated with the given input file.
+    
+    auto start = disassembly_view_input_files_map_.begin();
+    auto end   = disassembly_view_input_files_map_.end();
+    for (auto iter = start; iter != end; ++iter)
     {
-        // Search the tab for entries to remove.
-        RgIsaDisassemblyTabView* gpu_tab = tab_iter->second;
-        assert(gpu_tab != nullptr);
-        if (gpu_tab != nullptr)
+        // Search the map for entries to remove.
+        std::string file_path, gpu, entry_name;
+        DecodeEntrypointKey(iter->first, file_path, gpu, entry_name);
+        if (file_path == input_file_path)
         {
-            // Attempt to remove entries associated with the input file from each GPU tab.
-            gpu_tab->RemoveInputFileEntries(input_file_path);
-
-            // Does the GPU tab have any tables left in it? If not, destroy the tab too.
-            int num_tables_in_tab = gpu_tab->GetTableCount();
-            if (num_tables_in_tab == 0)
-            {
-                const std::string& gpu_name = tab_iter->first;
-                gpu_tabs_to_remove.push_back(gpu_name);
-            }
+            view_data_to_remove.push_back(iter->first);
         }
     }
 
     // Destroy all tabs that were marked for destruction.
-    for (auto gpu_tab : gpu_tabs_to_remove)
+    for (const auto& entrypoint_name_key : view_data_to_remove)
     {
-        auto tab_iter = gpu_tab_views_.find(gpu_tab);
-        if (tab_iter != gpu_tab_views_.end())
+        auto iter = disassembly_view_input_files_map_.find(entrypoint_name_key);
+        if (iter != disassembly_view_input_files_map_.end())
         {
-            // Destroy the GPU tab.
-            RgIsaDisassemblyTabView* gpu_tab_view = tab_iter->second;
+            // Mark Entry for evition from the cache.
+            RgIsaItemModel::EntryData entry_data{};
+            entry_data.isa_file_path  = iter->second.first;
+            entry_data.vgpr_file_path = iter->second.second;
+            entry_data.operation      = RgIsaItemModel::EntryData::Operation::kEvictData;
+            rg_isa_item_model_->UpdateData(&entry_data);
 
-            // Remove the GPU tab from the view.
-            ui_.disassemblyTableHostWidget->removeWidget(gpu_tab_view);
-
-            // Remove the GPU from the view.
-            gpu_tab_views_.erase(tab_iter);
+            disassembly_view_input_files_map_.erase(iter);
         }
     }
 }
@@ -923,44 +728,47 @@ void RgIsaDisassemblyView::SetCurrentResourceUsageView(RgResourceUsageView* reso
     setFocusProxy(resource_usage_view);
 }
 
-void RgIsaDisassemblyView::SetCurrentTargetGpuTabView(RgIsaDisassemblyTabView* tab_view)
-{
-    // Set the current widget in the stack.
-    ui_.disassemblyTableHostWidget->setCurrentWidget(tab_view);
-
-    // Store the current target GPU tab being viewed.
-    current_tab_view_ = tab_view;
-
-    // Use the current tab view as the focus proxy for this view.
-    setFocusProxy(tab_view);
-}
-
 void RgIsaDisassemblyView::SetCursor()
 {
-    ui_.columnVisibilityArrowPushButton->setCursor(Qt::PointingHandCursor);
+    ui_.rawTextPushButton->setCursor(Qt::PointingHandCursor);
     ui_.targetGpuPushButton->setCursor(Qt::PointingHandCursor);
     ui_.viewMaximizeButton->setCursor(Qt::PointingHandCursor);
 }
 
-bool RgIsaDisassemblyView::IsLineCorrelatedInEntry(const std::string& input_file_path,
-                                                   const std::string& target_gpu,
-                                                   const std::string& entrypoint,
-                                                   int                src_line) const
+std::string RgIsaDisassemblyView::GenerateEntrypointKey(const std::string& file_path, const std::string& asic, const std::string& entrypoint_name) const
+{
+    // In some cases it may not be possible to identify a given entry point by name when multiple
+    // entrypoints use the same name. Return a unique key based on the input filename and the
+    // entry point name, so that each entry point can be identified correctly.
+    return file_path + kEntrypointKeySeparator + asic + kEntrypointKeySeparator + entrypoint_name;
+}
+
+bool RgIsaDisassemblyView::DecodeEntrypointKey(const std::string& entrypoint_key,
+                                               std::string&       file_path,
+                                               std::string&       asic,
+                                               std::string&       entrypoint_name) const
 {
     bool ret = false;
 
-    RgIsaDisassemblyTabView* target_gpu_tab = GetTargetGpuTabWidgetByTabName(target_gpu.c_str());
+    // Attempt to split the given entry point key string into source file path and entry point name strings.
+    std::vector<std::string> file_path_and_entrypoint_name_list;
+    RgUtils::splitString(entrypoint_key, kEntrypointKeySeparator, file_path_and_entrypoint_name_list);
 
-    assert(target_gpu_tab != nullptr);
-    if (target_gpu_tab != nullptr)
+    // Verify that only 2 tokens are found. One for the source file path, and another for entry point name.
+    size_t token_count = file_path_and_entrypoint_name_list.size();
+    assert(token_count == 3);
+    if (token_count == 3)
     {
-        ret = target_gpu_tab->IsSourceLineCorrelatedForEntry(input_file_path, entrypoint, src_line);
+        file_path       = file_path_and_entrypoint_name_list[0];
+        asic            = file_path_and_entrypoint_name_list[1];
+        entrypoint_name = file_path_and_entrypoint_name_list[2];
+        ret             = true;
     }
 
     return ret;
 }
 
-void RgIsaDisassemblyView::HandleDisassemblyTabViewClicked()
+void RgIsaDisassemblyView::HandleDisassemblyViewClicked()
 {
     // Emit a signal to indicate that disassembly view was clicked.
     emit DisassemblyViewClicked();
@@ -1036,9 +844,29 @@ void RgIsaDisassemblyView::HandleFocusTargetGpuPushButton()
     ui_.targetGpuPushButton->clicked(false);
 }
 
-void RgIsaDisassemblyView::HandleFocusColumnsPushButton()
+void RgIsaDisassemblyView::HandleOpenDisassemblyInFileBrowser()
 {
-    ui_.columnVisibilityArrowPushButton->clicked(false);
+    // Search the map to find the relevant view data associated with the current entrypoint.
+    auto view_data_iter = disassembly_view_input_files_map_.find(current_disassembly_view_data_key_);
+    if (view_data_iter != disassembly_view_input_files_map_.end())
+    {
+        // Set the data model associated with the given entrypoint.
+        const auto& disassembly_file_path = view_data_iter->second.first;
+        // Use the path to the loaded CSV file to figure out which folder to open.
+        std::string build_output_directory;
+        bool        is_ok = RgUtils::ExtractFileDirectory(disassembly_file_path, build_output_directory);
+        assert(is_ok);
+        if (is_ok)
+        {
+            // Open the directory in the system's file browser.
+            RgUtils::OpenFolderInFileBrowser(build_output_directory);
+        }
+    }
+}
+
+void RgIsaDisassemblyView::HandleFocusRawTextDisassemblyPushButton()
+{
+    ui_.rawTextPushButton->clicked(false);
 }
 
 void RgIsaDisassemblyView::ConnectTitleBarDoubleClick(const RgViewContainer* disassembly_view_container)
@@ -1057,17 +885,6 @@ void RgIsaDisassemblyView::ConnectTitleBarDoubleClick(const RgViewContainer* dis
 bool RgIsaDisassemblyView::ReplaceInputFilePath(const std::string& old_file_path, const std::string& new_file_path)
 {
     bool result = true;
-
-    // Replace the file path in all disassembly tab views for all devices.
-    for (auto& gpu_and_tab_view : gpu_tab_views_)
-    {
-        RgIsaDisassemblyTabView* tab_view = gpu_and_tab_view.second;
-        if (!tab_view->ReplaceInputFilePath(old_file_path, new_file_path))
-        {
-            result = false;
-            break;
-        }
-    }
 
     // Replace the file path in the resource usage map.
     if (result)
@@ -1104,41 +921,12 @@ void RgIsaDisassemblyView::HandleSelectNextGPUTargetAction()
     ui_.targetGpuPushButton->SetSelectedRow(current_row);
 }
 
-void RgIsaDisassemblyView::HandleSelectNextMaxVgprLineAction()
-{
-    // Check to make sure that the max VGPR column is currently visible
-    // before enabling this feature.
-    std::vector<bool> column_visibility = RgUtils::GetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton);
-    bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
-    if (is_visible)
-    {
-        // Show the max VGPR lines for the current tab view.
-        current_tab_view_->HandleShowNextMaxVgprSignal();
-    }
-}
-
 bool RgIsaDisassemblyView::IsMaxVgprColumnVisible() const
 {
-    std::vector<bool> column_visibility = RgUtils::GetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton);
-    bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
-
-    return is_visible;
-}
-
-void RgIsaDisassemblyView::HandleSelectPreviousMaxVgprLineAction()
-{
-    // Check to make sure that the max VGPR column is currently visible
-    // before enabling this feature.
-    std::vector<bool> column_visibility = RgUtils::GetColumnVisibilityCheckboxes(ui_.columnVisibilityArrowPushButton);
-    bool              is_visible        = column_visibility[static_cast<int>(RgIsaDisassemblyTableColumns::kLiveVgprs)];
-    if (is_visible && current_tab_view_ != nullptr)
+    bool is_visible = false;
+    if (rg_isa_proxy_model_ != nullptr)
     {
-        // Show the previous max VGPR lines for the current tab view.
-        current_tab_view_->HandleShowPreviousMaxVgprSignal();
+        is_visible = rg_isa_proxy_model_->IsVgprColumnVisible();
     }
-}
-
-ArrowIconComboBox* RgIsaDisassemblyView::GetColumnVisibilityComboBox()
-{
-    return ui_.columnVisibilityArrowPushButton;
+    return is_visible;
 }

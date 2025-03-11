@@ -1,5 +1,6 @@
 // C++.
 #include <cassert>
+#include <memory>
 #include <sstream>
 #include <thread>
 
@@ -27,15 +28,17 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_build_settings_view_vulkan.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_build_settings_widget.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_cli_output_view.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_find_text_widget.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_go_to_line_dialog.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view_opencl.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view_vulkan.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_isa_tree_view.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_main_window.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_maximize_splitter.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_build_settings_item.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_file_item.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_titlebar.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_find_text_widget.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view_opencl.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view_vulkan.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_main_window.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_maximize_splitter.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_rename_project_dialog.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_scroll_area.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_source_code_editor.h"
@@ -302,10 +305,13 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
     assert(disassembly_view_ != nullptr);
     if (disassembly_view_ != nullptr)
     {
-        // Connect the handler invoked when the highlighted correlation line in the input source file should be updated.
-        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::InputSourceHighlightedLineChanged,
-            this, &RgBuildView::HandleHighlightedCorrelationLineUpdated);
-        assert(is_connected);
+        if (disassembly_view_->GetTreeView() != nullptr)
+        {
+            // Connect the handler invoked when the highlighted correlation line in the input source file should be updated.
+            is_connected = connect(
+                disassembly_view_->GetTreeView(), &RgIsaTreeView::HighlightedIsaRowChanged, this, &RgBuildView::HandleHighlightedCorrelationLineUpdated);
+            assert(is_connected);
+        }
 
         // Connect the RgIsaDisassemblyView's table resized handler.
         is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::DisassemblyTableWidthResizeRequested,
@@ -338,7 +344,7 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
         if (disassembly_view_splitter_ != nullptr)
         {
             is_connected = connect(disassembly_view_splitter_, &RgMaximizeSplitter::FrameInFocusSignal,
-                disassembly_view_, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+                disassembly_view_, &RgIsaDisassemblyView::HandleDisassemblyViewClicked);
             assert(is_connected);
         }
 
@@ -379,7 +385,7 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
         assert(view_manager_ != nullptr);
         if (view_manager_ != nullptr)
         {
-            is_connected = connect(view_manager_, &RgViewManager::FrameFocusInSignal, disassembly_view_, &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+            is_connected = connect(view_manager_, &RgViewManager::FrameFocusInSignal, disassembly_view_, &RgIsaDisassemblyView::HandleDisassemblyViewClicked);
             assert(is_connected);
 
             is_connected = connect(view_manager_, &RgViewManager::FrameFocusOutSignal, disassembly_view_, &RgIsaDisassemblyView::HandleFocusOutEvent);
@@ -387,7 +393,8 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
         }
 
         // Connect the focus column push button signal to the disassembly view's handlers.
-        is_connected = connect(cli_output_window_, &RgCliOutputView::FocusColumnPushButton, disassembly_view_, &RgIsaDisassemblyView::HandleFocusColumnsPushButton);
+        is_connected = connect(
+            cli_output_window_, &RgCliOutputView::FocusRawTextDisassemblyPushButton, disassembly_view_, &RgIsaDisassemblyView::HandleFocusRawTextDisassemblyPushButton);
         assert(is_connected);
 
         // Connect the focus source window signal to the disassembly view's handlers.
@@ -399,7 +406,7 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
         assert(is_connected);
 
         // Connect the Ctrl+F4 hotkey pressed signal.
-        is_connected = connect(this, &RgBuildView::ShowMaximumVgprClickedSignal, disassembly_view_, &RgIsaDisassemblyView::ShowMaximumVgprClickedSignal);
+        is_connected = connect(this, &RgBuildView::ShowMaximumVgprClickedSignal, disassembly_view_, &RgIsaDisassemblyView::ShowNextMaxVgprClickedSignal);
         assert(is_connected);
 
         // Connect the enable show max VGPR options signal.
@@ -1640,7 +1647,7 @@ void RgBuildView::HandleHighlightedCorrelationLineUpdated(int line_number)
     }
 
     // Add the correlated input source line number to the editor's highlight list.
-    current_code_editor_->SetHighlightedLines(highlighted_lines);
+    current_code_editor_->HandleHighlightedLinesSet(highlighted_lines);
 }
 
 void RgBuildView::HandleIsLineCorrelationEnabled(RgSourceCodeEditor* editor, bool is_enabled)
@@ -1925,8 +1932,82 @@ bool RgBuildView::ShowRemoveFileConfirmation(const std::string& message_string, 
 
 void RgBuildView::HandleFindTriggered()
 {
-    // Toggle to show the find widget.
-    ToggleFindWidgetVisibility(true);
+    if (view_manager_ && view_manager_->IsDisassemblyViewFocused() && disassembly_view_)
+    {
+        disassembly_view_->SetFocusOnSearchWidget();
+    }
+    else
+    {
+        // Toggle to show the find widget.
+        ToggleFindWidgetVisibility(true);
+    }
+}
+
+void RgBuildView::HandleGoToLineTriggered()
+{
+    if (view_manager_ && view_manager_->IsDisassemblyViewFocused() && disassembly_view_)
+    {
+        disassembly_view_->SetFocusOnGoToLineWidget();
+    }
+    else
+    {
+        RgMenu* menu = GetMenu();
+        assert(menu != nullptr);
+        if (menu != nullptr)
+        {
+            // Get the max number of lines.
+            RgSourceCodeEditor* source_code_editor = GetEditorForFilepath(menu->GetSelectedFilePath());
+            if (source_code_editor != nullptr && source_code_editor->isVisible())
+            {
+                int max_line_number = source_code_editor->document()->lineCount();
+
+                // Create a modal Go To line dialog.
+                std::unique_ptr<RgGoToLineDialog> go_to_line_dialog = std::make_unique<RgGoToLineDialog>(max_line_number, this);
+                go_to_line_dialog->setModal(true);
+                go_to_line_dialog->setWindowTitle(kStrGoToLineDialogTitle);
+
+                // Center the dialog on the view (registering with the scaling manager
+                // shifts it out of the center so we need to manually center it).
+                RgUtils::CenterOnWidget(go_to_line_dialog.get(), this);
+
+                // Execute the dialog and get the result.
+                RgGoToLineDialog::RgGoToLineDialogResult result;
+                result = static_cast<RgGoToLineDialog::RgGoToLineDialogResult>(go_to_line_dialog->exec());
+
+                switch (result)
+                {
+                case RgGoToLineDialog::kOk:
+                {
+                    // Go to the indicated line number.
+                    int line_number = go_to_line_dialog->GetLineNumber();
+
+                    // Scroll the editor to the indicated line.
+                    source_code_editor->ScrollToLine(line_number);
+
+                    // Set the highlighted line.
+                    QList<int> line_numbers;
+                    line_numbers << line_number;
+                    source_code_editor->SetHighlightedLines(line_numbers);
+
+                    // Move the cursor as well.
+                    QTextCursor cursor(source_code_editor->document()->findBlockByLineNumber(line_number - 1));
+                    source_code_editor->setTextCursor(cursor);
+                    break;
+                }
+                case RgGoToLineDialog::kCancel:
+                {
+                    // Dialog rejected.
+                    break;
+                }
+                default:
+                {
+                    // Shouldn't get here.
+                    assert(false);
+                }
+                }
+            }
+        }
+    }
 }
 
 void RgBuildView::HandleIsBuildInProgressChanged(bool is_building)
@@ -2096,34 +2177,32 @@ void RgBuildView::DestroyBuildOutputsForFile(const std::string& input_file_full_
 void RgBuildView::RemoveEditor(const std::string& filename, bool switch_to_next_file)
 {
     // Attempt to find the editor instance used to display the given file.
-    RgSourceCodeEditor* editor = nullptr;
-    auto editor_iter = source_code_editors_.find(filename);
+    RgSourceCodeEditor* editor      = nullptr;
+    auto                editor_iter = source_code_editors_.find(filename);
     if (editor_iter != source_code_editors_.end())
     {
         editor = editor_iter->second;
+
+        source_code_editors_.erase(editor_iter);
+
+        if (editor == current_code_editor_)
+        {
+            // There is no more "Current Editor," because it is being closed.
+            current_code_editor_->hide();
+            current_code_editor_ = nullptr;
+        }
+
+        // Destroy the editor associated with the file that was closed.
+        editor->deleteLater();
     }
 
-    assert(editor != nullptr);
-
     // Remove the editor from the map, and hide it from the interface.
-    QWidget* title_bar = source_view_container_->GetTitleBar();
+    QWidget*                title_bar             = source_view_container_->GetTitleBar();
     RgSourceEditorTitlebar* source_view_title_bar = qobject_cast<RgSourceEditorTitlebar*>(title_bar);
     if (source_view_title_bar != nullptr)
     {
         source_view_title_bar->SetTitlebarContentsVisibility(false);
     }
-
-    source_code_editors_.erase(editor_iter);
-
-    if (editor == current_code_editor_)
-    {
-        // There is no more "Current Editor," because it is being closed.
-        current_code_editor_->hide();
-        current_code_editor_ = nullptr;
-    }
-
-    // Destroy the editor associated with the file that was closed.
-    editor->deleteLater();
 
     if (switch_to_next_file)
     {
@@ -2700,7 +2779,7 @@ void RgBuildView::CreateIsaDisassemblyView()
             [[maybe_unused]] bool is_connected = connect(disassembly_view_container_,
                                                          &RgViewContainer::ViewContainerMouseClickEventSignal,
                                                          disassembly_view_,
-                &RgIsaDisassemblyView::HandleDisassemblyTabViewClicked);
+                                                         &RgIsaDisassemblyView::HandleDisassemblyViewClicked);
             assert(is_connected);
 
             // Set the object name for the disassembly view container.
@@ -3017,7 +3096,14 @@ void RgBuildView::CheckExternalFileModification()
         // If the modification time is not the same as remembered, the file has been changed externally.
         if (file_info.lastModified() != expected_last_modified)
         {
-            HandleExternalFileModification(file_info);
+            // Only handle the modification if it hasn't been handled already (i.e., no dialog shown to the user).
+            if (pending_file_modifications_.find(filename) == pending_file_modifications_.end())
+            {
+                // Mark this file as having pending modification
+                pending_file_modifications_[filename] = true;
+
+                HandleExternalFileModification(file_info);
+            }
         }
     }
 }
@@ -3077,6 +3163,10 @@ void RgBuildView::HandleExternalFileModification(const QFileInfo& file_info)
             assert(false);
         }
     }
+
+    // Once the user has responded to a file modification dialog, 
+    // reset the pending modification status for this file.
+    pending_file_modifications_.erase(modified_filename);
 }
 
 void RgBuildView::SetConfigSplitterPositions()

@@ -58,5 +58,14 @@
         <file>icons/find_next_icon_dark_mode.svg</file>
         <file>icons/find_previous_icon_dark_mode.svg</file>
         <file>icons/magnifying_glass_icon_dark_mode.svg</file>
+        <file>Resources/assets/browse_back_disabled.svg</file>
+        <file>Resources/assets/browse_back_normal.svg</file>
+        <file>Resources/assets/browse_back_pressed.svg</file>
+        <file>Resources/assets/browse_fwd_disabled.svg</file>
+        <file>Resources/assets/browse_fwd_normal.svg</file>
+        <file>Resources/assets/browse_fwd_pressed.svg</file>
+        <file>Resources/assets/PullDownOff_Gray.svg</file>
+        <file>Resources/assets/PullDownOn_Gray.svg</file>
+        <file>Resources/assets/third_party/ionicons/search_icon.png</file>
     </qresource>
 </RCC>

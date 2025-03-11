@@ -508,15 +508,8 @@ static const char* kStrSourceEditorContextMenuSelectAll  = "Select all";
 // *** DISASSEMBLY VIEW STRINGS - START ***
 
 // Disassembly table column names.
-static const char* kStrDisassemblyTableColumnAll            = "All";
-static const char* kStrDisassemblyTableColumnAddress        = "Address";
-static const char* kStrDisassemblyTableColumnOpcode         = "Opcode";
-static const char* kStrDisassemblyTableColumnOperands       = "Operands";
-static const char* kStrDisassemblyTableColumnCycles         = "Cycles";
-static const char* kStrDisassemblyTableColumnFunctionalUnit = "Functional unit";
-static const char* kStrDisassemblyTableColumnBinaryEncoding = "Binary encoding";
-static const char* kStrDisassemblyTableLiveVgprs            = "VGPR pressure (used:%1, allocated:%2)";
-static const char* kStrDisassemblyTableLiveVgprHeaderPart   = "VGPR pressure";
+static const char* kStrDisassemblyColumnAll            = "All";
+static const char* kStrDisassemblyLiveVgprHeaderPart   = "VGPR pressure";
 
 // Context menu strings
 static const char* kStrDisassemblyTableContextMenuCopy = "Copy selected disassembly";

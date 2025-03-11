@@ -99,7 +99,7 @@ void RgCliOutputView::HandleShiftTabFocusPressed()
     // in which case switch focus to file menu.
     if (current_sub_widget_ == CliOutputWindowSubWidgets::kOutputWindow)
     {
-        emit FocusColumnPushButton();
+        emit FocusRawTextDisassemblyPushButton();
     }
     else if (current_sub_widget_ == CliOutputWindowSubWidgets::kClearWindowButton)
     {

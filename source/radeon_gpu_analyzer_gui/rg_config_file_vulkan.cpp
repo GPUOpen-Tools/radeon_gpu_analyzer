@@ -4,7 +4,7 @@
 #include <algorithm>
 
 // Infra.
-#include <tinyxml2/Include/tinyxml2.h>
+#include "tinyxml2.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_config_file_definitions.h"

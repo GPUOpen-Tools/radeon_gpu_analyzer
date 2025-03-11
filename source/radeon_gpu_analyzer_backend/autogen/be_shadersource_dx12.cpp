@@ -461,7 +461,8 @@ beKA::beStatus ShaderSourceGeneratorVertex::SetPixelShaderInputs(const D3D12_SIG
                     }
                 }
             }
-            else if (param.SystemValueType == D3D_NAME_VIEWPORT_ARRAY_INDEX || param.SystemValueType == D3D_NAME_SHADINGRATE)
+            else if (param.SystemValueType == D3D_NAME_VIEWPORT_ARRAY_INDEX || param.SystemValueType == D3D_NAME_SHADINGRATE ||
+                     param.SystemValueType == D3D_NAME_CLIP_DISTANCE || param.SystemValueType == D3D_NAME_CULL_DISTANCE)
             {
                 vs_outputs_.push_back(param);
             }
@@ -519,20 +520,7 @@ beKA::beStatus ShaderSourceGeneratorVertex::FinalizeVertexShaderSetup(std::strin
                 std::string type;
                 if (GetTypeName(vs_outputs_[i].ComponentType, vs_outputs_[i].MinPrecision, component_count, type))
                 {
-                    if (vs_outputs_[i].SystemValueType == D3D_NAME_UNDEFINED)
-                    {
-                        stream_ << "    " << type << " attribute" << i << ": " << vs_outputs_[i].SemanticName << vs_outputs_[i].SemanticIndex << ";\n";
-                    }
-                    else
-                    {
-                        // System-value semantics.
-                        if (vs_outputs_[i].SemanticIndex != 0)
-                        {
-                            rc = beKA::beStatus::kBeStatusDxcCannotAutoGenerateVertexShader;
-                            break;
-                        }
-                        stream_ << "    " << type << " attribute" << i << ": " << vs_outputs_[i].SemanticName << ";\n";
-                    }
+                    stream_ << "    " << type << " attribute" << i << ": " << vs_outputs_[i].SemanticName << vs_outputs_[i].SemanticIndex << ";\n";
                 }
                 else
                 {

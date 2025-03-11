@@ -8,10 +8,10 @@ QMenu::item:disabled
     color: palette(disabled-text);
 }
 
-ArrowIconComboBox
+ArrowIconWidget, ArrowIconComboBox
 {
     border: none;
-    font-size: 8pt;
+    font-size: 9.75pt;
     text-align:left;
 }
 
@@ -20,27 +20,22 @@ RgIsaDisassemblyView ArrowIconComboBox
     border: none;
 }
 
-RgIsaDisassemblyCustomTableView
-{
-    font-size: 10pt;
-}
-
 ListWidget
 {
-    font-size: 8pt;
+    font-size: 9.75pt;
     text-align: left;
     border: 1px solid gray;
 }
 
 ListWidget QCheckBox
 {
-    font-size: 8pt;
+    font-size: 9.75pt;
     padding-left: 3px;
 }
 
 ListWidget QLabel
 {
-    font-size: 8pt;
+    font-size: 9.75pt;
     padding-left: 3px;
 }
 
@@ -61,7 +56,7 @@ ListWidget::item
 
 CheckBoxWidget
 {
-    font-size: 8pt;
+    font-size: 9.75pt;
 }
 
 CheckBoxWidget::indicator::checked::disabled
@@ -86,27 +81,16 @@ CheckBoxWidget::indicator:unchecked
 
 ColoredLegendGraphicsView
 {
-    font-size: 8pt;
-}
-
-DonutPieWidget
-{
+    font-size: 9.75pt;
 }
 
 NavigationListWidget
 {
+    background: rgb(240, 240, 240);
     border-right: 2px groove gray;
     outline: none;
     border: none;
     font: 8pt;
-}
-
-NavigationListWidget::item:hover
-{
-}
-
-NavigationListWidget::item:selected
-{
 }
 
 NavigationListWidget::item
@@ -118,33 +102,39 @@ NavigationListWidget::item
 
 RecentTraceMiniWidget
 {
-    font-size: 8pt;
+    font-size: 9.75pt;
 }
 
 ScaledCycleButton
 {
     border: none;
-    text-align:center;
+    font-size: 9.75pt;
+    text-align: center;
 }
 
 ScaledTableView, ScaledTreeView
 {
-    font-size: 9pt;
+    font-size: 9.75pt;
 }
 
 ScaledHeaderView
 {
-    font: bold 9pt;
+    font: bold 9.75pt;
 }
 
 ScaledTabWidget
 {
-    font: bold 8pt;
+    font: bold 9.75pt;
 }
 
 ScaledTabWidget > QTabBar::tab
 {
     padding: 0.5em 1em 0.5em 1em;
+}
+
+ScaledTabWidget > QTabBar::tab:disabled
+{
+    color: gray;
 }
 
 ScaledTabWidget > QTabBar::tab:!first
@@ -155,38 +145,25 @@ ScaledTabWidget > QTabBar::tab:!first
 ScaledTabWidget > QTabBar::tab:selected
 {
     border: 1px solid #C4C4C3;
+    border-bottom: 1px solid;
 }
 
 ScaledTabWidget > QTabBar::tab:!selected
 {
     border-right: 1px solid #C4C4C3;
     border-left: 1px solid #C4C4C3;
+    border-bottom: 1px solid #C4C4C3;
 }
 
-ScaledTabWidget > QTabBar::tab:!selected:hover 
+ScaledComboBox, ScaledLineEdit, ScaledLabel, ScaledPushButton, QLabel, QPushButton, ScaledCheckBox
 {
-}
-
-ScaledLabel, ScaledPushButton, QLabel, QPushButton
-{
-    font-size: 8pt;
-}
-
-ScaledLineEdit
-{
-    font-size: 8pt;
-    border: 1px solid palette(text);
+    font-size: 9.75pt;
 }
 
 TextSearchWidget
 {
-    font-size: 8pt;
-    border: 1px solid gray;
-}
-
-ScaledCheckBox
-{
-    font-size: 8pt;
+   font-size: 9.75pt;
+   border: 1px solid gray;
 }
 
 /********************************************************************/
@@ -204,7 +181,7 @@ RgMainWindow #mainTabWidget > QTabWidget::pane
 
 RgMainWindow #mainTabWidget > QTabBar
 {
-    font: bold 10.5pt;
+    font: bold 9.75pt;
 }
 
 RgMainWindow #mainTabWidget > QTabBar::tab
@@ -212,7 +189,7 @@ RgMainWindow #mainTabWidget > QTabBar::tab
     background: rgb(51,51,51);
     color: #666;
     bottom: 1px;
-    font-size: 10.5pt;
+    font-size: 9.75pt;
 }
 
 /* Home page background (appears as background color for empty tab bar space) */
@@ -317,7 +294,7 @@ RgSettingsTab #settingsListWidget
     border-right: 2px groove gray;
     outline: none;
     border: none;
-    font: bold 8pt;
+    font: bold 9.75pt;
 }
 
 RgSettingsTab #settingsListWidget::item:hover
@@ -335,7 +312,7 @@ RgSettingsTab #settingsListWidget::item
     border-bottom: none;
     padding: 7px;
     padding-left: 30px;
-    font: bold 8pt;
+    font: bold 9.75pt;
 }
 
 RgSettingsTab #rightFrame > QFrame:focus
@@ -346,13 +323,13 @@ RgSettingsTab #rightFrame > QFrame:focus
 RgSettingsTab #globalSettingsLabel
 {
     background: palette(alternate-base);
-    font: 8pt;
+    font: 9.75pt;
     padding: 5px;
 }
 
 QFontComboBox, QComboBox
 {
-    font-size: 8pt;
+    font-size: 9.75pt;
 }
 
 QComboBox::drop-down

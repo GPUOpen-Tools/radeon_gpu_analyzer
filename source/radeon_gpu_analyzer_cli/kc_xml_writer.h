@@ -5,7 +5,7 @@
 #define RGA_RADEONGPUANALYZERCLI_SRC_KC_XML_WRITER_H_
 
 // XML.
-#include "tinyxml2/Include/tinyxml2.h"
+#include "tinyxml2.h"
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_utils.h"

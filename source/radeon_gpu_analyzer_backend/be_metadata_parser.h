@@ -11,6 +11,7 @@
 
 // Local.
 #include "radeon_gpu_analyzer_backend/be_program_builder.h"
+#include "radeon_gpu_analyzer_backend/be_data_types.h"
 
 // A set of utilities for handling mangled shader names.
 class BeMangledKernelUtils
@@ -115,6 +116,15 @@ public:
 
     // Converts ShaderType enum to string shader name.
     static std::string GetShaderName(ShaderType shader_type);
+
+    // Converts beWaveSize enum to string.
+    static std::string GetWaveSize(beWaveSize wave_size);
+
+    // Converts string to beWaveSize enum.
+    static beWaveSize GetWaveSize(std::string wave_size);
+
+    // Converts uint64_t to beWaveSize enum.
+    static beWaveSize GetWaveSize(uint64_t wave_size);
 
     // Converts ShaderSubtype enum to string shader subtype.
     static std::string GetShaderSubtypeName(ShaderSubtype subtype);

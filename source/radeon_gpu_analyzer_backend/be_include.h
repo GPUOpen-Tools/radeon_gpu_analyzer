@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cctype>
 #include <locale>
+#include <cstdint>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>

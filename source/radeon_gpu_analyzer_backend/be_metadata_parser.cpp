@@ -48,6 +48,13 @@ const std::string kStrCallable      = "Callable";
 const std::string kStrTraversal     = "Traversal";
 const std::string kStrLaunchKernel  = "LaunchKernel";
 
+// Wave size strings.
+const std::string kStrWaveSizeUnknown = "Unknown";
+const std::string kStrWaveSize32      = "32";
+const std::string kStrWaveSize64      = "64";
+const uint64_t    kWaveSize32         = 32;
+const uint64_t    kWaveSize64         = 64;
+
 // Amdgpudis dot tokens.
 static const std::string kStrLcCodeObjectMetadataTokenStart  = "---\n";
 static const std::string kStrLcCodeObjectMetadataTokenEnd    = "\n...";
@@ -65,6 +72,7 @@ static const std::string kAmdgpuDisDotLdsSizeToken           = ".lds_size";
 static const std::string kAmdgpuDisDotShaderSubtypeToken     = ".shader_subtype";
 static const std::string kAmdgpuDisDotShadersToken           = ".shaders";
 static const std::string kAmdgpuDisDotHardwareMappingToken   = ".hardware_mapping";
+static const std::string kAmdgpuDisDotWavefrontSizeToken     = ".wavefront_size";
 static const std::string kAmdgpuDisDxilStdManglingPrefix     = "\001?";
 static const std::string kAmdgpuDisDxilStdManglingSuffix     = "@@";
 static const std::string kAmdgpuDisDxilStdHexPattern         = "[A-F0-9]+:";
@@ -198,6 +206,45 @@ std::string BeAmdPalMetaData::GetShaderName(ShaderType shader_type)
     throw std::runtime_error("Unknown shader type: " + std::to_string(static_cast<int>(shader_type)));
 }
 
+std::string BeAmdPalMetaData::GetWaveSize(beWaveSize wave_size)
+{
+    static const std::unordered_map<beWaveSize, const std::string&> inverseWaveSizeMap = {{beWaveSize::kWave32, kStrWaveSize32},
+                                                                                          {beWaveSize::kWave64, kStrWaveSize64}};
+
+    auto it = inverseWaveSizeMap.find(wave_size);
+    if (it != inverseWaveSizeMap.end())
+    {
+        return it->second;
+    }
+    return kStrWaveSizeUnknown;
+}
+
+beWaveSize BeAmdPalMetaData::GetWaveSize(std::string wave_size)
+{
+    static const std::unordered_map<std::string, beWaveSize> wavesizeMap = {{kStrWaveSize32, beWaveSize::kWave32}, {kStrWaveSize64, beWaveSize::kWave64}};
+
+    auto it = wavesizeMap.find(wave_size);
+    if (it != wavesizeMap.end())
+    {
+        return it->second;
+    }
+
+    return beWaveSize::kWave64;
+}
+
+beWaveSize BeAmdPalMetaData::GetWaveSize(uint64_t wave_size)
+{
+    static const std::unordered_map<uint64_t, beWaveSize> wavesizeMap = {{kWaveSize32, beWaveSize::kWave32}, {kWaveSize64, beWaveSize::kWave64}};
+
+    auto it = wavesizeMap.find(wave_size);
+    if (it != wavesizeMap.end())
+    {
+        return it->second;
+    }
+
+    return beWaveSize::kWave64;
+}
+
 std::string BeAmdPalMetaData::GetShaderSubtypeName(ShaderSubtype subtype)
 {
     static const std::unordered_map<ShaderSubtype, const std::string&> inverseSubtypeMap = {{ShaderSubtype::kUnknown,       kStrUnknown},
@@ -275,6 +322,7 @@ beKA::beStatus BeAmdPalMetaData::ParseAmdgpudisMetadata(const std::string& amdgp
                     stage.stats.num_sgprs_available = GetHardwareStageProperty(stage_node.second, kAmdgpuDisDotSgprLimitToken);
                     stage.stats.num_vgprs_used      = GetHardwareStageProperty(stage_node.second, kAmdgpuDisDotVgprCountToken);
                     stage.stats.num_vgprs_available = GetHardwareStageProperty(stage_node.second, kAmdgpuDisDotVgprLimitToken);
+                    stage.stats.wavefront_size      = GetHardwareStageProperty(stage_node.second, kAmdgpuDisDotWavefrontSizeToken);
 
                     pipeline.hardware_stages.push_back(stage);
                 }
@@ -295,6 +343,7 @@ beKA::beStatus BeAmdPalMetaData::ParseAmdgpudisMetadata(const std::string& amdgp
                         function.stats.num_sgprs_available = GetHardwareStageProperty(function_node.second, kAmdgpuDisDotSgprLimitToken);
                         function.stats.num_vgprs_used      = GetHardwareStageProperty(function_node.second, kAmdgpuDisDotVgprCountToken);
                         function.stats.num_vgprs_available = GetHardwareStageProperty(function_node.second, kAmdgpuDisDotVgprLimitToken);
+                        function.stats.wavefront_size      = GetHardwareStageProperty(function_node.second, kAmdgpuDisDotWavefrontSizeToken);
 
                         pipeline.shader_functions.push_back(function);
                     }

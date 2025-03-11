@@ -324,7 +324,7 @@ void KcCliCommanderDX12::RunCompileCommands(const Config& config, LoggingCallbac
                             // Convert to lower case.
                             const std::string target_lower = RgaSharedUtils::ToLower(target);
 
-                            if (KcUtils::IsNavi21AndBeyond(target_lower))
+                            if (RgaSharedUtils::IsNavi21AndBeyond(target_lower))
                             {
                                 target_devices.push_back(target_lower);
                             }
@@ -598,7 +598,7 @@ bool KcCliCommanderDX12::GetDX12DriverAsicList(const Config& config, std::set<st
     {
         for (const std::string& targetName : supported_gpus)
         {
-            if (KcUtils::IsNavi21AndBeyond(targetName))
+            if (RgaSharedUtils::IsNavi21AndBeyond(targetName))
             {
                 supported_gpus_filtered.push_back(targetName);
             }
@@ -628,7 +628,7 @@ bool KcCliCommanderDX12::DisassembleElfBinary(const Config&      config,
     }
 
     bool ret = false;
-    if (KcUtils::IsNaviTarget(target) || KcUtils::IsVegaTarget(target))
+    if (RgaSharedUtils::IsNaviTarget(target) || RgaSharedUtils::IsVegaTarget(target))
     {
         const std::string quoted_binary_path = KcUtils::Quote(pipeline_elf);
         ret                                  = KcUtils::InvokeAmdgpudis(quoted_binary_path, config.print_process_cmd_line, elf_disassembly, error_msg);

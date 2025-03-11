@@ -123,6 +123,9 @@ And, in case of a successful build, the disassembly and HW resource usage info w
 
 That's it - we got our first Vulkan® pipeline built with RGA.
 
+More information on some of the features available in the Disassembly View can be found under
+the :ref:`Disassembly View <disassembly_view>` section.
+
 OpenCL™ Offline Mode
 --------------------
 
@@ -173,8 +176,8 @@ The disassembly for the relevant kernel will be displayed in the disassembly vie
 .. image:: images/023_disassembly_view_opencl.png
 
 * Highlighted rows are correlated to the current line in the source code view on the left
-* Memory instructions are colored in red to help you identify spots with high memory pressure
-* The Columns drop-down menu at the top can be used to customize the presented columns
+* Columns can be customized by using the Viewing Options dropdown to show or hide them.
+
 * If more than one GPU was targeted, use the drop-down on the top left corner to switch devices
 * The resource usage line shows the GPU resources that are consumed by the presented code
 
@@ -199,6 +202,8 @@ The possible hazards are:
 	* Scratch memory usage is non-zero
 	* The size of the code is larger than the instruction cache
 
+More information on some of the features available in the Disassembly View can be found under
+the :ref:`Disassembly View <disassembly_view>` section.
 
 Binary Analysis Mode
 --------------------
@@ -238,10 +243,5 @@ The disassembly for the relevant kernel will be displayed in the disassembly vie
 
 .. image:: images/033_disassembly_view_binary_analysis.png
 
-Similar to OpenCL™ Offline Mode or Vulkan® Mode, in the Binary Analysis Mode:
-
-* Memory instructions are colored in red to help you identify spots with high memory pressure
-* The drop-down on the top left corner displays the target GPU device for which the current Code Object was compiled
-* The Columns drop-down menu at the top can be used to customize the presented columns
-* The resource usage line shows the GPU resources that are consumed by the presented code
-* The disassembly view also shows the VGPR pressure throughout the shader's instructions.
+More information on some of the features available in the Disassembly View can be found under
+the :ref:`Disassembly View <disassembly_view>` section.

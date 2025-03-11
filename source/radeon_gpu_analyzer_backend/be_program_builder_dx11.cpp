@@ -19,6 +19,9 @@
 #include "amdt_os_wrappers/Include/osApplication.h"
 #include "amdt_os_wrappers/Include/osProcess.h"
 
+// Shared.
+#include "common/rga_shared_utils.h"
+
 // Local.
 #include "radeon_gpu_analyzer_backend/be_d3d_include_manager.h"
 #include "radeon_gpu_analyzer_backend/be_program_builder_dx11.h"
@@ -1152,7 +1155,7 @@ bool BeProgramBuilderDx11::GetWavefrontSize(const std::string& device_name, size
     wavefront_size = 0;
 
     // For Navi targets, the wave size is being determined in runtime - keep it at zero.
-    if (!KcUtils::IsNaviTarget(device_name))
+    if (!RgaSharedUtils::IsNaviTarget(device_name))
     {
         // Extract the device info.
         GDT_DeviceInfo device_info;

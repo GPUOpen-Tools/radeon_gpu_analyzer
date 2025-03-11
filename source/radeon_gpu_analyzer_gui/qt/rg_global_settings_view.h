@@ -8,12 +8,13 @@
 
 // Infra.
 #include "qt_common/custom_widgets/list_widget.h"
+#include "qt_isa_gui/widgets/isa_item_model.h"
 
 // Local.
 #include "ui_rg_global_settings_view.h"
-#include "source/radeon_gpu_analyzer_gui/rg_data_types.h"
-#include "source/radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
-#include "source/radeon_gpu_analyzer_gui/qt/rg_build_settings_view.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_build_settings_view.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_isa_item_model.h"
 
 // Forward declarations.
 class QWidget;
@@ -133,9 +134,6 @@ private:
 
     // Create the controls responsible for picking the visible columns in the disassembly table.
     void CreateColumnVisibilityControls();
-
-    // Get the name of the given disassembly column as a string.
-    QString GetDisassemblyColumnName(RgIsaDisassemblyTableColumns column) const;
 
     // Populate the names in the column visibility list.
     void PopulateColumnVisibilityList();

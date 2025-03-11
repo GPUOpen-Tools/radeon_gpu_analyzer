@@ -4,7 +4,7 @@
 #include <functional>
 
 // XML.
-#include <tinyxml2/Include/tinyxml2.h>
+#include "tinyxml2.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_config_file_opencl.h"
@@ -19,7 +19,7 @@
 #include "radeon_gpu_analyzer_gui/rg_config_file_definitions.h"
 #include "radeon_gpu_analyzer_gui/rg_xml_utils.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_table_model.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_isa_item_model.h"
 
 // Infra.
 #include "source/common/rg_log.h"
@@ -1625,7 +1625,8 @@ static bool ExtractGlobalSettings_2_2(tinyxml2::XMLNode* global_settings_node, s
             ExtractDisassemblyColumns(tmp_disassembly_columns, global_settings->visible_disassembly_view_columns);
 
             // Update the columns to have the new VGPR pressure column as well if it is missing.
-            if (global_settings->visible_disassembly_view_columns.size() == static_cast<int>(RgIsaDisassemblyTableColumns::kCount) - 1)
+            if (global_settings->visible_disassembly_view_columns.size() ==
+                static_cast<int>(RgIsaItemModel::kColumnCount - IsaItemModel::kPcAddress) - 1)
             {
                 global_settings->visible_disassembly_view_columns.push_back("true");
             }
@@ -1812,7 +1813,8 @@ static bool ExtractGlobalSettings_2_3(tinyxml2::XMLNode* global_settings_node, s
             ExtractDisassemblyColumns(tmp_disassembly_columns, global_settings->visible_disassembly_view_columns);
 
             // Update the columns to have the new VGPR pressure column as well if it is missing.
-            if (global_settings->visible_disassembly_view_columns.size() == static_cast<int>(RgIsaDisassemblyTableColumns::kCount) - 1)
+            if (global_settings->visible_disassembly_view_columns.size() ==
+                static_cast<int>(RgIsaItemModel::kColumnCount - IsaItemModel::kPcAddress) - 1)
             {
                 global_settings->visible_disassembly_view_columns.push_back("true");
             }

@@ -14,7 +14,7 @@ public:
     ~KcCliCommanderVulkan() = default;
 
     // Perform compilation.
-    virtual void  RunCompileCommands(const Config& config, LoggingCallbackFunction callback) override;
+    virtual void RunCompileCommands(const Config& config, LoggingCallbackFunction callback) override;
 
     // Perform post-compile actions.
     virtual bool RunPostCompileSteps(const Config& config) override;
@@ -46,16 +46,12 @@ private:
     // either a GLSL or an HLSL file but not both.
     // Names of output SPIR-V binary files are returned in "outSpvFiles".
     // (This function calls glslang compiler).
-    bool CompileSourceToSpv(const Config& conf, const BeVkPipelineFiles& glsl_files,
-                            const BeVkPipelineFiles& hlsl_files, BeVkPipelineFiles& out_spv_files);
+    bool CompileSourceToSpv(const Config& conf, const BeVkPipelineFiles& glsl_files, const BeVkPipelineFiles& hlsl_files, BeVkPipelineFiles& out_spv_files);
 
     // Compile a SPIR-V binary file to ISA disassembly file(s) and shader statistics file(s) for specified device.
     // (This function invokes VulkanBackend executable).
     // is_vk_offline is set to true, if compilation fell back to vk-spv-offline mode.
-    void CompileSpvToIsaForDevice(const Config&            config, 
-                                  const BeVkPipelineFiles& spv_files,
-                                  const std::string&       device,
-                                  bool                     is_physical_adapter = false);
+    void CompileSpvToIsaForDevice(const Config& config, const BeVkPipelineFiles& spv_files, const std::string& device, bool is_physical_adapter = false);
 
     // Assemble a SPIR-V text file to SPIR-V binary file.
     // (This function invokes spv-as from SPIR-V Tools.)
@@ -83,8 +79,11 @@ private:
     void StoreInputFilesToOutputMD(const BeVkPipelineFiles& input_files);
 
     // Store output file names to the output metadata.
-    void StoreOutputFilesToOutputMD(const std::string& device, const BeVkPipelineFiles& spv_files,
-                                    const BeVkPipelineFiles& isa_files, const BeVkPipelineFiles& stats_files);
+    void StoreOutputFilesToOutputMD(const std::string&           device,
+                                    const BeVkPipelineFiles&     spv_files,
+                                    const BeVkPipelineFiles&     isa_files,
+                                    const BeVkPipelineFiles&     stats_files,
+                                    const BeVkPipelineWaveSizes& wave_sizes);
 
     // ---- Data ----
 
@@ -92,13 +91,13 @@ private:
     std::set<std::string> asics_;
 
     // Name of the first physical adapter installed on the system.
-    std::string  physical_adapter_name_;
+    std::string physical_adapter_name_;
 
     // Per-device output metadata.
-    std::map<std::string, RgVkOutputMetadata>  output_metadata_;
+    std::map<std::string, RgVkOutputMetadata> output_metadata_;
 
     // Temporary files.
-    std::vector<std::string>  temp_files_;
+    std::vector<std::string> temp_files_;
 };
 
-#endif // RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_VULKAN_H_
+#endif  // RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_VULKAN_H_

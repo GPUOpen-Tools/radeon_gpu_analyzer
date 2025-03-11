@@ -328,34 +328,6 @@ public:
 
     // Checks for available updates.
     static void CheckForUpdates();
-    
-    // Returns true if the target is Navi3 or beyond and false otherwise.
-    static bool IsStrix(const std::string& target_name);
-
-    // Returns true if the target is Navi3 or beyond and false otherwise.
-    static bool IsNavi3AndBeyond(const std::string& target_name);
-
-    // Returns true if the target is of the Navi3 generation and false otherwise.
-    static bool IsNavi3Target(const std::string& target_name);
-
-    // Returns true if the target is of the Navi generation and false otherwise.
-    static bool IsNaviTarget(const std::string& target_name);
-
-    // Returns true if the target is Navi21 or beyond and false otherwise.
-    static bool IsNavi21AndBeyond(const std::string& target_name);
-
-    // Returns true if the target is Navi21 otherwise.
-    static bool IsNavi21(const std::string& target_name);
-
-    // Returns true if the target is of the MI200 generation and false otherwise.
-    static bool IsMi200Target(const std::string& target_name);
-
-    // Returns true if the target is of the MI300 generation and false otherwise.
-    static bool IsMi300Target(const std::string& target_name);
-
-    // Returns true if the target is of the Vega generation and false otherwise.
-    static bool IsVegaTarget(const std::string& target_name);
-
     // Returns true if the given disassembly is supported by the static analysis engine.
     static bool IsPostPorcessingSupported(const std::string& isa_file_path);
 

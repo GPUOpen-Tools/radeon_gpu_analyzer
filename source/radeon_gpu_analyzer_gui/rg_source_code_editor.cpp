@@ -395,6 +395,36 @@ void RgSourceCodeEditor::HighlightCorrelatedSourceLines(QList<QTextEdit::ExtraSe
     }
 }
 
+void RgSourceCodeEditor::HandleHighlightedLinesSet(const QList<int>& line_indices)
+{
+    // Set the list of highlighted lines.
+    highlighted_row_indices_ = line_indices;
+
+    // A list of highlights to apply to the source editor lines.
+    QList<QTextEdit::ExtraSelection> extra_selections;
+
+    // Automatic correlation: add highlights for the disassembly-correlated source lines.
+    HighlightCorrelatedSourceLines(extra_selections);
+
+    // If there aren't any correlated lines to highlight, just highlight the user's currently-selected line.
+    if (extra_selections.empty())
+    {
+        // Standard user selection: add a highlight for the current line.
+        HighlightCursorLine(extra_selections);
+    }
+
+    // Set the line selections in the source editor.
+    setExtraSelections(extra_selections);
+
+    // Track the current and previously-selected line numbers.
+    int        current_line         = GetSelectedLineNumber();
+    static int last_cursor_position = current_line;
+    if (current_line != last_cursor_position)
+    {
+        last_cursor_position = current_line;
+    }
+}
+
 void RgSourceCodeEditor::SetHighlightedLines(const QList<int>& line_indices)
 {
     // Set the list of highlighted lines.

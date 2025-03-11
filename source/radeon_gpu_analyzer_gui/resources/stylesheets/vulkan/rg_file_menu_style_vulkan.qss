@@ -14,17 +14,3 @@ RgMenuBuildSettingsItem QPushButton:hover
     border-width: 2px;
     border-color: rgb(135,20,16);
 }
-
-/********************************************************************/
-/* Disassemblyview Frame (RgIsaDisassemblyView)
-/********************************************************************/
-RgIsaDisassemblyView #frame[selected=true]
-{
-    border: 1px solid rgb(224, 30, 55);
-}
-
-RgIsaDisassemblyView #frame[selected=false]
-{
-    border: 1px solid palette(text);
-
-}

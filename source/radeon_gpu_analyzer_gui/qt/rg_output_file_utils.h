@@ -8,12 +8,6 @@
 class RgOutputFileUtils
 {
 public:
-    // Parse the live VGPR data.
-    static bool ParseLiveVgprsData(const std::string&                                   live_vgpr_file_full_path,
-                                   std::vector<std::shared_ptr<RgIsaLine>>&             disassembled_isa_lines,
-                                   std::vector<std::shared_ptr<RgIsaLineInstruction>>&  vgpr_isa_lines,
-                                   std::vector<QString>&                                vgpr_file_lines,
-                                   RgLiveregData&                                       livereg_data);
 
     // Parse the live VGPR ISA line.
     static void ParseLiveVgprIsaLine(const QString& livereg_line, std::vector<std::shared_ptr<RgIsaLineInstruction>>& vgpr_isa_lines, bool is_label);

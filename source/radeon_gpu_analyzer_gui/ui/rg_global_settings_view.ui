@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1138</width>
+    <width>1034</width>
     <height>777</height>
    </rect>
   </property>
@@ -48,12 +48,138 @@
     <number>20</number>
    </property>
    <item>
-    <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0">
+    <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0">
      <property name="spacing">
       <number>6</number>
      </property>
-     <item row="8" column="0" colspan="4">
-      <widget class="QLabel" name="disassemblyViewLabel">
+     <item row="28" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <widget class="QComboBox" name="defaultLangComboBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>150</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="editable">
+          <bool>false</bool>
+         </property>
+         <property name="currentText">
+          <string>GLSL</string>
+         </property>
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
+         <item>
+          <property name="text">
+           <string>GLSL</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">HLSL</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_7">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>50</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="logFileLocationLineEdit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Policy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="20" column="1">
+      <widget class="RgLineEdit" name="assocExtGlslLineEdit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="23" column="0">
+      <widget class="QLabel" name="assocExtSpvBinaryLabel">
+       <property name="text">
+        <string>Associate file extensions with SPIR-V binary</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <spacer name="verticalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Policy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="12" column="0" colspan="3">
+      <widget class="QLabel" name="sourceCodeEditorLabel">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -66,11 +192,265 @@
         </font>
        </property>
        <property name="text">
-        <string>Disassembly view</string>
+        <string>Source code editor</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="0" colspan="4">
+     <item row="4" column="0">
+      <widget class="QCheckBox" name="projectNameCheckBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="text">
+        <string>Always use auto-generated project names</string>
+       </property>
+      </widget>
+     </item>
+     <item row="19" column="0" colspan="2">
+      <spacer name="verticalSpacer_6">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Policy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="14" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QFontComboBox" name="fontFamilyComboBox">
+         <property name="minimumSize">
+          <size>
+           <width>150</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="editable">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item row="26" column="0">
+      <spacer name="verticalSpacer_9">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Policy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="15" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QComboBox" name="fontSizeComboBox">
+         <property name="minimumSize">
+          <size>
+           <width>150</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="currentText">
+          <string/>
+         </property>
+         <property name="currentIndex">
+          <number>-1</number>
+         </property>
+         <property name="maxCount">
+          <number>50</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="projectFileLocationLineEdit">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="1">
+      <widget class="QLineEdit" name="includeFilesViewerLineEdit">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>&lt;system default&gt;</string>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="21" column="0">
+      <widget class="QLabel" name="assocExtHlslLabel">
+       <property name="text">
+        <string>Associate file extensions with HLSL</string>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="2">
+      <widget class="QPushButton" name="includeFilesViewerBrowseButton">
+       <property name="maximumSize">
+        <size>
+         <width>30</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="0">
+      <spacer name="verticalSpacer_5">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Policy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="28" column="0">
+      <widget class="QLabel" name="defaultLangLabel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Default high-level language</string>
+       </property>
+      </widget>
+     </item>
+     <item row="24" column="0">
+      <spacer name="verticalSpacer_8">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Policy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="defaultApiOnStartupLabel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Default API on startup</string>
+       </property>
+      </widget>
+     </item>
+     <item row="20" column="0">
+      <widget class="QLabel" name="assocExtGlslLabel">
+       <property name="text">
+        <string>Associate file extensions with GLSL</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QPushButton" name="projectFileLocationFolderOpenButton">
+       <property name="maximumSize">
+        <size>
+         <width>30</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <spacer name="verticalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Policy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>5</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="0" column="0" colspan="3">
       <widget class="QLabel" name="generalLabel">
        <property name="minimumSize">
         <size>
@@ -88,21 +468,8 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="3">
-      <widget class="QPushButton" name="logFileLocationFolderOpenButton">
-       <property name="maximumSize">
-        <size>
-         <width>30</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </item>
-     <item row="18" column="0" colspan="4">
-      <widget class="QLabel" name="inputFilesLabel">
+     <item row="8" column="0" colspan="3">
+      <widget class="QLabel" name="disassemblyViewLabel">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -115,40 +482,38 @@
         </font>
        </property>
        <property name="text">
-        <string>Input files</string>
+        <string>Disassembly view</string>
        </property>
       </widget>
      </item>
-     <item row="16" column="2">
-      <widget class="QLineEdit" name="includeFilesViewerLineEdit">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
+     <item row="2" column="0">
+      <widget class="QLabel" name="logFileLocationLabel">
        <property name="text">
-        <string>&lt;system default&gt;</string>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
+        <string>Log file location</string>
        </property>
       </widget>
      </item>
-     <item row="22" column="2">
-      <widget class="RgLineEdit" name="assocExtSpvasLineEdit">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+     <item row="16" column="0">
+      <widget class="QLabel" name="includeFilesViewerLabel">
+       <property name="text">
+        <string>Open include files with</string>
        </property>
-       <property name="minimumSize">
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QPushButton" name="logFileLocationFolderOpenButton">
+       <property name="maximumSize">
         <size>
-         <width>0</width>
-         <height>0</height>
+         <width>30</width>
+         <height>16777215</height>
         </size>
        </property>
+       <property name="text">
+        <string>...</string>
+       </property>
       </widget>
      </item>
-     <item row="5" column="2">
+     <item row="5" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QComboBox" name="defaultApiOnStartupComboBox">
@@ -207,8 +572,24 @@
        </item>
       </layout>
      </item>
-     <item row="12" column="0" colspan="4">
-      <widget class="QLabel" name="sourceCodeEditorLabel">
+     <item row="21" column="1">
+      <widget class="RgLineEdit" name="assocExtHlslLineEdit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="18" column="0" colspan="3">
+      <widget class="QLabel" name="inputFilesLabel">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -221,52 +602,12 @@
         </font>
        </property>
        <property name="text">
-        <string>Source code editor</string>
+        <string>Input files</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="2">
-      <widget class="QLineEdit" name="projectFileLocationLineEdit">
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="defaultApiOnStartupLabel">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Default API on startup</string>
-       </property>
-      </widget>
-     </item>
-     <item row="28" column="0">
-      <widget class="QLabel" name="defaultLangLabel">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Default high-level language</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="projectFileLocationLabel">
-       <property name="text">
-        <string>Project file location</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="0">
-      <spacer name="verticalSpacer">
+     <item row="11" column="0">
+      <spacer name="verticalSpacer_2">
        <property name="orientation">
         <enum>Qt::Orientation::Vertical</enum>
        </property>
@@ -281,8 +622,54 @@
        </property>
       </spacer>
      </item>
-     <item row="9" column="0">
-      <spacer name="verticalSpacer_4">
+     <item row="10" column="0">
+      <widget class="QLabel" name="disassemblyViewColunnsLabel">
+       <property name="text">
+        <string>Disassembly view columns</string>
+       </property>
+      </widget>
+     </item>
+     <item row="23" column="1">
+      <widget class="RgLineEdit" name="assocExtSpvBinaryLineEdit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="22" column="0">
+      <widget class="QLabel" name="assocExtSpvasLabel">
+       <property name="text">
+        <string>Associate file extensions with SPIR-V text</string>
+       </property>
+      </widget>
+     </item>
+     <item row="22" column="1">
+      <widget class="RgLineEdit" name="assocExtSpvasLineEdit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="0">
+      <spacer name="verticalSpacer_7">
        <property name="orientation">
         <enum>Qt::Orientation::Vertical</enum>
        </property>
@@ -292,19 +679,12 @@
        <property name="sizeHint" stdset="0">
         <size>
          <width>20</width>
-         <height>5</height>
+         <height>20</height>
         </size>
        </property>
       </spacer>
      </item>
-     <item row="20" column="0">
-      <widget class="QLabel" name="assocExtGlslLabel">
-       <property name="text">
-        <string>Associate file extensions with GLSL</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="2">
+     <item row="10" column="1">
       <widget class="ArrowIconComboBox" name="columnVisibilityArrowPushButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -323,241 +703,6 @@
        </property>
       </widget>
      </item>
-     <item row="14" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <item>
-        <widget class="QFontComboBox" name="fontFamilyComboBox">
-         <property name="minimumSize">
-          <size>
-           <width>150</width>
-           <height>25</height>
-          </size>
-         </property>
-         <property name="editable">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Orientation::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-     <item row="28" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_7">
-       <item>
-        <widget class="QComboBox" name="defaultLangComboBox">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>150</width>
-           <height>25</height>
-          </size>
-         </property>
-         <property name="editable">
-          <bool>false</bool>
-         </property>
-         <property name="currentText">
-          <string>GLSL</string>
-         </property>
-         <property name="currentIndex">
-          <number>0</number>
-         </property>
-         <item>
-          <property name="text">
-           <string>GLSL</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">HLSL</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_7">
-         <property name="orientation">
-          <enum>Qt::Orientation::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>50</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-     <item row="17" column="0">
-      <spacer name="verticalSpacer_7">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Policy::Fixed</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="20" column="2">
-      <widget class="RgLineEdit" name="assocExtGlslLineEdit">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="26" column="0">
-      <spacer name="verticalSpacer_9">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Policy::Fixed</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>5</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="21" column="2">
-      <widget class="RgLineEdit" name="assocExtHlslLineEdit">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="15" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <item>
-        <widget class="QComboBox" name="fontSizeComboBox">
-         <property name="minimumSize">
-          <size>
-           <width>150</width>
-           <height>25</height>
-          </size>
-         </property>
-         <property name="currentText">
-          <string/>
-         </property>
-         <property name="currentIndex">
-          <number>-1</number>
-         </property>
-         <property name="maxCount">
-          <number>50</number>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Orientation::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-     <item row="11" column="0">
-      <spacer name="verticalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Policy::Fixed</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="21" column="0">
-      <widget class="QLabel" name="assocExtHlslLabel">
-       <property name="text">
-        <string>Associate file extensions with HLSL</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="disassemblyViewColunnsLabel">
-       <property name="text">
-        <string>Disassembly view columns</string>
-       </property>
-      </widget>
-     </item>
-     <item row="19" column="0" colspan="3">
-      <spacer name="verticalSpacer_6">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Policy::Fixed</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>5</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="23" column="0">
-      <widget class="QLabel" name="assocExtSpvBinaryLabel">
-       <property name="text">
-        <string>Associate file extensions with SPIR-V binary</string>
-       </property>
-      </widget>
-     </item>
      <item row="15" column="0">
       <widget class="QLabel" name="fontSizeLabel">
        <property name="text">
@@ -565,157 +710,12 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="logFileLocationLabel">
+     <item row="3" column="0">
+      <widget class="QLabel" name="projectFileLocationLabel">
        <property name="text">
-        <string>Log file location</string>
+        <string>Project file location</string>
        </property>
       </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QCheckBox" name="projectNameCheckBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>25</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true"/>
-       </property>
-       <property name="text">
-        <string>Always use auto-generated project names</string>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="0">
-      <widget class="QLabel" name="includeFilesViewerLabel">
-       <property name="text">
-        <string>Open include files with</string>
-       </property>
-      </widget>
-     </item>
-     <item row="22" column="0">
-      <widget class="QLabel" name="assocExtSpvasLabel">
-       <property name="text">
-        <string>Associate file extensions with SPIR-V text</string>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="3">
-      <widget class="QPushButton" name="includeFilesViewerBrowseButton">
-       <property name="maximumSize">
-        <size>
-         <width>30</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="0">
-      <spacer name="verticalSpacer_5">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Policy::Fixed</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>5</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="23" column="2">
-      <widget class="RgLineEdit" name="assocExtSpvBinaryLineEdit">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QLineEdit" name="logFileLocationLineEdit">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="3">
-      <widget class="QPushButton" name="projectFileLocationFolderOpenButton">
-       <property name="maximumSize">
-        <size>
-         <width>30</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </item>
-     <item row="24" column="0">
-      <spacer name="verticalSpacer_8">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Policy::Fixed</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="1" column="0">
-      <spacer name="verticalSpacer_3">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Policy::Fixed</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>5</height>
-        </size>
-       </property>
-      </spacer>
      </item>
      <item row="14" column="0">
       <widget class="QLabel" name="fontFamilyLabel">
@@ -725,10 +725,54 @@
       </widget>
      </item>
      <item row="6" column="0">
-      <widget class="ArrowIconComboBox" name="color_theme_combo_box_">
+      <widget class="QLabel" name="colorThemeLabel">
        <property name="text">
-        <string>Color Theme: Light</string>
+        <string>Color theme </string>
        </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QWidget" name="colorThemeLayoutWidget" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="ArrowIconComboBox" name="colorThemeComboBox">
+          <property name="text">
+           <string>Light</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="colorThemeLayoutSpacer">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>662</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </widget>
      </item>
     </layout>
@@ -737,15 +781,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>RgLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>rg_line_edit.h</header>
-  </customwidget>
-  <customwidget>
    <class>ArrowIconComboBox</class>
    <extends>QPushButton</extends>
    <header location="global">qt_common/custom_widgets/arrow_icon_combo_box.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RgLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>rg_line_edit.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

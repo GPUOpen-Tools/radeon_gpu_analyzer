@@ -42,19 +42,6 @@ RgMenuFileItemOpencl #closeButton:hover
 }
 
 /********************************************************************/
-/* Disassemblyview Frame (RgIsaDisassemblyView)
-/********************************************************************/
-RgIsaDisassemblyView #frame[selected=true]
-{
-    border: 1px solid rgb(18, 152, 0);
-}
-
-RgIsaDisassemblyView #frame[selected=false]
-{
-    border: 1px solid palette(text);
-}
-
-/********************************************************************/
 /* Add/create menu item (RgAddCreateMenuItem)
 /********************************************************************/
 

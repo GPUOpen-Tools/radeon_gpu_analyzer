@@ -39,8 +39,10 @@ static const std::map<std::string, std::string> kVkAmdllpcTargetsToDeviceInfoTar
                                                                                         {"gfx1101", "11.0.1"},
                                                                                         {"gfx1102", "11.0.2"},
                                                                                         {"gfx1103", "11.0.3"},
-                                                                                        {"gfx1150", "11.5.0"}};  
-
+                                                                                        {"gfx1150", "11.5.0"},
+																						{"gfx1151", "11.5.1"},
+                                                                                        {"gfx1152", "11.5.2"},  
+                                                                                        {"gfx1201", "12.0.1"}};
 
 static bool GetAmdllpcPath(std::string& amdllpc_path)
 {

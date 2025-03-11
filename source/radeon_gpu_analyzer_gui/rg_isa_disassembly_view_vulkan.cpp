@@ -2,7 +2,6 @@
 #include <QStyle>
 
 // Local.
-#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_tab_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view_vulkan.h"
 #include "radeon_gpu_analyzer_gui/rg_data_types_vulkan.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"

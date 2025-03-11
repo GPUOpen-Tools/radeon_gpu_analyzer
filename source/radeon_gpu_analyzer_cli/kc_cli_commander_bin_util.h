@@ -109,7 +109,8 @@ private:
                                     const std::string& asic,
                                     uint32_t           stage,
                                     const std::string& isa_filename,
-                                    const std::string& stats_filename);
+                                    const std::string& stats_filename,
+                                    beWaveSize         wave_size);
 
     // Per-device output metadata.
     std::map<std::string, RgVkOutputMetadata> output_metadata_;
@@ -151,7 +152,8 @@ private:
                                     const std::string& asic,
                                     const std::string& kernel,
                                     const std::string& kernel_subtype,
-                                    const std::string& isa_filename);
+                                    const std::string& isa_filename,
+                                    beWaveSize         wave_size);
 
     // CodeObject Binary filename.
     std::string binary_codeobj_file_;

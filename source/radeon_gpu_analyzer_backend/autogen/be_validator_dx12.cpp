@@ -60,6 +60,7 @@ static const char* kStrWarningDxrBinaryExtractionNotSupportedInShaderMode =
     "is not supported in Shader mode.";
 static const char* kStrInfoInvalidPipelineOptionAutogen =
     "Info: Shader/state autogeneration only supported for graphics pipelines that include a VS, PS or a combination thereof.";
+static const char* kStrInfoInvalidAutogenDirectory = "Error: Invalid folder path provided for autogenerating the missing component of D3D12 pipeline.";
 
 // Validates the input arguments for a specific stage, and prints appropriate error messages to the console.
 static bool IsShaderInputsValid(const Config&      config,
@@ -424,23 +425,33 @@ void BeDx12PipelineValidator::AutoGenerateMissingPipeline(const Config& config, 
             }
         }
 
-        info.autogen_dir = BeDx12Utils::GetAbsoluteFileName(config.dx12_autogen_dir);
-        if (KcUtils::IsDirectory(info.autogen_dir) || config.should_retain_temp_files)
+        if (!config.dx12_autogen_dir.empty())
+        {
+            info.autogen_dir = BeDx12Utils::GetAbsoluteFileName(config.dx12_autogen_dir);
+            if (KcUtils::IsDirectory(info.autogen_dir))
+            {
+                info.should_retain_temp_files = true;
+            }
+            else
+            {
+                info.autogen_status = BeDx12AutoGenStatus::kFailed;
+                std::cout << kStrInfoInvalidAutogenDirectory << "\n\n";
+            }
+        }
+
+        if (config.should_retain_temp_files)
         {
             info.should_retain_temp_files = true;
         }
 
-        beKA::beStatus rc = generator.GenerateFiles(config,
-                                                    info.source_code,
-                                                    info.autogen_dir,
-                                                    info.root_signature,
-                                                    info.gpso_file,
-                                                    info.vertex_shader,
-                                                    info.pixel_shader,
-                                                    info.dxc_out);
-        if (rc == beKA::beStatus::kBeStatusSuccess)
+        if (info.autogen_status == BeDx12AutoGenStatus::kRequired)
         {
-            info.autogen_status = BeDx12AutoGenStatus::kSuccess;
+            beKA::beStatus rc = generator.GenerateFiles(
+                config, info.source_code, info.autogen_dir, info.root_signature, info.gpso_file, info.vertex_shader, info.pixel_shader, info.dxc_out);
+            if (rc == beKA::beStatus::kBeStatusSuccess)
+            {
+                info.autogen_status = BeDx12AutoGenStatus::kSuccess;
+            }
         }
     }
 }

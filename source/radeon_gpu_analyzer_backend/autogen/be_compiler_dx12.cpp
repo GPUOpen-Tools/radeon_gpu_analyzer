@@ -359,9 +359,12 @@ bool BeDx12Compiler::GetDxcCompilerArgs(const Config& config, const BePipelineSt
 
     if (!config.dxc_opt.empty())
     {
-        std::stringstream ss;
-        ss << config.dxc_opt;
-        compiler_args.push_back(BeDx12Utils::asCharArray(ss.str()));
+        std::istringstream ss(config.dxc_opt);
+        std::string        dxc_opt;
+        while (ss >> dxc_opt)
+        {
+            compiler_args.push_back(BeDx12Utils::asCharArray(dxc_opt));
+        }
     }
 
     return is_model_ok && is_entry_ok;

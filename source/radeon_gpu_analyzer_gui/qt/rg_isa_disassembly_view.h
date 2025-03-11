@@ -10,13 +10,20 @@
 
 // Infra.
 #include "qt_common/custom_widgets/arrow_icon_combo_box.h"
+#include "qt_isa_gui/widgets/isa_widget.h"
+#include "qt_isa_gui/widgets/isa_tree_view.h"
 
 // Local.
+#include "radeon_gpu_analyzer_gui/qt/rg_raw_text_disassembly_view.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_isa_item_delegate.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_isa_item_model.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_isa_proxy_model.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_isa_tree_view.h"
+
 #include "radeon_gpu_analyzer_gui/rg_data_types.h"
 #include "ui_rg_isa_disassembly_view.h"
 
 // Forward declarations.
-enum class RgIsaDisassemblyTableColumns;
 class RgIsaDisassemblyTabView;
 class RgResourceUsageView;
 class RgViewContainer;
@@ -49,9 +56,6 @@ public:
     // Remove the disassembly for the given input file.
     void RemoveInputFileEntries(const std::string& input_file_path);
 
-    // Checks if given source line is present in line correlation table for current entry point.
-    bool IsLineCorrelatedInEntry(const std::string& input_file_path, const std::string& target_gpu, const std::string& entrypoint, int src_line) const;
-
     // Connect the title bar's double click signal.
     void ConnectTitleBarDoubleClick(const RgViewContainer* disassembly_view_container);
 
@@ -67,12 +71,21 @@ public:
     // Enable/disable the show max VGPR context menu option.
     void EnableShowMaxVgprContextOption() const;
 
-    // Getter for the combo box.
-    ArrowIconComboBox* GetColumnVisibilityComboBox();
+    // Set focus on to the go to line, line edit widget.
+    void SetFocusOnGoToLineWidget();
+
+    // Set focus on to the line edit search widget.
+    void SetFocusOnSearchWidget();
+
+    // Get the current tree view in this widget.
+    RgIsaTreeView* GetTreeView() const;
+
+    // Check if the current API has line correlation supported.
+    virtual bool IsLineCorrelationSupported() const;
 
 signals:
-    // A signal emitted when the input source file's highlighted correlation line should be updated.
-    void InputSourceHighlightedLineChanged(int line_number);
+    // A signal emitted when the input source file's highlighted correlation line was updated.
+    void InputSourceHighlightedLineChanged(int src_line_number);
 
     // A signal emitted when the user has changed the disassembly table's column visibility.
     void DisassemblyColumnVisibilityUpdated();
@@ -119,11 +132,14 @@ signals:
     // A signal to switch disassembly view size.
     void SwitchDisassemblyContainerSize();
 
-    //  A signal to show/hide maximum VGPRs.
-    void ShowMaximumVgprClickedSignal();
+    //  A signal to show next maximum VGPRs.
+    void ShowNextMaxVgprClickedSignal();
+
+    //  A signal to show prev maximum VGPRs.
+    void ShowPrevMaxVgprClickedSignal();
 
     // A signal to enable/disable the Edit->Go to next maximum live VGPR line option.
-    void EnableShowMaxVgprOptionSignal(bool is_enabled);
+    void EnableShowMaxVgprOptionSignal(bool is_enabled) const;
 
 public slots:
     // Handler invoked when the user changes the selected line in the input source file.
@@ -135,18 +151,19 @@ public slots:
     // Show/hide Kernel Name Label.
     void HandleSetKernelNameLabel(bool show, const std::string& setTextLabel = "");
 
+    // Handler invoked when the user clicks on the raw button.
+    void HandleRawTextButtonClicked();
+
     // Handler invoked when the user clicks on the tab view.
-    void HandleDisassemblyTabViewClicked();
+    void HandleDisassemblyViewClicked();
 
     // Handler invoked to color the container frame black.
     void HandleFocusOutEvent();
 
     // Handler to focus the column push button.
-    void HandleFocusColumnsPushButton();
+    void HandleFocusRawTextDisassemblyPushButton();
 
 protected slots:
-    // Handler invoked when the user clicks an item in the column visibility list.
-    void HandleColumnVisibilityComboBoxItemClicked(QCheckBox* check_box);
 
     // Handler invoked when the disassembly view loses focus.
     void HandleDisassemblyTabViewLostFocus();
@@ -169,17 +186,11 @@ protected slots:
     // Handler to process select GPU target hot key.
     void HandleSelectNextGPUTargetAction();
 
-    // Handler to process select next max VGPR hot key.
-    void HandleSelectNextMaxVgprLineAction();
-
-    // Handler to process select previous max VGPR hot key.
-    void HandleSelectPreviousMaxVgprLineAction();
-
     // Handler to focus the target GPUs push button.
     void HandleFocusTargetGpuPushButton();
 
-    // Handler to open the column list widget.
-    void HandleOpenColumnListWidget();
+    // Handler to open disassembly file in browser.
+    void HandleOpenDisassemblyInFileBrowser();
 
     // Handler to open the GPU list widget.
     void HandleOpenGpuListWidget();
@@ -200,26 +211,20 @@ protected:
     // A map of full input file path to a map of QPlainTextEdit for the file.
     typedef std::map<std::string, EntryPointToLiveregAnalysisViews> InputToEntrypointLiveregViews;
 
-    // Connect signals for a new disassembly tab view.
-    void ConnectDisassemblyTabViewSignals(RgIsaDisassemblyTabView* entry_view);
+    // Create Isa viewer tree.
+    void CreateIsaTreeView(QWidget* disassembly_view_parent);
 
     // Connect the signals for the disassembly view.
     void ConnectSignals();
 
+    // Connect the signals for the isa tree view.
+    void ConnectIsaTreeViewSignals();
+
     // Create the lable responsible for displaying full kernel name in the disassembly table.
     void CreateKernelNameLabel();
 
-    // Create the controls responsible for picking the visible columns in the disassembly table.
-    void CreateColumnVisibilityControls();
-
     // Create the controls responsible for picking the currently selected target GPU.
     void CreateTargetGpuListControls();
-
-    // Get the name of the given disassembly column as a string.
-    QString GetDisassemblyColumnName(RgIsaDisassemblyTableColumns column) const;
-
-    // Retrieve a RgIsaDisassemblyTabView based on the given GPU name.
-    RgIsaDisassemblyTabView* GetTargetGpuTabWidgetByTabName(const std::string& gpu_family_name) const;
 
     // Populate the target GPU list widget.
     void PopulateTargetGpuList(const RgBuildOutputsMap& build_output);
@@ -233,11 +238,8 @@ protected:
     // Connect resource usage view signals.
     void ConnectResourceUsageViewSignals(RgResourceUsageView* resource_usage_view);
 
-    // Populate the names in the column visibility list.
-    void PopulateColumnVisibilityList();
-
     // Clean up all disassembly views related to the given input source file.
-    void DestroyDisassemblyViewsForFile(const std::string& input_file_path);
+    void DestroyDisassemblyViewDataForFile(const std::string& input_file_path);
 
     // Clean up all resource usage views related to the given input source file.
     void DestroyResourceUsageViewsForFile(const std::string& input_file_path);
@@ -248,20 +250,21 @@ protected:
     // Set the currently active resource usage view.
     void SetCurrentResourceUsageView(RgResourceUsageView* resource_usage_view);
 
-    // Set the currently active disassembly GPU tab view.
-    void SetCurrentTargetGpuTabView(RgIsaDisassemblyTabView* tab_view);
-
     // Set the cursor to pointing hand cursor for various widgets.
     void SetCursor();
 
     // Set the border stylesheet.
     virtual void SetBorderStylesheet(bool is_selected) = 0;
 
-    // Updates the "All" checkbox option.
-    void UpdateAllCheckBox();
+    // Generate a unique key used to identify a source input file and entrypoint. The key consists
+    // of the input source file path and entry point name, joined with a pipe.
+    std::string GenerateEntrypointKey(const std::string& file_path, const std::string& asic, const std::string& entrypoint_name) const;
 
-    // A map of GPU to the views showing disassembly for multiple kernel entries.
-    std::map<std::string, RgIsaDisassemblyTabView*> gpu_tab_views_;
+    // Decode a filepath/entrypoint key string into separate tokens.
+    bool DecodeEntrypointKey(const std::string& entrypoint_key, std::string& file_path, std::string& asic, std::string& entrypoint_name) const;
+
+    // A map of (GPU+inputfile+entryname) to a map of an input file's data.
+    std::unordered_map<std::string, std::pair<std::string, std::string>> disassembly_view_input_files_map_;
 
     // A map of GPU name to a map of an input file's entry point resource usage views.
     std::map<std::string, InputToEntrypointViews> gpu_resource_usage_views_;
@@ -269,11 +272,8 @@ protected:
     // A map of GPU name to a map of an input file's livereg analysis views.
     std::map<std::string, InputToEntrypointLiveregViews> gpu_livereg_analysis_views_;
 
-    // The current target GPU tab being viewed.
-    RgIsaDisassemblyTabView* current_tab_view_ = nullptr;
-
-    // A custom event filter for the disassembly columns list widget.
-    QObject* disassembly_columns_list_event_filter_ = nullptr;
+    // The current key (GPU+inputfile+entryname) for the data displayed in the isa disassembly view.
+    std::string current_disassembly_view_data_key_;
 
     // The resource usage text.
     std::string resource_usage_text_;
@@ -296,6 +296,18 @@ protected:
     // The shift+tab key action.
     QAction* shift_tab_key_action_ = nullptr;
 
+    // Isa disassembly qt data model.
+    RgIsaProxyModel* rg_isa_proxy_model_ = nullptr;
+
+    // Isa disassembly qt data model.
+    RgIsaItemModel* rg_isa_item_model_ = nullptr;
+
+    // Isa disassembly qt view.
+    RgIsaTreeView* rg_isa_tree_view_ = nullptr;
+
+    // Shared Isa view widget.
+    IsaWidget* rg_isa_widget_ = nullptr;
+    
     // The interface responsible for presenting disassembly results for multiple GPUs.
     Ui::RgIsaDisassemblyView ui_;
 };

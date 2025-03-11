@@ -20,7 +20,7 @@ beKA::beStatus BeDx12Reflection::AutoGenerateFiles(IDxcUtils*                dxc
     if (rc == beKA::beStatus::kBeStatusSuccess)
     {
         // Clear output.
-        hlsl_output = HlslOutput();
+        hlsl_output = {};
 
         const bool is_compute = !refection_input.cs_blob.empty();
         if (is_compute)
@@ -38,7 +38,8 @@ beKA::beStatus BeDx12Reflection::AutoGenerateFiles(IDxcUtils*                dxc
             const bool       has_vs                = !refection_input.vs_blob.empty();
             const bool       has_ps                = !refection_input.ps_blob.empty();
             UINT64           shader_requires_flags = 0;
-            DxcReflectionOutput vs_reflection_output, ps_reflection_output;
+            DxcReflectionOutput vs_reflection_output = {};
+            DxcReflectionOutput ps_reflection_output = {};
             if (has_vs)
             {
                 rc = CreateReflection(dxc_utils, refection_input.vs_blob, vs_reflection_output);
@@ -98,7 +99,7 @@ beKA::beStatus BeDx12Reflection::CreateReflection(IDxcUtils*                    
     assert(dxc_utils != nullptr);
     beKA::beStatus rc = beKA::beStatus::kBeStatusSuccess;
     // Clear.
-    dxc_output        = DxcReflectionOutput();  
+    dxc_output = {};
 
     DxcBuffer shader_data_buffer = {};
     shader_data_buffer.Ptr       = src_blob.data();

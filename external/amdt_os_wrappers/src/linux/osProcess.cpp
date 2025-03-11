@@ -21,6 +21,8 @@
 #include <signal.h>
 #include <dirent.h>
 #include <errno.h>
+#include <time.h>
+#include <sched.h>
 
 // Infra:
 #include <amdt_base_tools/Include/gtAssert.h>

@@ -26,7 +26,6 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_global_settings_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_build_settings_item.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_go_to_line_dialog.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_main_window.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_recent_project_widget.h"
@@ -345,6 +344,10 @@ void RgMainWindow::ConnectBuildViewSignals()
 
             // Connect the main window's Find event with the RgBuildView.
             is_connected = connect(this, &RgMainWindow::FindTriggered, build_view, &RgBuildView::HandleFindTriggered);
+            assert(is_connected);
+
+            // Connect the main window's Go to line event with the RgBuildView.
+            is_connected = connect(this, &RgMainWindow::GoToLineTriggered, build_view, &RgBuildView::HandleGoToLineTriggered);
             assert(is_connected);
 
             // Connect the RgMainWindow to the RgBuildView to update the "project is building" flag.
@@ -750,7 +753,7 @@ void RgMainWindow::CreateEditMenuActions()
     go_to_line_action_ = new QAction(tr(kStrMenuBarGoToLine), this);
     go_to_line_action_->setStatusTip(tr(kStrMenuBarGoToLineTooltip));
     go_to_line_action_->setShortcut(QKeySequence(kActionHotkeyGoToLine));
-    bool is_connected = connect(go_to_line_action_, &QAction::triggered, this, &RgMainWindow::HandleGoToLineEvent);
+    bool is_connected = connect(go_to_line_action_, &QAction::triggered, this, &RgMainWindow::GoToLineTriggered);
     assert(is_connected);
 
     // Find a string in the source editor.
@@ -1893,77 +1896,6 @@ void RgMainWindow::HandleShowMaxVgprsEvent()
 {
     // Emit the signal to show maximum VGPR lines.
     emit ShowMaximumVgprClickedSignal();
-}
-
-void RgMainWindow::HandleGoToLineEvent()
-{
-    assert(app_state_ != nullptr);
-    if (app_state_ != nullptr)
-    {
-        RgBuildView* build_view = app_state_->GetBuildView();
-        if (build_view != nullptr)
-        {
-            RgMenu* menu = build_view->GetMenu();
-            assert(menu != nullptr);
-            if (menu != nullptr)
-            {
-                // Get the max number of lines.
-                RgSourceCodeEditor* source_code_editor = build_view->GetEditorForFilepath(menu->GetSelectedFilePath());
-                if (source_code_editor != nullptr && source_code_editor->isVisible())
-                {
-                    int max_line_number = source_code_editor->document()->lineCount();
-
-                    // Create a modal Go To line dialog.
-                    RgGoToLineDialog* go_to_line_dialog = new RgGoToLineDialog(max_line_number, this);
-                    go_to_line_dialog->setModal(true);
-                    go_to_line_dialog->setWindowTitle(kStrGoToLineDialogTitle);
-
-                    // Center the dialog on the view (registering with the scaling manager
-                    // shifts it out of the center so we need to manually center it).
-                    RgUtils::CenterOnWidget(go_to_line_dialog, this);
-
-                    // Execute the dialog and get the result.
-                    RgGoToLineDialog::RgGoToLineDialogResult result;
-                    result = static_cast<RgGoToLineDialog::RgGoToLineDialogResult>(go_to_line_dialog->exec());
-
-                    switch (result)
-                    {
-                    case RgGoToLineDialog::kOk:
-                    {
-                        // Go to the indicated line number.
-                        int line_number = go_to_line_dialog->GetLineNumber();
-
-                        // Scroll the editor to the indicated line.
-                        source_code_editor->ScrollToLine(line_number);
-
-                        // Set the highlighted line.
-                        QList<int> line_numbers;
-                        line_numbers << line_number;
-                        source_code_editor->SetHighlightedLines(line_numbers);
-
-                        // Move the cursor as well.
-                        QTextCursor cursor(source_code_editor->document()->findBlockByLineNumber(line_number - 1));
-                        source_code_editor->setTextCursor(cursor);
-                        break;
-                    }
-                    case RgGoToLineDialog::kCancel:
-                    {
-                        // Dialog rejected.
-                        break;
-                    }
-                    default:
-                    {
-                        // Shouldn't get here.
-                        assert(false);
-                    }
-                    }
-
-                    // Free the memory.
-                    delete go_to_line_dialog;
-                }
-            }
-        }
-    }
 }
 
 void RgMainWindow::HandleSaveSettingsButtonClicked()

@@ -6,6 +6,7 @@
 
 // Shared.
 #include "common/rg_log.h"
+#include "common/rga_shared_utils.h"
 
 // Backend.
 #include "source/radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
@@ -162,7 +163,7 @@ bool KcCLICommanderLightningUtil::PerformLiveVgprAnalysis(const Config& config) 
 
             if (!livereg_out_filename.isEmpty())
             {
-                beWaveSize kernel_wave_size = (KcUtils::IsNaviTarget(device) ? beWaveSize::kWave64 : beWaveSize::kUnknown);
+                beWaveSize kernel_wave_size = (RgaSharedUtils::IsNaviTarget(device) ? beWaveSize::kWave64 : beWaveSize::kUnknown);
 
                 // Perform live VGPR analysis and force wave 64 for OpenCL kernels. Currently the wave size information
                 // is missing from LLVM disassembly, therefore Shae is not able to deduce the value from the disassembly.
@@ -242,7 +243,7 @@ bool KcCLICommanderLightningUtil::PerformLiveSgprAnalysis(const Config& config) 
 
             if (!livereg_out_filename.isEmpty())
             {
-                beWaveSize kernel_wave_size = (KcUtils::IsNaviTarget(device) ? beWaveSize::kWave64 : beWaveSize::kUnknown);
+                beWaveSize kernel_wave_size = (RgaSharedUtils::IsNaviTarget(device) ? beWaveSize::kWave64 : beWaveSize::kUnknown);
 
                 // Perform live SGPR analysis and force wave 64 for OpenCL kernels. Currently the wave size information
                 // is missing from LLVM disassembly, therefore Shae is not able to deduce the value from the disassembly.

@@ -30,6 +30,11 @@ bool RgIsaDisassemblyViewOpencl::PopulateBuildOutput(const std::shared_ptr<RgPro
     return ret;
 }
 
+bool RgIsaDisassemblyViewOpencl::IsLineCorrelationSupported() const
+{
+    return true;
+}
+
 void RgIsaDisassemblyViewOpencl::SetBorderStylesheet(bool is_selected)
 {
     // Set "selected" property to be utilized by this widget's stylesheet.

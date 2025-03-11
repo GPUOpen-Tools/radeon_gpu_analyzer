@@ -17,10 +17,12 @@ external/code_sanitizer
 *.msi
 RGA-Installer-cache
 source/common/vulkan_layer_launcher/RGALayerLauncher/bin
+source/radeon_gpu_analyzer_gui/external
 source/utils/vulkan/backend/build
 external/third_party
 external/QtCommon
 external/qt_common
+external/qt_isa_gui
 external/adl
 external/adlutil
 external/appsdk

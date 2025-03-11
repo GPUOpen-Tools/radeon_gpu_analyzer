@@ -18,6 +18,7 @@ More information about the RGA command line tool can be found in its help manual
 
    quickstart.rst
    help_manual.rst
+   disassembly_view.rst
 
 DISCLAIMER
 ----------

@@ -36,7 +36,7 @@ public:
     // Retrieve all devices as got from the loaded module
     virtual beKA::beStatus GetDeviceTable(std::vector<GDT_GfxCardInfo>& table) = 0;
 
-    // Parse ISA text and convert it to CSV format with additional data added (Functional Unit, Cycles, etc.)
+    // Parse ISA text and convert it to CSV format with additional data added (Functional Group, Cycles, etc.)
     // if "is_header_required" is true, adds standard disassembly header to the ISA text before parsing it.
     static beKA::beStatus ParseIsaToCsv(const std::string& isa_text, const std::string& device,
                                         std::string& parsed_isa_text, bool should_add_line_numbers = false, bool is_header_required = false);

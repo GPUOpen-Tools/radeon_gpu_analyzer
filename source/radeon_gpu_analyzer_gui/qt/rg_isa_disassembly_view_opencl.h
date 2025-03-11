@@ -16,6 +16,9 @@ public:
     // Populate the disassembly view using the given clone and build outputs.
     virtual bool PopulateBuildOutput(const std::shared_ptr<RgProjectClone> project_clone, const RgBuildOutputsMap& build_outputs) override;
 
+    // Check if the current API has line correlation supported.
+    bool IsLineCorrelationSupported() const override;
+
 protected:
     // Set the border stylesheet.
     virtual void SetBorderStylesheet(bool is_selected) override;

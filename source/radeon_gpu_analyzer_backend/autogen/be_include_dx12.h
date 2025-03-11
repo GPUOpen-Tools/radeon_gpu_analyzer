@@ -28,8 +28,8 @@ static const char* kStrTemplateGpsoFileContent =
     "0 },\n{ \"COLOR\", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }\n\n#"
     "PrimitiveTopologyType (the D3D12_PRIMITIVE_TOPOLOGY_TYPE value to be used when creating the PSO)\n"
     "D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE\n\n# NumRenderTargets (the number of formats in the upcoming RTVFormats section)"
-    "\n1\n\n# RTVFormats (an array of DXGI_FORMAT-typed values for the render target formats - the number of items in the array "
-    "should match the above NumRenderTargets section)\n{ DXGI_FORMAT_R8G8B8A8_UNORM }";
+    "\n2\n\n# # RTVFormats { RTVFormat1, RTVFormat2, ... , RTVFormatNumRenderTargets } (an array of DXGI_FORMAT-typed values "
+    "for the render target formats - the number of items in the array must match the above NumRenderTargets section)\n{ DXGI_FORMAT_R8G8B8A8_UNORM }";
 
 // Autogeneration status.
 enum class BeDx12AutoGenStatus

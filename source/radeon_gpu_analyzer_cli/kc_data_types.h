@@ -72,6 +72,7 @@ struct RgOutputFiles
     std::string  livereg_sgpr_file;
     std::string  cfg_file;
     std::string  entry_abbreviation;
+    beWaveSize   wave_size        = beWaveSize::kWave64;
     bool         is_bin_file_temp = false;
     bool         is_isa_file_temp = false;
     bool         status = true;

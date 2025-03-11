@@ -48,6 +48,9 @@ public:
     // Set the focus to disassembly view.
     void SetDisassemblyViewFocus();
 
+    // Is the focus currently on the disassembly view.
+    bool IsDisassemblyViewFocused() const;
+
     // Set the focus to output window.
     void SetOutputWindowFocus();
 
