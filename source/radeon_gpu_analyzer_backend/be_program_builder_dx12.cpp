@@ -627,22 +627,6 @@ static beStatus InvokeDx12Backend(const Config&      config,
     return ret;
 }
 
-static bool IsSupportedDevice(const std::string& device_name)
-{
-    const std::vector<std::string> kUnsupportedTargets = { "NAVI12LITE" };
-
-    bool ret = true;
-    for (const std::string& unsupported_target : kUnsupportedTargets)
-    {
-        if (device_name.find(unsupported_target) != std::string::npos)
-        {
-            ret = false;
-            break;
-        }
-    }
-    return ret;
-}
-
 // ***************************************
 // *** INTERNALLY LINKED SYMBOLS - END ***
 // ***************************************
@@ -688,7 +672,7 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
             // then they would be passed to the code that compares them to known gpu names and filters as necessary.
             for (const std::string& driver_name : split_gpu_names)
             {
-                if (driver_name.find("withdll") == std::string::npos && IsSupportedDevice(driver_name))
+                if (driver_name.find("withdll") == std::string::npos)
                 {
                     // Break by ':'.
                     std::vector<std::string> split_names_colon;
