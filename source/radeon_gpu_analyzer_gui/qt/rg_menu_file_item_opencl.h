@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Item widget in RGA Build view's File Menu for OpenCL mode.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_OPENCL_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_OPENCL_H_
 
@@ -128,10 +134,13 @@ public:
     virtual void SetHovered(bool is_hovered) override;
 
     // Alter the visual style of the item if it is currently selected.
-    virtual void SetCurrent(bool is_current) override;
+    virtual void SetCurrent(bool is_current, bool hide_entry_point_lists = true) override;
 
     // Set the visibility of the entrypoints list for the file.
     void ShowEntrypointsList(bool show_list);
+
+    // Clear the selected item from the entrypoint list.
+    void ClearSelectedEntryPoints();
 
     // Switch to the given entry point in the item's dropdown.
     void SwitchToEntrypointByName(const std::string& entrypoint_name);
@@ -194,4 +203,4 @@ protected:
     // The generated view object.
     Ui::rgMenuFileItemOpenCL ui_;
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_OPENCL_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_OPENCL_H_

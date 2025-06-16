@@ -1,6 +1,9 @@
-//======================================================================
-// Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for CLI Commander interface for compiling with the OpenGL Compiler (glc).
+//=============================================================================
 
 // C++.
 #include <iterator>

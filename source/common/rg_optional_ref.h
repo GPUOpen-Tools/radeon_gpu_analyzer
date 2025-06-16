@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga's implementation of c++ "optional" for references.
+//=============================================================================
 
 #ifdef _WIN32
 #define WEAK_LINK __declspec(selectany)

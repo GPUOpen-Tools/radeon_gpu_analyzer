@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020-2024 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for dx12 file auto generator class.
+//===================================================================================
 
 // Local.
 #include "radeon_gpu_analyzer_backend/autogen/be_generator_dx12.h"
@@ -24,16 +27,15 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
 {
     BeDx12AutoGenStatus status    = BeDx12AutoGenStatus::kRequired;
     input_files.is_gpso_specified = !config.pso_dx12.empty();
-    std::string source_file_path_vs, source_file_path_ps, source_file_path_cs;
     bool        is_dxc_compiler_req = false;
 
     // VS
     bool        has_blob_vs = !config.vs_dxbc.empty();
     bool        has_src_vs  = !config.vs_entry_point.empty();
     bool        has_any_vs  = has_blob_vs || has_src_vs;
-    if (source_file_path_vs.empty() && has_blob_vs)
+    if (input_files.source_file_path_vs.empty() && has_blob_vs)
     {
-        source_file_path_vs = BeDx12Utils::GetAbsoluteFileName(KcUtils::Quote(config.vs_dxbc));
+        input_files.source_file_path_vs = BeDx12Utils::GetAbsoluteFileName(KcUtils::Quote(config.vs_dxbc));
     }
     if (has_src_vs)
     {
@@ -43,9 +45,9 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
         }
         std::string vs_shader_source_path;
         bool        is_ok = BeDx12Utils::GetShaderStageSourceFileName(config, BePipelineStage::kVertex, vs_shader_source_path);
-        if (source_file_path_vs.empty() && is_ok)
+        if (input_files.source_file_path_vs.empty() && is_ok)
         {
-            source_file_path_vs = vs_shader_source_path;
+            input_files.source_file_path_vs = vs_shader_source_path;
         }
         if (!is_dxc_compiler_req)
         {
@@ -57,9 +59,9 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
     bool has_blob_ps = !config.ps_dxbc.empty();
     bool has_src_ps  = !config.ps_entry_point.empty();
     bool has_any_ps  = has_blob_ps || has_src_ps;
-    if (source_file_path_ps.empty() && has_blob_ps)
+    if (input_files.source_file_path_ps.empty() && has_blob_ps)
     {
-        source_file_path_ps = BeDx12Utils::GetAbsoluteFileName(KcUtils::Quote(config.ps_dxbc));
+        input_files.source_file_path_ps = BeDx12Utils::GetAbsoluteFileName(KcUtils::Quote(config.ps_dxbc));
     }
     if (has_src_ps)
     {
@@ -69,9 +71,9 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
         }
         std::string ps_shader_source_path;
         bool        is_ok = BeDx12Utils::GetShaderStageSourceFileName(config, BePipelineStage::kFragment, ps_shader_source_path);
-        if (source_file_path_ps.empty() && is_ok)
+        if (input_files.source_file_path_ps.empty() && is_ok)
         {
-            source_file_path_ps = ps_shader_source_path;
+            input_files.source_file_path_ps = ps_shader_source_path;
         }
         if (!is_dxc_compiler_req)
         {
@@ -83,9 +85,9 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
     bool has_blob_cs = !config.cs_dxbc.empty();
     bool has_src_cs  = !config.cs_entry_point.empty();
     bool has_any_cs  = has_blob_cs || has_src_cs;
-    if (source_file_path_cs.empty() && has_blob_cs)
+    if (input_files.source_file_path_cs.empty() && has_blob_cs)
     {
-        source_file_path_cs = BeDx12Utils::GetAbsoluteFileName(KcUtils::Quote(config.cs_dxbc));
+        input_files.source_file_path_cs = BeDx12Utils::GetAbsoluteFileName(KcUtils::Quote(config.cs_dxbc));
     }
     if (has_src_cs)
     {
@@ -95,9 +97,9 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
         }
         std::string cs_shader_source_path;
         bool        is_ok = BeDx12Utils::GetShaderStageSourceFileName(config, BePipelineStage::kCompute, cs_shader_source_path);
-        if (source_file_path_cs.empty() && is_ok)
+        if (input_files.source_file_path_cs.empty() && is_ok)
         {
-            source_file_path_cs = cs_shader_source_path;
+            input_files.source_file_path_cs = cs_shader_source_path;
         }
         if (!is_dxc_compiler_req)
         {
@@ -137,7 +139,7 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
                                 BePipelineStage::kVertex,
                                 has_blob_vs,
                                 has_src_vs,
-                                source_file_path_vs,
+                                input_files.source_file_path_vs,
                                 input_files.vs_blob,
                                 input_files.is_root_signature_specified,
                                 err);
@@ -152,7 +154,7 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
                                 BePipelineStage::kFragment,
                                 has_blob_ps,
                                 has_src_ps,
-                                source_file_path_ps,
+                                input_files.source_file_path_ps,
                                 input_files.ps_blob,
                                 input_files.is_root_signature_specified, 
                                 err);
@@ -167,7 +169,7 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
                                 BePipelineStage::kCompute,
                                 has_blob_cs,
                                 has_src_cs,
-                                source_file_path_cs,
+                                input_files.source_file_path_cs,
                                 input_files.cs_blob,
                                 input_files.is_root_signature_specified,
                                 err);

@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for a Binary-specific implementation of the status bar.
+//=============================================================================
 // C++.
 #include <cassert>
 // Qt.

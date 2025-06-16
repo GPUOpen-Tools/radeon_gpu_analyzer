@@ -1,6 +1,9 @@
-//======================================================================
-// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for parsing command line options.
+//=============================================================================
 
 // C++.
 #include <iostream>
@@ -98,8 +101,18 @@ static const char* kStrOptionVerbose       = "v,verbose";
 static const char* kStrDescriptionVerbose  = "Print command line strings that RGA uses to launch external processes.";
 static const char* kStrOptionCO            = "co";
 static const char* kStrDescriptionCO       = "Full path to the code object input file.";
+static const char* kStrOptionDisTxt        = "disassemble";
+static const char* kStrDescriptionDisTxt   = "Path to output text file where text disassembly of the binary would be saved.";
 static const char* kStrOptionIl            = "il";
 
+static const char* kStrVulkanStageVertexFullPath                 = "Full path to vertex shader input file.";
+static const char* kStrVulkanStageTessellationControlFullPath    = "Full path to tessellation control shader input file.";
+static const char* kStrVulkanStageTessellationEvaluationFullPath = "Full path to tessellation evaluation shader input file.";
+static const char* kStrVulkanStageGeometryFullPath               = "Full path to geometry shader input file.";
+static const char* kStrVulkanStageFragmentFullPath               = "Full path to fragment shader input file.";
+static const char* kStrVulkanStageComputeFullPath                = "Full path to compute shader input file.";
+static const char* kStrVulkanStageMeshFullPath                   = "Full path to mesh shader input file.";
+static const char* kStrVulkanStageTaskFullPath                   = "Full path to task shader input file.";
 
 bool ParseCmdLine(int argc, char* argv[], Config& config)
 {
@@ -182,12 +195,26 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
         // Vulkan shader type.
         opts.add_options(pipelined_opt_offline)
-            ("vert", "Full path to vertex shader input file.", po::value<std::string>(config.vertex_shader))
-            ("tesc", "Full path to tessellation control shader input file.", po::value<std::string>(config.tess_control_shader))
-            ("tese", "Full path to tessellation evaluation shader input file.", po::value<std::string>(config.tess_evaluation_shader))
-            ("geom", "Full path to geometry shader input file.", po::value<std::string>(config.geometry_shader))
-            ("frag", "Full path to fragment shader input file", po::value<std::string>(config.fragment_shader))
-            ("comp", "Full path to compute shader input file.", po::value<std::string>(config.compute_shader))
+            (kVulkanStageFileSuffix[kVertex], kStrVulkanStageVertexFullPath, po::value<std::string>(config.vertex_shader))
+            (kVulkanStageFileSuffix[kTessellationControl], kStrVulkanStageTessellationControlFullPath, po::value<std::string>(config.tess_control_shader))
+            (kVulkanStageFileSuffix[kTessellationEvaluation], kStrVulkanStageTessellationEvaluationFullPath, po::value<std::string>(config.tess_evaluation_shader))
+            (kVulkanStageFileSuffix[kGeometry], kStrVulkanStageGeometryFullPath, po::value<std::string>(config.geometry_shader))
+            (kVulkanStageFileSuffix[kFragment], kStrVulkanStageGeometryFullPath, po::value<std::string>(config.fragment_shader))
+            (kVulkanStageFileSuffix[kCompute], kStrVulkanStageComputeFullPath, po::value<std::string>(config.compute_shader))
+            (kVulkanStageFileSuffix[kMesh], kStrVulkanStageMeshFullPath, po::value<std::string>(config.mesh_shader))
+            (kVulkanStageFileSuffix[kTask], kStrVulkanStageTaskFullPath, po::value<std::string>(config.task_shader))
+            ;
+
+        po::Options vk_input_shader_type_opts("");
+        vk_input_shader_type_opts.positional_help("");
+        vk_input_shader_type_opts.custom_help("");
+        vk_input_shader_type_opts.add_options(pipelined_opt_offline)
+            (kVulkanStageFileSuffix[kVertex], kStrVulkanStageVertexFullPath, po::value<std::string>(config.vertex_shader))
+            (kVulkanStageFileSuffix[kTessellationControl], kStrVulkanStageTessellationControlFullPath, po::value<std::string>(config.tess_control_shader))
+            (kVulkanStageFileSuffix[kTessellationEvaluation], kStrVulkanStageTessellationEvaluationFullPath, po::value<std::string>(config.tess_evaluation_shader))
+            (kVulkanStageFileSuffix[kGeometry], kStrVulkanStageGeometryFullPath, po::value<std::string>(config.geometry_shader))
+            (kVulkanStageFileSuffix[kFragment], kStrVulkanStageGeometryFullPath, po::value<std::string>(config.fragment_shader))
+            (kVulkanStageFileSuffix[kCompute], kStrVulkanStageComputeFullPath, po::value<std::string>(config.compute_shader))
             ;
 
 #ifdef RGA_ENABLE_VULKAN
@@ -365,7 +392,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
         // Binary Analysis mode.
         opts.add_options(binary_opt)
-            (kStrOptionCO, kStrDescriptionCO, po::value<std::string>(config.binary_codeobj_file))
+            (kStrOptionCO, kStrDescriptionCO)
             ;
 
 #ifdef _LEGACY_OPENCL_ENABLED
@@ -422,6 +449,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("csv-separator", "Override to default separator for analysis items.", po::value<std::string>(config.csv_separator))
             ("retain", "Retain temporary output files.")
             ("no-rename-il", "If specified, do not rename generated IL file.")
+            (kStrOptionDisTxt, kStrDescriptionDisTxt, po::value<std::string>(config.binary_text_disassembly))
             ;
 
         opts.parse_positional("input");
@@ -587,8 +615,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
                  !config.inst_cfg_file.empty() || 
                  !config.spv_txt.empty() || 
                  !config.spv_bin.empty() ||
-                 !config.parsed_spv.empty() ||
-                 !config.binary_codeobj_file.empty())
+                 !config.parsed_spv.empty())
         {
             config.requested_command = Config::kCompile;
         }
@@ -967,8 +994,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             }
 
             std::cout << opts.help({
-                         generic_opt,
-                         opt_level_opt1,
+                         generic_opt, 
+                         opt_level_opt1, 
                          pipelined_opt_offline }) << std::endl;
 
             std::cout << "Examples:" << std::endl;
@@ -990,8 +1017,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             std::cout << "===========================" << std::endl;
             std::cout << opts.help({
                          generic_opt,
-                         il_dump_opt,
-                         pipelined_opt_offline }) << std::endl;
+                         il_dump_opt }) << std::endl;
+
+            std::cout << vk_input_shader_type_opts.help({pipelined_opt_offline}) << std::endl;
+
             std::cout << "Examples:" << std::endl;
             std::cout << "  Compile fragment shader for gfx1034; extract ISA, binaries and statistics:" << std::endl;
             std::cout << "    " << program_name << " -s opengl -c gfx1034 --isa output/opengl_isa.txt -b output/opengl_bin.bin -a output/opengl_stats.csv --frag source/myFragmentShader.frag" << std::endl;
@@ -1008,8 +1037,9 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
             std::cout << opts.help({
                          generic_opt,
-                         macro_and_include_opt,
-                         pipelined_opt_offline }) << std::endl;
+                         macro_and_include_opt }) << std::endl;
+
+            std::cout << vk_input_shader_type_opts.help({pipelined_opt_offline}) << std::endl;
 
             std::cout << " By default, input files would be interpreted as SPIR-V binary files, unless the file extension is any of the following:" << std::endl <<
                 "   .vert  --> GLSL source file." << std::endl <<
@@ -1058,7 +1088,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
                 (kStrOptionVerbose, kStrDescriptionVerbose)
                 ;
             binary_opts.add_options(binary_opt)
-                (kStrOptionCO, kStrDescriptionCO, po::value<std::string>())
+                (kStrOptionCO, kStrDescriptionCO)
                 ;
             std::cout << binary_opts.help({
                          generic_opt,

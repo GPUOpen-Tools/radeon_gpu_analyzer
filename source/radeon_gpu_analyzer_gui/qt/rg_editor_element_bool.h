@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RgEditorElementBool class.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_EDITOR_ELEMENT_BOOL_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_EDITOR_ELEMENT_BOOL_H_
 

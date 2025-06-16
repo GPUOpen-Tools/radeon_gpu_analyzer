@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for class responsible for searching a source editor using an RgFindTextWidget.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_PIPELINE_STATE_SEARCHER_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_PIPELINE_STATE_SEARCHER_H_
 

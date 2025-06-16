@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for Pipeline state item widget in RGA Build view's File Menu.
+//=============================================================================
+
 // C++.
 #include <sstream>
 #include <cassert>

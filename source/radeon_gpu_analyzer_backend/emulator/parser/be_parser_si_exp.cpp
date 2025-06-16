@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implemetation of parser for the Southern Island [SI] EXP instructions.
+//=============================================================================
 
 #include "be_parser_si_exp.h"
 

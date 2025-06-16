@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for a Binary-mode-specific implementation of the RgAppState.
+//=============================================================================
+
 #pragma once
 
 // Local.

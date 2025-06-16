@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief implementation for a Qt validator used to ensure that a given value remains between a specific range of unsigned integers.
+//=============================================================================
+
 // C++.
 #include <cassert>
 

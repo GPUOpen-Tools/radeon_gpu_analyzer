@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for XML writer for Binary mode config files.
+//=============================================================================
 // C++>
 #include <cassert>
 #include <sstream>
@@ -14,17 +20,14 @@
 bool RgConfigFileReaderBinary::ReadProjectConfigFile(tinyxml2::XMLDocument& doc, const char* file_data_model_version, std::shared_ptr<RgProject>& rga_project)
 {
     // Version 2.2 requires processing of binary output file, which
-   // is handled later.
-    bool is_version_compatible =
-        (kRgaDataModel2_0.compare(file_data_model_version) == 0) ||
-        (kRgaDataModel2_1.compare(file_data_model_version) == 0) ||
-        (kRgaDataModel2_2.compare(file_data_model_version) == 0) || 
-        (kRgaDataModel2_3.compare(file_data_model_version) == 0) ||
-        (kRgaDataModel2_4.compare(file_data_model_version) == 0);
+    // is handled later.
+    bool is_version_compatible = (kRgaDataModel2_0.compare(file_data_model_version) == 0) || (kRgaDataModel2_1.compare(file_data_model_version) == 0) ||
+                                 (kRgaDataModel2_2.compare(file_data_model_version) == 0) || (kRgaDataModel2_3.compare(file_data_model_version) == 0) ||
+                                 (kRgaDataModel2_4.compare(file_data_model_version) == 0);
 
     assert(is_version_compatible);
 
-    bool ret = false;
+    bool ret    = false;
     rga_project = nullptr;
 
     if (is_version_compatible)
@@ -55,15 +58,15 @@ bool RgConfigFileReaderBinary::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
                     rga_project                                     = binary_project;
 
                     // Iterate through the project's clones: get the first clone.
-                    node = node->NextSibling();
+                    node                          = node->NextSibling();
                     tinyxml2::XMLNode* clone_root = node;
 
                     while (clone_root != nullptr)
                     {
                         // Get the clone ID.
-                        node = clone_root->FirstChildElement(kXmlNodeCloneId);
+                        node                                  = clone_root->FirstChildElement(kXmlNodeCloneId);
                         std::shared_ptr<RgProjectClone> clone = std::make_shared<RgProjectClone>();
-                        ret = RgXMLUtils::ReadNodeTextUnsigned(node, clone->clone_id);
+                        ret                                   = RgXMLUtils::ReadNodeTextUnsigned(node, clone->clone_id);
                         if (ret && node != nullptr)
                         {
                             // Get the name of the clone.
@@ -95,7 +98,7 @@ bool RgConfigFileReaderBinary::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
                                 //}
 
                                 // Get the Binary build settings.
-                                node = node->NextSiblingElement(kXmlNodeBuildSettings);
+                                node                                                  = node->NextSiblingElement(kXmlNodeBuildSettings);
                                 std::shared_ptr<RgBuildSettingsBinary> build_settings = std::make_shared<RgBuildSettingsBinary>();
                                 assert(build_settings != nullptr);
                                 if (build_settings != nullptr)
@@ -140,24 +143,54 @@ bool RgConfigFileReaderBinary::ReadApiBuildSettings(tinyxml2::XMLNode* node, std
 
     if (build_settings_binary != nullptr)
     {
-        ret = true;    
+        ret = true;
     }
 
     if (ret)
-    {   
+    {
         // Binary file name.
         assert(node != nullptr);
         if (node != nullptr)
         {
-            // Binary output file name.
-            node = node->FirstChildElement(kXmlNodeGlobalBinaryInputFileName);
-            ret  = (node != nullptr);
-            assert(node != nullptr);
-            std::string binary_file_name;
-            bool        should_read = RgXMLUtils::ReadNodeTextString(node, binary_file_name);
-            if (should_read)
+            node = node->FirstChildElement(kXmlNodeTargetDevices);
+
+            if (node != nullptr)
             {
-                build_settings_binary->binary_file_name = binary_file_name;
+                node = node->NextSiblingElement(kXmlNodePredefinedMacros);
+
+                if (node != nullptr)
+                {
+                    node = node->NextSiblingElement(kXmlNodeAdditionalIncludeDirectories);
+
+                    if (node != nullptr)
+                    {
+                        node = node->NextSiblingElement(kXmlNodeAdditionalOptions);
+
+                        if (node != nullptr)
+                        {
+                            node = node->NextSiblingElement(kXmlNodeGlobalBinaryInputFileName);
+
+                            if (node != nullptr)
+                            {
+                                ret = false;
+                            }
+
+                            while (node != nullptr)
+                            {
+                                std::string binary_file_name;
+                                bool        should_read = RgXMLUtils::ReadNodeTextString(node, binary_file_name);
+                                if (should_read)
+                                {
+                                    build_settings_binary->binary_file_names.push_back(binary_file_name);
+
+                                    ret = true;
+                                }
+
+                                node = node->NextSiblingElement(kXmlNodeGlobalBinaryInputFileName);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -175,8 +208,8 @@ bool RgConfigFileWriterBinary::WriteProjectConfigFile(const RgProject& project, 
 
     // Create the Project element.
     tinyxml2::XMLElement* project_ptr = doc.NewElement(kXmlNodeProject);
-    tinyxml2::XMLElement* api = doc.NewElement(kXmlNodeApiName);
-    std::string api_name;
+    tinyxml2::XMLElement* api         = doc.NewElement(kXmlNodeApiName);
+    std::string           api_name;
     ret = RgUtils::ProjectAPIToString(project.api, api_name);
     if (ret)
     {
@@ -191,7 +224,7 @@ bool RgConfigFileWriterBinary::WriteProjectConfigFile(const RgProject& project, 
 
         // Handle the project's clones.
         std::vector<tinyxml2::XMLElement*> clone_elems;
-        const RgProjectBinary& bin_project = static_cast<const RgProjectBinary&>(project);
+        const RgProjectBinary&             bin_project = static_cast<const RgProjectBinary&>(project);
         WriteBinaryCloneElements(bin_project, doc, clone_elems);
         for (tinyxml2::XMLElement* clone_elem : clone_elems)
         {
@@ -203,14 +236,16 @@ bool RgConfigFileWriterBinary::WriteProjectConfigFile(const RgProject& project, 
 
         // Save the file.
         tinyxml2::XMLError rc = doc.SaveFile(config_file_path.c_str());
-        ret = (rc == tinyxml2::XML_SUCCESS);
+        ret                   = (rc == tinyxml2::XML_SUCCESS);
         assert(ret);
     }
 
     return ret;
 }
 
-bool RgConfigFileWriterBinary::WriteBuildSettingsElement(const std::shared_ptr<RgBuildSettings> build_settings, tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& build_settings_elem)
+bool RgConfigFileWriterBinary::WriteBuildSettingsElement(const std::shared_ptr<RgBuildSettings> build_settings,
+                                                         tinyxml2::XMLDocument&                 doc,
+                                                         tinyxml2::XMLElement*&                 build_settings_elem)
 {
     bool ret = false;
 
@@ -225,8 +260,12 @@ bool RgConfigFileWriterBinary::WriteBuildSettingsElement(const std::shared_ptr<R
             // Write API-agnostic build settings.
             WriteGeneralBuildSettings(build_settings_binary, doc, build_settings_elem);
 
-            // Binary output file name.
-            RgXMLUtils::AppendXMLElement(doc, build_settings_elem, kXmlNodeGlobalBinaryInputFileName, build_settings_binary->binary_file_name.c_str());
+            // Binary output file names.
+            for (size_t i = 0; i < build_settings_binary->binary_file_names.size(); i++)
+            {
+                RgXMLUtils::AppendXMLElement(
+                    doc, build_settings_elem, kXmlNodeGlobalBinaryInputFileName, build_settings_binary->binary_file_names.at(i).c_str());
+            }
 
             // Add the Build Settings element its parent.
             doc.InsertEndChild(build_settings_elem);
@@ -277,13 +316,12 @@ bool RgConfigFileWriterBinary::WriteBinaryCloneElements(const RgProjectBinary& p
             //    clone_source_files->LinkEndChild(file_path);
             //}
 
-
             //// Add the Source Files node to the Clone element.
             //clone_element->LinkEndChild(clone_source_files);
 
             // Build settings.
             tinyxml2::XMLElement* build_settings = doc.NewElement(kXmlNodeBuildSettings);
-            ret = WriteBuildSettingsElement(clone->build_settings, doc, build_settings);
+            ret                                  = WriteBuildSettingsElement(clone->build_settings, doc, build_settings);
 
             if (ret)
             {

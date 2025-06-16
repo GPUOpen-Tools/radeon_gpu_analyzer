@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for parsing listed kernels in RGA CLI output.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_SOURCE_RG_CLI_KERNEL_LIST_PARSER_H_
 #define RGA_RADEONGPUANALYZERGUI_SOURCE_RG_CLI_KERNEL_LIST_PARSER_H_
 

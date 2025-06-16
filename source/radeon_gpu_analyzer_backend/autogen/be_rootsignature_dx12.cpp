@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2024 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for dx12 root signature auto generation utilities.
+//=============================================================================
 
 // Local.
 #include "radeon_gpu_analyzer_backend/autogen/be_reflection_dx12.h"

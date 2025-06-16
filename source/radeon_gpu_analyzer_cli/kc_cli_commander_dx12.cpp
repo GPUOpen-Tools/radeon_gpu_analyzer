@@ -1,6 +1,9 @@
-//======================================================================
-// Copyright 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2019-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implememntation for CLI Commander interface for compiling for DX12.
+//=============================================================================
 #ifdef _WIN32
 
 // C++.
@@ -23,9 +26,10 @@
 #include "common/rga_shared_utils.h"
 
 // Local.
-#include "radeon_gpu_analyzer_cli/kc_cli_commander_bin_util.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_dx12.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
+#include "radeon_gpu_analyzer_cli/kc_utils_binary_parser.h"
+#include "radeon_gpu_analyzer_cli/kc_utils_binary_raytracing.h"
 
 // Device info.
 #include "DeviceInfoUtils.h"
@@ -676,18 +680,18 @@ bool KcCliCommanderDX12::DisassembleElfBinary(const Config&      config,
     return ret;
 }
 
-bool KcCliCommanderDX12::PostProcessElfBinary(const Config&           config,
-                                              const std::string&      target,
-                                              const std::string&      pipeline_elf,
-                                              const std::string&      elf_disassembly,
-                                              std::string&            error_msg)
+bool KcCliCommanderDX12::PostProcessElfBinary(const Config&      config,
+                                              const std::string& target,
+                                              const std::string& pipeline_elf,
+                                              const std::string& elf_disassembly,
+                                              std::string&       error_msg)
 {
     bool                               is_success = false;
     std::map<std::string, std::string> kernel_to_disassembly;
     beKA::beStatus                     status = ParseAmdgpudisOutputGraphicStrategy{}.ParseAmdgpudisKernels(elf_disassembly, kernel_to_disassembly, error_msg);
     if (status == beKA::beStatus::kBeStatusSuccess)
     {
-        RayTracingBinaryWorkflowStrategy processor{pipeline_elf, log_callback_};
+        RayTracingBinaryWorkflowStrategy processor{pipeline_elf, beProgramBuilderBinary::ApiEnum::kDXR, log_callback_};
         RaytracingPipelineMetaData       pipeline_md;
         beKA::beStatus                   md_status = BeAmdPalMetaData::ParseAmdgpudisMetadata(elf_disassembly, pipeline_md);
         assert(md_status == beKA::beStatus::kBeStatusRayTracingCodeObjMetaDataSuccess);

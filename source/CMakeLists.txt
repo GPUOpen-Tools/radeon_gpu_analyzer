@@ -1,3 +1,8 @@
+#######################################################################################################################
+### Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+### @author AMD Developer Tools Team
+#######################################################################################################################
+
 cmake_minimum_required (VERSION 3.10)
 
 # Add RGA CLI and Backend

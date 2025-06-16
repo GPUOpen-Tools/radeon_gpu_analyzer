@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga backend d3d include manager.
+//=============================================================================
 
 #ifdef _WIN32
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_D3D_INCLUDE_MANAGER_H_

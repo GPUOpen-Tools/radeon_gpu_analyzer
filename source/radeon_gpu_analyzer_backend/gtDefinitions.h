@@ -1,11 +1,9 @@
-//=====================================================================
-// Copyright 2016-2023 (c), Advanced Micro Devices, Inc. All rights reserved.
-//
-/// \author AMD Developer Tools Team
-/// \file gtDefinitions.h
-///
-//=====================================================================
-
+//=============================================================================
+/// Copyright (c) 2016-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for gtDefinitions class.
+//=============================================================================
 //------------------------------ gtDefinitions.h ------------------------------
 
 #ifndef __GTDEFINITIONS

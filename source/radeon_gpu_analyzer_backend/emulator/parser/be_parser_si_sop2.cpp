@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation of parser for the Southern Island [SI] SOP2 instructions.
+//=============================================================================
 
 // Local.
 #include "be_parser_si_sop2.h"

@@ -1,7 +1,9 @@
-//======================================================================
-// Copyright 2023 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
-
+//=============================================================================
+/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for Vulkan helper functions.
+//=============================================================================
 // C++.
 #include <sstream>
 
@@ -14,7 +16,7 @@
 #include "radeon_gpu_analyzer_backend/be_utils.h"
 
 // Local.
-#include "source/radeon_gpu_analyzer_cli/kc_cli_commander_vulkan_util.h"
+#include "source/radeon_gpu_analyzer_cli/kc_utils_vulkan.h"
 #include "source/radeon_gpu_analyzer_cli/kc_data_types.h"
 #include "source/radeon_gpu_analyzer_cli/kc_utils.h"
 #include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
@@ -30,14 +32,14 @@ static const std::string kStrVulkanStatsTagLdsSize           = "resourceUsage.ld
 static const std::string kStrVulkanStatsTagLdsUsage          = "resourceUsage.ldsUsageSizeInBytes";
 static const std::string kStrVulkanStatsTagScratchMem        = "resourceUsage.scratchMemUsageInBytes";
 
-bool KcCLICommanderVulkanUtil::ParseIsaFilesToCSV(bool line_numbers, const std::string& device_string, RgVkOutputMetadata& metadata) const
+bool KcUtilsVulkan::ParseIsaFilesToCSV(bool line_numbers, const std::string& device_string, RgVkOutputMetadata& metadata) const
 {
     bool ret = true;
 
     // Step through existing output items to determine which files to generate CSV ISA for.
     for (auto& output_file : metadata)
     {
-        if (!output_file.input_file.empty())
+        if (!output_file.isa_file.empty())
         {
             std::string isa, parsed_isa, parsed_isa_filename;
             bool        status = KcUtils::ReadTextFile(output_file.isa_file, isa, nullptr);
@@ -45,13 +47,13 @@ bool KcCLICommanderVulkanUtil::ParseIsaFilesToCSV(bool line_numbers, const std::
             if (status)
             {
                 // Convert the ISA text to CSV format.
-                if ((status = KcCLICommanderVulkanUtil::GetParsedIsaCsvText(isa, device_string, line_numbers, parsed_isa)) == true)
+                if ((status = KcUtilsVulkan::GetParsedIsaCsvText(isa, device_string, line_numbers, parsed_isa)) == true)
                 {
                     status = (KcUtils::GetParsedISAFileName(output_file.isa_file, parsed_isa_filename) == beKA::kBeStatusSuccess);
                     if (status)
                     {
                         // Attempt to write the ISA CSV to disk.
-                        status = (KcCLICommanderVulkanUtil::WriteIsaToFile(parsed_isa_filename, parsed_isa, log_callback_) == beKA::kBeStatusSuccess);
+                        status = (KcUtilsVulkan::WriteIsaToFile(parsed_isa_filename, parsed_isa, log_callback_) == beKA::kBeStatusSuccess);
                         if (status)
                         {
                             // Update the session metadata output to include the path to the ISA CSV.
@@ -72,7 +74,7 @@ bool KcCLICommanderVulkanUtil::ParseIsaFilesToCSV(bool line_numbers, const std::
     return ret;
 }
 
-bool KcCLICommanderVulkanUtil::PerformLiveVgprAnalysis(const Config& conf, const std::string& device, RgVkOutputMetadata& device_md) const
+bool KcUtilsVulkan::PerformLiveVgprAnalysis(const Config& conf, const std::string& device, RgVkOutputMetadata& device_md) const
 {
     bool ret = true;
 
@@ -85,7 +87,7 @@ bool KcCLICommanderVulkanUtil::PerformLiveVgprAnalysis(const Config& conf, const
     std::size_t stage = 0;
     for (auto& stage_md : device_md)
     {
-        if (!stage_md.input_file.empty() && ret)
+        if (!stage_md.isa_file.empty() && ret)
         {
             std::string out_file_name;
             gtString    out_filename_gtstr, isa_filename_gtstr;
@@ -121,7 +123,7 @@ bool KcCLICommanderVulkanUtil::PerformLiveVgprAnalysis(const Config& conf, const
     return ret;
 }
 
-bool KcCLICommanderVulkanUtil::PerformLiveSgprAnalysis(const Config& conf, const std::string& device, RgVkOutputMetadata& device_md) const
+bool KcUtilsVulkan::PerformLiveSgprAnalysis(const Config& conf, const std::string& device, RgVkOutputMetadata& device_md) const
 {
     bool ret = true;
 
@@ -134,7 +136,7 @@ bool KcCLICommanderVulkanUtil::PerformLiveSgprAnalysis(const Config& conf, const
     std::size_t stage = 0;
     for (auto& stage_md : device_md)
     {
-        if (!stage_md.input_file.empty() && ret)
+        if (!stage_md.isa_file.empty() && ret)
         {
             std::string out_file_name;
             gtString    out_filename_gtstr, isa_filename_gtstr;
@@ -170,7 +172,7 @@ bool KcCLICommanderVulkanUtil::PerformLiveSgprAnalysis(const Config& conf, const
     return ret;
 }
 
-bool KcCLICommanderVulkanUtil::ExtractCFG(const Config& config, const std::string& device, const RgVkOutputMetadata& device_md) const
+bool KcUtilsVulkan::ExtractCFG(const Config& config, const std::string& device, const RgVkOutputMetadata& device_md) const
 {
     bool ret = true;
 
@@ -184,7 +186,7 @@ bool KcCLICommanderVulkanUtil::ExtractCFG(const Config& config, const std::strin
     std::size_t stage = 0;
     for (const auto& stage_md : device_md)
     {
-        if (!stage_md.input_file.empty() && ret)
+        if (!stage_md.isa_file.empty() && ret)
         {
             std::string out_filename;
             gtString    out_filename_gtstr, isa_filename_gtstr;
@@ -221,7 +223,7 @@ bool KcCLICommanderVulkanUtil::ExtractCFG(const Config& config, const std::strin
     return ret;
 }
 
-void KcCLICommanderVulkanUtil::RunPostProcessingSteps(const Config& config) const
+void KcUtilsVulkan::RunPostProcessingSteps(const Config& config) const
 {
     // *****************************
     // Post-process for all devices.
@@ -258,12 +260,12 @@ void KcCLICommanderVulkanUtil::RunPostProcessingSteps(const Config& config) cons
     }
 }
 
-bool KcCLICommanderVulkanUtil::GenerateSessionMetadata(const Config& config) const
+bool KcUtilsVulkan::GenerateSessionMetadata(const Config& config) const
 {
     return KcXmlWriter::GenerateVulkanSessionMetadataFile(config.session_metadata_file, output_metadata_);
 }
 
-void KcCLICommanderVulkanUtil::DeleteTempFiles(std::vector<std::string>& temp_files)
+void KcUtilsVulkan::DeleteTempFiles(std::vector<std::string>& temp_files)
 {
     for (const std::string& tmp_file : temp_files)
     {
@@ -339,26 +341,26 @@ static bool ParseVulkanStats(const std::string isa_text, const std::string& stat
 }
 
 beKA::beStatus 
-KcCLICommanderVulkanUtil::ConvertStats(const BeVkPipelineFiles& isaFiles,
-                                       const BeVkPipelineFiles& stats_files,
-                                       const Config&            config,
-                                       const std::string&       device)
+KcUtilsVulkan::ConvertStats(const BeVkPipelineFiles& isaFiles,
+                            const BeVkPipelineFiles& stats_files,
+                            const Config&            config,
+                            const std::string&       device)
 {
     beKA::beStatus status = beKA::beStatus::kBeStatusSuccess;
     for (int stage = 0; stage < BePipelineStage::kCount && status == beKA::beStatus::kBeStatusSuccess; stage++)
     {
         if (!stats_files[stage].empty())
         {
-            status = KcCLICommanderVulkanUtil::ConvertStats(isaFiles[stage], stats_files[stage], config, device);
+            status = KcUtilsVulkan::ConvertStats(isaFiles[stage], stats_files[stage], config, device);
         }
     }
     return status;
 }
 
-beKA::beStatus KcCLICommanderVulkanUtil::ConvertStats(const std::string& isa_file,
-                                                      const std::string& stats_file,
-                                                      const Config&      config,
-                                                      const std::string& device)
+beKA::beStatus KcUtilsVulkan::ConvertStats(const std::string& isa_file,
+                                           const std::string& stats_file,
+                                           const Config&      config,
+                                           const std::string& device)
 {
     bool        result = false;
     std::string stats_text, isa_text;
@@ -380,7 +382,7 @@ beKA::beStatus KcCLICommanderVulkanUtil::ConvertStats(const std::string& isa_fil
     return (result ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusVulkanParseStatsFailed);
 }
 
-beKA::beStatus KcCLICommanderVulkanUtil::WriteIsaToFile(const std::string& file_name, const std::string& isa_text, LoggingCallbackFunction log_callback)
+beKA::beStatus KcUtilsVulkan::WriteIsaToFile(const std::string& file_name, const std::string& isa_text, LoggingCallbackFunction log_callback)
 {
     beKA::beStatus ret = beKA::beStatus::kBeStatusInvalid;
     ret = KcUtils::WriteTextFile(file_name, isa_text, log_callback) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusWriteToFileFailed;
@@ -391,7 +393,7 @@ beKA::beStatus KcCLICommanderVulkanUtil::WriteIsaToFile(const std::string& file_
     return ret;
 }
 
-bool KcCLICommanderVulkanUtil::GetParsedIsaCsvText(const std::string& isaText, const std::string& device, bool add_line_numbers, std::string& csv_text)
+bool KcUtilsVulkan::GetParsedIsaCsvText(const std::string& isaText, const std::string& device, bool add_line_numbers, std::string& csv_text)
 {
     static const char* kStrCsvParsedIsaHeader            = "Address, Opcode, Operands, Functional Unit, Cycles, Binary Encoding\n";
     static const char* kStrCsvParsedIsaHeaderLineNumbers = "Address, Source Line Number, Opcode, Operands, Functional Unit, Cycles, Binary Encoding\n";
@@ -413,7 +415,7 @@ static std::string GetHardwareStageDotTokenStr(const std::string& hardware_stage
     return hardwareStageDotToken.str();
 }
 
-std::string KcCLICommanderVulkanUtil::BuildStatisticsStr(const beKA::AnalysisData& stats, std::size_t stage, bool is_compute_bit_set)
+std::string KcUtilsVulkan::BuildStatisticsStr(const beKA::AnalysisData& stats, std::size_t stage, bool is_compute_bit_set)
 {
     std::stringstream statistics_stream;
 
@@ -439,8 +441,8 @@ std::string KcCLICommanderVulkanUtil::BuildStatisticsStr(const beKA::AnalysisDat
     return statistics_stream.str();
 }
 
-beKA::AnalysisData KcCLICommanderVulkanUtil::PopulateAnalysisData(const beKA::AnalysisData& stats,
-                                                                  const std::string&        current_device)
+beKA::AnalysisData KcUtilsVulkan::PopulateAnalysisData(const beKA::AnalysisData& stats,
+                                                       const std::string&        current_device)
 {    
     beKA::AnalysisData ret = stats;
     if (kRgaDeviceProps.count(current_device))
@@ -471,9 +473,9 @@ bool WriteStatsFile(const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md
         {
             if (hardware_stage.stage_type == hw_stage_type)
             {
-                beKA::AnalysisData stats{KcCLICommanderVulkanUtil::PopulateAnalysisData(hardware_stage.stats, device_md[stage].device)};
-                bool               isComputeBitSet = KcUtils::IsComputeBitSet(device_md[stage].entry_type);
-                std::string        stats_str       = KcCLICommanderVulkanUtil::BuildStatisticsStr(stats, stage, isComputeBitSet);
+                beKA::AnalysisData stats{KcUtilsVulkan::PopulateAnalysisData(hardware_stage.stats, device_md[stage].device)};
+                bool               isComputeBitSet = RgaEntryTypeUtils::IsComputeBitSet(device_md[stage].entry_type);
+                std::string        stats_str       = KcUtilsVulkan::BuildStatisticsStr(stats, stage, isComputeBitSet);
 
                 is_file_written = KcUtils::WriteTextFile(device_md[stage].stats_file, stats_str, callback);
                 if (is_file_written)
@@ -578,10 +580,10 @@ void WriteIsaFileWithHardcodedMapping(uint32_t                                  
     }
 }
 
-void KcCLICommanderVulkanUtil::ExtractStatistics(const Config&                             config,
-                                                 const std::string&                        device,
-                                                 const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md,
-                                                 const std::map<std::string, std::string>& shader_to_disassembly)
+void KcUtilsVulkan::ExtractStatistics(const Config&                             config,
+                                      const std::string&                        device,
+                                      const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md,
+                                      const std::map<std::string, std::string>& shader_to_disassembly)
 {
     std::string base_stats_filename = config.analysis_file;
     beStatus    status              = beKA::beStatus::kBeStatusSuccess;
@@ -623,6 +625,6 @@ void KcCLICommanderVulkanUtil::ExtractStatistics(const Config&                  
             }
         }
 
-        status = KcCLICommanderVulkanUtil::ConvertStats(isa_files, stats_files, config, device_string);
+        status = KcUtilsVulkan::ConvertStats(isa_files, stats_files, config, device_string);
     }
 }

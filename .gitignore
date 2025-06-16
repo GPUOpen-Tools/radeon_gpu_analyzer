@@ -33,3 +33,6 @@ external/miniz
 external/tsingleton
 external/update_check_api
 external/rga_internal_utils
+external/isa_spec_manager
+external/isa_spec_xml
+external/isa_spec_xml_rc

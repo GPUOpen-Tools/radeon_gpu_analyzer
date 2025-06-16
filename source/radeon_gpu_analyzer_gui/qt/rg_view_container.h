@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Multi purpose view container to help with maximization, focus management, and titlebar support.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_VIEW_CONTAINER_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_VIEW_CONTAINER_H_
 

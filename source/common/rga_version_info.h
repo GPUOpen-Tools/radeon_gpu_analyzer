@@ -1,7 +1,14 @@
+//=============================================================================
+/// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga version info.
+//=============================================================================
+
 #pragma once
 
 #define RGA_VERSION_MAJOR  2
-#define RGA_VERSION_MINOR  12
+#define RGA_VERSION_MINOR  13
 #define RGA_VERSION_UPDATE 0
 #define GEN_RGA_VERSION(MAJOR, MINOR, UPDATE)  MAJOR.MINOR.UPDATE
 #define RGA_VERSION_MAJOR_MINOR  GEN_RGA_VERSION(RGA_VERSION_MAJOR, RGA_VERSION_MINOR, RGA_VERSION_UPDATE)

@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for parsing the CLI's version-info results.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_XML_CLI_VERSION_INFO_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_XML_CLI_VERSION_INFO_H_
 

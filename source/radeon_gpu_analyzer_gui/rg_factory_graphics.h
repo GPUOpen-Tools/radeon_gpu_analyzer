@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for the Base factory used to create graphics API-specific object instances.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_FACTORY_GRAPHICS_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_FACTORY_GRAPHICS_H_
 

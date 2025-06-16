@@ -1,3 +1,11 @@
+//=====================================================================
+// Copyright 2016-2025 (c), Advanced Micro Devices, Inc. All rights reserved.
+//
+/// \author AMD Developer Tools Team
+/// \file ServerWorkerThread.cpp
+///
+//=====================================================================
+
 //------------------------------ ServerWorkerThread.cpp ------------------------------
 
 #include <iostream>

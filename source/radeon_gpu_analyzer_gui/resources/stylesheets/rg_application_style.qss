@@ -1,3 +1,8 @@
+/**
+* Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+* @author AMD Developer Tools Team
+*/
+
 /********************************************************************/
 /* Splitters
 /********************************************************************/
@@ -44,6 +49,7 @@ RgSourceEditorTitlebar QLabel
 RgIsaDisassemblyView #viewTitlebar ArrowIconComboBox
 {
     qproperty-fontColor: white;
+    background: rgb(51, 51, 51);
 }
 
 RgIsaDisassemblyView #viewTitlebar ScaledPushButton 

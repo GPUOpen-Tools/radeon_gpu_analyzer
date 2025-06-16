@@ -1,6 +1,9 @@
-//=============================================================
-// Copyright (c) 2017 Advanced Micro Devices, Inc.
-//=============================================================
+//=============================================================================
+/// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Representation of FLAT, SCRATCH and GLOBAL instructions.
+//=============================================================================
 
 #pragma once
 

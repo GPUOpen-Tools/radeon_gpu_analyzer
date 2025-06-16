@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for the raw text disassembly view.
+//=============================================================================
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_raw_text_disassembly_view.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"

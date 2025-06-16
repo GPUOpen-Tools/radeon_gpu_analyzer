@@ -1,30 +1,36 @@
-//=================================================================
-// Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for CLI Commander interface for compiling with the Vk-offline Compiler (amdllpc).
+//=============================================================================
 
 // C++.
 #include <iterator>
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vk_offline.h"
-#include "radeon_gpu_analyzer_cli/kc_cli_commander_vulkan_util.h"
-#include "radeon_gpu_analyzer_cli/kc_statistics_parser_vulkan.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
+#include "radeon_gpu_analyzer_cli/kc_statistics_parser_vulkan.h"
+#include "radeon_gpu_analyzer_cli/kc_utils_vulkan.h"
 
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_backend.h"
-#include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
 #include "radeon_gpu_analyzer_backend/be_metadata_parser.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_binary.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
 
 // Shared between CLI and GUI.
-#include "common/rga_shared_utils.h"
 #include "common/rga_version_info.h"
+#include "common/rga_shared_utils.h"
 
 // Infra.
-#include "external/amdt_os_wrappers/Include/osDirectory.h"
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
+#include "external/amdt_os_wrappers/Include/osDirectory.h"
+
+
 
 // Constants: error messages.
 static const char* kStrErrorVkOfflineCannotExtractVulkanVersion = "Error: unable to extract the Vulkan version.";
@@ -118,6 +124,8 @@ bool ValidateInputFiles(const Config& config, VkOfflineOptions& vulkan_options, 
     bool is_geom_shader_present            = (!config.geometry_shader.empty());
     bool is_frag_shader_present            = (!config.fragment_shader.empty());
     bool is_comp_shader_present            = (!config.compute_shader.empty());
+    bool is_mesh_shader_present            = (!config.mesh_shader.empty());
+    bool is_task_shader_present            = (!config.task_shader.empty());
     bool is_pipe_input                     = (!config.pipe_file.empty());
 
     // Cannot mix compute and non-compute shaders in Vulkan.
@@ -126,9 +134,23 @@ bool ValidateInputFiles(const Config& config, VkOfflineOptions& vulkan_options, 
             || is_tess_control_shader_present 
             || is_tess_evaluation_shader_present 
             || is_geom_shader_present 
-            || is_frag_shader_present))
+            || is_frag_shader_present 
+            || is_mesh_shader_present 
+            || is_task_shader_present))
     {
         log_msg << kStrErrorGraphicsComputeMix << std::endl;
+        should_abort = true;
+    }
+
+    // Cannot mix mesh shading with graphics shaders in Vulkan.
+    if (!should_abort && 
+        (is_mesh_shader_present || is_task_shader_present) &&
+        (is_vert_shader_present 
+            || is_tess_control_shader_present 
+            || is_tess_evaluation_shader_present 
+            || is_geom_shader_present))
+    {
+        log_msg << kStrErrorGraphicsMeshMix << std::endl;
         should_abort = true;
     }
 
@@ -241,6 +263,35 @@ bool ValidateInputFiles(const Config& config, VkOfflineOptions& vulkan_options, 
         } 
     }
 
+    if (!should_abort && is_mesh_shader_present)
+    {
+        should_abort = !KcUtils::ValidateShaderFileName(kStrMeshStageName, config.mesh_shader, log_msg);
+        if (IsInputFileExtGlsl(config.mesh_shader))
+        {
+            const auto& temp_mesh_name = KcUtils::ConstructTempFileName(kTempFileName, kVulkanStageFileSuffix[BePipelineStage::kMesh]);
+            should_abort               = !KcUtils::CopyTextFile(config.mesh_shader, temp_mesh_name, LoggingCallback);
+            vulkan_options.pipeline_shaders.mesh_shader << temp_mesh_name.c_str();
+        }
+        else
+        {
+            vulkan_options.pipeline_shaders.mesh_shader << config.mesh_shader.c_str();
+        }
+    }
+
+    if (!should_abort && is_task_shader_present)
+    {
+        should_abort = !KcUtils::ValidateShaderFileName(kStrTaskStageName, config.task_shader, log_msg);
+        if (IsInputFileExtGlsl(config.task_shader))
+        {
+            const auto& temp_task_name = KcUtils::ConstructTempFileName(kTempFileName, kVulkanStageFileSuffix[BePipelineStage::kTask]);
+            should_abort               = !KcUtils::CopyTextFile(config.task_shader, temp_task_name, LoggingCallback);
+            vulkan_options.pipeline_shaders.task_shader << temp_task_name.c_str();
+        }
+        else
+        {
+            vulkan_options.pipeline_shaders.task_shader << config.task_shader.c_str();
+        }
+    }
     return should_abort;
 }
 
@@ -462,6 +513,8 @@ void GetBeProgramPipelineFiles(const BeProgramPipeline& files, std::vector<std::
     append(files.geometry_shader,                fileStrings);
     append(files.fragment_shader,                fileStrings);
     append(files.compute_shader,                 fileStrings);
+    append(files.mesh_shader,                    fileStrings);
+    append(files.task_shader,                    fileStrings);
 }
 
 void DeleteTempFiles(const Config& config, const VkOfflineOptions& vulkan_options)
@@ -492,6 +545,8 @@ void DeleteTempFiles(const Config& config, const VkOfflineOptions& vulkan_option
     bool is_geom_shader_present            = (!config.geometry_shader.empty());
     bool is_frag_shader_present            = (!config.fragment_shader.empty());
     bool is_comp_shader_present            = (!config.compute_shader.empty());
+    bool is_mesh_shader_present            = (!config.mesh_shader.empty());
+    bool is_task_shader_present            = (!config.task_shader.empty());
     if (is_vert_shader_present && IsInputFileExtGlsl(config.vertex_shader))
     {
         temp_files.push_back(vulkan_options.pipeline_shaders.vertex_shader.asASCIICharArray());
@@ -516,8 +571,16 @@ void DeleteTempFiles(const Config& config, const VkOfflineOptions& vulkan_option
     {
         temp_files.push_back(vulkan_options.pipeline_shaders.compute_shader.asASCIICharArray());
     }
+    if (is_mesh_shader_present && IsInputFileExtGlsl(config.mesh_shader))
+    {
+        temp_files.push_back(vulkan_options.pipeline_shaders.mesh_shader.asASCIICharArray());
+    }
+    if (is_task_shader_present && IsInputFileExtGlsl(config.task_shader))
+    {
+        temp_files.push_back(vulkan_options.pipeline_shaders.task_shader.asASCIICharArray());
+    }
 
-    KcCLICommanderVulkanUtil::DeleteTempFiles(temp_files);
+    KcUtilsVulkan::DeleteTempFiles(temp_files);
 }
 
 void GetBeVkPipelineFileNames(const Config&           config,
@@ -567,6 +630,20 @@ void GetBeVkPipelineFileNames(const Config&           config,
         spv_files[kCompute]   = vulkan_options.pipeline_shaders.compute_shader.asASCIICharArray();
         isa_files[kCompute]   = vulkan_options.isa_disassembly_output_files.compute_shader.asASCIICharArray();
         stats_files[kCompute] = vulkan_options.stats_output_files.compute_shader.asASCIICharArray();
+    }
+    bool is_mesh_shader_present = (!config.mesh_shader.empty());
+    if (is_mesh_shader_present)
+    {
+        spv_files[kMesh]   = vulkan_options.pipeline_shaders.mesh_shader.asASCIICharArray();
+        isa_files[kMesh]   = vulkan_options.isa_disassembly_output_files.mesh_shader.asASCIICharArray();
+        stats_files[kMesh] = vulkan_options.stats_output_files.mesh_shader.asASCIICharArray();
+    }
+    bool is_task_shader_present = (!config.task_shader.empty());
+    if (is_task_shader_present)
+    {
+        spv_files[kTask]   = vulkan_options.pipeline_shaders.task_shader.asASCIICharArray();
+        isa_files[kTask]   = vulkan_options.isa_disassembly_output_files.task_shader.asASCIICharArray();
+        stats_files[kTask] = vulkan_options.stats_output_files.task_shader.asASCIICharArray();
     }
 }
 
@@ -635,7 +712,7 @@ void KcCLICommanderVkOffline::RunCompileCommands(const Config& config, LoggingCa
                 }
             }
 
-            KcCLICommanderVulkanUtil vk_util(output_metadata_, "", log_callback_, kVulkanStageFileSuffix);
+            KcUtilsVulkan vk_util(output_metadata_, "", log_callback_, kVulkanStageFileSuffix);
 
             for (const std::string& device : target_devices)
             {
@@ -759,7 +836,7 @@ void KcCLICommanderVkOffline::StoreOutputFilesToOutputMD(const std::string&     
             if (stage_md.input_file.empty())
             {
                 stage_md.input_file = spvFiles[stage];
-                stage_md.entry_type = kVulkanStageEntryTypes[stage];
+                stage_md.entry_type = beProgramBuilderBinary::GetEntryType(beProgramBuilderBinary::ApiEnum::kVulkan, stage);
                 stage_md.device     = device;
             }
             stage_md.isa_file   = isaFiles[stage];

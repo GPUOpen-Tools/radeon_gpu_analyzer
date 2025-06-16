@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for shader ISA Disassembly item model delegate.
+//=============================================================================
+
 // C++.
 #include <algorithm>
 
@@ -96,7 +103,7 @@ bool RgIsaItemDelegate::editorEvent(QEvent* event, QAbstractItemModel* model, co
                 RgIsaTreeView* view = qobject_cast<RgIsaTreeView*>(view_);
                 if (view != nullptr)
                 {
-                    view->UpdateLineCorrelation(source_index);
+                    view->UpdateLineCorrelation(source_index, true);
                 }
             }
 
@@ -172,6 +179,8 @@ void RgIsaItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
 
     if (source_model_index.column() < IsaItemModel::Columns::kColumnCount)
     {
+        painter->restore();
+
         return;
     }
     else if (source_model_index.column() == RgIsaItemModel::Columns::kIsaColumnVgprPressure)

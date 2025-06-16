@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RGA's Browse Push Button.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_BROWSE_BUTTON_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_BROWSE_BUTTON_H_
 

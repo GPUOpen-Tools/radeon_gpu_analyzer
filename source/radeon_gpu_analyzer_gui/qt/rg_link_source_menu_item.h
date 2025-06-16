@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Link source menu item.
+//=============================================================================
+
 #pragma once
 
 // Qt.
@@ -36,5 +43,5 @@ private:
     void SetCursor();
 
     // The generated UI object for this view.
-    Ui::RgLinkSourceMenuItem ui_;
+    Ui::rgLinkSourceMenuItem ui_;
 };

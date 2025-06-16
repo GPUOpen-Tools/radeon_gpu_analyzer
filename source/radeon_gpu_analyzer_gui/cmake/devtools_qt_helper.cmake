@@ -1,5 +1,5 @@
 #######################################################################################################################
-### Copyright (c) 2019-2024 Advanced Micro Devices, Inc. All rights reserved.
+### Copyright (c) 2019-2025 Advanced Micro Devices, Inc. All rights reserved.
 ### @author AMD Developer Tools Team
 #######################################################################################################################
 
@@ -28,17 +28,6 @@ if (NOT Qt6_DIR)
         message(STATUS "Qt5 cmake package found at ${Qt5_DIR}")
     else ()
         message(WARNING "Qt5 cmake package not found. Please specify Qt5_DIR manually or in the CMAKE_PREFIX_PATH")
-    endif ()
-endif ()
-
-# linuxdeployqt
-if (UNIX AND NOT APPLE)
-
-    find_program(LINUXDEPLOYQT "linuxdeployqt" HINTS "${PROJECT_SOURCE_DIR}/external/linuxdeployqt")
-    if (LINUXDEPLOYQT)
-        message(STATUS "Found linuxdeployqt: ${LINUXDEPLOYQT}")
-    else ()
-        message(ERROR "linuxdeployqt not found but is required for build")
     endif ()
 endif ()
 

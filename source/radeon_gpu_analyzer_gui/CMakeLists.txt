@@ -1,3 +1,7 @@
+#######################################################################################################################
+### Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+### @author AMD Developer Tools Team
+#######################################################################################################################
 cmake_minimum_required (VERSION 3.10)
 
 project (radeon_gpu_analyzer_gui)
@@ -181,7 +185,6 @@ add_custom_command(TARGET radeon_gpu_analyzer_gui POST_BUILD
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "Copying external files to $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/../../external/qt_isa_gui/external/isa_spec_manager_xml/ $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/isa_spec/
 )
 
 # Setup the post-build script.

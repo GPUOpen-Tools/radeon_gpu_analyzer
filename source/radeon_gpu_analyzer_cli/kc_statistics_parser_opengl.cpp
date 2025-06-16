@@ -1,7 +1,9 @@
-//======================================================================
-// Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
-
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for class parsing statistics for opengl.
+//=============================================================================
 // Infra.
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 

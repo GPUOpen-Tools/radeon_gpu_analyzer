@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for CLI Commander interface.
+//=============================================================================
 
 // C++
 #include <cassert>
@@ -17,7 +20,7 @@
 #include "radeon_gpu_analyzer_cli/kc_cli_commander.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_lightning.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vulkan.h"
-#include "radeon_gpu_analyzer_cli/kc_cli_commander_bin.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_commander_binary.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 
 // Shared.
@@ -104,7 +107,7 @@ bool KcCliCommander::GenerateVersionInfoFile(const Config& config)
     if (status)
     {
         // Try generating the version info file for Binary Analysis mode.
-        bool is_binary_analysis_version_info_generated = KcCliCommanderBin::GenerateBinaryAnalysisVersionInfo(filename);
+        bool is_binary_analysis_version_info_generated = KcCliCommanderBinary::GenerateBinaryAnalysisVersionInfo(filename);
         assert(is_binary_analysis_version_info_generated);
         if (!is_binary_analysis_version_info_generated)
         {

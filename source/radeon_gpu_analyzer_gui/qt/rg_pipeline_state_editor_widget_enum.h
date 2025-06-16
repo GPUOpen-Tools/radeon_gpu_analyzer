@@ -1,7 +1,11 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Pso editor widget Enum.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_PIPELINE_STATE_EDITOR_WIDGET_ENUM_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_PIPELINE_STATE_EDITOR_WIDGET_ENUM_H_
-
-// Infra.
 
 // Local.
 #include "source/radeon_gpu_analyzer_gui/qt/rg_pipeline_state_editor_widget.h"

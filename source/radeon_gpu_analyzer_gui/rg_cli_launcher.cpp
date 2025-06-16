@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for RGA CLI launcher.
+//=============================================================================
+
 // C++.
 #include <sstream>
 #include <cassert>
@@ -102,7 +109,7 @@ void BuildOutputViewCommandHeader(std::shared_ptr<RgProject> project, const std:
 
     // Include the project's API in the build header line.
     std::string project_api_string;
-    bool is_ok = RgUtils::ProjectAPIToString(project->api, project_api_string);
+    bool        is_ok = RgUtils::ProjectAPIToString(project->api, project_api_string);
     assert(is_ok);
     if (is_ok)
     {
@@ -120,9 +127,9 @@ void BuildOutputViewCommandHeader(std::shared_ptr<RgProject> project, const std:
     }
 
     // Insert a separator line above and below the build output line.
-    std::string build_header_string = text_stream.str();
-    int num_dashes_to_insert = static_cast<int>(build_header_string.length());
-    std::string dashed_lines = std::string(num_dashes_to_insert, '-');
+    std::string build_header_string  = text_stream.str();
+    int         num_dashes_to_insert = static_cast<int>(build_header_string.length());
+    std::string dashed_lines         = std::string(num_dashes_to_insert, '-');
 
     // Surround the project build header text with dashed line separators.
     std::stringstream cmd_line_output_stream;
@@ -133,8 +140,13 @@ void BuildOutputViewCommandHeader(std::shared_ptr<RgProject> project, const std:
     invocation_text = cmd_line_output_stream.str();
 }
 
-bool RgCliLauncher::BuildProjectCloneOpencl(std::shared_ptr<RgProject> project, int clone_index, const std::string& output_path, const std::string& binary_name,
-    std::function<void(const std::string&)> cli_output_handling_callback, std::vector<std::string>& gpu_built, bool& cancel_signal)
+bool RgCliLauncher::BuildProjectCloneOpencl(std::shared_ptr<RgProject>              project,
+                                            int                                     clone_index,
+                                            const std::string&                      output_path,
+                                            const std::string&                      binary_name,
+                                            std::function<void(const std::string&)> cli_output_handling_callback,
+                                            std::vector<std::string>&               gpu_built,
+                                            bool&                                   cancel_signal)
 {
     bool ret = false;
     if (project != nullptr)
@@ -145,7 +157,7 @@ bool RgCliLauncher::BuildProjectCloneOpencl(std::shared_ptr<RgProject> project, 
         std::stringstream full_cli_output;
 
         // Verify that the clone index is valid for the given project.
-        int num_clones = static_cast<int>(project->clones.size());
+        int  num_clones           = static_cast<int>(project->clones.size());
         bool is_clone_index_valid = (clone_index >= 0 && clone_index < num_clones);
         assert(is_clone_index_valid);
         if (is_clone_index_valid)
@@ -159,9 +171,8 @@ bool RgCliLauncher::BuildProjectCloneOpencl(std::shared_ptr<RgProject> project, 
             BuildCompileProjectCommandString(cmd, output_path, binary_name);
 
             // Build settings.
-            std::string build_settings;
-            std::shared_ptr<RgBuildSettingsOpencl> cl_build_settings =
-                std::static_pointer_cast<RgBuildSettingsOpencl>(target_clone->build_settings);
+            std::string                            build_settings;
+            std::shared_ptr<RgBuildSettingsOpencl> cl_build_settings = std::static_pointer_cast<RgBuildSettingsOpencl>(target_clone->build_settings);
             assert(cl_build_settings != nullptr);
             ret = RgCliUtils::GenerateOpenclBuildSettingsString(*cl_build_settings, build_settings);
             assert(ret);
@@ -255,8 +266,13 @@ bool RgCliLauncher::BuildProjectCloneOpencl(std::shared_ptr<RgProject> project, 
     return ret;
 }
 
-bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, int clone_index, const std::string& output_path, const std::string& binary_name,
-    std::function<void(const std::string&)> cli_output_handling_callback, std::vector<std::string>& gpus_built, bool& cancel_signal)
+bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject>              project,
+                                            int                                     clone_index,
+                                            const std::string&                      output_path,
+                                            const std::string&                      binary_name,
+                                            std::function<void(const std::string&)> cli_output_handling_callback,
+                                            std::vector<std::string>&               gpus_built,
+                                            bool&                                   cancel_signal)
 {
     Q_UNUSED(binary_name);
 
@@ -269,7 +285,7 @@ bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, 
         std::stringstream full_cli_output;
 
         // Verify that the clone index is valid for the given project.
-        int num_clones = static_cast<int>(project->clones.size());
+        int  num_clones           = static_cast<int>(project->clones.size());
         bool is_clone_index_valid = (clone_index >= 0 && clone_index < num_clones);
         assert(is_clone_index_valid);
         if (is_clone_index_valid)
@@ -286,7 +302,7 @@ bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, 
                     std::stringstream cmd;
 
                     // Build settings.
-                    std::string build_settings;
+                    std::string                            build_settings;
                     std::shared_ptr<RgBuildSettingsVulkan> build_settings_vulkan =
                         std::static_pointer_cast<RgBuildSettingsVulkan>(target_clone->build_settings);
                     assert(build_settings_vulkan != nullptr);
@@ -301,7 +317,8 @@ bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, 
                         cmd << build_settings << " ";
                     }
 
-                    std::shared_ptr<RgUtilsVulkan> vulkan_util = std::dynamic_pointer_cast<RgUtilsVulkan>(RgUtilsGraphics::CreateUtility(RgProjectAPI::kVulkan));
+                    std::shared_ptr<RgUtilsVulkan> vulkan_util =
+                        std::dynamic_pointer_cast<RgUtilsVulkan>(RgUtilsGraphics::CreateUtility(RgProjectAPI::kVulkan));
                     assert(vulkan_util != nullptr);
                     if (vulkan_util != nullptr)
                     {
@@ -323,7 +340,8 @@ bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, 
                                 full_cmd_with_gpu << cmd.str();
 
                                 // Specify the Metadata file path.
-                                full_cmd_with_gpu << kStrCliOptSessionMetadata << " \"" << output_path << target_gpu << "_" << kStrSessionMetadataFilename << "\" ";
+                                full_cmd_with_gpu << kStrCliOptSessionMetadata << " \"" << output_path << target_gpu << "_" << kStrSessionMetadataFilename
+                                                  << "\" ";
 
                                 // Specify which GPU to build outputs for.
                                 full_cmd_with_gpu << kStrCliOptAsic << " " << target_gpu << " ";
@@ -344,7 +362,7 @@ bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, 
                                 if (vulkan_clone->pipeline.type == RgPipelineType::kGraphics)
                                 {
                                     size_t first_stage = static_cast<size_t>(RgPipelineStage::kVertex);
-                                    size_t last_stage = static_cast<size_t>(RgPipelineStage::kFragment);
+                                    size_t last_stage  = static_cast<size_t>(RgPipelineStage::kFragment);
 
                                     // Step through each stage in a graphics pipeline. If the project's
                                     // stage is not empty, append the stage's shader file to the cmdline.
@@ -376,7 +394,8 @@ bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, 
                                     RgPipelineStage current_stage = RgPipelineStage::kCompute;
 
                                     // Does the pipeline have a compute shader source file?
-                                    const auto& compute_shader_input_source_file_path = vulkan_clone->pipeline.shader_stages[static_cast<size_t>(current_stage)];
+                                    const auto& compute_shader_input_source_file_path =
+                                        vulkan_clone->pipeline.shader_stages[static_cast<size_t>(current_stage)];
                                     if (!compute_shader_input_source_file_path.empty())
                                     {
                                         // A source file exists in this stage. Append it to the command line.
@@ -470,29 +489,37 @@ bool RgCliLauncher::BuildProjectCloneVulkan(std::shared_ptr<RgProject> project, 
     return ret;
 }
 
-std::string ExtractTargetGpuDetected(const std::string& full_cli_output_str)
+std::vector<std::string> ExtractTargetGpuDetected(const std::string& full_cli_output_str)
 {
-    size_t curr_pos = full_cli_output_str.find(kStrTargetGPUDetected);
+    std::vector<std::string> target_gpus;
+
+    std::string cli_output_substr = full_cli_output_str;
+
+    size_t curr_pos = cli_output_substr.find(kStrTargetGPUDetected);
     assert(curr_pos != std::string::npos);
-    if (curr_pos != std::string::npos)
+    while (curr_pos != std::string::npos)
     {
         size_t      beg           = curr_pos + strlen(kStrTargetGPUDetected);
-        size_t      end           = full_cli_output_str.find("\n", beg);
-        std::string full_gpu_name = full_cli_output_str.substr(beg, end - beg);
-        curr_pos      = full_gpu_name.find(" ");
+        size_t      end           = cli_output_substr.find("\n", beg);
+        std::string full_gpu_name = cli_output_substr.substr(beg, end - beg);
+        curr_pos                  = full_gpu_name.find(" ");
         if (curr_pos != std::string::npos)
         {
-            std::string target_gpu = full_gpu_name.substr(0, curr_pos);
-            return target_gpu;
-        }       
+            target_gpus.push_back(full_gpu_name.substr(0, curr_pos));
+        }
+
+        size_t new_start = end + 1;
+
+        cli_output_substr = cli_output_substr.substr(new_start, cli_output_substr.size() - new_start);
+        curr_pos          = cli_output_substr.find(kStrTargetGPUDetected);
     }
-    return "";
+    return target_gpus;
 }
 
 bool RgCliLauncher::BuildProjectCloneBinary(std::shared_ptr<RgProject>              project,
                                             int                                     clone_index,
                                             const std::string&                      output_path,
-                                            const std::string&                      binary_name,
+                                            const std::vector<std::string>&         binary_names,
                                             std::function<void(const std::string&)> cli_output_handling_callback,
                                             std::vector<std::string>&               gpu_built,
                                             bool&                                   cancel_signal)
@@ -517,11 +544,11 @@ bool RgCliLauncher::BuildProjectCloneBinary(std::shared_ptr<RgProject>          
             std::stringstream cmd;
 
             // Build the compile project command string.
-            BuildCompileProjectCommandString(cmd, output_path, binary_name);
+            BuildCompileProjectCommandString(cmd, output_path, binary_names.at(0));
 
             // Build settings.
-            std::string                            build_settings;
-            auto bin_build_settings = std::static_pointer_cast<RgBuildSettingsBinary>(target_clone->build_settings);
+            std::string build_settings;
+            auto        bin_build_settings = std::static_pointer_cast<RgBuildSettingsBinary>(target_clone->build_settings);
             assert(bin_build_settings != nullptr);
             ret = RgCliUtils::GenerateBinaryBuildSettingsString(*bin_build_settings, build_settings);
             assert(ret);
@@ -545,17 +572,19 @@ bool RgCliLauncher::BuildProjectCloneBinary(std::shared_ptr<RgProject>          
                 full_cmd_with_gpu << cmd.str();
 
                 // Specify the Metadata file path.
-                static const std::string kSTR_TEMP_GPU = "rga-temp-gpu";
+                static const std::string kSTR_TEMP_GPU = "rga-temp";
                 std::stringstream        metadata_temp_filename_ss;
                 metadata_temp_filename_ss << output_path << kSTR_TEMP_GPU << "_" << kStrSessionMetadataFilename;
                 std::string metadata_temp_filename{metadata_temp_filename_ss.str()};
                 full_cmd_with_gpu << kStrCliOptSessionMetadata << " \"" << metadata_temp_filename << "\" ";
-                
+
                 // Surround the path to the input file with quotes to prevent breaking the CLI parser.
-                full_cmd_with_gpu << kStrCliOptBinaryCodeObj;
-                full_cmd_with_gpu << " \"";
-                full_cmd_with_gpu << binary_name;
-                full_cmd_with_gpu << "\" ";
+                for (size_t i = 0; i < binary_names.size(); i++)
+                {
+                    full_cmd_with_gpu << " \"";
+                    full_cmd_with_gpu << binary_names.at(i);
+                    full_cmd_with_gpu << "\" ";
+                }
 
                 // Add the full CLI execution string to the output window's log.
                 cmd_line_output_stream << full_cmd_with_gpu.str();
@@ -575,20 +604,37 @@ bool RgCliLauncher::BuildProjectCloneBinary(std::shared_ptr<RgProject>          
                 // Append the CLI's output to the string containing the entire execution output.
                 full_cli_output << cmd_line_output_as_gt_str.asASCIICharArray();
 
-                // Extract target gpu.
-                std::string target_gpu = ExtractTargetGpuDetected(full_cli_output.str());
-                assert(ret && !target_gpu.empty());
-                if (ret && !target_gpu.empty())
+                std::vector<std::string> target_gpus = ExtractTargetGpuDetected(full_cli_output.str());
+                assert(ret && !target_gpus.empty());
+
+                std::string first_gpu = "";
+
+                // Since we want to put all binaries in the same metadata file, just use the first gpu name for the metadata file.
+                if (!target_gpus.empty())
+                {
+                    first_gpu = target_gpus.front();
+                }
+
+                if (ret && !first_gpu.empty())
                 {
                     // Add the GPU to the output list if it was built successfully.
-                    gpu_built.push_back(target_gpu);
+                    gpu_built.push_back(first_gpu);
 
-                   if (RgUtils::IsFileExists(metadata_temp_filename))
-                   {
-                       std::stringstream new_metadata_filename;
-                       new_metadata_filename << output_path << target_gpu << "_" << kStrSessionMetadataFilename;
-                       RgUtils::RenameFile(metadata_temp_filename, new_metadata_filename.str());
-                   }
+                    if (RgUtils::IsFileExists(metadata_temp_filename))
+                    {
+                        std::stringstream new_metadata_filename;
+                        new_metadata_filename << output_path << kStrSessionMetadataFilename;
+
+                        // If there is already an existing file, append the new xml metadata for the new binary files to the existing metadata rather than replacing it.
+                        if (!RgUtils::AppendFiles(new_metadata_filename.str(), metadata_temp_filename))
+                        {
+                            RgUtils::RenameFile(metadata_temp_filename, new_metadata_filename.str());
+                        }
+                        else
+                        {
+                            QFile::remove(metadata_temp_filename.c_str());
+                        }
+                    }
                 }
 
                 // Invoke the callback used to send new CLI output to the GUI.
@@ -614,8 +660,10 @@ bool RgCliLauncher::BuildProjectCloneBinary(std::shared_ptr<RgProject>          
     return ret;
 }
 
-bool RgCliLauncher::DisassembleSpvToText(const std::string& compiler_bin_folder, const std::string& spv_full_file_path,
-                                         const std::string& output_file_path, std::string& cli_output)
+bool RgCliLauncher::DisassembleSpvToText(const std::string& compiler_bin_folder,
+                                         const std::string& spv_full_file_path,
+                                         const std::string& output_file_path,
+                                         std::string&       cli_output)
 {
     bool ret = false;
 
@@ -637,9 +685,9 @@ bool RgCliLauncher::DisassembleSpvToText(const std::string& compiler_bin_folder,
     command_stream << kStrCliOptVulkanSpvDis << " \"" << output_file_path << "\" \"" << spv_full_file_path << "\"";
 
     // Launch the command line backend to generate the version info file.
-    bool cancel_signal = false;
+    bool     cancel_signal = false;
     gtString cli_output_as_gt_str;
-    bool is_launch_successful = osExecAndGrabOutput(command_stream.str().c_str(), cancel_signal, cli_output_as_gt_str);
+    bool     is_launch_successful = osExecAndGrabOutput(command_stream.str().c_str(), cancel_signal, cli_output_as_gt_str);
     assert(is_launch_successful);
 
     if (is_launch_successful)
@@ -669,9 +717,9 @@ bool RgCliLauncher::GenerateVersionInfoFile(const std::string& full_path)
     cmd << kStrCliOptVersionInfo << " \"" << full_path << "\"";
 
     // Launch the command line backend to generate the version info file.
-    bool cancel_signal = false;
+    bool     cancel_signal = false;
     gtString cli_output_as_gt_str;
-    bool is_launch_successful = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, cli_output_as_gt_str);
+    bool     is_launch_successful = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, cli_output_as_gt_str);
     assert(is_launch_successful);
 
     if (is_launch_successful)
@@ -715,18 +763,19 @@ bool RgCliLauncher::ListKernels(std::shared_ptr<RgProject> project, int clone_in
                 const std::string& source_file_path = file_info.file_path;
 
                 // Add the version-info option to the command.
-                cmd << kStrCliOptListKernels << " " << "\"" << source_file_path << "\"";
+                cmd << kStrCliOptListKernels << " "
+                    << "\"" << source_file_path << "\"";
 
                 // Launch the command line backend to generate the version info file.
-                bool cancel_signal = false;
+                bool     cancel_signal = false;
                 gtString cli_output_as_gt_str;
-                bool is_launch_successful = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, cli_output_as_gt_str);
+                bool     is_launch_successful = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, cli_output_as_gt_str);
                 assert(is_launch_successful);
                 if (is_launch_successful)
                 {
                     // Parse the output and dump it into entrypointLineNumbers.
-                    is_parsing_failed = !RgCliKernelListParser::ReadListKernelsOutput(cli_output_as_gt_str.asASCIICharArray(),
-                                                                                    entrypoint_line_numbers[source_file_path]);
+                    is_parsing_failed =
+                        !RgCliKernelListParser::ReadListKernelsOutput(cli_output_as_gt_str.asASCIICharArray(), entrypoint_line_numbers[source_file_path]);
                 }
                 else
                 {

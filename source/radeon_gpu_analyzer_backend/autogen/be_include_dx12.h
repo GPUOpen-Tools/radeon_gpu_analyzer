@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2024 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for dx12 auto generation include primitives.
+//=============================================================================
 
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_INCLUDE_DX12_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_INCLUDE_DX12_H_
@@ -46,8 +49,11 @@ using BeDx12ShaderBinaryBlob = std::vector<char>;
 struct BeDx12AutoGenInput
 {
     BeDx12ShaderBinaryBlob                    vs_blob;
+    std::string                               source_file_path_vs;
     BeDx12ShaderBinaryBlob                    ps_blob;
+    std::string                               source_file_path_ps;
     BeDx12ShaderBinaryBlob                    cs_blob;
+    std::string                               source_file_path_cs;
     bool                                      is_root_signature_specified = false;
     bool                                      is_gpso_specified           = false;
     const D3D12_GRAPHICS_PIPELINE_STATE_DESC* parsed_gpso_file            = nullptr;

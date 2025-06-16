@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2021-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for an rga common utilities.
+//=============================================================================
+
 // C++
 #include <cassert>
 #include <sstream>

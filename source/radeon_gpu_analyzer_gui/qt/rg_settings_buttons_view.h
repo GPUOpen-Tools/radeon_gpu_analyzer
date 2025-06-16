@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for settings button view.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_SETTINGS_BUTTONS_VIEW_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_SETTINGS_BUTTONS_VIEW_H_
 

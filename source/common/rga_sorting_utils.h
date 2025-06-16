@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for sorting GPU architectures.
+//=============================================================================
+
 #pragma once
 // C++.
 #include <string>

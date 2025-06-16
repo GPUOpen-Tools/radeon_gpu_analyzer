@@ -1,9 +1,12 @@
-//======================================================================
-// Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
-#ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_LIGHTNING_UTIL_H_
-#define RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_LIGHTNING_UTIL_H_
+//=============================================================================
+/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for OpenCL helper functions.
+//=============================================================================
 
+#ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_LIGHTNING_H_
+#define RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_LIGHTNING_H_
 // C++.
 #include <string>
 
@@ -21,19 +24,15 @@ static const std::string kLcKernelIsaHeader2 = "Disassembly for ";
 static const std::string kLcKernelIsaHeader3 = "@kernel ";
 
 // Class for OpenCl mode utility functions for ISA post-processing.
-class KcCLICommanderLightningUtil
+class KcUtilsLightning
 {
 public:
-
-    KcCLICommanderLightningUtil(const std::string&      binary_codeobj_file,
-                                RgClOutputMetadata&     output_metadata,
-                                bool                    should_print_cmd,
-                                LoggingCallbackFunction log_callback)
-        : binary_codeobj_file_(binary_codeobj_file)
-        , output_metadata_(output_metadata)
+    KcUtilsLightning(RgClOutputMetadata& output_metadata, bool should_print_cmd, LoggingCallbackFunction log_callback)
+        : output_metadata_(output_metadata)
         , should_print_cmd_(should_print_cmd)
         , log_callback_(log_callback)
-    {}
+    {
+    }
 
     // Log Error Status.
     static void LogErrorStatus(beKA::beStatus status, const std::string& error_msg);
@@ -65,24 +64,14 @@ public:
     // Extract the list of entry points from the source file specified by "fileName".
     static bool ExtractEntries(const std::string& filename, const Config& config, const CmpilerPaths& compiler_paths, RgEntryData& entry_data);
 
-    // Perform post-compile actions.
-    bool RunPostCompileSteps(const Config& config, const CmpilerPaths& compiler_paths);
-
     // Pre-fix ISA Text with Header.
     static std::string PrefixWithISAHeader(const std::string& kernel_name, const std::string& kernel_isa_text);
 
-private:
-
-    // Generate RGA CLI session metadata file.
-    bool GenerateSessionMetadata(const Config& config, const CmpilerPaths& compiler_paths) const;
-
     // Delete all temporary files created by RGA.
-    void DeleteTempFiles() const;
+    static void DeleteTempFiles(const RgClOutputMetadata& output_metadata);
 
+private:
     // ---- DATA ----
-
-    // CodeObject Binary filename.
-    std::string binary_codeobj_file_;
 
     // Output Metadata.
     RgClOutputMetadata& output_metadata_;
@@ -94,4 +83,4 @@ private:
     LoggingCallbackFunction log_callback_;
 
 };
-#endif  // RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_LIGHTNING_UTIL_H_
+#endif  // RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_LIGHTNING_H_

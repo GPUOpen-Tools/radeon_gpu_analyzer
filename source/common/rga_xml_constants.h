@@ -1,5 +1,9 @@
-//=====================================================================
-// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+//=============================================================================
+/// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga xml constants strings.
+//=============================================================================
 
 #pragma once
 
@@ -35,7 +39,7 @@ static const char* kStrXmlNodeMetadata            = "ProgramOutputMetadata";
 static const char* kStrXmlNodeDataModel           = "DataModel";
 static const char* kStrXmlNodeInputFile           = "InputFile";
 static const char* kStrXmlNodePath                = "Path";
-static const char* kStrXmlNodeOutput              = "Output";;
+static const char* kStrXmlNodeOutput              = "Output";
 static const char* kStrXmlNodeTarget              = "TargetGPU";
 static const char* kStrXmlNodeEntry               = "Entry";
 static const char* kStrXmlNodeName                = "Name";
@@ -50,6 +54,7 @@ static const char* kStrXmlNodeCfg                 = "CFG";
 static const char* kStrXmlNodePipeline            = "Pipeline";
 static const char* kStrXmlNodeStage               = "Stage";
 static const char* kStrXmlNodeExtremelyLongName   = "ExtremelyLongName";
+static const char* kStrXmlNodeDisassembly         = "Disassembly";
 
 // Pipeline types
 static const char* kStrXmlNodeTypeGraphics   = "Graphics";
@@ -75,24 +80,37 @@ static const char* kStrXmlNodeDxrClosestHit    = "DXR_ClosestHit";
 static const char* kStrXmlNodeDxrMiss          = "DXR_Miss";
 static const char* kStrXmlNodeDxrCallable      = "DXR_Callable";
 static const char* kStrXmlNodeDxrTraversal     = "DXR_Traversal";
+static const char* kStrXmlNodeDxrUnknown       = "DXR_Unknown";
 static const char* kStrXmlNodeDxVertex         = "DX12_Vertex";
 static const char* kStrXmlNodeDxHull           = "DX12_Hull";
 static const char* kStrXmlNodeDxDomain         = "DX12_Domain";
 static const char* kStrXmlNodeDxGeometry       = "DX12_Geometry";
 static const char* kStrXmlNodeDxPixel          = "DX12_Pixel";
 static const char* kStrXmlNodeDxCompute        = "DX12_Compute";
+static const char* kStrXmlNodeDxMesh           = "DX12_Mesh";
+static const char* kStrXmlNodeDxAmplification  = "DX12_Amplification";
 static const char* kStrXmlNodeGlVertex         = "GL_Vertex";
 static const char* kStrXmlNodeGlTessCtrl       = "GL_TessellationControl";
 static const char* kStrXmlNodeGlTessEval       = "GL_TessellationEvaluation";
 static const char* kStrXmlNodeGlGeometry       = "GL_Geometry";
 static const char* kStrXmlNodeGlFragment       = "GL_Fragment";
 static const char* kStrXmlNodeGlCompute        = "GL_Compute";
+static const char* kStrXmlNodeVkRayGeneration  = "VK_RayGeneration";
+static const char* kStrXmlNodeVkIntersection   = "VK_Intersection";
+static const char* kStrXmlNodeVkAnyHit         = "VK_AnyHit";
+static const char* kStrXmlNodeVkClosestHit     = "VK_ClosestHit";
+static const char* kStrXmlNodeVkMiss           = "VK_Miss";
+static const char* kStrXmlNodeVkCallable       = "VK_Callable";
+static const char* kStrXmlNodeVkTraversal      = "VK_Traversal";
+static const char* kStrXmlNodeVkUnknown        = "VK_Unknown";
 static const char* kStrXmlNodeVkVertex         = "VK_Vertex";
 static const char* kStrXmlNodeVkTessCtrl       = "VK_TessellationControl";
 static const char* kStrXmlNodeVkTessEval       = "VK_TessellationEvaluation";
 static const char* kStrXmlNodeVkGeometry       = "VK_Geometry";
 static const char* kStrXmlNodeVkFragment       = "VK_Fragment";
 static const char* kStrXmlNodeVkCompute        = "VK_Compute";
+static const char* kStrXmlNodeVkMesh           = "VK_Mesh";
+static const char* kStrXmlNodeVkTask           = "VK_Task";
 static const char* kStrXmlNodeUnknown          = "Unknown";
 
 // Other

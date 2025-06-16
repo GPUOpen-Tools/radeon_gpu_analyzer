@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Main entry point for all tests.
+//=============================================================================
+
 #include <gtest/gtest.h>
 
 int main(int argc, char** argv)

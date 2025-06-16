@@ -1,11 +1,13 @@
-Radeon™ GPU Analyzer 2.12 Release Notes
+Radeon™ GPU Analyzer 2.13 Release Notes
 =======================================
 Highlights
 ==========
--     Added support for RDNA™ 4 (gfx1201) as well as gfx1151 and gfx1152 architectures as compiler targets across all RGA's modes.
--     Upgraded ISA disassembly view: you can now navigate through the disassembly more easily and identify areas with higher VGPR pressure in your shaders and kernels. 
--     The new disassembly view presents tooltips when hovering over opcodes in the view.
--     Updated the offline OpenCL, Vulkan and OpenGL compilers.
+-     Added support for the gfx1200 RDNA™ 4 architecture as a compilation target across all of RGA's modes.
+-     The Binary Analysis mode now supports Vulkan mesh shading pipelines and Vulkan raytracing pre-compiled Code Objects.
+-     All Vulkan offline modes (vk-offline, vk-spv-offline and vk-spv-txt-offline) now support mesh shading pipeline compilation.
+-     Updated the Vulkan and OpenGL offline compilers.
+-     Updated the following Vulkan tool dependencies: glslangValidator, spirv-as and spirv-dis (SPIRV-Tools v2024.4).
+-     Updated the DXC front-end compiler to v1.8.2502.
 
 Notes: 
 -     Clock cycle estimates are no longer presented by the upgraded ISA disassembly view in RGA GUI application.
@@ -25,7 +27,6 @@ Vulkan Live Driver Mode
 Offline OpenCL Mode
 -------------------
 -	OpenCL C++ kernels are not yet supported by the Lightning Compiler.
--   In OpenCL mode, the VGPR allocation granularity assumes Wave64 for all kernels. This may result in VGPR allocation granularity of 12 VGPRs instead of 24 VGPRs for Wave32 kernels compiled for the following targets: gfx1201, gfx1151, gfx1150, gfx1101 and gfx1100.
 
 DirectX 12 Mode
 ---------------

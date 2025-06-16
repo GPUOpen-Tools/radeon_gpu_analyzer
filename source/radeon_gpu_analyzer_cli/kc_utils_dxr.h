@@ -1,33 +1,33 @@
-//======================================================================
-// Copyright 2023 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for DXR helper functions.
+//=============================================================================
 
-#ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_DXR_UTIL_H_
-#define RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_DXR_UTIL_H_
+#ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_DXR_H_
+#define RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_DXR_H_
 
 // C++.
 #include <string>
 
 // Backend.
-#include "source/radeon_gpu_analyzer_backend/be_include.h"
+#include "radeon_gpu_analyzer_backend/be_include.h"
 #include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
 
 // Local.
-#include "source/radeon_gpu_analyzer_cli/kc_data_types.h"
+#include "radeon_gpu_analyzer_cli/kc_data_types.h"
 #include "radeon_gpu_analyzer_cli/kc_config.h"
 
 
 // Class for DXR mode utility functions for ISA post-processing.
-class KcCLICommanderDxrUtil
+class KcUtilsDxr
 {
 public:
-
-    KcCLICommanderDxrUtil(const std::string&      binary_codeobj_file,
-                          RgClOutputMetadata&     output_metadata,
-                          bool                    should_print_cmd,
-                          LoggingCallbackFunction log_callback)
-        : binary_codeobj_file_(binary_codeobj_file)
-        , output_metadata_(output_metadata)
+    KcUtilsDxr(RgClOutputMetadata&     output_metadata,
+               bool                    should_print_cmd,
+               LoggingCallbackFunction log_callback)
+        : output_metadata_(output_metadata)
         , should_print_cmd_(should_print_cmd)
         , log_callback_(log_callback)
     {}
@@ -47,9 +47,6 @@ public:
     // Extract Resource Usage (statistics) data.
     beKA::beStatus ExtractStatistics(const Config& config, const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md) const;
 
-    // Perform post-compile actions.
-    bool RunPostCompileSteps(const Config& config);
-
     // Helper function that combines the kernel and shader_subtype to kernel_shader_subtype.
     static std::string CombineKernelAndKernelSubtype(const std::string& kernel, const std::string& shader_subtype);
 
@@ -68,20 +65,13 @@ public:
                                         const std::string& default_extension,
                                         const std::string& entry_point_name,
                                         const std::string& device_name,
-                                        std::string&       generated_filename); 
-
-private:
-
-    // Generate RGA CLI session metadata file.
-    bool GenerateSessionMetadata(const Config& config) const;
+                                        std::string&       generated_filename);
 
     // Delete all temporary files created by RGA.
-    void DeleteTempFiles() const;
+    static void DeleteTempFiles(const RgClOutputMetadata& output_metadata);
 
+private:
     // ---- DATA ----
-
-    // CodeObject Binary filename.
-    std::string binary_codeobj_file_;
 
     // Output Metadata.
     RgClOutputMetadata& output_metadata_;
@@ -97,4 +87,4 @@ private:
 
 };
 
-#endif  // RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_DXR_UTIL_H_
+#endif  // RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_DXR_H_

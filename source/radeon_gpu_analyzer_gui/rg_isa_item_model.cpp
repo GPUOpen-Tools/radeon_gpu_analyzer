@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for shader ISA Disassembly view item model.
+//=============================================================================
+
 // C++.
 #include <cassert>
 #include <sstream>
@@ -27,6 +34,7 @@
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_data_types.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
+#include "radeon_gpu_analyzer_gui/rg_isa_decode_manager.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_item_model.h"
@@ -39,7 +47,7 @@ const std::array<std::string, RgIsaItemModel::kColumnCount - IsaItemModel::kColu
     "Functional group"};  ///< Predefined column headers.
 
 RgIsaItemModel::RgIsaItemModel(QObject* parent)
-    : IsaItemModel(parent)
+    : IsaItemModel(parent, RgIsaDecodeManager::GetInstance().Get())
 {
 }
 
@@ -72,7 +80,7 @@ QVariant RgIsaItemModel::headerData(int section, Qt::Orientation orientation, in
                               .arg(QString::number(current_livereg_data_.used))
                               .arg(QString::number(current_livereg_data_.allocated))
                               .arg(QString::number(current_livereg_data_.total_vgprs));
-        }      
+        }
 
         // Show the hazard icon if we've hit more than the max live VGPRs.
         if (current_livereg_data_.max_vgprs >= current_livereg_data_.total_vgprs)
@@ -378,9 +386,9 @@ void RgIsaItemModel::ReadIsaCsvFile(std::string                                 
     }
 }
 
-int RgIsaItemModel::CalculateMaxVgprs(std::vector<std::vector<RgIndexData>>&                   index_data,
-                                            std::vector<std::pair<int, int>>&                  max_line_numbers,
-                                            std::vector<std::shared_ptr<IsaItemModel::Block>>& blocks)
+int RgIsaItemModel::CalculateMaxVgprs(std::vector<std::vector<RgIndexData>>&             index_data,
+                                      std::vector<std::pair<int, int>>&                  max_line_numbers,
+                                      std::vector<std::shared_ptr<IsaItemModel::Block>>& blocks)
 {
     int max_vgprs_used = 0;
 
@@ -443,7 +451,7 @@ bool RgIsaItemModel::SetCurrentMaxVgprLine(EntryData::Operation op)
 
             const auto& curr_row = current_livereg_data_.max_vgpr_line_numbers[current_livereg_data_.current_max_vgpr_line_numbers_index];
             current_index_data_.at(curr_row.first).at(curr_row.second).is_max_vgpr_row = true;
-            ret = true;
+            ret                                                                        = true;
         }
         break;
 
@@ -461,7 +469,7 @@ bool RgIsaItemModel::SetCurrentMaxVgprLine(EntryData::Operation op)
 
             const auto& curr_row = current_livereg_data_.max_vgpr_line_numbers[current_livereg_data_.current_max_vgpr_line_numbers_index];
             current_index_data_.at(curr_row.first).at(curr_row.second).is_max_vgpr_row = true;
-            ret = true;
+            ret                                                                        = true;
         }
         break;
     default:
@@ -645,7 +653,6 @@ bool RgIsaItemModel::ParseLiveVgprsData(const std::string&                      
                         livereg_data.unmatched_count++;
                     }
                 }
-
             }
         }
     }
@@ -655,7 +662,7 @@ bool RgIsaItemModel::ParseLiveVgprsData(const std::string&                      
 
 void RgIsaItemModel::UpdateData(void* data)
 {
-    const EntryData   entry_data         = *(static_cast<EntryData*>(data));
+    const EntryData entry_data = *(static_cast<EntryData*>(data));
 
     const std::string csv_file_full_path = entry_data.isa_file_path;
 
@@ -703,7 +710,7 @@ void RgIsaItemModel::UpdateData(void* data)
 
         if (!SetArchitecture(entry_data.target_gpu))
         {
-            qDebug() << entry_data.target_gpu  << " xml spec missing.";
+            qDebug() << entry_data.target_gpu << " xml spec missing.";
         }
 
         // If the the file has been read before, use the cached value.
@@ -732,7 +739,6 @@ void RgIsaItemModel::UpdateData(void* data)
         CacheSizeHints();
 
         break;
-
     }
 }
 
@@ -908,7 +914,7 @@ bool RgIsaItemModel::SetArchitecture(const std::string target_gpu)
         success = false;
     }
 
-    IsaItemModel::SetArchitecture(architecture);
+    IsaItemModel::SetArchitecture(architecture, false);
 
     return success;
 }

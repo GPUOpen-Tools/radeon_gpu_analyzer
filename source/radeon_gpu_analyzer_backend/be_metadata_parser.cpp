@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2024 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for rga code object metadata parser class.
+//=============================================================================
 
 // C++.
 #include <unordered_map>
@@ -36,6 +39,8 @@ const std::string kStrDomain   = ".domain";
 const std::string kStrGeometry = ".geometry";
 const std::string kStrPixel    = ".pixel";
 const std::string kStrCompute  = ".compute";
+const std::string kStrMesh     = ".mesh";
+const std::string kStrTask     = ".task";
 
 // Raytracing Shader Stage Dot Strings.
 const std::string kStrUnknown       = "Unknown";
@@ -56,27 +61,27 @@ const uint64_t    kWaveSize32         = 32;
 const uint64_t    kWaveSize64         = 64;
 
 // Amdgpudis dot tokens.
-static const std::string kStrLcCodeObjectMetadataTokenStart  = "---\n";
-static const std::string kStrLcCodeObjectMetadataTokenEnd    = "\n...";
-static const std::string kStrCodeObjectMetadataKeyKernels    = "amdhsa.kernels";
-static const std::string kStrCodeObjectMetadataKeyPipelines  = "amdpal.pipelines";
-static const std::string kAmdgpuDisDotApiToken               = ".api";
-static const std::string kAmdgpuDisDotHardwareStagesToken    = ".hardware_stages";
-static const std::string kAmdgpuDisDotScratchMemorySizeToken = ".scratch_memory_size";
-static const std::string kAmdgpuDisDotSgprCountToken         = ".sgpr_count";
-static const std::string kAmdgpuDisDotSgprLimitToken         = ".sgpr_limit";
-static const std::string kAmdgpuDisDotVgprCountToken         = ".vgpr_count";
-static const std::string kAmdgpuDisDotVgprLimitToken         = ".vgpr_limit";
-static const std::string kAmdgpuDisDotShaderFunctionsToken   = ".shader_functions";
-static const std::string kAmdgpuDisDotLdsSizeToken           = ".lds_size";
-static const std::string kAmdgpuDisDotShaderSubtypeToken     = ".shader_subtype";
-static const std::string kAmdgpuDisDotShadersToken           = ".shaders";
-static const std::string kAmdgpuDisDotHardwareMappingToken   = ".hardware_mapping";
-static const std::string kAmdgpuDisDotWavefrontSizeToken     = ".wavefront_size";
-static const std::string kAmdgpuDisDxilStdManglingPrefix     = "\001?";
-static const std::string kAmdgpuDisDxilStdManglingSuffix     = "@@";
-static const std::string kAmdgpuDisDxilStdHexPattern         = "[A-F0-9]+:";
-
+static const std::string kStrLcCodeObjectMetadataTokenStart          = "---\n";
+static const std::string kStrLcCodeObjectMetadataTokenEnd            = "\n...";
+static const std::string kStrCodeObjectMetadataKeyKernels            = "amdhsa.kernels";
+static const std::string kStrCodeObjectMetadataKeyPipelines          = "amdpal.pipelines";
+static const std::string kAmdgpuDisDotApiToken                       = ".api";
+static const std::string kAmdgpuDisDotHardwareStagesToken            = ".hardware_stages";
+static const std::string kAmdgpuDisDotScratchMemorySizeToken         = ".scratch_memory_size";
+static const std::string kAmdgpuDisDotSgprCountToken                 = ".sgpr_count";
+static const std::string kAmdgpuDisDotSgprLimitToken                 = ".sgpr_limit";
+static const std::string kAmdgpuDisDotVgprCountToken                 = ".vgpr_count";
+static const std::string kAmdgpuDisDotVgprLimitToken                 = ".vgpr_limit";
+static const std::string kAmdgpuDisDotShaderFunctionsToken           = ".shader_functions";
+static const std::string kAmdgpuDisDotLdsSizeToken                   = ".lds_size";
+static const std::string kAmdgpuDisDotShaderSubtypeToken             = ".shader_subtype";
+static const std::string kAmdgpuDisDotShadersToken                   = ".shaders";
+static const std::string kAmdgpuDisDotHardwareMappingToken           = ".hardware_mapping";
+static const std::string kAmdgpuDisDotWavefrontSizeToken             = ".wavefront_size";
+static const std::string kAmdgpuDisDxilStdManglingPrefix             = "\001?";
+static const std::string kAmdgpuDisDxilStdManglingSuffix             = "@@";
+static const std::string kAmdgpuDisDxilStdHexPattern                 = "[A-F0-9]+:";
+static const std::string kAmdgpuDisRaytracingStandAloneComputeShader = "lgc.shader.CS.main";
 
 std::string BeMangledKernelUtils::DemangleShaderName(const std::string& kernel_name)
 {
@@ -141,7 +146,9 @@ BeAmdPalMetaData::ShaderType BeAmdPalMetaData::GetShaderType(const std::string& 
                                                                           {kStrDomain,   ShaderType::kDomain},
                                                                           {kStrGeometry, ShaderType::kGeometry},
                                                                           {kStrPixel,    ShaderType::kPixel},
-                                                                          {kStrCompute,  ShaderType::kCompute}};
+                                                                          {kStrCompute,  ShaderType::kCompute},
+                                                                          {kStrMesh,     ShaderType::kMesh},
+                                                                          {kStrTask,     ShaderType::kTask}};
 
     auto it = shaderMap.find(shader_name);
     if (it != shaderMap.end())
@@ -168,7 +175,7 @@ BeAmdPalMetaData::ShaderSubtype BeAmdPalMetaData::GetShaderSubtype(const std::st
     {
         return it->second;
     }
-    throw std::runtime_error("Unknown shader subtype: " + subtype_name);
+    return ShaderSubtype::kUnknown;
 }
 
 std::string BeAmdPalMetaData::GetStageName(StageType stage_type)
@@ -196,7 +203,9 @@ std::string BeAmdPalMetaData::GetShaderName(ShaderType shader_type)
                                                                                         {ShaderType::kDomain,   kStrDomain},
                                                                                         {ShaderType::kGeometry, kStrGeometry},
                                                                                         {ShaderType::kPixel,    kStrPixel},
-                                                                                        {ShaderType::kCompute,  kStrCompute}};
+                                                                                        {ShaderType::kCompute,  kStrCompute},
+                                                                                        {ShaderType::kMesh,     kStrMesh},
+                                                                                        {ShaderType::kTask,     kStrTask}};
 
     auto it = inverseShaderMap.find(shader_type);
     if (it != inverseShaderMap.end())
@@ -329,12 +338,19 @@ beKA::beStatus BeAmdPalMetaData::ParseAmdgpudisMetadata(const std::string& amdgp
 
                 if (pipeline_node[kAmdgpuDisDotShaderFunctionsToken])
                 {
+                    bool is_traditional_compute_shader = false; 
                     // Parse shader functions.
                     for (const auto& function_node : pipeline_node[kAmdgpuDisDotShaderFunctionsToken])
                     {
                         BeAmdPalMetaData::ShaderFunctionMetaData function;
 
-                        function.name           = BeMangledKernelUtils::DemangleShaderName(function_node.first.as<std::string>());
+                        function.name = BeMangledKernelUtils::DemangleShaderName(function_node.first.as<std::string>());
+                        if (function.name == kAmdgpuDisRaytracingStandAloneComputeShader)
+                        {
+                            is_traditional_compute_shader = true;
+                            break;
+                        }
+
                         function.shader_subtype = BeAmdPalMetaData::GetShaderSubtype(function_node.second[kAmdgpuDisDotShaderSubtypeToken].as<std::string>());
 
                         function.stats.lds_size_used       = GetHardwareStageProperty(function_node.second, kAmdgpuDisDotLdsSizeToken);
@@ -347,7 +363,15 @@ beKA::beStatus BeAmdPalMetaData::ParseAmdgpudisMetadata(const std::string& amdgp
 
                         pipeline.shader_functions.push_back(function);
                     }
-                    status = beKA::beStatus::kBeStatusRayTracingCodeObjMetaDataSuccess;
+
+                    if (is_traditional_compute_shader)
+                    {
+                        status = beKA::beStatus::kBeStatusGraphicsCodeObjMetaDataSuccess;
+                    }
+                    else
+                    {
+                        status = beKA::beStatus::kBeStatusRayTracingCodeObjMetaDataSuccess;
+                    }
                 }
                 else
                 {

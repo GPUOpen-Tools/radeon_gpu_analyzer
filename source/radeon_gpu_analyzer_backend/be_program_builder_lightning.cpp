@@ -1,6 +1,9 @@
-//======================================================================
-// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for rga backend progam builder (legacy) opencl class.
+//=============================================================================
 
 // Infra.
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
@@ -467,7 +470,7 @@ beKA::beStatus BeProgramBuilderLightning::PreprocessOpencl(const CmpilerPaths& c
         compiler_args << " " << kStrLcOpenclDefs;
 
         // Add a default device selection option.
-        // (as of v2.8 we need to specify *some* default device needed for clang-18 in RGA).
+        // (as of v2.8 we need to specify *some* default device needed for clang-19 in RGA).
         compiler_args << " " << kStrLcCompilerOpenclSwitchDevice << kStrLcCompilerOpenclDefaultDevice;
         
         std::string std_out, std_err;

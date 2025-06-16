@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RgAppState class allows a project with a specific mode to interface with the main window.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_H_
 
@@ -19,7 +26,7 @@ class RgAppState : public QObject
     Q_OBJECT
 
 public:
-    RgAppState() = default;
+    RgAppState()          = default;
     virtual ~RgAppState() = default;
 
     // Reset the RgBuildView instance used to display the current project.
@@ -140,4 +147,4 @@ public:
     virtual ~RgAppStateAnalysis() = default;
 };
 
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_H_

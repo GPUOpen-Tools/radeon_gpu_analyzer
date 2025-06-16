@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for a OpenCL-mode-specific implementation of the RgAppState.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_OPENCL_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_OPENCL_H_
 
@@ -15,7 +22,7 @@ class RgAppStateOpencl : public RgAppState
     Q_OBJECT
 
 public:
-    RgAppStateOpencl() = default;
+    RgAppStateOpencl()          = default;
     virtual ~RgAppStateOpencl() = default;
 
     // Reset the RgBuildView instance used to display the current project.
@@ -87,4 +94,4 @@ private:
     // The action used to open a source file.
     QAction* open_file_action_ = nullptr;
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_OPENCL_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_OPENCL_H_

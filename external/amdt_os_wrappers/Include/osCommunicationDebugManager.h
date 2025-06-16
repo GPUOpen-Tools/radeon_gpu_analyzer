@@ -1,3 +1,11 @@
+//=====================================================================
+// Copyright 2016-2025 (c), Advanced Micro Devices, Inc. All rights reserved.
+//
+/// \author AMD Developer Tools Team
+/// \file osCommunicationDebugManager.h
+///
+//=====================================================================
+
 //------------------------------ osCommunicationDebugManager.h ------------------------------
 
 #ifndef __OS_COMMUNICATION_DEBUG_MANAGER

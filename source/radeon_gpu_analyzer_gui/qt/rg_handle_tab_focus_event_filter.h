@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RgHandleTabFocusEventFilter class.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_HANDLE_TAB_FOCUS_EVENT_FILTER_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_HANDLE_TAB_FOCUS_EVENT_FILTER_H_
 

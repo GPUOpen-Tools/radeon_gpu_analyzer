@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for rga backend isa static analyzer class.
+//=============================================================================
 
 // C++.
 #include <cassert>
@@ -78,6 +81,7 @@ static std::string GetShaeIsaCmd(const gtString& target)
     const gtString kShaeGfx1100 = L"gfx1100";
     const gtString kShaeGfx1101 = L"gfx1101";
     const gtString kShaeGfx1151 = L"gfx1151";
+    const gtString kShaeGfx1200 = L"gfx1200";
     const gtString kShaeGfx1201 = L"gfx1201";
 
     const gtString kShaeOptionIsa  = L"--isa";
@@ -90,7 +94,7 @@ static std::string GetShaeIsaCmd(const gtString& target)
     {
         shae_gfx_generation << kShaeGfx12.asASCIICharArray();
 
-        if (target.isEqualNoCase(kShaeGfx1201))
+        if (target.isEqualNoCase(kShaeGfx1200) || target.isEqualNoCase(kShaeGfx1201))
         {
             should_add_arch_option = true;
         }

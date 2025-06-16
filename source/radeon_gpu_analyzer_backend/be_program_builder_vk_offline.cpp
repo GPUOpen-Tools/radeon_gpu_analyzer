@@ -1,6 +1,9 @@
-//======================================================================
-// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for rga backend progam builder vulkan offline class.
+//=============================================================================
 
 // C++.
 #include <sstream>
@@ -22,27 +25,31 @@
 // *****************************************
 
 // Targets of Amdllpc gfxip and corresponding DeviceInfo names.
-static const std::map<std::string, std::string> kVkAmdllpcTargetsToDeviceInfoTargets = {{"gfx900", "9.0.0"},
-                                                                                        {"gfx902", "9.0.2"},
-                                                                                        {"gfx904", "9.0.4"},
-                                                                                        {"gfx906", "9.0.6"},
-                                                                                        {"gfx90c", "9.0.12"},
-                                                                                        {"gfx1010", "10.1.0"},
-                                                                                        {"gfx1011", "10.1.1"},
-                                                                                        {"gfx1012", "10.1.2"},
-                                                                                        {"gfx1030", "10.3.0"},
-                                                                                        {"gfx1031", "10.3.1"},
-                                                                                        {"gfx1032", "10.3.2"},
-                                                                                        {"gfx1034", "10.3.4"},
-                                                                                        {"gfx1035", "10.3.5"},
-                                                                                        {"gfx1100", "11.0.0"},
-                                                                                        {"gfx1101", "11.0.1"},
-                                                                                        {"gfx1102", "11.0.2"},
-                                                                                        {"gfx1103", "11.0.3"},
-                                                                                        {"gfx1150", "11.5.0"},
-																						{"gfx1151", "11.5.1"},
-                                                                                        {"gfx1152", "11.5.2"},  
-                                                                                        {"gfx1201", "12.0.1"}};
+static const std::map<std::string, std::string> kVkAmdllpcTargetsToDeviceInfoTargets = {
+    {"gfx900", "9.0.0"},   
+    {"gfx902", "9.0.2"},   
+    {"gfx904", "9.0.4"},   
+    {"gfx906", "9.0.6"},   
+    {"gfx90c", "9.0.12"},  
+    {"gfx1010", "10.1.0"},
+    {"gfx1011", "10.1.1"}, 
+    {"gfx1012", "10.1.2"}, 
+    {"gfx1030", "10.3.0"}, 
+    {"gfx1031", "10.3.1"}, 
+    {"gfx1032", "10.3.2"}, 
+    {"gfx1034", "10.3.4"},
+    {"gfx1035", "10.3.5"}, 
+    {"gfx1100", "11.0.0"}, 
+    {"gfx1101", "11.0.1"}, 
+    {"gfx1102", "11.0.2"}, 
+    {"gfx1103", "11.0.3"}, 
+    {"gfx1150", "11.5.0"},
+    {"gfx1151", "11.5.1"}, 
+    {"gfx1152", "11.5.2"}, 
+    {"gfx1200", "12.0.0"}, 
+    {"gfx1201", "12.0.1"}};
+// gfx110x is not supported by amdllpc as of 07/11/2023.
+
 
 static bool GetAmdllpcPath(std::string& amdllpc_path)
 {
@@ -128,6 +135,20 @@ static beKA::beStatus AddAmdllpcInputFileNames(const VkOfflineOptions& options, 
         if (!options.pipeline_shaders.fragment_shader.isEmpty())
         {
             cmd << "\"" << options.pipeline_shaders.fragment_shader.asASCIICharArray() << "\" ";
+            is_stage_input = true;
+        }
+
+        // Mesh shader.
+        if (!options.pipeline_shaders.mesh_shader.isEmpty())
+        {
+            cmd << "\"" << options.pipeline_shaders.mesh_shader.asASCIICharArray() << "\" ";
+            is_stage_input = true;
+        }
+        
+        // Task shader.
+        if (!options.pipeline_shaders.task_shader.isEmpty())
+        {
+            cmd << "\"" << options.pipeline_shaders.task_shader.asASCIICharArray() << "\" ";
             is_stage_input = true;
         }
     }

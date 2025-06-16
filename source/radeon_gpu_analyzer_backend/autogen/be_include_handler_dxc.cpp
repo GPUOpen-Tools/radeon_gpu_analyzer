@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2024 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for dxc include handler.
+//=============================================================================
 
 // Local.
 #include "radeon_gpu_analyzer_backend/autogen/be_include_handler_dxc.h"

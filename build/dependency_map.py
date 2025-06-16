@@ -1,5 +1,5 @@
 #!python
-# Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # RGA git project names and revisions
 #
@@ -32,20 +32,17 @@ git_mapping = {}
 
 github_mapping = {
  # Lib.
-    "adl"                            : ["../external/adl",                      "master"],
     "appsdk"                         : ["../external/appsdk",                   "master"],
     "common_lib_ext_boost_1.59"      : ["../external/third_party/Boost",        "master"],
-    "windows_kits"                   : ["../external/third_party/Windows-Kits", "master"],
     "cxxopts"                        : ["../external/third_party/cxxopts",      "master"],
     "volk"                           : ["../external/third_party/volk",         "master"],
  # Src.
-    "adl_util"                       : ["../external/adlutil",                  "master"],
     "tsingleton"                     : ["../external/tsingleton",               "master"],
     "common_src_miniz"               : ["../external/miniz",                    "master"],
     "dynamic_library_module"         : ["../external/dynamic_library_module",   "amd-rga-v2.7"],
-    "device_info"                    : ["../external/device_info",              "rga-v2.12"],
+    "device_info"                    : ["../external/device_info",              "rga-v2.13"],
     "update_check_api"               : ["../external/update_check_api",         "v2.1.1"],
  # Qt tools.
-    "qt_common"                      : ["../external/qt_common",                "v4.2.0"],
-    "qt_isa_gui"                     : ["../external/qt_isa_gui",               "v1.0.0"],
+    "qt_common"                      : ["../external/qt_common",                "v4.3.0"],
+    "qt_isa_gui"                     : ["../external/qt_isa_gui",               "v1.1.0"],
 }

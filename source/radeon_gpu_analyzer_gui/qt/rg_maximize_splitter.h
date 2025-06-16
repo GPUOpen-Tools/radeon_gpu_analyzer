@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Splitter class which allows maximization of contained views.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MAXIMIZE_SPLITTER_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MAXIMIZE_SPLITTER_H_
 

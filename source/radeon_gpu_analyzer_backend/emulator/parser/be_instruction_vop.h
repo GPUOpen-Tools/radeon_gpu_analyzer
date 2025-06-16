@@ -1,6 +1,9 @@
-//=============================================================
-// Copyright (c) 2013 Advanced Micro Devices, Inc.
-//=============================================================
+//=============================================================================
+/// Copyright (c) 2013-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for class representing Vector ALU general Instruction in shader isa.
+//=============================================================================
 
 #ifndef __VOPINSTRUCTION_H
 #define __VOPINSTRUCTION_H

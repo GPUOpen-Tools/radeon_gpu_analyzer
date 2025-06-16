@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for the configuration manager.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_CONFIG_MANAGER_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_CONFIG_MANAGER_H_
 
@@ -51,8 +57,8 @@ public:
     // Add the given source file path to the provided project.
     void AddSourceFileToProject(const std::string& source_file_path, std::shared_ptr<RgProject> program, int clone_index) const;
 
-     // Add the given code obj file path to the provided project.
-    bool AddCodeObjFileToProject(const std::string& bin_file_path, std::shared_ptr<RgProject> program, int clone_index) const;
+    // Add the given code obj file path to the provided project.
+    bool AddCodeObjFileToProject(const std::string& bin_file_path, std::shared_ptr<RgProject> program, int clone_index, QString function_name = "") const;
 
     // Add the given source file to a project's pipeline for the specified shader stage.
     void AddShaderStage(RgPipelineStage stage, const std::string& source_file_path, std::shared_ptr<RgProject> project, int clone_index) const;
@@ -87,8 +93,8 @@ public:
     // Retrieve a source file path from a program by clone index.
     void GetProjectSourceFilePaths(std::shared_ptr<RgProject> program, int clone_index, std::vector<std::string>& source_file_paths) const;
 
-    // Retrieve a code object file path from a program by clone index.
-    std::string GetProjectBinaryFilePath(std::shared_ptr<RgProject> program, int clone_index) const;
+    // Retrieve the code object file paths from a program by clone index.
+    std::vector<std::string> GetProjectBinaryFilePath(std::shared_ptr<RgProject> program, int clone_index) const;
 
     // Update the file path to a file that has already been added to a program clone.
     void UpdateSourceFilepath(const std::string& old_file_path, const std::string& new_file_path, std::shared_ptr<RgProject> program, int clone_index);

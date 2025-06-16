@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for the base class for a generic CSV file parser object.
+//=============================================================================
 // C++.
 #include <cassert>
 #include <memory>

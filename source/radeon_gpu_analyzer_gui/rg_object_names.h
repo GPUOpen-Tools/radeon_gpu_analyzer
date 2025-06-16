@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Object names for PSO editor objects (RgPipelineStateModelVulkan.cpp)
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_OBJECT_NAMES_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_OBJECT_NAMES_H_
 

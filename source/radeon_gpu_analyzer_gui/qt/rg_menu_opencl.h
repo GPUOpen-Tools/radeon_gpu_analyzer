@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RGA Build view's File Menu for OpenCL mode.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_OPENCL_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_OPENCL_H_
 

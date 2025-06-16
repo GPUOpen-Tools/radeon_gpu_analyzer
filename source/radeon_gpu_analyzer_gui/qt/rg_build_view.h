@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Build View class.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_BUILD_VIEW_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_BUILD_VIEW_H_
 
@@ -111,8 +118,11 @@ public:
     // Returns "true" if the user selected to proceed with the build, or "false" otherwise.
     virtual bool SaveCurrentState();
 
-    // Builds the current project.
-    void BuildCurrentProject();
+    // Builds the current project. 
+    // Optionally, when given a list of binaries file paths in binary analysis mode, only builds those binaries 
+    // and adds them to the existing project, rather than clearing the project and building all binaries in the project settings. 
+    // In other modes, since there are no binaries to build this is empty by default.
+    void BuildCurrentProject(std::vector<std::string> binaries_to_build = {});
 
     // Create the file menu.
     bool CreateFileMenu();
@@ -271,6 +281,9 @@ signals:
 
     // A signal emitted to programatically trigger a project build.
     void BuildProjectEvent();
+
+    // A signal emitted to programatically disassemble the given binary files into the project.
+    void DissasembleBinaryFilesEvent(std::vector<std::string> bin_file_paths = {});
 
     // Signal emitted when the user changes the selected entry point index for a given file.
     void SelectedEntrypointChanged(const std::string& target_gpu, const std::string& input_file_path, const std::string& selected_entrypoint_name);
@@ -456,6 +469,9 @@ protected:
 
     // Remove all build outputs associated with the given input file.
     void DestroyBuildOutputsForFile(const std::string& input_file_full_path);
+
+    // Function to remove the file from the metadata. Does nothing unless reimplemented by the api specific class.
+    virtual void RemoveFileFromMetadata(const std::string& full_path);
 
     // Handle API-specific RgBuildView mode switching.
     // Do nothing by default, as RgBuildView does not require mode-specific behavior.

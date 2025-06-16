@@ -66,3 +66,4 @@ dx12/agility_sdk/d3d12SDKLayers.dll filter=lfs diff=lfs merge=lfs -text
 lc/opencl/windows/lib/bitcode/opencl.bc filter=lfs diff=lfs merge=lfs -text
 lc/opencl/linux/lib/bitcode/opencl.bc filter=lfs diff=lfs merge=lfs -text
 lc/opencl/linux/bin/clang-18 filter=lfs diff=lfs merge=lfs -text
+vulkan/tools/windows/bin/glslangValidator.exe filter=lfs diff=lfs merge=lfs -text

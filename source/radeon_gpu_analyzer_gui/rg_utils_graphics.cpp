@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for the rga gui utilities for Graphics APIs.
+//=============================================================================
+
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_utils_graphics.h"
 #include "radeon_gpu_analyzer_gui/rg_utils_vulkan.h"

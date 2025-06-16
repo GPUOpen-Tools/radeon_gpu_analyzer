@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RGA Build view's File Menu for Binary Analysis mode.
+//=============================================================================
 #pragma once
 
 // C++.
@@ -44,9 +50,6 @@ public:
     // Add an item to the menu.
     bool AddItem(const std::string& full_path, bool is_new_file_item);
 
-    // Remove an item from the menu.
-    void RemoveItem(const std::string& full_filename) override;
-
     // Remove all items in the menu.
     void RemoveAllItems();
 
@@ -59,6 +62,9 @@ public:
     // Offset the currently selected row in the entry point list by advancing or regressing the current index by the given offset.
     // This function will return true only when (current index + offset) is a valid index in the entry point list.
     bool OffsetCurrentFileEntrypoint(int offset);
+
+    // Deselect the currently selected file item without hiding the entry point list.
+    void DeselectCurrentFile() override;
 
     // Toggle the visibility of the entry point list for file items.
     void SetIsShowEntrypointListEnabled(bool is_enabled);
@@ -80,7 +86,7 @@ public:
 
 signals:
     // A signal emitted when the user drags and drops a file.
-    void DragAndDropExistingFile(const std::string& filename);
+    void DragAndDropExistingFile(const std::vector<std::string>& filename);
 
     // Signal emitted when the user changes the selected entry point index for a given file.
     void SelectedEntrypointChanged(const std::string& input_file_path, const std::string& selected_entrypoint_name);

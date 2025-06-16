@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga gui syntax highlighter.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_SYNTAX_HIGHLIGHTER_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_SYNTAX_HIGHLIGHTER_H_
 

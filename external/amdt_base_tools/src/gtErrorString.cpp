@@ -1,5 +1,5 @@
 //=====================================================================
-// Copyright 2014-2016 (c), Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2014-2025 (c), Advanced Micro Devices, Inc. All rights reserved.
 //
 /// \author AMD Developer Tools Team
 /// \file gtErrorString.cpp

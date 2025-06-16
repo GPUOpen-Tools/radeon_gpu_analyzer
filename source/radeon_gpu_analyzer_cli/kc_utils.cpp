@@ -1,7 +1,9 @@
-//=================================================================
-// Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
-
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for CLI utility functions.
+//=============================================================================
 // XML.
 #include "tinyxml2.h"
 
@@ -164,6 +166,9 @@ bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_out
     static const char* kStrGeometryStageNameAbbreviation = "geom";
     static const char* kStrFragmentStageNameAbbreviation = "frag";
     static const char* kStrComputeStageNameAbbreviation = "comp";
+    static const char* kStrMeshStageNameAbbreviation = "mesh";
+    static const char* kStrTaskStageNameAbbreviation = "task";
+
 
     // Clear the existing pipeline.
     pipeline_files.ClearAll();
@@ -216,6 +221,9 @@ bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_out
             pipeline_files.geometry_shader << fixed_filename << "_" << original_filename.asASCIICharArray();
             pipeline_files.fragment_shader << fixed_filename << "_" << original_filename.asASCIICharArray();
             pipeline_files.compute_shader << fixed_filename << "_" << original_filename.asASCIICharArray();
+            pipeline_files.mesh_shader << fixed_filename << "_" << original_filename.asASCIICharArray();
+            pipeline_files.task_shader << fixed_filename << "_" << original_filename.asASCIICharArray();
+
         }
         else if (!default_suffix.empty())
         {
@@ -225,6 +233,8 @@ bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_out
             pipeline_files.geometry_shader << "_" << default_suffix.c_str();
             pipeline_files.fragment_shader << "_" << default_suffix.c_str();
             pipeline_files.compute_shader << "_" << default_suffix.c_str();
+            pipeline_files.mesh_shader << "_" << default_suffix.c_str();
+            pipeline_files.task_shader << "_" << default_suffix.c_str();
         }
 
         // Stage token.
@@ -234,6 +244,8 @@ bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_out
         pipeline_files.geometry_shader << "_" << kStrGeometryStageNameAbbreviation;
         pipeline_files.fragment_shader << "_" << kStrFragmentStageNameAbbreviation;
         pipeline_files.compute_shader << "_" << kStrComputeStageNameAbbreviation;
+        pipeline_files.mesh_shader << "_" << kStrMeshStageNameAbbreviation;
+        pipeline_files.task_shader << "_" << kStrTaskStageNameAbbreviation;
 
         pipeline_files.vertex_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
         pipeline_files.tessellation_control_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
@@ -241,6 +253,9 @@ bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_out
         pipeline_files.geometry_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
         pipeline_files.fragment_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
         pipeline_files.compute_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
+        pipeline_files.mesh_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
+        pipeline_files.task_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
+
     }
 
     return status;
@@ -1113,6 +1128,8 @@ void KcUtils::DeletePipelineFiles(const BeProgramPipeline & files)
     deleteFile(files.geometry_shader);
     deleteFile(files.fragment_shader);
     deleteFile(files.compute_shader);
+    deleteFile(files.mesh_shader);
+    deleteFile(files.task_shader);
 }
 
 const std::vector<std::string> KcUtils::GetRgaDisabledDevices()
@@ -1828,22 +1845,6 @@ std::string KcUtils::AdjustBaseFileNameLiveregSgpr(const std::string& user_input
 std::string KcUtils::AdjustBaseFileNameCfg(const std::string& user_input_filename, const std::string& device)
 {
     return AdjustBaseFileName(user_input_filename, device, KC_STR_DEFAULT_CFG_SUFFIX);
-}
-
-bool KcUtils::IsComputeBitSet(RgEntryType rga_entry_type)
-{
-    bool ret = false;
-    switch (rga_entry_type)
-    {
-    case RgEntryType::kDxCompute:
-    case RgEntryType::kGlCompute:
-        ret = true;
-        break;
-    default:
-        ret = false;
-        break;
-    }
-    return ret;
 }
 
 bool KcUtils::InvokeAmdgpudis(const std::string& cmd_line_options, bool should_print_cmd, std::string& out_txt, std::string& error_msg)

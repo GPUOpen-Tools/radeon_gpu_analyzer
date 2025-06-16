@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for rga backend progam builder opengl class.
+//=============================================================================
 
 // C++.
 #include <sstream>
@@ -480,33 +483,34 @@ bool BeProgramBuilderOpengl::GetDeviceGLName(const std::string& device_name, std
     if (gl_backend_values.empty())
     {
         // Fill in the values if that's the first time.
-        gl_backend_values["gfx803"]        = "803";
-        gl_backend_values["Ellesmere"]     = "803";
-        gl_backend_values["Baffin"]        = "803";
-        gl_backend_values["Fiji"]          = "803";
-        gl_backend_values["gfx900"]        = "900";
-        gl_backend_values["gfx902"]        = "902";
-        gl_backend_values["gfx904"]        = "904";
-        gl_backend_values["gfx906"]        = "906";
-        gl_backend_values["gfx90c"]        = "90c";
-        gl_backend_values["gfx1010"]       = "1010";
-        gl_backend_values["gfx1011"]       = "1011";
-        gl_backend_values["gfx1012"]       = "1012";
-        gl_backend_values["gfx1030"]       = "1030";
-        gl_backend_values["gfx1031"]       = "1031";
-        gl_backend_values["gfx1032"]       = "1032";
-        gl_backend_values["gfx1033"]       = "1033";
-        gl_backend_values["gfx1034"]       = "1034";
-        gl_backend_values["gfx1035"]       = "1035";
-        gl_backend_values["gfx1036"]       = "1036";
-        gl_backend_values["gfx1100"]       = "1100";
-        gl_backend_values["gfx1101"]       = "1101";
-        gl_backend_values["gfx1102"]       = "1102";
-        gl_backend_values["gfx1103"]       = "1103";
-        gl_backend_values["gfx1150"]       = "1150";
-        gl_backend_values["gfx1151"]       = "1151";
-        gl_backend_values["gfx1152"]       = "1152";
-        gl_backend_values["gfx1201"]       = "1201";
+        gl_backend_values["gfx803"]    = "803";
+        gl_backend_values["Ellesmere"] = "803";
+        gl_backend_values["Baffin"]    = "803";
+        gl_backend_values["Fiji"]      = "803";
+        gl_backend_values["gfx900"]    = "900";
+        gl_backend_values["gfx902"]    = "902";
+        gl_backend_values["gfx904"]    = "904";
+        gl_backend_values["gfx906"]    = "906";
+        gl_backend_values["gfx90c"]    = "90c";
+        gl_backend_values["gfx1010"]   = "1010";
+        gl_backend_values["gfx1011"]   = "1011";
+        gl_backend_values["gfx1012"]   = "1012";
+        gl_backend_values["gfx1030"]   = "1030";
+        gl_backend_values["gfx1031"]   = "1031";
+        gl_backend_values["gfx1032"]   = "1032";
+        gl_backend_values["gfx1033"]   = "1033";
+        gl_backend_values["gfx1034"]   = "1034";
+        gl_backend_values["gfx1035"]   = "1035";
+        gl_backend_values["gfx1036"]   = "1036";
+        gl_backend_values["gfx1100"]   = "1100";
+        gl_backend_values["gfx1101"]   = "1101";
+        gl_backend_values["gfx1102"]   = "1102";
+        gl_backend_values["gfx1103"]   = "1103";
+        gl_backend_values["gfx1150"]   = "1150";
+        gl_backend_values["gfx1151"]   = "1151";
+        gl_backend_values["gfx1152"]   = "1152";
+        gl_backend_values["gfx1200"]   = "1200";
+        gl_backend_values["gfx1201"]   = "1201";
     }
 
     // Fetch the relevant value.

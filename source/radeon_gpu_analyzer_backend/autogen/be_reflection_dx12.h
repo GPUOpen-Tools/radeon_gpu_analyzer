@@ -1,7 +1,9 @@
-//=================================================================
-// Copyright 2024 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
-
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for dx12 reflection utilities class.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_REFLECTION_DX12_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_REFLECTION_DX12_H_
 
@@ -45,7 +47,8 @@ class BeDx12Reflection
      };
 
      // Calls Dxc's CreateReflection function and populates dxc_output.
-     beKA::beStatus CreateReflection(IDxcUtils*                    dxc_utils, 
+     beKA::beStatus CreateReflection(IDxcUtils*                    dxc_utils,
+                                     const std::string&            src_path,
                                      const BeDx12ShaderBinaryBlob& src_blob,
                                      DxcReflectionOutput&          dxc_output) const;
 

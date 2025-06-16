@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for class to collect command line options.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_CONFIG_H_
 #define RGA_RADEONGPUANALYZERCLI_SRC_KC_CONFIG_H_
 
@@ -61,7 +64,6 @@ public:
     std::string              inference_model_confidence;        ///< The prediction model's level of confidence.
     std::string              inference_engine_path;             ///< Alternative path to the inference engine to be used for SPP.
     std::string              binary_output_file;                ///< Output binary file template.
-    std::string              binary_codeobj_file;               ///< Input binary file template - used primarily in binary mode.
     std::string              function;                          ///< Kernel/Function of interest in analysis.
     std::string              csv_separator;                     ///< Override for CSV list separator.
     std::string              metadata_file;                     ///< Output .metadata Text file template.
@@ -162,6 +164,8 @@ public:
     std::string              geometry_shader;                   ///< Geometry shader full path
     std::string              fragment_shader;                   ///< Fragment shader full path
     std::string              compute_shader;                    ///< Compute shader full path
+    std::string              mesh_shader;                       ///< Mesh shader full path
+    std::string              task_shader;                       ///< Task shader full path
     std::string              pipe_file;                         ///< .pipe shader full path
     std::string              pso;                               ///< Vulkan Pipeline State Object file.
     std::string              spv_bin;                           ///< Path to SPIR-V binary file.
@@ -182,7 +186,10 @@ public:
     bool                     is_spv_input;                      ///< Input files are SPIR-V binary files.
     bool                     is_spv_txt_input;                  ///< Input files are SPIR-V text files.
 
-    // Compiler paths
+    // Binary Analysis.
+    std::string              binary_text_disassembly;           ///< Path to output file for amdgpu-dis disassembly of code object binary.
+
+    // Compiler paths.
     std::string              compiler_bin_path;                 ///< Path to user-provided compiler "bin" folder.
     std::string              compiler_inc_path;                 ///< Path to user-provided compiler "include" folder.
     std::string              compiler_lib_path;                 ///< Path to user-provided compiler "lib" folder.

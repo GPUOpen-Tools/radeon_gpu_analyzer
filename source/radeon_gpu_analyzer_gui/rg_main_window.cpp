@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for RGA application's main window.
+//=============================================================================
 // C++.
 #include <cassert>
 #include <memory>
@@ -319,6 +325,10 @@ void RgMainWindow::ConnectBuildViewSignals()
 
             // Connect the project build event trigger action signal.
             is_connected = connect(build_view, &RgBuildView::BuildProjectEvent, this, &RgMainWindow::HandleBuildProjectEvent);
+            assert(is_connected);
+
+            // Connect the disassemble binary files event.
+            is_connected = connect(build_view, &RgBuildView::DissasembleBinaryFilesEvent, this, &RgMainWindow::HandleDissasembleBinaryFilesEvent);
             assert(is_connected);
 
             // Connect the update application notification message signal.
@@ -659,12 +669,26 @@ void RgMainWindow::CreateHelpmenuActions()
 
 void RgMainWindow::CreateBuildMenuActions()
 {
-    // Build current project action.
-    build_project_action_ = new QAction(tr(kStrMenuBarBuildProject), this);
-    build_project_action_->setStatusTip(tr(kStrMenuBarBuildProjectTooltip));
-    build_project_action_->setShortcut(QKeySequence(kActionHotkeyBuildProject));
-    bool is_connected = connect(build_project_action_, &QAction::triggered, this, &RgMainWindow::HandleBuildProjectEvent);
-    assert(is_connected);
+    bool is_connected;
+
+    if (!app_state_->IsAnalysis())
+    {
+        // Build current project action.
+        build_project_action_ = new QAction(tr(kStrMenuBarBuildProject), this);
+        build_project_action_->setStatusTip(tr(kStrMenuBarBuildProjectTooltip));
+        build_project_action_->setShortcut(QKeySequence(kActionHotkeyBuildProject));
+        is_connected = connect(build_project_action_, &QAction::triggered, this, &RgMainWindow::HandleBuildProjectEvent);
+        assert(is_connected);
+    }
+    else
+    {
+        // Build current project action.
+        disassemble_binaries_action_ = new QAction(tr(kStrMenuBarAnalyzeProject), this);
+        disassemble_binaries_action_->setStatusTip(tr(kStrMenuBarAnalyzeProjectTooltip));
+        disassemble_binaries_action_->setShortcut(QKeySequence(kActionHotkeyBuildProject));
+        is_connected = connect(disassemble_binaries_action_, &QAction::triggered, this, [this]() { RgMainWindow::HandleDissasembleBinaryFilesEvent({}); });
+        assert(is_connected);
+    }
 
     // Open the project's build settings.
     build_settings_action_ = new QAction(tr(kStrMenuBuildSettings), this);
@@ -693,7 +717,15 @@ void RgMainWindow::CreateBuildMenu()
     CreateBuildMenuActions();
 
     menu_bar_ = menuBar()->addMenu(tr(kStrMenuBarBuild));
-    menu_bar_->addAction(build_project_action_);
+    if (!app_state_->IsAnalysis())
+    {
+        menu_bar_->addAction(build_project_action_);
+    }
+    else
+    {
+        menu_bar_->addAction(disassemble_binaries_action_);
+    }
+
     assert(app_state_ != nullptr);
     // For graphics APIs, add the pipeline state action.
     if (app_state_ != nullptr && app_state_->IsGraphics())
@@ -738,7 +770,14 @@ void RgMainWindow::DestroyBuildView()
 void RgMainWindow::EnableBuildMenu(bool is_enabled)
 {
     // Toggle the actions associated with the build menu items.
-    build_project_action_->setEnabled(is_enabled);
+    if (!app_state_->IsAnalysis())
+    {
+        build_project_action_->setEnabled(is_enabled);
+    }
+    else
+    {
+        disassemble_binaries_action_->setEnabled(is_enabled);
+    }
 
     // Make sure that the Build and Cancel options are never both enabled.
     if (is_enabled)
@@ -936,7 +975,14 @@ void RgMainWindow::HandleProjectFileCountChanged(bool is_project_empty)
     }
 
     // Toggle the actions associated with the build menu items.
-    build_project_action_->setEnabled(!is_project_empty);
+    if (!app_state_->IsAnalysis())
+    {
+        build_project_action_->setEnabled(!is_project_empty);
+    }
+    else
+    {
+        disassemble_binaries_action_->setEnabled(!is_project_empty);
+    }
 
     // Make sure that the Build and Cancel options are never both enabled.
     if (!is_project_empty)
@@ -1427,6 +1473,27 @@ void RgMainWindow::HandleBuildProjectEvent()
     }
 }
 
+void RgMainWindow::HandleDissasembleBinaryFilesEvent(std::vector<std::string> binaries_to_build)
+{
+    assert(app_state_ != nullptr);
+    if (app_state_ != nullptr)
+    {
+        // Emit a signal to indicate view change.
+        emit HotKeyPressedSignal();
+
+        RgBuildView* build_view = app_state_->GetBuildView();
+        if (build_view != nullptr)
+        {
+            // Save all source files and settings when a new build is started.
+            if (build_view->SaveCurrentState())
+            {
+                // Now build the project.
+                build_view->BuildCurrentProject(binaries_to_build);
+            }
+        }
+    }
+}
+
 void RgMainWindow::HandleBuildSettingsEvent()
 {
     // Emit a signal to indicate view change.
@@ -1557,7 +1624,15 @@ void RgMainWindow::HandleProjectLoaded(std::shared_ptr<RgProject> project)
         if ((project->clones[0] != nullptr) && (project->IsEmpty()))
         {
             // Disable the build-related actions, except for the build settings action.
-            build_project_action_->setEnabled(false);
+            if (!app_state_->IsAnalysis())
+            {
+                build_project_action_->setEnabled(false);
+            }
+            else
+            {
+                disassemble_binaries_action_->setEnabled(false);
+            }
+
             build_settings_action_->setEnabled(true);
             assert(app_state_ != nullptr);
             if (app_state_ != nullptr && app_state_->IsGraphics() && pipeline_state_action_ != nullptr)
@@ -1674,7 +1749,7 @@ void RgMainWindow::ResetViewStateAfterBuild()
     assert(app_state_ != nullptr);
     if (app_state_ != nullptr && app_state_->IsAnalysis())
     {
-        build_project_action_->setEnabled(false);
+        disassemble_binaries_action_->setEnabled(true);
         build_settings_action_->setEnabled(false);
         cancel_build_action_->setEnabled(false);
 
@@ -1750,7 +1825,15 @@ void RgMainWindow::HandleProjectBuildStarted()
     RgUtils::SetStatusTip(strStatusBarBuildStarted.c_str(), this);
 
     // Do not allow another build while a build is already in progress.
-    build_project_action_->setEnabled(false);
+    if (!app_state_->IsAnalysis())
+    {
+        build_project_action_->setEnabled(false);
+    }
+    else
+    {
+        disassemble_binaries_action_->setEnabled(false);
+    }
+
     cancel_build_action_->setEnabled(true);
 
     assert(app_state_ != nullptr);
@@ -2076,8 +2159,8 @@ void RgMainWindow::EnableBuildViewActions()
     if (build_view != nullptr)
     {
         bool is_project_empty = build_view->GetMenu()->IsEmpty();
-        EnableBuildMenu(!is_project_empty);
-        build_settings_action_->setEnabled(true);
+        EnableBuildMenu(!is_project_empty || app_state_->IsAnalysis());
+        build_settings_action_->setEnabled(!app_state_->IsAnalysis());
         assert(app_state_ != nullptr);
         if (app_state_ != nullptr && pipeline_state_action_ != nullptr)
         {
@@ -2216,28 +2299,88 @@ bool RgMainWindow::eventFilter(QObject* object, QEvent* event)
     }
 }
 
-bool RgMainWindow::LoadBinaryCodeObject(const QString filename)
+bool RgMainWindow::LoadBinaryCodeObject()
 {
     QStringList filename_strings;
-    bool        is_file_valid = RgUtils::IsFileExists(filename.toStdString()) && RgUtils::IsSourceFileTypeValid(filename.toStdString());
-    if (is_file_valid)
-    {
-        filename_strings.push_back(filename);
+    bool        valid_files = false;
 
-        // Disable additional drops and open the desired files in the build view.
-        assert(app_state_ != nullptr);
-        if (app_state_ != nullptr)
+    // Check whether the elf files are give as arguments or if they were written to a file.
+    bool elf_list = false;
+    if (QCoreApplication::arguments().size() == 2)
+    {
+        QString argument = QCoreApplication::arguments().at(1);
+        if (argument.endsWith(".txt"))
         {
-            setAcceptDrops(false);
-            if (is_file_valid)
-            {
-                app_state_->OpenFilesInBuildView(filename_strings);
-            }
-            setAcceptDrops(true);
+            elf_list = true;
+        }
+    }
+
+    if (elf_list)
+    {
+        // Read file containling paths to all the elf files.
+        QString elf_list_file_path = QCoreApplication::arguments().at(1);
+
+        if (!RgUtils::IsFileExists(elf_list_file_path.toStdString()))
+        {
+            return valid_files;
         }
 
-        // Set the focus to main window so the user can use keyboard shortcuts.
-        setFocus();
+        QFile elf_list_file = QFile(elf_list_file_path);
+        elf_list_file.open(QIODeviceBase::OpenModeFlag::ReadOnly);
+
+        QString     all_elf_files = elf_list_file.readAll();
+        QStringList filenames     = all_elf_files.split("\n");
+
+        for (qsizetype i = 0; i < filenames.size(); i++)
+        {
+            QString filename      = filenames.at(i);
+            bool    is_file_valid = RgUtils::IsFileExists(filename.toStdString()) && RgUtils::IsSourceFileTypeValid(filename.toStdString());
+            if (is_file_valid)
+            {
+                valid_files = true;
+                filename_strings.push_back(filename);
+            }
+        }
     }
-    return is_file_valid;
+    else
+    {
+        // Parse the elf file paths passed as application arguments.
+        for (qsizetype i = 1; i < QCoreApplication::arguments().size(); i++)
+        {
+            QString filename = QCoreApplication::arguments().at(i);
+
+            QStringList file_and_function_names = filename.split("::");
+
+            QString parsed_filename = filename;
+
+            if (file_and_function_names.size() > 1)
+            {
+                parsed_filename = file_and_function_names[0];
+            }
+
+            bool is_file_valid = RgUtils::IsFileExists(parsed_filename.toStdString()) && RgUtils::IsSourceFileTypeValid(parsed_filename.toStdString());
+            if (is_file_valid)
+            {
+                valid_files = true;
+                filename_strings.push_back(parsed_filename);
+            }
+        }
+    }
+
+    // Disable additional drops and open the desired files in the build view.
+    assert(app_state_ != nullptr);
+    if (app_state_ != nullptr)
+    {
+        setAcceptDrops(false);
+        if (valid_files)
+        {
+            app_state_->OpenFilesInBuildView(filename_strings);
+        }
+        setAcceptDrops(true);
+    }
+
+    // Set the focus to main window so the user can use keyboard shortcuts.
+    setFocus();
+
+    return valid_files;
 }

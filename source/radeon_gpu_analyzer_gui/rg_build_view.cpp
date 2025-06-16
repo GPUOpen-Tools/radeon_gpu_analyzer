@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implemnetation for Build View class.
+//=============================================================================
+
 // C++.
 #include <cassert>
 #include <memory>
@@ -58,14 +65,14 @@
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "radeon_gpu_analyzer_gui/rg_xml_session_config.h"
 
-static const int kStrFileMenuViewContainerWidth = 200;
+static const int kStrFileMenuViewContainerWidth  = 200;
 static const int kFindTextWidgetHorizontalMargin = 10;
-static const int kFindTextWidgetVerticalMargin = 10;
+static const int kFindTextWidgetVerticalMargin   = 10;
 
-RgBuildView::RgBuildView(RgProjectAPI api, QWidget* parent) :
-    QWidget(parent),
-    clone_index_(0),
-    parent_(parent)
+RgBuildView::RgBuildView(RgProjectAPI api, QWidget* parent)
+    : QWidget(parent)
+    , clone_index_(0)
+    , parent_(parent)
 {
     // Setup the UI.
     ui_.setupUi(this);
@@ -190,8 +197,8 @@ void RgBuildView::ConnectFileSignals()
         assert(is_connected);
 
         // Connect the "Build Settings" button in the file menu.
-        RgMenuBuildSettingsItem* build_settings_item = menu->GetBuildSettingsItem();
-        const QPushButton* pBuildSettingsFileMenuButton = build_settings_item->GetBuildSettingsButton();
+        RgMenuBuildSettingsItem* build_settings_item          = menu->GetBuildSettingsItem();
+        const QPushButton*       pBuildSettingsFileMenuButton = build_settings_item->GetBuildSettingsButton();
         is_connected = connect(pBuildSettingsFileMenuButton, &QPushButton::clicked, this, &RgBuildView::HandleBuildSettingsMenuButtonClicked);
         assert(is_connected);
 
@@ -235,11 +242,13 @@ void RgBuildView::HandleSetDisassemblyViewFocus()
 void RgBuildView::ConnectBuildSettingsSignals()
 {
     // "Save" button.
-    bool is_connected = connect(settings_buttons_view_, &RgSettingsButtonsView::SaveSettingsButtonClickedSignal, this, &RgBuildView::HandleSaveSettingsButtonClicked);
+    bool is_connected =
+        connect(settings_buttons_view_, &RgSettingsButtonsView::SaveSettingsButtonClickedSignal, this, &RgBuildView::HandleSaveSettingsButtonClicked);
     assert(is_connected);
 
     // "Restore defaults" button.
-    is_connected = connect(settings_buttons_view_, &RgSettingsButtonsView::RestoreDefaultSettingsButtonClickedSignal, this, &RgBuildView::HandleRestoreDefaultsSettingsClicked);
+    is_connected = connect(
+        settings_buttons_view_, &RgSettingsButtonsView::RestoreDefaultSettingsButtonClickedSignal, this, &RgBuildView::HandleRestoreDefaultsSettingsClicked);
     assert(is_connected);
 
     // Connect the save settings view clicked signal.
@@ -314,18 +323,16 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
         }
 
         // Connect the RgIsaDisassemblyView's table resized handler.
-        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::DisassemblyTableWidthResizeRequested,
-            this, &RgBuildView::HandleDisassemblyTableWidthResizeRequested);
+        is_connected = connect(
+            disassembly_view_, &RgIsaDisassemblyView::DisassemblyTableWidthResizeRequested, this, &RgBuildView::HandleDisassemblyTableWidthResizeRequested);
         assert(is_connected);
 
         // Connect the RgIsaDisassemblyView's Target GPU changed handler.
-        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::SelectedTargetGpuChanged,
-            this, &RgBuildView::HandleSelectedTargetGpuChanged);
+        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::SelectedTargetGpuChanged, this, &RgBuildView::HandleSelectedTargetGpuChanged);
         assert(is_connected);
 
         // Connect the RgIsaDisassemblyView's clicked handler.
-        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::DisassemblyViewClicked,
-            this, &RgBuildView::HandleDisassemblyViewClicked);
+        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::DisassemblyViewClicked, this, &RgBuildView::HandleDisassemblyViewClicked);
         assert(is_connected);
 
         // Connect the RgIsaDisassemblyViewTitlebar's double click handler.
@@ -336,15 +343,14 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
         assert(is_connected);
 
         // Connect the handler invoked when cli output window should be highlighted.
-        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::FocusCliOutputWindow,
-            this, &RgBuildView::HandleSetOutputWindowFocus);
+        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::FocusCliOutputWindow, this, &RgBuildView::HandleSetOutputWindowFocus);
         assert(is_connected);
 
         // Connect the splitter's frame in focus signal.
         if (disassembly_view_splitter_ != nullptr)
         {
-            is_connected = connect(disassembly_view_splitter_, &RgMaximizeSplitter::FrameInFocusSignal,
-                disassembly_view_, &RgIsaDisassemblyView::HandleDisassemblyViewClicked);
+            is_connected = connect(
+                disassembly_view_splitter_, &RgMaximizeSplitter::FrameInFocusSignal, disassembly_view_, &RgIsaDisassemblyView::HandleDisassemblyViewClicked);
             assert(is_connected);
         }
 
@@ -353,18 +359,18 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
         if (current_code_editor_ != nullptr)
         {
             // Connect the source editor's focus in handler.
-            is_connected = connect(current_code_editor_, &RgSourceCodeEditor::SourceCodeEditorFocusInEvent,
-                disassembly_view_, &RgIsaDisassemblyView::HandleFocusOutEvent);
+            is_connected =
+                connect(current_code_editor_, &RgSourceCodeEditor::SourceCodeEditorFocusInEvent, disassembly_view_, &RgIsaDisassemblyView::HandleFocusOutEvent);
             assert(is_connected);
 
             // Connect the source editor's scrollbar disabling signal.
-            is_connected = connect(current_code_editor_, &RgSourceCodeEditor::DisableScrollbarSignals,
-                disassembly_view_, &RgIsaDisassemblyView::DisableScrollbarSignals);
+            is_connected =
+                connect(current_code_editor_, &RgSourceCodeEditor::DisableScrollbarSignals, disassembly_view_, &RgIsaDisassemblyView::DisableScrollbarSignals);
             assert(is_connected);
 
             // Connect the source editor's scrollbar enabling signal.
-            is_connected = connect(current_code_editor_, &RgSourceCodeEditor::EnableScrollbarSignals,
-                disassembly_view_, &RgIsaDisassemblyView::EnableScrollbarSignals);
+            is_connected =
+                connect(current_code_editor_, &RgSourceCodeEditor::EnableScrollbarSignals, disassembly_view_, &RgIsaDisassemblyView::EnableScrollbarSignals);
             assert(is_connected);
         }
 
@@ -393,8 +399,10 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
         }
 
         // Connect the focus column push button signal to the disassembly view's handlers.
-        is_connected = connect(
-            cli_output_window_, &RgCliOutputView::FocusRawTextDisassemblyPushButton, disassembly_view_, &RgIsaDisassemblyView::HandleFocusRawTextDisassemblyPushButton);
+        is_connected = connect(cli_output_window_,
+                               &RgCliOutputView::FocusRawTextDisassemblyPushButton,
+                               disassembly_view_,
+                               &RgIsaDisassemblyView::HandleFocusRawTextDisassemblyPushButton);
         assert(is_connected);
 
         // Connect the focus source window signal to the disassembly view's handlers.
@@ -421,18 +429,15 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
     if (disassembly_view_splitter_ != nullptr)
     {
         // Connect the handler invoked when the disassembly container has been maximized.
-        is_connected = connect(disassembly_view_splitter_, &RgMaximizeSplitter::ViewMaximized,
-            this, &RgBuildView::HandleDisassemblyViewSizeMaximize);
+        is_connected = connect(disassembly_view_splitter_, &RgMaximizeSplitter::ViewMaximized, this, &RgBuildView::HandleDisassemblyViewSizeMaximize);
         assert(is_connected);
 
         // Connect the handler invoked when the disassembly container has been restored to normal size.
-        is_connected = connect(disassembly_view_splitter_, &RgMaximizeSplitter::ViewRestored,
-            this, &RgBuildView::HandleDisassemblyViewSizeRestore);
+        is_connected = connect(disassembly_view_splitter_, &RgMaximizeSplitter::ViewRestored, this, &RgBuildView::HandleDisassemblyViewSizeRestore);
         assert(is_connected);
 
         // Connect the handler invoked when the disassembly splitter is resized.
-        is_connected = connect(disassembly_view_splitter_, &RgMaximizeSplitter::splitterMoved,
-            this, &RgBuildView::HandleSplitterMoved);
+        is_connected = connect(disassembly_view_splitter_, &RgMaximizeSplitter::splitterMoved, this, &RgBuildView::HandleSplitterMoved);
         assert(is_connected);
     }
 
@@ -494,8 +499,8 @@ void RgBuildView::ConnectSourcecodeEditorSignals(RgSourceCodeEditor* editor)
     assert(is_connected);
 
     // Connect the editor titlebar's "Dismiss Message" handler.
-    is_connected = connect(source_editor_titlebar_, &RgSourceEditorTitlebar::DismissMsgButtonClicked,
-        this, &RgBuildView::HandleCodeEditorTitlebarDismissMsgPressed);
+    is_connected =
+        connect(source_editor_titlebar_, &RgSourceEditorTitlebar::DismissMsgButtonClicked, this, &RgBuildView::HandleCodeEditorTitlebarDismissMsgPressed);
     assert(is_connected);
 }
 
@@ -545,8 +550,8 @@ void RgBuildView::CreateProjectClone()
     if (project_ != nullptr)
     {
         // Create Clone 0, and add it into the new project.
-        std::string clone_name = RgUtils::GenerateCloneName(clone_index_);
-        std::shared_ptr<RgProjectClone> clone_0 = factory_->CreateProjectClone(clone_name);
+        std::string                     clone_name = RgUtils::GenerateCloneName(clone_index_);
+        std::shared_ptr<RgProjectClone> clone_0    = factory_->CreateProjectClone(clone_name);
         assert(clone_0 != nullptr);
         if (clone_0 != nullptr)
         {
@@ -573,13 +578,16 @@ void RgBuildView::CreateProjectClone()
     }
 }
 
-void RgBuildView::BuildCurrentProject()
+void RgBuildView::BuildCurrentProject(std::vector<std::string> binaries_to_build)
 {
-    // Destroy outputs from previous builds.
-    DestroyProjectBuildArtifacts();
+    if (binaries_to_build.size() == 0)
+    {
+        // Destroy outputs from previous builds.
+        DestroyProjectBuildArtifacts();
 
-    // Clear the output window.
-    cli_output_window_->ClearText();
+        // Clear the output window.
+        cli_output_window_->ClearText();
+    }
 
     // Set the "is currently building" flag.
     HandleIsBuildInProgressChanged(true);
@@ -588,8 +596,7 @@ void RgBuildView::BuildCurrentProject()
     emit ProjectBuildStarted();
 
     // The function that will be invoked by the build thread.
-    auto background_task = [&]
-    {
+    auto background_task = [&, binaries_to_build] {
         // Build an output path where all of the build artifacts will be dumped to.
         std::string output_path = CreateProjectBuildOutputPath();
 
@@ -636,48 +643,59 @@ void RgBuildView::BuildCurrentProject()
             cancel_bulid_signal_ = false;
 
             // Verify that the clone index is valid.
-            int num_clones = static_cast<int>(project_->clones.size());
+            int  num_clones           = static_cast<int>(project_->clones.size());
             bool is_clone_index_valid = (clone_index_ >= 0 && clone_index_ < num_clones);
             assert(is_clone_index_valid);
             if (is_clone_index_valid)
             {
                 // Attempt to build the clone.
-                bool is_project_built = false;
+                bool                     is_project_built = false;
                 std::vector<std::string> gpus_with_build_outputs;
-                RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
+                RgProjectAPI             current_api = RgConfigManager::Instance().GetCurrentAPI();
 
                 // Get the binary output file name and create a project.
                 assert(project_->clones[clone_index_]->build_settings != nullptr);
                 if (current_api == RgProjectAPI::kOpenCL)
                 {
                     std::shared_ptr<RgBuildSettings> project_settings = project_->clones[clone_index_]->build_settings;
-                    std::string binary_name = kStrBuildSettingsOutputBinaryFileName;
-                    is_project_built = RgCliLauncher::BuildProjectCloneOpencl(project_, clone_index_, output_path, binary_name, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
+                    std::string                      binary_name      = kStrBuildSettingsOutputBinaryFileName;
+                    is_project_built                                  = RgCliLauncher::BuildProjectCloneOpencl(
+                        project_, clone_index_, output_path, binary_name, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
                 }
                 else if (current_api == RgProjectAPI::kVulkan)
                 {
                     std::shared_ptr<RgBuildSettings> project_settings = project_->clones[clone_index_]->build_settings;
-                    std::string binary_name = kStrBuildSettingsOutputBinaryFileName;
+                    std::string                      binary_name      = kStrBuildSettingsOutputBinaryFileName;
                     assert(project_settings != nullptr);
-                    if (project_settings != nullptr)
+                    if (project_settings != nullptr && project_settings->binary_file_names.size() > 0)
                     {
-                        binary_name = project_settings->binary_file_name;
+                        binary_name = project_settings->binary_file_names.at(0);
                     }
-                    is_project_built = RgCliLauncher::BuildProjectCloneVulkan(project_, clone_index_, output_path, binary_name, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
+                    is_project_built = RgCliLauncher::BuildProjectCloneVulkan(
+                        project_, clone_index_, output_path, binary_name, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
                 }
                 else if (current_api == RgProjectAPI::kBinary)
                 {
                     std::shared_ptr<RgBuildSettings> project_settings = project_->clones[clone_index_]->build_settings;
+
                     assert(project_settings != nullptr);
                     if (project_settings != nullptr)
                     {
-                        is_project_built = RgCliLauncher::BuildProjectCloneBinary(project_,
-                                                                                  clone_index_,
-                                                                                  output_path,
-                                                                                  project_settings->binary_file_name,
-                                                                                  append_build_output,
-                                                                                  gpus_with_build_outputs,
-                                                                                  cancel_bulid_signal_);
+                        if (binaries_to_build.size() == 0)
+                        {
+                            is_project_built = RgCliLauncher::BuildProjectCloneBinary(project_,
+                                                                                      clone_index_,
+                                                                                      output_path,
+                                                                                      project_settings->binary_file_names,
+                                                                                      append_build_output,
+                                                                                      gpus_with_build_outputs,
+                                                                                      cancel_bulid_signal_);
+                        }
+                        else
+                        {
+                            is_project_built = RgCliLauncher::BuildProjectCloneBinary(
+                                project_, clone_index_, output_path, binaries_to_build, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
+                        }
                     }
                 }
 
@@ -768,11 +786,11 @@ bool RgBuildView::CreateFileMenu()
 
 bool RgBuildView::CreateNewEmptyProject()
 {
-    bool ret = false;
+    bool        ret = false;
     std::string project_name;
 
     // Get the global configuration.
-    RgConfigManager& config_manager = RgConfigManager::Instance();
+    RgConfigManager&                  config_manager  = RgConfigManager::Instance();
     std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
 
     if (global_settings->use_default_project_name == true)
@@ -796,7 +814,7 @@ bool RgBuildView::CreateNewEmptyProject()
         bool is_valid_project_path = false;
         do
         {
-             auto rename_project_dialog = std::unique_ptr<RgRenameProjectDialog>(factory_->CreateRenameProjectDialog(project_name, parent_));
+            auto rename_project_dialog = std::unique_ptr<RgRenameProjectDialog>(factory_->CreateRenameProjectDialog(project_name, parent_));
 
             // Prompt the user for the project name.
             int rc = rename_project_dialog->exec();
@@ -844,7 +862,7 @@ bool RgBuildView::InitializeView()
     empty_panel_ = new QWidget(this);
 
     // Create container for source view widgets.
-    source_view_stack_ = new QWidget();
+    source_view_stack_  = new QWidget();
     QVBoxLayout* layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
     source_view_stack_->setLayout(layout);
@@ -950,8 +968,8 @@ bool RgBuildView::InitializeView()
     status = InitializeModeSpecificViews();
 
     // Apply the stylesheets for the build settings.
-    RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
-    std::shared_ptr<RgFactory> factory = RgFactory::CreateFactory(current_api);
+    RgProjectAPI               current_api = RgConfigManager::Instance().GetCurrentAPI();
+    std::shared_ptr<RgFactory> factory     = RgFactory::CreateFactory(current_api);
     assert(factory != nullptr);
     if (factory != nullptr)
     {
@@ -998,8 +1016,8 @@ bool RgBuildView::LoadBuildOutput(const std::string& project_folder, const std::
     if (version_info != nullptr)
     {
         // Determine which GPU architectures and families are supported in the current mode.
-        const std::string& current_mode = RgConfigManager::Instance().GetCurrentModeString();
-        auto mode_architectures_iter = version_info->gpu_architectures.find(current_mode);
+        const std::string& current_mode            = RgConfigManager::Instance().GetCurrentModeString();
+        auto               mode_architectures_iter = version_info->gpu_architectures.find(current_mode);
 
         if (mode_architectures_iter != version_info->gpu_architectures.end())
         {
@@ -1030,12 +1048,12 @@ bool RgBuildView::LoadBuildOutput(const std::string& project_folder, const std::
     {
         // Append the clone folder to the build output path.
         std::string cloneNameString = RgUtils::GenerateCloneName(clone_index_);
-        is_ok = RgUtils::AppendFolderToPath(output_folder_path, cloneNameString, output_folder_path);
+        is_ok                       = RgUtils::AppendFolderToPath(output_folder_path, cloneNameString, output_folder_path);
         assert(is_ok);
         if (is_ok)
         {
             const std::vector<std::string>* gpus_to_load = nullptr;
-            if (target_gpus != nullptr)
+            if (target_gpus != nullptr && target_gpus->size() != 0)
             {
                 // If a list of GPUs was provided, attempt to load output for each.
                 gpus_to_load = target_gpus;
@@ -1072,12 +1090,54 @@ bool RgBuildView::LoadBuildOutput(const std::string& project_folder, const std::
                             emit UpdateFileColoring();
 
                             std::shared_ptr<RgCliBuildOutput> gpu_output = nullptr;
-                            is_loaded_for_gpu = LoadSessionMetadata(full_metadata_file_path, gpu_output);
+                            is_loaded_for_gpu                            = LoadSessionMetadata(full_metadata_file_path, gpu_output);
 
                             if (is_loaded_for_gpu && gpu_output != nullptr)
                             {
                                 // Add the outputs to the map to store per-GPU results.
                                 build_outputs_[current_gpu] = gpu_output;
+                                is_loaded                   = true;
+                            }
+                        }
+                    }
+                }
+
+                // For binary mode the gpu name is not inlcuded in the metadata file.
+                if (!is_loaded)
+                {
+                    std::stringstream metadataFilenameStream;
+                    metadataFilenameStream << kStrSessionMetadataFilename;
+                    bool is_loaded_for_gpu = false;
+
+                    std::string full_metadata_file_path;
+                    is_ok = RgUtils::AppendFileNameToPath(output_folder_path, metadataFilenameStream.str(), full_metadata_file_path);
+                    assert(is_ok);
+                    if (is_ok)
+                    {
+                        // Does the session metadata file exist?
+                        bool is_metadata_exists = RgUtils::IsFileExists(full_metadata_file_path);
+                        if (is_metadata_exists)
+                        {
+                            // Emit a signal so the file coloring in the file menu is updated.
+                            emit UpdateFileColoring();
+
+                            std::shared_ptr<RgCliBuildOutput> gpu_output = nullptr;
+                            is_loaded_for_gpu                            = LoadSessionMetadata(full_metadata_file_path, gpu_output);
+
+                            if (is_loaded_for_gpu && gpu_output != nullptr)
+                            {
+                                // Add the outputs to the map.
+                                if (build_outputs_.size() == 0)
+                                {
+                                    build_outputs_[gpus_to_load->front()] = gpu_output;
+                                }
+                                else
+                                {
+                                    // For binary, all the output needs to be stored at the same index regardless of gpu since we want to show all binaries at the same time.
+                                    // So if there is already an entry in the map, put the whole gpu_output into the existing entry.
+                                    build_outputs_.begin()->second = gpu_output;
+                                }
+
                                 is_loaded = true;
                             }
                         }
@@ -1144,19 +1204,20 @@ void RgBuildView::SaveCurrentFile(EditMode)
             if (current_file_name.empty())
             {
                 std::string filter = std::string(kStrFileDialogFilterOpencl) + ";;" + kStrFileDialogFilterAll;
-                current_file_name = QFileDialog::getSaveFileName(this, kStrFileDialogSaveNewFile,
-                    RgConfigManager::Instance().GetLastSelectedFolder().c_str(), filter.c_str()).toStdString();
+                current_file_name =
+                    QFileDialog::getSaveFileName(this, kStrFileDialogSaveNewFile, RgConfigManager::Instance().GetLastSelectedFolder().c_str(), filter.c_str())
+                        .toStdString();
 
                 // Extract directory from full path.
                 std::string file_directory;
-                bool is_ok = RgUtils::ExtractFileDirectory(current_file_name, file_directory);
+                bool        is_ok = RgUtils::ExtractFileDirectory(current_file_name, file_directory);
                 assert(is_ok);
 
                 if (is_ok)
                 {
                     // Update last selected directory in global config.
                     std::shared_ptr<RgGlobalSettings> global_config = RgConfigManager::Instance().GetGlobalConfig();
-                    global_config->last_selected_directory = file_directory;
+                    global_config->last_selected_directory          = file_directory;
                 }
             }
 
@@ -1192,7 +1253,7 @@ RgUnsavedItemsDialog::UnsavedFileDialogResult RgBuildView::RequestSaveFile(const
 
 bool RgBuildView::ShowSaveDialog(RgFilesToSave files_to_save /* = rgFilesToSave::All */, bool should_save_source_files /* = false */)
 {
-    bool ret = false;
+    bool        ret = false;
     QStringList unsaved_files;
 
     // This flag would be set to true if the user chose to cancel the operation.
@@ -1442,8 +1503,8 @@ void RgBuildView::SetSourceCodeText(const std::string& file_full_path)
             if (is_ok)
             {
                 // Save the current line number and vertical scroll position.
-                int current_line_number = current_code_editor_->GetSelectedLineNumber();
-                const int v_scroll_position = current_code_editor_->verticalScrollBar()->value();
+                int       current_line_number = current_code_editor_->GetSelectedLineNumber();
+                const int v_scroll_position   = current_code_editor_->verticalScrollBar()->value();
 
                 // Set the text.
                 current_code_editor_->setText(src_code);
@@ -1539,11 +1600,9 @@ void RgBuildView::HandleSourceEditorOpenHeaderRequest(const QString& path)
     assert(clone_index_ < project_->clones.size());
     assert(project_->clones[clone_index_] != nullptr);
     assert(project_->clones[clone_index_]->build_settings != nullptr);
-    if (project_ != nullptr && clone_index_ < project_->clones.size() &&
-        project_->clones[clone_index_] != nullptr)
+    if (project_ != nullptr && clone_index_ < project_->clones.size() && project_->clones[clone_index_] != nullptr)
     {
-        const std::vector<std::string>& include_paths =
-            project_->clones[clone_index_]->build_settings->additional_include_directories;
+        const std::vector<std::string>& include_paths = project_->clones[clone_index_]->build_settings->additional_include_directories;
 
         // The path to the file that we would like to open.
         std::string path_to_open;
@@ -1558,8 +1617,8 @@ void RgBuildView::HandleSourceEditorOpenHeaderRequest(const QString& path)
             {
                 // Get the directory of the currently edited file.
                 std::string file_directory;
-                std::string file_path = GetFilepathForEditor(current_code_editor_);
-                bool is_dir_extracted = RgUtils::ExtractFileDirectory(file_path, file_directory);
+                std::string file_path        = GetFilepathForEditor(current_code_editor_);
+                bool        is_dir_extracted = RgUtils::ExtractFileDirectory(file_path, file_directory);
                 if (is_dir_extracted)
                 {
                     // Search for the user's file in the directory
@@ -1570,7 +1629,7 @@ void RgBuildView::HandleSourceEditorOpenHeaderRequest(const QString& path)
                     {
                         // We found it.
                         path_to_open = full_path.str();
-                        is_exist = true;
+                        is_exist     = true;
                     }
                 }
             }
@@ -1586,7 +1645,7 @@ void RgBuildView::HandleSourceEditorOpenHeaderRequest(const QString& path)
                     if (RgUtils::IsFileExists(full_path.str()))
                     {
                         path_to_open = full_path.str();
-                        is_exist = true;
+                        is_exist     = true;
                         break;
                     }
                 }
@@ -1605,8 +1664,7 @@ void RgBuildView::HandleSourceEditorOpenHeaderRequest(const QString& path)
             {
                 // Notify the user that the viewer app could not be launched.
                 std::stringstream err_msg;
-                err_msg << kStrErrCouldNotOpenHeaderFileViewer <<
-                    RgConfigManager::Instance().GetIncludeFileViewer();
+                err_msg << kStrErrCouldNotOpenHeaderFileViewer << RgConfigManager::Instance().GetIncludeFileViewer();
                 emit SetStatusBarText(err_msg.str());
             }
         }
@@ -1745,7 +1803,7 @@ void RgBuildView::HandleSelectedTargetGpuChanged(const std::string& target_gpu)
         current_target_gpu_ = target_gpu;
 
         InputFileToBuildOutputsMap outputs_map;
-        bool got_outputs = GetInputFileOutputs(target_gpu_build_outputs->second, outputs_map);
+        bool                       got_outputs = GetInputFileOutputs(target_gpu_build_outputs->second, outputs_map);
 
         assert(got_outputs);
         if (got_outputs)
@@ -1754,6 +1812,8 @@ void RgBuildView::HandleSelectedTargetGpuChanged(const std::string& target_gpu)
             if (current_code_editor_ != nullptr)
             {
                 std::string current_file_path = GetFilepathForEditor(current_code_editor_);
+
+                disassembly_view_->SetTargetGpuLabel(current_file_path, project_->clones[clone_index_]->build_settings);
 
                 // Does the currently-selected source file have build output for the new Target GPU?
                 auto source_file_outputs_iter = outputs_map.find(current_file_path);
@@ -1817,7 +1877,7 @@ void RgBuildView::HandleProjectRenamed(const std::string& project_name)
     RgUtils::ExtractFileDirectory(project_->project_file_full_path, directory);
 
     // Create full path by appending new name to directory.
-    char separator = static_cast<char>(QDir::separator().unicode());
+    char        separator = static_cast<char>(QDir::separator().unicode());
     std::string full_path = directory + separator + project_name + kStrProjectFileExtension;
 
     // Rename the project.
@@ -1867,6 +1927,8 @@ void RgBuildView::HandleMenuItemCloseButtonClicked(const std::string& full_path)
     {
         // Remove the input file from the RgBuildView.
         RemoveInputFile(full_path);
+
+        RemoveFileFromMetadata(full_path);
     }
 }
 
@@ -2082,21 +2144,21 @@ void RgBuildView::HandleDisassemblyTableWidthResizeRequested(int minimum_width)
     assert(disassembly_view_splitter_ != nullptr);
 
     // Before resizing the disassembly table, make sure that it is not in maximized state.
-    if (disassembly_view_ != nullptr && disassembly_view_container_ != nullptr
-        && disassembly_view_splitter_ != nullptr && !disassembly_view_container_->IsInMaximizedState())
+    if (disassembly_view_ != nullptr && disassembly_view_container_ != nullptr && disassembly_view_splitter_ != nullptr &&
+        !disassembly_view_container_->IsInMaximizedState())
     {
         // Add a small portion of extra buffer space to the right side of the table.
         static const float RESIZE_EXTRA_MARGIN = 1.5f;
-        minimum_width = static_cast<int>(minimum_width * RESIZE_EXTRA_MARGIN);
+        minimum_width                          = static_cast<int>(minimum_width * RESIZE_EXTRA_MARGIN);
 
         QRect resource_usage_text_bounds;
         disassembly_view_->GetResourceUsageTextBounds(resource_usage_text_bounds);
 
         // Set maximum width for the widgets containing the ISA disassembly table.
         const int resource_usage_string_width = resource_usage_text_bounds.width();
-        const int maximum_width = resource_usage_string_width > minimum_width ? resource_usage_string_width : minimum_width;
+        const int maximum_width               = resource_usage_string_width > minimum_width ? resource_usage_string_width : minimum_width;
 
-        int splitter_width = disassembly_view_splitter_->size().width();
+        int        splitter_width = disassembly_view_splitter_->size().width();
         QList<int> splitter_widths;
         splitter_widths.push_back(splitter_width - maximum_width);
         splitter_widths.push_back(maximum_width);
@@ -2132,7 +2194,7 @@ void RgBuildView::DestroyBuildOutputsForFile(const std::string& input_file_full_
 
     // Iterate through build output for all target GPUs.
     auto first_target_gpu = build_outputs_.begin();
-    auto last_target_gpu = build_outputs_.end();
+    auto last_target_gpu  = build_outputs_.end();
     for (auto target_gpu_iter = first_target_gpu; target_gpu_iter != last_target_gpu; ++target_gpu_iter)
     {
         std::shared_ptr<RgCliBuildOutput> build_output = target_gpu_iter->second;
@@ -2327,6 +2389,12 @@ void RgBuildView::DestroyProjectBuildArtifacts()
     }
 }
 
+void RgBuildView::RemoveFileFromMetadata(const std::string& full_path)
+{
+    Q_UNUSED(full_path);
+    return;
+}
+
 std::string RgBuildView::GetFilepathForEditor(const RgSourceCodeEditor* editor)
 {
     // Return an empty string by default.
@@ -2367,12 +2435,12 @@ bool RgBuildView::IsLineCorrelationEnabled(RgSourceCodeEditor* source_editor)
         if (is_valid_clone_index)
         {
             auto first_file = project_->clones[clone_index_]->source_files.begin();
-            auto last_file = project_->clones[clone_index_]->source_files.end();
+            auto last_file  = project_->clones[clone_index_]->source_files.end();
 
             // Search the list of source file info for the one that matches the given editor.
-            std::string file_path = GetFilepathForEditor(source_editor);
+            std::string              file_path = GetFilepathForEditor(source_editor);
             RgSourceFilePathSearcher path_searcher(file_path);
-            auto file_iter = std::find_if(first_file, last_file, path_searcher);
+            auto                     file_iter = std::find_if(first_file, last_file, path_searcher);
             assert(file_iter != last_file);
             if (file_iter != last_file)
             {
@@ -2391,7 +2459,7 @@ std::string RgBuildView::CreateProjectBuildOutputPath() const
 
     // Build an output path where all of the build artifacts will be dumped to.
     std::string project_directory;
-    bool is_ok = RgUtils::ExtractFileDirectory(project_->project_file_full_path, project_directory);
+    bool        is_ok = RgUtils::ExtractFileDirectory(project_->project_file_full_path, project_directory);
     assert(is_ok);
     if (is_ok)
     {
@@ -2506,7 +2574,7 @@ void RgBuildView::UpdateSourceEditorTitlebar(RgSourceCodeEditor* code_editor)
     {
         // If the source file has already been disassembled, check if line correlation is currently enabled.
         bool is_correlation_enabled = false;
-        bool is_disassembled = IsGcnDisassemblyGenerated(source_file_path);
+        bool is_disassembled        = IsGcnDisassemblyGenerated(source_file_path);
         if (is_disassembled)
         {
             is_correlation_enabled = IsLineCorrelationEnabled(code_editor);
@@ -2688,7 +2756,7 @@ void RgBuildView::CreateBuildSettingsView()
                 if (factory_ != nullptr)
                 {
                     // Create the build settings interface.
-                    build_settings_view_ = factory_->CreateBuildSettingsView(this, clone->build_settings, false);
+                    build_settings_view_                      = factory_->CreateBuildSettingsView(this, clone->build_settings, false);
                     [[maybe_unused]] RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
                     assert(build_settings_view_ != nullptr || (current_api == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
 
@@ -2760,8 +2828,8 @@ void RgBuildView::CreateFindWidget()
 void RgBuildView::CreateIsaDisassemblyView()
 {
     // Create a factory matching the API mode.
-    RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
-    std::shared_ptr<RgFactory> factory = RgFactory::CreateFactory(current_api);
+    RgProjectAPI               current_api = RgConfigManager::Instance().GetCurrentAPI();
+    std::shared_ptr<RgFactory> factory     = RgFactory::CreateFactory(current_api);
     assert(factory != nullptr);
     if (factory != nullptr)
     {
@@ -2805,7 +2873,7 @@ bool RgBuildView::GetInputFileOutputs(std::shared_ptr<RgCliBuildOutput> build_ou
     if (build_outputs != nullptr)
     {
         outputs = build_outputs->per_file_output;
-        ret = true;
+        ret     = true;
     }
 
     return ret;
@@ -2825,7 +2893,7 @@ RgSourceCodeEditor* RgBuildView::GetEditorForFilepath(const std::string& full_fi
         }
         else
         {
-            editor = new RgSourceCodeEditor(this, lang);
+            editor                               = new RgSourceCodeEditor(this, lang);
             source_code_editors_[full_file_path] = editor;
 
             // Connect to the specific editor's signals.
@@ -2839,7 +2907,7 @@ RgSourceCodeEditor* RgBuildView::GetEditorForFilepath(const std::string& full_fi
             ConnectSourcecodeEditorSignals(editor);
 
             // Set the fonts for the source code editor.
-            RgConfigManager& config_manager = RgConfigManager::Instance();
+            RgConfigManager&                  config_manager  = RgConfigManager::Instance();
             std::shared_ptr<RgGlobalSettings> global_settings = config_manager.GetGlobalConfig();
             assert(global_settings != nullptr);
             if (global_settings != nullptr)
@@ -2931,7 +2999,7 @@ void RgBuildView::RenameProject(const std::string& full_path)
             // Set project name.
             std::string filename;
             RgUtils::ExtractFileName(full_path, filename, false);
-            project_->project_name = filename;
+            project_->project_name          = filename;
             RgConfigManager& config_manager = RgConfigManager::Instance();
 
             // Update the recent project list to reference the new path.
@@ -3051,11 +3119,11 @@ void RgBuildView::UpdateSourceFileCorrelationState(const std::string& file_path,
         if (is_valid_clone_index)
         {
             auto first_file = project_->clones[clone_index_]->source_files.begin();
-            auto last_file = project_->clones[clone_index_]->source_files.end();
+            auto last_file  = project_->clones[clone_index_]->source_files.end();
 
             // Search for the given source file in the project's list of source files.
             RgSourceFilePathSearcher path_searcher(file_path);
-            auto file_iter = std::find_if(first_file, last_file, path_searcher);
+            auto                     file_iter = std::find_if(first_file, last_file, path_searcher);
             if (file_iter != last_file)
             {
                 // Update the correlation state for the file.
@@ -3091,7 +3159,7 @@ void RgBuildView::CheckExternalFileModification()
 
         // Get file info for the editor file.
         std::string filename = GetFilepathForEditor(current_code_editor_);
-        QFileInfo file_info(filename.c_str());
+        QFileInfo   file_info(filename.c_str());
 
         // If the modification time is not the same as remembered, the file has been changed externally.
         if (file_info.lastModified() != expected_last_modified)
@@ -3111,7 +3179,7 @@ void RgBuildView::CheckExternalFileModification()
 void RgBuildView::HandleExternalFileModification(const QFileInfo& file_info)
 {
     std::string modified_filename = file_info.filePath().toStdString();
-    bool is_file_exists = RgUtils::IsFileExists(modified_filename);
+    bool        is_file_exists    = RgUtils::IsFileExists(modified_filename);
     if (is_file_exists)
     {
         // Notify other components in the system that this file has been modified outside the app.
@@ -3164,7 +3232,7 @@ void RgBuildView::HandleExternalFileModification(const QFileInfo& file_info)
         }
     }
 
-    // Once the user has responded to a file modification dialog, 
+    // Once the user has responded to a file modification dialog,
     // reset the pending modification status for this file.
     pending_file_modifications_.erase(modified_filename);
 }
@@ -3182,7 +3250,7 @@ void RgBuildView::SetConfigSplitterPositions()
     if (disassembly_view_splitter_)
     {
         // Disassembly/source view splitter.
-        config_manager.SetSplitterValues(kStrSplitterNameSourceDisassembly, disassembly_view_splitter_->ToStdVector()); 
+        config_manager.SetSplitterValues(kStrSplitterNameSourceDisassembly, disassembly_view_splitter_->ToStdVector());
     }
 }
 
@@ -3217,8 +3285,8 @@ void RgBuildView::GetUnsavedSourceFiles(QStringList& unsaved_source_files)
     auto editor_iter = source_code_editors_.begin();
     while (editor_iter != source_code_editors_.end())
     {
-        RgSourceCodeEditor* editor = editor_iter->second;
-        std::string full_path = editor_iter->first;
+        RgSourceCodeEditor* editor    = editor_iter->second;
+        std::string         full_path = editor_iter->first;
 
         bool is_editor_valid = (editor != nullptr);
         assert(is_editor_valid);
@@ -3295,7 +3363,8 @@ void RgBuildView::HandleRestoreDefaultsSettingsClicked()
     SetAPISpecificBorderColor();
 
     // Ask the user for confirmation.
-    bool is_confirmation = RgUtils::ShowConfirmationMessageBox(kStrBuildSettingsDefaultSettingsConfirmationTitle, kStrBuildSettingsDefaultSettingsConfirmation, this);
+    bool is_confirmation =
+        RgUtils::ShowConfirmationMessageBox(kStrBuildSettingsDefaultSettingsConfirmationTitle, kStrBuildSettingsDefaultSettingsConfirmation, this);
 
     if (is_confirmation)
     {

@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga backend dtaa types.
+//=============================================================================
 
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_DATA_TYPES_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_DATA_TYPES_H_
@@ -23,6 +26,8 @@ struct BeProgramPipeline
         geometry_shader.makeEmpty();
         fragment_shader.makeEmpty();
         compute_shader.makeEmpty();
+        mesh_shader.makeEmpty();
+        task_shader.makeEmpty();
     }
 
     // Vertex shader.
@@ -42,6 +47,12 @@ struct BeProgramPipeline
 
     // Compute shader.
     gtString compute_shader;
+
+    // Mesh shader.
+    gtString mesh_shader;
+
+    // Task shader.
+    gtString task_shader;
 };
 
 // The type of stage used for a shader module.
@@ -53,6 +64,8 @@ enum BePipelineStage : char
     kGeometry,
     kFragment,
     kCompute,
+    kMesh,
+    kTask,
 
     kCount
 };
@@ -102,7 +115,9 @@ static const BeVkPipelineFiles kStrDx12StageNames =
     "domain",
     "geometry",
     "pixel",
-    "compute"
+    "compute", 
+    "mesh", 
+    "task"
 };
 
 // DX12 Suffixes for stage-specific output files.
@@ -113,7 +128,9 @@ static const BeVkPipelineFiles kStrDx12StageSuffix =
     "domain",
     "geom",
     "pixel",
-    "comp"
+    "comp", 
+    "mesh", 
+    "task"
 };
 
 // Vulkan Suffixes for stage-specific output files.
@@ -124,7 +141,9 @@ static const BeVkPipelineFiles kVulkanStageFileSuffix =
     "tese", 
     "geom", 
     "frag", 
-    "comp"
+    "comp", 
+    "mesh", 
+    "task"
 };
 
 // Physical adapter data.

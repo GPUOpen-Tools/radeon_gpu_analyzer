@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for CLI string constants.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_STRING_CONSTANTS_H_
 #define RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_STRING_CONSTANTS_H_
 
@@ -18,6 +21,7 @@ static const char* kStrErrorNoDeviceFound = "Error: unable to find supported dev
 static const char* kStrErrorUnknownDevice = "Error: code object compiled for unknown device.";
 static const char* kStrErrorMemoryAllocationFailure = "Error: memory allocation failure.";
 static const char* kStrErrorGraphicsComputeMix = "Error: cannot mix compute and non-compute shaders.";
+static const char* kStrErrorGraphicsMeshMix = "Error: cannot mix mesh shaders with vert, tesc, tese or geom shaders.";
 static const char* kStrErrorCannotFindOutputDir = "Error: output directory does not exist: ";
 static const char* kStrErrorCannotInvokeCompiler = "Error: unable to invoke the compiler.";
 static const char* kStrErrorCannotReadFile = "Error: unable to read: ";
@@ -73,8 +77,9 @@ static const char* kStrInfoContructingPerBlockCfg1 = "Generating per-block contr
 static const char* kStrInfoContructingPerBlockCfg2 = " shader...";
 static const char* kStrInfoContructingPerInstructionCfg1 = "Generating per-instruction control-flow graph for ";
 static const char* kStrInfoContructingPerInstructionCfg2 = " shader...";
-static const char* kStrInfoValidateBinFile = "Info: Validating input code object: ";
-static const char* kStrInfoDetectBinWorkflowType  = "Info: Identifying workflow type for input code object: ";
+static const char* kStrInfoValidateBinFile = "Info: validating input code object: ";
+static const char* kStrInfoDisassemblingBinary = "Info: disassembling input code object ";
+static const char* kStrInfoDetectBinWorkflowType  = "Info: identifying workflow type for input code object: ";
 static const char* kStrInfoDetectBinTargetDevice  = "Info: extracting device information from: ";
 
 
@@ -93,6 +98,8 @@ static const char* kStrTessellationEvaluationStageName = "tessellation evaluatio
 static const char* kStrGeometryStageName = "geometry";
 static const char* kStrFragmentStageName = "fragment";
 static const char* kStrComputeStageName = "compute";
+static const char* kStrMeshStageName = "mesh";
+static const char* kStrTaskStageName = "task";
 
 // Default file extensions.
 static const char* kStrDefaultExtensionIsa = "amdisa";
@@ -109,6 +116,7 @@ static const char* kStrDefaultExtensionMetadata = "amdMetadata";
 static const char* kStrDefaultExtensionDxasm = "dxasm";
 static const char* kStrDefaultExtensionStats = "stats";
 static const char* kStrDefaultExtensionCsv = "csv";
+static const char* kStrDefaultExtensionRawDisassembly = "raw";
 
 // Default file names.
 static const char* kStrDefaultFilenameLivereg = "livereg";
@@ -123,6 +131,7 @@ static const char* kStrDefaultFilenameOutputBinaryFileName = "codeobj.bin";
 static const char* kStrRgaModeOpenclOffline    = "OpenCL";
 static const char* kStrRgaModeOpengl           = "OpenGL";
 static const char* kStrRgaModeVulkan           = "Vulkan";
+static const char* kStrRgaModeVulkanRT         = "VulkanRT";
 static const char* kStrRgaModeVkOffline        = "Vulkan Offline";
 static const char* kStrRgaModeDx11             = "DX11";
 static const char* kStrRgaModeDx12             = "DX12";

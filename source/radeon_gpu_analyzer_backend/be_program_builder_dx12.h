@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga backend progam builder dx12 class.
+//=============================================================================
 
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_DX12_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_DX12_H_

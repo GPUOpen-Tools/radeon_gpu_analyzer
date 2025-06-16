@@ -1,6 +1,10 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for parsing command line options.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_PARSE_CMD_LINE_H_
 #define RGA_RADEONGPUANALYZERCLI_SRC_KC_PARSE_CMD_LINE_H_
 

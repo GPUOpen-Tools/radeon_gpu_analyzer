@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for the base class for an API-specific config file reader.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_CONFIG_FILE_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_CONFIG_FILE_H_
 

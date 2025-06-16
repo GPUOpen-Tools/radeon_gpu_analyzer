@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for RGA's browse missing file dialog.
+//=============================================================================
+
 // C++.
 #include <cassert>
 
@@ -116,7 +123,7 @@ void RgBrowseMissingFileDialog::BrowseFilePathForRow(int row_index)
 
         // Extract the existing path to the missing file.
         const std::string original_file_path = raw_data.toString().toStdString();
-        std::string updated_file_path = original_file_path;
+        std::string updated_file_path  = original_file_path;
 
         // Show a file browser dialog so the user can update the path to the missing file.
         bool file_path_updated = RgUtils::OpenFileDialog(this, project_api_, updated_file_path);

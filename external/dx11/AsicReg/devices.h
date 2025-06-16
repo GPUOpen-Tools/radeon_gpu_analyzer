@@ -1,5 +1,5 @@
 //=================================================================
-// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //=================================================================
 #ifndef _CI_ID_H
 #define _CI_ID_H

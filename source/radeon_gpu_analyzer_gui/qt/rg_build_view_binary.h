@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Build View class for Binary Analysis mode.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_BUILD_VIEW_BINARY_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_BUILD_VIEW_BINARY_H_
 
@@ -41,9 +48,6 @@ public:
     // Show the disassembly view for the currently selected file item.
     virtual void ShowCurrentFileDisassembly() override;
 
-    // Reload the content of the file modified by an external process.
-    void ReloadFile(const std::string& file_path) override;
-
     // Save the currently open and active file.
     void SaveCurrentFile(EditMode mode) override;
 
@@ -56,8 +60,8 @@ public:
     // Add an existing source file to the given project.
     bool AddExistingSourcefileToProject(const std::string& source_file_path);
 
-    // Add an existing codeobj file to the given project.
-    bool AddExistingCodeObjFileToProject(const std::string& bin_file_path);
+    // Add existing codeobj files to the given project.
+    bool AddExistingCodeObjFileToProject(const std::vector<std::string>& bin_file_paths);
 
     // Try to find the entry point containing the given line.
     // Returns "true" if found or "false" otherwise. The name of found function is returned in "entry_name".
@@ -86,8 +90,8 @@ private slots:
     // Handler invoked when the user changes the selected entry point index for a given file.
     void HandleSelectedEntrypointChanged(const std::string& input_file_path, const std::string& selected_entrypoint_name);
 
-    // A handler invoked when a file is dragged and dropped on the menu.
-    void HandleExistingFileDragAndDrop(const std::string& file_path_to_add);
+    // A handler invoked when a file or files are dragged and dropped on the menu.
+    void HandleExistingFileDragAndDrop(const std::vector<std::string>& file_path_to_add);
 
     // A handler invoked when a valid menu file item has been clicked on.
     void HandleMenuItemClicked(RgMenuFileItem* item);
@@ -110,6 +114,9 @@ protected:
 
     // Destroy obsolete build outputs from a previous project build.
     virtual void DestroyProjectBuildArtifacts() override;
+
+    // Function to remove the binary file from the metadata.
+    void RemoveFileFromMetadata(const std::string& full_path) override;
 
     // Set the focus to the file menu.
     virtual void FocusOnFileMenu() override;

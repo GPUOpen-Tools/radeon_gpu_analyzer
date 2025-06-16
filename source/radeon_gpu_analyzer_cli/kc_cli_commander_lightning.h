@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for CLI Commander interface for compiling with the Lightning Compiler (LC).
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_LIGHTNING_H_
 #define RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_LIGHTNING_H_
 
@@ -96,13 +99,16 @@ private:
     bool  ReduceISA(const std::string& bin_file, IsaMap& kernel_isa_texts);
 
     // Dump IL file.
-    beKA::beStatus DumpIL(const Config&                   config,
+    beKA::beStatus DumpIL(const Config&             config,
                     const OpenCLOptions&            user_options,
                     const std::vector<std::string>& src_file_names,
                     const std::string&              device,
                     const std::string&              clang_device,
                     std::string&                    error_text);
 
+    // Generate RGA CLI session metadata file.
+    bool GenerateSessionMetadata(const Config& config, const CmpilerPaths& compiler_paths) const;
+    
     // ---- DATA ----
 
     // Output Metadata

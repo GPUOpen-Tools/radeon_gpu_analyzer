@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2023 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga backend progam builder binary analysis class.
+//=============================================================================
 
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_BINARY_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_BINARY_H_
@@ -9,6 +12,9 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
+
+// Shared.
+#include "common/rga_entry_type.h"
 
 // Infra.
 #include "external/amdt_base_tools/Include/gtString.h"
@@ -38,6 +44,9 @@ public:
 
         // Vulkan.
         kVulkan,
+        
+        // Vulkan ray tracing.
+        kVulkanRT,
 
         // OpenGL.
         kOpenGL,
@@ -60,6 +69,9 @@ public:
 
     // Gets the api mode from the amdpal pipeline metadata.
     static ApiEnum GetApiFromPipelineMetadata(const BeAmdPalMetaData::PipelineMetaData& pipeline);
+
+    // Get entry types for specific pipeline or raytracing stage.
+    static RgaEntryType GetEntryType(ApiEnum api, uint32_t stage);
 
 };
 #endif  // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_BINARY_H_

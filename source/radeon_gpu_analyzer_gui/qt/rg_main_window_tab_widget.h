@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RGA main window specific implementation of QTabWidget.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MAIN_WINDOW_TAB_WIDGET_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MAIN_WINDOW_TAB_WIDGET_H_
 

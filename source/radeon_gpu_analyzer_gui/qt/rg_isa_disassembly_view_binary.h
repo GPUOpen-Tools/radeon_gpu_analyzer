@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for shader ISA Disassembly view for Binary Analysis.
+//=============================================================================
+
 #pragma once
 
 // Local.
@@ -19,6 +26,6 @@ protected:
     // Set the border stylesheet.
     virtual void SetBorderStylesheet(bool is_selected) override;
 
-    // Populate the disassembly view with the given CLI build output.
-    bool PopulateDisassemblyView(const std::string& binary_file_name, const RgBuildOutputsMap& build_output);
+    // Populate the disassembly view with the given file names and CLI build output.
+    bool PopulateDisassemblyView(const std::vector<std::string>& binary_file_names, const RgBuildOutputsMap& build_output);
 };

@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header definition for generic instruction fields constants.
+//=============================================================================
 
 // In SI ISA different instructions ,can define for different field`s names the set of
 // the (same) generic instructions fields bits values.
@@ -85,7 +88,7 @@
 X_INIT(ScalarGPRMin, 0),
        X(ScalarGPR),
        X_INIT(ScalarGPRMax, 103),
-       // 104 – 105 reserved.
+       // 104 - 105 reserved.
        X(Reserved104),
        X(Reserved105),
        X_INIT(Reserved, 2),

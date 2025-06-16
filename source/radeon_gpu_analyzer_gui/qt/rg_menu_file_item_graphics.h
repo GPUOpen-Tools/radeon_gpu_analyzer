@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Item widget in RGA Build view's File Menu for Vulkan mode.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_GRAPHICS_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_GRAPHICS_H_
 
@@ -52,19 +58,19 @@ public:
     virtual void dragEnterEvent(QDragEnterEvent* event) override;
 
     // Handler invoked when the user drops a dragged file.
-    virtual void dropEvent(QDropEvent *event) override;
+    virtual void dropEvent(QDropEvent* event) override;
 
     // Handler invoked when the drag event leaves this widget.
     virtual void dragLeaveEvent(QDragLeaveEvent* event) override;
 
     // Handler invoked when the user is moving the mouse while dragging.
-    virtual void dragMoveEvent(QDragMoveEvent *event) override;
+    virtual void dragMoveEvent(QDragMoveEvent* event) override;
 
     // Alter the visual style of the item if it is hovered or not.
     virtual void SetHovered(bool is_hovered) override;
 
     // Alter the visual style of the item if it is currently selected.
-    virtual void SetCurrent(bool is_current) override;
+    virtual void SetCurrent(bool is_current, bool hide_entry_point_lists = true) override;
 
     // Alter the visual style of the item if the stage is occupied by a file.
     void SetStageIsOccupied(bool is_occupied);
@@ -174,9 +180,8 @@ protected:
     // Graphics-specific actions for context menu.
     struct
     {
-        QAction* separator  = nullptr;
+        QAction* separator   = nullptr;
         QAction* restore_spv = nullptr;
-    }
-    context_menu_actions_graphics_;
+    } context_menu_actions_graphics_;
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_GRAPHICS_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_GRAPHICS_H_

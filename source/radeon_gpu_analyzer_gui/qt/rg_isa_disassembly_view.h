@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for shader ISA Disassembly view.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_VIEW_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_VIEW_H_
 
@@ -82,6 +89,9 @@ public:
 
     // Check if the current API has line correlation supported.
     virtual bool IsLineCorrelationSupported() const;
+
+    // Set the target gpu label and architecture in the model by finding the target gpu that corresponds to the given input file in the build settings.
+    void SetTargetGpuLabel(std::string input_file, std::shared_ptr<RgBuildSettings> build_settings);
 
 signals:
     // A signal emitted when the input source file's highlighted correlation line was updated.
@@ -307,7 +317,7 @@ protected:
 
     // Shared Isa view widget.
     IsaWidget* rg_isa_widget_ = nullptr;
-    
+
     // The interface responsible for presenting disassembly results for multiple GPUs.
     Ui::RgIsaDisassemblyView ui_;
 };

@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for shader ISA Disassembly view for graphics.
+//=============================================================================
+
 // C++.
 #include <cassert>
 
@@ -18,6 +25,9 @@ bool RgIsaDisassemblyViewGraphics::PopulateBuildOutput(const std::shared_ptr<RgP
     if (pipeline_clone != nullptr)
     {
         const ShaderInputFileArray& shader_stage_array = pipeline_clone->pipeline.shader_stages;
+
+        ui_.targetGpuPushButton->setVisible(true);
+        ui_.binary_target_gpu_->setVisible(false);
 
         // Build artifacts may contain disassembly for shader files that are no longer associated
         // with any stage in the pipeline. Provide the map of the pipeline's current stages, along

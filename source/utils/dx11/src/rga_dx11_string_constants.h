@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2017 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for dx11 string constants.
+//=============================================================================
 
 #include <string>
 

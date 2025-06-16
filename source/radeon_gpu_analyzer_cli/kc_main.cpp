@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief CLI entry point.
+//=============================================================================
 
 // C++.
 #include <memory>
@@ -23,7 +26,7 @@
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_opengl.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vk_offline.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vulkan.h"
-#include "radeon_gpu_analyzer_cli/kc_cli_commander_bin.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_commander_binary.h"
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_lightning.h"
 #ifdef _WIN32
@@ -108,7 +111,7 @@ int main(int argc, char* argv[])
             commander = std::make_shared<KcCliCommanderVulkan>();
             break;
         case kModeBinary:
-            commander = std::make_shared<KcCliCommanderBin>();
+            commander = std::make_shared<KcCliCommanderBinary>();
             break;
         case RgaMode::kModeOpenclOffline:
         {

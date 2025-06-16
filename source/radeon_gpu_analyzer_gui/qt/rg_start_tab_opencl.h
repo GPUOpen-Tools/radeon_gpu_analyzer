@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for a OpenCL-specific implementation of the start tab.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_START_TAB_OPENCL_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_START_TAB_OPENCL_H_
 

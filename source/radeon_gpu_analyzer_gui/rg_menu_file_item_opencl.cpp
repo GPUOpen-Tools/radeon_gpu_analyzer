@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for Item widget in RGA Build view's File Menu for OpenCL mode.
+//=============================================================================
+
 // C++.
 #include <cassert>
 #include <sstream>
@@ -17,25 +24,32 @@
 
 #include "common/rga_xml_constants.h"
 
-static const std::vector<std::string> 
-kStrXmlNodeRtxVec =
-{
-    kStrXmlNodeDxrRayGeneration,
-    kStrXmlNodeDxrIntersection,
-    kStrXmlNodeDxrAnyHit,
-    kStrXmlNodeDxrClosestHit,
-    kStrXmlNodeDxrMiss,
-    kStrXmlNodeDxrCallable,
-    kStrXmlNodeDxrTraversal
-};
+static const std::vector<std::string> kStrXmlNodeRtxVec = {kStrXmlNodeDxrRayGeneration,
+                                                           kStrXmlNodeDxrIntersection,
+                                                           kStrXmlNodeDxrAnyHit,
+                                                           kStrXmlNodeDxrClosestHit,
+                                                           kStrXmlNodeDxrMiss,
+                                                           kStrXmlNodeDxrCallable,
+                                                           kStrXmlNodeDxrTraversal,
+                                                           kStrXmlNodeDxrUnknown,
+                                                           kStrXmlNodeVkRayGeneration,
+                                                           kStrXmlNodeVkIntersection,
+                                                           kStrXmlNodeVkAnyHit,
+                                                           kStrXmlNodeVkClosestHit,
+                                                           kStrXmlNodeVkMiss,
+                                                           kStrXmlNodeVkCallable,
+                                                           kStrXmlNodeVkTraversal,
+                                                           kStrXmlNodeVkUnknown};
 
 // Stylesheet for file menu items for when they are selcted and not selected.
-static const char* kStrFileMenuItemColor = "#itemBackground[current = false] {background-color: palette(midlight)} #itemBackground[current = true] {background-color: palette(base); border-style: solid; border-width: 1px;}";
+static const char* kStrFileMenuItemColor =
+    "#itemBackground[current = false] {background-color: palette(midlight)} #itemBackground[current = true] {background-color: palette(base); border-style: "
+    "solid; border-width: 1px;}";
 
-static const int s_FILE_MENU_KERNEL_ITEM_HEIGHT = 20;
-static const int s_FILE_MENU_DXR_KERNEL_ITEM_HEIGHT = s_FILE_MENU_KERNEL_ITEM_HEIGHT * 2;
+static const int s_FILE_MENU_KERNEL_ITEM_HEIGHT     = 20;
+static const int s_FILE_MENU_RT_KERNEL_ITEM_HEIGHT = s_FILE_MENU_KERNEL_ITEM_HEIGHT * 2;
 
-bool IsKernelTypeDxr(const std::string& kernel_type)
+bool IsRayTracingKernelType(const std::string& kernel_type)
 {
     return std::find(std::begin(kStrXmlNodeRtxVec), std::end(kStrXmlNodeRtxVec), kernel_type) != std::end(kStrXmlNodeRtxVec);
 }
@@ -53,7 +67,9 @@ class RgEntrypointItemStyleDelegate : public QStyledItemDelegate
 {
 public:
     RgEntrypointItemStyleDelegate(QObject* parent = nullptr)
-        : QStyledItemDelegate(parent) {}
+        : QStyledItemDelegate(parent)
+    {
+    }
 
     // A custom row painter for the entry point list.
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -77,7 +93,7 @@ RgMenuItemEntryListModel::RgMenuItemEntryListModel(QWidget* parent)
     entry_point_item_model_ = new QStandardItemModel(parent);
 
     // Figure out which API is being used. This will determine which text is used for the item's entrypoints list.
-    RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
+    RgProjectAPI      current_api           = RgConfigManager::Instance().GetCurrentAPI();
     const std::string entrypoint_label_text = RgUtils::GetEntrypointsNameString(current_api);
 
     // Add the column header text.
@@ -92,17 +108,16 @@ QStandardItemModel* RgMenuItemEntryListModel::GetEntryItemModel() const
 void RgMenuItemEntryListModel::AddEntry(const RgEntryOutput& entrypoint)
 {
     const auto& entrypoint_name            = entrypoint.entrypoint_name;
-    bool        is_dxr_entrypoint          = IsKernelTypeDxr(entrypoint.kernel_type);
+    bool        is_rt_entrypoint           = IsRayTracingKernelType(entrypoint.kernel_type);
     const auto& extremely_long_kernel_name = entrypoint.extremely_long_kernel_name;
     bool        has_extremely_long_name    = !entrypoint.extremely_long_kernel_name.empty();
-
 
     std::string display_text;
 
     int current_row_count = entry_point_item_model_->rowCount();
-    int new_row_count = current_row_count + 1;
+    int new_row_count     = current_row_count + 1;
 
-    if (is_dxr_entrypoint)
+    if (is_rt_entrypoint)
     {
         const auto&        p              = SeparateKernelAndKernelSubtype(entrypoint_name);
         const std::string& kernel_name    = p.first;
@@ -110,7 +125,8 @@ void RgMenuItemEntryListModel::AddEntry(const RgEntryOutput& entrypoint)
         // Truncate long entry point names.
         RgUtils::GetDisplayText(kernel_name, display_text, entry_point_widget_width_, entry_point_tree_, kTextTruncateLengthBackOpencl);
         std::stringstream ss;
-        ss << kernel_subtype << ":\n" << "    " << display_text;
+        ss << kernel_subtype << ":\n"
+           << "    " << display_text;
         display_text = ss.str();
     }
     else
@@ -159,9 +175,9 @@ void RgMenuItemEntryListModel::AddEntry(const RgEntryOutput& entrypoint)
 
     // Set the scaled height for size hint.
     QSize size = entry_point_item_model_->data(model_index, Qt::SizeHintRole).toSize();
-    if (is_dxr_entrypoint)
+    if (is_rt_entrypoint)
     {
-        size.setHeight(s_FILE_MENU_DXR_KERNEL_ITEM_HEIGHT); 
+        size.setHeight(s_FILE_MENU_RT_KERNEL_ITEM_HEIGHT);
     }
     else
     {
@@ -228,8 +244,8 @@ bool RgMenuItemEntryListModel::GetSelectedEntrypointExtremelyLongName(const std:
     return ret;
 }
 
-RgMenuFileItemOpencl::RgMenuFileItemOpencl(const std::string& file_full_path, RgMenu* parent) :
-    RgMenuFileItem(file_full_path, parent)
+RgMenuFileItemOpencl::RgMenuFileItemOpencl(const std::string& file_full_path, RgMenu* parent)
+    : RgMenuFileItem(file_full_path, parent)
 {
     ui_.setupUi(this);
 
@@ -298,14 +314,14 @@ void RgMenuFileItemOpencl::mousePressEvent(QMouseEvent* event)
     emit MenuItemSelected(this);
 }
 
-void RgMenuFileItemOpencl::resizeEvent(QResizeEvent *event)
+void RgMenuFileItemOpencl::resizeEvent(QResizeEvent* event)
 {
     Q_UNUSED(event);
 
     UpdateFilenameLabelText();
 }
 
-void RgMenuFileItemOpencl::showEvent(QShowEvent *event)
+void RgMenuFileItemOpencl::showEvent(QShowEvent* event)
 {
     Q_UNUSED(event);
 
@@ -355,7 +371,7 @@ bool RgMenuFileItemOpencl::GetSelectedEntrypointName(std::string& entrypoint_nam
         if (selected_entrypoint_index.isValid())
         {
             // Extract and return the entry point name from the list.
-            entrypoint_name               = entry_list_model_->GetEntryPointName(selected_entrypoint_index.row());
+            entrypoint_name     = entry_list_model_->GetEntryPointName(selected_entrypoint_index.row());
             got_entrypoint_name = true;
         }
         else
@@ -363,7 +379,7 @@ bool RgMenuFileItemOpencl::GetSelectedEntrypointName(std::string& entrypoint_nam
             // 2. If the Selection Model is empty (it may have been cleared after the build), check the last selected entry name.
             if (!last_selected_entry__name_.empty())
             {
-                entrypoint_name = last_selected_entry__name_;
+                entrypoint_name     = last_selected_entry__name_;
                 got_entrypoint_name = true;
             }
         }
@@ -387,7 +403,7 @@ void RgMenuFileItemOpencl::SetHovered(bool is_hovered)
     ui_.itemBackground->style()->polish(ui_.itemBackground);
 }
 
-void RgMenuFileItemOpencl::SetCurrent(bool is_current)
+void RgMenuFileItemOpencl::SetCurrent(bool is_current, bool hide_entry_point_lists)
 {
     // Set "current" property to be utilized by this widget's stylesheet.
     ui_.itemBackground->setProperty(kStrFileMenuPropertyCurrent, is_current);
@@ -397,7 +413,7 @@ void RgMenuFileItemOpencl::SetCurrent(bool is_current)
     ui_.itemBackground->style()->polish(ui_.itemBackground);
 
     // Toggle the visibility of the entrypoints list based on if the item is current or not.
-    ShowEntrypointsList(is_current);
+    ShowEntrypointsList(is_current || !hide_entry_point_lists);
 }
 
 void RgMenuFileItemOpencl::UpdateFilenameLabelText()
@@ -523,14 +539,23 @@ void RgMenuFileItemOpencl::ShowEntrypointsList(bool show_list)
     }
 }
 
+void RgMenuFileItemOpencl::ClearSelectedEntryPoints()
+{
+    QItemSelectionModel* selection_model = ui_.entrypointListView->selectionModel();
+    if (selection_model != nullptr)
+    {
+        selection_model->clear();
+    }
+}
+
 void RgMenuFileItemOpencl::SwitchToEntrypointByName(const std::string& display_name)
 {
     // Get the list of entry point names for this file item.
     std::vector<std::string> entrypoint_names;
     GetEntrypointNames(entrypoint_names);
 
-    int selected_entrypoint_index = 0;
-    bool found_entry_point = false;
+    int  selected_entrypoint_index = 0;
+    bool found_entry_point         = false;
     for (const std::string& currentEntry : entrypoint_names)
     {
         if (display_name.compare(currentEntry) == 0)
@@ -558,7 +583,7 @@ void RgMenuFileItemOpencl::SwitchToEntrypointByName(const std::string& display_n
 void RgMenuFileItemOpencl::UpdateBuildOutputs(const std::vector<RgEntryOutput>& entry_outputs)
 {
     std::string current_display_entrypoint_name;
-    bool is_entrypoint_selected = GetSelectedEntrypointName(current_display_entrypoint_name);
+    bool        is_entrypoint_selected = GetSelectedEntrypointName(current_display_entrypoint_name);
 
     assert(entry_list_model_ != nullptr);
     if (entry_list_model_ != nullptr)
@@ -610,7 +635,7 @@ void RgMenuFileItemOpencl::UpdateBuildOutputs(const std::vector<RgEntryOutput>& 
                     current_display_entrypoint_name = entrypoint_names[0];
 
                     const std::string& input_file_path = GetFilename();
-                    emit SelectedEntrypointChanged(input_file_path, current_display_entrypoint_name);
+                    emit               SelectedEntrypointChanged(input_file_path, current_display_entrypoint_name);
                 }
             }
         }
@@ -632,8 +657,8 @@ void RgMenuFileItemOpencl::HandleEntrypointClicked()
     if (selection_model->currentIndex().isValid())
     {
         // Pull the filename out of the selected item.
-        const std::string& file_path = GetFilename();
-        int selected_row = selection_model->currentIndex().row();
+        const std::string& file_path    = GetFilename();
+        int                selected_row = selection_model->currentIndex().row();
 
         // Get a list of all the entry point names for the input file.
         std::vector<std::string> entrypoint_names;

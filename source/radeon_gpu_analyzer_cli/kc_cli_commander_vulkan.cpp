@@ -1,6 +1,9 @@
-//======================================================================
-// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for CLI Commander interface for compiling with the Vulkan.
+//=============================================================================
 
 // C++.
 #include <cassert>
@@ -20,17 +23,18 @@
 #include "common/rga_shared_utils.h"
 
 // Backend.
-#include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
-#include "radeon_gpu_analyzer_backend/be_utils.h"
-#include "radeon_gpu_analyzer_backend/be_string_constants.h"
 #include "radeon_gpu_analyzer_backend/be_data_types.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_binary.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
+#include "radeon_gpu_analyzer_backend/be_string_constants.h"
+#include "radeon_gpu_analyzer_backend/be_utils.h"
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vulkan.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_vk_offline.h"
 #include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
-#include "radeon_gpu_analyzer_cli/kc_cli_commander_vulkan_util.h"
+#include "radeon_gpu_analyzer_cli/kc_utils_vulkan.h"
 
 using namespace beKA;
 
@@ -637,11 +641,14 @@ static bool IsInputValid(const Config& config)
         bool all_shader_stages_valid   = true;
         for (uint8_t ii = 0; ii < BePipelineStage::kCount; ii++)
         {
-            bool is_stage_provided = !possible_shader_stage_file_paths[ii].empty();
-            if (is_stage_provided)
+            if (ii < possible_shader_stage_file_paths.size())
             {
-                any_shader_stage_provided = true;
-                all_shader_stages_valid &= IsShaderStageInputValid(possible_shader_stage_file_paths[ii], kStrPipelineStageNamesFull[ii]);
+                bool is_stage_provided = !possible_shader_stage_file_paths[ii].empty();
+                if (is_stage_provided)
+                {
+                    any_shader_stage_provided = true;
+                    all_shader_stages_valid &= IsShaderStageInputValid(possible_shader_stage_file_paths[ii], kStrPipelineStageNamesFull[ii]);
+                }
             }
         }
 
@@ -807,7 +814,7 @@ void KcCliCommanderVulkan::RunCompileCommands(const Config& config, LoggingCallb
                         }
                     }
 
-                    KcCLICommanderVulkanUtil util(output_metadata_, physical_adapter_name_, log_callback_, kVulkanStageFileSuffix);
+                    KcUtilsVulkan util(output_metadata_, physical_adapter_name_, log_callback_, kVulkanStageFileSuffix);
                     util.RunPostProcessingSteps(configPerDevice);
                 }
             }
@@ -819,7 +826,7 @@ bool KcCliCommanderVulkan::RunPostCompileSteps(const Config& config)
 {
     bool ret = false;
 
-    KcCLICommanderVulkanUtil util(output_metadata_, physical_adapter_name_, log_callback_, kVulkanStageFileSuffix);
+    KcUtilsVulkan util(output_metadata_, physical_adapter_name_, log_callback_, kVulkanStageFileSuffix);
 
     if (!config.session_metadata_file.empty())
     {
@@ -832,7 +839,7 @@ bool KcCliCommanderVulkan::RunPostCompileSteps(const Config& config)
 
     if (!config.should_retain_temp_files)
     {
-        KcCLICommanderVulkanUtil::DeleteTempFiles(temp_files_);
+        KcUtilsVulkan::DeleteTempFiles(temp_files_);
     }
 
     return ret;
@@ -1279,7 +1286,7 @@ void KcCliCommanderVulkan::CompileSpvToIsaForDevice(const Config&            con
                 }
             }
 
-            status = KcCLICommanderVulkanUtil::ConvertStats(isa_files, stats_files, config, device);
+            status = KcUtilsVulkan::ConvertStats(isa_files, stats_files, config, device);
         }
 
         if (status == kBeStatusSuccess)
@@ -1561,7 +1568,7 @@ void KcCliCommanderVulkan::StoreInputFilesToOutputMD(const BeVkPipelineFiles& in
             {
                 RgOutputFiles out_files;
                 out_files.device     = device;
-                out_files.entry_type = kVulkanStageEntryTypes[stage];
+                out_files.entry_type = beProgramBuilderBinary::GetEntryType(beProgramBuilderBinary::ApiEnum::kVulkan, stage);
                 out_files.input_file = input_files[stage];
                 out_md[stage]        = out_files;
             }
@@ -1613,7 +1620,7 @@ void KcCliCommanderVulkan::StoreOutputFilesToOutputMD(const std::string&        
             if (stage_md.input_file.empty())
             {
                 stage_md.input_file = spv_files[stage];
-                stage_md.entry_type = kVulkanStageEntryTypes[stage];
+                stage_md.entry_type = beProgramBuilderBinary::GetEntryType(beProgramBuilderBinary::ApiEnum::kVulkan, stage);
                 stage_md.device     = device;
             }
             stage_md.isa_file   = isa_files[stage];

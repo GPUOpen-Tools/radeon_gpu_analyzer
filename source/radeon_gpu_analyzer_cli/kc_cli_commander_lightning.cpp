@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for CLI Commander interface for compiling with the Lightning Compiler (LC).
+//=============================================================================
 // C++.
 #include <vector>
 #include <map>
@@ -12,13 +18,17 @@
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
 #include "external/amdt_os_wrappers/Include/osApplication.h"
+
+// Shared.
+#include "common/rga_entry_type.h"
 #include "common/rg_log.h"
+#include "common/rga_shared_utils.h"
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
 #include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
-#include "radeon_gpu_analyzer_cli/kc_cli_commander_lightning_util.h"
+#include "radeon_gpu_analyzer_cli/kc_utils_lightning.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_lightning.h"
 #include "radeon_gpu_analyzer_cli/kc_statistics_device_props.h"
 
@@ -26,9 +36,6 @@
 #include "radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
 #include "radeon_gpu_analyzer_backend/be_string_constants.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
-
-// Shared.
-#include "common/rga_shared_utils.h"
 
 // *****************************************
 // *** INTERNALLY LINKED SYMBOLS - START ***
@@ -64,7 +71,8 @@ static const std::vector<std::pair<std::string, std::string>> kLcLlvmTargetsToDe
     {"gfx1103", "gfx1103"}, 
     {"gfx1150", "gfx1150"}, 
     {"gfx1151", "gfx1151"},  
-    {"gfx1152", "gfx1152"}, 
+    {"gfx1152", "gfx1152"},
+    {"gfx1200", "gfx1200"}, 
     {"gfx1201", "gfx1201"}};
 
 // For some devices, clang does not accept device names that RGA gets from DeviceInfo.
@@ -266,7 +274,7 @@ bool KcCLICommanderLightning::Compile(const Config& config)
         // Generate CSV files with parsed ISA if required.
         if (config.is_parsed_isa_required && (result == beKA::kBeStatusSuccess || targets_.size() > 1))
         {
-            KcCLICommanderLightningUtil util(config.binary_codeobj_file, output_metadata_, should_print_cmd_, log_callback_);
+            KcUtilsLightning util(output_metadata_, should_print_cmd_, log_callback_);
             result = util.ParseIsaFilesToCSV(config.is_line_numbers_required) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusParseIsaToCsvFailed;
         }
 
@@ -393,7 +401,7 @@ beKA::beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, cons
 
         if (current_status != beKA::beStatus::kBeStatusSuccess)
         {
-            KcCLICommanderLightningUtil::LogErrorStatus(current_status, error_text);
+            KcUtilsLightning::LogErrorStatus(current_status, error_text);
             continue;
         }
 
@@ -449,19 +457,19 @@ beKA::beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, cons
             }
             else
             {
-                output_metadata_[{device, ""}] = RgOutputFiles(RgEntryType::kOpenclKernel, "", bin_filename);
+                output_metadata_[{device, ""}] = RgOutputFiles(RgaEntryType::kOpenclKernel, "", bin_filename);
             }
         }
         else
         {
             // Store error status to the metadata.
-            RgOutputFiles output(RgEntryType::kOpenclKernel, "", "");
+            RgOutputFiles output(RgaEntryType::kOpenclKernel, "", "");
             output.status = false;
             output_metadata_[{device, ""}] = output;
         }
 
         status = (current_status == beKA::beStatus::kBeStatusSuccess ? status : current_status);
-        KcCLICommanderLightningUtil::LogErrorStatus(current_status, error_text);
+        KcUtilsLightning::LogErrorStatus(current_status, error_text);
     }
 
     return status;
@@ -488,7 +496,7 @@ beKA::beStatus KcCLICommanderLightning::DisassembleBinary(const std::string& bin
     else
     {
         // Store error status to the metadata.
-        RgOutputFiles output(RgEntryType::kOpenclKernel, "", "");
+        RgOutputFiles output(RgaEntryType::kOpenclKernel, "", "");
         output.status = false;
         output_metadata_[{rgaDevice, ""}] = output;
     }
@@ -514,8 +522,14 @@ void KcCLICommanderLightning::RunCompileCommands(const Config& config, LoggingCa
 {
     bool is_multiple_devices = (config.asics.size() > 1);
     bool status = Compile(config);
-    KcCLICommanderLightningUtil util(config.binary_codeobj_file, output_metadata_, should_print_cmd_, log_callback_);
+    KcUtilsLightning util(output_metadata_, should_print_cmd_, log_callback_);
     
+    // Extract Statistics if required.
+    if (status || is_multiple_devices)
+    {
+        util.ExtractStatistics(config);
+    }
+
     // Block post-processing until quality of analysis engine improves when processing llvm disassembly.
     bool is_livereg_required = !config.livereg_analysis_file.empty();
     if (is_livereg_required)
@@ -551,12 +565,6 @@ void KcCLICommanderLightning::RunCompileCommands(const Config& config, LoggingCa
     if ((status || is_multiple_devices) && !config.metadata_file.empty())
     {
         util.ExtractMetadata(compiler_paths_, config.metadata_file);
-    }
-
-    // Extract Statistics if required.
-    if ((status || is_multiple_devices) && !config.analysis_file.empty())
-    {
-        util.ExtractStatistics(config);
     }
 }
 
@@ -833,7 +841,7 @@ bool KcCLICommanderLightning::SplitISA(const std::string& bin_file, const std::s
             {
                 if (KcUtils::WriteTextFile(isa_filename.asASCIICharArray(), isa_text_map_item.second, log_callback_))
                 {
-                    RgOutputFiles  outFiles = RgOutputFiles(RgEntryType::kOpenclKernel, isa_filename.asASCIICharArray());
+                    RgOutputFiles  outFiles = RgOutputFiles(RgaEntryType::kOpenclKernel, isa_filename.asASCIICharArray());
                     outFiles.is_isa_file_temp = is_isa_file_temp;
                     output_metadata_[{device, isa_text_map_item.first}] = outFiles;
                 }
@@ -894,7 +902,7 @@ bool KcCLICommanderLightning::SplitISAText(const std::string& isa_text,
         {
             const std::string& kernel_isa  = isa_text.substr(isa_text_start, isa_text_end - isa_text_start);
             const std::string& kernel_name = isa_text.substr(kernel_start_offsets[i].first, kernel_start_offsets[i].second);
-            kernel_isa_map[kernel_name]    = KcCLICommanderLightningUtil::PrefixWithISAHeader(kernel_name, kernel_isa);
+            kernel_isa_map[kernel_name]    = KcUtilsLightning::PrefixWithISAHeader(kernel_name, kernel_isa);
             label_name_start = kernel_isa_end + BLOCK_END_TOKEN.size();
         }
         else
@@ -942,7 +950,7 @@ bool KcCLICommanderLightning::ListEntriesOpenclOffline(const Config& config, Log
         }
     }
 
-    if (ret && (ret = KcCLICommanderLightningUtil::ExtractEntries(filename, config, compiler_paths_, entry_data)) == true)
+    if (ret && (ret = KcUtilsLightning::ExtractEntries(filename, config, compiler_paths_, entry_data)) == true)
     {
         // Sort the entry names in alphabetical order.
         std::sort(entry_data.begin(), entry_data.end(),
@@ -976,8 +984,22 @@ bool KcCLICommanderLightning::GetSupportedTargets(std::set<std::string>& targets
 
 bool KcCLICommanderLightning::RunPostCompileSteps(const Config& config)
 {
-    KcCLICommanderLightningUtil util(config.binary_codeobj_file, output_metadata_, should_print_cmd_, log_callback_);
-    return util.RunPostCompileSteps(config, compiler_paths_);
+    bool ret = false;
+
+    if (!config.session_metadata_file.empty())
+    {
+        ret = GenerateSessionMetadata(config, compiler_paths_);
+        if (!ret)
+        {
+            std::stringstream msg;
+            msg << kStrErrorFailedToGenerateSessionMetdata << std::endl;
+            log_callback_(msg.str());
+        }
+    }
+
+    KcUtilsLightning::DeleteTempFiles(output_metadata_);
+
+    return ret;
 }
 
 beKA::beStatus KcCLICommanderLightning::DumpIL(const Config&                   config,
@@ -1025,4 +1047,31 @@ beKA::beStatus KcCLICommanderLightning::DumpIL(const Config&                   c
         }
     }
     return status;
+}
+
+bool KcCLICommanderLightning::GenerateSessionMetadata(const Config& config, const CmpilerPaths& compiler_paths) const
+{
+    RgFileEntryData file_kernel_data;
+    bool            ret = !config.session_metadata_file.empty();
+    assert(ret);
+
+    if (ret)
+    {
+        for (const std::string& input_file : config.input_files)
+        {
+            RgEntryData entry_data;
+            ret = ret && KcUtilsLightning::ExtractEntries(input_file, config, compiler_paths, entry_data);
+            if (ret)
+            {
+                file_kernel_data[input_file] = entry_data;
+            }
+        }
+    }
+
+    if (ret && !output_metadata_.empty())
+    {
+        ret = KcXmlWriter::GenerateClSessionMetadataFile(config.session_metadata_file, file_kernel_data, output_metadata_);
+    }
+
+    return ret;
 }

@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RGA CLI launcher.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_CLI_LAUNCHER_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_CLI_LAUNCHER_H_
 
@@ -41,13 +48,14 @@ public:
     // project is the project containing the clone to be built.
     // clone_index is the index of the clone to be built.
     // outputPath is where the output files will be generated.
+    // binary_names is the list of binary files that will be in the project.
     // cliOutputHandlingCallback is a callback used to send CLI output text to the GUI.
     // cancelSignal can be used to terminate the operation.
     // Returns true for success, false otherwise.
     static bool BuildProjectCloneBinary(std::shared_ptr<RgProject>              project,
                                         int                                     clone_index,
                                         const std::string&                      output_path,
-                                        const std::string&                      binary_name,
+                                        const std::vector<std::string>&         binary_names,
                                         std::function<void(const std::string&)> cli_output_handling_callback,
                                         std::vector<std::string>&               gpus_built,
                                         bool&                                   cancel_signal);

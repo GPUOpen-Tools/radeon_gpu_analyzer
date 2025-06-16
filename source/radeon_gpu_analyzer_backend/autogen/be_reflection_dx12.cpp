@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2024 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementaion for dx12 reflection utilities class.
+//=============================================================================
 
 // Local.
 #include "radeon_gpu_analyzer_backend/autogen/be_reflection_dx12.h"
@@ -27,7 +30,7 @@ beKA::beStatus BeDx12Reflection::AutoGenerateFiles(IDxcUtils*                dxc
         {
             // Generate root signature.
             DxcReflectionOutput cs_reflection_output;
-            rc = CreateReflection(dxc_utils, refection_input.cs_blob, cs_reflection_output);
+            rc = CreateReflection(dxc_utils, refection_input.source_file_path_cs, refection_input.cs_blob, cs_reflection_output);
             if (rc == beKA::beStatus::kBeStatusSuccess && !refection_input.is_root_signature_specified)
             {
                 rc = GenerateRootSignatureCompute(cs_reflection_output, hlsl_output.root_signature, err);
@@ -42,7 +45,7 @@ beKA::beStatus BeDx12Reflection::AutoGenerateFiles(IDxcUtils*                dxc
             DxcReflectionOutput ps_reflection_output = {};
             if (has_vs)
             {
-                rc = CreateReflection(dxc_utils, refection_input.vs_blob, vs_reflection_output);
+                rc = CreateReflection(dxc_utils, refection_input.source_file_path_vs, refection_input.vs_blob, vs_reflection_output);
                 if (rc == beKA::beStatus::kBeStatusSuccess)
                 {
                     shader_requires_flags |= vs_reflection_output.shader_reflection_ptr->GetRequiresFlags();
@@ -50,7 +53,7 @@ beKA::beStatus BeDx12Reflection::AutoGenerateFiles(IDxcUtils*                dxc
             }
             if (has_ps)
             {
-                rc = CreateReflection(dxc_utils, refection_input.ps_blob, ps_reflection_output);
+                rc = CreateReflection(dxc_utils, refection_input.source_file_path_ps, refection_input.ps_blob, ps_reflection_output);
                 if (rc == beKA::beStatus::kBeStatusSuccess)
                 {
                     shader_requires_flags |= ps_reflection_output.shader_reflection_ptr->GetRequiresFlags();
@@ -92,7 +95,8 @@ beKA::beStatus BeDx12Reflection::AutoGenerateFiles(IDxcUtils*                dxc
     return rc;
 }
 
-beKA::beStatus BeDx12Reflection::CreateReflection(IDxcUtils*                    dxc_utils, 
+beKA::beStatus BeDx12Reflection::CreateReflection(IDxcUtils*                    dxc_utils,
+                                                  const std::string&            src_path,
                                                   const BeDx12ShaderBinaryBlob& src_blob,
                                                   DxcReflectionOutput&          dxc_output) const
 {
@@ -105,7 +109,13 @@ beKA::beStatus BeDx12Reflection::CreateReflection(IDxcUtils*                    
     shader_data_buffer.Ptr       = src_blob.data();
     shader_data_buffer.Size      = src_blob.size();
 
-    rc = BeDx12Utils::CheckHr(dxc_utils->CreateReflection(&shader_data_buffer, IID_PPV_ARGS(&dxc_output.shader_reflection_ptr)));
+    auto hr = dxc_utils->CreateReflection(&shader_data_buffer, IID_PPV_ARGS(&dxc_output.shader_reflection_ptr));
+    if (hr == E_INVALIDARG)
+    {
+        std::cout << "Warning: failed to load provided blob with DXC for reflection: " << src_path << "\n";
+    }
+
+    rc = BeDx12Utils::CheckHr(hr);
     if (rc == beKA::beStatus::kBeStatusSuccess && dxc_output.shader_reflection_ptr)
     {
         rc = BeDx12Utils::CheckHr(dxc_output.shader_reflection_ptr->GetDesc(&dxc_output.shader_desc));

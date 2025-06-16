@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for Item widget in RGA Build view's File Menu for Vulkan mode.
+//=============================================================================
+
 // C++.
 #include <sstream>
 #include <cassert>
@@ -380,8 +387,10 @@ void RgMenuFileItemGraphics::SetHovered(bool is_hovered)
     ui_.itemBackground->style()->polish(ui_.itemBackground);
 }
 
-void RgMenuFileItemGraphics::SetCurrent(bool is_current)
+void RgMenuFileItemGraphics::SetCurrent(bool is_current, bool hide_entry_point_lists)
 {
+    Q_UNUSED(hide_entry_point_lists);
+
     // Set "current" property to be utilized by this widget's stylesheet.
     ui_.itemBackground->setProperty(kStrFileMenuPropertyCurrent, is_current);
 

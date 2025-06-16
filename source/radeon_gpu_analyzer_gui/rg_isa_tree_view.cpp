@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for shader ISA Disassembly tree view.
+//=============================================================================
+
 // Qt.
 #include <QtWidgets/QApplication>
 
@@ -16,12 +23,8 @@ RgIsaTreeView::RgIsaTreeView(QWidget* parent, RgIsaDisassemblyView* disassembly_
     : IsaTreeView(parent)
     , parent_disassembly_view_(disassembly_view)
 {
-    auto* shared_isa_item_delegate = this->itemDelegate();
-
-    RgIsaItemDelegate* rgp_isa_item_delegate = new RgIsaItemDelegate(this);
-    setItemDelegate(rgp_isa_item_delegate);
-
-    shared_isa_item_delegate->deleteLater();
+    RgIsaItemDelegate* rg_isa_item_delegate = new RgIsaItemDelegate(this);
+    ReplaceDelegate(rg_isa_item_delegate);
 
      // Explicitly set style for the tooltip background color, and connect it to theme color update.
     HandleColorThemeChanged();
@@ -32,22 +35,21 @@ RgIsaTreeView::RgIsaTreeView(QWidget* parent, RgIsaDisassemblyView* disassembly_
 
     // Connect signals used for actions in the top level disassembly view.
     ConnectDisassemblyViewSignals();
+
+    // Connect signal for when the isa tree view selects and scrolls to a new line.
+    connect(this, &IsaTreeView::ScrolledToIndex, this, &RgIsaTreeView::HandleScrolledToIndex);
 }
 
 RgIsaTreeView::~RgIsaTreeView()
 {
 }
 
-void RgIsaTreeView::ScrollToIndex(const QModelIndex source_index, bool record, bool select_row)
+void RgIsaTreeView::HandleScrolledToIndex(const QModelIndex source_index)
 {
-    // We are about to scroll to an index, first update line correlation at that index.
-    UpdateLineCorrelation(source_index);
-
-    // Then scroll to the index.
-    IsaTreeView::ScrollToIndex(source_index, record, select_row);
+    UpdateLineCorrelation(source_index, true);
 }
 
-bool RgIsaTreeView::UpdateLineCorrelation(const QModelIndex source_index)
+bool RgIsaTreeView::UpdateLineCorrelation(const QModelIndex source_index, bool update_source_code_editor)
 {
     bool ret = false;
 
@@ -82,7 +84,10 @@ bool RgIsaTreeView::UpdateLineCorrelation(const QModelIndex source_index)
                 entry_data.operation               = RgIsaItemModel::EntryData::Operation::kUpdateLineCorrelation;
                 model->UpdateData(&entry_data);
 
-                emit HighlightedIsaRowChanged(correlated_src_line_index);
+                if (update_source_code_editor)
+                {
+                    emit HighlightedIsaRowChanged(correlated_src_line_index);
+                }
 
                 ret = true;
             }
@@ -249,12 +254,10 @@ void RgIsaTreeView::HandleHighlightedInputSrcLineChanged(int src_line_index)
         QModelIndex isa_tree_view_index = model->GetFirstLineCorrelatedIndex(src_line_index);
         if (isa_tree_view_index.isValid())
         {
-            ScrollToIndex(isa_tree_view_index, false, false);
+            ScrollToIndex(isa_tree_view_index, false, false, false);
         }
-        else
-        {
-            UpdateLineCorrelation(isa_tree_view_index);
-        }
+
+        UpdateLineCorrelation(isa_tree_view_index, false);
     }
 }
 
@@ -281,8 +284,10 @@ void RgIsaTreeView::HandleShowNextMaxVgpr()
         QModelIndex isa_tree_view_index = model->GetMaxVgprIndex();
         if (isa_tree_view_index.isValid())
         {
-            ScrollToIndex(isa_tree_view_index, false, false);
+            ScrollToIndex(isa_tree_view_index, false, false, false);
         }
+
+        UpdateLineCorrelation(isa_tree_view_index, true);
     }
 }
 
@@ -309,8 +314,10 @@ void RgIsaTreeView::HandleShowPrevMaxVgpr()
         QModelIndex isa_tree_view_index = model->GetMaxVgprIndex();
         if (isa_tree_view_index.isValid())
         {
-            ScrollToIndex(isa_tree_view_index, false, false);
+            ScrollToIndex(isa_tree_view_index, false, false, false);
         }
+
+        UpdateLineCorrelation(isa_tree_view_index, true);
     }
 }
 

@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2024 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for dxc include handler.
+//=============================================================================
 
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_INCLUDE_HANDLER_DXC_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_INCLUDE_HANDLER_DXC_H_

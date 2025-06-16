@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RgEditorElement class. (The base class for typed editor elements.)
+//=============================================================================
+
 // C++.
 #include <cassert>
 

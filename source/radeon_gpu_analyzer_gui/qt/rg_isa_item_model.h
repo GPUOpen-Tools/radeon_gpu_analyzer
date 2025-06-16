@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for shader ISA Disassembly view item model.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_ITEM_MODEL_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_ITEM_MODEL_H_
 
@@ -28,7 +35,7 @@ public:
         // The function unit.
         kIsaColumnFunctionalUnit,
         // Total RGA isa item model columns.
-        kColumnCount                                                  
+        kColumnCount
     };
 
     // Predefined column headers.
@@ -53,20 +60,20 @@ public:
         // Path to current entry's isa file.
         std::string isa_file_path;
         // Path to current entry's isa file.
-        std::string vgpr_file_path;         
+        std::string vgpr_file_path;
         // Current entry's highlighted input src line number.
-        int         input_source_line_index = kInvalidCorrelationLineIndex;  
+        int input_source_line_index = kInvalidCorrelationLineIndex;
 
         enum class Operation
         {
             // Read isa and livereg file data into cache.
             kLoadData,
             // Evict isa and livereg file data from cache.
-            kEvictData,      
+            kEvictData,
             // Highlight next index with max vgpr.
             kGoToNextMaxVgpr,
             // Highlight prev index with max vgpr.
-            kGoToPrevMaxVgpr,        
+            kGoToPrevMaxVgpr,
             // Highlight isa lines input_source_line_index
             kUpdateLineCorrelation,
             // Total operations count.
@@ -78,17 +85,17 @@ public:
     typedef struct RgIndexData
     {
         // Number of live registers units for the row.
-        std::string num_live_registers;       
+        std::string num_live_registers;
         // Opcode for the row.
-        std::string opcode;      
+        std::string opcode;
         // Flag for max vgpr row.
-        bool        is_max_vgpr_row         = false;   
+        bool is_max_vgpr_row = false;
         // Input src line index correlated to the row.
-        int         input_source_line_index = kInvalidCorrelationLineIndex;  
+        int input_source_line_index = kInvalidCorrelationLineIndex;
         // Flag for if the the row is correlated to the higlighted src row.
-        bool        is_active_correlation   = false;        
+        bool is_active_correlation = false;
         // Tooltip for the vgpr column for the row.
-        std::string vgpr_tooltip;                                            
+        std::string vgpr_tooltip;
     } RgIndexData;
 
     explicit RgIsaItemModel(QObject* parent = nullptr);
@@ -115,6 +122,9 @@ public:
 
     // Get the isa row index for the current max vgpr.
     QModelIndex GetMaxVgprIndex() const;
+
+    // Set target gpu asic for the model.
+    bool SetArchitecture(const std::string target_gpu);
 
     // Cache the sizes of columns based on the isa text that is currently in this model.
     void CacheSizeHints() override;
@@ -156,7 +166,7 @@ protected:
 
     private:
         // The RgpIsaItemModel to reset.
-        RgIsaItemModel* isa_item_model_;  
+        RgIsaItemModel* isa_item_model_;
     };
 
     // Cached column widths.
@@ -200,9 +210,6 @@ protected:
 
     // Helper function to create vgpr column tooltip.
     void CreateVgprTooltip(std::string& tooltip, const std::string& num_live_registers) const;
-
-    // Set target gpu asic for the model.
-    bool SetArchitecture(const std::string target_gpu);
 
     // Cached Parsed csv data for all entries.
     std::unordered_map<std::string, std::vector<std::shared_ptr<IsaItemModel::Block>>> cached_isa_;

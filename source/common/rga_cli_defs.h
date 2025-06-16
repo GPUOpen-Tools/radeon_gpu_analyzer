@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga's cli definitions strings.
+//=============================================================================
+
 #pragma once
 
 // *** OpenCL-specific - BEGIN ***

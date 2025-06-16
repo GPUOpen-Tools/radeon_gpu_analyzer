@@ -1,3 +1,11 @@
+//=====================================================================
+// Copyright 2016-2025 (c), Advanced Micro Devices, Inc. All rights reserved.
+//
+/// \author AMD Developer Tools Team
+/// \file osApplication.cpp
+///
+//=====================================================================
+
 //------------------------------ osApplication.cpp ------------------------------
 
 #ifdef _GR_IPHONE_BUILD

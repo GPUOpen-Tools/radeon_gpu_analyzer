@@ -1,3 +1,8 @@
+/**
+* Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+* @author AMD Developer Tools Team
+*/
+
 /********************************************************************/
 /* Frame focus border
 /********************************************************************/
@@ -100,4 +105,9 @@ RgIsaDisassemblyView #frame[selected=true]
 RgIsaDisassemblyView #frame[selected=false]
 {
     border: 1px solid black;
+}
+
+RgIsaDisassemblyView #binary_target_gpu_
+{
+    color: white;
 }

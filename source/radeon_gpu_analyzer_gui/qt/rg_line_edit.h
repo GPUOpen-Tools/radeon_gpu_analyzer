@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RGA specific implementation of QLineEdit.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_LINE_EDIT_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_LINE_EDIT_H_
 

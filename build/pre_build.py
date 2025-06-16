@@ -1,5 +1,5 @@
 #! python3
-# Copyright (c) 2020-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Script to perform all necessary pre build steps. This includes:
 #

@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for shader ISA Disassembly view proxy model.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_PROXY_MODEL_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_PROXY_MODEL_H_
 

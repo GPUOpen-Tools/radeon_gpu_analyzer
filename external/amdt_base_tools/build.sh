@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# Copyright (c) 2016-2025 Advanced Micro Devices, Inc. All rights reserved.
+#
 # This script will build the current project target in scons.
 # you can pass any other scons parmaters here
 commandLineArgs=$*

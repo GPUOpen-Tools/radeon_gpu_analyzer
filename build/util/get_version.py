@@ -1,5 +1,7 @@
 #!python
 #
+# Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+#
 # Get RGA version from RGA/source/common/rga_version_info.h.
 #
 # Usage:

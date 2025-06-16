@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief RGA GUI entry point.
+//=============================================================================
+
 // C++.
 #include <cassert>
 #include <memory>
@@ -16,25 +23,26 @@
 #include "qt_common/utils/qt_util.h"
 
 // Local.
+#include "radeon_gpu_analyzer_gui/rg_config_manager.h"
+#include "radeon_gpu_analyzer_gui/rg_factory.h"
+#include "radeon_gpu_analyzer_gui/rg_isa_decode_manager.h"
+#include "radeon_gpu_analyzer_gui/rg_string_constants.h"
+#include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_app_state.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_main_window.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_startup_dialog.h"
-#include "radeon_gpu_analyzer_gui/rg_config_manager.h"
-#include "radeon_gpu_analyzer_gui/rg_string_constants.h"
-#include "radeon_gpu_analyzer_gui/rg_utils.h"
-#include "radeon_gpu_analyzer_gui/rg_factory.h"
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    int result = -1;
-    static const int kTopMargin = 8;
-    const int kExplicitMinWidth = 700;
-    const int kExplicitMinHeight = 700;
+    int              result             = -1;
+    static const int kTopMargin         = 8;
+    const int        kExplicitMinWidth  = 700;
+    const int        kExplicitMinHeight = 700;
 
 #ifdef RGA_GUI_AUTOMATION
     // Parse the command line and start Testing Thread.
-    RgTestConfig test_config = RgTestClientThread::ParseCmdLine(argc, argv);
-    RgTestClientThread  tester(test_config);
+    RgTestConfig       test_config = RgTestClientThread::ParseCmdLine(argc, argv);
+    RgTestClientThread tester(test_config);
     if (test_config.list_tests_ || test_config.test_gui_)
     {
         if (test_config.test_gui_ && test_config.iteration_ == 1)
@@ -78,7 +86,7 @@ int main(int argc, char *argv[])
 
     qApp->setPalette(QtCommon::QtUtils::ColorTheme::Get().GetCurrentPalette());
 
-    bool enable_feature_interop = QCoreApplication::arguments().count() == 2;
+    bool enable_feature_interop = QCoreApplication::arguments().count() >= 2;
     if (enable_feature_interop)
     {
         RgConfigManager::Instance().SetCurrentAPI(RgProjectAPI::kBinary);
@@ -124,6 +132,12 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (!RgIsaDecodeManager::GetInstance().Get())
+    {
+        RgUtils::ShowErrorMessageBox(kStrErrCannotInitializeDecodemanager);
+        RgLog::file << kStrErrCannotInitializeDecodemanager << std::endl;
+    }
+
     // Get the window geometry from config manager.
     RgWindowConfig window_config = {};
     RgConfigManager::Instance().GetWindowGeometry(window_config);
@@ -132,7 +146,7 @@ int main(int argc, char *argv[])
     RgMainWindow main_window;
 
 #ifdef RGA_GUI_AUTOMATION
-        tester.MainWndCreated(&main_window);
+    tester.MainWndCreated(&main_window);
 #endif
 
     // Initialize the main window.
@@ -148,7 +162,8 @@ int main(int argc, char *argv[])
     main_window.setMinimumSize(kExplicitMinWidth, kExplicitMinHeight);
 
     // Show maximized if either geometry value is zero, or if the window was closed maximized.
-    if (window_config.window_width == 0 || window_config.window_height == 0 || window_config.window_state & Qt::WindowMaximized || window_config.window_state & Qt::WindowFullScreen)
+    if (window_config.window_width == 0 || window_config.window_height == 0 || window_config.window_state & Qt::WindowMaximized ||
+        window_config.window_state & Qt::WindowFullScreen)
     {
         main_window.showMaximized();
     }
@@ -175,7 +190,7 @@ int main(int argc, char *argv[])
 
     if (enable_feature_interop)
     {
-        if (!main_window.LoadBinaryCodeObject(QCoreApplication::arguments().at(1)))
+        if (!main_window.LoadBinaryCodeObject())
         {
             // Display the fatal error to the user and exit after the user confirms.
             RgUtils::ShowErrorMessageBox(kStrLogCannotLoadBinaryCodeObject);

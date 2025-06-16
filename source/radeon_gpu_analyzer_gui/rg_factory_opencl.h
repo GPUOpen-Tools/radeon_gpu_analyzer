@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for the factory used to create openCL object instances.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_FACTORY_OPENCL_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_FACTORY_OPENCL_H_
 

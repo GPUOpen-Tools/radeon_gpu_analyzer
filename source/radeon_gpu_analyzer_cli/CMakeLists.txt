@@ -1,3 +1,7 @@
+#######################################################################################################################
+### Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+### @author AMD Developer Tools Team
+#######################################################################################################################
 cmake_minimum_required (VERSION 3.10)
 project (radeon_gpu_analyzer_cli)
 
@@ -6,7 +10,7 @@ set (RadeonGPUAnalyzerCLI_VERSION_MAJOR 2)
 set (RadeonGPUAnalyzerCLI_VERSION_MINOR 0)
 
 if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(TINYXML2_DIR "${PROJECT_SOURCE_DIR}/../../external/qt_isa_gui/external/isa_spec_manager/source/third_party/tinyxml2")
+    set(TINYXML2_DIR "${PROJECT_SOURCE_DIR}/../../external/isa_spec_manager/source/third_party/tinyxml2")
 endif()
 
 # Windows-specific preprocessor directives
@@ -180,18 +184,20 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
                            debug ${YAMLCPP_LIBD}
                            debug ${SPIRVCROSS_LIBD}
                            general ${UPDATECHECKAPI_LIBS}
-                           general tinyxml2)
+                           general tinyxml2
+                           general isa_decoder
+                           )
 else()
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools
                                ${Boost_LIBRARIES}
                                ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB}
-                               ${UPDATECHECKAPI_LIBS} tinyxml2)
+                               ${UPDATECHECKAPI_LIBS} tinyxml2 isa_decoder)
     else()
         target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools
                                ${BOOST_LIBRARY1} ${BOOST_LIBRARY3}
                                ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB}
-                               ${UPDATECHECKAPI_LIBS} tinyxml2)
+                               ${UPDATECHECKAPI_LIBS} tinyxml2 isa_decoder)
     endif()
 endif()
 
@@ -321,3 +327,8 @@ IF(WIN32)
     )
 ENDIF(WIN32)
 
+# Copy isa xml spec
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E echo "Copying external files to $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/../../external/isa_spec_xml/ $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/isa_spec/
+)

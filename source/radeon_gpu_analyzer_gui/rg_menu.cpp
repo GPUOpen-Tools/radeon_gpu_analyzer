@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for the Base claas of RGA Build view's File Menu.
+//=============================================================================
+
 // C++.
 #include <cassert>
 #include <sstream>
@@ -22,10 +29,10 @@
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
-RgMenu::RgMenu(QWidget* parent) :
-    QFrame(parent),
-    focus_index_(0),
-    tab_focus_index_(0)
+RgMenu::RgMenu(QWidget* parent)
+    : QFrame(parent)
+    , focus_index_(0)
+    , tab_focus_index_(0)
 {
     // Initialize the view object.
     ui_.setupUi(this);
@@ -293,8 +300,8 @@ void RgMenu::SetItemIsSaved(const std::string& fullFilename, bool is_saved)
     auto filepath_iter = full_file_path_to_menu_item_.find(fullFilename);
     if (filepath_iter != full_file_path_to_menu_item_.end())
     {
-        RgMenuFileItem* menu_item = filepath_iter->second;
-        bool is_item_valid = (menu_item != nullptr);
+        RgMenuFileItem* menu_item     = filepath_iter->second;
+        bool            is_item_valid = (menu_item != nullptr);
         assert(is_item_valid);
 
         if (is_item_valid)
@@ -341,16 +348,16 @@ void RgMenu::HandleBuildEnded()
     build_settings_menu_item_->setEnabled(true);
 }
 
-void RgMenu::HandleSwitchToFile(const std::string & file_path, int line_num)
+void RgMenu::HandleSwitchToFile(const std::string& file_path, int line_num)
 {
     // Set focus index to newly selected item.
-    bool  found = false;
+    bool found = false;
     for (size_t i = 0; i < menu_items_.size(); i++)
     {
         if (menu_items_[i]->GetFilename() == file_path)
         {
-            found = true;
-            focus_index_ = i;
+            found            = true;
+            focus_index_     = i;
             tab_focus_index_ = i;
             break;
         }
@@ -368,7 +375,7 @@ void RgMenu::HandleSwitchToFile(const std::string & file_path, int line_num)
 
 void RgMenu::HandleRenamedFile(const std::string& old_file_path, const std::string& new_file_path)
 {
-    auto menu_item_iter = full_file_path_to_menu_item_.find(old_file_path);
+    auto menu_item_iter     = full_file_path_to_menu_item_.find(old_file_path);
     bool found_old_filepath = menu_item_iter != full_file_path_to_menu_item_.end();
 
     // If the old path was found, remove it.
@@ -386,7 +393,7 @@ void RgMenu::HandleRenamedFile(const std::string& old_file_path, const std::stri
     emit FileRenamed(old_file_path, new_file_path);
 }
 
-void RgMenu::SelectFile(RgMenuFileItem* selected)
+void RgMenu::SelectFile(RgMenuFileItem* selected, bool hide_entry_point_lists)
 {
     if (selected != nullptr)
     {
@@ -411,9 +418,9 @@ void RgMenu::SelectFile(RgMenuFileItem* selected)
         UpdateHighlight(selected);
 
         // Set the file item as the current item.
-        UpdateCurrentItem(selected);
+        UpdateCurrentItem(selected, hide_entry_point_lists);
 
-        const std::string& new_file_name = selected->GetFilename();
+        const std::string&            new_file_name      = selected->GetFilename();
         StringToFileItemMap::iterator full_filename_iter = full_file_path_to_menu_item_.find(new_file_name);
         if (full_filename_iter != full_file_path_to_menu_item_.end())
         {
@@ -422,7 +429,7 @@ void RgMenu::SelectFile(RgMenuFileItem* selected)
     }
 }
 
-void RgMenu::DisplayFileInEditor(RgMenuFileItem* selected)
+void RgMenu::DisplayFileInEditor(RgMenuFileItem* selected, bool hide_entry_point_lists)
 {
     std::string old_filename;
     if (selected_file_item_ != nullptr)
@@ -431,7 +438,7 @@ void RgMenu::DisplayFileInEditor(RgMenuFileItem* selected)
         old_filename = selected_file_item_->GetFilename();
     }
 
-    const std::string& new_file_name = selected->GetFilename();
+    const std::string&            new_file_name      = selected->GetFilename();
     StringToFileItemMap::iterator full_filename_iter = full_file_path_to_menu_item_.find(new_file_name);
     if (full_filename_iter != full_file_path_to_menu_item_.end())
     {
@@ -439,7 +446,7 @@ void RgMenu::DisplayFileInEditor(RgMenuFileItem* selected)
         UpdateHighlight(selected);
 
         // Set this item as the current one.
-        UpdateCurrentItem(selected);
+        UpdateCurrentItem(selected, hide_entry_point_lists);
 
         // Update the cursors.
         UpdateCursor(selected);
@@ -455,7 +462,7 @@ void RgMenu::DisplayFileInEditor(RgMenuFileItem* selected)
 void RgMenu::HandleNextItemAction()
 {
     // Compute the index of the next button to focus on. Take the extra non-file items into account.
-    int offset = GetButtonCount() - 1;
+    int    offset    = GetButtonCount() - 1;
     size_t end_index = menu_items_.size() + offset;
 
     // Increment focus index and wrap around.
@@ -475,7 +482,7 @@ void RgMenu::HandleNextItemAction()
 void RgMenu::HandlePreviousItemAction()
 {
     // Compute the index of the next button to focus on. Take the extra non-file items into account.
-    int offset = GetButtonCount() - 1;
+    int    offset    = GetButtonCount() - 1;
     size_t end_index = menu_items_.size() + offset;
 
     // Decrement focus index and wrap around.
@@ -514,7 +521,7 @@ void RgMenu::HandleRenameSelectedFileAction()
 void RgMenu::UpdateCursor(RgMenuFileItem* current_stage_item)
 {
     // Reset cursor to pointing hand cursor for all items.
-    foreach(auto item, menu_items_)
+    foreach (auto item, menu_items_)
     {
         item->setCursor(Qt::PointingHandCursor);
     }
@@ -526,7 +533,7 @@ void RgMenu::UpdateCursor(RgMenuFileItem* current_stage_item)
 void RgMenu::UpdateHighlight(RgMenuFileItem* selected)
 {
     // Reset the highlight for all items.
-    foreach(auto item, menu_items_)
+    foreach (auto item, menu_items_)
     {
         item->SetHovered(false);
     }
@@ -541,14 +548,14 @@ void RgMenu::mousePressEvent(QMouseEvent* event)
     QFrame::mousePressEvent(event);
 }
 
-void RgMenu::UpdateCurrentItem(RgMenuFileItem* selected)
+void RgMenu::UpdateCurrentItem(RgMenuFileItem* selected, bool hide_entry_point_lists)
 {
     for (auto item : menu_items_)
     {
-        item->SetCurrent(false);
+        item->SetCurrent(false, hide_entry_point_lists);
     }
 
-    selected->SetCurrent(true);
+    selected->SetCurrent(true, hide_entry_point_lists);
 }
 
 void RgMenu::ClearFileMenuHighlight()

@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for class representing SOPK Instruction in shader isa.
+//=============================================================================
 
 #ifndef __SOPKINSTRUCTION_H
 #define __SOPKINSTRUCTION_H

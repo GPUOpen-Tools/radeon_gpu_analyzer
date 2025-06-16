@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for CLI utility functions.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_H_
 #define RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_H_
 
@@ -352,19 +355,13 @@ public:
     // Adjust base file name for live register analysis output file.
     static std::string AdjustBaseFileNameLiveregSgpr(const std::string& user_input_filename, const std::string& device);    
 
-    // Adjust base file name for stall analysis output file.
-    static std::string AdjustBaseFileNameStallAnalysis(const std::string& user_input_filename, const std::string& device);
-
     // Adjust base file name for cfg output file.
     static std::string AdjustBaseFileNameCfg(const std::string& user_input_filename, const std::string& device);
-
-    // Returns true if the compute bit is set for given entry_type.
-    static bool IsComputeBitSet(RgEntryType rga_entry_type);
 
     // Invoke the amdgpu-dis executable.
     static bool InvokeAmdgpudis(const std::string& cmd_line_options, bool should_print_cmd, std::string& out_text, std::string& error_txt);
 
-private:
+ private:
     // This is a static class (no instances).
     KcUtils(const KcUtils& other);
     KcUtils()  = default;

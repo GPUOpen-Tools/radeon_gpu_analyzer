@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for source code editor titlebar.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_SOURCE_EDITOR_TITLEBAR_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_SOURCE_EDITOR_TITLEBAR_H_
 

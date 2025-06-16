@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for RGA Build view's File Menu for Binary Analysis mode.
+//=============================================================================
+
 // C++.
 #include <cassert>
 #include <sstream>
@@ -70,7 +77,7 @@ void RgMenuBinary::ConnectDefaultItemSignals()
     // Handler invoked when the "Load CodeObj Binary" button is clicked within an API item.
     [[maybe_unused]] bool is_connected = connect(link_source_menu_item_->GetLoadCodeObjButton(), &QPushButton::clicked, this, &RgMenu::CreateFileButtonClicked);
     assert(is_connected);
-    
+
     // Handler invoked when the "Link Source File" button is clicked within an API item.
     //is_connected = connect(link_source_menu_item_->GetLinkSourceButton(), &QPushButton::clicked, this, &RgMenu::OpenFileButtonClicked);
     //assert(is_connected);
@@ -98,7 +105,7 @@ void RgMenuBinary::ConnectMenuFileItemSignals(RgMenuFileItem* menu_item)
         assert(is_connected);
 
         // Connect the file menu item selection handler for each new item.
-        is_connected =  connect(opencl_item, &RgMenuFileItemOpencl::MenuItemSelected, this, &RgMenu::MenuItemClicked);
+        is_connected = connect(opencl_item, &RgMenuFileItemOpencl::MenuItemSelected, this, &RgMenu::MenuItemClicked);
         assert(is_connected);
 
         // Connect the file menu item selection handler to update build settings button.
@@ -106,11 +113,11 @@ void RgMenuBinary::ConnectMenuFileItemSignals(RgMenuFileItem* menu_item)
         assert(is_connected);
 
         // Connect the file menu item rename handler for each new item.
-        is_connected =  connect(opencl_item, &RgMenuFileItemOpencl::FileRenamed, this, &RgMenu::HandleRenamedFile);
+        is_connected = connect(opencl_item, &RgMenuFileItemOpencl::FileRenamed, this, &RgMenu::HandleRenamedFile);
         assert(is_connected);
 
         // Connect the file menu item's entry point changed handler.
-        is_connected =  connect(opencl_item, &RgMenuFileItemOpencl::SelectedEntrypointChanged, this, &RgMenuBinary::SelectedEntrypointChanged);
+        is_connected = connect(opencl_item, &RgMenuFileItemOpencl::SelectedEntrypointChanged, this, &RgMenuBinary::SelectedEntrypointChanged);
         assert(is_connected);
     }
 }
@@ -121,7 +128,7 @@ bool RgMenuBinary::AddItem(const std::string& full_path, bool is_new_file_item)
 
     // Extract the file name from the full file path.
     std::string filename;
-    bool is_ok = RgUtils::ExtractFileName(full_path, filename);
+    bool        is_ok = RgUtils::ExtractFileName(full_path, filename);
     assert(is_ok);
     if (is_ok)
     {
@@ -172,22 +179,7 @@ bool RgMenuBinary::AddItem(const std::string& full_path, bool is_new_file_item)
         }
     }
 
-    if (wasAdded)
-    {
-        link_source_menu_item_->ToggleLoadCodeObjectButtonVisibilty(false);
-    }
-
     return wasAdded;
-}
-
-void RgMenuBinary::RemoveItem(const std::string& full_filename)
-{
-    RgMenu::RemoveItem(full_filename);
-
-    if (IsEmpty())
-    {
-        link_source_menu_item_->ToggleLoadCodeObjectButtonVisibilty(true);
-    }
 }
 
 void RgMenuBinary::RemoveAllItems()
@@ -213,6 +205,18 @@ void RgMenuBinary::ClearBuildOutputs()
         {
             file_item_opencl->ClearEntrypointsList();
         }
+    }
+}
+
+void RgMenuBinary::DeselectCurrentFile()
+{
+    // If a file was already selected, deselect it.
+    if (selected_file_item_ != nullptr)
+    {
+        selected_file_item_->SetHovered(false);
+        selected_file_item_->SetCurrent(false, false);
+        selected_file_item_->setCursor(Qt::PointingHandCursor);
+        selected_file_item_ = nullptr;
     }
 }
 
@@ -248,12 +252,12 @@ bool RgMenuBinary::OffsetCurrentFileEntrypoint(int offset)
             {
                 // Get the name of the currently selected entrypoint.
                 std::string selected_entrypoint_name;
-                bool is_entrypoint_selected = opencl_item->GetSelectedEntrypointName(selected_entrypoint_name);
+                bool        is_entrypoint_selected = opencl_item->GetSelectedEntrypointName(selected_entrypoint_name);
                 if (is_entrypoint_selected && !selected_entrypoint_name.empty())
                 {
                     // Compute the index of the currently selected entrypoint.
                     auto current_index_iter = std::find(entrypoint_names.begin(), entrypoint_names.end(), selected_entrypoint_name);
-                    int selected_index = current_index_iter - entrypoint_names.begin();
+                    int  selected_index     = current_index_iter - entrypoint_names.begin();
 
                     // Offset the index, and check that it's still a valid index in the name list.
                     selected_index += offset;
@@ -276,26 +280,33 @@ void RgMenuBinary::SetIsShowEntrypointListEnabled(bool is_enabled)
 {
     is_show_entrypoint_list_enabled_ = is_enabled;
 
-    // Disable the ability to expand file items' entry point list.
-    if (!is_enabled && selected_file_item_ != nullptr)
+    // Disable or enable the ability to expand file items' entry point list.
+    for (auto item : menu_items_)
     {
-        RgMenuFileItemOpencl* menu_item_opencl = static_cast<RgMenuFileItemOpencl*>(selected_file_item_);
-        assert(menu_item_opencl != nullptr);
-        if (menu_item_opencl != nullptr)
+        if (item != nullptr)
         {
-            menu_item_opencl->ShowEntrypointsList(false);
+            RgMenuFileItemOpencl* menu_item_opencl = static_cast<RgMenuFileItemOpencl*>(item);
+            assert(menu_item_opencl != nullptr);
+            if (menu_item_opencl != nullptr)
+            {
+                if (menu_item_opencl != selected_file_item_)
+                {
+                    menu_item_opencl->ClearSelectedEntryPoints();
+                }
+
+                menu_item_opencl->ShowEntrypointsList(is_enabled);
+            }
         }
     }
 }
 
 void RgMenuBinary::UpdateBuildOutput(const RgBuildOutputsMap& build_outputs)
 {
-    std::string gpu_with_outputs;
-    std::shared_ptr<RgCliBuildOutput> gpu_outputs = nullptr;
-    bool is_output_valid = RgUtils::GetFirstValidOutputGpu(build_outputs, gpu_with_outputs, gpu_outputs);
+    std::string                       gpu_with_outputs;
+    std::shared_ptr<RgCliBuildOutput> gpu_outputs     = nullptr;
+    bool                              is_output_valid = RgUtils::GetFirstValidOutputGpu(build_outputs, gpu_with_outputs, gpu_outputs);
     if (is_output_valid && (gpu_outputs != nullptr))
     {
-
         assert(gpu_outputs != nullptr);
         if (gpu_outputs != nullptr)
         {
@@ -306,22 +317,14 @@ void RgMenuBinary::UpdateBuildOutput(const RgBuildOutputsMap& build_outputs)
 
                 // Find the build output with the current item's filename.
                 const std::string& item_filename = file_item->GetFilename();
-                auto output_iter = gpu_outputs->per_file_output.find(item_filename);
+                auto               output_iter   = gpu_outputs->per_file_output.find(item_filename);
                 if (output_iter != gpu_outputs->per_file_output.end())
                 {
                     // Update the menu item with the outputs for the matching input file.
-                    RgFileOutputs& file_outputs = output_iter->second;
+                    RgFileOutputs&                    file_outputs  = output_iter->second;
                     const std::vector<RgEntryOutput>& entry_outputs = file_outputs.outputs;
                     file_item_opencl->UpdateBuildOutputs(entry_outputs);
                 }
-            }
-
-            // Does the user have a file selected in the menu?
-            RgMenuFileItemOpencl* file_item_opencl = static_cast<RgMenuFileItemOpencl*>(selected_file_item_);
-            if (file_item_opencl != nullptr)
-            {
-                // Auto-expand the list of entrypoints in the selected file item.
-                file_item_opencl->ShowEntrypointsList(true);
             }
         }
     }
@@ -442,7 +445,21 @@ void RgMenuBinary::HandleActivateItemAction()
         // If focus index is in the range of the menu file items, select the appropriate file item.
         if (focus_index_ < menu_items_.size())
         {
-            SelectFile(menu_items_[focus_index_]);
+            SelectFile(menu_items_[focus_index_], false);
+
+            for (RgMenuFileItem* item : menu_items_)
+            {
+                RgMenuFileItemOpencl* item_opencl = static_cast<RgMenuFileItemOpencl*>(item);
+                if (item_opencl != nullptr)
+                {
+                    item_opencl->ShowEntrypointsList(true);
+
+                    if (item != selected_file_item_)
+                    {
+                        item_opencl->ClearSelectedEntryPoints();
+                    }
+                }
+            }
 
             // Set the build settings button to have focus out style sheets.
             assert(build_settings_menu_item_ != nullptr);
@@ -465,7 +482,13 @@ void RgMenuBinary::HandleActivateItemAction()
                 if (item_opencl != nullptr)
                 {
                     item_opencl->SetHovered(false);
-                    item_opencl->SetCurrent(false);
+                    item_opencl->SetCurrent(false, false);
+                    item_opencl->ShowEntrypointsList(true);
+
+                    if (item != selected_file_item_)
+                    {
+                        item_opencl->ClearSelectedEntryPoints();
+                    }
                 }
             }
 
@@ -520,7 +543,7 @@ void RgMenuBinary::HandleBuildSettingsButtonClicked(bool /*checked*/)
     for (RgMenuFileItem* item : menu_items_)
     {
         item->SetHovered(false);
-        item->SetCurrent(false);
+        item->SetCurrent(false, false);
         item->setCursor(Qt::PointingHandCursor);
     }
 
@@ -634,14 +657,28 @@ void RgMenuBinary::HandleSelectedFileChanged(RgMenuFileItem* selected)
     {
         if (menu_items_[i] == selected)
         {
-            focus_index_ = i;
+            focus_index_     = i;
             tab_focus_index_ = i;
             break;
         }
     }
 
     // Display the currently selected file in the source editor.
-    DisplayFileInEditor(menu_items_[focus_index_]);
+    DisplayFileInEditor(menu_items_[focus_index_], false);
+
+    for (RgMenuFileItem* item : menu_items_)
+    {
+        RgMenuFileItemOpencl* item_opencl = static_cast<RgMenuFileItemOpencl*>(item);
+        if (item_opencl != nullptr)
+        {
+            item_opencl->ShowEntrypointsList(true);
+
+            if (item != selected_file_item_)
+            {
+                item_opencl->ClearSelectedEntryPoints();
+            }
+        }
+    }
 }
 
 void RgMenuBinary::SetButtonsNoFocus()
@@ -681,7 +718,7 @@ void RgMenuBinary::dragEnterEvent(QDragEnterEvent* event)
         assert(mime_data != nullptr);
         if (mime_data != nullptr)
         {
-            bool is_file_read_error     = false;
+            bool is_file_read_error = false;
 
             // Make sure the drop data has one or more file urls.
             if (mime_data->hasUrls())
@@ -729,6 +766,8 @@ void RgMenuBinary::dropEvent(QDropEvent* event)
     {
         if (mime_data->hasUrls())
         {
+            std::vector<std::string> file_paths;
+
             // Cycle thru all the files being dropped.
             foreach (auto file, mime_data->urls())
             {
@@ -738,10 +777,12 @@ void RgMenuBinary::dropEvent(QDropEvent* event)
                     // Get the file path.
                     std::string file_path = file.toLocalFile().toStdString();
 
-                    // Emit a signal to add an existing file.
-                    emit DragAndDropExistingFile(file_path);
+                    file_paths.push_back(file_path);
                 }
             }
+
+            // Emit a signal to add an existing file.
+            emit DragAndDropExistingFile(file_paths);
         }
         else
         {

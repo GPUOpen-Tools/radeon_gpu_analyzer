@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for Add/Create Menu Item.
+//=============================================================================
+
 #include "radeon_gpu_analyzer_gui/qt/rg_add_create_menu_item.h"
 
 // QtCommon.

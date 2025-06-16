@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for shader ISA Disassembly view for OpenCL.
+//=============================================================================
+
 // C++.
 #include <cassert>
 
@@ -21,6 +28,9 @@ bool RgIsaDisassemblyViewOpencl::PopulateBuildOutput(const std::shared_ptr<RgPro
     if (project_clone != nullptr)
     {
         std::vector<RgSourceFileInfo>& project_source_files = project_clone->source_files;
+
+        ui_.targetGpuPushButton->setVisible(true);
+        ui_.binary_target_gpu_->setVisible(false);
 
         // Build artifacts may contain disassembly for source files that are no longer
         // in the project, so provide a list of files to load, along with the current build output.

@@ -1,3 +1,11 @@
+//=====================================================================
+// Copyright 2011 Advanced Micro Devices, Inc. All rights reserved.
+//
+/// \author GPU Developer Tools
+/// \file $File: //devtools/main/Common/Src/CElf/Include/compat.h $
+/// \version $Revision: #15 $
+/// \brief  An include header for celf.
+//
 #ifndef _COMPAT_H_
 #define _COMPAT_H_ 1
 

@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga shared data types.
+//=============================================================================
+
 #pragma once
 
 // Type of Vulkan input file.

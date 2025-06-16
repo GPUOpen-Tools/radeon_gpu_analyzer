@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RGA application's main window.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MAIN_WINDOW_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MAIN_WINDOW_H_
 
@@ -60,7 +66,7 @@ public:
     virtual bool eventFilter(QObject* obj, QEvent* event) override;
 
     // Method to load a binary code object file, directly via the command line.
-    bool LoadBinaryCodeObject(const QString filename);
+    bool LoadBinaryCodeObject();
 
 signals:
     // Signal emitted when the user triggers the Edit menu's Find action.
@@ -203,22 +209,23 @@ protected:
 
     // Actions for the menus - START.
 
-    QAction* focus_next_widget_action_ = nullptr;
-    QAction* focus_prev_widget_action_ = nullptr;
-    QAction* open_project_action_ = nullptr;
-    QAction* save_action_ = nullptr;
-    QAction* back_to_home_action_ = nullptr;
-    QAction* build_project_action_ = nullptr;
-    QAction* build_settings_action_ = nullptr;
-    QAction* pipeline_state_action_ = nullptr;
-    QAction* help_about_action_ = nullptr;
-    QAction* exit_action_ = nullptr;
-    QAction* go_to_line_action_ = nullptr;
-    QAction* find_action_ = nullptr;
-    QAction* show_max_vgprs_action_ = nullptr;
-    QAction* cancel_build_action_ = nullptr;
+    QAction* focus_next_widget_action_          = nullptr;
+    QAction* focus_prev_widget_action_          = nullptr;
+    QAction* open_project_action_               = nullptr;
+    QAction* save_action_                       = nullptr;
+    QAction* back_to_home_action_               = nullptr;
+    QAction* build_project_action_              = nullptr;
+    QAction* disassemble_binaries_action_       = nullptr;
+    QAction* build_settings_action_             = nullptr;
+    QAction* pipeline_state_action_             = nullptr;
+    QAction* help_about_action_                 = nullptr;
+    QAction* exit_action_                       = nullptr;
+    QAction* go_to_line_action_                 = nullptr;
+    QAction* find_action_                       = nullptr;
+    QAction* show_max_vgprs_action_             = nullptr;
+    QAction* cancel_build_action_               = nullptr;
     QAction* help_getting_started_guide_action_ = nullptr;
-    QAction* help_manul_action_ = nullptr;
+    QAction* help_manul_action_                 = nullptr;
 
     // Actions for the menus - END.
 
@@ -328,6 +335,9 @@ protected slots:
     // Handler for building the current program.
     void HandleBuildProjectEvent();
 
+    // Handler for having the cli reproduce the disassembly files for the current binary analysis project.
+    void HandleDissasembleBinaryFilesEvent(std::vector<std::string> binaries_to_build = {});
+
     // Handler for viewing the program build settings.
     void HandleBuildSettingsEvent();
 
@@ -386,7 +396,7 @@ protected slots:
     void HandleTabBarTabChanged(bool save_changes);
 
     // Handler for when the text of the status bar is changed.
-    void HandleStatusBarMessageChange(const QString&  msg);
+    void HandleStatusBarMessageChange(const QString& msg);
 
     // Handler for when the custom status bar signals API change by user.
     void HandleChangeAPIMode(RgProjectAPI switch_to_api);
@@ -397,4 +407,4 @@ protected slots:
     // Handler for when the blinking notification message timer fires.
     void HandleAppNotificationMessageTimerFired();
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MAIN_WINDOW_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MAIN_WINDOW_H_

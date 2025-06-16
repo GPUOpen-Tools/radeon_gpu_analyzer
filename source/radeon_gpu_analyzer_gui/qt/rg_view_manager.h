@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for a manger for multi purpose view container.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_VIEW_MANAGER_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_VIEW_MANAGER_H_
 

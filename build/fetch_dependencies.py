@@ -1,4 +1,5 @@
-#! /usr/bin/python
+#! python3
+# Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Simple script to update a set of common directories that are needed as dependencies of the current project
 # Usage:

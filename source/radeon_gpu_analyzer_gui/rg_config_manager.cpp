@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for the configuration manager.
+//=============================================================================
 // C++.
 #include <algorithm>
 #include <cassert>
@@ -110,7 +116,7 @@ private:
             auto mode_architectures_iter = version_info->gpu_architectures.find(api_mode);
             if (mode_architectures_iter != version_info->gpu_architectures.end())
             {
-                std::vector<RgGpuArchitecture>&  mode_architectures = mode_architectures_iter->second;
+                std::vector<RgGpuArchitecture>& mode_architectures = mode_architectures_iter->second;
                 std::sort(mode_architectures.begin(), mode_architectures.end(), GpuComparator<RgGpuArchitecture>{});
 
                 auto last_architecture_iter = mode_architectures.rbegin();
@@ -125,7 +131,7 @@ private:
                     const std::string& latest_family_name = latest_family->family_name;
 
                     // Add the latest supported GPU family as the default target GPU.
-                    build_settings->target_gpus.push_back(latest_family_name); 
+                    build_settings->target_gpus.push_back(latest_family_name);
                 }
                 else
                 {
@@ -166,16 +172,12 @@ private:
         return ret;
     }
 
-        // Creates the default Vulkan build settings.
+    // Creates the default Vulkan build settings.
     static std::shared_ptr<RgBuildSettingsBinary> CreateDefaultBuildSettingsBinary()
     {
         std::shared_ptr<RgBuildSettingsBinary> ret = std::make_shared<RgBuildSettingsBinary>();
 
         assert(ret != nullptr);
-        if (ret != nullptr)
-        {
-            // 
-        }
 
         return ret;
     }
@@ -277,7 +279,7 @@ bool RgConfigManager::Init()
                 }
 
                 // Loop through each supported API and create + store the default build settings for that API.
-                for (int api_index = static_cast<int>(RgProjectAPI::kUnknown)+1; api_index < static_cast<int>(RgProjectAPI::kApiCount); ++api_index)
+                for (int api_index = static_cast<int>(RgProjectAPI::kUnknown) + 1; api_index < static_cast<int>(RgProjectAPI::kApiCount); ++api_index)
                 {
                     RgProjectAPI current_api = static_cast<RgProjectAPI>(api_index);
 
@@ -431,7 +433,10 @@ void RgConfigManager::AddSourceFileToProject(const std::string& source_file_path
     }
 }
 
-bool RgConfigManager::AddCodeObjFileToProject(const std::string& bin_file_path, std::shared_ptr<RgProject> project, int clone_index) const
+bool RgConfigManager::AddCodeObjFileToProject(const std::string&         bin_file_path,
+                                              std::shared_ptr<RgProject> project,
+                                              int                        clone_index,
+                                              QString                    function_name) const
 {
     bool ret = false;
     assert(project != nullptr);
@@ -450,15 +455,16 @@ bool RgConfigManager::AddCodeObjFileToProject(const std::string& bin_file_path, 
                 auto clone = project->clones[clone_index];
                 if (clone != nullptr && clone->build_settings != nullptr)
                 {
-                    clone->build_settings->binary_file_name = bin_file_path;
-                    ret                                     = true;
+                    clone->build_settings->binary_file_names.push_back(bin_file_path);
+                    clone->build_settings->initial_binary_function_name = function_name.toStdString();
+
+                    ret = true;
                 }
             }
         }
     }
     return ret;
 }
-
 
 void RgConfigManager::AddShaderStage(RgPipelineStage stage, const std::string& source_file_path, std::shared_ptr<RgProject> project, int clone_index) const
 {
@@ -628,13 +634,30 @@ void RgConfigManager::RemoveSourceFilePath(std::shared_ptr<RgProject> project, i
             {
                 if (current_api_ == RgProjectAPI::kBinary)
                 {
-                    bool file_path_found = (clone->build_settings != nullptr && clone->build_settings->binary_file_name == source_file_path);
-                    assert(file_path_found);
-                    // If the old binary file path exists in the clone, update it.
-                    if (file_path_found)
+                    bool file_path_found = false;
+
+                    if (clone->build_settings != nullptr)
                     {
-                        clone->build_settings->binary_file_name.clear();
+                        // Erase the binary file name and it's corresponding gpu from the build settings.
+                        auto gpu_iter = clone->build_settings->target_gpus.begin();
+                        for (auto iter = clone->build_settings->binary_file_names.begin(); iter < clone->build_settings->binary_file_names.end(); ++iter)
+                        {
+                            if (*iter == source_file_path)
+                            {
+                                clone->build_settings->binary_file_names.erase(iter);
+                                file_path_found = true;
+
+                                if (gpu_iter < clone->build_settings->target_gpus.end())
+                                {
+                                    clone->build_settings->target_gpus.erase(gpu_iter);
+                                }
+
+                                break;
+                            }
+                            gpu_iter++;
+                        }
                     }
+                    assert(file_path_found);
                 }
                 else
                 {
@@ -675,9 +698,9 @@ void RgConfigManager::GetProjectSourceFilePaths(std::shared_ptr<RgProject> proje
     }
 }
 
-std::string RgConfigManager::GetProjectBinaryFilePath(std::shared_ptr<RgProject> project, int clone_index) const
+std::vector<std::string> RgConfigManager::GetProjectBinaryFilePath(std::shared_ptr<RgProject> project, int clone_index) const
 {
-    std::string result;
+    std::vector<std::string> result;
     assert(project != nullptr);
     if (project != nullptr)
     {
@@ -690,7 +713,7 @@ std::string RgConfigManager::GetProjectBinaryFilePath(std::shared_ptr<RgProject>
             auto clone = project->clones[clone_index];
             if (clone != nullptr && clone->build_settings)
             {
-                result = clone->build_settings->binary_file_name;
+                result = clone->build_settings->binary_file_names;
             }
         }
     }
@@ -713,13 +736,24 @@ void RgConfigManager::UpdateSourceFilepath(const std::string&         old_file_p
 
         if (current_api_ == RgProjectAPI::kBinary)
         {
-            bool old_file_path_found = (clone->build_settings != nullptr && clone->build_settings->binary_file_name == old_file_path);
+            bool old_file_path_found = false;
+
+            if (clone->build_settings != nullptr)
+            {
+                for (auto iter = clone->build_settings->binary_file_names.begin(); iter < clone->build_settings->binary_file_names.end(); ++iter)
+                {
+                    if (*iter == old_file_path)
+                    {
+                        old_file_path_found = true;
+
+                        clone->build_settings->binary_file_names.erase(iter);
+                        clone->build_settings->binary_file_names.push_back(new_file_path);
+                        break;
+                    }
+                }
+            }
             assert(old_file_path_found);
             // If the old binary file path exists in the clone, update it.
-            if (old_file_path_found)
-            {
-                clone->build_settings->binary_file_name = new_file_path;
-            }
         }
         else
         {

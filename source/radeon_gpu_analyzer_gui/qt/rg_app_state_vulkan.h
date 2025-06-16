@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for a Vulkan-mode-specific implementation of the RgAppState.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_VULKAN_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_VULKAN_H_
 
@@ -8,9 +15,9 @@
 #include "source/radeon_gpu_analyzer_gui/qt/rg_app_state.h"
 
 // Forward declarations.
-class  RgBuildViewVulkan;
-class  RgStartTabVulkan;
-class  QAction;
+class RgBuildViewVulkan;
+class RgStartTabVulkan;
+class QAction;
 struct RgProject;
 
 // A Vulkan-mode-specific implementation of the RgAppState.
@@ -19,7 +26,7 @@ class RgAppStateVulkan : public RgAppStateGraphics
     Q_OBJECT
 
 public:
-    RgAppStateVulkan() = default;
+    RgAppStateVulkan()          = default;
     virtual ~RgAppStateVulkan() = default;
 
     // Reset the RgBuildView instance used to display the current project.
@@ -97,5 +104,4 @@ private:
     // An action responsible for creating a new compute pipeline.
     QAction* new_compute_pipeline_action_ = nullptr;
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_VULKAN_H_
-
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_VULKAN_H_

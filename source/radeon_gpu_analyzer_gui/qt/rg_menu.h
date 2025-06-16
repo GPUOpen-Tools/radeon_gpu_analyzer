@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for the Base claas of RGA Build view's File Menu.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_H_
 
@@ -40,7 +46,7 @@ typedef std::map<std::string, RgMenuFileItem*> StringToFileItemMap;
 
 // Stylesheet for add/create buttons when in focus.
 static const char* kStrButtonFocusOutStylesheet = "QPushButton { margin: 1px; background: palette(button);}";
-static const char* kStrButtonFocusInStylesheet = "QPushButton { border: 1px solid #6666FF; margin: 1px; background: palette(highlight); }";
+static const char* kStrButtonFocusInStylesheet  = "QPushButton { border: 1px solid #6666FF; margin: 1px; background: palette(highlight); }";
 
 // Indices for special case file items.
 enum class FileMenuFocusItems
@@ -118,7 +124,7 @@ public:
     virtual void RemoveItem(const std::string& full_filename);
 
     // Deselect the currently selected file item.
-    void DeselectCurrentFile();
+    virtual void DeselectCurrentFile();
 
     // Mark an item as saved or unsaved (denoted by "*" after the filename).
     void SetItemIsSaved(const std::string& full_filename, bool is_saved);
@@ -188,10 +194,10 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
 
     // Select the given file item.
-    void SelectFile(RgMenuFileItem* selected);
+    void SelectFile(RgMenuFileItem* selected, bool hide_entry_point_lists = true);
 
     // Display the selected file in the source editor.
-    void DisplayFileInEditor(RgMenuFileItem* selected);
+    void DisplayFileInEditor(RgMenuFileItem* selected, bool hide_entry_point_lists = true);
 
     // Update the mouse cursor.
     void UpdateCursor(RgMenuFileItem* item);
@@ -206,7 +212,7 @@ protected:
     void ClearFileMenuItemSelection();
 
     // Update the current item setting.
-    void UpdateCurrentItem(RgMenuFileItem* item);
+    void UpdateCurrentItem(RgMenuFileItem* item, bool hide_entry_point_lists);
 
     // Maps every full path to corresponding file menu item.
     StringToFileItemMap full_file_path_to_menu_item_;
@@ -215,7 +221,7 @@ protected:
     std::vector<RgMenuFileItem*> menu_items_;
 
     // The layout that holds the menu items.
-    QVBoxLayout*  layout_ = nullptr;
+    QVBoxLayout* layout_ = nullptr;
 
     // The build settings menu item (a file menu for any API should have a Build Settings item).
     RgMenuBuildSettingsItem* build_settings_menu_item_ = nullptr;
@@ -227,13 +233,13 @@ protected:
     size_t tab_focus_index_ = 0;
 
     // File menu actions.
-    QAction* next_item_action_ = nullptr;
-    QAction* prev_item_action_ = nullptr;
-    QAction* open_context_menu_action_ = nullptr;
-    QAction* activate_item_action_ = nullptr;
+    QAction* next_item_action_            = nullptr;
+    QAction* prev_item_action_            = nullptr;
+    QAction* open_context_menu_action_    = nullptr;
+    QAction* activate_item_action_        = nullptr;
     QAction* rename_selected_file_action_ = nullptr;
-    QAction* tab_key_action_ = nullptr;
-    QAction* shift_tab_key_action_ = nullptr;
+    QAction* tab_key_action_              = nullptr;
+    QAction* shift_tab_key_action_        = nullptr;
 
     // The currently selected file item within the file menu.
     RgMenuFileItem* selected_file_item_ = nullptr;
@@ -287,4 +293,4 @@ private slots:
     // Handler invoked when the user triggers the rename selected file action.
     void HandleRenameSelectedFileAction();
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_H_

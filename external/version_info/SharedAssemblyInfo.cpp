@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for Version info.
+//=============================================================================
+
 #include "stdafx.h"
 
 using namespace System::Reflection;

@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for vulkan backend class.
+//=============================================================================
 // C++.
 #include <cassert>
 #include <string>

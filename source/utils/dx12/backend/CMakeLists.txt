@@ -1,8 +1,13 @@
+#######################################################################################################################
+### Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+### @author AMD Developer Tools Team
+#######################################################################################################################
+
 cmake_minimum_required(VERSION 3.10)
 project(dx12_backend)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
-set(TINYXML2_DIR "${PROJECT_SOURCE_DIR}/../../../../external/qt_isa_gui/external/isa_spec_manager/source/third_party/tinyxml2")
+set(TINYXML2_DIR "${PROJECT_SOURCE_DIR}/../../../../external/isa_spec_manager/source/third_party/tinyxml2")
 
 file(GLOB  SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/*.cpp"

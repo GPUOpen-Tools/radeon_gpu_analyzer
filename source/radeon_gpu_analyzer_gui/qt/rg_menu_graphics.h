@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RGA Build view's File Menu for Graphics APIs.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_GRAPHICS_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_GRAPHICS_H_
 

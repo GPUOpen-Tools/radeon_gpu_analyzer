@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2024 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for dx12 gpso auto generation utilities.
+//=============================================================================
 
 // Dx12 Backend.
 #include "utils/dx12/backend/rg_dx12_utils.h"

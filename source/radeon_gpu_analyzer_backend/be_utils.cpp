@@ -1,7 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
-
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for rga backend utilis.
+//=============================================================================
 // C++.
 #include <algorithm>
 #include <sstream>
@@ -177,6 +179,8 @@ void BeUtils::DeleteOutputFiles(const BeProgramPipeline& output_file_path)
     DeleteFileFromDisk(output_file_path.geometry_shader);
     DeleteFileFromDisk(output_file_path.fragment_shader);
     DeleteFileFromDisk(output_file_path.compute_shader);
+    DeleteFileFromDisk(output_file_path.mesh_shader);
+    DeleteFileFromDisk(output_file_path.task_shader);
 }
 
 void BeUtils::DeleteFileFromDisk(const gtString& file_path)

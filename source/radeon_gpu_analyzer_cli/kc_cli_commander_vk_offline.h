@@ -1,6 +1,9 @@
-//======================================================================
-// Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for CLI Commander interface for compiling with the Vk-offline Compiler (amdllpc).
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_VK_OFFLINE_H_
 #define RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_VK_OFFLINE_H_
 

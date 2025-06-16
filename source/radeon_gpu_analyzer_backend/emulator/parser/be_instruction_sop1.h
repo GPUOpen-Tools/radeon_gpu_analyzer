@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for class representing SOP1 Instruction in shader isa.
+//=============================================================================
 
 #ifndef __SOP1INSTRUCTION_H
 #define __SOP1INSTRUCTION_H

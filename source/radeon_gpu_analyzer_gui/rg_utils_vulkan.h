@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for the rga gui utilities for Vulkan.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_UTILS_VULKAN_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_UTILS_VULKAN_H_
 

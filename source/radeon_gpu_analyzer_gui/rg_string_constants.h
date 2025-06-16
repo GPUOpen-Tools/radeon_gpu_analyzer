@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for the RGA gui constant string constants.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_STRING_CONSTANTS_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_STRING_CONSTANTS_H_
 
@@ -90,6 +96,7 @@ static const char* kStrErrCannotReadConfigFile                = "RGA is unable t
 static const char* kStrErrDeleteFileAndRerun                  = "Please delete the file, and re-run the application.";
 static const char* kStrErrRgaWillNowExit                      = "RGA will now exit.";
 static const char* kStrErrCannotRestoreDefaultSettings        = "Cannot restore default settings.";
+static const char* kStrErrCannotAddMultiFile                  = "One or more files could not be added since a file with that name already exists.";
 static const char* kStrErrCannotAddFileA                      = "Cannot add the file: ";
 static const char* kStrErrCannotAddFileB                      = ", since a file with that name already exists.";
 static const char* kStrErrCannotWriteToFile                   = "Cannot write to file: ";
@@ -133,6 +140,8 @@ static const char* kStrErrorMultisamplingSampleMaskInvalidA =
     "The multisampling state 'rasterizationSamples' field is incompatible with the value of 'pSampleMask'.";
 static const char* kStrErrorMultisamplingSampleMaskInvalidB =
     "Please adjust the 'rasterizationSamples' field or alter the dimension of 'pSampleMask' as required by the Vulkan spec.";
+static const char* kStrErrCannotInitializeDecodemanager =
+    "Failed to initialize decoder: Isa spec files may be missing, corrupted, or malformed. Some RGA features may not function as expected.";
 
 // *** ERROR STRINGS  - END ***
 
@@ -179,16 +188,18 @@ static const char* kStrMenuShowMaxVgprLines        = "Go to &next maximum VGPR p
 static const char* kStrMenuShowMaxVgprLinesTooltip = "Jump to the next line with maximum VGPR pressure. (Ctrl+F4)";
 
 // Build menu items.
-static const char* kStrMenuBarBuild                = "&Build";
-static const char* kStrMenuBarBuildProject         = "Build project";
-static const char* kStrMenuBarBuildProjectTooltip  = "Build the current project (Ctrl+Shift+B).";
-static const char* kStrMenuBarBuildSettingsTooltip = "View the current project's build settings (F8).";
-static const char* kStrMenuBarBuildCancelTooltip   = "Cancel the build process (Ctrl+Shift+T).";
-static const char* kStrMenuBuildSettings           = "Build settings";
-static const char* kStrMenuPipelineStateEditor     = "Pipeline state";
-static const char* kStrMenuBarPipelineStateTooltip = "View and edit the current project's pipeline state (F9).";
-static const char* kStrMenuBuildSettingsLower      = "build settings";
-static const char* kStrMenuCancelBuild             = "Cancel build";
+static const char* kStrMenuBarBuild                      = "&Build";
+static const char* kStrMenuBarBuildProject               = "Build project";
+static const char* kStrMenuBarBuildProjectTooltip        = "Build the current project (Ctrl+Shift+B).";
+static const char* kStrMenuBarAnalyzeProject             = "Analyze project";
+static const char* kStrMenuBarAnalyzeProjectTooltip      = "Analyze the current project (Ctrl+Shift+B).";
+static const char* kStrMenuBarBuildSettingsTooltip       = "View the current project's build settings (F8).";
+static const char* kStrMenuBarBuildCancelTooltip         = "Cancel the build process (Ctrl+Shift+T).";
+static const char* kStrMenuBuildSettings                 = "Build settings";
+static const char* kStrMenuPipelineStateEditor           = "Pipeline state";
+static const char* kStrMenuBarPipelineStateTooltip       = "View and edit the current project's pipeline state (F9).";
+static const char* kStrMenuBuildSettingsLower            = "build settings";
+static const char* kStrMenuCancelBuild                   = "Cancel build";
 
 // Graphics menu item strings.
 static const char* kStrGraphicsMenuPipelineStateTooltip            = "View/Edit the current pipeline's state (F9).";
@@ -375,7 +386,7 @@ static const char* kStrErrInvalidGpusSpecified    = "The following are not valid
 
 // Select include directories strings.
 static const char* kStrIncludeDirDialogBrowseButton       = "&Browse...";
-static const char* kStrIncludeDirDialogSelectIncludeDirs  = "Add include directories";
+static const char* kStrIncludeDirDialogSelectIncludeDirs  = "Include directories";
 static const char* kStrIncludeDirDialogDeleteBoxTitle     = "Delete confirmation";
 static const char* kStrIncludeDirDialogDeleteBoxMessage   = "Are you sure you want to delete this entry?";
 static const char* kStrIncludeDirDialogDirDoesNotExist    = "This directory does not exist.";
@@ -384,7 +395,7 @@ static const char* kStrIncludeDirDialogSelectDirTitle     = "Select a directory"
 static const char* kStrIcdLocationDialogSelectFileTitle   = "Browse for Vulkan ICD file";
 
 // Predefined macros editor dialog strings.
-static const char* kStrPreprocessorDirectivesDialogTitle                       = "Add preprocessor directives";
+static const char* kStrPreprocessorDirectivesDialogTitle                       = "Preprocessor directives";
 static const char* kStrPreprocessorDirectivesDialogDirectiveIsDuplicate        = "Definition already defined: ";
 static const char* kStrPreprocessorDirectivesDialogDirectiveContainsWhitespace = "Definition contains whitespace: ";
 
@@ -508,8 +519,8 @@ static const char* kStrSourceEditorContextMenuSelectAll  = "Select all";
 // *** DISASSEMBLY VIEW STRINGS - START ***
 
 // Disassembly table column names.
-static const char* kStrDisassemblyColumnAll            = "All";
-static const char* kStrDisassemblyLiveVgprHeaderPart   = "VGPR pressure";
+static const char* kStrDisassemblyColumnAll          = "All";
+static const char* kStrDisassemblyLiveVgprHeaderPart = "VGPR pressure";
 
 // Context menu strings
 static const char* kStrDisassemblyTableContextMenuCopy = "Copy selected disassembly";

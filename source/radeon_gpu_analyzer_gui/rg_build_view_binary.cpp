@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for Build View class for Binary Analysis mode.
+//=============================================================================
+
 // C++.
 #include <cassert>
 #include <sstream>
@@ -14,7 +21,7 @@
 #include "qt_common/utils/qt_util.h"
 
 // Infra.
-#include "source/common/rga_shared_utils.h"
+#include "common/rga_shared_utils.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_build_settings_view_opencl.h"
@@ -22,6 +29,7 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_build_view_binary.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_cli_output_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view_binary.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_build_settings_item.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_file_item_opencl.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_binary.h"
@@ -50,18 +58,23 @@ void RgBuildViewBinary::ConnectBuildSettingsSignals()
 
     if (build_settings_view_opencl != nullptr)
     {
-        bool is_connected = connect(build_settings_view_opencl, &RgBuildSettingsViewOpencl::PendingChangesStateChanged, this, &RgBuildView::HandleBuildSettingsPendingChangesStateChanged);
+        bool is_connected = connect(build_settings_view_opencl,
+                                    &RgBuildSettingsViewOpencl::PendingChangesStateChanged,
+                                    this,
+                                    &RgBuildView::HandleBuildSettingsPendingChangesStateChanged);
         assert(is_connected);
 
         is_connected = connect(build_settings_view_opencl, &RgBuildSettingsViewOpencl::ProjectBuildSettingsSaved, this, &RgBuildView::HandleBuildSettingsSaved);
         assert(is_connected);
 
         // Connect to build settings view's edit line's "focus in" event to color the frame green.
-        is_connected = connect(build_settings_view_opencl, &RgBuildSettingsViewOpencl::SetFrameBorderGreenSignal, this, &RgBuildView::HandleSetFrameBorderGreen);
+        is_connected =
+            connect(build_settings_view_opencl, &RgBuildSettingsViewOpencl::SetFrameBorderGreenSignal, this, &RgBuildView::HandleSetFrameBorderGreen);
         assert(is_connected);
 
         // Connect to build settings view's edit line's "focus out" event to color the frame black.
-        is_connected = connect(build_settings_view_opencl, &RgBuildSettingsViewOpencl::SetFrameBorderBlackSignal, this, &RgBuildView::HandleSetFrameBorderBlack);
+        is_connected =
+            connect(build_settings_view_opencl, &RgBuildSettingsViewOpencl::SetFrameBorderBlackSignal, this, &RgBuildView::HandleSetFrameBorderBlack);
         assert(is_connected);
     }
 }
@@ -145,14 +158,14 @@ void RgBuildViewBinary::CurrentBuildSucceeded()
 
     // Update the correlation state for each source code editor based on which source
     // files were built successfully.
-    std::string output_gpu;
-    std::shared_ptr<RgCliBuildOutput> build_output = nullptr;
-    bool isOutputValid = RgUtils::GetFirstValidOutputGpu(build_outputs_, output_gpu, build_output);
+    std::string                       output_gpu;
+    std::shared_ptr<RgCliBuildOutput> build_output  = nullptr;
+    bool                              isOutputValid = RgUtils::GetFirstValidOutputGpu(build_outputs_, output_gpu, build_output);
     if (isOutputValid && build_output != nullptr)
     {
         // Store the path to the current source file using the file menu.
         std::string current_source_file_path;
-        RgMenu* menu = GetMenu();
+        RgMenu*     menu = GetMenu();
         assert(menu != nullptr);
         if (menu != nullptr)
         {
@@ -223,18 +236,17 @@ void RgBuildViewBinary::ConnectDisassemblyViewApiSpecificSignals()
     if (disassembly_view_ != nullptr)
     {
         // Connect the handler invoked when the user changes the selected entrypoint.
-        bool is_connected = connect(this, &RgBuildViewBinary::SelectedEntrypointChanged,
-            disassembly_view_, &RgIsaDisassemblyView::HandleSelectedEntrypointChanged);
+        bool is_connected =
+            connect(this, &RgBuildViewBinary::SelectedEntrypointChanged, disassembly_view_, &RgIsaDisassemblyView::HandleSelectedEntrypointChanged);
         assert(is_connected);
 
         // Connect the RgIsaDisassemblyView's entry point changed handler.
-        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::SelectedEntrypointChanged,
-            this, &RgBuildViewBinary::HandleSelectedEntrypointChanged);
+        is_connected = connect(disassembly_view_, &RgIsaDisassemblyView::SelectedEntrypointChanged, this, &RgBuildViewBinary::HandleSelectedEntrypointChanged);
         assert(is_connected);
 
         // Connect the handler invoked when the user changes the selected entrypoint.
-        is_connected = connect(this, &RgBuildViewBinary::SelectedExtremelyLongKernelNameChanged,
-            disassembly_view_, &RgIsaDisassemblyView::HandleSetKernelNameLabel);
+        is_connected =
+            connect(this, &RgBuildViewBinary::SelectedExtremelyLongKernelNameChanged, disassembly_view_, &RgIsaDisassemblyView::HandleSetKernelNameLabel);
         assert(is_connected);
     }
 }
@@ -255,7 +267,7 @@ bool RgBuildViewBinary::IsSourceFileInProject(const std::string& source_file_pat
     std::vector<std::string> source_files;
     RgConfigManager::Instance().GetProjectSourceFilePaths(project_, clone_index_, source_files);
 
-    for (std::vector<std::string>::iterator iter = source_files.begin(); iter != source_files.end(); ++iter)
+    for (auto iter = source_files.begin(); iter != source_files.end(); ++iter)
     {
         if (RgaSharedUtils::ComparePaths(source_file_path, *iter))
         {
@@ -288,11 +300,14 @@ bool RgBuildViewBinary::PopulateMenu()
     // Fill up the file path list with the paths corrected by the user.
     std::vector<std::string> source_file_paths;
     RgConfigManager::Instance().GetProjectSourceFilePaths(project_, clone_index_, source_file_paths);
-    
-    const auto& bin_file = RgConfigManager::Instance().GetProjectBinaryFilePath(project_, clone_index_);
-    if (!bin_file.empty())
+
+    const auto& bin_files = RgConfigManager::Instance().GetProjectBinaryFilePath(project_, clone_index_);
+    if (!bin_files.empty())
     {
-        source_file_paths.push_back(bin_file);
+        for (int i = 0; i < bin_files.size(); i++)
+        {
+            source_file_paths.push_back(bin_files.at(i));
+        }
     }
 
     if (!source_file_paths.empty())
@@ -300,7 +315,7 @@ bool RgBuildViewBinary::PopulateMenu()
         // Add all the project's source files into the RgBuildView.
         for (int file_index = 0; file_index < source_file_paths.size(); ++file_index)
         {
-            const std::string& file_path = source_file_paths[file_index];
+            const std::string& file_path = source_file_paths.at(file_index);
 
             // Check that the file still exists before attempting to load it.
             bool is_file_exists = RgUtils::IsFileExists(file_path);
@@ -312,9 +327,6 @@ bool RgBuildViewBinary::PopulateMenu()
                 {
                     // Set the source code view text with the contents of the selected file.
                     SetSourceCodeText(file_path);
-
-                    // This will enable the build action.
-                    ReloadFile(file_path);
 
                     // The RgBuildView was successfully populated with the current project.
                     ret = true;
@@ -360,7 +372,7 @@ bool RgBuildViewBinary::IsGcnDisassemblyGenerated(const std::string& input_file_
             auto inputFileOutputsIter = targetGpuOutputsIter->second->per_file_output.find(input_file_path);
             if (inputFileOutputsIter != targetGpuOutputsIter->second->per_file_output.end())
             {
-                RgFileOutputs& fileOutputs = inputFileOutputsIter->second;
+                RgFileOutputs& fileOutputs   = inputFileOutputsIter->second;
                 is_current_file_disassembled = !fileOutputs.outputs.empty();
             }
         }
@@ -374,7 +386,7 @@ bool RgBuildViewBinary::LoadSessionMetadata(const std::string& metadata_file_pat
     bool ret = false;
 
     std::shared_ptr<RgCliBuildOutputOpencl> gpu_output_opencl = nullptr;
-    ret = RgXMLSessionConfig::ReadSessionMetadataOpenCL(metadata_file_path, gpu_output_opencl);
+    ret                                                       = RgXMLSessionConfig::ReadSessionMetadataOpenCL(metadata_file_path, gpu_output_opencl);
     if (ret == false)
     {
         std::shared_ptr<RgCliBuildOutputPipeline> gpu_output_vulkan = nullptr;
@@ -390,7 +402,33 @@ bool RgBuildViewBinary::LoadSessionMetadata(const std::string& metadata_file_pat
     }
     else
     {
-        build_output = gpu_output_opencl;
+        if (project_ != nullptr && project_->clones[clone_index_] != nullptr)
+        {
+            std::vector<std::string> target_gpus;
+            for (const auto& binary_file_name : project_->clones[clone_index_]->build_settings->binary_file_names)
+            {
+                std::string gpu_name = "";
+
+                RgFileOutputs& file_output = gpu_output_opencl->per_file_output[binary_file_name];
+
+                if (!file_output.outputs.empty())
+                {
+                    std::sort(file_output.outputs.begin(), file_output.outputs.end(), RgEntryOutputComparator());
+
+                    RgEntryOutput entry_output = file_output.outputs.front();
+                    if (!entry_output.outputs.empty())
+                    {
+                        gpu_name = entry_output.outputs.front().gpu_name;
+                    }
+                }
+
+                target_gpus.push_back(gpu_name);
+            }
+
+            project_->clones[clone_index_]->build_settings->target_gpus = target_gpus;
+
+            build_output = gpu_output_opencl;
+        }
     }
 
     return ret;
@@ -401,8 +439,8 @@ void RgBuildViewBinary::ShowCurrentFileDisassembly()
     bool is_current_file_disassembled = false;
 
     // Show the currently selected file's first entry point disassembly (if there is no currently selected entry).
-    const std::string& input_filepath = file_menu_->GetSelectedFilePath();
-    RgMenuFileItem* selected_file_item = file_menu_->GetSelectedFileItem();
+    const std::string& input_filepath     = file_menu_->GetSelectedFilePath();
+    RgMenuFileItem*    selected_file_item = file_menu_->GetSelectedFileItem();
     assert(selected_file_item != nullptr);
 
     if (selected_file_item != nullptr)
@@ -413,7 +451,7 @@ void RgBuildViewBinary::ShowCurrentFileDisassembly()
         if (opencl_file_item != nullptr)
         {
             std::string current_entrypoint_name;
-            bool is_entry_selected = opencl_file_item->GetSelectedEntrypointName(current_entrypoint_name);
+            bool        is_entry_selected = opencl_file_item->GetSelectedEntrypointName(current_entrypoint_name);
 
             // Get the list of entry point names for the selected input file.
             std::vector<std::string> entrypoint_names;
@@ -441,20 +479,8 @@ void RgBuildViewBinary::ShowCurrentFileDisassembly()
     ToggleDisassemblyViewVisibility(is_current_file_disassembled);
 }
 
-void RgBuildViewBinary::ReloadFile(const std::string& file_path)
-{
-    RgBuildView::ReloadFile(file_path);
-
-    // This will enable the build action.
-    emit ProjectFileCountChanged(false);
-
-    // Trigger a project build event.
-    emit BuildProjectEvent();
-}
-
 void RgBuildViewBinary::SaveCurrentFile(EditMode)
 {
-    
 }
 
 bool RgBuildViewBinary::AddFile(const std::string& file_full_path, bool is_new_file)
@@ -525,12 +551,12 @@ void RgBuildViewBinary::SetDefaultFocusWidget() const
     }
 }
 
-void RgBuildViewBinary::HandleExistingFileDragAndDrop(const std::string& file_path_to_add)
+void RgBuildViewBinary::HandleExistingFileDragAndDrop(const std::vector<std::string>& file_paths_to_add)
 {
     assert(file_menu_ != nullptr);
-    if (file_menu_ != nullptr && !file_path_to_add.empty())
+    if (file_menu_ != nullptr && !file_paths_to_add.empty())
     {
-        AddExistingCodeObjFileToProject(file_path_to_add);
+        AddExistingCodeObjFileToProject(file_paths_to_add);
     }
 }
 
@@ -587,7 +613,7 @@ bool RgBuildViewBinary::AddExistingSourcefileToProject(const std::string& source
     return ret;
 }
 
-bool RgBuildViewBinary::AddExistingCodeObjFileToProject(const std::string& bin_file_path)
+bool RgBuildViewBinary::AddExistingCodeObjFileToProject(const std::vector<std::string>& bin_file_paths)
 {
     bool ret = false;
 
@@ -604,27 +630,46 @@ bool RgBuildViewBinary::AddExistingCodeObjFileToProject(const std::string& bin_f
 
     if (is_project_created)
     {
-        if (!IsCodeObjFileInProject(bin_file_path))
+        RgMenuBinary* file_menu = nullptr;
+        file_menu               = static_cast<RgMenuBinary*>(file_menu_);
+        if (file_menu != nullptr)
         {
-            RgMenuBinary* file_menu = nullptr;
-            file_menu               = static_cast<RgMenuBinary*>(file_menu_);
-            if (file_menu != nullptr)
+            RgConfigManager& config_manager = RgConfigManager::Instance();
+
+            // Get the initial function name from the application arguments if there is one.
+            QStringList file_and_function_name;
+
+            if (QCoreApplication::arguments().size() > 1)
             {
-                // Remove any existing files from the menu.
-                if (!file_menu->IsEmpty())
-                {
-                    file_menu->RemoveAllItems();
-                }
+                file_and_function_name = QCoreApplication::arguments().at(1).split("::");
+            }
 
-                if (file_menu->IsEmpty())
-                {
-                    RgConfigManager& config_manager = RgConfigManager::Instance();
+            QString initial_function_name = "";
+            if (file_and_function_name.size() > 1)
+            {
+                initial_function_name = file_and_function_name[1];
+            }
 
+            bool file_already_in_project = false;
+
+            std::vector<std::string> new_binaries_to_disassemble;
+
+            for (auto bin_file_path : bin_file_paths)
+            {
+                if (!IsCodeObjFileInProject(bin_file_path))
+                {
                     // Add the code obj file's path to the project's clone.
-                    ret = config_manager.AddCodeObjFileToProject(bin_file_path, project_, clone_index_);
+                    ret = config_manager.AddCodeObjFileToProject(bin_file_path, project_, clone_index_, initial_function_name);
 
-                    // Save the project after adding a code obj.
-                    config_manager.SaveProjectFile(project_);
+                    if (!ret)
+                    {
+                        // Report the error.
+                        std::stringstream msg;
+                        msg << kStrErrCannotAddFileA << bin_file_path;
+                        RgUtils::ShowErrorMessageBox(msg.str().c_str(), this);
+
+                        continue;
+                    }
 
                     // Add the selected file to the menu.
                     AddFile(bin_file_path);
@@ -632,26 +677,44 @@ bool RgBuildViewBinary::AddExistingCodeObjFileToProject(const std::string& bin_f
                     // Set the source code view text with the contents of the selected file.
                     SetSourceCodeText(bin_file_path);
 
-                    // This will enable the build action.
-                    emit ProjectFileCountChanged(false);
-
-                    // Trigger a project build event.
-                    emit BuildProjectEvent();
+                    new_binaries_to_disassemble.push_back(bin_file_path);
                 }
                 else
                 {
-                    // User wants to maintain status quo.
-                    ret = true;  
+                    file_already_in_project = true;
                 }
             }
-        }
 
-        if (!ret)
-        {
-            // Report the error.
-            std::stringstream msg;
-            msg << kStrErrCannotAddFileA << bin_file_path << kStrErrCannotAddFileB;
-            RgUtils::ShowErrorMessageBox(msg.str().c_str(), this);
+            if (file_already_in_project)
+            {
+                if (bin_file_paths.size() == 1)
+                {
+                    // If they was only one file being added but failed tell them the file already exists.
+                    std::stringstream msg;
+                    msg << kStrErrCannotAddFileA << bin_file_paths.front() << kStrErrCannotAddFileB;
+                    RgUtils::ShowErrorMessageBox(msg.str().c_str(), this);
+                }
+                else if (bin_file_paths.size() > 1)
+                {
+                    // If there were multiple files and one or more files could not be added, tell them not all files could be added.
+                    std::stringstream msg;
+                    msg << kStrErrCannotAddMultiFile;
+                    RgUtils::ShowErrorMessageBox(msg.str().c_str(), this);
+                }
+            }
+
+            // Only rebuild the project if any files were actually added.
+            if (new_binaries_to_disassemble.size() > 0)
+            {
+                // Save the project after adding a code obj.
+                config_manager.SaveProjectFile(project_);
+
+                // This will enable the build action.
+                emit ProjectFileCountChanged(false);
+
+                // Trigger a project build event.
+                emit DissasembleBinaryFilesEvent(new_binaries_to_disassemble);
+            }
         }
     }
 
@@ -668,11 +731,11 @@ bool RgBuildViewBinary::GetEntrypointNameForLineNumber(const std::string& file_p
     {
         for (const auto& entry_src_line_data : file_src_line_data->second)
         {
-            const std::pair<int, int>  startAndEndLines = entry_src_line_data.second;
+            const std::pair<int, int> startAndEndLines = entry_src_line_data.second;
             if (line_number >= startAndEndLines.first && line_number <= startAndEndLines.second)
             {
                 entry_name = entry_src_line_data.first;
-                found = true;
+                found      = true;
                 break;
             }
         }
@@ -684,7 +747,6 @@ bool RgBuildViewBinary::GetEntrypointNameForLineNumber(const std::string& file_p
         assert(file_menu_ != nullptr);
         if (file_menu_ != nullptr)
         {
-            
             RgMenuFileItem* file_item = file_menu_->GetFileItemFromPath(file_path);
             assert(file_item != nullptr);
             if (file_item != nullptr)
@@ -736,9 +798,23 @@ void RgBuildViewBinary::HandleSelectedFileChanged(const std::string&, const std:
                         assert(file_item_opencl != nullptr);
                         if (file_item_opencl != nullptr)
                         {
-                            // Retrieve the name of the currently-selected entry point (if there is one).
                             std::string selected_entrypoint_name;
-                            bool is_entry_point_selected = file_item_opencl->GetSelectedEntrypointName(selected_entrypoint_name);
+
+                            bool is_entry_point_selected;
+
+                            std::string initial_function_name = project_->clones[clone_index_]->build_settings->initial_binary_function_name;
+                            static bool first_show            = true;
+                            if (initial_function_name != "" && first_show)
+                            {
+                                selected_entrypoint_name = initial_function_name;
+                                is_entry_point_selected  = true;
+                                first_show               = false;
+                            }
+                            else
+                            {
+                                // Retrieve the name of the currently-selected entry point (if there is one).
+                                is_entry_point_selected = file_item_opencl->GetSelectedEntrypointName(selected_entrypoint_name);
+                            }
 
                             // Update the visibility of the disassembly view.
                             ToggleDisassemblyViewVisibility(is_entry_point_selected);
@@ -757,7 +833,11 @@ void RgBuildViewBinary::HandleSelectedFileChanged(const std::string&, const std:
                                 if (filepath_editor != nullptr)
                                 {
                                     const int selected_line_number = filepath_editor->GetSelectedLineNumber();
-                                    disassembly_view_->HandleInputFileSelectedLineChanged(current_target_gpu_, new_file_path, selected_entrypoint_name, selected_line_number);
+                                    disassembly_view_->HandleInputFileSelectedLineChanged(
+                                        current_target_gpu_, new_file_path, selected_entrypoint_name, selected_line_number);
+
+                                    // Set the target gpu name label.
+                                    disassembly_view_->SetTargetGpuLabel(new_file_path, project_->clones[clone_index_]->build_settings);
                                 }
                             }
 
@@ -789,8 +869,8 @@ void RgBuildViewBinary::HandleSourceFileSelectedLineChanged(RgSourceCodeEditor* 
     {
         if (disassembly_view_ != nullptr && !disassembly_view_->IsEmpty())
         {
-            const std::string& input_filename = GetFilepathForEditor(editor);
-            bool is_disassembled = IsGcnDisassemblyGenerated(input_filename);
+            const std::string& input_filename  = GetFilepathForEditor(editor);
+            bool               is_disassembled = IsGcnDisassemblyGenerated(input_filename);
             if (is_disassembled)
             {
                 int correlated_line_number = kInvalidCorrelationLineIndex;
@@ -803,7 +883,7 @@ void RgBuildViewBinary::HandleSourceFileSelectedLineChanged(RgSourceCodeEditor* 
 
                 // If the line is associated with a named entrypoint, highlight it in the file menu item.
                 std::string entry_name;
-                bool is_valid = GetEntrypointNameForLineNumber(input_filename, line_number, entry_name);
+                bool        is_valid = GetEntrypointNameForLineNumber(input_filename, line_number, entry_name);
                 if (is_valid)
                 {
                     RgMenuBinary* menu_binary = static_cast<RgMenuBinary*>(file_menu_);
@@ -866,12 +946,12 @@ int RgBuildViewBinary::FindEntrypointStartLine(RgSourceCodeEditor* editor, int l
     if (editor != nullptr)
     {
         // Start at the given line and search for the next opening brace. This is the "real" start of the entrypoint.
-        int search_line = actual_start_line;
+        int  search_line              = actual_start_line;
         bool searching_for_start_line = true;
         while (searching_for_start_line)
         {
             QString line_text;
-            bool got_line_text = editor->GetTextAtLine(search_line, line_text);
+            bool    got_line_text = editor->GetTextAtLine(search_line, line_text);
             if (got_line_text)
             {
                 // Start at the index of the brace, and check if there's anything else in the line other than whitespace.
@@ -882,7 +962,7 @@ int RgBuildViewBinary::FindEntrypointStartLine(RgSourceCodeEditor* editor, int l
 
                     // Search for alphanumeric characters the occur after the opening brace.
                     auto start_character = line_text_string.begin() + (brace_index + 1);
-                    auto end_character = line_text_string.end();
+                    auto end_character   = line_text_string.end();
 
                     // Create a list of bools, used to determine if there are any alphanumeric characters in the line after the opening brace.
                     std::vector<bool> is_alphanumeric_list;
@@ -899,7 +979,7 @@ int RgBuildViewBinary::FindEntrypointStartLine(RgSourceCodeEditor* editor, int l
                         search_line++;
                     }
 
-                    actual_start_line = search_line;
+                    actual_start_line        = search_line;
                     searching_for_start_line = false;
                 }
                 else
@@ -926,7 +1006,7 @@ void RgBuildViewBinary::HighlightEntrypointStartLine(const std::string& input_fi
     {
         // Search for the start line number for the given entry point name.
         EntryToSourceLineRange& file_entrypoints_info = input_file_iter->second;
-        auto lineNumberIter = file_entrypoints_info.find(selected_entrypoint_name);
+        auto                    lineNumberIter        = file_entrypoints_info.find(selected_entrypoint_name);
         if (lineNumberIter != file_entrypoints_info.end())
         {
             RgSourceCodeEditor* editor = GetEditorForFilepath(input_file_path);
@@ -975,7 +1055,20 @@ bool RgBuildViewBinary::LoadEntrypointLineNumbers()
 
 bool RgBuildViewBinary::IsCodeObjFileInProject(const std::string& bin_file_path) const
 {
-    return RgaSharedUtils::ComparePaths(bin_file_path, RgConfigManager::Instance().GetProjectBinaryFilePath(project_, clone_index_));
+    bool res = false;
+
+    std::vector<std::string> file_paths = RgConfigManager::Instance().GetProjectBinaryFilePath(project_, clone_index_);
+
+    for (auto iter = file_paths.begin(); iter != file_paths.end(); ++iter)
+    {
+        if (RgaSharedUtils::ComparePaths(bin_file_path, *iter))
+        {
+            res = true;
+            break;
+        }
+    }
+
+    return res;
 }
 
 void RgBuildViewBinary::HandleExternalFileModification(const QFileInfo& file_info)
@@ -991,6 +1084,12 @@ void RgBuildViewBinary::HandleExternalFileModification(const QFileInfo& file_inf
 
         // Reload the modified file.
         ReloadFile(modified_file_path);
+
+        // This will enable the build action.
+        emit ProjectFileCountChanged(false);
+
+        // Trigger a project build event.
+        emit BuildProjectEvent();
     }
     else
     {
@@ -1013,7 +1112,7 @@ void RgBuildViewBinary::ToggleDisassemblyViewKernelLabelVisiblity(RgMenuFileItem
     {
         std::string extremely_long_name;
         bool        is_visible = file_item->GetSelectedEntrypointExtremelyLongName(selected_entrypoint_name, extremely_long_name);
-        emit SelectedExtremelyLongKernelNameChanged(is_visible, extremely_long_name);
+        emit        SelectedExtremelyLongKernelNameChanged(is_visible, extremely_long_name);
     }
 }
 
@@ -1030,4 +1129,36 @@ bool RgBuildViewBinary::IsLineCorrelationSupported() const
 void RgBuildViewBinary::UpdateApplicationNotificationMessage()
 {
     // Add OpenCL application notification message here, when needed.
+}
+
+void RgBuildViewBinary::RemoveFileFromMetadata(const std::string& full_path)
+{
+    std::string project_directory;
+    if (RgUtils::ExtractFileDirectory(project_->project_file_full_path, project_directory))
+    {
+        // Generate a clone name string based on the current clone index.
+        std::string output_folder_path;
+
+        bool is_ok = RgUtils::AppendFolderToPath(project_directory, kStrOutputFolderName, output_folder_path);
+        assert(is_ok);
+        if (is_ok)
+        {
+            std::string cloneNameString = RgUtils::GenerateCloneName(clone_index_);
+            is_ok                       = RgUtils::AppendFolderToPath(output_folder_path, cloneNameString, output_folder_path);
+            assert(is_ok);
+            if (is_ok)
+            {
+                std::stringstream metadataFilenameStream;
+                metadataFilenameStream << kStrSessionMetadataFilename;
+
+                std::string full_metadata_file_path;
+                is_ok = RgUtils::AppendFileNameToPath(output_folder_path, metadataFilenameStream.str(), full_metadata_file_path);
+                assert(is_ok);
+                if (is_ok)
+                {
+                    RgXMLSessionConfig::RemoveBinaryFileFromMetadata(full_metadata_file_path, full_path);
+                }
+            }
+        }
+    }
 }

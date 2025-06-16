@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for base class implementation of the status bar.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_STATUS_BAR_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_STATUS_BAR_H_
 

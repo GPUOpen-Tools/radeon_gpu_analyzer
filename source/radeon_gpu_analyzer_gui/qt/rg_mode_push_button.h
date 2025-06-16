@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RGA main window specific implementation of QPushButton for changing modes.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MODE_PUSH_BUTTON_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MODE_PUSH_BUTTON_H_
 

@@ -1,10 +1,14 @@
-//======================================================================
-// Copyright 2023 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Vulkan helper functions.
+//=============================================================================
 
 #pragma once
 
 // Shared.
+#include "common/rga_entry_type.h"
 #include "common/rg_log.h"
 
 // Backend.
@@ -24,41 +28,14 @@ static const std::string kStrVulkanStatsFileExtension          = "csv";
 static const std::string kStrVulkanValidationInfoFileExtension = "txt";
 static const std::string kStrVulkanHlslFileExtension           = "hlsl";
 
-// An array containing per-stage RgEntryType(s).
-typedef std::array<RgEntryType, BePipelineStage::kCount> BeVkPipelineEntries;
-
-// Output metadata entry types for Vulkan pipeline stages.
-static const BeVkPipelineEntries 
-kVulkanStageEntryTypes = 
-{
-    RgEntryType::kVkVertex,
-    RgEntryType::kVkTessControl,
-    RgEntryType::kVkTessEval,
-    RgEntryType::kVkGeometry,
-    RgEntryType::kVkFragment,
-    RgEntryType::kVkCompute
-};
-
-// Output metadata entry types for Vulkan pipeline stages.
-static const BeVkPipelineEntries 
-kOpenGLStageEntryTypes = 
-{
-    RgEntryType::kGlVertex,
-    RgEntryType::kGlTessControl,
-    RgEntryType::kGlTessEval,
-    RgEntryType::kGlGeometry,
-    RgEntryType::kGlFragment,
-    RgEntryType::kGlCompute
-};
-
 // Class for Vulkan mode utility functions for ISA Dissassembly and post-processing.
-class KcCLICommanderVulkanUtil
+class KcUtilsVulkan
 {
 public:
-    KcCLICommanderVulkanUtil(std::map<std::string, RgVkOutputMetadata>& output_metadata,
-                             std::string physical_adapter_name, 
-                             LoggingCallbackFunction log_callback,
-                             const std::array<std::string, BePipelineStage::kCount>& vulkan_stage_file_suffix)
+    KcUtilsVulkan(std::map<std::string, RgVkOutputMetadata>&              output_metadata,
+                  std::string                                             physical_adapter_name,
+                  LoggingCallbackFunction                                 log_callback,
+                  const std::array<std::string, BePipelineStage::kCount>& vulkan_stage_file_suffix)
         : output_metadata_(output_metadata)
         , physical_adapter_name_(physical_adapter_name)
         , log_callback_(log_callback)
@@ -75,9 +52,9 @@ public:
     static void DeleteTempFiles(std::vector<std::string>& temp_files);
 
     // Convert statistics file from Vulkan mode into normal RGA stats format.
-    static beKA::beStatus ConvertStats(const BeVkPipelineFiles& isaFiles, 
-                                       const BeVkPipelineFiles& stats_files, 
-                                       const Config&            config, 
+    static beKA::beStatus ConvertStats(const BeVkPipelineFiles& isaFiles,
+                                       const BeVkPipelineFiles& stats_files,
+                                       const Config&            config,
                                        const std::string&       device);
 
     // Util to convert stats.
@@ -106,9 +83,9 @@ public:
     static beKA::AnalysisData PopulateAnalysisData(const beKA::AnalysisData& stats,
                                                    const std::string&        current_device);
 
- private:
+private:
 
-    KcCLICommanderVulkanUtil() = default;
+    KcUtilsVulkan() = default;
 
     // Parse ISA files and generate separate files that contain parsed ISA in CSV format.
     bool ParseIsaFilesToCSV(bool add_line_numbers, const std::string& device_string, RgVkOutputMetadata& metadata) const;

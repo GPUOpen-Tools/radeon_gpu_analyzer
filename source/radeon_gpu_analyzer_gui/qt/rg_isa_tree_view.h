@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for shader ISA Disassembly tree view.
+//=============================================================================
+
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_TREE_VIEW_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_TREE_VIEW_H_
 
@@ -32,11 +39,8 @@ public:
     // Destructor.
     virtual ~RgIsaTreeView();
 
-    // Respond to a request and scroll this tree to the given source model index.
-    void ScrollToIndex(const QModelIndex source_index, bool record, bool select_row) override;
-
     // Respond to a request to update line correlation wrt. given index.
-    bool UpdateLineCorrelation(const QModelIndex source_index);
+    bool UpdateLineCorrelation(const QModelIndex source_index, bool update_source_code_editor);
 
 public slots:
     // A handler to update the context menu next maximum live VGPR line option.
@@ -82,6 +86,10 @@ private slots:
 
     // Handler invoked when the color theme is changed.
     void HandleColorThemeChanged();
+
+    // Handler invoked when the tree view programmatically selects and scrolls to a new index. 
+    // Updates line correlation and notifies the source code editor that it needs to select a new line.
+    void HandleScrolledToIndex(const QModelIndex source_index);
 
 private:
     // Top level disassembly view.

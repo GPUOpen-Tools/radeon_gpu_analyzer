@@ -1,6 +1,9 @@
-//======================================================================
-// Copyright 2024 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga code object metadata parser class.
+//=============================================================================
 
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_METADATA_PARSER_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_METADATA_PARSER_H_
@@ -53,7 +56,9 @@ public:
         kDomain,
         kGeometry,
         kPixel,
-        kCompute
+        kCompute,
+        kMesh,
+        kTask
     };
 
     // Enum to represent different shader subtypes.

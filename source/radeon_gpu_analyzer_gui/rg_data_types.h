@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for the RGA gui common data types.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DATA_TYPES_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DATA_TYPES_H_
 
@@ -13,7 +19,8 @@
 #include <QMetaType>
 
 // Infra.
-#include "source/common/rga_shared_data_types.h"
+#include "common/rga_entry_type.h"
+#include "common/rga_shared_data_types.h"
 
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_config_manager.h"
@@ -115,7 +122,8 @@ struct RgBuildSettings
         , additional_include_directories(other.additional_include_directories)
         , additional_options(other.additional_options)
         , compiler_paths(other.compiler_paths)
-        , binary_file_name(other.binary_file_name)
+        , binary_file_names(other.binary_file_names)
+        , initial_binary_function_name("")
     {
     }
 
@@ -123,7 +131,7 @@ struct RgBuildSettings
     {
         bool isSame = (target_gpus == other.target_gpus) && (predefined_macros == other.predefined_macros) &&
                       (additional_include_directories == other.additional_include_directories) && (additional_options == other.additional_options) &&
-                      (binary_file_name == other.binary_file_name) && (compiler_paths == other.compiler_paths);
+                      (binary_file_names == other.binary_file_names) && (compiler_paths == other.compiler_paths);
 
         return isSame;
     }
@@ -133,7 +141,10 @@ struct RgBuildSettings
     std::vector<std::string> predefined_macros;
     std::vector<std::string> additional_include_directories;
     std::string              additional_options;
-    std::string              binary_file_name;
+    std::vector<std::string> binary_file_names;
+
+    // The name of the function to be displayed initially when there are multiple functions in the same file used for binary analysis.
+    std::string initial_binary_function_name;
 
     // Alternative compiler paths: {bin, include, lib}.
     std::tuple<std::string, std::string, std::string> compiler_paths;
@@ -523,6 +534,15 @@ struct RgEntryOutput
     std::vector<RgOutputItem> outputs;
 };
 
+// Custom comparator for RgEntryOutput based on its kernel type. 
+struct RgEntryOutputComparator
+{
+    bool operator()(const RgEntryOutput& a, const RgEntryOutput& b) const
+    {
+        return RgaEntryTypeUtils::CompareEntryTypeStr(a.kernel_type, b.kernel_type);
+    }
+};
+
 struct RgFileOutputs
 {
     // The input source file path responsible for the entry.
@@ -551,8 +571,8 @@ struct RgCliBuildOutputOpencl : RgCliBuildOutput
 {
     virtual ~RgCliBuildOutputOpencl() = default;
 
-    // The full path to the project binary.
-    std::string project_binary;
+    // The full path to all the project binaries.
+    std::vector<std::string> project_binaries;
 };
 
 // This structure represents the output of the command line backend when building a pipeline object.

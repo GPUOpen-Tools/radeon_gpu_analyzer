@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for set of utility functions to simplify processing XML.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_XML_UTILS_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_XML_UTILS_H_
 

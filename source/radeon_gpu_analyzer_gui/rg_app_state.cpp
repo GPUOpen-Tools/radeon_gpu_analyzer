@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementationte class allows a project with a specific mode to interface with the main window.
+//=============================================================================
+
 // C++.
 #include <cassert>
 

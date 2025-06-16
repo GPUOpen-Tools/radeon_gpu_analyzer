@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for class for creating dx12 backend instance.
+//=============================================================================
+
 #ifndef RGA_CORE_DX12_BACKEND_SRC_RG_DX12_BACKEND_H_
 #define RGA_CORE_DX12_BACKEND_SRC_RG_DX12_BACKEND_H_
 

@@ -1,7 +1,9 @@
-//======================================================================
-// Copyright 2020-2022 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
-
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for rga backend string constants.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_BE_STRING_CONSTANTS_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_STRING_CONSTANTS_H_
 

@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for the rga gui utilities.
+//=============================================================================
 // C++.
 #include <cassert>
 #include <fstream>
@@ -134,11 +140,8 @@ static QString ConstructVulkanOpenFileFilter()
 // Build the file filter for Open File dialog in BInary Analysis mode.
 static QString ConstructBinaryAnalysisOpenFileFilter()
 {
-    return QString(kStrFileDialogFilterBinary) + 
-        "(" + " *" + kStrSourceFileExtensionBin 
-            + " *" + kStrSourceFileExtensionElf 
-            + " *" + kStrSourceFileExtensionCO + ")" 
-            + ";;" + kStrFileDialogFilterAll;
+    return QString(kStrFileDialogFilterBinary) + "(" + " *" + kStrSourceFileExtensionBin + " *" + kStrSourceFileExtensionElf + " *" +
+           kStrSourceFileExtensionCO + ")" + ";;" + kStrFileDialogFilterAll;
 }
 
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - END ***
@@ -657,9 +660,7 @@ bool RgUtils::IsSourceFileTypeValid(const std::string& str)
     {
     case RgProjectAPI::kBinary:
     {
-        if (qtString.endsWith(kStrSourceFileExtensionBin) 
-            || qtString.endsWith(kStrSourceFileExtensionElf)
-            || qtString.endsWith(kStrSourceFileExtensionCO))
+        if (qtString.endsWith(kStrSourceFileExtensionBin) || qtString.endsWith(kStrSourceFileExtensionElf) || qtString.endsWith(kStrSourceFileExtensionCO))
         {
             ret = true;
         }
@@ -857,6 +858,9 @@ bool RgUtils::OpenFileDialogForMultipleFiles(QWidget* parent, RgProjectAPI api, 
     {
     case RgProjectAPI::kOpenCL:
         ret = OpenMultipleFileDialogHelper(parent, kStrFileDialogCaption, kStrFileDialogFilterOpencl, selected_file_paths);
+        break;
+    case RgProjectAPI::kBinary:
+        ret = OpenMultipleFileDialogHelper(parent, kStrFileDialogCaption, ConstructBinaryAnalysisOpenFileFilter(), selected_file_paths);
         break;
     case RgProjectAPI::kUnknown:
     default:
@@ -1148,6 +1152,29 @@ bool RgUtils::IsFileExists(const std::string& file_full_path)
     return ret;
 }
 
+bool RgUtils::AppendFiles(const std::string& first_file_full_path, const std::string& second_file_full_path)
+{
+    QFile base_file(first_file_full_path.c_str());
+    QFile append_file(second_file_full_path.c_str());
+
+    if (!base_file.exists() || !append_file.exists())
+    {
+        return false;
+    }
+
+    base_file.open(QIODeviceBase::OpenModeFlag::Append);
+    append_file.open(QIODeviceBase::OpenModeFlag::ReadWrite);
+
+    QByteArrayList append_file_text = append_file.readAll().split('\n');
+    append_file_text.removeFirst();
+    base_file.write(append_file_text.join("\n"));
+
+    base_file.close();
+    append_file.close();
+    
+    return true;
+}
+
 bool RgUtils::IsDirExists(const std::string& dir_full_path)
 {
     // Convert the path to gtString.
@@ -1198,7 +1225,7 @@ bool RgUtils::IsValidFileName(const std::string& filename)
 
 bool RgUtils::IsValidProjectName(const std::string& file_full_path, std::string& error_message)
 {
-	const int kMaxProjectNameLength = 50;
+    const int kMaxProjectNameLength = 50;
     QFileInfo file_info             = QFileInfo(QString::fromStdString(file_full_path));
     QString   file_name             = file_info.fileName();
 

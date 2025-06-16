@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for the rga gui utilities.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_UTILS_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_UTILS_H_
 
@@ -152,6 +158,9 @@ public:
 
     // Returns true if the given file exists.
     static bool IsFileExists(const std::string& file_full_path);
+
+    // Appends the second file's contents to the first file. Returns true if successful. 
+    static bool AppendFiles(const std::string& first_file_full_path, const std::string& second_file_full_path);
 
     // Returns true if the given directory exists.
     static bool IsDirExists(const std::string& dir_full_path);

@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for shader ISA Disassembly view for Binary Analysis.
+//=============================================================================
+
 // C++.
 #include <cassert>
 
@@ -20,10 +27,19 @@ bool RgIsaDisassemblyViewBinary::PopulateBuildOutput(const std::shared_ptr<RgPro
     assert(project_clone != nullptr);
     if (project_clone != nullptr && project_clone->build_settings != nullptr)
     {
+        std::vector<std::string> file_list;
+
+        for (std::string file : project_clone->build_settings->binary_file_names)
+        {
+            file_list.push_back(file);
+        }
+
+        ui_.targetGpuPushButton->setVisible(false);
+        ui_.binary_target_gpu_->setVisible(true);
 
         // Build artifacts may contain disassembly for source files that are no longer
         // in the project, so provide a list of files to load, along with the current build output.
-        ret = PopulateDisassemblyView(project_clone->build_settings->binary_file_name, build_outputs);
+        ret = PopulateDisassemblyView(file_list, build_outputs);
     }
 
     return ret;
@@ -39,27 +55,36 @@ void RgIsaDisassemblyViewBinary::SetBorderStylesheet(bool is_selected)
     ui_.frame->style()->polish(ui_.frame);
 }
 
-bool RgIsaDisassemblyViewBinary::PopulateDisassemblyView(const std::string& binary_file_name, const RgBuildOutputsMap& build_output)
+bool RgIsaDisassemblyViewBinary::PopulateDisassemblyView(const std::vector<std::string>& binary_file_names, const RgBuildOutputsMap& build_output)
 {
     bool is_problem_found = false;
 
     // Iterate through each target GPU's output.
     for (auto gpu_outputs_iter = build_output.begin(); gpu_outputs_iter != build_output.end(); ++gpu_outputs_iter)
     {
-        const std::string& target_gpu = gpu_outputs_iter->first;
+        const std::string&                target_gpu       = gpu_outputs_iter->first;
         std::shared_ptr<RgCliBuildOutput> gpu_build_output = gpu_outputs_iter->second;
-        bool is_valid_output = gpu_build_output != nullptr;
+        bool                              is_valid_output  = gpu_build_output != nullptr;
         assert(is_valid_output);
         if (is_valid_output)
         {
             // Step through the outputs map, and load the disassembly data for each input file.
-            for (auto output_iter = gpu_build_output->per_file_output.begin(); output_iter != gpu_build_output->per_file_output.end();
-                 ++output_iter)
+            for (auto output_iter = gpu_build_output->per_file_output.begin(); output_iter != gpu_build_output->per_file_output.end(); ++output_iter)
             {
                 const std::string& source_file_path = output_iter->first;
 
+                bool file_name_found = false;
+
+                for (auto binary_name : binary_file_names)
+                {
+                    if (binary_name == source_file_path)
+                    {
+                        file_name_found = true;
+                    }
+                }
+
                 // Only load build outputs for files in the given list of source files.
-                if (!binary_file_name.empty() && binary_file_name.compare(source_file_path) == 0)
+                if (file_name_found)
                 {
                     // Get the list of outputs for the input file.
                     RgFileOutputs& file_outputs = output_iter->second;

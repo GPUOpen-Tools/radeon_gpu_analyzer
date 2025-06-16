@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for OpenCL helper functions.
+//=============================================================================
 // C++
 #include <sstream>
 
@@ -9,14 +15,15 @@
 #include "common/rga_shared_utils.h"
 
 // Backend.
-#include "source/radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
+#include "radeon_gpu_analyzer_backend/be_metadata_parser.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
 
 // Local.
-#include "source/radeon_gpu_analyzer_cli/kc_cli_commander_lightning_util.h"
-#include "source/radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
-#include "source/radeon_gpu_analyzer_cli/kc_utils.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
+#include "radeon_gpu_analyzer_cli/kc_statistics_device_props.h"
+#include "radeon_gpu_analyzer_cli/kc_utils_lightning.h"
+#include "radeon_gpu_analyzer_cli/kc_utils.h"
 #include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
-#include "source/radeon_gpu_analyzer_cli/kc_statistics_device_props.h"
 
 const char* const kStrKernelName = "Kernel name: ";
 
@@ -49,7 +56,7 @@ static void LogResult(bool result)
     std::cout << (result ? kStrInfoSuccess : kStrInfoFailed) << std::endl;
 }
 
-void KcCLICommanderLightningUtil::LogErrorStatus(beKA::beStatus status, const std::string& error_msg)
+void KcUtilsLightning::LogErrorStatus(beKA::beStatus status, const std::string& error_msg)
 {
     const char* kStrErrorCannotFindBinary = "Error: cannot find binary file.";
     switch (status)
@@ -87,7 +94,7 @@ void KcCLICommanderLightningUtil::LogErrorStatus(beKA::beStatus status, const st
     }
 }
 
-bool KcCLICommanderLightningUtil::ParseIsaFilesToCSV(bool line_numbers) const
+bool KcUtilsLightning::ParseIsaFilesToCSV(bool line_numbers) const
 {
     bool ret = true;
     for (const auto& output_md_item : output_metadata_)
@@ -102,12 +109,12 @@ bool KcCLICommanderLightningUtil::ParseIsaFilesToCSV(bool line_numbers) const
             bool status = KcUtils::ReadTextFile(output_files.isa_file, isa, nullptr);
             if (status)
             {
-                if ((status = KcCLICommanderLightningUtil::GetParsedIsaCsvText(isa, device, line_numbers, parsed_isa)) == true)
+                if ((status = KcUtilsLightning::GetParsedIsaCsvText(isa, device, line_numbers, parsed_isa)) == true)
                 {
                     status = (KcUtils::GetParsedISAFileName(output_files.isa_file, parsed_isa_filename) == beKA::kBeStatusSuccess);
                     if (status)
                     {
-                        status = (KcCLICommanderLightningUtil::WriteIsaToFile(parsed_isa_filename, parsed_isa, log_callback_) == beKA::kBeStatusSuccess);
+                        status = (KcUtilsLightning::WriteIsaToFile(parsed_isa_filename, parsed_isa, log_callback_) == beKA::kBeStatusSuccess);
                     }
                     if (status)
                     {
@@ -127,7 +134,7 @@ bool KcCLICommanderLightningUtil::ParseIsaFilesToCSV(bool line_numbers) const
     return ret;
 }
 
-bool KcCLICommanderLightningUtil::PerformLiveVgprAnalysis(const Config& config) const
+bool KcUtilsLightning::PerformLiveVgprAnalysis(const Config& config) const
 {
     bool              ret = true;
     std::stringstream error_msg;
@@ -163,13 +170,11 @@ bool KcCLICommanderLightningUtil::PerformLiveVgprAnalysis(const Config& config) 
 
             if (!livereg_out_filename.isEmpty())
             {
-                beWaveSize kernel_wave_size = (RgaSharedUtils::IsNaviTarget(device) ? beWaveSize::kWave64 : beWaveSize::kUnknown);
-
                 // Perform live VGPR analysis and force wave 64 for OpenCL kernels. Currently the wave size information
                 // is missing from LLVM disassembly, therefore Shae is not able to deduce the value from the disassembly.
                 // Therefore we will use a default of wave64 (this would be ignored by Shae for pre-RDNA targets).
                 KcUtils::PerformLiveRegisterAnalysis(
-                    isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line, false, kernel_wave_size);
+                    isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line, false, output_files.wave_size);
                 if (BeProgramBuilderLightning::VerifyOutputFile(livereg_out_filename.asASCIICharArray()))
                 {
                     // Store the name of livereg output file in the RGA output files metadata.
@@ -199,7 +204,7 @@ bool KcCLICommanderLightningUtil::PerformLiveVgprAnalysis(const Config& config) 
     return ret;
 }
 
-bool KcCLICommanderLightningUtil::PerformLiveSgprAnalysis(const Config& config) const
+bool KcUtilsLightning::PerformLiveSgprAnalysis(const Config& config) const
 {
     bool              ret = true;
     std::stringstream error_msg;
@@ -243,13 +248,11 @@ bool KcCLICommanderLightningUtil::PerformLiveSgprAnalysis(const Config& config) 
 
             if (!livereg_out_filename.isEmpty())
             {
-                beWaveSize kernel_wave_size = (RgaSharedUtils::IsNaviTarget(device) ? beWaveSize::kWave64 : beWaveSize::kUnknown);
-
                 // Perform live SGPR analysis and force wave 64 for OpenCL kernels. Currently the wave size information
                 // is missing from LLVM disassembly, therefore Shae is not able to deduce the value from the disassembly.
                 // Therefore we will use a default of wave64 (this would be ignored by Shae for pre-RDNA targets).
                 KcUtils::PerformLiveRegisterAnalysis(
-                    isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line, true, kernel_wave_size);
+                    isa_filename, device_gtstr, livereg_out_filename, log_callback_, config.print_process_cmd_line, true, output_files.wave_size);
                 if (BeProgramBuilderLightning::VerifyOutputFile(livereg_out_filename.asASCIICharArray()))
                 {
                     // Store the name of livereg output file in the RGA output files metadata.
@@ -279,7 +282,7 @@ bool KcCLICommanderLightningUtil::PerformLiveSgprAnalysis(const Config& config) 
     return ret;
 }
 
-bool KcCLICommanderLightningUtil::ExtractCFG(const Config& config) const
+bool KcUtilsLightning::ExtractCFG(const Config& config) const
 {
     bool              ret = true;
     std::stringstream error_msg;
@@ -345,7 +348,7 @@ bool KcCLICommanderLightningUtil::ExtractCFG(const Config& config) const
     return ret;
 }
 
-beKA::beStatus KcCLICommanderLightningUtil::ExtractMetadata(const CmpilerPaths& compiler_paths, const std::string& metadata_filename) const
+beKA::beStatus KcUtilsLightning::ExtractMetadata(const CmpilerPaths& compiler_paths, const std::string& metadata_filename) const
 {
     beKA::beStatus current_status = beKA::beStatus::kBeStatusSuccess;
     beKA::beStatus status         = beKA::beStatus::kBeStatusSuccess;
@@ -501,22 +504,25 @@ static bool StoreStatistics(const Config&             config,
     return ret;
 }
 
-beKA::beStatus KcCLICommanderLightningUtil::ExtractStatistics(const Config& config) const
+beKA::beStatus KcUtilsLightning::ExtractStatistics(const Config& config) const
 {
-    std::string device = "", statFileName = config.analysis_file, outStatFileName;
+    std::string    device = "", stat_filename = config.analysis_file, out_stat_filename;
     beKA::beStatus status = beKA::beStatus::kBeStatusSuccess;
 
-    LogPreStep(kStrInfoExtractingStats);
+    if (!stat_filename.empty())
+    {
+        LogPreStep(kStrInfoExtractingStats);
+    }
 
-    for (auto& outputMDItem : output_metadata_)
+    for (auto& output_md_item : output_metadata_)
     {
         beKA::AnalysisData stats_data;
         CodePropsMap       code_props;
-        const std::string& current_device = outputMDItem.first.first;
-        if (device != current_device && outputMDItem.second.status)
+        const std::string& current_device = output_md_item.first.first;
+        if (device != current_device && output_md_item.second.status)
         {
             status = BeProgramBuilderLightning::ExtractKernelCodeProps(
-                config.compiler_bin_path, outputMDItem.second.bin_file, config.print_process_cmd_line, code_props);
+                config.compiler_bin_path, output_md_item.second.bin_file, config.print_process_cmd_line, code_props);
             if (status != beKA::beStatus::kBeStatusSuccess)
             {
                 break;
@@ -528,39 +534,48 @@ beKA::beStatus KcCLICommanderLightningUtil::ExtractStatistics(const Config& conf
                     auto out_files = output_metadata_.find({current_device, kernel_code_props.first});
                     if (out_files != output_metadata_.end())
                     {
-                        std::string        entry_name{ kernel_code_props.first };
-                        const std::string& entry_abbrivation = out_files->second.entry_abbreviation;
-                        if (!entry_abbrivation.empty())
-                        {
-                            entry_name = entry_abbrivation;
-                        }
+                        out_files->second.wave_size = BeAmdPalMetaData::GetWaveSize(kernel_code_props.second.wavefront_size);
 
-                        std::string current_isa_file;
-                        KcUtils::ConstructOutputFileName(config.isa_file, "", kStrDefaultExtensionIsa, entry_name, current_device, current_isa_file);
-                        if (GetIsaSize(current_isa_file, kernel_code_props.second) && BuildAnalysisData(kernel_code_props.second, current_device, stats_data))
+                        if (!stat_filename.empty())
                         {
-                            status = StoreStatistics(config, statFileName, current_device, entry_name, stats_data, outStatFileName)
-                                         ? status
-                                         : beKA::beStatus::kBeStatusWriteToFileFailed;
-                            if (status == beKA::beStatus::kBeStatusSuccess)
+                            std::string        entry_name{kernel_code_props.first};
+                            const std::string& entry_abbrivation = out_files->second.entry_abbreviation;
+                            if (!entry_abbrivation.empty())
                             {
-                                out_files->second.stats_file = outStatFileName;
+                                entry_name = entry_abbrivation;
+                            }
+
+                            std::string current_isa_file;
+                            KcUtils::ConstructOutputFileName(config.isa_file, "", kStrDefaultExtensionIsa, entry_name, current_device, current_isa_file);
+                            if (GetIsaSize(current_isa_file, kernel_code_props.second) &&
+                                BuildAnalysisData(kernel_code_props.second, current_device, stats_data))
+                            {
+                                status = StoreStatistics(config, stat_filename, current_device, entry_name, stats_data, out_stat_filename)
+                                             ? status
+                                             : beKA::beStatus::kBeStatusWriteToFileFailed;
+                                if (status == beKA::beStatus::kBeStatusSuccess)
+                                {
+                                    out_files->second.stats_file = out_stat_filename;
+                                }
                             }
                         }
                     }
                 }
             }
 
-            device = outputMDItem.first.first;
+            device = output_md_item.first.first;
         }
     }
 
-    LogResult(status == beKA::beStatus::kBeStatusSuccess);
+    if (!stat_filename.empty())
+    {
+        LogResult(status == beKA::beStatus::kBeStatusSuccess);
+    }
 
     return status;
 }
 
-bool KcCLICommanderLightningUtil::GetParsedIsaCsvText(const std::string& isaText, const std::string& device, bool add_line_numbers, std::string& csv_text)
+bool KcUtilsLightning::GetParsedIsaCsvText(const std::string& isaText, const std::string& device, bool add_line_numbers, std::string& csv_text)
 {
     static const char* kStrCsvParsedIsaHeader            = "Address, Opcode, Operands, Functional Unit, Cycles, Binary Encoding\n";
     static const char* kStrCsvParsedIsaHeaderLineNumbers = "Address, Source Line Number, Opcode, Operands, Functional Unit, Cycles, Binary Encoding\n";
@@ -575,9 +590,9 @@ bool KcCLICommanderLightningUtil::GetParsedIsaCsvText(const std::string& isaText
     return ret;
 }
 
-beKA::beStatus KcCLICommanderLightningUtil::WriteIsaToFile(const std::string&      file_name,
-                                                           const std::string&      isa_text,
-                                                           LoggingCallbackFunction log_callback)
+beKA::beStatus KcUtilsLightning::WriteIsaToFile(const std::string&      file_name,
+                                                const std::string&      isa_text,
+                                                LoggingCallbackFunction log_callback)
 {
     beKA::beStatus ret = beKA::beStatus::kBeStatusInvalid;
     ret = KcUtils::WriteTextFile(file_name, isa_text, log_callback) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusWriteToFileFailed;
@@ -831,10 +846,10 @@ static bool ExtractEntriesPreprocessed(std::string& text, const std::string& fil
     return true;
 }
 
-bool KcCLICommanderLightningUtil::ExtractEntries(const std::string&  file_name,
-                                                 const Config&       config,
-                                                 const CmpilerPaths& compiler_paths,
-                                                 RgEntryData&        entry_data)
+bool KcUtilsLightning::ExtractEntries(const std::string&  file_name,
+                                      const Config&       config,
+                                      const CmpilerPaths& compiler_paths,
+                                      RgEntryData&        entry_data)
 {
     bool ret = false;
 
@@ -858,36 +873,9 @@ bool KcCLICommanderLightningUtil::ExtractEntries(const std::string&  file_name,
     return ret;
 }
 
-bool KcCLICommanderLightningUtil::GenerateSessionMetadata(const Config& config, const CmpilerPaths& compiler_paths) const
+void KcUtilsLightning::DeleteTempFiles(const RgClOutputMetadata& output_metadata)
 {
-    RgFileEntryData file_kernel_data;
-    bool            ret = !config.session_metadata_file.empty();
-    assert(ret);
-
-    if (ret)
-    {
-        for (const std::string& input_file : config.input_files)
-        {
-            RgEntryData entry_data;
-            ret = ret && ExtractEntries(input_file, config, compiler_paths, entry_data);
-            if (ret)
-            {
-                file_kernel_data[input_file] = entry_data;
-            }
-        }
-    }
-
-    if (ret && !output_metadata_.empty())
-    {
-        ret = KcXmlWriter::GenerateClSessionMetadataFile(config.session_metadata_file, binary_codeobj_file_, file_kernel_data, output_metadata_);
-    }
-
-    return ret;
-}
-
-void KcCLICommanderLightningUtil::DeleteTempFiles() const
-{
-    for (const auto& out_file_data : output_metadata_)
+    for (const auto& out_file_data : output_metadata)
     {
         const RgOutputFiles out_files = out_file_data.second;
         gtString            filename;
@@ -904,27 +892,7 @@ void KcCLICommanderLightningUtil::DeleteTempFiles() const
     }
 }
 
-bool KcCLICommanderLightningUtil::RunPostCompileSteps(const Config& config, const CmpilerPaths& compiler_paths)
-{
-    bool ret = false;
-
-    if (!config.session_metadata_file.empty())
-    {
-        ret = GenerateSessionMetadata(config, compiler_paths);
-        if (!ret)
-        {
-            std::stringstream msg;
-            msg << kStrErrorFailedToGenerateSessionMetdata << std::endl;
-            log_callback_(msg.str());
-        }
-    }
-
-    DeleteTempFiles();
-
-    return ret;
-}
-
-std::string KcCLICommanderLightningUtil::PrefixWithISAHeader(const std::string& kernel_name, const std::string& kernel_isa_text)
+std::string KcUtilsLightning::PrefixWithISAHeader(const std::string& kernel_name, const std::string& kernel_isa_text)
 {
     std::stringstream  kernel_isa_text_ss;
     kernel_isa_text_ss << kLcKernelIsaHeader1 << "\"" << kernel_name << "\"" << std::endl

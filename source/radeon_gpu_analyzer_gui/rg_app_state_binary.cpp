@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for a Binary-mode-specific implementation of the RgAppState.
+//=============================================================================
+
 // C++.
 #include <cassert>
 
@@ -103,12 +110,19 @@ void RgAppStateBinary::HandleLoadCodeObjectBinary()
             {
                 // Retrieve the current API from the configuration manager.
                 RgProjectAPI current_api = RgConfigManager::Instance().GetCurrentAPI();
-                std::string file_path_to_add;
-                bool         is_ok = RgUtils::OpenFileDialog(main_window_, current_api, file_path_to_add);
-                if (is_ok && !file_path_to_add.empty() && RgUtils::IsFileExists(file_path_to_add))
+                QStringList file_paths_to_add;
+                bool         is_ok = RgUtils::OpenFileDialogForMultipleFiles(main_window_, current_api, file_paths_to_add);
+                if (is_ok && !file_paths_to_add.empty())
                 {
                     main_window_->setAcceptDrops(false);
-                    QStringList selected_files(QString::fromStdString(file_path_to_add));
+                    QStringList selected_files;
+                    for (auto file : file_paths_to_add)
+                    {
+                        if (RgUtils::IsFileExists(file.toStdString()))
+                        {
+                            selected_files.append(file);
+                        }
+                    }
                     OpenFilesInBuildView(selected_files);
                     main_window_->setAcceptDrops(true);
                 }
@@ -166,17 +180,14 @@ void RgAppStateBinary::OpenFilesInBuildView(const QStringList& file_paths)
         assert(build_view_ != nullptr && main_window_ != nullptr);
         if (build_view_ != nullptr && main_window_ != nullptr)
         {
-            for (const QString& selectedFile : file_paths)
+            std::vector<std::string> str_file_paths;
+            for (const QString& selected_file : file_paths)
             {
-                // Update the project to reference to selected source file.
-                bool result = build_view_->AddExistingCodeObjFileToProject(selectedFile.toStdString());
-
-                // Break out of the for loop if the operation failed.
-                if (!result)
-                {
-                    break;
-                }
+                str_file_paths.push_back(selected_file.toStdString());
             }
+
+            // Update the project to reference to selected source file.
+            build_view_->AddExistingCodeObjFileToProject(str_file_paths);
 
             // Switch to the build view if there's at least one file being edited.
             if (!build_view_->HasSourceCodeEditors())

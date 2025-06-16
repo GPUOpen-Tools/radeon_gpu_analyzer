@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for Build View class for Vulkan.
+//=============================================================================
+
 // C++.
 #include <cassert>
 #include <sstream>
@@ -1027,7 +1034,7 @@ void RgBuildViewVulkan::HandleAddExistingFile()
         {
             // Inform the user the the file already exists.
             std::stringstream msg;
-            msg << kStrErrCannotAddFileA << file_path_to_add << kStrErrCannotAddFileB;
+            msg << kStrErrCannotAddFileA << file_path_to_add.front() << kStrErrCannotAddFileB;
             RgUtils::ShowErrorMessageBox(msg.str().c_str(), this);
         }
     }

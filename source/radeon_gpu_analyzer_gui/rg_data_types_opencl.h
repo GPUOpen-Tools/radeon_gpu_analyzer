@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for the RGA gui OpenCL data types.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DATA_TYPES_OPENCL_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_DATA_TYPES_OPENCL_H_
 

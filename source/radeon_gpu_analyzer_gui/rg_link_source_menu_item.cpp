@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Link source menu item.
+//=============================================================================
+
 #include "radeon_gpu_analyzer_gui/qt/rg_link_source_menu_item.h"
 
 #include "radeon_gpu_analyzer_gui/rg_data_types_binary.h"

@@ -1,6 +1,9 @@
-//=================================================================
-// Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header definition for scalar instruction fields constants.
+//=============================================================================
 
 // In SI ISA different instructions ,can define for different field`s names the set of
 // the (same) scalar constant bits values.

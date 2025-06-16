@@ -1,6 +1,9 @@
-//=============================================================
-// Copyright (c) 2013 Advanced Micro Devices, Inc.
-//=============================================================
+//=============================================================================
+/// Copyright (c) 2013-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Parse for the shader isa.
+//=============================================================================
 
 #ifndef RGA_RADEONGPUANALYZERBACKEND_SRC_EMULATOR_PARSER_BE_ISA_PARSER_H_
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_EMULATOR_PARSER_BE_ISA_PARSER_H_

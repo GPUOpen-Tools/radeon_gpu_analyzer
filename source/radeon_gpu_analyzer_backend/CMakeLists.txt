@@ -1,9 +1,23 @@
+#######################################################################################################################
+### Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+### @author AMD Developer Tools Team
+#######################################################################################################################
 cmake_minimum_required (VERSION 3.10)
 project (radeon_gpu_analyzer_backend)
 
 # The version number
 set (radeon_gpu_analyzer_backend_VERSION_MAJOR 1)
 set (radeon_gpu_analyzer_backend_VERSION_MINOR 2)
+
+# Before fetching the isa_decoder, set this variable so we only pull in 
+# the isa_decoder, and skip the command line interface, examples, and tests.
+set (EXCLUDE_ISA_CLI_EXAMPLES_TESTS ON)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# Add cmake utilities
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(cli_external)
 
 # Project-specific preprocessor directives
 add_definitions(-DRGA_BACKEND_EXPORTS)

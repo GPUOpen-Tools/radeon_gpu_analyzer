@@ -1,6 +1,10 @@
-//=================================================================
-// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
-//=================================================================
+//=============================================================================
+/// Copyright (c) 2013-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for Parser for the shader isa.
+//=============================================================================
+
 #define _HAS_AUTO_PTR_ETC 1
 
 // C++.

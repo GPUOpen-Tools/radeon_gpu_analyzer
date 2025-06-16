@@ -1,6 +1,9 @@
-//======================================================================
-// Copyright 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
-//======================================================================
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for CLI Commander interface for compiling with the Vulkan.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_VULKAN_H_
 #define RGA_RADEONGPUANALYZERCLI_SRC_KC_CLI_COMMANDER_VULKAN_H_
 
@@ -68,12 +71,6 @@ private:
     // Names of output SPIR-V binary files are returned in "outSpvFiles".
     // (This function invokes SPIR-V Tools assembler).
     bool AssembleSpvTxtInputFiles(const Config& config, const BeVkPipelineFiles& spv_txt_files, BeVkPipelineFiles& out_spv_files);
-
-    // Predict shader performance.
-    bool PredictShaderPerformance(const Config& config) const;
-
-    // Generate the per-block or per-instruction Control Flow Graph.
-    bool ExtractCFG(const Config& config, const std::string& device_string, const RgVkOutputMetadata& metadata) const;
 
     // Store input file names to the output metadata.
     void StoreInputFilesToOutputMD(const BeVkPipelineFiles& input_files);

@@ -1,3 +1,4 @@
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by VersionResource.rc

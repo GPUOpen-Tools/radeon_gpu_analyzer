@@ -1,4 +1,9 @@
-//------------------------------ TCPSocketClientTest.cpp ------------------------------
+//=============================================================================
+/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for TCPSocketClientTest.cpp
+//=============================================================================
 
 // include Google Test header
 #include <gtest/gtest.h>

@@ -1,3 +1,10 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Implementation for RGA main window specific implementation of QPushButton for changing modes.
+//=============================================================================
+
 // Qt.
 #include <QPainter>
 #include <QPainterPath>

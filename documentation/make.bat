@@ -1,5 +1,7 @@
 @ECHO OFF
 
+REM Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+
 pushd %~dp0
 
 REM Command file for Sphinx documentation

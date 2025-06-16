@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for Item widget in RGA Build view's File Menu.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_H_
 
@@ -22,7 +28,7 @@ public:
     virtual void SetHovered(bool is_hovered) = 0;
 
     // Alter the visual style of the item if it is currently selected.
-    virtual void SetCurrent(bool is_current) = 0;
+    virtual void SetCurrent(bool is_current, bool hide_entry_point_lists = true) = 0;
 
     // Connect signals for this file item.
     void ConnectSignals();
@@ -95,10 +101,9 @@ protected:
     struct
     {
         QAction* open_containing_folder = nullptr;
-        QAction* rename_file = nullptr;
-        QAction* remove_file = nullptr;
-    }
-    context_menu_actions_;
+        QAction* rename_file            = nullptr;
+        QAction* remove_file            = nullptr;
+    } context_menu_actions_;
 
     // Whether or not the file has been saved.
     bool is_saved_;
@@ -106,4 +111,4 @@ protected:
     // The flag to keep track of escape key being pressed.
     bool is_escape_pressed_ = false;
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_FILE_ITEM_H_

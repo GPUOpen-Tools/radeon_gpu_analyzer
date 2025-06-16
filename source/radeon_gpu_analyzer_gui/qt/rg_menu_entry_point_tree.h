@@ -1,3 +1,9 @@
+//=============================================================================
+/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// @author AMD Developer Tools Team
+/// @file
+/// @brief Header for RGA File Menu's Tree view.
+//=============================================================================
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_ENTRY_POINT_TREE_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_MENU_ENTRY_POINT_TREE_H_
 
