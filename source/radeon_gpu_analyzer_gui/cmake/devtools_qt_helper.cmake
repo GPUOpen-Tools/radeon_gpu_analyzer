@@ -31,6 +31,17 @@ if (NOT Qt6_DIR)
     endif ()
 endif ()
 
+# linuxdeployqt
+if (UNIX AND NOT APPLE)
+
+    find_program(LINUXDEPLOYQT "linuxdeployqt" HINTS "${PROJECT_SOURCE_DIR}/external/linuxdeployqt")
+    if (LINUXDEPLOYQT)
+        message(STATUS "Found linuxdeployqt: ${LINUXDEPLOYQT}")
+    else ()
+        message(ERROR "linuxdeployqt not found but is required for build")
+    endif ()
+endif ()
+
 if (Qt5_DIR OR Qt6_DIR)
     #######################################################################################################################
     # Setup the INSTALL target to include Qt DLLs
