@@ -818,6 +818,7 @@ void RgBuildViewBinary::HandleSelectedFileChanged(const std::string&, const std:
 
                             // Update the visibility of the disassembly view.
                             ToggleDisassemblyViewVisibility(is_entry_point_selected);
+                            MaximizeDisassemblyView();
 
                             if (is_entry_point_selected)
                             {

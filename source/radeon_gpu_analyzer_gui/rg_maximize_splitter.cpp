@@ -120,6 +120,7 @@ void RgMaximizeSplitter::Restore()
             if(view_container != nullptr)
             {
                 view_container->SetHiddenState(false);
+                view_container->SetMaximizedState(false);
             }
         }
 

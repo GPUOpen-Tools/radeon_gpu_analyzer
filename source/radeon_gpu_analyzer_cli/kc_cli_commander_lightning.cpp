@@ -57,6 +57,7 @@ static const std::vector<std::pair<std::string, std::string>> kLcLlvmTargetsToDe
     {"gfx90a", "gfx90a"},
     {"gfx90c", "gfx90c"},   
     {"gfx942", "gfx942"},   
+    {"gfx950", "gfx950"},   
     {"gfx1010", "gfx1010"}, 
     {"gfx1011", "gfx1011"},  
     {"gfx1012", "gfx1012"}, 
@@ -72,6 +73,7 @@ static const std::vector<std::pair<std::string, std::string>> kLcLlvmTargetsToDe
     {"gfx1150", "gfx1150"}, 
     {"gfx1151", "gfx1151"},  
     {"gfx1152", "gfx1152"},
+    {"gfx1153", "gfx1153"},
     {"gfx1200", "gfx1200"}, 
     {"gfx1201", "gfx1201"}};
 

@@ -27,6 +27,7 @@ static const char* kStrRdna3   = "RDNA3";
 static const char* kStrCdna3   = "CDNA3";
 static const char* kStrRdna3_5 = "RDNA3.5";
 static const char* kStrRdna4   = "RDNA4";
+static const char* kStrCdna4   = "CDNA4";
 
 enum class GpuArchitecture
 {
@@ -41,7 +42,8 @@ enum class GpuArchitecture
     kGpuArchitectureRdna3,
     kGpuArchitectureCdna3,
     kGpuArchitectureRdna3_5,
-	kGpuArchitectureRdna4
+    kGpuArchitectureRdna4,
+    kGpuArchitectureCdna4
 };
 
 // GPU Architectures sort priority.
@@ -56,7 +58,8 @@ static const std::unordered_map<std::string, GpuArchitecture> kGpuSortPriority =
                                                                                   {kStrRdna3,   GpuArchitecture::kGpuArchitectureRdna3},
                                                                                   {kStrCdna3,   GpuArchitecture::kGpuArchitectureCdna3},
 																				  {kStrRdna3_5, GpuArchitecture::kGpuArchitectureRdna3_5},
-                                                                                  {kStrRdna4,   GpuArchitecture::kGpuArchitectureRdna4}};
+                                                                                  {kStrRdna4,   GpuArchitecture::kGpuArchitectureRdna4},
+                                                                                  {kStrCdna4,   GpuArchitecture::kGpuArchitectureCdna4}};
 
 // Definition of GpuComparator
 template <typename Gpu>

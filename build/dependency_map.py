@@ -32,17 +32,17 @@ git_mapping = {}
 
 github_mapping = {
  # Lib.
-    "appsdk"                         : ["../external/appsdk",                   "master"],
-    "common_lib_ext_boost_1.59"      : ["../external/third_party/Boost",        "master"],
-    "cxxopts"                        : ["../external/third_party/cxxopts",      "master"],
-    "volk"                           : ["../external/third_party/volk",         "master"],
+    "appsdk"                         : ["../external/appsdk",                   "55a6940ebc963daec69152314a1bb94943287d4c"],
+    "common_lib_ext_boost_1.59"      : ["../external/third_party/Boost",        "d50f858fdff41c549595bb1c84d236206d117772"],
+    "cxxopts"                        : ["../external/third_party/cxxopts",      "e725ea308468ab50751ba7f930842a4c061226e9"],
+    "volk"                           : ["../external/third_party/volk",         "eef21b173a78b4db96a7b13df9e096068c9bacd6"],
  # Src.
-    "tsingleton"                     : ["../external/tsingleton",               "master"],
-    "common_src_miniz"               : ["../external/miniz",                    "master"],
+    "tsingleton"                     : ["../external/tsingleton",               "d048b8fdea9d84e8939116a442ef70608189f6e2"],
+    "common_src_miniz"               : ["../external/miniz",                    "a958cde31565769681aa3d7934c3d38c52940f4e"],
     "dynamic_library_module"         : ["../external/dynamic_library_module",   "amd-rga-v2.7"],
-    "device_info"                    : ["../external/device_info",              "rga-v2.13"],
+    "device_info"                    : ["../external/device_info",              "rga-v2.14"],
     "update_check_api"               : ["../external/update_check_api",         "v2.1.1"],
  # Qt tools.
-    "qt_common"                      : ["../external/qt_common",                "v4.3.0"],
-    "qt_isa_gui"                     : ["../external/qt_isa_gui",               "v1.1.0"],
+    "qt_common"                      : ["../external/qt_common",                "v4.4.0"],
+    "qt_isa_gui"                     : ["../external/qt_isa_gui",               "v1.2.0"],
 }

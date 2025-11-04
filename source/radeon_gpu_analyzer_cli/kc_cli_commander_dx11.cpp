@@ -48,7 +48,7 @@ static const char* kStrInfoDx11DxAsmCodeGenerationSuccess = "DX ASM code generat
 static const char* kStrInfoDx11DxAsmCodeGenerationFailure = "DX ASM code generation failed.";
 
 // Unsupported devices.
-static const std::set<std::string> kUnsupportedDevicesDx11 = {"gfx902", "gfx904", "gfx908", "gfx90a", "gfx942", "gfx1033"};
+static const std::set<std::string> kUnsupportedDevicesDx11 = {"gfx902", "gfx904", "gfx908", "gfx90a", "gfx942", "gfx950", "gfx1033"};
 
 KcCliCommanderDX::KcCliCommanderDX(void)
 {

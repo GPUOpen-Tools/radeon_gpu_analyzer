@@ -91,7 +91,7 @@ public:
     virtual bool IsLineCorrelationSupported() const;
 
     // Set the target gpu label and architecture in the model by finding the target gpu that corresponds to the given input file in the build settings.
-    void SetTargetGpuLabel(std::string input_file, std::shared_ptr<RgBuildSettings> build_settings);
+    virtual void SetTargetGpuLabel(std::string input_file, std::shared_ptr<RgBuildSettings> build_settings);
 
 signals:
     // A signal emitted when the input source file's highlighted correlation line was updated.

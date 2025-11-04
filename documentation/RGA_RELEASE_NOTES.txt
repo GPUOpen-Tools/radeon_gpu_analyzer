@@ -1,15 +1,13 @@
-Radeon™ GPU Analyzer 2.13 Release Notes
+Radeon™ GPU Analyzer 2.14 Release Notes
 =======================================
 Highlights
 ==========
--     Added support for the gfx1200 RDNA™ 4 architecture as a compilation target across all of RGA's modes.
--     The Binary Analysis mode now supports Vulkan mesh shading pipelines and Vulkan raytracing pre-compiled Code Objects.
--     All Vulkan offline modes (vk-offline, vk-spv-offline and vk-spv-txt-offline) now support mesh shading pipeline compilation.
--     Updated the Vulkan and OpenGL offline compilers.
--     Updated the following Vulkan tool dependencies: glslangValidator, spirv-as and spirv-dis (SPIRV-Tools v2024.4).
--     Updated the DXC front-end compiler to v1.8.2502.
+-     Analyze precompiled HIP GPU Code Object binaries for the MI-350 (gfx950 CDNA™ 4 architecture) with RGA's Binary Analysis mode.
+-     Compile and analyze OpenCL™ kernels for MI-350 (gfx950 CDNA™ 4 architecture).
+-     Added support for the gfx1153 as a compilation target across all RGA's modes.
 
 Notes: 
+-     With the introduction of 25.20-based Linux drivers, the AMDVLK driver is no longer included in the amdgpu-pro driver package. This is a result of the AMDVLK open-source project being discontinued as mentioned here (https://github.com/GPUOpen-Drivers/AMDVLK/discussions/416). Instead, the RADV open-source Vulkan® driver is installed by default. Consequently, live driver compilation of Vulkan pipelines using RGA is no longer supported with the latest drivers. For a limited transition period, RGA will still bundle the latest amdvlk64.so from the latest 25.10 amdgpu-pro driver release which can be used for reference. RGA will also continue to support Vulkan pipeline compilation on Linux through its offline Vulkan mode.
 -     Clock cycle estimates are no longer presented by the upgraded ISA disassembly view in RGA GUI application.
 -     The new disassembly view presents Functional Groups, leveraging the AMD GPU machine-readable ISA documentation.
 -     For backward compatibility, the RGA CLI output presents Cycle estimates and Functional Unit fields similar to RGA 2.11. 
@@ -40,6 +38,8 @@ DirectX 11 Mode
 
 Vulkan Offline Modes (vk-offline, vk-spv-offline, vk-spv-txt-offline)
 ---------------------------------------------------------------------
+-	Vulkan offline modes will fail on Ubuntu 22.04. It will work as expected on Ubuntu 24.04.
+
 SPIR-V support limitations:
 a. The Vulkan Offline modes currently only support the following SPIR-V capabilities:
 CapabilityMatrix

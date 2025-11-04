@@ -120,8 +120,14 @@ beProgramBuilderBinary::ApiEnum beProgramBuilderBinary::GetApiFromPipelineMetada
         bool is_raytracing_binary = false;
         if (!pipeline.shader_functions.empty())
         {
-            // Metadata contains a .shader_functions section for user defined shaders.
-            is_raytracing_binary = true;
+            for (const auto& shader_function : pipeline.shader_functions)
+            {
+                if (shader_function.shader_subtype != BeAmdPalMetaData::ShaderSubtype::kUnknown)
+                {
+                    is_raytracing_binary = true;
+                    break;
+                }
+            }
         }
         for (const auto& shader : pipeline.shaders)
         {

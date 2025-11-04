@@ -1579,6 +1579,18 @@ void RgBuildView::ToggleDisassemblyViewVisibility(bool is_visible)
     }
 }
 
+void RgBuildView::MaximizeDisassemblyView()
+{
+    // Then maximize the size of the disassembly view for Binary Analysis mode.
+    if (disassembly_view_container_ != nullptr && !disassembly_view_container_->IsInMaximizedState())
+    {
+        // Toggle the maximize state of the disassembly view.
+        disassembly_view_container_->SetIsMaximizable(true);
+        disassembly_view_container_->SwitchContainerSize();
+        disassembly_view_container_->SetIsMaximizable(false);
+    }
+}
+
 void RgBuildView::HandleSourceEditorHidden()
 {
     // Hide the find widget.
@@ -2113,15 +2125,19 @@ void RgBuildView::HandleProjectBuildSuccess()
         int selected_line_number = current_code_editor_->GetSelectedLineNumber();
         HandleSourceFileSelectedLineChanged(current_code_editor_, selected_line_number);
     }
-
+    
     // Resize the disassembly view.
     HandleDisassemblyTableWidthResizeRequested(0);
     // Then maximize the size of the disassembly view for Binary Analysis mode.
     if (disassembly_view_container_ != nullptr && RgConfigManager::Instance().GetCurrentAPI() == RgProjectAPI::kBinary)
     {
-        disassembly_view_container_->SetIsMaximizable(true);
-        disassembly_view_container_->SwitchContainerSize();
-        disassembly_view_container_->SetIsMaximizable(false);
+        std::string filename = menu->GetSelectedFileItem()->GetFilename();
+        if (IsGcnDisassemblyGenerated(filename) && !disassembly_view_container_->IsInMaximizedState())
+        {
+            disassembly_view_container_->SetIsMaximizable(true);
+            disassembly_view_container_->SwitchContainerSize();
+            disassembly_view_container_->SetIsMaximizable(false);
+        }
     }
 
     // Update the notification message if needed.

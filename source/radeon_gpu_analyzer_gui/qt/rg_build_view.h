@@ -176,6 +176,9 @@ public:
     // Toggle the visibility of the disassembly view.
     void ToggleDisassemblyViewVisibility(bool is_visible);
 
+    // Maximizes the disassembly view.
+    void MaximizeDisassemblyView();
+
     // Connect signals to the source editor's find widget.
     void ConnectFindSignals();
 

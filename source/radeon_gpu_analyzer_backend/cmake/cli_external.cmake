@@ -5,7 +5,7 @@
 include(FetchContent)
 
 set (GITHUB_REPO_PREFIX "https://github.com/GPUOpen-Tools")
-set (ISA_SPEC_MANAGER_BRANCH "main")
+set (ISA_SPEC_MANAGER_BRANCH "46192e668545db3c24876af39c24a52ff36b3887")
 
 if (NOT TARGET isa_decoder)
     if (NOT ISA_SPEC_MANAGER_DIR)

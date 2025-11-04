@@ -53,8 +53,8 @@ public:
     // Returns true if the target is of the Navi4 generation and false otherwise.
     static bool IsNavi4Target(const std::string& target_name);
 
-    // Returns true if the target is Strix and false otherwise.
-    static bool IsStrix(const std::string& target_name);
+    // Returns true if the target is RDNA 3.5 and false otherwise.
+    static bool IsNavi3Dot5Target(const std::string& target_name);
 
     // Returns true if the target is Navi3 or beyond and false otherwise.
     static bool IsNavi3AndBeyond(const std::string& target_name);
@@ -76,6 +76,9 @@ public:
 
     // Returns true if the target is of the MI300 generation and false otherwise.
     static bool IsMi300Target(const std::string& target_name);
+    
+    // Returns true if the target is of the MI350 generation and false otherwise.
+    static bool IsMi350Target(const std::string& target_name);
 
     // Returns true if the target is of the Vega generation and false otherwise.
     static bool IsVegaTarget(const std::string& target_name);

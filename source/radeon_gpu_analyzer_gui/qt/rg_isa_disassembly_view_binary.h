@@ -22,6 +22,9 @@ public:
     // Populate the disassembly view using the given clone and build outputs.
     virtual bool PopulateBuildOutput(const std::shared_ptr<RgProjectClone> project_clone, const RgBuildOutputsMap& build_outputs) override;
 
+    // Set the target gpu label and architecture in the model by finding the target gpu that corresponds to the given input file in the build settings.
+    virtual void SetTargetGpuLabel(std::string input_file, std::shared_ptr<RgBuildSettings> build_settings) override;
+
 protected:
     // Set the border stylesheet.
     virtual void SetBorderStylesheet(bool is_selected) override;

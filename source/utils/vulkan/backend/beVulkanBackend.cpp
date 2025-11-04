@@ -132,11 +132,10 @@ static const char* kStrVulkanWarningExtensionNotSupported = "Vulkan extension is
 static const char* kStrVulkanWarningValidationInfoUnavailable = "Vulkan validation information may not be available or complete.";
 static const char* kStrVulkanWarningGraphicsPipelineWithoutVertexShader = "Warning: no vertex shader detected in graphics pipeline.";
 
-// General warnings.
-static const char* kStrVulkanAmdvlkLocation1 = "Warning: failed to locate AMD's Vulkan driver on the system: ";
-static const char* kStrVulkanAmdvlkLocation2 = ". Falling back to using the amdvlk binary that is packaged with RGA.";
 
 // Info.
+static const char* kStrVulkanAmdvlkLocation1 = "AMD's Vulkan driver (";
+static const char* kStrVulkanAmdvlkLocation2 = ") was not found on the system. Defaulting to the amdvlk binary that is packaged with RGA.";
 static const char* kStrVulkanInfoValidationEnabling = "Enabling Vulkan validation layers... ";
 static const char* kStrVulkanInfoLayerOutput1 = "*** Output from ";
 static const char* kStrVulkanInfoLayerOutputBegin = " layer - begin *** ";

@@ -109,6 +109,7 @@ bool BeUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& card_list,
     AddGenerationDevices(GDT_HW_GENERATION_CDNA2, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_CDNA3, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX12, card_list, public_device_unique_names, convert_to_lower);
+    AddGenerationDevices(GDT_HW_GENERATION_CDNA4, card_list, public_device_unique_names, convert_to_lower);
 
     return (!card_list.empty() && !public_device_unique_names.empty());
 }

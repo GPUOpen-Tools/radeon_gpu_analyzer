@@ -153,9 +153,7 @@ void RgIsaItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     IsaItemDelegate::paint(painter, option, model_index);
 
     // Check if there should be a block label pinned to the top of the view.
-    int proxy_index_y_position = -1;
-
-    if (BlockLabelPinnedToTop(source_model_index, model_index, proxy_index_y_position))
+    if (BlockLabelPinnedToTop(model_index))
     {
         // Don't paint anything else if this index is a block label pinned to the top of the view.
         return;

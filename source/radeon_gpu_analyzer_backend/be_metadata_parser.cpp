@@ -276,10 +276,34 @@ std::string BeAmdPalMetaData::GetShaderSubtypeName(ShaderSubtype subtype)
 
 uint64_t GetHardwareStageProperty(const YAML::Node& node, const std::string& key)
 {
-    uint64_t ret = static_cast<uint64_t>(-1);
-    if (node[key])
+    uint64_t          ret = static_cast<uint64_t>(-1);
+    const YAML::Node& val = node[key];
+    if (val && val.IsDefined() && val.IsScalar())
     {
-        ret = node[key].as<uint64_t>();
+        try
+        {
+            ret = val.as<uint64_t>();
+        }
+        catch (const YAML::BadConversion&)
+        {
+        }
+    }
+    return ret;
+}
+
+std::string GetHardwareStageString(const YAML::Node& node, const std::string& key)
+{
+    std::string       ret;
+    const YAML::Node& val = node[key];
+    if (val && val.IsDefined() && val.IsScalar())
+    {
+        try
+        {
+            ret = val.as<std::string>();
+        }
+        catch (const YAML::BadConversion&)
+        {
+        }
     }
     return ret;
 }
@@ -338,7 +362,7 @@ beKA::beStatus BeAmdPalMetaData::ParseAmdgpudisMetadata(const std::string& amdgp
 
                 if (pipeline_node[kAmdgpuDisDotShaderFunctionsToken])
                 {
-                    bool is_traditional_compute_shader = false; 
+                    bool is_traditional_compute_shader = true;
                     // Parse shader functions.
                     for (const auto& function_node : pipeline_node[kAmdgpuDisDotShaderFunctionsToken])
                     {
@@ -347,12 +371,15 @@ beKA::beStatus BeAmdPalMetaData::ParseAmdgpudisMetadata(const std::string& amdgp
                         function.name = BeMangledKernelUtils::DemangleShaderName(function_node.first.as<std::string>());
                         if (function.name == kAmdgpuDisRaytracingStandAloneComputeShader)
                         {
-                            is_traditional_compute_shader = true;
                             break;
                         }
 
-                        function.shader_subtype = BeAmdPalMetaData::GetShaderSubtype(function_node.second[kAmdgpuDisDotShaderSubtypeToken].as<std::string>());
-
+                        const std::string shader_subtype = GetHardwareStageString(function_node.second, kAmdgpuDisDotShaderSubtypeToken);
+                        function.shader_subtype          = BeAmdPalMetaData::GetShaderSubtype(shader_subtype);
+                        if (function.shader_subtype != BeAmdPalMetaData::ShaderSubtype::kUnknown)
+                        {
+                            is_traditional_compute_shader = false;
+                        }
                         function.stats.lds_size_used       = GetHardwareStageProperty(function_node.second, kAmdgpuDisDotLdsSizeToken);
                         function.stats.scratch_memory_used = GetHardwareStageProperty(function_node.second, kAmdgpuDisDotScratchMemorySizeToken);
                         function.stats.num_sgprs_used      = GetHardwareStageProperty(function_node.second, kAmdgpuDisDotSgprCountToken);

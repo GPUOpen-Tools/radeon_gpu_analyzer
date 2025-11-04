@@ -243,14 +243,14 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwi
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/disassembler/linux/amdgpu-dis $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/disassembler/amdgpu-dis
         COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/disassembler/amdgpu-dis
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/linux/bin $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/
-        COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/clang-18
+        COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/clang-20
         COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/lld
         COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/llvm-readobj
-        COMMAND ln -s -f ./clang-18 $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/clang
+        COMMAND ln -s -f ./clang-20 $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/clang
         COMMAND ln -s -f ./lld $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/ld.lld
         COMMAND ln -s -f ./llvm-readobj $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/llvm-readelf
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/linux/include/opencl-c.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/include/opencl-c.h
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/linux/include/opencl-c-base.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/clang/18/include/opencl-c-base.h
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/linux/include/opencl-c-base.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/clang/20/include/opencl-c-base.h
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/additional-targets $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/additional-targets
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/linux/lib/bitcode $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/bitcode/
     )
@@ -307,7 +307,7 @@ IF(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/disassembler/windows/amdgpu-dis.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/disassembler/amdgpu-dis.exe
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/windows/bin $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/windows/include/opencl-c.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/include/opencl-c.h
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/windows/include/opencl-c-base.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/clang/18/include/opencl-c-base.h
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/windows/include/opencl-c-base.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/clang/20/include/opencl-c-base.h
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/additional-targets $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/additional-targets
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/windows/lib/bitcode $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/bitcode/
     )

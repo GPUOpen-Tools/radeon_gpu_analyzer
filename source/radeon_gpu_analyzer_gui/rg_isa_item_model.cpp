@@ -878,7 +878,7 @@ bool RgIsaItemModel::SetArchitecture(const std::string target_gpu)
     {
         architecture = amdisa::GpuArchitecture::kRdna4;
     }
-    else if (RgaSharedUtils::IsStrix(target_gpu))
+    else if (RgaSharedUtils::IsNavi3Dot5Target(target_gpu))
     {
         architecture = amdisa::GpuArchitecture::kRdna3_5;
     }
@@ -896,7 +896,11 @@ bool RgIsaItemModel::SetArchitecture(const std::string target_gpu)
     }
     else if (RgaSharedUtils::IsVegaTarget(target_gpu))
     {
-        if (RgaSharedUtils::IsMi300Target(target_gpu))
+        if (RgaSharedUtils::IsMi350Target(target_gpu))
+        {
+            architecture = amdisa::GpuArchitecture::kCdna4;
+        }
+        else if (RgaSharedUtils::IsMi300Target(target_gpu))
         {
             architecture = amdisa::GpuArchitecture::kCdna3;
         }

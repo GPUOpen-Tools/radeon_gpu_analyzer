@@ -31,9 +31,9 @@ The supported modes by the **command-line tool** are:
 
 ## System Requirements ##
 
-* Windows: 10, 64-bit. Visual Studio 2015 or later.
-* Linux: Ubuntu 20.04. Build with gcc 4.7.2 or later.
-* Vulkan SDK 1.1.97.0 or later. To download the Vulkan SDK, visit https://vulkan.lunarg.com/
+* Windows® 10 or 11 64-bit. Visual Studio® 2019 or above (2022 is the default).
+* Linux: Ubuntu 22.04 or 24.04 LTS. Build with gcc 9.1 or later.
+* Vulkan SDK 1.2.162.1 or later. To download the Vulkan SDK, visit https://vulkan.lunarg.com/
 
 To run the tool, you would need to have the AMD Radeon Adrenalin Software (Windows) or amdgpu-pro driver (Linux) installed for all modes, except for the following "offline" modes, which are independent of the driver and hardware:
 * Vulkan offline mode
@@ -96,7 +96,7 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
 
 ### Building on Ubuntu ###
 * One time setup:
-  * Install the Vulkan SDK (version 1.1.97.0 or above). To download the Vulkan SDK, visit https://vulkan.lunarg.com/
+  * Install the Vulkan SDK (version 1.2.162.1 or above). To download the Vulkan SDK, visit https://vulkan.lunarg.com/
   * `sudo apt-get install libboost-all-dev`
   * `sudo apt-get install gcc-multilib g++-multilib`
   * `sudo apt-get install libglu1-mesa-dev mesa-common-dev libgtk2.0-dev`
@@ -112,7 +112,7 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
    On Linux, it is recommended to explicitly pass to CMake the location of the Vulkan SDK include and lib directories as well as the location of Qt. For example:
 
    ```
-   python pre_build.py --qt 6.7.0 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
+   python pre_build.py --qt 6.7.0 --vk-include ~/work/vulkan-sdk/1.2.162.1/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.2.162.1/x86_64/lib/
    ```
 
    This will fetch all the dependencies and generate the make files.
@@ -163,6 +163,7 @@ The supported modes by the **GUI app** are:
 * Binary Analysis - Analyze pre-compiled binary Code Object files
 
 The supported modes by the **command-line tool** are:
+* Binary Analysis - Analyze pre-compiled binary Code Object files.
 * DX12 (see https://gpuopen.com/radeon-gpu-analyzer-2-2-direct3d12-compute/ and https://gpuopen.com/radeon-gpu-analyzer-2-3-direct3d-12-graphics/ for more details)
 * DX11
 * DXR
@@ -174,9 +175,9 @@ The supported modes by the **command-line tool** are:
 
 ## System Requirements ##
 
-* Windows: 10 or 11, 64-bit. Visual Studio 2017 or later.
-* Linux: Ubuntu 22.04. Build with gcc 4.7.2 or later.
-* Vulkan SDK 1.1.97.0 or later. To download the Vulkan SDK, visit https://vulkan.lunarg.com/
+* Windows® 10 or 11 64-bit. Visual Studio® 2019 or above (2022 is the default).
+* Linux: Ubuntu 22.04 or 24.04 LTS. Build with gcc 9.1 or later.
+* Vulkan SDK 1.2.162.1 or later. To download the Vulkan SDK, visit https://vulkan.lunarg.com/
 
 To run the tool, you would need to have the AMD Radeon Adrenalin Software (Windows) or amdgpu-pro driver (Linux) installed for all modes, except for the following "offline" modes, which are independent of the driver and hardware:
 * Vulkan offline mode
@@ -237,11 +238,12 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
 
 ### Building on Ubuntu ###
 * One time setup:
-  * Install the Vulkan SDK (version 1.1.97.0 or above). To download the Vulkan SDK, visit https://vulkan.lunarg.com/
+  * Install the Vulkan SDK (version 1.2.162.1 or above). To download the Vulkan SDK, visit https://vulkan.lunarg.com/
   * `sudo apt-get install libboost-all-dev`
   * `sudo apt-get install gcc-multilib g++-multilib`
   * `sudo apt-get install libglu1-mesa-dev mesa-common-dev libgtk2.0-dev`
   * `sudo apt-get install zlib1g-dev libx11-dev:i386`
+  * `sudo apt-get install patchelf`
   * Install CMake 3.10 or above. For auto-detecting the Vulkan SDK version 3.7 or above is required.
   * Install Python 3.10 (or above)
   * To build the GUI app, you should also have Qt installed
@@ -253,7 +255,7 @@ named "utils" under the RGA executable's directory (for example, D3DCompiler_47.
    On Linux, it is recommended to explicitly pass to CMake the location of the Vulkan SDK include and lib directories as well as the location of Qt. For example:
 
    ```
-   python pre_build.py --qt 6.7.0 --vk-include ~/work/vulkan-sdk/1.1.97.0/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.1.97.0/x86_64/lib/
+   python pre_build.py --qt 6.7.0 --vk-include ~/work/vulkan-sdk/1.2.162.1/x86_64/include/ --vk-lib ~/work/vulkan-sdk/1.2.162.1/x86_64/lib/
    ```
 
    This will fetch all the dependencies and generate the make files.

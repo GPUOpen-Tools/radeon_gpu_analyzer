@@ -939,50 +939,8 @@ bool RgIsaDisassemblyView::IsMaxVgprColumnVisible() const
 
 void RgIsaDisassemblyView::SetTargetGpuLabel(std::string new_file_path, std::shared_ptr<RgBuildSettings> build_settings)
 {
-    // Set the target gpu name label.
-    std::string target_gpu = "";
-
-    for (size_t file_index = 0; file_index < build_settings->target_gpus.size() && file_index < build_settings->binary_file_names.size(); file_index++)
-    {
-        if (build_settings->binary_file_names[file_index] == new_file_path)
-        {
-            target_gpu = build_settings->target_gpus[file_index];
-            break;
-        }
-    }
-
-    if (!target_gpu.empty())
-    {
-        // Get a mapping of the compute capability to architecture.
-        std::map<std::string, std::string> compute_capability_to_arch;
-        bool                               has_arch_mapping = RgUtils::GetComputeCapabilityToArchMapping(compute_capability_to_arch);
-
-        // Construct the presented name.
-        std::stringstream presented_name;
-
-        // If applicable, prepend the gfx notation (for example, "gfx802/Tonga" for "Tonga").
-        std::string gfx_notation;
-        bool        has_gfx_notation = RgUtils::GetGfxNotation(target_gpu, gfx_notation);
-        if (has_gfx_notation && !gfx_notation.empty())
-        {
-            presented_name << gfx_notation << "/";
-        }
-        presented_name << target_gpu;
-
-        // If we have a mapping, let's construct a name that includes
-        // the GPU architecture as well: <compute capability> (<architecture>).
-        if (has_arch_mapping)
-        {
-            auto iter = compute_capability_to_arch.find(target_gpu);
-            if (iter != compute_capability_to_arch.end())
-            {
-                presented_name << " (" << iter->second << ")";
-            }
-        }
-
-        ui_.binary_target_gpu_->setText(QString::fromStdString(presented_name.str()));
-
-        // Also switch the architecture for the model.
-        rg_isa_item_model_->SetArchitecture(target_gpu);
-    }
+    // Target GPU **Label** is applicable only for Binary Analysis mode.
+    // RgIsaDisassemblyViewBinary::SetTargetGpuLabel overrides this method, to set target gpu label.
+    // OpenCL and Vulkan modes have a dropdown for target GPUs.
+    ;
 }

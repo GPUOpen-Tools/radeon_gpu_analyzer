@@ -30,14 +30,30 @@
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 #include "external/amdt_os_wrappers/Include/osDirectory.h"
 
-
-
 // Constants: error messages.
 static const char* kStrErrorVkOfflineCannotExtractVulkanVersion = "Error: unable to extract the Vulkan version.";
-static const char* kStrErrorVkOfflineMixedInputFiles = "Error: cannot mix stage-specific input files (--vert, --tesc, --tese, --geom, --frag, --comp) with a stage-less SPIR-V input file.";
+static const char* kStrErrorVkOfflineMixedInputFiles =
+    "Error: cannot mix stage-specific input files (--vert, --tesc, --tese, --geom, --frag, --comp) with a stage-less SPIR-V input file.";
 
 // Unsupported devices.
-static const std::set<std::string> kUnsupportedDevicesVkOffline = {"gfx900", "gfx902", "gfx904", "gfx906", "gfx908", "gfx90a", "gfx90c", "gfx942", "gfx1033"};
+static const std::set<std::string> kUnsupportedDevicesVkOffline = {"gfx900",
+                                                                   "gfx902",
+                                                                   "gfx904",
+                                                                   "gfx906",
+                                                                   "gfx908",
+                                                                   "gfx90a",
+                                                                   "gfx90c",
+                                                                   "gfx942",
+                                                                   "gfx950",
+                                                                   "gfx1010",
+                                                                   "gfx1011",
+                                                                   "gfx1012",
+                                                                   "gfx1030",
+                                                                   "gfx1031",
+                                                                   "gfx1032",
+                                                                   "gfx1033",
+                                                                   "gfx1034",
+                                                                   "gfx1035"};
 
 KcCLICommanderVkOffline::KcCLICommanderVkOffline() : vulkan_builder_(new BeProgramBuilderVkOffline)
 {
