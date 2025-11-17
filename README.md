@@ -8,7 +8,7 @@ You can use RGA to produce the following output:
 * Intermediate language disassembly: AMDIL, DXIL and DXBC for DirectX, SPIR-V for Vulkan, LLVM IR for Offline OpenCL
 * Hardware resource usage statistics, such as register consumption, static memory allocation and more
 * Compiled binaries
-* Live register analysis (see http://gpuopen.com/live-vgpr-analysis-radeon-gpu-analyzer/ for more info)
+* Live register analysis (see http://gpuopen.com/learn/live-vgpr-analysis-radeon-gpu-analyzer/ for more info)
 * Control flow graphs
 * Build errors and warnings
 
@@ -151,7 +151,7 @@ You can use RGA to produce the following output:
 * Intermediate language disassembly: AMDIL, DXIL and DXBC for DirectX, SPIR-V for Vulkan, LLVM IR for Offline OpenCL
 * Hardware resource usage statistics, such as register consumption, static memory allocation and more
 * Compiled binaries
-* Live register analysis (see http://gpuopen.com/live-vgpr-analysis-radeon-gpu-analyzer/ for more info)
+* Live register analysis (see http://gpuopen.com/learn/live-vgpr-analysis-radeon-gpu-analyzer/ for more info)
 * Control flow graphs
 * Build errors and warnings
 
