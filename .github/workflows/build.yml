@@ -1,0 +1,92 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: ${{ matrix.os-name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            os-name: Windows
+            qt-arch: win64_msvc2019_64
+          - runner: ubuntu-24.04
+            os-name: Ubuntu
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install Qt (Windows)
+        if: runner.os == 'Windows'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.0'
+          arch: ${{ matrix.qt-arch }}
+          dir: 'C:\'
+          cache: true
+
+      - name: Install Qt (Ubuntu)
+        if: runner.os == 'Linux'
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.0'
+          arch: linux_gcc_64
+          dir: '${{ github.workspace }}'
+          modules: 'qtwaylandcompositor'
+          cache: true
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            cmake \
+            build-essential \
+            chrpath \
+            patchelf \
+            libxcb-xinerama0 \
+            libxcb-cursor-dev \
+            mesa-common-dev \
+            libglu1-mesa-dev \
+            libgl1-mesa-dev \
+            libx11-xcb-dev \
+            libxkbcommon-x11-dev \
+            libwayland-dev
+
+      - name: Pre-build (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          cd build
+          python pre_build.py --vs 2022 --qt 6.7.0 --qt-root C:\Qt
+
+      - name: Pre-build (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          cd build
+          python3 pre_build.py --qt 6.7.0 --qt-root "${{ github.workspace }}/Qt"
+
+      - name: Build Release (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          cmake --build build\win\vs2022 --config Release --target radeon_gpu_analyzer_cli radeon_gpu_analyzer_gui --parallel %NUMBER_OF_PROCESSORS%
+
+      - name: Build Release (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          cmake --build build/linux/make/release --target radeon_gpu_analyzer_cli radeon_gpu_analyzer_gui --parallel $(nproc)

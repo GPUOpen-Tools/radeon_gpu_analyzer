@@ -1,5 +1,7 @@
 # RGA (Radeon™ GPU Analyzer) #
 
+[![Build Status](https://github.com/GPUOpen-Tools/RGA/actions/workflows/build.yml/badge.svg)](https://github.com/GPUOpen-Tools/RGA/actions/workflows/build.yml)
+
 Radeon GPU Analyzer is a compiler and code analysis tool for Vulkan®, DirectX®, OpenGL® and OpenCL™. Using this product, you can compile high-level source code for a variety of AMD GPU and APU architectures,
 independent of the type of GPU/APU that is physically installed on your system.
 
