@@ -87,7 +87,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           cd build
-          python3 pre_build.py --qt 6.7.0 --qt-root "${{ github.workspace }}/Qt"
+          python3 pre_build.py --no-qt --qt 6.7.0 --qt-root "${{ github.workspace }}/Qt"
 
       - name: Build Release (Windows)
         if: runner.os == 'Windows'
@@ -98,4 +98,4 @@ jobs:
       - name: Build Release (Ubuntu)
         if: runner.os == 'Linux'
         run: |
-          cmake --build build/linux/make/release --target radeon_gpu_analyzer_cli radeon_gpu_analyzer_gui --parallel $(nproc)
+          cmake --build build/linux/make/release --target radeon_gpu_analyzer_cli --parallel $(nproc)
