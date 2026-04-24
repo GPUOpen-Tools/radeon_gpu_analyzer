@@ -75,7 +75,8 @@ jobs:
             libx11-xcb-dev \
             libxkbcommon-x11-dev \
             libwayland-dev \
-            libvulkan-dev
+            libvulkan-dev \
+            libboost-all-dev
 
       - name: Install linuxdeployqt (Ubuntu)
         if: runner.os == 'Linux'
