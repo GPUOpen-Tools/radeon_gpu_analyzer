@@ -84,10 +84,9 @@ jobs:
             -O /tmp/linuxdeployqt.AppImage
           chmod +x /tmp/linuxdeployqt.AppImage
           cd /tmp && ./linuxdeployqt.AppImage --appimage-extract
-          mkdir -p "$GITHUB_WORKSPACE/external/linuxdeployqt"
-          printf '#!/bin/sh\nexec /tmp/squashfs-root/AppRun "$@"\n' \
-            > "$GITHUB_WORKSPACE/external/linuxdeployqt/linuxdeployqt"
-          chmod +x "$GITHUB_WORKSPACE/external/linuxdeployqt/linuxdeployqt"
+          printf '#!/bin/sh\nexec /tmp/squashfs-root/AppRun "$@"\n' > /tmp/linuxdeployqt-wrapper
+          chmod +x /tmp/linuxdeployqt-wrapper
+          sudo mv /tmp/linuxdeployqt-wrapper /usr/local/bin/linuxdeployqt
 
       - name: Pre-build (Windows)
         if: runner.os == 'Windows'
