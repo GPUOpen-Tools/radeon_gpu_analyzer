@@ -17,8 +17,9 @@ jobs:
           - runner: windows-latest
             os-name: Windows
             qt-arch: win64_msvc2019_64
-          - runner: ubuntu-24.04
+          - runner: ubuntu-22.04
             os-name: Ubuntu
+            # linuxdeployqt requires glibc <= 2.35 (Ubuntu Jammy); ubuntu-24.04 ships 2.39 and is rejected at startup
 
     steps:
       - uses: actions/checkout@v5
