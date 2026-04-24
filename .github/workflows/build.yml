@@ -65,7 +65,8 @@ jobs:
             libgl1-mesa-dev \
             libx11-xcb-dev \
             libxkbcommon-x11-dev \
-            libwayland-dev
+            libwayland-dev \
+            libvulkan-dev
 
       - name: Pre-build (Windows)
         if: runner.os == 'Windows'
