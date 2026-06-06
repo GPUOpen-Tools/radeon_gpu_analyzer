@@ -55,8 +55,7 @@ static const int kEndRange   = 7;
 static const int kVgprBitShift = 5;
 
 // "Unknown" functional group string.
-static const int     kFunctionalGroupNameIndexUnknown = 0;
-static const QString kFunctionalGroupNameUnknown      = amdisa::kFunctionalGroupName[kFunctionalGroupNameIndexUnknown];
+static const QString kFunctionalGroupNameUnknown = amdisa::FunctionalGroupNames[static_cast<int>(amdisa::FunctionalGroups::kFunctionalGroupUnknown)];
 
 RgIsaItemDelegate::RgIsaItemDelegate(IsaTreeView* view, QObject* parent)
     : IsaItemDelegate(view, parent)
@@ -274,9 +273,8 @@ void RgIsaItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
         if (data.isValid())
         {
             const auto decoded_info     = qvariant_cast<amdisa::InstructionInfo>(data);
-            const auto op_code          = QString(decoded_info.instruction_name.c_str()).toLower().toStdString();
-            const auto functional_group = decoded_info.functional_group_subgroup_info.IsaFunctionalGroup;
-            functional_group_name       = amdisa::kFunctionalGroupName[static_cast<int>(functional_group)];
+            const auto functional_group = decoded_info.functional_group_subgroup_info.isa_functional_group;
+            functional_group_name       = amdisa::FunctionalGroupNames[static_cast<int>(functional_group)];
         }
 
 

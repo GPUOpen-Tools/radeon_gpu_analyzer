@@ -14,7 +14,7 @@
     <ROW Property="AI_SHORTCUTSREG" Value="0|0|0|0|"/>
     <ROW Property="AI_STARTMENU_SH" Type="4" MsiKey="AI_STARTMENU_SH"/>
     <ROW Property="ALLUSERS" Value="1"/>
-    <ROW Property="ARPCOMMENTS" Value="RGA-2.13.0.28-Installer.msi" ValueLocId="*"/>
+    <ROW Property="ARPCOMMENTS" Value="RGA-2.14.2.5-Installer.msi" ValueLocId="*"/>
     <ROW Property="ARPCONTACT" Value="https://github.com/GPUOpen-Tools/"/>
     <ROW Property="ARPNOMODIFY" MultiBuildValue="x64_Release_Static:1"/>
     <ROW Property="ARPNOREPAIR" Value="1"/>
@@ -23,10 +23,10 @@
     <ROW Property="CTRLS" Value="2"/>
     <ROW Property="Manufacturer" Value="GPUOpen"/>
     <ROW Property="PackageFileName" Value="RGA-2.4.0.0-Installer.msi" MultiBuildValue="x64_Release_Static:RGA-2.8.0.20-Installer.msi"/>
-    <ROW Property="ProductCode" Value="1033:{043DCF02-0729-4247-A09D-2BABD2BC549F} " Type="16"/>
+    <ROW Property="ProductCode" Value="1033:{CA08581A-1DFF-4A46-B4AF-5470CEE0EEDD} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="Radeon GPU Analyzer (RGA)"/>
-    <ROW Property="ProductVersion" Value="2.13.0.28" Type="32"/>
+    <ROW Property="ProductVersion" Value="2.14.2.5" Type="32"/>
     <ROW Property="SETUP_FILE_NAME" Value="RGA-2.8.0.20-Installer.msi"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND"/>
     <ROW Property="UpgradeCode" Value="{72FDBDB3-E5E3-4772-9396-EB5196A89D80}"/>

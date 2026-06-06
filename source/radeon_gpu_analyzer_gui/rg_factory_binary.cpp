@@ -67,7 +67,7 @@ std::shared_ptr<RgBuildSettings> RgFactoryBinary::CreateBuildSettings(std::share
     return build_settings;
 }
 
-RgBuildSettingsView* RgFactoryBinary::CreateBuildSettingsView(QWidget*, std::shared_ptr<RgBuildSettings> build_settings, bool)
+RgBuildSettingsView* RgFactoryBinary::CreateBuildSettingsView(QWidget*, std::shared_ptr<RgBuildSettings>, bool)
 {
     return nullptr;
 }

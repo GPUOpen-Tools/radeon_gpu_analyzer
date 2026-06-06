@@ -28,7 +28,6 @@ url_mapping_linux = {
 github_root = "https://github.com/GPUOpen-Tools/"
 
 # repositories.
-git_mapping = {}
 
 github_mapping = {
  # Lib.
@@ -43,6 +42,6 @@ github_mapping = {
     "device_info"                    : ["../external/device_info",              "rga-v2.14.1"],
     "update_check_api"               : ["../external/update_check_api",         "v2.1.1"],
  # Qt tools.
-    "qt_common"                      : ["../external/qt_common",                "v4.4.0"],
-    "qt_isa_gui"                     : ["../external/qt_isa_gui",               "v1.2.0"],
+    "qt_common"                      : ["../external/qt_common",                "v4.5.0"],
+    "qt_isa_gui"                     : ["../external/qt_isa_gui",               "v1.3.0"],
 }

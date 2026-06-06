@@ -807,7 +807,7 @@ void RgIsaItemModel::CacheSizeHints()
 
     // Calculate functional group column width.
     size_t max_functional_group_text_length = 0;
-    for (const char* functional_group_name : amdisa::kFunctionalGroupName)
+    for (const char* functional_group_name : amdisa::FunctionalGroupNames)
     {
         max_functional_group_text_length = std::max(max_functional_group_text_length, std::strlen(functional_group_name));
     }

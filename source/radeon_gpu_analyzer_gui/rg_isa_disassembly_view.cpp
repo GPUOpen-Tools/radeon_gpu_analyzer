@@ -937,7 +937,7 @@ bool RgIsaDisassemblyView::IsMaxVgprColumnVisible() const
     return is_visible;
 }
 
-void RgIsaDisassemblyView::SetTargetGpuLabel(std::string new_file_path, std::shared_ptr<RgBuildSettings> build_settings)
+void RgIsaDisassemblyView::SetTargetGpuLabel(std::string, std::shared_ptr<RgBuildSettings>)
 {
     // Target GPU **Label** is applicable only for Binary Analysis mode.
     // RgIsaDisassemblyViewBinary::SetTargetGpuLabel overrides this method, to set target gpu label.

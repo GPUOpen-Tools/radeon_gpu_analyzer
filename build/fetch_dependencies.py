@@ -52,7 +52,6 @@ def log_print(message):
 
 # add script root to support import of URL and git maps
 sys.path.append(script_root)
-from dependency_map import git_mapping
 from dependency_map import github_mapping
 from dependency_map import github_root
 from dependency_map import url_mapping_win
@@ -64,9 +63,6 @@ AMD_GITHUB_URL = (str(GIT_URL).lstrip("b'"))
 if GIT_URL is None:
     print("\nERROR: Unable to determine origin for RGA git project\n")
     exit(1)
-
-# Used for development using alternate github servers.
-GIT_ROOT_INTERNAL = "git@github.amd.com:Developer-Solutions/"
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="A script that updates the build enviroment")
@@ -254,35 +250,6 @@ def do_clone(repo_git_path, repo_target, repo_branch):
     return status
 
 
-def fetch_git_map(update, git_branch, force):
-    log_print("INFO: Fetching dependencies from: " + GIT_ROOT_INTERNAL)
-    for key in git_mapping:
-        # Target path, relative to workspace
-        path = git_mapping[key][0]
-        source = GIT_ROOT_INTERNAL + key
-
-        required_commit = git_mapping[key][1]
-        # required_commit may be "None" - or user may override commit via command line. In this case, use tip of tree
-        if required_commit is None:
-            required_commit = git_branch
-
-        log_print("INFO: Checking out commit: " + required_commit + " for " + key)
-
-        os.chdir(WORKSPACE)
-        target_path = os.path.normpath(os.path.join(script_root, path))
-        if os.path.isdir(target_path):
-            # directory exists - get latest from git using pull
-            if update is True:
-                status = do_fetch(target_path, required_commit, source, force)
-                if not status:
-                    sys.exit(1)
-        else:
-            # directory doesn't exist - clone from git
-            status = do_clone(source, target_path, required_commit)
-            if not status:
-                sys.exit(1)
-
-
 def fetch_github_map(update, git_branch, force):
     log_print("INFO: Fetching dependencies from: " + github_root)
     for key in github_mapping:
@@ -328,9 +295,6 @@ def do_fetch_dependencies(update, internal, force):
         # likely to be due to inability to find git command
         print("Error calling command: git --version")
 
-    # Strip everything after the last '/' from the URL to retrieve the root
-    amd_github_root = (AMD_GITHUB_URL.rsplit('/', 1))[0] + '/'
-
     # If cloning from github.com - use the master branch as the default branch - otherwise use amd-master
     git_branch = "amd-master"
     if "github.com" in AMD_GITHUB_URL:
@@ -339,7 +303,6 @@ def do_fetch_dependencies(update, internal, force):
     # The following section contains OS-specific dependencies that are downloaded and placed in the specified target directory.
     # for each dependency - test if it has already been fetched - if not, then fetch it, otherwise update it to top of tree
     # at the users request.
-    fetch_git_map(update, git_branch, force)
     fetch_github_map(update, git_branch, force)
 
     # Capture the operating system.
