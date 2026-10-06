@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2013-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2013-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for Parser for the shader isa.
@@ -8,6 +8,8 @@
 #define _HAS_AUTO_PTR_ETC 1
 
 // C++.
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <string>
 
@@ -22,6 +24,9 @@
 #endif
 
 #include "amdt_os_wrappers/Include/osDebugLog.h"
+
+// Common.
+#include "common/rga_shared_utils.h"
 
 // Local.
 #include "be_string_constants.h"
@@ -47,14 +52,14 @@
 
 static const std::string kIsaLabelToken1 = "label_";
 static const std::string kIsaLabelToken2 = "BB";
-static const std::string kIsaBranchToken  = "branch";
-static const std::string kIsaCallToken    = "call";
+static const std::string kIsaBranchToken = "branch";
+static const std::string kIsaCallToken   = "call";
 
 static bool ExtractRuntimeChangedNumOfGprs(const std::string& isa_line, unsigned int& num_gprs)
 {
-    bool ret = false;
+    bool              ret                    = false;
     const std::string kChangedByRuntimeToken = "modified by runtime to be ";
-    size_t pos_begin = isa_line.find(kChangedByRuntimeToken);
+    size_t            pos_begin              = isa_line.find(kChangedByRuntimeToken);
     if (pos_begin != std::string::npos)
     {
         // Handles the case where the number of SGPRs was changed by the runtime.
@@ -63,8 +68,8 @@ static bool ExtractRuntimeChangedNumOfGprs(const std::string& isa_line, unsigned
         if (pos_end > pos_begin)
         {
             const std::string kNumAsText = isa_line.substr(pos_begin, pos_end - pos_begin);
-            num_gprs = std::stoul(kNumAsText);
-            ret = true;
+            num_gprs                     = std::stoul(kNumAsText);
+            ret                          = true;
         }
     }
 
@@ -93,8 +98,11 @@ static std::string trimStr(const std::string& str_to_trim)
 }
 
 // Split the given instruction into its building blocks: opcode, operands, binary representation and offset.
-static bool ExtractBuildingBlocks(const std::string& isa_instruction, std::string& instruction_opcode,
-    std::string& params, std::string& binary_representation, std::string& offset)
+static bool ExtractBuildingBlocks(const std::string& isa_instruction,
+                                  std::string&       instruction_opcode,
+                                  std::string&       params,
+                                  std::string&       binary_representation,
+                                  std::string&       offset)
 {
     bool ret = false;
 
@@ -109,12 +117,12 @@ static bool ExtractBuildingBlocks(const std::string& isa_instruction, std::strin
         instruction_opcode = trimmed_instruction.substr(0, index_start);
 
         // Extract the parameters.
-        bool is_llpc_disassembly = false;
-        size_t index_end_llpc = trimmed_instruction.find(";");
-        size_t index_end = trimmed_instruction.find("//");
+        bool   is_llpc_disassembly = false;
+        size_t index_end_llpc      = trimmed_instruction.find(";");
+        size_t index_end           = trimmed_instruction.find("//");
         if (index_end == std::string::npos)
         {
-            index_end = index_end_llpc;
+            index_end           = index_end_llpc;
             is_llpc_disassembly = true;
         }
         if (index_end != std::string::npos)
@@ -131,7 +139,7 @@ static bool ExtractBuildingBlocks(const std::string& isa_instruction, std::strin
                 {
                     // Extract the offset.
                     index_start = index_end + 3;
-                    index_end = trimmed_instruction.find(':', index_end);
+                    index_end   = trimmed_instruction.find(':', index_end);
 
                     if (index_start != std::string::npos)
                     {
@@ -155,7 +163,7 @@ static bool ExtractBuildingBlocks(const std::string& isa_instruction, std::strin
                     if (binary_representation_start < trimmed_instruction.size())
                     {
                         binary_representation = trimmed_instruction.substr(binary_representation_start);
-                        ret = true;
+                        ret                   = true;
                     }
                 }
             }
@@ -172,20 +180,20 @@ static bool ExtractBuildingBlocks(const std::string& isa_instruction, std::strin
 ParserIsa::ParserIsa(ParserSi::LoggingCallBackFuncP log_function)
 {
     ParserSi::SetLog(log_function);
-    parser_si_[Instruction::kInstructionSetSop2] = new ParserSiSop2();
-    parser_si_[Instruction::kInstructionSetSopk] = new ParserSiSopk();
-    parser_si_[Instruction::kInstructionSetSop1] = new ParserSiSop1();
-    parser_si_[Instruction::kInstructionSetSopc] = new ParserSiSopC();
-    parser_si_[Instruction::kInstructionSetSopp] = new ParserSiSopp();
-    parser_si_[Instruction::kInstructionSetSmrd] = new ParserSiSmrd();
+    parser_si_[Instruction::kInstructionSetSop2]   = new ParserSiSop2();
+    parser_si_[Instruction::kInstructionSetSopk]   = new ParserSiSopk();
+    parser_si_[Instruction::kInstructionSetSop1]   = new ParserSiSop1();
+    parser_si_[Instruction::kInstructionSetSopc]   = new ParserSiSopC();
+    parser_si_[Instruction::kInstructionSetSopp]   = new ParserSiSopp();
+    parser_si_[Instruction::kInstructionSetSmrd]   = new ParserSiSmrd();
     parser_si_[Instruction::kInstructionSetVintrp] = new ParserSiVintrp();
-    parser_si_[Instruction::kInstructionSetDs] = new ParserSiDs();
-    parser_si_[Instruction::kInstructionSetMubuf] = new ParserSiMubuf();
-    parser_si_[Instruction::kInstructionSetMtbuf] = new ParserSiMtbuf();
-    parser_si_[Instruction::kInstructionSetMimg] = new ParserSiMimg();
-    parser_si_[Instruction::kInstructionSetExp] = new ParserSiExp();
-    parser_si_[Instruction::kInstructionSetVop] = new ParserSiVop();
-    parser_si_[Instruction::kInstructionSetFlat] = new ParserFLAT();
+    parser_si_[Instruction::kInstructionSetDs]     = new ParserSiDs();
+    parser_si_[Instruction::kInstructionSetMubuf]  = new ParserSiMubuf();
+    parser_si_[Instruction::kInstructionSetMtbuf]  = new ParserSiMtbuf();
+    parser_si_[Instruction::kInstructionSetMimg]   = new ParserSiMimg();
+    parser_si_[Instruction::kInstructionSetExp]    = new ParserSiExp();
+    parser_si_[Instruction::kInstructionSetVop]    = new ParserSiVop();
+    parser_si_[Instruction::kInstructionSetFlat]   = new ParserFLAT();
 }
 
 ParserIsa::~ParserIsa()
@@ -207,12 +215,20 @@ ParserIsa::~ParserIsa()
     delete parser_si_[Instruction::kInstructionSetFlat];
 }
 
-bool ParserIsa::Parse(const std::string& isa_line, GDT_HW_GENERATION asic_generation, Instruction::Instruction32Bit hex_instruction,
-    const std::string& src_line, int src_line_number, bool is_literal_32b, uint32_t literal_32b,
-    int label /*=kNoLabel*/, int goto_global /*=kNoLabel*/, int line_count/* = 0*/)
+bool ParserIsa::Parse(const std::string&            isa_line,
+                      GDT_HW_GENERATION             asic_generation,
+                      Instruction::Instruction32Bit hex_instruction,
+                      const std::string&            src_path,
+                      const std::string&            src_line,
+                      int                           src_line_number,
+                      bool                          is_literal_32b,
+                      uint32_t                      literal_32b,
+                      int                           label /*=kNoLabel*/,
+                      int                           goto_global /*=kNoLabel*/,
+                      int                           line_count /* = 0*/)
 {
-    bool ret = false;
-    Instruction* instruction = NULL;
+    bool                          ret                  = false;
+    Instruction*                  instruction          = NULL;
     ParserSi::InstructionEncoding instruction_encoding = ParserSi::GetInstructionEncoding(hex_instruction);
 
     if (instruction_encoding == ParserSi::kInstructionEncodingSop2)
@@ -239,14 +255,12 @@ bool ParserIsa::Parse(const std::string& isa_line, GDT_HW_GENERATION asic_genera
     {
         parser_si_[Instruction::kInstructionSetSmrd]->Parse(asic_generation, hex_instruction, instruction, is_literal_32b, literal_32b, label, goto_global);
     }
-    else if ((instruction_encoding == ParserSi::kInstructionEncodingVop2) ||
-             (instruction_encoding == ParserSi::kInstructionEncodingVop1) ||
+    else if ((instruction_encoding == ParserSi::kInstructionEncodingVop2) || (instruction_encoding == ParserSi::kInstructionEncodingVop1) ||
              (instruction_encoding == ParserSi::kInstructionEncodingVopc))
     {
         parser_si_[Instruction::kInstructionSetVop]->Parse(asic_generation, hex_instruction, instruction, is_literal_32b, literal_32b, label, goto_global);
     }
-    else if ((instruction_encoding == ParserSi::kInstructionEncodingVintrp) ||
-             (instruction_encoding == ParserSi::kViInstructionEncodingVintrp))
+    else if ((instruction_encoding == ParserSi::kInstructionEncodingVintrp) || (instruction_encoding == ParserSi::kViInstructionEncodingVintrp))
     {
         parser_si_[Instruction::kInstructionSetVintrp]->Parse(asic_generation, hex_instruction, instruction, is_literal_32b, literal_32b, label, goto_global);
     }
@@ -255,13 +269,17 @@ bool ParserIsa::Parse(const std::string& isa_line, GDT_HW_GENERATION asic_genera
     {
         // Push an instruction of an arbitrary type into the collection so the ISA view can display the text of this instruction.
         // The textual part that is displayed in the ISA view is added in the next if block below.
-        instruction = new SIVOP1Instruction(32, VOPInstruction::kEncodingVop1, SIVOP1Instruction::kNOP, kNoLabel, kNoLabel);
+        instruction = new (std::nothrow) SIVOP1Instruction(32, VOPInstruction::kEncodingVop1, SIVOP1Instruction::kNOP, kNoLabel, kNoLabel);
     }
 
     if (instruction != NULL)
     {
         instruction->SetLineNumber(line_count);
-        instruction->SetSrcLineInfo(src_line_number, src_line);
+        Instruction::SrcLineInfo src_line_info;
+        src_line_info.path_        = src_path;
+        src_line_info.line_        = src_line;
+        src_line_info.line_number_ = src_line_number;
+        instruction->SetSrcLineInfo(src_line_info);
         instructions_.push_back(instruction);
 
         std::string opcode;
@@ -281,9 +299,15 @@ bool ParserIsa::Parse(const std::string& isa_line, GDT_HW_GENERATION asic_genera
     return ret;
 }
 
-bool ParserIsa::Parse(const std::string& isa_line, GDT_HW_GENERATION asic_generation, Instruction::Instruction64Bit hex_instruction,
-    const std::string& src_line, int src_line_number, int label /*=kNoLabel*/,
-    int goto_label /*=kNoLabel*/, int line_count /*= 0*/)
+bool ParserIsa::Parse(const std::string&            isa_line,
+                      GDT_HW_GENERATION             asic_generation,
+                      Instruction::Instruction64Bit hex_instruction,
+                      const std::string&            src_path,
+                      const std::string&            src_line,
+                      int                           src_line_number,
+                      int                           label /*=kNoLabel*/,
+                      int                           goto_label /*=kNoLabel*/,
+                      int                           line_count /*= 0*/)
 {
     Instruction* instruction = nullptr;
 
@@ -292,47 +316,47 @@ bool ParserIsa::Parse(const std::string& isa_line, GDT_HW_GENERATION asic_genera
 
     switch (instruction_encoding)
     {
-        case ParserSi::kInstructionEncodingDs:
-            parser_si_[Instruction::kInstructionSetDs]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
-            break;
+    case ParserSi::kInstructionEncodingDs:
+        parser_si_[Instruction::kInstructionSetDs]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
+        break;
 
-        case ParserSi::kInstructionEncodingMubuf:
-            parser_si_[Instruction::kInstructionSetMubuf]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
-            break;
+    case ParserSi::kInstructionEncodingMubuf:
+        parser_si_[Instruction::kInstructionSetMubuf]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
+        break;
 
-        case ParserSi::kInstructionEncodingMimg:
-            parser_si_[Instruction::kInstructionSetMimg]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
-            break;
+    case ParserSi::kInstructionEncodingMimg:
+        parser_si_[Instruction::kInstructionSetMimg]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
+        break;
 
-        case ParserSi::kInstructionEncodingMtbuf:
-            parser_si_[Instruction::kInstructionSetMtbuf]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
-            break;
+    case ParserSi::kInstructionEncodingMtbuf:
+        parser_si_[Instruction::kInstructionSetMtbuf]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
+        break;
 
-        case ParserSi::InstructionEncodingExp:
-            parser_si_[Instruction::kInstructionSetExp]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
-            break;
+    case ParserSi::InstructionEncodingExp:
+        parser_si_[Instruction::kInstructionSetExp]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
+        break;
 
-        case ParserSi::kInstructionEncodingVop3:
-            parser_si_[Instruction::kInstructionSetVop]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
-            break;
+    case ParserSi::kInstructionEncodingVop3:
+        parser_si_[Instruction::kInstructionSetVop]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
+        break;
 
-        case ParserSi::kViInstructionEncodingSmem:
-            parser_si_[Instruction::kInstructionSetSmrd]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
-            break;
+    case ParserSi::kViInstructionEncodingSmem:
+        parser_si_[Instruction::kInstructionSetSmrd]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
+        break;
 
-        case ParserSi::kViInstructionEncodingFlat:
-            parser_si_[Instruction::kInstructionSetFlat]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
-            break;
+    case ParserSi::kViInstructionEncodingFlat:
+        parser_si_[Instruction::kInstructionSetFlat]->Parse(asic_generation, hex_instruction, instruction, label, goto_label);
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     if (nullptr == instruction)
     {
         // Push an instruction of an arbitrary type into the collection so the ISA view can display the text of this instruction.
         // The textual part that is displayed in the ISA view is added in the next if block below.
-        instruction = new SIVOP1Instruction(32, VOPInstruction::kEncodingVop1, SIVOP1Instruction::kNOP, kNoLabel, kNoLabel);
+        instruction = new (std::nothrow) SIVOP1Instruction(32, VOPInstruction::kEncodingVop1, SIVOP1Instruction::kNOP, kNoLabel, kNoLabel);
     }
 
     if (instruction != NULL)
@@ -340,7 +364,11 @@ bool ParserIsa::Parse(const std::string& isa_line, GDT_HW_GENERATION asic_genera
         if (kNoLabel == instruction->GetLabel())
         {
             instruction->SetLineNumber(line_count);
-            instruction->SetSrcLineInfo(src_line_number, src_line);
+            Instruction::SrcLineInfo src_line_info;
+            src_line_info.path_        = src_path;
+            src_line_info.line_        = src_line;
+            src_line_info.line_number_ = src_line_number;
+            instruction->SetSrcLineInfo(src_line_info);
             instructions_.push_back(instruction);
 
             // Set the ISA instruction's string representation.
@@ -348,7 +376,7 @@ bool ParserIsa::Parse(const std::string& isa_line, GDT_HW_GENERATION asic_genera
             std::string params;
             std::string binary_representation;
             std::string offset;
-            bool ret = ExtractBuildingBlocks(isa_line, opcode, params, binary_representation, offset);
+            bool        ret = ExtractBuildingBlocks(isa_line, opcode, params, binary_representation, offset);
 
             if (ret)
             {
@@ -390,9 +418,9 @@ bool ParserIsa::ParseForSize(const std::string& isa)
     boost::regex instruction_annotation_llpc(";[[:blank:]]*([[:xdigit:]]{8})([[:blank:]]+[[:xdigit:]]{8}){0,1}");
 
     std::istringstream isa_stream(isa);
-    boost::smatch match_instruction;
-    std::string isa_line;
-    int  isa_size = 0;
+    boost::smatch      match_instruction;
+    std::string        isa_line;
+    int                isa_size = 0;
 
     while (getline(isa_stream, isa_line))
     {
@@ -400,21 +428,21 @@ bool ParserIsa::ParseForSize(const std::string& isa)
         {
             std::string code_len_text(match_instruction[2].first, match_instruction[2].second);
             code_len_ = atoi(code_len_text.c_str());
-            ret = true;
+            ret       = true;
             break;
         }
         else if (boost::regex_search(isa_line, match_instruction, code_len_byte_ni))
         {
             std::string code_len_text(match_instruction[2].first, match_instruction[2].second);
             code_len_ = atoi(code_len_text.c_str());
-            ret = true;
+            ret       = true;
             break;
         }
         else if (boost::regex_search(isa_line, match_instruction, instruction_annotation_scpc) ||
-            boost::regex_search(isa_line, match_instruction, instruction_annotation_llpc))
+                 boost::regex_search(isa_line, match_instruction, instruction_annotation_llpc))
         {
             // Count size of instructions "manually" if ISA size is not provided by disassembler.
-            int instruction_size = match_instruction[(int) match_instruction.size() - 1].matched ? 8 : 4;
+            int instruction_size = match_instruction[(int)match_instruction.size() - 1].matched ? 8 : 4;
             isa_size += instruction_size;
             ret = true;
         }
@@ -428,35 +456,17 @@ bool ParserIsa::ParseForSize(const std::string& isa)
     return ret;
 }
 
-static bool  GetSourceLineInfo(const std::string& isa_line, const std::string& prev_isa_line, std::string& src_line, int& src_line_number)
-{
-    bool ret = false;
-
-    // Source line info has the following format:
-    // ; C:\DEV\work\line_numbers\test.cl:4    <-- prevIsaLine
-    // ; A[0] = 0.0f;                          <-- isaLine
-    const size_t src_line_offset = 2;
-    size_t colon_offset = 0;
-    if (prev_isa_line.find(';') == 0 && isa_line.find(';') == 0 && ((colon_offset = prev_isa_line.rfind(':')) != std::string::npos))
-    {
-        src_line = isa_line.substr(src_line_offset);
-        src_line_number = std::atoi(prev_isa_line.substr(colon_offset + 1).c_str());
-        ret = true;
-    }
-
-    return ret;
-}
-
 bool ParserIsa::ParseToVector(const std::string& isa)
 {
-    int line_count = 0, src_line_number = 0;
+    int                           line_count      = 0;
+    uint32_t                      src_line_number = 0;
     Instruction::Instruction32Bit inst32;
     Instruction::Instruction64Bit inst64;
 
     std::istringstream isa_stream(isa);
-    std::string isa_line, src_line;
-    bool isa_code_proc = false, parse_ok = true, gpr_proc = false, is_vgpr_found = false, is_sgpr_found = false, is_code_len_found = false;
-    int label = kNoLabel, goto_label = kNoLabel;
+    std::string        isa_line, src_path, src_line;
+    bool               isa_code_proc = false, parse_ok = true, gpr_proc = false, is_vgpr_found = false, is_sgpr_found = false, is_code_len_found = false;
+    int                label = kNoLabel, goto_label = kNoLabel;
 
     boost::smatch match_instruction;
 
@@ -518,26 +528,49 @@ bool ParserIsa::ParseToVector(const std::string& isa)
     GDT_HW_GENERATION asicGen = GDT_HW_GENERATION_NONE;
     // Asic generation is in "asic(".
     const std::string kAsicGenStr("asic(");
-    std::string  prev_line = "";
+    std::string       prev_line = "";
 
     while (getline(isa_stream, isa_line))
     {
         line_count++;
 
         if (!isa_code_proc && !gpr_proc && strstr(isa_line.c_str(), isa_start.c_str()) == NULL ||
-            GetSourceLineInfo(isa_line, prev_line, src_line, src_line_number))
+            RgaSharedUtils::GetSourceLineInfo(isa_line, prev_line, src_path, src_line, src_line_number))
         {
+            prev_line = isa_line;
             continue;
         }
-        else if (!isa_code_proc && !gpr_proc)
+
+        // Handle single-line source info: prev_line is "; path:line" but isa_line is an instruction (not a comment).
+        // Extract path and line number from prev_line without skipping the current instruction line.
+        if (prev_line.find(';') == 0 && isa_line.find(';') != 0)
+        {
+            const size_t src_line_offset = 2;
+            size_t       colon_offset    = prev_line.rfind(':');
+            if (colon_offset != std::string::npos && colon_offset > src_line_offset)
+            {
+                std::string line_num_str = prev_line.substr(colon_offset + 1);
+                if (!line_num_str.empty() && std::all_of(line_num_str.begin(), line_num_str.end(), ::isdigit))
+                {
+                    uint32_t parsed_line_num = std::atoi(line_num_str.c_str());
+                    if (parsed_line_num > 0)
+                    {
+                        src_path        = prev_line.substr(src_line_offset, colon_offset - src_line_offset);
+                        src_line_number = parsed_line_num;
+                        src_line.clear();
+                    }
+                }
+            }
+        }
+
+        if (!isa_code_proc && !gpr_proc)
         {
             isa_code_proc = true;
         }
-        else if (isa_code_proc && strstr(isa_line.c_str(), isa_end.c_str()) != NULL
-                 && isa_line.find("//") == std::string::npos)
+        else if (isa_code_proc && strstr(isa_line.c_str(), isa_end.c_str()) != NULL && isa_line.find("//") == std::string::npos)
         {
             // at least one line of valid code detected
-            gpr_proc = true;
+            gpr_proc      = true;
             isa_code_proc = false;
         }
         else if (isa_code_proc)
@@ -554,7 +587,7 @@ bool ParserIsa::ParseToVector(const std::string& isa)
                 }
                 else if (tmp == "CI")
                 {
-                    asicGen = GDT_HW_GENERATION_SEAISLAND;    // we consider SI and CI to be the same when parsing
+                    asicGen = GDT_HW_GENERATION_SEAISLAND;  // we consider SI and CI to be the same when parsing
                 }
                 else if (tmp == "VI")
                 {
@@ -562,10 +595,10 @@ bool ParserIsa::ParseToVector(const std::string& isa)
                 }
             }
 
-            std::stringstream instruction_stream;
-            std::string::const_iterator isa_line_start = isa_line.begin();
-            std::string::const_iterator isa_line_end = isa_line.end();
-            bool is_instruction_parsed = true;
+            std::stringstream           instruction_stream;
+            std::string::const_iterator isa_line_start        = isa_line.begin();
+            std::string::const_iterator isa_line_end          = isa_line.end();
+            bool                        is_instruction_parsed = true;
 
             if (label == kNoLabel)
             {
@@ -583,7 +616,7 @@ bool ParserIsa::ParseToVector(const std::string& isa)
                 std::string inst32_text_upper_case(match_instruction[4].first, match_instruction[4].second);
                 instruction_stream << std::hex << inst32_text_upper_case << inst32_text_lower_case;
                 instruction_stream >> inst64;
-                is_instruction_parsed = Parse(isa_line, asicGen, inst64, src_line, src_line_number, label, goto_label, line_count);
+                is_instruction_parsed = Parse(isa_line, asicGen, inst64, src_path, src_line, src_line_number, label, goto_label, line_count);
                 label = goto_label = kNoLabel;
 
                 if (!is_instruction_parsed)
@@ -597,29 +630,33 @@ bool ParserIsa::ParseToVector(const std::string& isa)
                     instruction_stream << std::hex << inst32_text_upper_case;
                     instruction_stream >> literal_32b;
 
-                    is_instruction_parsed = Parse(isa_line, asicGen, inst32, src_line, src_line_number, true, literal_32b, label, goto_label, line_count);
+                    is_instruction_parsed =
+                        Parse(isa_line, asicGen, inst32, src_path, src_line, src_line_number, true, literal_32b, label, goto_label, line_count);
                     label = goto_label = kNoLabel;
-
                 }
             }
-            else if (is_instruction_parsed && (boost::regex_search(isa_line_start, isa_line_end, match_instruction, regex_inst32) ||
-                boost::regex_search(isa_line_start, isa_line_end, match_instruction, regex_inst32_48) ||
-                (is_llpc_disassembly && boost::regex_search(isa_line_start, isa_line_end, match_instruction, regex_inst32_48_llpc))))
+            else if (is_instruction_parsed &&
+                     (boost::regex_search(isa_line_start, isa_line_end, match_instruction, regex_inst32) ||
+                      boost::regex_search(isa_line_start, isa_line_end, match_instruction, regex_inst32_48) ||
+                      (is_llpc_disassembly && boost::regex_search(isa_line_start, isa_line_end, match_instruction, regex_inst32_48_llpc))))
             {
                 // This is either inst32Ex or inst32_48Ex.
                 std::string inst32_ext(match_instruction[2].first, match_instruction[2].second);
 
                 instruction_stream << std::hex << inst32_ext;
                 instruction_stream >> inst32;
-                is_instruction_parsed = Parse(isa_line, asicGen, inst32, src_line, src_line_number, false, 0, label, goto_label, line_count);
+                is_instruction_parsed = Parse(isa_line, asicGen, inst32, src_path, src_line, src_line_number, false, 0, label, goto_label, line_count);
                 label = goto_label = kNoLabel;
             }
             else if (label != kNoLabel)
             {
-                Instruction* instruction = nullptr;
-                std::string trimmed_isa_line = trimStr(isa_line);
-                instruction = new Instruction(trimmed_isa_line);
-                instructions_.push_back(instruction);
+                Instruction* instruction      = nullptr;
+                std::string  trimmed_isa_line = trimStr(isa_line);
+                instruction                   = new (std::nothrow) Instruction(trimmed_isa_line);
+                if (instruction != nullptr)
+                {
+                    instructions_.push_back(instruction);
+                }
                 label = goto_label = kNoLabel;
             }
 
@@ -638,7 +675,7 @@ bool ParserIsa::ParseToVector(const std::string& isa)
             {
                 // Mark the VGPR section as found.
                 is_vgpr_found = true;
-                vgprs_ = 0;
+                vgprs_        = 0;
 
                 // Check if the number of VGPRs was changed by the runtime.
                 bool is_changed_by_runtime = ExtractRuntimeChangedNumOfGprs(isa_line, vgprs_);
@@ -653,7 +690,7 @@ bool ParserIsa::ParseToVector(const std::string& isa)
             {
                 // Mark the SGPR section as found.
                 is_sgpr_found = true;
-                sgprs_ = 0;
+                sgprs_        = 0;
 
                 // Check if the number of SGPRs was changed by the runtime.
                 bool is_changed_by_runtime = ExtractRuntimeChangedNumOfGprs(isa_line, sgprs_);
@@ -703,14 +740,14 @@ void ParserIsa::ResetInstsCounters()
 
 int ParserIsa::GetLabel(const std::string& isa_line)
 {
-    const int kHsailIsaOffset = 2;
-    int ret = kNoLabel;
-    size_t  offset = 0;
-    std::stringstream  stream;
+    const int         kHsailIsaOffset = 2;
+    int               ret             = kNoLabel;
+    size_t            offset          = 0;
+    std::stringstream stream;
 
     if ((offset = isa_line.find(kIsaLabelToken1)) == 0 || offset == kHsailIsaOffset)
     {
-        size_t  labelNumLen = isa_line.size() - offset - kIsaLabelToken1.size() - 1;
+        size_t labelNumLen = isa_line.size() - offset - kIsaLabelToken1.size() - 1;
         stream << std::hex << isa_line.substr(offset + kIsaLabelToken1.size(), labelNumLen);
         stream >> ret;
     }
@@ -718,8 +755,7 @@ int ParserIsa::GetLabel(const std::string& isa_line)
     {
         if ((offset = isa_line.find('_')) != std::string::npos)
         {
-            stream << isa_line.substr(kIsaLabelToken2.size(), offset - kIsaLabelToken2.size()) <<
-                      isa_line.substr(offset + 1, isa_line.size() - offset - 2);
+            stream << isa_line.substr(kIsaLabelToken2.size(), offset - kIsaLabelToken2.size()) << isa_line.substr(offset + 1, isa_line.size() - offset - 2);
             stream >> ret;
         }
     }
@@ -754,37 +790,36 @@ int ParserIsa::GetLabel(const std::string& isa_line)
 
 int ParserIsa::GetGotoLabel(const std::string& sISALine)
 {
-    int ret = kNoLabel;
-    size_t  offset = 0;
-    std::stringstream  stream;
+    int               ret    = kNoLabel;
+    size_t            offset = 0;
+    std::stringstream stream;
 
-    if ((offset = sISALine.find(kIsaBranchToken)) != std::string::npos ||
-        (offset = sISALine.find(kIsaCallToken)) != std::string::npos)
+    if ((offset = sISALine.find(kIsaBranchToken)) != std::string::npos || (offset = sISALine.find(kIsaCallToken)) != std::string::npos)
     {
         if ((offset = sISALine.find(kIsaLabelToken1)) != std::string::npos)
         {
-            size_t  labelNumLen = sISALine.find_first_of(' ', offset) - offset - kIsaLabelToken1.size();
+            size_t labelNumLen = sISALine.find_first_of(' ', offset) - offset - kIsaLabelToken1.size();
             stream << std::hex << sISALine.substr(offset + kIsaLabelToken1.size(), labelNumLen);
             stream >> ret;
         }
         else if ((offset = sISALine.find(kIsaLabelToken2)) != std::string::npos)
         {
-            size_t  labelNumOffset = offset + kIsaLabelToken2.size();
+            size_t labelNumOffset = offset + kIsaLabelToken2.size();
             if ((offset = sISALine.find('_', offset)) != std::string::npos)
             {
-                stream << sISALine.substr(labelNumOffset, offset - labelNumOffset) <<
-                          sISALine.substr(offset + 1, sISALine.find_first_of(' ', offset) - offset - 1);
+                stream << sISALine.substr(labelNumOffset, offset - labelNumOffset)
+                       << sISALine.substr(offset + 1, sISALine.find_first_of(' ', offset) - offset - 1);
                 stream >> ret;
             }
         }
         else
         {
             // Clang-15 LC generated labels have the format "L<number>:".
-            size_t                    labelNumLen = 0;
-            const size_t              kLabelStartSize  = 1;
-            const size_t              kLabelEndSize    = 1;
-            const size_t              kLabelStartMatch = sISALine.find("L");
-            const size_t              kLabelEndMatch   = sISALine.find(":");
+            size_t       labelNumLen      = 0;
+            const size_t kLabelStartSize  = 1;
+            const size_t kLabelEndSize    = 1;
+            const size_t kLabelStartMatch = sISALine.find("L");
+            const size_t kLabelEndMatch   = sISALine.find(":");
             if (kLabelStartMatch != std::string::npos)
             {
                 if (kLabelStartMatch == 0 && kLabelEndMatch != std::string::npos)
@@ -803,8 +838,11 @@ int ParserIsa::GetGotoLabel(const std::string& sISALine)
     return ret;
 }
 
-bool ParserIsa::SplitIsaLine(const std::string& isaInstruction, std::string& instrOpCode,
-                             std::string& params, std::string& binaryRepresentation, std::string& offset) const
+bool ParserIsa::SplitIsaLine(const std::string& isaInstruction,
+                             std::string&       instrOpCode,
+                             std::string&       params,
+                             std::string&       binaryRepresentation,
+                             std::string&       offset) const
 {
     return ExtractBuildingBlocks(isaInstruction, instrOpCode, params, binaryRepresentation, offset);
 }

@@ -62,8 +62,8 @@ def parse_arguments():
     parser.add_argument("--platform", default="x64", choices=["x64", "x86"], help="specify the platform (32 or 64 bit)")
     if sys.platform == "win32":
         parser.add_argument("--cppcheck", action="store_true", help="create a cppcheck project in the Visual Studio solution")
-        parser.add_argument("--vs", default="2022", choices=["2017", "2019", "2022"], help="specify the version of Visual Studio to be used with this script (default: 2019)")
-        parser.add_argument("--toolchain", default=None, choices=["2017", "2019", "2022"], help="specify the compiler toolchain to be used with this script (default: 2019)")
+        parser.add_argument("--vs", default="2022", choices=["2017", "2019", "2022", "2026"], help="specify the version of Visual Studio to be used with this script (default: 2019)")
+        parser.add_argument("--toolchain", default=None, choices=["2017", "2019", "2022", "2026"], help="specify the compiler toolchain to be used with this script (default: 2019)")
         parser.add_argument("--qt-root", default="C:\\Qt", help="specify the root directory for locating QT on this system (default: C:\\Qt\\)")
         parser.add_argument("--qt-libver", default="2019", choices=["2017", "2019"], help="specify the Qt lib version to be used with this script (default: 2019)")
         parser.add_argument("--vk-include", action="store", help="specify the Vulkan SDK include folder")
@@ -178,13 +178,15 @@ def generate_config(config, args):
     # Specify the type of Build files to generate
     cmake_generator = None
     if sys.platform == "win32":
-        if args.vs == "2022":
+        if args.vs == "2026":
+            cmake_generator="Visual Studio 18 2026"
+        elif args.vs == "2022":
             cmake_generator="Visual Studio 17 2022"
         elif args.vs == "2019":
             cmake_generator="Visual Studio 16 2019"
         else:
             cmake_generator="Visual Studio 15 2017"
-            if not support_32_bit_build or args.platform != "x86":
+            if args.platform != "x86":
                 cmake_generator = cmake_generator + " Win64"
 
     elif sys.platform == "darwin":
@@ -228,7 +230,11 @@ def generate_config(config, args):
         if args.vs != "2017":
             if args.platform != "x86":
                 cmake_args.extend(["-A" + "x64"])
-            if args.toolchain == "2019":
+            if args.toolchain == "2026":
+                cmake_args.extend(["-Tv145"])
+            elif args.toolchain == "2022":
+                cmake_args.extend(["-Tv143"])
+            elif args.toolchain == "2019":
                 cmake_args.extend(["-Tv142"])
             elif args.toolchain == "2017":
                 cmake_args.extend(["-Tv141"])
@@ -363,6 +369,10 @@ def main():
                 toolchain_suffix = "_msvc141"
             if script_args.toolchain == "2019":
                 toolchain_suffix = "_msvc142"
+            if script_args.toolchain == "2022":
+                toolchain_suffix = "_msvc143"
+            if script_args.toolchain == "2026":
+                toolchain_suffix = "_msvc145"
         cmake_output_dir = os.path.join(script_args.output, "vs" + script_args.vs + toolchain_suffix + test_suffix)
     else:
         cmake_output_dir = os.path.join(script_args.output, "make" + test_suffix)
@@ -422,7 +432,7 @@ def main():
             else:
                 # linux & mac use the same commands
                 # generate the path to the config specific makefile
-                build_dir = os.path.join(cmake_output_dir, config + config_suffix)
+                build_dir = os.path.join(cmake_output_dir, config)
 
                 cmake_args = ["cmake", "--build", build_dir, "--parallel", script_args.build_jobs]
 

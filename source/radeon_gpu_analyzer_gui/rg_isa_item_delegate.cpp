@@ -50,9 +50,6 @@ static const QColor kVgprRangeColors[] = {kVgprRangeZeroColor,
 static const int kBeginRange = 0;
 static const int kEndRange   = 7;
 
-// Equivalent to dividing by 2^5 (32).
-// 32 is calculated as, max number of vgprs (256) / kVgprRangeColors.size() which is 8.
-static const int kVgprBitShift = 5;
 
 // "Unknown" functional group string.
 static const QString kFunctionalGroupNameUnknown = amdisa::FunctionalGroupNames[static_cast<int>(amdisa::FunctionalGroups::kFunctionalGroupUnknown)];
@@ -212,7 +209,7 @@ void RgIsaItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
             rect.setHeight(std::max(1, rect.height() - 1));
             
             // Convert the one-based live register number into the range that it falls into to use as an array index.
-            int array_index = std::clamp((num_live_registers - 1) >> kVgprBitShift, kBeginRange, kEndRange);
+            int array_index = std::clamp((num_live_registers - 1) >> model->GetVgprBitShift(), kBeginRange, kEndRange);
 
             // Draw the rectangle indicating VGPR pressure.
             allocated_rect_width = num_live_registers;

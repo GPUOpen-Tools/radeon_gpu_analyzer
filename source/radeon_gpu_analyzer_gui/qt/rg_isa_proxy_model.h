@@ -38,7 +38,7 @@ public:
     void SetColumnVisibility(uint32_t column, bool visibility, QHeaderView* header = nullptr) override;
 
     // Create the visibility checkbox related to a column.
-    virtual void CreateViewingOptionsCheckbox(uint32_t column, QWidget* parent = nullptr) override;
+    virtual void CreateViewingOptionsCheckbox(uint32_t column, QWidget* parent) override;
 
     // Get the visibility checkbox related to a column.
     virtual const QCheckBox* GetViewingOptionsCheckbox(uint32_t column) override;

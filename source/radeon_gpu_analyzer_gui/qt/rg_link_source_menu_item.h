@@ -38,6 +38,9 @@ public:
     // Toggle Visiblity for Load Code Object Button.
     void ToggleLoadCodeObjectButtonVisibilty(bool visible) const;
 
+    // Toggle Visiblity for Link Source Code Button.
+    void ToggleLinkSourceButtonVisibilty(bool visible) const;
+
 private:
     // Set the cursor to pointing hand cursor for various widgets.
     void SetCursor();

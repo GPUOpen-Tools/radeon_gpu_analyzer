@@ -167,6 +167,12 @@ bool KcCliCommander::ListEntries(const Config&, LoggingCallbackFunction)
     return false;
 }
 
+bool KcCliCommander::ListSourcePaths(const Config&, LoggingCallbackFunction)
+{
+    RgLog::stdErr << kStrErrorCommandNotSupported << std::endl;
+    return false;
+}
+
 bool KcCliCommander::InitRequestedAsicList(const std::vector<std::string>& devices, 
                                            beKA::RgaMode                   mode,
                                            const std::set<std::string>&    supported_devices,

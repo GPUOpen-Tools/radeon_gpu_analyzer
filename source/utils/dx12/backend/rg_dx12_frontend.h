@@ -25,13 +25,15 @@ using namespace Microsoft::WRL;
 
 namespace rga
 {
+    struct PSO_STREAM;
+
     class rgDx12Frontend
     {
     public:
         rgDx12Frontend(D3D_FEATURE_LEVEL feature_level) : feature_level_(feature_level) {}
 
         // Init.
-        bool Init(bool is_dxr_session, bool is_offline_session);
+        bool Init(bool is_dxr_session, bool is_mesh_shader, bool is_offline_session);
 
         // Retrieve the list of supported targets and their driver IDs.
         bool GetSupportedTargets(std::vector<std::string>& supported_targets,
@@ -42,6 +44,9 @@ namespace rga
 
         // Compile graphics pipeline.
         bool CompileGraphicsPipeline(const RgDx12Config& config, std::string& error_msg) const;
+
+        // Compile graphics pipeline with mesh shaders.
+        bool CompileMeshPipeline(const RgDx12Config& config, std::string& error_msg) const;
 
 #ifdef RGA_DXR_ENABLED
         // Compile ray tracing pipeline.
@@ -57,6 +62,10 @@ namespace rga
 
         bool CreateGraphicsPipeline(const RgDx12Config& config,
             D3D12_GRAPHICS_PIPELINE_STATE_DESC*& pso,
+            std::string& error_msg) const;
+
+        bool CreateMeshPipeline(const RgDx12Config& config,
+            PSO_STREAM& pso,
             std::string& error_msg) const;
 
         bool ExtractRootSignature(const D3D12_SHADER_BYTECODE& bytecode,

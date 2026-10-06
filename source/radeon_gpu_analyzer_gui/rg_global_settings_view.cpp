@@ -174,29 +174,6 @@ RgGlobalSettingsView::RgGlobalSettingsView(QWidget* parent, const RgGlobalSettin
         // Should not get here.
         assert(false);
     }
-
-    // Unsupported options under Settings tab needs to be disabled for binary mode.
-    if (current_api == RgProjectAPI::kBinary)
-    {
-        ui_.sourceCodeEditorLabel->hide();
-        ui_.fontFamilyLabel->hide();
-        ui_.fontFamilyComboBox->hide();
-        ui_.fontSizeLabel->hide();
-        ui_.fontSizeComboBox->hide();
-        ui_.includeFilesViewerLabel->hide();
-        ui_.includeFilesViewerLineEdit->hide();
-        ui_.includeFilesViewerBrowseButton->hide();
-
-        ui_.inputFilesLabel->hide();     
-        ui_.assocExtGlslLabel->hide();        
-        ui_.assocExtGlslLineEdit->hide();        
-        ui_.assocExtHlslLabel->hide();        
-        ui_.assocExtHlslLineEdit->hide();   
-        ui_.assocExtSpvasLabel->hide();        
-        ui_.assocExtSpvasLineEdit->hide();        
-        ui_.assocExtSpvBinaryLabel->hide();        
-        ui_.assocExtSpvBinaryLineEdit->hide();        
-    }
 }
 
 RgGlobalSettingsView::~RgGlobalSettingsView()
@@ -667,7 +644,11 @@ void RgGlobalSettingsView::PopulateColumnVisibilityList()
 
     // Add the "All" entry.
     QCheckBox* all_check_box = ui_.columnVisibilityArrowPushButton->AddCheckboxItem(kStrDisassemblyColumnAll, QVariant(), false, true);
-    all_check_box->setObjectName(kStrGlobalSettingsColumnListItemAllCheckbox);
+
+    if (all_check_box != nullptr)
+    {
+        all_check_box->setObjectName(kStrGlobalSettingsColumnListItemAllCheckbox);
+    }
 
     ui_.columnVisibilityArrowPushButton->AddCheckboxItem(IsaItemModel::kColumnNames[IsaItemModel::Columns::kPcAddress].c_str(), QVariant(), false, false);
     ui_.columnVisibilityArrowPushButton->AddCheckboxItem(IsaItemModel::kColumnNames[IsaItemModel::Columns::kOpCode].c_str(), QVariant(), false, false);

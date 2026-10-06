@@ -26,7 +26,8 @@ bool RgConfigFileReaderOpencl::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
         (kRgaDataModel2_1.compare(file_data_model_version) == 0) ||
         (kRgaDataModel2_2.compare(file_data_model_version) == 0) || 
         (kRgaDataModel2_3.compare(file_data_model_version) == 0) ||
-        (kRgaDataModel2_4.compare(file_data_model_version) == 0);
+        (kRgaDataModel2_4.compare(file_data_model_version) == 0) ||
+        (kRgaDataModel2_5.compare(file_data_model_version) == 0);
 
     assert(is_version_compatible);
 
@@ -369,7 +370,7 @@ bool RgConfigFileWriterOpencl::WriteOpenCLCloneElements(const RgProjectOpencl& p
             tinyxml2::XMLElement* clone_source_files = doc.NewElement(kXmlNodeCloneSourceFiles);
 
             // Go through each and every source file, and create its element.
-            for (const RgSourceFileInfo& source_file_info : clone->source_files)
+            for (const auto& source_file_info : clone->source_files)
             {
                 // Create the file element.
                 tinyxml2::XMLElement* file_path = doc.NewElement(kXmlNodeFilePath);

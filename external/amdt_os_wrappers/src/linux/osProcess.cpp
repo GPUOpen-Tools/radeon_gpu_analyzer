@@ -456,10 +456,10 @@ bool osLaunchSuspendedProcess(
 
             // Create the arguments buffer
             wchar_t* pCmdBuf = static_cast<wchar_t*>(calloc(cmdStr.length() + 1, sizeof(wchar_t)));
-            retVal = (pCmdBuf != nullptr);
 
-            if (!retVal)
+            if (pCmdBuf == nullptr)
             {
+                retVal = false;
                 gtString errMsg(L"osLaunchSuspendedProcess: Failed to allocate space for args buffer\n");
                 perror(errMsg.asASCIICharArray());
                 OS_OUTPUT_DEBUG_LOG(errMsg.asCharArray(), OS_DEBUG_LOG_ERROR);
@@ -520,10 +520,10 @@ bool osLaunchSuspendedProcess(
 
                 // Create the arguments vector
                 char** argv = static_cast<char**>(calloc((sizeof(char*) * (argc + 1)), 1));
-                retVal = (argv != nullptr);
 
-                if (!retVal)
+                if (argv == nullptr)
                 {
+                    retVal = false;
                     gtString errMsg(L"osLaunchSuspendedProcess: Failed to allocate space for arg vector\n");
                     perror(errMsg.asASCIICharArray());
                     OS_OUTPUT_DEBUG_LOG(errMsg.asCharArray(), OS_DEBUG_LOG_ERROR);
@@ -588,7 +588,9 @@ bool osLaunchSuspendedProcess(
                         perror(errMsg.asASCIICharArray());
                         OS_OUTPUT_DEBUG_LOG(errMsg.asCharArray(), OS_DEBUG_LOG_ERROR);
                         free(pCmdBuf);
+                        pCmdBuf = nullptr;
                         free(argv);
+                        argv = nullptr;
                     }
                     else
                     {
@@ -660,7 +662,9 @@ bool osLaunchSuspendedProcess(
                         // Set the pids
                         processId = targetPid;
                         free(pCmdBuf);
+                        pCmdBuf = nullptr;
                         free(argv);
+                        argv = nullptr;
                     }
                 }
             }
@@ -1011,11 +1015,12 @@ bool osGetProcessPlatform(osProcessId processId, osRuntimePlatform& platform)
     snprintf(buffer, sizeof(buffer), "/proc/%d/maps", processId);
 
     FILE* pFile = fopen(buffer, "r");
-    bool retVal = (pFile != nullptr);
+    bool retVal = false;
 
-    if (retVal)
+    if (pFile != nullptr)
     {
         platform = OS_NATIVE_PLATFORM;
+        retVal = true;
 
         while (fgets(buffer, sizeof(buffer), pFile) != NULL)
         {

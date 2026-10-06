@@ -1,7 +1,5 @@
 # RGA (Radeon™ GPU Analyzer) #
 
-[![Build Status](https://github.com/GPUOpen-Tools/RGA/actions/workflows/build.yml/badge.svg)](https://github.com/GPUOpen-Tools/RGA/actions/workflows/build.yml)
-
 Radeon GPU Analyzer is a compiler and code analysis tool for Vulkan®, DirectX®, OpenGL® and OpenCL™. Using this product, you can compile high-level source code for a variety of AMD GPU and APU architectures,
 independent of the type of GPU/APU that is physically installed on your system.
 
@@ -10,7 +8,7 @@ You can use RGA to produce the following output:
 * Intermediate language disassembly: AMDIL, DXIL and DXBC for DirectX, SPIR-V for Vulkan, LLVM IR for Offline OpenCL
 * Hardware resource usage statistics, such as register consumption, static memory allocation and more
 * Compiled binaries
-* Live register analysis (see http://gpuopen.com/learn/live-vgpr-analysis-radeon-gpu-analyzer/ for more info)
+* Live register analysis (see [this article](https://gpuopen.com/learn/live-vgpr-analysis-radeon-gpu-analyzer/) for more info)
 * Control flow graphs
 * Build errors and warnings
 
@@ -23,7 +21,7 @@ The supported modes by the **GUI app** are:
 
 The supported modes by the **command-line tool** are:
 * Binary Analysis - analyze pre-compiled AMD GPU Code Object binary files
-* DX12 (see https://gpuopen.com/radeon-gpu-analyzer-2-2-direct3d12-compute/ and https://gpuopen.com/radeon-gpu-analyzer-2-3-direct3d-12-graphics/ for more details)
+* DX12 (see [RGA for Direct3D®12 Compute](https://gpuopen.com/news/radeon-gpu-analyzer-2-2-direct3d12-compute/) and [RGA for Direct3D®12 Graphics](https://gpuopen.com/news/radeon-gpu-analyzer-2-3-direct3d-12-graphics/) for more details)
 * DX11
 * DXR
 * Vulkan - compilation of GLSL/SPIR-V together with the API's pipeline state, using AMD's Vulkan driver
@@ -33,8 +31,8 @@ The supported modes by the **command-line tool** are:
 
 ## System Requirements ##
 
-* Windows® 10 or 11 64-bit. Visual Studio® 2019 or above (2022 is the default).
-* Linux: Ubuntu 22.04 or 24.04 LTS. Build with gcc 9.1 or later.
+* Windows® 11 64-bit. Visual Studio® 2019 or above (2022 is the default).
+* Linux: Ubuntu 24.04 LTS. Build with gcc 9.1 or later.
 * Vulkan SDK 1.2.162.1 or later. To download the Vulkan SDK, visit https://vulkan.lunarg.com/
 
 To run the tool, you would need to have the AMD Radeon Adrenalin Software (Windows) or amdgpu-pro driver (Linux) installed for all modes, except for the following "offline" modes, which are independent of the driver and hardware:
@@ -153,7 +151,7 @@ You can use RGA to produce the following output:
 * Intermediate language disassembly: AMDIL, DXIL and DXBC for DirectX, SPIR-V for Vulkan, LLVM IR for Offline OpenCL
 * Hardware resource usage statistics, such as register consumption, static memory allocation and more
 * Compiled binaries
-* Live register analysis (see http://gpuopen.com/learn/live-vgpr-analysis-radeon-gpu-analyzer/ for more info)
+* Live register analysis (see [this article](https://gpuopen.com/learn/live-vgpr-analysis-radeon-gpu-analyzer/) for more info)
 * Control flow graphs
 * Build errors and warnings
 
@@ -166,7 +164,7 @@ The supported modes by the **GUI app** are:
 
 The supported modes by the **command-line tool** are:
 * Binary Analysis - Analyze pre-compiled binary Code Object files.
-* DX12 (see https://gpuopen.com/radeon-gpu-analyzer-2-2-direct3d12-compute/ and https://gpuopen.com/radeon-gpu-analyzer-2-3-direct3d-12-graphics/ for more details)
+* DX12 (see [RGA for Direct3D®12 Compute](https://gpuopen.com/news/radeon-gpu-analyzer-2-2-direct3d12-compute/) and [RGA for Direct3D®12 Graphics](https://gpuopen.com/news/radeon-gpu-analyzer-2-3-direct3d-12-graphics/) for more details)
 * DX11
 * DXR
 * Vulkan - compilation of GLSL/SPIR-V together with the API's pipeline state, using AMD's Vulkan driver
@@ -177,8 +175,8 @@ The supported modes by the **command-line tool** are:
 
 ## System Requirements ##
 
-* Windows® 10 or 11 64-bit. Visual Studio® 2019 or above (2022 is the default).
-* Linux: Ubuntu 22.04 or 24.04 LTS. Build with gcc 9.1 or later.
+* Windows® 11 64-bit. Visual Studio® 2019 or above (2022 is the default).
+* Linux: Ubuntu 24.04 LTS. Build with gcc 9.1 or later.
 * Vulkan SDK 1.2.162.1 or later. To download the Vulkan SDK, visit https://vulkan.lunarg.com/
 
 To run the tool, you would need to have the AMD Radeon Adrenalin Software (Windows) or amdgpu-pro driver (Linux) installed for all modes, except for the following "offline" modes, which are independent of the driver and hardware:

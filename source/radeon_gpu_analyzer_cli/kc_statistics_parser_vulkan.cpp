@@ -12,6 +12,9 @@
 // Infra.
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
 
+// Common.
+#include "common/rga_shared_utils.h"
+
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_statistics_parser_vulkan.h"
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
@@ -125,6 +128,11 @@ bool KcVulkanStatisticsParser::ParseStatistics(const std::string& device, const 
         device_lower.find(kOfflineDeviceNameIceland) != std::string::npos)
     {
         statistics.num_sgprs_available = 96;
+    }
+    if (RgaSharedUtils::IsMi450Target(device))
+    {
+        statistics.num_vgprs_available = 1024;
+        statistics.lds_size_available  = 327680;
     }
     if (IsGfx6Device(device))
     {

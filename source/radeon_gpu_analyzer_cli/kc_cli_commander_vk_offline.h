@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for CLI Commander interface for compiling with the Vk-offline Compiler (amdllpc).
@@ -34,17 +34,24 @@ public:
     // Execute the build.
     virtual void RunCompileCommands(const Config& config, LoggingCallbackFunction callback) override;
 
+    // Perform post-compile actions (generate session metadata).
+    virtual bool RunPostCompileSteps(const Config& config) override;
+
 private:
 
     // Caches the supported devices.
     bool GetSupportedDevices();
 
     // Store output file names to the output metadata.
-    void StoreOutputFilesToOutputMD(const std::string&           device,
-                                    const BeVkPipelineFiles&     spv_files,
-                                    const BeVkPipelineFiles&     isa_files,
-                                    const BeVkPipelineFiles&     stats_files,
-                                    const BeVkPipelineWaveSizes& wave_sizes);
+    void StoreOutputFilesToOutputMD(const std::string&               device,
+                                    const BePipelineFiles&         spv_files,
+                                    const BePipelineFiles&         isa_files,
+                                    const BePipelineFiles&         stats_files,
+                                    const BeVkPipelineWaveSizes&     wave_sizes,
+                                    const BeVkPipelineShaderHashes&  shader_hashes);
+
+    // Generate the XML session summary file.
+    bool GenerateSessionSummary(const Config& config);
 
     // The builder.
     BeProgramBuilderVkOffline* vulkan_builder_;

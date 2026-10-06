@@ -6,6 +6,7 @@
 //=============================================================================
 
 // C++.
+#include <algorithm>
 #include <cassert>
 #include <sstream>
 #include <thread>
@@ -21,6 +22,7 @@
 #include "qt_common/utils/qt_util.h"
 
 // Infra.
+#include "qt_isa_gui/widgets/find_text_widget.h"
 #include "source/common/vulkan/rg_pso_factory_vulkan.h"
 #include "source/common/vulkan/rg_pso_serializer_vulkan.h"
 
@@ -41,12 +43,61 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_source_editor_titlebar.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_view_manager.h"
 #include "radeon_gpu_analyzer_gui/rg_cli_launcher.h"
+#include "radeon_gpu_analyzer_gui/rg_data_types_vulkan.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
+#include "common/rga_shared_utils.h"
 #include "radeon_gpu_analyzer_gui/rg_factory_vulkan.h"
 #include "radeon_gpu_analyzer_gui/rg_utils_vulkan.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "radeon_gpu_analyzer_gui/rg_xml_session_config.h"
+
+// Parse the ISA CSV file and collect the {min, max} source line range per source file.
+static void ReadCsvFileForLineRanges(const std::string& csv_file_full_path,
+                                     std::map<std::string, std::pair<uint32_t, uint32_t>>& src_file_line_ranges)
+{
+    QFile       csv_file(csv_file_full_path.c_str());
+    QTextStream file_stream(&csv_file);
+
+    if (!csv_file.open(QFile::ReadOnly | QFile::Text))
+        return;
+    if (file_stream.atEnd())
+        return;
+
+    std::string header = file_stream.readLine().toStdString();
+    if (header.find(kStrCsvColumnSourceLineNumber) == std::string::npos)
+        return;
+
+    while (!file_stream.atEnd())
+    {
+        std::string              line = file_stream.readLine().toStdString();
+        std::vector<std::string> line_tokens;
+        std::vector<std::string> operand_tokens;
+        RgaSharedUtils::ParseCsvLine(line, line_tokens, operand_tokens);
+
+        if (line_tokens.size() < static_cast<size_t>(RgCsvFileColumns::kCount))
+            continue;
+
+        const std::string& source_line_str = line_tokens[static_cast<int>(RgCsvFileColumns::kSourceLineNumber)];
+        const std::string& source_path     = line_tokens[static_cast<int>(RgCsvFileColumns::kSourcePath)];
+
+        if (source_line_str.empty() || source_path.empty() || source_path == kStrUnknownSourcePath)
+            continue;
+
+        uint32_t line_number = static_cast<uint32_t>(std::stoi(source_line_str));
+        if (line_number == 0)
+            continue;
+
+        auto it = src_file_line_ranges.find(source_path);
+        if (it == src_file_line_ranges.end())
+            src_file_line_ranges[source_path] = {line_number, line_number};
+        else
+        {
+            it->second.first  = std::min(it->second.first, line_number);
+            it->second.second = std::max(it->second.second, line_number);
+        }
+    }
+}
 
 // PSO editor container frame name.
 static const char* kStrPsoEditorFrameName            = "PSOEditorContainerFrame";
@@ -549,6 +600,11 @@ void RgBuildViewVulkan::ShowCurrentFileDisassembly()
 
                 // Emit a signal indicating that the selected entry point has changed.
                 emit SelectedEntrypointChanged(current_target_gpu_, input_filepath, current_entrypoint_name);
+
+                // Move the source editor cursor to the entrypoint's first line so that the
+                // base class's post-build HandleSourceFileSelectedLineChanged call lands on a
+                // valid correlatable line and line correlation is displayed automatically.
+                HighlightPipelineStageStartLine(input_filepath, current_entrypoint_name);
             }
         }
     }
@@ -743,6 +799,11 @@ void RgBuildViewVulkan::SaveCurrentFile(EditMode mode)
                 RgBuildView::SaveCurrentFile(mode);
             }
         }
+    }
+    else if (mode == EditMode::kSourceCodeTabs)
+    {
+        // Don't need to do anything here.
+        // N/A for Vulkan mode.
     }
     else if (mode == EditMode::kPipelineSettings)
     {
@@ -945,6 +1006,18 @@ void RgBuildViewVulkan::HandleSelectedFileChanged(const std::string& old_file_pa
                     std::string selected_entrypoint_name = kStrDefaultVulkanGlslEntrypointName;
                     emit        SelectedEntrypointChanged(current_target_gpu_, new_file_path, selected_entrypoint_name);
 
+                    // Move the cursor to the entrypoint's first correlatable line so that
+                    // line correlation is displayed when switching between shader stages.
+                    HighlightPipelineStageStartLine(new_file_path, selected_entrypoint_name);
+
+                    // If line correlation is active, re-highlight the disassembly for the currently selected line.
+                    if (IsLineCorrelationEnabled(editor))
+                    {
+                        const int selected_line_number = editor->GetSelectedLineNumber();
+                        disassembly_view_->HandleInputFileSelectedLineChanged(
+                            current_target_gpu_, new_file_path, selected_entrypoint_name, selected_line_number);
+                    }
+
                     // Update the titlebar for the current source editor.
                     UpdateSourceEditorTitlebar(editor);
                 }
@@ -964,28 +1037,78 @@ void RgBuildViewVulkan::HandleSelectedFileChanged(const std::string& old_file_pa
     }
 }
 
-void RgBuildViewVulkan::HandleSourceFileSelectedLineChanged(RgSourceCodeEditor* editor, int line_number)
+void RgBuildViewVulkan::HandleSourceFileSelectedLineChanged(ShaderSourceCodeViewer* editor, int line_number)
 {
-    Q_UNUSED(line_number);
-
     // Handle updating source correlation only when the project isn't currently being built.
     if (!is_build_in_progress_)
     {
-        if (disassembly_view_ != nullptr && !disassembly_view_->IsEmpty())
+        RgSourceCodeEditor* code_editor = qobject_cast<RgSourceCodeEditor*>(editor);
+
+        if (disassembly_view_ != nullptr && !disassembly_view_->IsEmpty() && code_editor != nullptr)
         {
-            const std::string& input_filename = GetFilepathForEditor(editor);
+            const std::string& input_filename = GetFilepathForEditor(code_editor);
             bool               isDisassembled = IsGcnDisassemblyGenerated(input_filename);
             if (isDisassembled)
             {
                 int correlated_line_number = kInvalidCorrelationLineIndex;
+                if (IsLineCorrelationEnabled(code_editor))
+                    correlated_line_number = line_number;
 
-                // If the line is associated with a named entry point, highlight it in the file menu item.
+                // Determine which entrypoint corresponds to this source line.
                 std::string entry_name = kStrDefaultVulkanGlslEntrypointName;
+                std::string selected_entry_name;
+                if (GetEntrypointNameForLineNumber(input_filename, line_number, selected_entry_name))
+                    entry_name = selected_entry_name;
 
                 // Send the input source file's correlation line index to the disassembly view.
                 disassembly_view_->HandleInputFileSelectedLineChanged(current_target_gpu_, input_filename, entry_name, correlated_line_number);
             }
         }
+    }
+}
+
+void RgBuildViewVulkan::HandleHighlightedCorrelationLineUpdated(int line_number, const std::string& src_path)
+{
+    // Clear ISA and source highlighting when line correlation is disabled.
+    if (!IsLineCorrelationSupported())
+    {
+        HandleSourceFileSelectedLineChanged(current_code_editor_, kInvalidCorrelationLineIndex);
+        RgBuildView::HandleHighlightedCorrelationLineUpdated(kInvalidCorrelationLineIndex, "");
+        return;
+    }
+
+    // If the correlated source path refers to a different file than the one currently shown,
+    // switch the file menu (and therefore the source view) to the correct shader stage.
+    // Guard against uncorrelated instructions (empty path) and unknown paths (not a loaded stage file).
+    bool stage_switched = false;
+    if (!src_path.empty() && current_code_editor_ != nullptr && file_menu_ != nullptr)
+    {
+        RgMenuFileItem* file_item = file_menu_->GetFileItemFromPath(src_path);
+        if (file_item != nullptr)
+        {
+            // Only call GetEditorForFilepath after confirming the path is a known stage file,
+            // to avoid it creating a spurious blank editor for unrecognized paths.
+            RgSourceCodeEditor* target_editor = GetEditorForFilepath(file_item->GetFilename());
+            if (target_editor != nullptr && target_editor != current_code_editor_)
+            {
+                SwitchToEditor(target_editor);
+                file_menu_->HandleSelectedFileChanged(static_cast<RgMenuFileItemGraphics*>(file_item));
+                stage_switched = true;
+            }
+        }
+    }
+
+    // Delegate the line-highlight logic to the base class.
+    RgBuildView::HandleHighlightedCorrelationLineUpdated(line_number, src_path);
+
+    // When we switched stages above, HandleSelectedFileChanged reset the ISA view's
+    // line correlation to the first correlatable line of the new stage.  Re-send
+    // the correct source-to-ISA correlation for the line that triggered the switch
+    // so that the ISA highlighting matches the highlighted source line.
+    if (stage_switched && line_number != kInvalidCorrelationLineIndex && disassembly_view_ != nullptr)
+    {
+        std::string entry_name = kStrDefaultVulkanGlslEntrypointName;
+        disassembly_view_->HandleInputFileSelectedLineChanged(current_target_gpu_, src_path, entry_name, line_number);
     }
 }
 
@@ -1404,8 +1527,8 @@ void RgBuildViewVulkan::CreatePipelineStateView(QWidget* parent)
         // Add the state editor view to the parent frame.
         pso_editor_frame_->layout()->addWidget(pipeline_state_view_);
 
-        // Create the find widget, register with the scaling manager.
-        pso_find_widget_ = new RgFindTextWidget(pipeline_state_view_);
+        // Create the find widget.
+        pso_find_widget_ = new FindTextWidget(pipeline_state_view_);
 
         // The find widget is hidden by default.
         pso_find_widget_->hide();
@@ -1463,9 +1586,16 @@ void RgBuildViewVulkan::ConnectDisassemblyViewApiSpecificSignals()
 bool RgBuildViewVulkan::IsLineCorrelationEnabled(RgSourceCodeEditor* source_editor)
 {
     Q_UNUSED(source_editor);
+    return IsLineCorrelationSupported();
+}
 
-    // Source line correlation with disassembly is not available in Vulkan mode.
-    return false;
+void RgBuildViewVulkan::UpdateSourceFileCorrelationState(const std::string& file_path, bool is_correlated)
+{
+    // Vulkan shader stages are stored in pipeline.shader_stages (a plain string array),
+    // not in the source_files vector that carries the is_correlated flag.
+    // IsLineCorrelationEnabled is overridden to not use that flag, so there is nothing to update.
+    Q_UNUSED(file_path);
+    Q_UNUSED(is_correlated);
 }
 
 bool RgBuildViewVulkan::IsSourceFileInProject(const std::string& source_file_path) const
@@ -1609,7 +1739,7 @@ bool RgBuildViewVulkan::CreateNewSourceFile(RgPipelineStage stage, const std::st
                     assert(current_code_editor_ != nullptr);
                     if (current_code_editor_ != nullptr)
                     {
-                        current_code_editor_->SetSyntaxHighlighting(RgSrcLanguage::kGLSL);
+                        current_code_editor_->SetSyntaxHighlighting(ShaderSourceLanguage::kGLSL);
                     }
                 }
             }
@@ -1826,12 +1956,138 @@ bool RgBuildViewVulkan::DisasmSpvFile(const std::string& spv_file, std::string& 
 
 bool RgBuildViewVulkan::IsLineCorrelationSupported() const
 {
+    if (project_ != nullptr && clone_index_ >= 0 && clone_index_ < static_cast<int>(project_->clones.size()))
+    {
+        auto vulkan_clone = std::dynamic_pointer_cast<RgProjectCloneVulkan>(project_->clones[clone_index_]);
+        if (vulkan_clone != nullptr && vulkan_clone->build_settings != nullptr)
+        {
+            if (!static_cast<RgBuildSettingsVulkan*>(vulkan_clone->build_settings.get())->is_generate_debug_info_checked)
+            {
+                return false;
+            }
+
+            // Disable line correlation for SPIR-V inputs (binary or text).
+            if (file_menu_ != nullptr)
+            {
+                int first_stage = static_cast<int>(RgPipelineStage::kVertex);
+                int last_stage  = static_cast<int>(RgPipelineStage::kFragment);
+                if (vulkan_clone->pipeline.type == RgPipelineType::kCompute)
+                {
+                    first_stage = last_stage = static_cast<int>(RgPipelineStage::kCompute);
+                }
+                for (int stage = first_stage; stage <= last_stage; ++stage)
+                {
+                    RgMenuFileItemGraphics* stage_item = file_menu_->GetStageItem(static_cast<RgPipelineStage>(stage));
+                    if (stage_item != nullptr && !stage_item->GetFilename().empty())
+                    {
+                        const RgVulkanInputType file_type = stage_item->GetFileType();
+                        if (file_type == RgVulkanInputType::kSpirv || file_type == RgVulkanInputType::kSpirvTxt)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+    }
+    return false;
+}
+
+void RgBuildViewVulkan::CurrentBuildSucceeded()
+{
+    // Rebuild the entrypoint line number map from the CSV files produced by this build.
+    entrypoint_line_numbers_.clear();
+
+    const bool is_correlation_enabled = IsLineCorrelationSupported();
+    if (is_correlation_enabled)
+    {
+        // Find the first GPU with valid pipeline build output and parse each stage's CSV.
+        for (const auto& [gpu, build_output] : build_outputs_)
+        {
+            auto pipeline_output = std::dynamic_pointer_cast<RgCliBuildOutputPipeline>(build_output);
+            if (pipeline_output == nullptr)
+                continue;
+
+            for (const auto& [input_file, file_outputs] : pipeline_output->per_file_output)
+            {
+                for (const auto& entry_output : file_outputs.outputs)
+                {
+                    for (const auto& output_item : entry_output.outputs)
+                    {
+                        if (output_item.file_type == RgCliOutputFileType::kIsaDisassemblyCsv)
+                        {
+                            std::map<std::string, std::pair<uint32_t, uint32_t>> src_file_ranges;
+                            ReadCsvFileForLineRanges(output_item.file_path, src_file_ranges);
+                            for (const auto& [src_file, range] : src_file_ranges)
+                            {
+                                entrypoint_line_numbers_[src_file][entry_output.entrypoint_name] = range;
+                            }
+                        }
+                    }
+                }
+            }
+            break;  // Only need one GPU's output to populate the line number map.
+        }
+    }
+
+    for (auto& [file_path, editor] : source_code_editors_)
+    {
+        emit LineCorrelationEnabledStateChanged(editor, is_correlation_enabled);
+    }
+}
+
+bool RgBuildViewVulkan::GetEntrypointNameForLineNumber(const std::string& file_path, int line_number, std::string& entry_name) const
+{
+    auto file_iter = entrypoint_line_numbers_.find(file_path);
+    if (file_iter != entrypoint_line_numbers_.end())
+    {
+        if (line_number > 0)
+        {
+            const auto line = static_cast<uint32_t>(line_number);
+            for (const auto& entry : file_iter->second)
+            {
+                if (line >= entry.second.first && line <= entry.second.second)
+                {
+                    entry_name = entry.first;
+                    return true;
+                }
+            }
+        }
+    }
     return false;
 }
 
 RgMenuGraphics* RgBuildViewVulkan::GetGraphicsFileMenu()
 {
     return file_menu_;
+}
+
+void RgBuildViewVulkan::HighlightPipelineStageStartLine(const std::string& input_file_path,
+                                                         const std::string& entrypoint_name)
+{
+    auto file_iter = entrypoint_line_numbers_.find(input_file_path);
+    if (file_iter != entrypoint_line_numbers_.end())
+    {
+        auto entry_iter = file_iter->second.find(entrypoint_name);
+        if (entry_iter != file_iter->second.end())
+        {
+            RgSourceCodeEditor* editor = GetEditorForFilepath(input_file_path);
+            if (editor != nullptr)
+            {
+                int start_line = static_cast<int>(entry_iter->second.first);
+
+                // Scroll to the start of the entrypoint.
+                editor->ScrollToLine(start_line);
+
+                // Move the cursor to the start line so that the post-build
+                // HandleSourceFileSelectedLineChanged call lands on a valid correlatable line.
+                QTextCursor cursor(editor->document()->findBlockByLineNumber(start_line - 1));
+                editor->setTextCursor(cursor);
+            }
+        }
+    }
 }
 
 void RgBuildViewVulkan::HandlePipelineStateTreeFocusIn()

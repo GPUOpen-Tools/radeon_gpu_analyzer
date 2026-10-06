@@ -41,6 +41,11 @@ void RgLinkSourceMenuItem::ToggleLineSeparatorVisibilty(bool visible) const
     ui_.line_2->setVisible(visible);
 }
 
+void RgLinkSourceMenuItem::ToggleLinkSourceButtonVisibilty(bool visible) const
+{
+    ui_.linkSourceButton->setVisible(visible);
+}
+
 void RgLinkSourceMenuItem::ToggleLoadCodeObjectButtonVisibilty(bool visible) const
 {
     ui_.loadCodeObjectButton->setVisible(visible);

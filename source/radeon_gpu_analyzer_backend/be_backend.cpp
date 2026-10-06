@@ -97,6 +97,20 @@ beKA::beStatus Backend::Initialize(beKA::BuiltProgramKind program_kind, LoggingC
 Backend::~Backend()
 {
     AMDTDeviceInfoUtils::DeleteInstance();
+
+    if (builder_opencl_ != nullptr)
+    {
+        delete builder_opencl_;
+        builder_opencl_ = nullptr;
+    }
+
+#ifdef _WIN32
+    if (builder_dx11_ != nullptr)
+    {
+        delete builder_dx11_;
+        builder_dx11_ = nullptr;
+    }
+#endif
 }
 
 beKA::beStatus Backend::GetDeviceInfo(const std::string& device_name, GDT_DeviceInfo& gdt_device_info)

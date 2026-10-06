@@ -1,11 +1,12 @@
 //=============================================================================
-/// Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2023-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for rga backend progam builder binary analysis class.
 //=============================================================================
 
 // C++
+#include <algorithm>
 #include <cassert>
 
 // Local
@@ -89,9 +90,9 @@ std::string beProgramBuilderBinary::GetStrFromApi(ApiEnum api)
     return api_string;
 }
 
-BeVkPipelineFiles beProgramBuilderBinary::GetStageFileSuffixesFromApi(ApiEnum api)
+BePipelineFiles beProgramBuilderBinary::GetStageFileSuffixesFromApi(ApiEnum api)
 {
-    BeVkPipelineFiles suffixes;
+    BePipelineFiles suffixes;
 
     switch (api)
     {
@@ -258,4 +259,28 @@ RgaEntryType beProgramBuilderBinary::GetEntryType(ApiEnum api, uint32_t stage)
         }
     }
     return entry;
+}
+
+BeAmdHsaMetaData::KernelNames beProgramBuilderBinary::GetKernelNames(const BeAmdPalMetaData::PipelineMetaData& pipeline)
+{
+    BeAmdHsaMetaData::KernelNames kernels;
+    for (const auto& stage : pipeline.hardware_stages)
+    {
+        if (!stage.entry_point.empty())
+        {
+            kernels.push_back(stage.entry_point);
+        }
+    }
+
+    // For raytracing pipelines, shader function names may differ from hardware stage entry points.
+    // Always include shader function names so SplitISAText can match whichever symbol appears in the disassembly.
+    for (const auto& func : pipeline.shader_functions)
+    {
+        if (!func.raw_name.empty() && std::find(kernels.begin(), kernels.end(), func.raw_name) == kernels.end())
+        {
+            kernels.push_back(func.raw_name);
+        }
+    }
+
+    return kernels;
 }

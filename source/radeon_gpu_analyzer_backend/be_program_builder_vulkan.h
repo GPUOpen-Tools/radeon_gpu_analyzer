@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for rga backend progam builder vulkan class.
@@ -52,19 +52,22 @@ public:
                                             std::string&       error_text);
 
     // Compile SPIR-V binary file(s) to pipeline binary, ISA disassembly & statistics using the Vulkan Backend executable.
-    static beStatus CompileSpirv(const std::string&       loader_debug,
-                                 const BeVkPipelineFiles& spirv_files,
-                                 const BeVkPipelineFiles& isa_files,
-                                 const BeVkPipelineFiles& statsFiles,
-                                 const std::string&       bin_file,
-                                 const std::string&       pso_file,
-                                 const std::string&       icd_file,
-                                 const std::string&       validation_output,
-                                 const std::string&       validation_output_redirection,
-                                 const std::string&       device,
-                                 bool                     should_print_cmd,
-                                 BeVkPipelineWaveSizes&   wave_sizes,
-                                 std::string&             errMsg);
+    static beStatus CompileSpirv(const std::string&        loader_debug,
+                                 const BePipelineFiles&    spirv_files,
+                                 const BePipelineFiles&    isa_files,
+                                 const BePipelineFiles&    stats_files,
+                                 const std::string&        bin_file,
+                                 const std::string&        pso_file,
+                                 const std::string&        icd_file,
+                                 const std::string&        validation_output,
+                                 const std::string&        validation_output_redirection,
+                                 const std::string&        device,
+                                 bool                      should_print_cmd,
+                                 bool                      is_line_numbers_required,
+                                 const std::string&        compiler_bin_dir,
+                                 BeVkPipelineWaveSizes&    wave_sizes,
+                                 BeVkPipelineShaderHashes& shader_hashes,
+                                 std::string&              err_msg);
 
     // Disassemble SPIR-V binary file to disassembly text file.
     static beStatus DisassembleSpv(const std::string& spv_tool_bin_dir,
@@ -97,16 +100,32 @@ public:
 
     // Invoke amdgpu-dis on the binary file and parse the output into disassembly.
     static beStatus AmdgpudisBinaryToDisassembly(const std::string&                  bin_file,
-                                                 const BeVkPipelineFiles&            isa_files,
+                                                 const BePipelineFiles&              isa_files,
                                                  bool                                should_print_cmd,
                                                  std::string&                        amdgpu_dis_stdout,
                                                  std::map<std::string, std::string>& shader_to_disassembly,
                                                  BeVkPipelineWaveSizes&              wave_sizes,
+                                                 BeVkPipelineShaderHashes&           shader_hash,
                                                  std::string&                        error_msg);
+
+    // Invoke llvm-objdump on the binary file for disassembly with optional source-line correlation,
+    // and llvm-readobj for metadata extraction. Replacement for AmdgpudisBinaryToDisassembly.
+    static beStatus LlvmObjdumpBinaryToDisassembly(const std::string&                  bin_file,
+                                                   const std::string&                  device,
+                                                   const std::string&                  compiler_bin_dir,
+                                                   bool                                line_numbers,
+                                                   const BePipelineFiles&              isa_files,
+                                                   bool                                should_print_cmd,
+                                                   BeAmdPalMetaData::PipelineMetaData& out_pipeline_md,
+                                                   std::map<std::string, std::string>& shader_to_disassembly,
+                                                   BeVkPipelineWaveSizes&              wave_sizes,
+                                                   BeVkPipelineShaderHashes&           shader_hashes,
+                                                   std::string&                        error_msg);
 
     // Helper function to Extract from AmdgpuDis Metadata Hardware Maapping for a given api shader stage.
     static bool GetAmdgpuDisApiShaderToHwMapping(const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
                                                  const std::string&                        api_shader_stage_name,
+                                                 std::string&                              api_shader_stage_hash,
                                                  std::string&                              hw_mapping_str,
                                                  beWaveSize&                               wave_size);
 
@@ -115,7 +134,8 @@ public:
                                           const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
                                           const std::map<std::string, std::string>& shader_to_disassembly,
                                           const std::string&                        isa_file,
-                                          beWaveSize&                               wave_size);
+                                          beWaveSize&                               wave_size,
+                                          std::string&                              shader_hash);
 
 private:
     // Invoke the glslang compiler executable.

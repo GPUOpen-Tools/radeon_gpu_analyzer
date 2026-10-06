@@ -127,15 +127,15 @@ public:
         kCbranchiFork,
         //  D.u = hardware register. Read some or all of a hardware register
         // into the LSBs of D. SIMM16 = {size[4:0], offset[4:0], hwRegId[5:0]}; offset
-        // is 0�31, size is 1�32.
+        // is 0-31, size is 1-32.
         kGetregB32,
         //  hardware register = D.u. Write some or all of the LSBs of D
         // into a hardware register (note that D is a source SGPR).
-        // SIMM16 = {size[4:0], offset[4:0], hwRegId[5:0]}; offset is 0�31, size is 1�32.
+        // SIMM16 = {size[4:0], offset[4:0], hwRegId[5:0]}; offset is 0-31, size is 1-32.
         kSetregB32,
         //  This instruction uses a 32-bit literal constant. Write
         // some or all of the LSBs of IMM32 into a hardware register.
-        // SIMM16 = {size[4:0], offset[4:0], hwRegId[5:0]}; offset is 0�31, size is 1�32.
+        // SIMM16 = {size[4:0], offset[4:0], hwRegId[5:0]}; offset is 0-31, size is 1-32.
         // All other values are reserved.
         kSetregimm32B32 = 21,
         // Reserved

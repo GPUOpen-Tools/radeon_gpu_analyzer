@@ -265,7 +265,8 @@ static const char* kStrFileContextMenuOpenContainingFolder = "Show in explorer";
 #endif
 static const char* kStrFileContextMenuRenameFile   = "Rename";
 static const char* kStrFileContextMenuRemoveFile   = "Remove";
-static const char* kStrFileContextMenuCopyFileName = "Copy";
+static const char* kStrFileContextMenuCopyFileName       = "Copy kernel name";
+static const char* kStrFileContextMenuRevealKernelName   = "Reveal kernel name";
 static const char* kStrFileContextMenuRestoreSpv   = "Revert to original SPIR-V binary";
 
 // Tooltip for the remove button on the file menu item.
@@ -333,6 +334,12 @@ static const char* kStrRemoveFileDialogTextBinary =
 static const char* kStrMenuBarVulkanConfirmRevertToOrigSpvA = "This will revert all SPIR-V assembly edits and restore the original SPIR-V binary from: ";
 static const char* kStrMenuBarVulkanConfirmRevertToOrigSpvB = "Are you sure?";
 
+// Confirm that the user wants to reload binary code object file with source code.
+static const char* kStrReloadCodeobjectFileDialogText = "No source files embedded within the binary code object were detected on disk.\nDo you want to attach source files to enable line correlation?";
+static const char* kStrReloadCodeobjectFileStatus = "No source files detected.";
+static const char* kStrReloadCodeobjectFileTooltip = "No source files embedded within the binary code object were detected on disk.";
+
+
 // *** FILE DIALOG STRINGS - END ***
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -378,6 +385,8 @@ static const char* kStrBuildSettingsAlternativeCompilerTooltipGeneric =
 static const char* kStrBuildSettingsSettingsCmdlineTooltip =
     "The command string which will be passed to the RGA backend when it is invoked. This command is generated according to the above selected settings.";
 static const char* kStrBuildSettingsClangOptionsTooltip = "Additional options for the clang compiler. For example, use -Weverything to enable all diagnostics.";
+static const char* kStrBuildSettingsAdditionalSourceDirectoryTooltip =
+    "Additional source directories should be separated by ';'. If a path includes a space, surround it with parentheses.";
 
 // Build settings error strings.
 static const char* kStrErrInvalidPendingSetting   = "The following issues must be resolved before saving build settings:";
@@ -393,6 +402,15 @@ static const char* kStrIncludeDirDialogDirDoesNotExist    = "This directory does
 static const char* kStrIncludeDirDialogDirAlreadySelected = "This directory is already selected.";
 static const char* kStrIncludeDirDialogSelectDirTitle     = "Select a directory";
 static const char* kStrIcdLocationDialogSelectFileTitle   = "Browse for Vulkan ICD file";
+
+// Source search directories dialog (shown when source files are missing after binary analysis).
+static const char* kStrSourceSearchDirsDialogTitle      = "Missing source files for correlation";
+static const char* kStrSourceSearchDirsDialogInfoPrefix = "The following source files could not be found on the local system:";
+static const char* kStrSourceSearchDirsDialogInfoSuffix = "Provide search paths for RGA to locate the source files and present source <-> ISA correlation, or press Cancel to continue without line correlation.";
+
+// Placeholder text shown in read-only editors when source files are missing.
+static const char* kStrMissingSourcePlaceholderText  = "RGA could not find the relevant source files for source <-> ISA correlation:";
+static const char* kStrMissingSourceClickHereText    = "Click here to add additional search paths and rerun the analysis.";
 
 // Predefined macros editor dialog strings.
 static const char* kStrPreprocessorDirectivesDialogTitle                       = "Preprocessor directives";
@@ -540,6 +558,7 @@ static const char* kStrDisassemblyTableContextMenuGoToMaxVgpr = "Go to next maxi
 // Titlebar text strings.
 static const char* kStrGpuResourceUsage          = "Resource usage";
 static const char* kStrResourceUsageVgprs        = "VGPRs";
+static const char* kStrResourceUsageAgprs        = "AGPRs";
 static const char* kStrResourceUsageSgprs        = "SGPRs";
 static const char* kStrResourceUsageLds          = "LDS";
 static const char* kStrResourceUsageSpills       = "spills";
@@ -651,11 +670,12 @@ static const char* kStrBuildViewFontFamily = "DejaVu Sans Mono";
 #else
 static const char* kStrBuildViewFontFamily = "Consolas";
 #endif
-static const char* kStrBuildViewSettingsScrollarea                 = "settingsScrollArea";
-static const char* kStrBuildViewSettingsScrollareaStylesheet       = "QScrollArea#settingsScrollArea { background-color: transparent; }";
-static const char* kStrBuildViewBuildSettingsWidgetStylesheetGreen = "#buildSettingsWidget { border: 1px solid rgb(18, 152, 0) }";
-static const char* kStrBuildViewBuildSettingsWidgetStylesheetRed   = "#buildSettingsWidget { border: 1px solid rgb(224, 30, 55); }";
-static const char* kStrBuildViewBuildSettingsWidgetStylesheetBlack = "#buildSettingsWidget { border: 1px solid palette(text); }";
+static const char* kStrBuildViewSettingsScrollarea                  = "settingsScrollArea";
+static const char* kStrBuildViewSettingsScrollareaStylesheet        = "QScrollArea#settingsScrollArea { background-color: transparent; }";
+static const char* kStrBuildViewBuildSettingsWidgetStylesheetGreen  = "#buildSettingsWidget { border: 1px solid rgb(18, 152, 0) }";
+static const char* kStrBuildViewBuildSettingsWidgetStylesheetRed    = "#buildSettingsWidget { border: 1px solid rgb(224, 30, 55); }";
+static const char* kStrBuildViewBuildSettingsWidgetStylesheetPurple = "#buildSettingsWidget { border: 1px solid rgb(128, 0, 128); }";
+static const char* kStrBuildViewBuildSettingsWidgetStylesheetBlack  = "#buildSettingsWidget { border: 1px solid palette(text); }";
 
 // *** BUILD VIEW FONT FAMILY - END ***
 

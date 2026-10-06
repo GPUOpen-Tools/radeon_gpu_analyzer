@@ -11,6 +11,7 @@
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_entry_point_tree.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_file_item_opencl.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_reveal_kernel_name_dialog.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 
 // Qt.
@@ -60,8 +61,12 @@ void RgMenuEntryPointTree::ConnectSignals()
     bool is_connected = connect(this, &QTreeView::customContextMenuRequested, this, &RgMenuEntryPointTree::HandleOpenContextMenu);
     assert(is_connected);
 
-    // Connect the item's "Copy" menu item.
+    // Connect the "Copy kernel name" menu item.
     is_connected = connect(copy_kernel_name_action_, &QAction::triggered, this, &RgMenuEntryPointTree::HandleCopyKernelNameSelection);
+    assert(is_connected);
+
+    // Connect the "Reveal kernel name" menu item.
+    is_connected = connect(reveal_kernel_name_action_, &QAction::triggered, this, &RgMenuEntryPointTree::HandleRevealKernelNameSelection);
     assert(is_connected);
 }
 
@@ -87,6 +92,9 @@ void RgMenuEntryPointTree::InitializeContextMenu()
     // Create the menu items to insert into the context menu.
     copy_kernel_name_action_ = new QAction(kStrFileContextMenuCopyFileName, this);
     context_menu_->addAction(copy_kernel_name_action_);
+
+    reveal_kernel_name_action_ = new QAction(kStrFileContextMenuRevealKernelName, this);
+    context_menu_->addAction(reveal_kernel_name_action_);
 }
 
 void RgMenuEntryPointTree::HandleOpenContextMenu(const QPoint& widget_click_position)
@@ -100,6 +108,12 @@ void RgMenuEntryPointTree::HandleOpenContextMenu(const QPoint& widget_click_posi
 
     // Open the context menu at the user's click position.
     context_menu_->exec(click_point);
+}
+
+void RgMenuEntryPointTree::HandleRevealKernelNameSelection()
+{
+    RgRevealKernelNameDialog dialog(kernel_name_, this);
+    dialog.exec();
 }
 
 void RgMenuEntryPointTree::HandleCopyKernelNameSelection()

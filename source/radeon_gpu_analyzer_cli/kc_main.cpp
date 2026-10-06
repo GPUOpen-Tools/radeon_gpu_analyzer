@@ -60,6 +60,10 @@ static void Shutdown()
 
 int main(int argc, char* argv[])
 {
+#ifdef _WIN32
+    SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+#endif
+
     bool status = true;
     Config config;
     std::stringstream msg;
@@ -138,6 +142,9 @@ int main(int argc, char* argv[])
             break;
         case Config::kListEntries:
             commander->ListEntries(config, LoggingCallback);
+            break;
+        case Config::kListSourcePaths:
+            commander->ListSourcePaths(config, LoggingCallback);
             break;
         case Config::kListAsics:
             if (!commander->PrintAsicList(config))

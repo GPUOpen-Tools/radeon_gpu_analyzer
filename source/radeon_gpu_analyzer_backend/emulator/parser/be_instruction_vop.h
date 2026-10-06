@@ -558,7 +558,7 @@ public:
         kV3MBcntLOU32B32 = 291,    //  ThreadMask = (1 << ThreadPosition) - 1; D.u = CountOneBits(S0.u & ThreadMask[31              // 0]) + S1.u. Masked bit count, ThreadPosition is the position of this thread in the wavefront (in 0..63).
         kV3MBcntHiU32B32 = 292,    //  ThreadMask = (1 << ThreadPosition) - 1; D.u = CountOneBits(S0.u & ThreadMask[63:32]) + S1.u. Masked bit count, ThreadPosition is the position of this thread in the wavefront (in 0..63).
 
-        // 293 � 298 See corresponding opcode numbers in VOP3b (3 in, 2 out).
+        // 293-298 See corresponding opcode numbers in VOP3b (3 in, 2 out).
         kV3AddI32 = 293,         //  D.u = S0.u + S1.u; VCC=carry-out (VOP3:sgpr=carry-out).
         kV3SubI32 = 294,        //  D.u = S0.u - S1.u; VCC=carry-out (VOP3:sgpr=carry-out).
         kV3SubrevI32 = 295,         //  D.u = S1.u - S0.u; VCC=carry-out (VOP3:sgpr=carry-out).
@@ -656,7 +656,7 @@ public:
         kV3CvtF32Ubyte3 = 404,          //  D.f = UINT2FLT(S0.u[31:24]).
         kV3CvtU32F64 = 405,      //  D.u = (uint)S0.d.
         kV3CvtF64U32 = 406,      //  D.d = (double)S0.u.
-        //407 � 415 reserved.
+        //407-415 reserved.
         kV3FractF32 = 416,     //  D.f = S0.f - floor(S0.f).
         kV3TruncF32 = 417,     //  D.f = trunc(S0.f), return integer part of S0.
         kV3CeilF32 = 418,    //  D.f = ceil(S0.f). Implemented as: D.f = trunc(S0.f); if (S0 > 0.0 && S0 != D), D += 1.0.

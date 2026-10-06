@@ -87,15 +87,16 @@ public:
     // Get the current tree view in this widget.
     RgIsaTreeView* GetTreeView() const;
 
-    // Check if the current API has line correlation supported.
-    virtual bool IsLineCorrelationSupported() const;
-
-    // Set the target gpu label and architecture in the model by finding the target gpu that corresponds to the given input file in the build settings.
-    virtual void SetTargetGpuLabel(std::string input_file, std::shared_ptr<RgBuildSettings> build_settings);
+    // Handler invoked when the user changes the selected line in the input source file. For binary mode the input file will contain the source file path if available, with the binary file path provided separately.
+    void HandleInputFileSelectedLineChanged(const std::string& target_gpu,
+                                            const std::string& input_file_path,
+                                            std::string&       entry_name,
+                                            int                line_index,
+                                            std::string        binary_file_path = "");
 
 signals:
     // A signal emitted when the input source file's highlighted correlation line was updated.
-    void InputSourceHighlightedLineChanged(int src_line_number);
+    void InputSourceHighlightedLineChanged(int src_line_number, const std::string& src_file_path);
 
     // A signal emitted when the user has changed the disassembly table's column visibility.
     void DisassemblyColumnVisibilityUpdated();
@@ -152,14 +153,15 @@ signals:
     void EnableShowMaxVgprOptionSignal(bool is_enabled) const;
 
 public slots:
-    // Handler invoked when the user changes the selected line in the input source file.
-    void HandleInputFileSelectedLineChanged(const std::string& target_gpu, const std::string& input_file_path, std::string& entry_name, int line_index);
-
     // Handler invoked when the user changes the selected entry point for a given input file.
     void HandleSelectedEntrypointChanged(const std::string& target_gpu, const std::string& input_file_path, const std::string& selected_entrypoint_name);
 
     // Show/hide Kernel Name Label.
     void HandleSetKernelNameLabel(bool show, const std::string& setTextLabel = "");
+
+    // Set the target GPU label. Base implementation is a no-op.
+    // RgIsaDisassemblyViewBinary overrides this to set the target gpu label for binary analysis mode.
+    virtual void SetTargetGpuLabel(std::string target_gpu = {}, std::shared_ptr<RgBuildSettings> build_settings = nullptr);
 
     // Handler invoked when the user clicks on the raw button.
     void HandleRawTextButtonClicked();
@@ -265,13 +267,6 @@ protected:
 
     // Set the border stylesheet.
     virtual void SetBorderStylesheet(bool is_selected) = 0;
-
-    // Generate a unique key used to identify a source input file and entrypoint. The key consists
-    // of the input source file path and entry point name, joined with a pipe.
-    std::string GenerateEntrypointKey(const std::string& file_path, const std::string& asic, const std::string& entrypoint_name) const;
-
-    // Decode a filepath/entrypoint key string into separate tokens.
-    bool DecodeEntrypointKey(const std::string& entrypoint_key, std::string& file_path, std::string& asic, std::string& entrypoint_name) const;
 
     // A map of (GPU+inputfile+entryname) to a map of an input file's data.
     std::unordered_map<std::string, std::pair<std::string, std::string>> disassembly_view_input_files_map_;

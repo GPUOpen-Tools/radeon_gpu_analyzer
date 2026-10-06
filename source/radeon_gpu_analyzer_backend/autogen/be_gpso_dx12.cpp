@@ -270,11 +270,11 @@ static bool WriteGpsoInputLayoutElement(std::stringstream& stream, const D3D12_I
     const char* input_slot_string  = InputSlotClassToStr(input_element.InputSlotClass);
     if (dxgi_format_string != nullptr && input_slot_string != nullptr)
     {
-        stream << "{ \"" << input_element.SemanticName << "\", " 
-               << input_element.SemanticIndex << ", " 
-               << dxgi_format_string << ", " 
-               << input_element.InputSlot << ", " 
-               << input_element.AlignedByteOffset << ", " 
+        stream << "{ \"" << input_element.SemanticName << "\", "
+               << input_element.SemanticIndex << ", "
+               << dxgi_format_string << ", "
+               << input_element.InputSlot << ", "
+               << input_element.AlignedByteOffset << ", "
                << input_slot_string << ", "
                << input_element.InstanceDataStepRate << " }\n";
         ret = true;
@@ -459,7 +459,7 @@ void GpsoGenerator::SetRenderTargets(const DXGI_FORMAT* formats, size_t count)
 beKA::beStatus GpsoGenerator::SignatureParameterToFormatAndSize(const D3D12_SIGNATURE_PARAMETER_DESC& param, std::pair<DXGI_FORMAT, size_t>& result)
 {
     beKA::beStatus rc = beKA::beStatus::kBeStatusSuccess;
-    
+
     switch (param.ComponentType)
     {
     case D3D_REGISTER_COMPONENT_FLOAT32:
@@ -557,7 +557,7 @@ beKA::beStatus GpsoGenerator::SignatureParameterToFormatAndSize(const D3D12_SIGN
                 break;
             }
 
-            
+
         }
         else  // Precision is 16 or 10 bit.
         {
@@ -565,7 +565,7 @@ beKA::beStatus GpsoGenerator::SignatureParameterToFormatAndSize(const D3D12_SIGN
             if (BeDx12Utils::MaskToComponentCount(param.Mask, component_count))
             {
                 switch (component_count)
-                {                
+                {
                 case 1:
                     result = std::make_pair(DXGI_FORMAT_R16_UINT, sizeof(float));
                     break;
@@ -672,6 +672,7 @@ beKA::beStatus GpsoGenerator::SignatureParameterToFormatAndSize(const D3D12_SIGN
 beKA::beStatus BeDx12Reflection::GenerateGpso(UINT64                     shader_requires_flags,
                                               bool                       has_vs,
                                               const DxcReflectionOutput& vs_output,
+                                              bool                       has_ms,
                                               bool                       has_ps,
                                               const DxcReflectionOutput& ps_output,
                                               std::string&               gpso_text,
@@ -688,6 +689,10 @@ beKA::beStatus BeDx12Reflection::GenerateGpso(UINT64                     shader_
     if (has_vs)
     {
         rc = gpso_genenerator.SetVertexShaderInputs(vs_output.param_desc_inputs.data(), vs_output.param_desc_inputs.size());
+    }
+    else if (has_ms)
+    {
+        // Nothing to do, we don't expect shader inputs for mesh shaders.
     }
     else
     {

@@ -39,7 +39,7 @@ bool RgConfigFileReaderVulkan::ReadProjectClone(tinyxml2::XMLDocument& doc, tiny
     ret = ret && ReadPipeline(doc, clones_root, true, clone->spv_backup_);
     assert(ret);
 
-    if (ret)
+    if (ret && node != nullptr)
     {
         // Create a Vulkan build settings object.
         std::shared_ptr<RgBuildSettingsVulkan> build_settings = std::make_shared<RgBuildSettingsVulkan>();
@@ -93,7 +93,8 @@ bool RgConfigFileReaderVulkan::ReadProjectConfigFile(tinyxml2::XMLDocument& doc,
                                  (kRgaDataModel2_1.compare(file_data_model_version) == 0) ||
                                  (kRgaDataModel2_2.compare(file_data_model_version) == 0) || 
                                  (kRgaDataModel2_3.compare(file_data_model_version) == 0) ||
-                                 (kRgaDataModel2_4.compare(file_data_model_version) == 0);
+                                 (kRgaDataModel2_4.compare(file_data_model_version) == 0) ||
+                                 (kRgaDataModel2_5.compare(file_data_model_version) == 0);
 
     assert(is_version_compatible);
 
@@ -158,9 +159,47 @@ bool RgConfigFileReaderVulkan::ReadApiBuildSettings(tinyxml2::XMLNode* node, std
         assert(build_settings_vulkan != nullptr);
         if (build_settings_vulkan != nullptr)
         {
-            if ((kRgaDataModel2_2.compare(version) == 0) || 
-                (kRgaDataModel2_3.compare(version) == 0) || 
-                (kRgaDataModel2_4.compare(version) == 0))
+            if (kRgaDataModel2_5.compare(version) == 0)
+            {
+                assert(node != nullptr);
+                if (node != nullptr)
+                {
+                    // Compile offline flag (new in 2.5, written before BinaryOutputFileName).
+                    node = node->FirstChildElement(kXmlNodeVulkanOfflineCompilation);
+                    ret  = (node != nullptr);
+                    assert(node != nullptr);
+                    if (ret)
+                    {
+                        RgXMLUtils::ReadNodeTextBool(node, build_settings_vulkan->is_compile_offline_checked);
+                    }
+                }
+
+                assert(node != nullptr);
+                if (ret && node != nullptr)
+                {
+                    // Binary output file name.
+                    node = node->NextSiblingElement(kXmlNodeGlobalBinaryOutputFileName);
+                    ret  = (node != nullptr);
+                    assert(node != nullptr);
+                    std::string binary_file_name;
+                    bool        should_read = RgXMLUtils::ReadNodeTextString(node, binary_file_name);
+                    if (should_read)
+                    {
+                        build_settings_vulkan->binary_file_name = binary_file_name;
+                    }
+                }
+
+                assert(node != nullptr);
+                if (ret && node != nullptr)
+                {
+                    // Generate Debug Info.
+                    node = node->NextSiblingElement(kXmlNodeVulkanGenerateDebugInfo);
+                    ret  = RgXMLUtils::ReadNodeTextBool(node, build_settings_vulkan->is_generate_debug_info_checked);
+                }
+            }
+            else if ((kRgaDataModel2_2.compare(version) == 0) ||
+                     (kRgaDataModel2_3.compare(version) == 0) ||
+                     (kRgaDataModel2_4.compare(version) == 0))
             {
                 assert(node != nullptr);
                 if (node != nullptr)
@@ -359,6 +398,9 @@ bool RgConfigFileWriterVulkan::WriteBuildSettingsElement(const std::shared_ptr<R
             ret = WriteGeneralBuildSettings(build_settings, doc, build_settings_elem);
 
             // Write Vulkan-specific settings.
+
+            // Compile offline flag.
+            RgXMLUtils::AppendXMLElement(doc, build_settings_elem, kXmlNodeVulkanOfflineCompilation, build_settings_vulkan->is_compile_offline_checked);
 
             // Binary output file name.
             RgXMLUtils::AppendXMLElement(doc, build_settings_elem, kXmlNodeGlobalBinaryOutputFileName, build_settings_vulkan->binary_file_name.c_str());

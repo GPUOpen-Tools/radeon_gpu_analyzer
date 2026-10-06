@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for CLI Commander interface for compiling with the Lightning Compiler (LC).
@@ -12,7 +12,6 @@
 #include <algorithm>
 #include <iterator>
 #include <cassert>
-#include <regex>
 
 // Infra.
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
@@ -20,22 +19,26 @@
 #include "external/amdt_os_wrappers/Include/osApplication.h"
 
 // Shared.
+#include "common/rga_analysis_summary.h"
+#include "common/rga_cli_defs.h"
 #include "common/rga_entry_type.h"
 #include "common/rg_log.h"
 #include "common/rga_shared_utils.h"
 
-// Local.
-#include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
-#include "radeon_gpu_analyzer_cli/kc_utils.h"
-#include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
-#include "radeon_gpu_analyzer_cli/kc_utils_lightning.h"
-#include "radeon_gpu_analyzer_cli/kc_cli_commander_lightning.h"
-#include "radeon_gpu_analyzer_cli/kc_statistics_device_props.h"
-
 // Backend.
+#include "radeon_gpu_analyzer_backend/be_isa_spec_metadata.h"
+#include "radeon_gpu_analyzer_backend/be_metadata_parser.h"
 #include "radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
 #include "radeon_gpu_analyzer_backend/be_string_constants.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
+
+// Local.
+#include "radeon_gpu_analyzer_cli/kc_cli_commander_lightning.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_isa_spec_loader.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
+#include "radeon_gpu_analyzer_cli/kc_utils.h"
+#include "radeon_gpu_analyzer_cli/kc_utils_lightning.h"
+#include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
 
 // *****************************************
 // *** INTERNALLY LINKED SYMBOLS - START ***
@@ -43,89 +46,87 @@
 
 // Targets of Lightning Compiler in LLVM format and corresponding DeviceInfo names.
 static const std::vector<std::pair<std::string, std::string>> kLcLlvmTargetsToDeviceInfoTargets = {
-    {"gfx801", "carrizo"},  
-    {"gfx802", "tonga"},    
-    {"gfx803", "fiji"},     
-    {"gfx803", "ellesmere"}, 
-    {"gfx803", "baffin"},   
+    {"gfx801", "carrizo"},
+    {"gfx802", "tonga"},
+    {"gfx803", "fiji"},
+    {"gfx803", "ellesmere"},
+    {"gfx803", "baffin"},
     {"gfx803", "gfx804"},
-    {"gfx900", "gfx900"},   
-    {"gfx902", "gfx902"},   
-    {"gfx904", "gfx904"},   
-    {"gfx906", "gfx906"},    
-    {"gfx908", "gfx908"},   
+    {"gfx900", "gfx900"},
+    {"gfx902", "gfx902"},
+    {"gfx904", "gfx904"},
+    {"gfx906", "gfx906"},
+    {"gfx908", "gfx908"},
     {"gfx90a", "gfx90a"},
-    {"gfx90c", "gfx90c"},   
-    {"gfx942", "gfx942"},   
-    {"gfx950", "gfx950"},   
-    {"gfx1010", "gfx1010"}, 
-    {"gfx1011", "gfx1011"},  
-    {"gfx1012", "gfx1012"}, 
+    {"gfx90c", "gfx90c"},
+    {"gfx942", "gfx942"},
+    {"gfx950", "gfx950"},
+    {"gfx1010", "gfx1010"},
+    {"gfx1011", "gfx1011"},
+    {"gfx1012", "gfx1012"},
     {"gfx1030", "gfx1030"},
-    {"gfx1031", "gfx1031"}, 
-    {"gfx1032", "gfx1032"}, 
-    {"gfx1034", "gfx1034"}, 
-    {"gfx1035", "gfx1035"},  
-    {"gfx1100", "gfx1100"}, 
+    {"gfx1031", "gfx1031"},
+    {"gfx1032", "gfx1032"},
+    {"gfx1034", "gfx1034"},
+    {"gfx1035", "gfx1035"},
+    {"gfx1100", "gfx1100"},
     {"gfx1101", "gfx1101"},
-    {"gfx1102", "gfx1102"}, 
-    {"gfx1103", "gfx1103"}, 
-    {"gfx1150", "gfx1150"}, 
-    {"gfx1151", "gfx1151"},  
+    {"gfx1102", "gfx1102"},
+    {"gfx1103", "gfx1103"},
+    {"gfx1150", "gfx1150"},
+    {"gfx1151", "gfx1151"},
     {"gfx1152", "gfx1152"},
     {"gfx1153", "gfx1153"},
-    {"gfx1200", "gfx1200"}, 
-    {"gfx1201", "gfx1201"}};
+    {"gfx1200", "gfx1200"},
+    {"gfx1201", "gfx1201"},
+    {"gfx1250", "gfx1250"},
+};
 
 // For some devices, clang does not accept device names that RGA gets from DeviceInfo.
 // This table maps the DeviceInfo names to names accepted by clang for such devices.
-static const std::map<std::string, std::string>
-kLcDeviceInfoToClangDeviceMap = { {"ellesmere", "polaris10"},
-                                  {"baffin",    "polaris11"},
-                                  {"gfx804",    "gfx803"} };
+static const std::map<std::string, std::string> kLcDeviceInfoToClangDeviceMap = {{"ellesmere", "polaris10"}, {"baffin", "polaris11"}, {"gfx804", "gfx803"}};
 
 // Default target for Lightning Compiler (the latest supported target).
-static const std::string  kLcDefaultTarget = kLcLlvmTargetsToDeviceInfoTargets.rbegin()->second;
+static const std::string kLcDefaultTarget = kLcLlvmTargetsToDeviceInfoTargets.rbegin()->second;
 
-static const gtString  kTempBinaryFilename                  = L"rga_lc_ocl_out";
-static const gtString  kTempBinaryFileExtension             = L"bin";
-static const gtString  kTempIsaFilename                     = L"rga_lc_isa_";
-static const gtString  kTempIsaFileExtension                = L"isa";
+static const gtString kTempBinaryFilename      = L"rga_lc_ocl_out";
+static const gtString kTempBinaryFileExtension = L"bin";
+static const gtString kTempIsaFilename         = L"rga_lc_isa_";
+static const gtString kTempIsaFileExtension    = L"isa";
 
-static const std::string  kCompilerVersionToken             = "clang version ";
-static const std::string  kCompilerWarningToken             = "warning:";
+static const std::string kCompilerVersionToken = "clang version ";
+static const std::string kCompilerWarningToken = "warning:";
 
-static const std::string  kLcIsaInstructionSuffix1          = "_e32";
-static const std::string  kLcIsaInstructionSuffix2          = "_e64";
+static const std::string kLcIsaInstructionSuffix1 = "_e32";
+static const std::string kLcIsaInstructionSuffix2 = "_e64";
 
-static const std::string  kLcIsaBranchToken                 = "branch";
-static const std::string  kIsaCallToken                     = "call";
+static const std::string kLcIsaBranchToken = "branch";
+static const std::string kIsaCallToken     = "call";
 
-static const std::string  kIsaInstructionAddressStartToken  = "//";
-static const std::string  kIsaInstructionAddressEndToken    = ":";
-static const std::string  kIsaCommentStartToken             = ";";
+static const std::string kIsaInstructionAddressStartToken = "//";
+static const std::string kIsaInstructionAddressEndToken   = ":";
+static const std::string kIsaCommentStartToken            = ";";
 
-static const std::string  kStrDx11NaValue                       = "N/A";
+static const std::string kStrDx11NaValue = "N/A";
 
 // Error messages.
-static const char* kStrErrorOpenclOfflineCannotFindKernel = "Error: cannot find OpenCL kernel: ";
-static const char* kStrErrorOpenclOfflineUnknownDevice1 = "Error: unknown device name provided: ";
-static const char* kStrErrorOpenclOfflineUnknownDevice2 = ". Cannot compile for this target.";
-static const char* kStrErrorOpenclOfflineFailedToCreateTempFile = "Error: failed to create a temp file.";
+static const char* kStrErrorOpenclOfflineCannotFindKernel         = "Error: cannot find OpenCL kernel: ";
+static const char* kStrErrorOpenclOfflineUnknownDevice1           = "Error: unknown device name provided: ";
+static const char* kStrErrorOpenclOfflineUnknownDevice2           = ". Cannot compile for this target.";
+static const char* kStrErrorOpenclOfflineFailedToCreateTempFile   = "Error: failed to create a temp file.";
 static const char* kStrErrorOpenclOfflineLlvmIrDisassemblyFailure = "Error: failed to generate LLVM IR disassembly.";
 
 // Warning messages.
 static const char* kStrWarningOpenclOfflineUsingExtraDevice1 = "Warning: using unknown target GPU: ";
-static const char* kStrWarningRocmclUsingExtraDevice2 = "; successful compilation and analysis are not guaranteed.";
+static const char* kStrWarningRocmclUsingExtraDevice2        = "; successful compilation and analysis are not guaranteed.";
 
 // Info messages.
 static const char* kStrInfoOpenclOfflinePerformingLiveregAnalysis = "Performing live register analysis";
-static const char* kStrInfoOpenclOfflineExtractingCfg = "Extracting control flow graph";
+static const char* kStrInfoOpenclOfflineExtractingCfg             = "Extracting control flow graph";
 
-
-static const size_t  kIsaInstruction64BitCodeTextSize   = 16;
-static const int     kIsaInstruction64BitBytes          = 8;
-static const int     kIsaInstruction32BitBytes          = 4;
+static const size_t kIsaInstruction64BitCodeTextSize = 16;
+static const int    kIsaInstruction64BitBytes        = 8;
+static const int    kIsaInstruction32BitBytes        = 4;
 
 // ***************************************
 // *** INTERNALLY LINKED SYMBOLS - END ***
@@ -134,9 +135,9 @@ static const int     kIsaInstruction32BitBytes          = 4;
 // Returns the list of additional LC targets specified in the "additional-targets" file.
 static std::vector<std::string> GetExtraTargetList()
 {
-    static const wchar_t* kLcExtraTargetsFilename = L"additional-targets";
+    static const wchar_t*    kLcExtraTargetsFilename = L"additional-targets";
     std::vector<std::string> device_list;
-    osFilePath targets_file_path;
+    osFilePath               targets_file_path;
     osGetCurrentApplicationPath(targets_file_path, false);
     targets_file_path.appendSubDirectory(kLcOpenclRootDir);
     targets_file_path.setFileName(kLcExtraTargetsFilename);
@@ -151,7 +152,7 @@ static std::vector<std::string> GetExtraTargetList()
             if (device.find("//") == std::string::npos)
             {
                 // Save the target name in lower case to avoid case-sensitivity issues.
-                std::transform(device.begin(), device.end(), device.begin(), [](const char& c) {return static_cast<char>(std::tolower(c)); });
+                std::transform(device.begin(), device.end(), device.begin(), [](const char& c) { return static_cast<char>(std::tolower(c)); });
                 device_list.push_back(device);
             }
         }
@@ -160,21 +161,21 @@ static std::vector<std::string> GetExtraTargetList()
     return device_list;
 }
 
-static void  LogPreStep(const std::string& msg, const std::string& device = "")
+static void LogPreStep(const std::string& msg, const std::string& device = "")
 {
     std::cout << msg << device << "... ";
 }
 
-static void  LogResult(bool result)
+static void LogResult(bool result)
 {
     std::cout << (result ? kStrInfoSuccess : kStrInfoFailed) << std::endl;
 }
 
 beKA::beStatus KcCLICommanderLightning::Init(const Config& config, LoggingCallbackFunction log_callback)
 {
-    log_callback_ = log_callback;
-    compiler_paths_  = {config.compiler_bin_path, config.compiler_inc_path, config.compiler_lib_path};
-    should_print_cmd_   = config.print_process_cmd_line;
+    log_callback_     = log_callback;
+    compiler_paths_   = {config.compiler_bin_path, config.compiler_inc_path, config.compiler_lib_path};
+    should_print_cmd_ = config.print_process_cmd_line;
     return beKA::kBeStatusSuccess;
 }
 
@@ -193,14 +194,15 @@ bool KcCLICommanderLightning::InitRequestedAsicListLC(const Config& config)
         for (std::string device : config.asics)
         {
             std::set<std::string> supported_targets;
-            std::string matched_arch_name;
+            std::string           matched_arch_name;
 
             [[maybe_unused]] bool is_supported_target_extracted = GetSupportedTargets(supported_targets);
             assert(is_supported_target_extracted);
 
             // If the device is specified in the LLVM format, convert it to the DeviceInfo format.
-            auto llvm_device = std::find_if(kLcLlvmTargetsToDeviceInfoTargets.cbegin(), kLcLlvmTargetsToDeviceInfoTargets.cend(),
-                                           [&](const std::pair<std::string, std::string>& d){ return (d.first == device);});
+            auto llvm_device = std::find_if(kLcLlvmTargetsToDeviceInfoTargets.cbegin(),
+                                            kLcLlvmTargetsToDeviceInfoTargets.cend(),
+                                            [&](const std::pair<std::string, std::string>& d) { return (d.first == device); });
             if (llvm_device != kLcLlvmTargetsToDeviceInfoTargets.cend())
             {
                 device = llvm_device->second;
@@ -225,7 +227,7 @@ bool KcCLICommanderLightning::InitRequestedAsicListLC(const Config& config)
             {
                 // Try additional devices from "additional-targets" file.
                 std::vector<std::string> extra_devices = GetExtraTargetList();
-                std::transform(device.begin(), device.end(), device.begin(), [](const char& c) {return static_cast<char>(std::tolower(c)); });
+                std::transform(device.begin(), device.end(), device.begin(), [](const char& c) { return static_cast<char>(std::tolower(c)); });
                 if (std::find(extra_devices.cbegin(), extra_devices.cend(), device) != extra_devices.cend())
                 {
                     RgLog::stdErr << kStrWarningOpenclOfflineUsingExtraDevice1 << device << kStrWarningRocmclUsingExtraDevice2 << std::endl << std::endl;
@@ -254,13 +256,13 @@ bool KcCLICommanderLightning::Compile(const Config& config)
 
         // Prepare OpenCL options and defines.
         OpenCLOptions options;
-        options.selected_devices = targets_;
-        options.defines = config.defines;
-        options.include_paths = config.include_path;
+        options.selected_devices       = targets_;
+        options.defines                = config.defines;
+        options.include_paths          = config.include_path;
         options.opencl_compile_options = config.opencl_options;
-        options.optimization_level = config.opt_level;
-        options.line_numbers = config.is_line_numbers_required;
-        options.should_dump_il = !config.il_file.empty();
+        options.optimization_level     = config.opt_level;
+        options.line_numbers           = config.is_line_numbers_required;
+        options.should_dump_il         = !config.il_file.empty();
 
         // Run the back-end compilation procedure.
         switch (config.mode)
@@ -273,13 +275,6 @@ bool KcCLICommanderLightning::Compile(const Config& config)
             break;
         }
 
-        // Generate CSV files with parsed ISA if required.
-        if (config.is_parsed_isa_required && (result == beKA::kBeStatusSuccess || targets_.size() > 1))
-        {
-            KcUtilsLightning util(output_metadata_, should_print_cmd_, log_callback_);
-            result = util.ParseIsaFilesToCSV(config.is_line_numbers_required) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusParseIsaToCsvFailed;
-        }
-
         ret = (result == beKA::kBeStatusSuccess);
     }
 
@@ -288,26 +283,26 @@ bool KcCLICommanderLightning::Compile(const Config& config)
 
 void KcCLICommanderLightning::Version(Config& config, LoggingCallbackFunction callback)
 {
-    bool  ret;
+    bool              ret;
     std::stringstream log;
     KcCliCommander::Version(config, callback);
 
-    std::string output_text = "", version = "";
-    beKA::beStatus status = BeProgramBuilderLightning::GetCompilerVersion(beKA::RgaMode::kModeOpenclOffline, config.compiler_bin_path,
-                                                                           config.print_process_cmd_line, output_text);
+    std::string    output_text = "", version = "";
+    beKA::beStatus status =
+        BeProgramBuilderLightning::GetCompilerVersion(beKA::RgaMode::kModeOpenclOffline, config.compiler_bin_path, config.print_process_cmd_line, output_text);
     ret = (status == beKA::kBeStatusSuccess);
     if (ret)
     {
-        size_t  offset = output_text.find(kCompilerVersionToken);
+        size_t offset = output_text.find(kCompilerVersionToken);
         if (offset != std::string::npos)
         {
             offset += kCompilerVersionToken.size();
-            size_t  offset1 = output_text.find(" ", offset);
-            size_t  offset2 = output_text.find("\n", offset);
+            size_t offset1 = output_text.find(" ", offset);
+            size_t offset2 = output_text.find("\n", offset);
             if (offset1 != std::string::npos && offset2 != std::string::npos)
             {
                 size_t end_offset = std::min<size_t>(offset1, offset2);
-                version = output_text.substr(0, end_offset);
+                version           = output_text.substr(0, end_offset);
             }
         }
     }
@@ -337,8 +332,8 @@ bool KcCLICommanderLightning::GenerateOpenclOfflineVersionInfo(const std::string
 bool KcCLICommanderLightning::PrintAsicList(const Config&)
 {
     std::set<std::string> targets;
-    bool ret = GetSupportedTargets(targets);
-    ret = ret && KcUtils::PrintAsicList(targets);
+    bool                  ret = GetSupportedTargets(targets);
+    ret                       = ret && KcUtils::PrintAsicList(targets);
 
     if (ret)
     {
@@ -347,7 +342,7 @@ bool KcCLICommanderLightning::PrintAsicList(const Config&)
         if (!extra_targets.empty())
         {
             static const char* kStrOpenclOfflineExtraDeviceListTitle = "Additional GPU targets (Warning: correct compilation and analysis are not guaranteed):";
-            static const char* kStrOpenclOfflineDeviceListOffset = "    ";
+            static const char* kStrOpenclOfflineDeviceListOffset     = "    ";
             RgLog::stdOut << std::endl << kStrOpenclOfflineExtraDeviceListTitle << std::endl << std::endl;
             for (const std::string& device : extra_targets)
             {
@@ -377,9 +372,9 @@ beKA::beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, cons
     // Run LC compiler for all requested devices
     for (const std::string& device : ocl_options.selected_devices)
     {
-        std::string  error_text;
+        std::string error_text;
         LogPreStep(kStrInfoCompiling, device);
-        std::string  bin_filename;
+        std::string bin_filename;
 
         // Adjust the device name if necessary.
         std::string clang_device = device;
@@ -395,7 +390,7 @@ beKA::beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, cons
         KcUtils::DeleteFile(bin_filename);
 
         // Prepare a list of source files.
-        std::vector<std::string>  src_filenames;
+        std::vector<std::string> src_filenames;
         for (const std::string& input_file : config.input_files)
         {
             src_filenames.push_back(input_file);
@@ -408,13 +403,8 @@ beKA::beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, cons
         }
 
         // Compile source to binary.
-        current_status = BeProgramBuilderLightning::CompileOpenCLToBinary(compiler_paths_,
-                                                                         ocl_options,
-                                                                         src_filenames,
-                                                                         bin_filename,
-                                                                         clang_device,
-                                                                         should_print_cmd_,
-                                                                         error_text);
+        current_status = BeProgramBuilderLightning::CompileOpenCLToBinary(
+            compiler_paths_, ocl_options, src_filenames, bin_filename, clang_device, should_print_cmd_, error_text);
         LogResult(current_status == beKA::beStatus::kBeStatusSuccess);
 
         if (current_status == beKA::beStatus::kBeStatusSuccess)
@@ -431,15 +421,12 @@ beKA::beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, cons
             }
 
             // Disassemble binary to ISA text.
-            if (!config.isa_file.empty() ||
-                !config.analysis_file.empty() ||
-                !config.livereg_analysis_file.empty() || 
-                !config.sgpr_livereg_analysis_file.empty() || 
-                !config.block_cfg_file.empty() ||
-                !config.inst_cfg_file.empty())
+            if (!config.isa_file.empty() || !config.analysis_file.empty() || !config.livereg_analysis_file.empty() ||
+                !config.sgpr_livereg_analysis_file.empty() || !config.block_cfg_file.empty() || !config.inst_cfg_file.empty())
             {
                 LogPreStep(kStrInfoExtractingIsaForDevice, device);
-                current_status = DisassembleBinary(bin_filename, config.isa_file, clang_device, device, config.function, config.is_line_numbers_required, error_text);
+                current_status =
+                    DisassembleBinary(bin_filename, config.isa_file, clang_device, device, config.function, config.is_line_numbers_required, error_text);
                 LogResult(current_status == beKA::beStatus::kBeStatusSuccess);
 
                 assert(current_status == beKA::beStatus::kBeStatusSuccess);
@@ -451,7 +438,7 @@ beKA::beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, cons
                         const std::string& md_device = output_md_node.first.first;
                         if (md_device == device)
                         {
-                            output_md_node.second.bin_file = bin_filename;
+                            output_md_node.second.bin_file         = bin_filename;
                             output_md_node.second.is_bin_file_temp = config.binary_output_file.empty();
                         }
                     }
@@ -466,7 +453,7 @@ beKA::beStatus KcCLICommanderLightning::CompileOpenCL(const Config& config, cons
         {
             // Store error status to the metadata.
             RgOutputFiles output(RgaEntryType::kOpenclKernel, "", "");
-            output.status = false;
+            output.status                  = false;
             output_metadata_[{device, ""}] = output;
         }
 
@@ -482,39 +469,55 @@ beKA::beStatus KcCLICommanderLightning::DisassembleBinary(const std::string& bin
                                                           const std::string& clangDevice,
                                                           const std::string& rgaDevice,
                                                           const std::string& kernel,
-                                                          bool lineNumbers,
-                                                          std::string& error_text)
+                                                          bool               lineNumbers,
+                                                          std::string&       error_text)
 {
-    std::string  out_isa_text;
-    std::vector<std::string>  kernel_names;
-    beKA::beStatus status = BeProgramBuilderLightning::DisassembleBinary(compiler_paths_.bin, binFileName,
-        clangDevice, lineNumbers, should_print_cmd_, out_isa_text, error_text);
+    std::string                      out_isa_text;
+    BeAmdHsaMetaData::AmdHsaMetaData md;
+    beKA::beStatus                   status =
+        BeProgramBuilderLightning::DisassembleBinary(compiler_paths_.bin, binFileName, clangDevice, lineNumbers, should_print_cmd_, out_isa_text, error_text);
+    if (!error_text.empty())
+    {
+        status = beKA::kBeStatusLightningDisassembleFailed;
+        log_callback_(error_text);
+    }
 
     if (status == beKA::kBeStatusSuccess)
     {
-        status = BeProgramBuilderLightning::ExtractKernelNames(compiler_paths_.bin, binFileName,
-            should_print_cmd_, kernel_names);
+        std::string metadata_text;
+        status = BeProgramBuilderLightning::ExtractMetadata(compiler_paths_.bin, binFileName, should_print_cmd_, metadata_text, error_text);
+        if (!error_text.empty())
+        {
+            status = beKA::kBeStatusLightningExtractMetadataFailed;
+            log_callback_(error_text);
+            log_callback_("\n");
+        }
+
+        if (status == beKA::kBeStatusSuccess)
+        {
+            status = BeAmdHsaMetaData::ParseMetadata(metadata_text, md);
+        }
+    }
+
+    if (status == beKA::kBeStatusSuccess)
+    {
+        if (!kernel.empty() && std::find(md.kernel_names.cbegin(), md.kernel_names.cend(), kernel) == md.kernel_names.cend())
+        {
+            error_text = std::string(kStrErrorOpenclOfflineCannotFindKernel) + kernel;
+            status     = beKA::kBeStatusWrongKernelName;
+        }
+        else
+        {
+            status = SplitISA(binFileName, out_isa_text, userIsaFileName, rgaDevice, kernel, md.kernel_names) ? beKA::kBeStatusSuccess
+                                                                                                              : beKA::kBeStatusLightningSplitIsaFailed;
+        }
     }
     else
     {
         // Store error status to the metadata.
         RgOutputFiles output(RgaEntryType::kOpenclKernel, "", "");
-        output.status = false;
+        output.status                     = false;
         output_metadata_[{rgaDevice, ""}] = output;
-    }
-
-    if (status == beKA::kBeStatusSuccess)
-    {
-        if (!kernel.empty() && std::find(kernel_names.cbegin(), kernel_names.cend(), kernel) == kernel_names.cend())
-        {
-            error_text = std::string(kStrErrorOpenclOfflineCannotFindKernel) + kernel;
-            status = beKA::kBeStatusWrongKernelName;
-        }
-        else
-        {
-            status = SplitISA(binFileName, out_isa_text, userIsaFileName, rgaDevice, kernel, kernel_names) ?
-                         beKA::kBeStatusSuccess : beKA::kBeStatusLightningSplitIsaFailed;
-        }
     }
 
     return status;
@@ -522,61 +525,25 @@ beKA::beStatus KcCLICommanderLightning::DisassembleBinary(const std::string& bin
 
 void KcCLICommanderLightning::RunCompileCommands(const Config& config, LoggingCallbackFunction)
 {
-    bool is_multiple_devices = (config.asics.size() > 1);
-    bool status = Compile(config);
-    KcUtilsLightning util(output_metadata_, should_print_cmd_, log_callback_);
-    
-    // Extract Statistics if required.
+    if (!config.session_summary_file.empty())
+    {
+        KcCliIsaSpecLoader::LoadIsaSpecsFromXML(true, config.include_target_metadata, config.asics);
+    }
+
+    bool             is_multiple_devices = (config.asics.size() > 1);
+    bool             status              = Compile(config);
+    KcUtilsLightning util(config.binary_output_file, "", output_metadata_, should_print_cmd_, log_callback_);
     if (status || is_multiple_devices)
     {
-        util.ExtractStatistics(config);
-    }
-
-    // Block post-processing until quality of analysis engine improves when processing llvm disassembly.
-    bool is_livereg_required = !config.livereg_analysis_file.empty();
-    if (is_livereg_required)
-    {
-        // Perform Live Registers analysis if required.
-        if (status || is_multiple_devices)
-        {
-            util.PerformLiveVgprAnalysis(config);
-        }
-    }
-
-    bool is_sgpr_livereg_required = !config.sgpr_livereg_analysis_file.empty();
-    if (is_sgpr_livereg_required)
-    {
-        // Perform Live Registers analysis if required.
-        if (status || is_multiple_devices)
-        {
-            util.PerformLiveSgprAnalysis(config);
-        }
-    }
-
-    bool is_cfg_required = (!config.block_cfg_file.empty() || !config.inst_cfg_file.empty());
-    if (is_cfg_required)
-    {
-        // Extract Control Flow Graph.
-        if (status || is_multiple_devices)
-        {
-            util.ExtractCFG(config);
-        }
-    }
-
-    // Extract CodeObj metadata if required.
-    if ((status || is_multiple_devices) && !config.metadata_file.empty())
-    {
-        util.ExtractMetadata(compiler_paths_, config.metadata_file);
+        util.RunPostProcessingSteps(config, compiler_paths_);
     }
 }
 
-beKA::beStatus KcCLICommanderLightning::AdjustBinaryFileName(const Config&      config,
-                                                             const std::string& device,
-                                                             std::string&       bin_filename)
+beKA::beStatus KcCLICommanderLightning::AdjustBinaryFileName(const Config& config, const std::string& device, std::string& bin_filename)
 {
-    beKA::beStatus  status = beKA::kBeStatusSuccess;
+    beKA::beStatus status = beKA::kBeStatusSuccess;
 
-    gtString name = L"";
+    gtString    name          = L"";
     std::string user_bin_name = config.binary_output_file;
 
     // If binary output file name is not provided, create a binary file in the temp folder.
@@ -599,225 +566,31 @@ beKA::beStatus KcCLICommanderLightning::AdjustBinaryFileName(const Config&      
     return status;
 }
 
-static void  GatherBranchTargets(std::stringstream& isa, std::unordered_map<std::string, bool>& branch_targets)
-{
-    // The format of branch instruction text:
-    //
-    //     s_cbranch_scc1 BB0_3        // 000000001110: BF85001C
-    //           ^         ^                    ^          ^
-    //           |         |                    |          |
-    //      instruction  label               offset       code
-
-    std::string  isa_line;
-
-    // Skip lines before the actual ISA code.
-    while (std::getline(isa, isa_line) && isa_line.find(kLcKernelIsaHeader3) == std::string::npos) {}
-
-    // Gather target labels of all branch instructions.
-    while (std::getline(isa, isa_line))
-    {
-        size_t  inst_end_offset, branch_token_offset, instOffset = isa_line.find_first_not_of(" \t");
-        if (instOffset != std::string::npos)
-        {
-            if ((branch_token_offset = isa_line.find(kLcIsaBranchToken, instOffset)) != std::string::npos ||
-                (branch_token_offset = isa_line.find(kIsaCallToken, instOffset)) != std::string::npos)
-            {
-                if ((inst_end_offset = isa_line.find_first_of(" \t", instOffset)) != std::string::npos &&
-                    branch_token_offset < inst_end_offset)
-                {
-                    // Found branch instruction. Add its target label to the list.
-                    size_t  label_start_offset, label_end_offset;
-                    if ((label_start_offset = isa_line.find_first_not_of(" \t", inst_end_offset)) != std::string::npos &&
-                        isa_line.compare(label_start_offset, kIsaInstructionAddressStartToken.size(), kIsaInstructionAddressStartToken) != 0 &&
-                        ((label_end_offset = isa_line.find_first_of(" \t", label_start_offset)) != std::string::npos))
-                    {
-                        branch_targets[isa_line.substr(label_start_offset, label_end_offset - label_start_offset)] = true;
-                    }
-                }
-            }
-        }
-    }
-    isa.clear();
-    isa.seekg(0);
-}
-
-// Checks if "isa_line" is a label that is not in the list of branch targets.
-bool  IsUnreferencedLabel(const std::string& isa_line, const std::unordered_map<std::string, bool>& branch_targets)
-{
-    bool  ret = false;
-
-    // Looking for strings of the pattern 'anylabel:' that are not function labels.
-    size_t colon_indx = isa_line.find(':');
-    size_t line_size = isa_line.size();
-    if ((colon_indx == (line_size - 1)) && (line_size > 1))
-    {
-        std::string branch_name = isa_line.substr(0, isa_line.size() - 1);
-        ret = (branch_targets.find(branch_name) == branch_targets.end());
-    }
-
-    return ret;
-}
-
-// Remove non-standard instruction suffixes.
-static void  FilterISALine(std::string & isa_line)
-{
-    size_t  offset = isa_line.find_first_not_of(" \t");
-    if (offset != std::string::npos)
-    {
-        offset = isa_line.find_first_of(" ");
-    }
-    if (offset != std::string::npos)
-    {
-        size_t  suffix_length = 0;
-        if (offset >= kLcIsaInstructionSuffix1.size() &&
-            isa_line.substr(offset - kLcIsaInstructionSuffix1.size(), kLcIsaInstructionSuffix1.size()) == kLcIsaInstructionSuffix1)
-        {
-            suffix_length = kLcIsaInstructionSuffix1.size();
-        }
-        else if (offset >= kLcIsaInstructionSuffix2.size() &&
-            isa_line.substr(offset - kLcIsaInstructionSuffix2.size(), kLcIsaInstructionSuffix2.size()) == kLcIsaInstructionSuffix2)
-        {
-            suffix_length = kLcIsaInstructionSuffix2.size();
-        }
-        // Remove the suffix.
-        if (suffix_length != 0)
-        {
-            isa_line.erase(offset - suffix_length, suffix_length);
-            // Restore the alignment of byte encoding.
-            if ((offset = isa_line.find("//", offset)) != std::string::npos)
-            {
-                isa_line.insert(offset, suffix_length, ' ');
-            }
-        }
-    }
-}
-
-// The Lightning Compiler may append useless code for some library functions to the ISA disassembly.
-// This function eliminates such code.
-// It also also removes unreferenced labels and non-standard instruction suffixes.
-bool  KcCLICommanderLightning::ReduceISA(const std::string& binFile, IsaMap& kernel_isa_text)
-{
-    bool  ret = false;
-    for (auto& kernel_isa : kernel_isa_text)
-    {
-        int  code_size = BeProgramBuilderLightning::GetKernelCodeSize(compiler_paths_.bin, binFile, kernel_isa.first, should_print_cmd_);
-        assert(code_size != -1);
-        if (code_size != -1)
-        {
-            // Copy ISA lines to new stream. Stop when found an instruction with address > codeSize.
-            std::stringstream  old_isa, new_isa, address_stream;
-            old_isa.str(kernel_isa.second);
-            std::string  isa_line;
-            int  address, address_offset = -1;
-
-            // Gather the target labels of all branch instructions.
-            std::unordered_map<std::string, bool>  branch_targets;
-            branch_targets.clear();
-            GatherBranchTargets(old_isa, branch_targets);
-
-            // Skip lines before the actual ISA code.
-            while (std::getline(old_isa, isa_line) && new_isa << isa_line << std::endl &&
-                isa_line.find(kLcKernelIsaHeader3) == std::string::npos) {}
-
-            while (std::getline(old_isa, isa_line))
-            {
-                // Add the ISA line to the new ISA text if it's not an unreferenced label.
-                if (!IsUnreferencedLabel(isa_line, branch_targets))
-                {
-                    if (isa_line.find(" <") != 0)
-                    {
-                        size_t branch_label_start = isa_line.find(" <") + 2;
-                        size_t branch_label_end = isa_line.find(">:");
-                        size_t address_end = isa_line.find_first_of(" ");
-                        if (branch_label_end != std::string::npos)
-                        {
-                            // If this is a branch label, reformat and add the string so the RGA GUI recognizes the syntax.
-                            std::string new_branch_label = isa_line.substr(0, address_end + 1) + isa_line.substr(branch_label_start, branch_label_end - (branch_label_start)) + ":";
-                            new_isa << new_branch_label << std::endl;
-                        }
-                        else
-                        {
-                            // Add the line as is.
-                            new_isa << isa_line << std::endl;
-                        }
-                    }
-                }
-
-                // Check if this instruction is the last one and we have to stop here.
-                // Skip comment lines generated by disassembler.
-                if (isa_line.find(kIsaCommentStartToken, 0) != 0)
-                {
-
-                    // Format of ISA disassembly instruction (64-bit and 32-bit):
-                    //  s_load_dwordx2 s[0:1], s[6:7], 0x0     // 000000001108: C0060003 00000000
-                    //  v_add_u32 v0, s8, v0                   // 000000001134: 68000008
-                    //                                            `-- addr --'
-                    size_t  address_start, address_end;
-
-                    FilterISALine(isa_line);
-
-                    if ((address_start = isa_line.find(kIsaInstructionAddressStartToken)) != std::string::npos &&
-                        (address_end = isa_line.find(kIsaInstructionAddressEndToken, address_start)) != std::string::npos)
-                    {
-                        address_start += (kIsaInstructionAddressStartToken.size());
-                        address_stream.str(isa_line.substr(address_start, address_end - address_start));
-                        address_stream.clear();
-                        int inst_size = (isa_line.size() - address_end < kIsaInstruction64BitCodeTextSize) ? kIsaInstruction32BitBytes : kIsaInstruction64BitBytes;
-                        if (address_stream >> std::hex >> address)
-                        {
-                            // address_offset is the binary address of 1st instruction.
-                            address_offset = (address_offset == -1 ? address : address_offset);
-                            if ((address - address_offset + inst_size) >= code_size)
-                            {
-                                ret = true;
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (ret)
-            {
-                kernel_isa.second = new_isa.str();
-            }
-        }
-    }
-
-    return ret;
-}
-
-bool KcCLICommanderLightning::SplitISA(const std::string& bin_file, const std::string& isa_text,
-                                       const std::string& user_isa_file_name, const std::string& device,
-                                       const std::string& kernel, const std::vector<std::string>& kernel_names)
+bool KcCLICommanderLightning::SplitISA(const std::string&              bin_file,
+                                       const std::string&              isa_text,
+                                       const std::string&              user_isa_file_name,
+                                       const std::string&              device,
+                                       const std::string&              kernel,
+                                       const std::vector<std::string>& kernel_names)
 {
     // kernelIsaTextMap maps kernel name --> kernel ISA text.
     IsaMap kernel_isa_text_map;
-    bool ret, is_isa_file_temp = user_isa_file_name.empty();
+    bool   ret, is_isa_file_temp = user_isa_file_name.empty();
 
-    // Replace labels of format "address   <label_name>:" with
-    //  "label_name:"
-    std::string label_pattern_prefix("[0-9a-zA-Z]+ <");
-    std::regex label_prefix_regex(label_pattern_prefix);
-    std::regex label_suffix_regex(">:");
-    std::string isa_text_clean_prefix = std::regex_replace(isa_text, label_prefix_regex, "");
-    std::string new_isa_text = std::regex_replace(isa_text_clean_prefix, label_suffix_regex, ":");
+    // Replace labels of format "address   <label_name>:" with "label_name:"
+    std::string new_isa_text = KcUtilsLightning::FormatLlvmIsaLabels(isa_text);
 
     // Split ISA text into per-kernel fragments.
-    ret = SplitISAText(new_isa_text, kernel_names, kernel_isa_text_map);
+    ret = KcUtilsLightning::SplitISAText(new_isa_text, kernel_names, kernel_isa_text_map);
 
     // Eliminate the useless code.
-    ret = ret && ReduceISA(bin_file, kernel_isa_text_map);
+    ret = ret && KcUtilsLightning::ReduceISA(bin_file, compiler_paths_, should_print_cmd_, kernel_isa_text_map);
 
     // Store per-kernel ISA texts to separate files and launch livereg tool for each file.
     if (ret)
     {
         // isaTextMapItem is a pair{kernelName, kernelIsaText}.
-        for (const auto &isa_text_map_item : kernel_isa_text_map)
+        for (const auto& isa_text_map_item : kernel_isa_text_map)
         {
             // Skip the kernels that are not requested.
             if (!kernel.empty() && kernel != isa_text_map_item.first)
@@ -825,32 +598,31 @@ bool KcCLICommanderLightning::SplitISA(const std::string& bin_file, const std::s
                 continue;
             }
 
-            gtString  isa_filename;
+            gtString    isa_filename;
             std::string function_name = isa_text_map_item.first;
 
             if (is_isa_file_temp)
             {
-                gtString  base_isa_filename(kTempIsaFilename);
+                gtString base_isa_filename(kTempIsaFilename);
                 base_isa_filename << device.c_str() << "_" << function_name.c_str();
                 isa_filename = KcUtils::ConstructTempFileName(base_isa_filename, kTempIsaFileExtension);
             }
             else
             {
-                KcUtils::ConstructOutputFileName(user_isa_file_name, "", kStrDefaultExtensionIsa,
-                                                 function_name, device, isa_filename);
+                KcUtils::ConstructOutputFileName(user_isa_file_name, "", kStrDefaultExtensionIsa, function_name, device, isa_filename);
             }
             if (!isa_filename.isEmpty())
             {
                 if (KcUtils::WriteTextFile(isa_filename.asASCIICharArray(), isa_text_map_item.second, log_callback_))
                 {
-                    RgOutputFiles  outFiles = RgOutputFiles(RgaEntryType::kOpenclKernel, isa_filename.asASCIICharArray());
-                    outFiles.is_isa_file_temp = is_isa_file_temp;
+                    RgOutputFiles outFiles                              = RgOutputFiles(RgaEntryType::kOpenclKernel, isa_filename.asASCIICharArray());
+                    outFiles.is_isa_file_temp                           = is_isa_file_temp;
                     output_metadata_[{device, isa_text_map_item.first}] = outFiles;
                 }
             }
             else
             {
-                std::stringstream  error_msg;
+                std::stringstream error_msg;
                 error_msg << kStrErrorOpenclOfflineFailedToCreateTempFile << std::endl;
                 log_callback_(error_msg.str());
                 ret = false;
@@ -861,62 +633,6 @@ bool KcCLICommanderLightning::SplitISA(const std::string& bin_file, const std::s
     return ret;
 }
 
-bool KcCLICommanderLightning::SplitISAText(const std::string& isa_text,
-                                           const std::vector<std::string>& kernel_names,
-                                           IsaMap& kernel_isa_map) const
-{
-    bool  status = true;
-    const std::string  LABEL_NAME_END_TOKEN = ":\n";
-    const std::string  BLOCK_END_TOKEN = "\n\n";
-    size_t label_name_start = 0, label_name_end = 0, kernel_isa_end = 0;
-
-    label_name_start = isa_text.find_first_not_of('\n');
-
-    std::vector<std::pair<size_t, size_t>> kernel_start_offsets;
-    if (!isa_text.empty())
-    {
-        while ((label_name_end = isa_text.find(LABEL_NAME_END_TOKEN, label_name_start)) != std::string::npos)
-        {
-            // Check if this contains a kernel name.
-            std::string  label_name = isa_text.substr(label_name_start, label_name_end - label_name_start);
-            if (std::count(kernel_names.begin(), kernel_names.end(), label_name) != 0)
-            {
-                kernel_start_offsets.push_back({ label_name_start, label_name_end - label_name_start });
-            }
-            if ((label_name_start = isa_text.find(BLOCK_END_TOKEN, label_name_end)) == std::string::npos)
-            {
-                // End of file.
-                break;
-            }
-            else
-            {
-                label_name_start += BLOCK_END_TOKEN.size();
-            }
-        }
-    }
-
-    // Split the ISA text using collected offsets of kernel names.
-    for (size_t i = 0, size = kernel_start_offsets.size(); i < size; i++)
-    {
-        size_t  isa_text_start = kernel_start_offsets[i].first;
-        size_t  isa_text_end = (i < size - 1 ? kernel_start_offsets[i + 1].first - 1 : isa_text.size());
-        if (isa_text_start <= isa_text_end)
-        {
-            const std::string& kernel_isa  = isa_text.substr(isa_text_start, isa_text_end - isa_text_start);
-            const std::string& kernel_name = isa_text.substr(kernel_start_offsets[i].first, kernel_start_offsets[i].second);
-            kernel_isa_map[kernel_name]    = KcUtilsLightning::PrefixWithISAHeader(kernel_name, kernel_isa);
-            label_name_start = kernel_isa_end + BLOCK_END_TOKEN.size();
-        }
-        else
-        {
-            status = false;
-            break;
-        }
-    }
-
-    return status;
-}
-
 bool KcCLICommanderLightning::ListEntries(const Config& config, LoggingCallbackFunction callback)
 {
     return ListEntriesOpenclOffline(config, callback);
@@ -924,9 +640,9 @@ bool KcCLICommanderLightning::ListEntries(const Config& config, LoggingCallbackF
 
 bool KcCLICommanderLightning::ListEntriesOpenclOffline(const Config& config, LoggingCallbackFunction callback)
 {
-    bool ret = true;
-    std::string filename;
-    RgEntryData entry_data;
+    bool              ret = true;
+    std::string       filename;
+    RgEntryData       entry_data;
     std::stringstream msg;
 
     if (config.mode != beKA::RgaMode::kModeOpenclOffline)
@@ -955,8 +671,9 @@ bool KcCLICommanderLightning::ListEntriesOpenclOffline(const Config& config, Log
     if (ret && (ret = KcUtilsLightning::ExtractEntries(filename, config, compiler_paths_, entry_data)) == true)
     {
         // Sort the entry names in alphabetical order.
-        std::sort(entry_data.begin(), entry_data.end(),
-            [](const std::tuple<std::string, int, int>& a, const std::tuple<std::string, int, int>& b) {return (std::get<0>(a) < std::get<0>(b)); });
+        std::sort(entry_data.begin(), entry_data.end(), [](const std::tuple<std::string, int, int>& a, const std::tuple<std::string, int, int>& b) {
+            return (std::get<0>(a) < std::get<0>(b));
+        });
 
         // Dump the entry points.
         for (const auto& data_item : entry_data)
@@ -999,17 +716,22 @@ bool KcCLICommanderLightning::RunPostCompileSteps(const Config& config)
         }
     }
 
+    if (!config.session_summary_file.empty())
+    {
+        ret = GenerateSessionSummary(config);
+    }
+
     KcUtilsLightning::DeleteTempFiles(output_metadata_);
 
     return ret;
 }
 
 beKA::beStatus KcCLICommanderLightning::DumpIL(const Config&                   config,
-                                         const OpenCLOptions&            user_options,
-                                         const std::vector<std::string>& src_file_names,
-                                         const std::string&              device,
-                                         const std::string&              clang_device,
-                                         std::string&                    error_text)
+                                               const OpenCLOptions&            user_options,
+                                               const std::vector<std::string>& src_file_names,
+                                               const std::string&              device,
+                                               const std::string&              clang_device,
+                                               std::string&                    error_text)
 {
     beKA::beStatus status = beKA::beStatus::kBeStatusSuccess;
 
@@ -1075,5 +797,52 @@ bool KcCLICommanderLightning::GenerateSessionMetadata(const Config& config, cons
         ret = KcXmlWriter::GenerateClSessionMetadataFile(config.session_metadata_file, file_kernel_data, output_metadata_);
     }
 
+    return ret;
+}
+
+bool KcCLICommanderLightning::GenerateSessionSummary(const Config& config)
+{
+    bool ret = !config.session_summary_file.empty() && !output_metadata_.empty();
+    if (ret)
+    {
+        RgaAnalysisSummary                                        summary;
+        std::map<std::string, RgaAnalysisSummary::AnalysisResult> results_by_device;
+
+        for (const auto& [key, out_files] : output_metadata_)
+        {
+            const std::string& device      = key.first;
+            const std::string& kernel_name = key.second;
+            auto&              result      = results_by_device[device];
+
+            if (result.target_architecture_.empty())
+            {
+                result.target_architecture_ = device;
+                if (config.include_target_metadata)
+                {
+                    beKA::BeIsaSpecExplorer::PopulateFromSpec(device, result.target_architecture_metadata_);
+                }
+                result.inputs_.inputs_ = config.input_files;
+                result.output_.api_    = kStrRgaModeOpenclOffline;
+            }
+
+            RgaAnalysisSummary::Kernel kernel;
+            if (KcUtils::GenerateKernelSummary(device, kernel_name, out_files, kernel, log_callback_, should_print_cmd_))
+            {
+                kernel.kernel_id_ = static_cast<int>(result.output_.kernels_.size());
+                result.output_.kernels_.push_back(std::move(kernel));
+            }
+        }
+
+        for (auto& [device, result] : results_by_device)
+        {
+            summary.results_.push_back(std::move(result));
+        }
+
+        ret = KcXmlWriter::WriteAnalysisSummaryToFile(summary, config.session_summary_file);
+        if (!ret)
+        {
+            RgLog::stdOut << kStrErrorFailedToGenerateSessionSummary << std::endl;
+        }
+    }
     return ret;
 }

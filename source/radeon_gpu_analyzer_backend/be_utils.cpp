@@ -33,6 +33,8 @@ static const char* kShaderStageDs = "ds";
 static const char* kShaderStageGs = "gs";
 static const char* kShaderStagePs = "ps";
 static const char* kShaderStageCs = "cs";
+static const char* kShaderStageMs = "ms";
+static const char* kShaderStageAs = "as";
 
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - BEGIN ***
 
@@ -110,6 +112,7 @@ bool BeUtils::GetAllGraphicsCards(std::vector<GDT_GfxCardInfo>& card_list,
     AddGenerationDevices(GDT_HW_GENERATION_CDNA3, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_GFX12, card_list, public_device_unique_names, convert_to_lower);
     AddGenerationDevices(GDT_HW_GENERATION_CDNA4, card_list, public_device_unique_names, convert_to_lower);
+    AddGenerationDevices(GDT_HW_GENERATION_CDNA5, card_list, public_device_unique_names, convert_to_lower);
 
     return (!card_list.empty() && !public_device_unique_names.empty());
 }
@@ -251,17 +254,6 @@ void BeUtils::PrintCmdLine(const std::string & cmd_line, bool should_print_cmd)
     }
 }
 
-void BeUtils::SplitString(const std::string& str, char delim, std::vector<std::string>& dst)
-{
-    std::stringstream ss;
-    ss.str(str);
-    std::string substr;
-    while (std::getline(ss, substr, delim))
-    {
-        dst.push_back(substr);
-    }
-}
-
 static void LeftTrim(const std::string& text, std::string& trimmed_text)
 {
     trimmed_text    = text;
@@ -276,12 +268,51 @@ static void RightTrim(const std::string& text, std::string& trimmed_text)
     trimmed_text.erase(space_iter.base(), trimmed_text.end());
 }
 
-void BeUtils::TrimLeadingAndTrailingWhitespace(const std::string& text, std::string& trimmed_text)
+std::string BeUtils::TrimLeadingAndTrailingWhitespace(const std::string& text)
 {
-    // Trim the whitespace off the left and right sides of the incoming text.
     std::string left_trimmed;
     LeftTrim(text, left_trimmed);
-    RightTrim(left_trimmed, trimmed_text);
+    std::string result;
+    RightTrim(left_trimmed, result);
+    return result;
+}
+
+void BeUtils::SplitString(const std::string& str, const std::string& delim, std::vector<std::string>& dst, bool should_trim)
+{
+    dst.clear();
+    std::string remaining = str;
+    size_t      pos       = 0;
+    while ((pos = remaining.find(delim)) != std::string::npos)
+    {
+        std::string token = remaining.substr(0, pos);
+        if (should_trim)
+        {
+            token = TrimLeadingAndTrailingWhitespace(token);
+        }
+        dst.push_back(token);
+        remaining.erase(0, pos + delim.length());
+    }
+
+    if (should_trim)
+    {
+        remaining = TrimLeadingAndTrailingWhitespace(remaining);
+    }
+    if (!remaining.empty())
+    {
+        dst.push_back(remaining);
+    }
+}
+
+std::string BeUtils::SubstringBeforeFirst(const std::string& str, const std::string& delimiters)
+{
+    size_t pos = str.find_first_of(delimiters);
+    return (pos == std::string::npos) ? str : str.substr(0, pos);
+}
+
+std::string BeUtils::SubstringAfterFirst(const std::string& str, char delimiter)
+{
+    size_t pos = str.find(delimiter);
+    return (pos == std::string::npos) ? str : str.substr(pos + 1);
 }
 
 bool BeUtils::DeviceNameLessThan(const std::string& a, const std::string& b)
@@ -305,8 +336,8 @@ bool BeUtils::DeviceNameLessThan(const std::string& a, const std::string& b)
         // Both names are in gfx notation, compare according to the number.
         std::vector<std::string> split1;
         std::vector<std::string> split2;
-        BeUtils::SplitString(a, 'x', split1);
-        BeUtils::SplitString(b, 'x', split2);
+        BeUtils::SplitString(a, std::string("x"), split1);
+        BeUtils::SplitString(b, std::string("x"), split2);
         assert(split1.size() > 1);
         assert(split2.size() > 1);
         if (split1.size() > 1 && split2.size() > 1)
@@ -506,6 +537,12 @@ bool BeUtils::BePipelineStageToAmdgpudisStageName(BePipelineStage pipeline_stage
     case kCompute:
         amdgpu_dis_stage = kShaderStageCs;
         break;
+    case kMesh:
+        amdgpu_dis_stage = kShaderStageMs;
+        break;
+    case kTask:
+        amdgpu_dis_stage = kShaderStageAs;
+        break;
     case kCount:
     default:
         // We shouldn't get here.
@@ -535,4 +572,12 @@ bool BeUtils::BeAmdgpudisStageNameToBeRayTracingStage(const std::string& amdgpu_
 bool BeUtils::IsNumericValue(const std::string& str)
 {
     return !str.empty() && std::find_if(str.begin(), str.end(), [](char c) { return !std::isdigit(c); }) == str.end();
+}
+
+std::string BeUtils::NormalizePathSeparatorsToCurrentOS(const std::string& path)
+{
+    gtString gt_path;
+    gt_path.fromASCIIString(path.c_str());
+    osFilePath::adjustStringToCurrentOS(gt_path);
+    return gt_path.asASCIICharArray();
 }

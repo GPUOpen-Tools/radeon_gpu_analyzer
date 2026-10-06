@@ -31,7 +31,8 @@ static const char* kStrCliOptClOptimizationLevel3 = "--O3";
 // *** Vulkan-specific - BEGIN ***
 
 static const char* kStrCliOptVulkanOption = "--Vulkanoption";
-static const char* kStrCliOptVulkanGenerateDebugInformation = "-g";
+static const char* kStrCliOptVulkanCompileOffline = "--force-fallback";
+static const char* kStrCliOptVulkanGenerateDebugInformation = "-gVS";
 static const char* kStrCliOptVulkanNoExplicitBindings = "--auto-map-bindings";
 static const char* kStrCliOptVulkanHlslBlockOffsets = "--hlsl-offsets";
 static const char* kStrCliOptVulkanHlslIomap = "--hlsl-iomap";
@@ -71,6 +72,9 @@ static const char* kStrCliOptPso = "--pso";
 static const char* kStrCliOptAdditionalIncludePath = "-I";
 static const char* kStrCliOptPreprocessorDirective = "-D";
 static const char* kStrCliOptListKernels = "--list-kernels";
+static const char* kStrCliOptListSourcePaths = "--list-source-paths";
+static const char* kStrCliOptSubstitutePath          = "--substitute-path";
+static const char  kStrCliOptSubstitutePathDelimiter = '|';
 static const char* kStrCliOptVersionInfo = "--version-info";
 static const char* kStrCliOptCompilerBinDir = "--compiler-bin";
 static const char* kStrCliOptCompilerIncDir = "--compiler-inc";
@@ -93,10 +97,7 @@ static const char* kStrCliDescAlternativeLightningCompilerLibFolder =
     "ockl.bc, "
     "oclc_abi_version_400.bc, "
     "oclc_abi_version_500.bc, "
-    "oclc_correctly_rounded_sqrt_off.bc, "
-    "oclc_correctly_rounded_sqrt_on.bc, "
-    "oclc_daz_opt_off.bc, "
-    "oclc_daz_opt_on.bc, "
+    "oclc_abi_version_600.bc, "
     "oclc_finite_only_off.bc, "
     "oclc_finite_only_on.bc, "
     "oclc_isa_version_1010.bc, "
@@ -106,7 +107,11 @@ static const char* kStrCliDescAlternativeLightningCompilerLibFolder =
     "oclc_isa_version_1103.bc, "
 	"oclc_isa_version_1150.bc, "
 	"oclc_isa_version_1151.bc, "
+    "oclc_isa_version_1152.bc, "
+    "oclc_isa_version_1153.bc, "
+    "oclc_isa_version_1200.bc, "
     "oclc_isa_version_1201.bc, "
+    "oclc_isa_version_1250.bc, "
     "oclc_isa_version_1011.bc, "
     "oclc_isa_version_1012.bc, "
     "oclc_isa_version_1030.bc, "
@@ -121,9 +126,11 @@ static const char* kStrCliDescAlternativeLightningCompilerLibFolder =
     "oclc_isa_version_90a.bc, "
     "oclc_isa_version_90c.bc, "
     "oclc_isa_version_942.bc, "
+    "oclc_isa_version_950.bc, "
     "oclc_unsafe_math_off.bc, "
     "oclc_unsafe_math_on.bc, "
     "oclc_isa_version_1034.bc, "
+    "oclc_isa_version_1035.bc, "
     "oclc_wavefrontsize64_off.bc, "
     "oclc_wavefrontsize64_on.bc, "
     "ocml.bc, opencl.bc";

@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for dx12 and dxr data types.
@@ -27,23 +27,11 @@ namespace rga
         // Full path to compiled DXBC of the shader as an input.
         std::string dxbc;
 
-        // Full path to ISA disassembly output file.
-        std::string isa;
-
-        // Full path to AMDIL disassembly output file.
-        std::string amdil;
-
-        // Full path to resource usage output file.
-        std::string stats;
-
         // Shader model for the shader (also known as Target).
         std::string shader_model;
 
         // The target entry point.
         std::string entry_point;
-
-        // The compiled shader DXBC binary output file.
-        std::string dxbcOut;
 
         // The compiled shader DXBC disassembly output file.
         std::string dxbc_disassembly;
@@ -62,6 +50,8 @@ namespace rga
         RgDx12ShaderConfig domain;
         RgDx12ShaderConfig geom;
         RgDx12ShaderConfig pixel;
+        RgDx12ShaderConfig mesh;
+        RgDx12ShaderConfig amplification;
 
         // Additional include directories.
         std::vector<std::string> include_dirs;
@@ -86,6 +76,9 @@ namespace rga
 
         // Compilation mode (DXR or DX12 (default)).
         bool is_config_dxr = false;
+
+        // Tell the backend if mesh shaders are being used.
+        bool is_mesh_shader = false;
 
         // DXR binary output file.
         std::string dxr_binary_output;
@@ -127,6 +120,8 @@ namespace rga
         bool domain = false;
         bool geom = false;
         bool pixel = false;
+        bool mesh = false;
+        bool amplification = false;
     };
 
     // Per-stage bytecode.
@@ -137,6 +132,8 @@ namespace rga
         D3D12_SHADER_BYTECODE domain;
         D3D12_SHADER_BYTECODE geom;
         D3D12_SHADER_BYTECODE pixel;
+        D3D12_SHADER_BYTECODE mesh;
+        D3D12_SHADER_BYTECODE amplification;
     };
 
     // *** DXR-SPECIFIC TYPES - BEGIN ***

@@ -320,10 +320,8 @@ static const RgEnumValuesVector& GetPipelineCreateFlagEnumerators()
 
 static const RgEnumValuesVector& GetDescriptorSetLayoutCreateFlagEnumerators()
 {
-    static RgEnumValuesVector descriptor_set_layout_create_flag_enumerators = {
-        ENUM_VALUE(VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR),
-        ENUM_VALUE(VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT)
-    };
+    static RgEnumValuesVector descriptor_set_layout_create_flag_enumerators = {ENUM_VALUE(VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR),
+                                                                               ENUM_VALUE(VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT)};
 
     return descriptor_set_layout_create_flag_enumerators;
 }
@@ -339,19 +337,17 @@ static const RgEnumValuesVector& GetAttachmentDescriptionFlagEnumerators()
 
 static const RgEnumValuesVector& GetPrimitiveTopologyEnumerators()
 {
-    static RgEnumValuesVector primitive_topology_enumerators = {
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_POINT_LIST),
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_LINE_LIST),
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP),
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST),
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP),
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN),
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY),
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY),
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY),
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY),
-        ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST)
-    };
+    static RgEnumValuesVector primitive_topology_enumerators = {ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_POINT_LIST),
+                                                                ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_LINE_LIST),
+                                                                ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP),
+                                                                ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST),
+                                                                ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP),
+                                                                ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN),
+                                                                ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY),
+                                                                ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY),
+                                                                ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY),
+                                                                ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY),
+                                                                ENUM_VALUE(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST)};
 
     return primitive_topology_enumerators;
 }
@@ -359,10 +355,7 @@ static const RgEnumValuesVector& GetPrimitiveTopologyEnumerators()
 static const RgEnumValuesVector& GetAttachmentLoadOpEnumerators()
 {
     static RgEnumValuesVector load_op_enumerators = {
-        ENUM_VALUE(VK_ATTACHMENT_LOAD_OP_LOAD),
-        ENUM_VALUE(VK_ATTACHMENT_LOAD_OP_CLEAR),
-        ENUM_VALUE(VK_ATTACHMENT_LOAD_OP_DONT_CARE)
-    };
+        ENUM_VALUE(VK_ATTACHMENT_LOAD_OP_LOAD), ENUM_VALUE(VK_ATTACHMENT_LOAD_OP_CLEAR), ENUM_VALUE(VK_ATTACHMENT_LOAD_OP_DONT_CARE)};
 
     return load_op_enumerators;
 }
@@ -789,6 +782,18 @@ RgPipelineStateModelVulkan::~RgPipelineStateModelVulkan()
         }
     }
     back_stencil_op_state_node_.clear();
+
+    if (graphics_pipeline_state_ != nullptr)
+    {
+        delete graphics_pipeline_state_;
+        graphics_pipeline_state_ = nullptr;
+    }
+
+    if (compute_pipeline_state_ != nullptr)
+    {
+        delete compute_pipeline_state_;
+        compute_pipeline_state_ = nullptr;
+    }
 }
 
 uint32_t GetSampleMaskDimension(VkSampleCountFlagBits sample_count_bits)
@@ -875,8 +880,7 @@ bool RgPipelineStateModelVulkan::CheckValidPipelineState(std::string& error_stri
             ret = resolve_attachments_compatible;
         }
 
-        VkPipelineMultisampleStateCreateInfo* multisampling_state_create_info =
-            graphics_pipeline_state_->GetPipelineMultisampleStateCreateInfo();
+        VkPipelineMultisampleStateCreateInfo* multisampling_state_create_info = graphics_pipeline_state_->GetPipelineMultisampleStateCreateInfo();
         assert(multisampling_state_create_info != nullptr);
         if (multisampling_state_create_info != nullptr)
         {
@@ -940,20 +944,24 @@ void RgPipelineStateModelVulkan::InitializeDefaultGraphicsPipeline()
     if (graphics_pso_state != nullptr)
     {
         // Configure the pipeline's default blend state to be compatible with the default shader code.
-        VkPipelineColorBlendAttachmentState* color_blend_attachment = new VkPipelineColorBlendAttachmentState{};
-        color_blend_attachment->colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        color_blend_attachment->blendEnable = VK_FALSE;
-        color_blend_attachment->srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-        color_blend_attachment->dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-        color_blend_attachment->colorBlendOp = VK_BLEND_OP_ADD;
-        color_blend_attachment->srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        color_blend_attachment->dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-        color_blend_attachment->alphaBlendOp = VK_BLEND_OP_ADD;
+        // Allocate as array since the destructor uses delete[] on pAttachments.
+        VkPipelineColorBlendAttachmentState* color_blend_attachment = new (std::nothrow) VkPipelineColorBlendAttachmentState[1]{};
+        if (color_blend_attachment != nullptr)
+        {
+            color_blend_attachment->colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+            color_blend_attachment->blendEnable         = VK_FALSE;
+            color_blend_attachment->srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            color_blend_attachment->dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+            color_blend_attachment->colorBlendOp        = VK_BLEND_OP_ADD;
+            color_blend_attachment->srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            color_blend_attachment->dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+            color_blend_attachment->alphaBlendOp        = VK_BLEND_OP_ADD;
 
-        // Add a default color blend create info state.
-        VkPipelineColorBlendStateCreateInfo* color_blend_state_info = graphics_pso_state->GetPipelineColorBlendStateCreateInfo();
-        color_blend_state_info->pAttachments = color_blend_attachment;
-        color_blend_state_info->attachmentCount = 1;
+            // Add a default color blend create info state.
+            VkPipelineColorBlendStateCreateInfo* color_blend_state_info = graphics_pso_state->GetPipelineColorBlendStateCreateInfo();
+            color_blend_state_info->pAttachments                        = color_blend_attachment;
+            color_blend_state_info->attachmentCount                     = 1;
+        }
 
         // Assign the default state in the model.
         graphics_pipeline_state_ = graphics_pso_state;
@@ -989,22 +997,23 @@ void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfoArray(Rg
     std::vector<VkDescriptorSetLayoutCreateInfo*>& descriptor_set_layouts = create_info->GetDescriptorSetLayoutCreateInfo();
 
     // Create the Descriptor Set Layout array root item.
-    RgEditorElementArrayElementAdd* descriptor_set_layouts_item = new RgEditorElementArrayElementAdd(descriptor_set_layouts_root, descriptor_set_layouts_array_stream.str().c_str(),
-        [=](int element_index)
-    {
-        std::vector<VkDescriptorSetLayoutCreateInfo*>& current_descriptor_set_layouts = create_info->GetDescriptorSetLayoutCreateInfo();
-        int element_count = static_cast<int>(current_descriptor_set_layouts.size());
+    RgEditorElementArrayElementAdd* descriptor_set_layouts_item =
+        new RgEditorElementArrayElementAdd(descriptor_set_layouts_root, descriptor_set_layouts_array_stream.str().c_str(), [=](int element_index) {
+            std::vector<VkDescriptorSetLayoutCreateInfo*>& current_descriptor_set_layouts = create_info->GetDescriptorSetLayoutCreateInfo();
+            int                                            element_count                  = static_cast<int>(current_descriptor_set_layouts.size());
 
-        // If we remove the given element, is it necessary to shift other subsequent elements?
-        if (element_count > 1 && element_index < element_count - 1)
-        {
-            // Shift all elements after the removed element.
-            for (int copy_index = element_index; copy_index < (element_count - 1); ++copy_index)
+            // If we remove the given element, is it necessary to shift other subsequent elements?
+            if (element_count > 1 && element_index < element_count - 1)
             {
-                memcpy(*(current_descriptor_set_layouts.data() + copy_index), *(current_descriptor_set_layouts.data() + (copy_index + 1)), sizeof(VkDescriptorSetLayoutCreateInfo));
+                // Shift all elements after the removed element.
+                for (int copy_index = element_index; copy_index < (element_count - 1); ++copy_index)
+                {
+                    memcpy(*(current_descriptor_set_layouts.data() + copy_index),
+                           *(current_descriptor_set_layouts.data() + (copy_index + 1)),
+                           sizeof(VkDescriptorSetLayoutCreateInfo));
+                }
             }
-        }
-    });
+        });
 
     // Set the object name.
     descriptor_set_layouts_item->setObjectName(kStrDescriptorSetLayoutsItem);
@@ -1013,8 +1022,9 @@ void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfoArray(Rg
     descriptor_set_layout_count_ = static_cast<uint32_t>(descriptor_set_layouts.size());
 
     // Create the Descriptor Set Layout count item.
-    RgEditorElement* descriptor_set_layout_count_item = MakeNumericElement(nullptr, kStrVulkanDescriptorSetLayoutCount,
-        &descriptor_set_layout_count_, [=] { HandleDescriptorSetLayoutCountChanged(descriptor_set_layouts_item, create_info); });
+    RgEditorElement* descriptor_set_layout_count_item = MakeNumericElement(nullptr, kStrVulkanDescriptorSetLayoutCount, &descriptor_set_layout_count_, [=] {
+        HandleDescriptorSetLayoutCountChanged(descriptor_set_layouts_item, create_info);
+    });
 
     // Set the object name.
     descriptor_set_layout_count_item->setObjectName(kStrDescriptorSetLayoutCountItem);
@@ -1074,7 +1084,7 @@ RgEditorElement* RgPipelineStateModelVulkan::InitializeGraphicsPipelineCreateInf
 void RgPipelineStateModelVulkan::HandleDescriptorSetLayoutCountChanged(RgEditorElement* root_element, RgPsoCreateInfoVulkan* create_info, bool first_init)
 {
     int num_existing_elements = root_element->ChildCount();
-    int new_element_count = static_cast<int32_t>(descriptor_set_layout_count_);
+    int new_element_count     = static_cast<int32_t>(descriptor_set_layout_count_);
 
     if (new_element_count != num_existing_elements)
     {
@@ -1194,12 +1204,14 @@ void RgPipelineStateModelVulkan::InitializeVkGraphicsPipelineCreateInfo(RgEditor
 
         // Add the "flags" member.
         const RgEnumValuesVector& pipeline_flags_enumerators = GetPipelineCreateFlagEnumerators();
-        RgEditorElement* flags_item = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberFlags, pipeline_flags_enumerators, reinterpret_cast<uint32_t*>(&vk_graphics_pipeline_create_info->flags), true);
+        RgEditorElement*          flags_item                 = new RgEditorElementEnum(
+            parent_, kStrVulkanPipelineMemberFlags, pipeline_flags_enumerators, reinterpret_cast<uint32_t*>(&vk_graphics_pipeline_create_info->flags), true);
         graphics_pipeline_create_info_root->AppendChildItem(flags_item);
 
         // Connect to the splitter moved signal to close the drop down.
         RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(flags_item), &RgEditorElementEnum::HotKeyPressedSignal);
+        bool               is_connected      = connect(
+            build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(flags_item), &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Set object name.
@@ -1210,7 +1222,8 @@ void RgPipelineStateModelVulkan::InitializeVkGraphicsPipelineCreateInfo(RgEditor
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(flags_item), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(
+            this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(flags_item), &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "pVertexInputState" node.
@@ -1246,7 +1259,8 @@ void RgPipelineStateModelVulkan::InitializeVkGraphicsPipelineCreateInfo(RgEditor
         }
 
         // Add the "pRasterizationState" node.
-        VkPipelineRasterizationStateCreateInfo* pipeline_rasterization_state_create_info = graphics_pipeline_create_info->GetPipelineRasterizationStateCreateInfo();
+        VkPipelineRasterizationStateCreateInfo* pipeline_rasterization_state_create_info =
+            graphics_pipeline_create_info->GetPipelineRasterizationStateCreateInfo();
         assert(pipeline_rasterization_state_create_info != nullptr);
         if (pipeline_rasterization_state_create_info != nullptr)
         {
@@ -1262,7 +1276,8 @@ void RgPipelineStateModelVulkan::InitializeVkGraphicsPipelineCreateInfo(RgEditor
         }
 
         // Add the "pDepthStencilState" node.
-        VkPipelineDepthStencilStateCreateInfo* pipeline_depth_stencil_state_create_info = graphics_pipeline_create_info->GetPipelineDepthStencilStateCreateInfo();
+        VkPipelineDepthStencilStateCreateInfo* pipeline_depth_stencil_state_create_info =
+            graphics_pipeline_create_info->GetPipelineDepthStencilStateCreateInfo();
         assert(pipeline_depth_stencil_state_create_info != nullptr);
         if (pipeline_depth_stencil_state_create_info != nullptr)
         {
@@ -1278,16 +1293,19 @@ void RgPipelineStateModelVulkan::InitializeVkGraphicsPipelineCreateInfo(RgEditor
         }
 
         // Add the "subpass" member.
-        RgEditorElement* subpass_create_info = MakeNumericElement(graphics_pipeline_create_info_root, kStrVulkanPipelineMemberSubpass, &vk_graphics_pipeline_create_info->subpass);
+        RgEditorElement* subpass_create_info =
+            MakeNumericElement(graphics_pipeline_create_info_root, kStrVulkanPipelineMemberSubpass, &vk_graphics_pipeline_create_info->subpass);
         graphics_pipeline_create_info_root->AppendChildItem(subpass_create_info);
 
         // Add the "basePipelineIndex" member.
-        RgEditorElement* base_pipeline_index_create_info = MakeNumericElement(graphics_pipeline_create_info_root, kStrVulkanPipelineMemberBaseIndex, &vk_graphics_pipeline_create_info->basePipelineIndex);
+        RgEditorElement* base_pipeline_index_create_info =
+            MakeNumericElement(graphics_pipeline_create_info_root, kStrVulkanPipelineMemberBaseIndex, &vk_graphics_pipeline_create_info->basePipelineIndex);
         graphics_pipeline_create_info_root->AppendChildItem(base_pipeline_index_create_info);
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeVertexInputStateCreateInfo(RgEditorElement* root_element, VkPipelineVertexInputStateCreateInfo* vertex_input_state_create_info)
+void RgPipelineStateModelVulkan::InitializeVertexInputStateCreateInfo(RgEditorElement*                      root_element,
+                                                                      VkPipelineVertexInputStateCreateInfo* vertex_input_state_create_info)
 {
     assert(vertex_input_state_create_info != nullptr);
     if (vertex_input_state_create_info != nullptr)
@@ -1306,15 +1324,20 @@ void RgPipelineStateModelVulkan::InitializeVertexInputStateCreateInfo(RgEditorEl
         flags_item->setObjectName(kStrFlagsItem);
 
         // Create the vertex binding descriptions array root item.
-        RgEditorElementArrayElementAdd* vertex_binding_descriptions_item = new RgEditorElementArrayElementAdd(vertex_info_state_root, kStrVulkanPipelineMemberPvertexBindingDescriptions,
-            [=](int element_index) { RemoveElement(vertex_input_state_create_info->pVertexBindingDescriptions, vertex_input_state_create_info->vertexBindingDescriptionCount, element_index); });
+        RgEditorElementArrayElementAdd* vertex_binding_descriptions_item =
+            new RgEditorElementArrayElementAdd(vertex_info_state_root, kStrVulkanPipelineMemberPvertexBindingDescriptions, [=](int element_index) {
+                RemoveElement(
+                    vertex_input_state_create_info->pVertexBindingDescriptions, vertex_input_state_create_info->vertexBindingDescriptionCount, element_index);
+            });
 
         // Set object name.
         vertex_binding_descriptions_item->setObjectName(kStrVertexBindingDescriptionsItem);
 
         // Add the "vertexBindingDescriptionCount" member.
-        RgEditorElement* vertex_binding_description_count_item = MakeNumericElement(nullptr, kStrVulkanPipelineMemberVertexBindingDescriptionCount,
-            &vertex_input_state_create_info->vertexBindingDescriptionCount, [=] { HandleVertexBindingDescriptionCountChanged(vertex_binding_descriptions_item, vertex_input_state_create_info); });
+        RgEditorElement* vertex_binding_description_count_item = MakeNumericElement(
+            nullptr, kStrVulkanPipelineMemberVertexBindingDescriptionCount, &vertex_input_state_create_info->vertexBindingDescriptionCount, [=] {
+                HandleVertexBindingDescriptionCountChanged(vertex_binding_descriptions_item, vertex_input_state_create_info);
+            });
 
         // Set object name.
         vertex_binding_description_count_item->setObjectName(kStrVertexBindingDescriptionCountItem);
@@ -1329,15 +1352,21 @@ void RgPipelineStateModelVulkan::InitializeVertexInputStateCreateInfo(RgEditorEl
         vertex_info_state_root->AppendChildItem(vertex_binding_descriptions_item);
 
         // Create the vertex attribute descriptions array root item.
-        RgEditorElementArrayElementAdd* vertex_attribute_descriptions_item = new RgEditorElementArrayElementAdd(vertex_info_state_root, kStrVulkanPipelineMemberPvertexAttributeDescriptions,
-            [=](int element_index) { RemoveElement(vertex_input_state_create_info->pVertexAttributeDescriptions, vertex_input_state_create_info->vertexAttributeDescriptionCount, element_index); });
+        RgEditorElementArrayElementAdd* vertex_attribute_descriptions_item =
+            new RgEditorElementArrayElementAdd(vertex_info_state_root, kStrVulkanPipelineMemberPvertexAttributeDescriptions, [=](int element_index) {
+                RemoveElement(vertex_input_state_create_info->pVertexAttributeDescriptions,
+                              vertex_input_state_create_info->vertexAttributeDescriptionCount,
+                              element_index);
+            });
 
         // Set object name.
         vertex_attribute_descriptions_item->setObjectName(kStrVertexAttributeDescriptionsItem);
 
         // Add the "vertexAttributeDescriptionCount" member.
-        RgEditorElement* vertex_attribute_description_count_item = MakeNumericElement(nullptr, kStrVulkanPipelineMemberVertexAttributeDescriptionCount,
-            &vertex_input_state_create_info->vertexAttributeDescriptionCount, [=] { HandleVertexAttributeDescriptionCountChanged(vertex_attribute_descriptions_item, vertex_input_state_create_info); });
+        RgEditorElement* vertex_attribute_description_count_item = MakeNumericElement(
+            nullptr, kStrVulkanPipelineMemberVertexAttributeDescriptionCount, &vertex_input_state_create_info->vertexAttributeDescriptionCount, [=] {
+                HandleVertexAttributeDescriptionCountChanged(vertex_attribute_descriptions_item, vertex_input_state_create_info);
+            });
 
         // Set object name.
         vertex_attribute_description_count_item->setObjectName(kStrVertexAttributeDescriptionCountItem);
@@ -1353,27 +1382,41 @@ void RgPipelineStateModelVulkan::InitializeVertexInputStateCreateInfo(RgEditorEl
     }
 }
 
-void RgPipelineStateModelVulkan::HandleVertexBindingDescriptionCountChanged(RgEditorElement* root_element, VkPipelineVertexInputStateCreateInfo* input_state_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleVertexBindingDescriptionCountChanged(RgEditorElement*                      root_element,
+                                                                            VkPipelineVertexInputStateCreateInfo* input_state_create_info,
+                                                                            bool                                  first_init)
 {
     ResizeHandler(root_element,
-        input_state_create_info->vertexBindingDescriptionCount,
-        input_state_create_info->pVertexBindingDescriptions,
-        kStrVulkanVertexInputBindingDescription,
-        std::bind(&RgPipelineStateModelVulkan::InitializeVertexInputBindingDescriptionCreateInfo, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-        first_init);
+                  input_state_create_info->vertexBindingDescriptionCount,
+                  input_state_create_info->pVertexBindingDescriptions,
+                  kStrVulkanVertexInputBindingDescription,
+                  std::bind(&RgPipelineStateModelVulkan::InitializeVertexInputBindingDescriptionCreateInfo,
+                            this,
+                            std::placeholders::_1,
+                            std::placeholders::_2,
+                            std::placeholders::_3),
+                  first_init);
 }
 
-void RgPipelineStateModelVulkan::HandleVertexAttributeDescriptionCountChanged(RgEditorElement* root_element, VkPipelineVertexInputStateCreateInfo* input_state_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleVertexAttributeDescriptionCountChanged(RgEditorElement*                      root_element,
+                                                                              VkPipelineVertexInputStateCreateInfo* input_state_create_info,
+                                                                              bool                                  first_init)
 {
     ResizeHandler(root_element,
-        input_state_create_info->vertexAttributeDescriptionCount,
-        input_state_create_info->pVertexAttributeDescriptions,
-        kStrVulkanVertexInputAttributeDescription,
-        std::bind(&RgPipelineStateModelVulkan::InitializeVertexInputAttributeDescriptionCreateInfo, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-        first_init);
+                  input_state_create_info->vertexAttributeDescriptionCount,
+                  input_state_create_info->pVertexAttributeDescriptions,
+                  kStrVulkanVertexInputAttributeDescription,
+                  std::bind(&RgPipelineStateModelVulkan::InitializeVertexInputAttributeDescriptionCreateInfo,
+                            this,
+                            std::placeholders::_1,
+                            std::placeholders::_2,
+                            std::placeholders::_3),
+                  first_init);
 }
 
-void RgPipelineStateModelVulkan::InitializeVertexInputBindingDescriptionCreateInfo(RgEditorElement* root_element, VkVertexInputBindingDescription* base_input_binding_description_item, int item_index)
+void RgPipelineStateModelVulkan::InitializeVertexInputBindingDescriptionCreateInfo(RgEditorElement*                 root_element,
+                                                                                   VkVertexInputBindingDescription* base_input_binding_description_item,
+                                                                                   int                              item_index)
 {
     assert(root_element != nullptr);
     assert(base_input_binding_description_item != nullptr);
@@ -1384,46 +1427,57 @@ void RgPipelineStateModelVulkan::InitializeVertexInputBindingDescriptionCreateIn
         if (offset_input_binding_description_item != nullptr)
         {
             // Add the "binding" member.
-            RgEditorElement* binding_element = MakeNumericElement(root_element, kStrVulkanPipelineMemberVertexBinding, &offset_input_binding_description_item->binding);
+            RgEditorElement* binding_element =
+                MakeNumericElement(root_element, kStrVulkanPipelineMemberVertexBinding, &offset_input_binding_description_item->binding);
             root_element->AppendChildItem(binding_element);
 
             // Set object name.
             binding_element->setObjectName(kStrBindingElement);
 
             // Add the "stride" member.
-            RgEditorElement* stride_element = MakeNumericElement(root_element, kStrVulkanPipelineMemberVertexStride, &offset_input_binding_description_item->stride);
+            RgEditorElement* stride_element =
+                MakeNumericElement(root_element, kStrVulkanPipelineMemberVertexStride, &offset_input_binding_description_item->stride);
             root_element->AppendChildItem(stride_element);
 
             // Set object name.
             stride_element->setObjectName(kStrStrideElement);
 
             // Add the "inputRate" member values.
-            const RgEnumValuesVector input_rate_values = {
-                ENUM_VALUE(VK_VERTEX_INPUT_RATE_VERTEX),
-                ENUM_VALUE(VK_VERTEX_INPUT_RATE_INSTANCE)
-            };
-            RgEditorElement* input_rate_element = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberVertexInputRate, input_rate_values, reinterpret_cast<uint32_t*>(&offset_input_binding_description_item->inputRate));
+            const RgEnumValuesVector input_rate_values  = {ENUM_VALUE(VK_VERTEX_INPUT_RATE_VERTEX), ENUM_VALUE(VK_VERTEX_INPUT_RATE_INSTANCE)};
+            RgEditorElement*         input_rate_element = new RgEditorElementEnum(parent_,
+                                                                          kStrVulkanPipelineMemberVertexInputRate,
+                                                                          input_rate_values,
+                                                                          reinterpret_cast<uint32_t*>(&offset_input_binding_description_item->inputRate));
             root_element->AppendChildItem(input_rate_element);
 
             // Connect to the splitter moved signal to close the drop down.
             RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(input_rate_element), &RgEditorElementEnum::HotKeyPressedSignal);
+            bool               is_connected      = connect(build_view_vulkan,
+                                        &RgBuildViewVulkan::SplitterMoved,
+                                        static_cast<RgEditorElementEnum*>(input_rate_element),
+                                        &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             input_rate_element->setObjectName(kStrInputRateElement);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(input_rate_element, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(input_rate_element, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(input_rate_element), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(input_rate_element),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
         }
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeVertexInputAttributeDescriptionCreateInfo(RgEditorElement* root_element, VkVertexInputAttributeDescription* base_input_attribute_description, int item_index)
+void RgPipelineStateModelVulkan::InitializeVertexInputAttributeDescriptionCreateInfo(RgEditorElement*                   root_element,
+                                                                                     VkVertexInputAttributeDescription* base_input_attribute_description,
+                                                                                     int                                item_index)
 {
     assert(root_element != nullptr);
     assert(base_input_attribute_description != nullptr);
@@ -1434,14 +1488,16 @@ void RgPipelineStateModelVulkan::InitializeVertexInputAttributeDescriptionCreate
         if (offset_input_attribute_description != nullptr)
         {
             // Add the "location" member.
-            RgEditorElement* location_element = MakeNumericElement(root_element, kStrVulkanPipelineMemberVertexLocation, &offset_input_attribute_description->location);
+            RgEditorElement* location_element =
+                MakeNumericElement(root_element, kStrVulkanPipelineMemberVertexLocation, &offset_input_attribute_description->location);
             root_element->AppendChildItem(location_element);
 
             // Set object name.
             location_element->setObjectName(kStrLocationElement);
 
             // Add the "binding" member.
-            RgEditorElement* binding_element = MakeNumericElement(root_element, kStrVulkanPipelineMemberVertexBinding, &offset_input_attribute_description->binding);
+            RgEditorElement* binding_element =
+                MakeNumericElement(root_element, kStrVulkanPipelineMemberVertexBinding, &offset_input_attribute_description->binding);
             root_element->AppendChildItem(binding_element);
 
             // Set object name.
@@ -1449,12 +1505,16 @@ void RgPipelineStateModelVulkan::InitializeVertexInputAttributeDescriptionCreate
 
             // Add the "format" member values.
             const RgEnumValuesVector& format_enumerators = GetFormatEnumerators();
-            RgEditorElement* format_element = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberVertexFormat, format_enumerators, reinterpret_cast<uint32_t*>(&offset_input_attribute_description->format));
+            RgEditorElement*          format_element     = new RgEditorElementEnum(
+                parent_, kStrVulkanPipelineMemberVertexFormat, format_enumerators, reinterpret_cast<uint32_t*>(&offset_input_attribute_description->format));
             root_element->AppendChildItem(format_element);
 
             // Connect to the splitter moved signal to close the drop down.
             RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(format_element), &RgEditorElementEnum::HotKeyPressedSignal);
+            bool               is_connected      = connect(build_view_vulkan,
+                                        &RgBuildViewVulkan::SplitterMoved,
+                                        static_cast<RgEditorElementEnum*>(format_element),
+                                        &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             format_element->setObjectName(kStrFormatElement);
@@ -1464,7 +1524,10 @@ void RgPipelineStateModelVulkan::InitializeVertexInputAttributeDescriptionCreate
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(format_element), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(format_element),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "offset" member.
@@ -1477,7 +1540,8 @@ void RgPipelineStateModelVulkan::InitializeVertexInputAttributeDescriptionCreate
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeInputAssemblyStateCreateInfo(RgEditorElement* root_element, VkPipelineInputAssemblyStateCreateInfo* input_assembly_state_create_info)
+void RgPipelineStateModelVulkan::InitializeInputAssemblyStateCreateInfo(RgEditorElement*                        root_element,
+                                                                        VkPipelineInputAssemblyStateCreateInfo* input_assembly_state_create_info)
 {
     assert(input_assembly_state_create_info != nullptr);
     if (input_assembly_state_create_info != nullptr)
@@ -1497,12 +1561,16 @@ void RgPipelineStateModelVulkan::InitializeInputAssemblyStateCreateInfo(RgEditor
 
         // Add the primitive "topology" node.
         const RgEnumValuesVector& primitive_topology_enumerators = GetPrimitiveTopologyEnumerators();
-        RgEditorElement* topology_item = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberTopology, primitive_topology_enumerators, reinterpret_cast<uint32_t*>(&input_assembly_state_create_info->topology));
+        RgEditorElement*          topology_item                  = new RgEditorElementEnum(parent_,
+                                                                 kStrVulkanPipelineMemberTopology,
+                                                                 primitive_topology_enumerators,
+                                                                 reinterpret_cast<uint32_t*>(&input_assembly_state_create_info->topology));
         input_assembly_state_root->AppendChildItem(topology_item);
 
         // Connect to the splitter moved signal to close the drop down.
         RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(topology_item), &RgEditorElementEnum::HotKeyPressedSignal);
+        bool               is_connected      = connect(
+            build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(topology_item), &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         topology_item->setObjectName(kStrTopologyItem);
@@ -1512,11 +1580,15 @@ void RgPipelineStateModelVulkan::InitializeInputAssemblyStateCreateInfo(RgEditor
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(topology_item), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(this,
+                               &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                               static_cast<RgEditorElementEnum*>(topology_item),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "primitiveRestartEnable" member.
-        RgEditorElementBool* primitive_restart_enable_item = new RgEditorElementBool(input_assembly_state_root, kStrVulkanPipelineMemberPrimitiveRestartEnable, &input_assembly_state_create_info->primitiveRestartEnable);
+        RgEditorElementBool* primitive_restart_enable_item = new RgEditorElementBool(
+            input_assembly_state_root, kStrVulkanPipelineMemberPrimitiveRestartEnable, &input_assembly_state_create_info->primitiveRestartEnable);
         input_assembly_state_root->AppendChildItem(primitive_restart_enable_item);
 
         // Set object name.
@@ -1524,7 +1596,8 @@ void RgPipelineStateModelVulkan::InitializeInputAssemblyStateCreateInfo(RgEditor
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeTessellationStateCreateInfo(RgEditorElement* root_element, VkPipelineTessellationStateCreateInfo* tessellation_state_create_info)
+void RgPipelineStateModelVulkan::InitializeTessellationStateCreateInfo(RgEditorElement*                       root_element,
+                                                                       VkPipelineTessellationStateCreateInfo* tessellation_state_create_info)
 {
     assert(tessellation_state_create_info != nullptr);
     if (tessellation_state_create_info != nullptr)
@@ -1543,7 +1616,8 @@ void RgPipelineStateModelVulkan::InitializeTessellationStateCreateInfo(RgEditorE
         flags_item->setObjectName(kStrFlagsItem);
 
         // Add the "patchControlPoints" member.
-        RgEditorElement* patch_control_points_item = MakeNumericElement(tessellation_state_root, kStrVulkanPipelineMemberPatchControlPoints, &tessellation_state_create_info->patchControlPoints);
+        RgEditorElement* patch_control_points_item =
+            MakeNumericElement(tessellation_state_root, kStrVulkanPipelineMemberPatchControlPoints, &tessellation_state_create_info->patchControlPoints);
         tessellation_state_root->AppendChildItem(patch_control_points_item);
 
         // Set object name.
@@ -1551,7 +1625,8 @@ void RgPipelineStateModelVulkan::InitializeTessellationStateCreateInfo(RgEditorE
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeViewportStateCreateInfo(RgEditorElement* root_element, VkPipelineViewportStateCreateInfo* pipeline_viewport_state_create_info)
+void RgPipelineStateModelVulkan::InitializeViewportStateCreateInfo(RgEditorElement*                   root_element,
+                                                                   VkPipelineViewportStateCreateInfo* pipeline_viewport_state_create_info)
 {
     assert(pipeline_viewport_state_create_info != nullptr);
     if (pipeline_viewport_state_create_info != nullptr)
@@ -1570,18 +1645,22 @@ void RgPipelineStateModelVulkan::InitializeViewportStateCreateInfo(RgEditorEleme
         flags_item->setObjectName(kStrFlagsItem);
 
         // Create the "pViewports" root node.
-        RgEditorElementArrayElementAdd* viewports_root_item = new RgEditorElementArrayElementAdd(viewport_state_root, kStrVulkanPipelineMemberPviewports,
-            [=](int element_index) { RemoveElement(pipeline_viewport_state_create_info->pViewports, pipeline_viewport_state_create_info->viewportCount, element_index); });
-
-        // Set object name.
-        viewports_root_item->setObjectName(kStrViewportsRootItem);
+        RgEditorElementArrayElementAdd* viewports_root_item =
+            new RgEditorElementArrayElementAdd(viewport_state_root, kStrVulkanPipelineMemberPviewports, [=](int element_index) {
+                RemoveElement(pipeline_viewport_state_create_info->pViewports, pipeline_viewport_state_create_info->viewportCount, element_index);
+            });
 
         assert(viewports_root_item != nullptr);
         if (viewports_root_item != nullptr)
         {
+            // Set object name.
+            viewports_root_item->setObjectName(kStrViewportsRootItem);
+
             // Create the "viewportCountItem" node.
-            RgEditorElement* viewport_count_item = MakeNumericElement(nullptr, kStrVulkanPipelineMemberViewportCount,
-                &pipeline_viewport_state_create_info->viewportCount, [=] { HandlePipelineViewportCountChanged(viewports_root_item, pipeline_viewport_state_create_info); });
+            RgEditorElement* viewport_count_item =
+                MakeNumericElement(nullptr, kStrVulkanPipelineMemberViewportCount, &pipeline_viewport_state_create_info->viewportCount, [=] {
+                    HandlePipelineViewportCountChanged(viewports_root_item, pipeline_viewport_state_create_info);
+                });
 
             // Set object name.
             viewport_count_item->setObjectName(kStrViewportCountItem);
@@ -1597,15 +1676,19 @@ void RgPipelineStateModelVulkan::InitializeViewportStateCreateInfo(RgEditorEleme
         }
 
         // Create the "pScissors" root node.
-        RgEditorElementArrayElementAdd* scissors_root_item = new RgEditorElementArrayElementAdd(viewport_state_root, kStrVulkanPipelineMemberPscissors,
-            [=](int element_index) { RemoveElement(pipeline_viewport_state_create_info->pScissors, pipeline_viewport_state_create_info->scissorCount, element_index); });
+        RgEditorElementArrayElementAdd* scissors_root_item =
+            new RgEditorElementArrayElementAdd(viewport_state_root, kStrVulkanPipelineMemberPscissors, [=](int element_index) {
+                RemoveElement(pipeline_viewport_state_create_info->pScissors, pipeline_viewport_state_create_info->scissorCount, element_index);
+            });
 
         // Set object name.
         scissors_root_item->setObjectName(kStrScissorsRootItem);
 
         // Create the "scissorCountItem" member.
-        RgEditorElement* scissor_count_item = MakeNumericElement(nullptr, kStrVulkanPipelineMemberScissorCount,
-            &pipeline_viewport_state_create_info->scissorCount, [=] { HandlePipelineScissorCountChanged(scissors_root_item, pipeline_viewport_state_create_info); });
+        RgEditorElement* scissor_count_item =
+            MakeNumericElement(nullptr, kStrVulkanPipelineMemberScissorCount, &pipeline_viewport_state_create_info->scissorCount, [=] {
+                HandlePipelineScissorCountChanged(scissors_root_item, pipeline_viewport_state_create_info);
+            });
 
         // Set object name.
         scissor_count_item->setObjectName(kStrScissorCountItem);
@@ -1621,27 +1704,41 @@ void RgPipelineStateModelVulkan::InitializeViewportStateCreateInfo(RgEditorEleme
     }
 }
 
-void RgPipelineStateModelVulkan::HandlePipelineViewportCountChanged(RgEditorElement* root_element, VkPipelineViewportStateCreateInfo* viewport_state_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandlePipelineViewportCountChanged(RgEditorElement*                   root_element,
+                                                                    VkPipelineViewportStateCreateInfo* viewport_state_create_info,
+                                                                    bool                               first_init)
 {
     ResizeHandler(root_element,
-        viewport_state_create_info->viewportCount,
-        viewport_state_create_info->pViewports,
-        kStrVulkanPipelineMemberVkViewport,
-        std::bind(&RgPipelineStateModelVulkan::InitializePipelineViewportDescriptionCreateInfo, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-        first_init);
+                  viewport_state_create_info->viewportCount,
+                  viewport_state_create_info->pViewports,
+                  kStrVulkanPipelineMemberVkViewport,
+                  std::bind(&RgPipelineStateModelVulkan::InitializePipelineViewportDescriptionCreateInfo,
+                            this,
+                            std::placeholders::_1,
+                            std::placeholders::_2,
+                            std::placeholders::_3),
+                  first_init);
 }
 
-void RgPipelineStateModelVulkan::HandlePipelineScissorCountChanged(RgEditorElement* root_element, VkPipelineViewportStateCreateInfo* viewport_state_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandlePipelineScissorCountChanged(RgEditorElement*                   root_element,
+                                                                   VkPipelineViewportStateCreateInfo* viewport_state_create_info,
+                                                                   bool                               first_init)
 {
     ResizeHandler(root_element,
-        viewport_state_create_info->scissorCount,
-        viewport_state_create_info->pScissors,
-        kStrVulkanPipelineMemberScissorRect,
-        std::bind(&RgPipelineStateModelVulkan::InitializePipelineScissorDescriptionCreateInfo, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-        first_init);
+                  viewport_state_create_info->scissorCount,
+                  viewport_state_create_info->pScissors,
+                  kStrVulkanPipelineMemberScissorRect,
+                  std::bind(&RgPipelineStateModelVulkan::InitializePipelineScissorDescriptionCreateInfo,
+                            this,
+                            std::placeholders::_1,
+                            std::placeholders::_2,
+                            std::placeholders::_3),
+                  first_init);
 }
 
-void RgPipelineStateModelVulkan::InitializePipelineViewportDescriptionCreateInfo(RgEditorElement* root_element, VkViewport* base_viewport_description, int item_index)
+void RgPipelineStateModelVulkan::InitializePipelineViewportDescriptionCreateInfo(RgEditorElement* root_element,
+                                                                                 VkViewport*      base_viewport_description,
+                                                                                 int              item_index)
 {
     assert(root_element != nullptr);
     assert(base_viewport_description != nullptr);
@@ -1680,14 +1777,16 @@ void RgPipelineStateModelVulkan::InitializePipelineViewportDescriptionCreateInfo
             height_item->setObjectName(kStrHeightItem);
 
             // Add the "minDepth" node.
-            RgEditorElement* min_depth_item = MakeNumericElement(root_element, kStrVulkanPipelineMemberViewportMinDepth, &offset_viewport_description->minDepth);
+            RgEditorElement* min_depth_item =
+                MakeNumericElement(root_element, kStrVulkanPipelineMemberViewportMinDepth, &offset_viewport_description->minDepth);
             root_element->AppendChildItem(min_depth_item);
 
             // Set object name.
             min_depth_item->setObjectName(kStrMinDepthItem);
 
             // Add the "maxDepth" node.
-            RgEditorElement* max_depth_item = MakeNumericElement(root_element, kStrVulkanPipelineMemberViewportMaxDepth, &offset_viewport_description->maxDepth);
+            RgEditorElement* max_depth_item =
+                MakeNumericElement(root_element, kStrVulkanPipelineMemberViewportMaxDepth, &offset_viewport_description->maxDepth);
             root_element->AppendChildItem(max_depth_item);
 
             // Set object name.
@@ -1696,7 +1795,9 @@ void RgPipelineStateModelVulkan::InitializePipelineViewportDescriptionCreateInfo
     }
 }
 
-void RgPipelineStateModelVulkan::InitializePipelineScissorDescriptionCreateInfo(RgEditorElement* root_element, VkRect2D* base_scissor_description, int item_index)
+void RgPipelineStateModelVulkan::InitializePipelineScissorDescriptionCreateInfo(RgEditorElement* root_element,
+                                                                                VkRect2D*        base_scissor_description,
+                                                                                int              item_index)
 {
     assert(root_element != nullptr);
     assert(base_scissor_description != nullptr);
@@ -1751,7 +1852,8 @@ void RgPipelineStateModelVulkan::InitializePipelineScissorDescriptionCreateInfo(
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(RgEditorElement* root_element, VkPipelineRasterizationStateCreateInfo* rasterization_state_create_info)
+void RgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(RgEditorElement*                        root_element,
+                                                                        VkPipelineRasterizationStateCreateInfo* rasterization_state_create_info)
 {
     assert(rasterization_state_create_info != nullptr);
     if (rasterization_state_create_info != nullptr)
@@ -1770,14 +1872,16 @@ void RgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(RgEditor
         flags_item->setObjectName(kStrFlagsItem);
 
         // Add the "depthClampEnable" node.
-        RgEditorElementBool* depth_clamp_enable_item = new RgEditorElementBool(rasterization_state_root, kStrVulkanPipelineMemberDepthClampEnable, &rasterization_state_create_info->depthClampEnable);
+        RgEditorElementBool* depth_clamp_enable_item =
+            new RgEditorElementBool(rasterization_state_root, kStrVulkanPipelineMemberDepthClampEnable, &rasterization_state_create_info->depthClampEnable);
         rasterization_state_root->AppendChildItem(depth_clamp_enable_item);
 
         // Set object name.
         depth_clamp_enable_item->setObjectName(kStrDepthClampEnableItem);
 
         // Add the "rasterizerDiscardEnable" node.
-        RgEditorElementBool* rasterization_discard_enable = new RgEditorElementBool(rasterization_state_root, kStrVulkanPipelineMemberRasterizerDiscardEnable, &rasterization_state_create_info->rasterizerDiscardEnable);
+        RgEditorElementBool* rasterization_discard_enable = new RgEditorElementBool(
+            rasterization_state_root, kStrVulkanPipelineMemberRasterizerDiscardEnable, &rasterization_state_create_info->rasterizerDiscardEnable);
         rasterization_state_root->AppendChildItem(rasterization_discard_enable);
 
         // Set object name.
@@ -1785,12 +1889,18 @@ void RgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(RgEditor
 
         // Add the "polygonMode" member values.
         const RgEnumValuesVector& polygon_mode_enumerators = GetPolygonModeEnumerators();
-        RgEditorElement* polygon_mode_node = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberRasterizerPolygonMode, polygon_mode_enumerators, reinterpret_cast<uint32_t*>(&rasterization_state_create_info->polygonMode));
+        RgEditorElement*          polygon_mode_node        = new RgEditorElementEnum(parent_,
+                                                                     kStrVulkanPipelineMemberRasterizerPolygonMode,
+                                                                     polygon_mode_enumerators,
+                                                                     reinterpret_cast<uint32_t*>(&rasterization_state_create_info->polygonMode));
         rasterization_state_root->AppendChildItem(polygon_mode_node);
 
         // Connect to the splitter moved signal to close the drop down.
         RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(polygon_mode_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        bool               is_connected      = connect(build_view_vulkan,
+                                    &RgBuildViewVulkan::SplitterMoved,
+                                    static_cast<RgEditorElementEnum*>(polygon_mode_node),
+                                    &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         polygon_mode_node->setObjectName(kStrPolygonModeNode);
@@ -1800,17 +1910,25 @@ void RgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(RgEditor
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(polygon_mode_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(this,
+                               &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                               static_cast<RgEditorElementEnum*>(polygon_mode_node),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "cullMode" member values.
         const RgEnumValuesVector& cull_mode_enumerators = GetCullModeFlagEnumerators();
-        RgEditorElement* cull_mode_node = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberRasterizerCullMode, cull_mode_enumerators, reinterpret_cast<uint32_t*>(&rasterization_state_create_info->cullMode), true);
+        RgEditorElement*          cull_mode_node        = new RgEditorElementEnum(parent_,
+                                                                  kStrVulkanPipelineMemberRasterizerCullMode,
+                                                                  cull_mode_enumerators,
+                                                                  reinterpret_cast<uint32_t*>(&rasterization_state_create_info->cullMode),
+                                                                  true);
         rasterization_state_root->AppendChildItem(cull_mode_node);
 
         // Connect to the splitter moved signal to close the drop down.
         build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(cull_mode_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected      = connect(
+            build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(cull_mode_node), &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         cull_mode_node->setObjectName(kStrCullModeNode);
@@ -1820,17 +1938,26 @@ void RgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(RgEditor
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(cull_mode_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(this,
+                               &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                               static_cast<RgEditorElementEnum*>(cull_mode_node),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "frontFace" member values.
         const RgEnumValuesVector& front_face_enumerators = GetFrontFaceEnumerators();
-        RgEditorElement* front_face_node = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberRasterizerFrontFace, front_face_enumerators, reinterpret_cast<uint32_t*>(&rasterization_state_create_info->frontFace));
+        RgEditorElement*          front_face_node        = new RgEditorElementEnum(parent_,
+                                                                   kStrVulkanPipelineMemberRasterizerFrontFace,
+                                                                   front_face_enumerators,
+                                                                   reinterpret_cast<uint32_t*>(&rasterization_state_create_info->frontFace));
         rasterization_state_root->AppendChildItem(front_face_node);
 
         // Connect to the splitter moved signal to close the drop down.
         build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(front_face_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected      = connect(build_view_vulkan,
+                               &RgBuildViewVulkan::SplitterMoved,
+                               static_cast<RgEditorElementEnum*>(front_face_node),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         front_face_node->setObjectName(kStrFrontFaceNode);
@@ -1840,39 +1967,47 @@ void RgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(RgEditor
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(front_face_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(this,
+                               &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                               static_cast<RgEditorElementEnum*>(front_face_node),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "depthBiasEnable" node.
-        RgEditorElementBool* depth_bias_enable_node = new RgEditorElementBool(rasterization_state_root, kStrVulkanPipelineMemberRasterizerDepthBiasEnable, &rasterization_state_create_info->depthBiasEnable);
+        RgEditorElementBool* depth_bias_enable_node = new RgEditorElementBool(
+            rasterization_state_root, kStrVulkanPipelineMemberRasterizerDepthBiasEnable, &rasterization_state_create_info->depthBiasEnable);
         rasterization_state_root->AppendChildItem(depth_bias_enable_node);
 
         // Set object name.
         depth_bias_enable_node->setObjectName(kStrDepthBiasEnableNode);
 
         // Add the "depthBiasConstantFactor" node.
-        RgEditorElement* depth_bias_constant_factor_node = MakeNumericElement(rasterization_state_root, kStrVulkanPipelineMemberRasterizerDepthBiasConstantFactor, &rasterization_state_create_info->depthBiasConstantFactor);
+        RgEditorElement* depth_bias_constant_factor_node = MakeNumericElement(
+            rasterization_state_root, kStrVulkanPipelineMemberRasterizerDepthBiasConstantFactor, &rasterization_state_create_info->depthBiasConstantFactor);
         rasterization_state_root->AppendChildItem(depth_bias_constant_factor_node);
 
         // Set object name.
         depth_bias_constant_factor_node->setObjectName(kStrDepthBiasConstantFactorNode);
 
         // Add the "depthBiasClamp" node.
-        RgEditorElement* depth_bias_clamp_node = MakeNumericElement(rasterization_state_root, kStrVulkanPipelineMemberRasterizerDepthBiasClamp, &rasterization_state_create_info->depthBiasClamp);
+        RgEditorElement* depth_bias_clamp_node =
+            MakeNumericElement(rasterization_state_root, kStrVulkanPipelineMemberRasterizerDepthBiasClamp, &rasterization_state_create_info->depthBiasClamp);
         rasterization_state_root->AppendChildItem(depth_bias_clamp_node);
 
         // Set object name.
         depth_bias_clamp_node->setObjectName(kStrDepthBiasClampNode);
 
         // Add the "depthBiasSlopeFactor" node.
-        RgEditorElement* depth_bias_slope_factor_node = MakeNumericElement(rasterization_state_root, kStrVulkanPipelineMemberRasterizerDepthBiasSlopeFactor, &rasterization_state_create_info->depthBiasSlopeFactor);
+        RgEditorElement* depth_bias_slope_factor_node = MakeNumericElement(
+            rasterization_state_root, kStrVulkanPipelineMemberRasterizerDepthBiasSlopeFactor, &rasterization_state_create_info->depthBiasSlopeFactor);
         rasterization_state_root->AppendChildItem(depth_bias_slope_factor_node);
 
         // Set object name.
         depth_bias_slope_factor_node->setObjectName(kStrDepthBiasSlopeFactorNode);
 
         // Add the "lineWidth" node.
-        RgEditorElement* line_width_node = MakeNumericElement(rasterization_state_root, kStrVulkanPipelineMemberRasterizerLineWidth, &rasterization_state_create_info->lineWidth);
+        RgEditorElement* line_width_node =
+            MakeNumericElement(rasterization_state_root, kStrVulkanPipelineMemberRasterizerLineWidth, &rasterization_state_create_info->lineWidth);
         rasterization_state_root->AppendChildItem(line_width_node);
 
         // Set object name.
@@ -1880,14 +2015,16 @@ void RgPipelineStateModelVulkan::InitializeRasterizationStateCreateInfo(RgEditor
     }
 }
 
-void RgPipelineStateModelVulkan::HandleMultisamplingSampleMaskDimensionChanged(RgEditorElement* root_element, VkPipelineMultisampleStateCreateInfo* multisample_state_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleMultisamplingSampleMaskDimensionChanged(RgEditorElement*                      root_element,
+                                                                               VkPipelineMultisampleStateCreateInfo* multisample_state_create_info,
+                                                                               bool                                  first_init)
 {
     ResizeHandler(root_element,
-        sample_mask_dimension_,
-        multisample_state_create_info->pSampleMask,
-        kStrVulkanMultisampleRasterizationSampleFlagsType,
-        std::bind(&RgPipelineStateModelVulkan::InitializeSampleMask, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-        first_init);
+                  sample_mask_dimension_,
+                  multisample_state_create_info->pSampleMask,
+                  kStrVulkanMultisampleRasterizationSampleFlagsType,
+                  std::bind(&RgPipelineStateModelVulkan::InitializeSampleMask, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+                  first_init);
 }
 
 void RgPipelineStateModelVulkan::InitializeSampleMask(RgEditorElement* root_element, uint32_t* sample_mask_base, int item_index)
@@ -1901,7 +2038,8 @@ void RgPipelineStateModelVulkan::InitializeSampleMask(RgEditorElement* root_elem
         if (sample_mask_item != nullptr)
         {
             // Add the array element.
-            RgEditorElement* sample_mask_elemet_node = MakeNumericElement(root_element, kStrVulkanMultisampleRasterizationSampleFlagsElementType, reinterpret_cast<uint32_t*>(sample_mask_item));
+            RgEditorElement* sample_mask_elemet_node =
+                MakeNumericElement(root_element, kStrVulkanMultisampleRasterizationSampleFlagsElementType, reinterpret_cast<uint32_t*>(sample_mask_item));
             root_element->AppendChildItem(sample_mask_elemet_node);
 
             // Set object name.
@@ -1910,7 +2048,8 @@ void RgPipelineStateModelVulkan::InitializeSampleMask(RgEditorElement* root_elem
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(RgEditorElement* root_element, VkPipelineMultisampleStateCreateInfo* pipeline_multisample_state_create_info)
+void RgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(RgEditorElement*                      root_element,
+                                                                      VkPipelineMultisampleStateCreateInfo* pipeline_multisample_state_create_info)
 {
     // Initialize the sample mask dimension.
     sample_mask_dimension_ = 0;
@@ -1936,12 +2075,14 @@ void RgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(RgEditorEl
         {
             // Initialize the mask dimension if the pSampleMask is used.
             uint32_t enum_dimension = GetSampleMaskDimension(pipeline_multisample_state_create_info->rasterizationSamples);
-            sample_mask_dimension_ = enum_dimension;
+            sample_mask_dimension_  = enum_dimension;
         }
 
         // Create the pSampleMask array root item.
-        RgEditorElementArrayElementAdd* sample_mask_root_item = new RgEditorElementArrayElementAdd(multisample_state_root, kStrVulkanMultisampleSampleMask,
-            [=](int element_index) { RemoveElement(pipeline_multisample_state_create_info->pSampleMask, sample_mask_dimension_, element_index); });
+        RgEditorElementArrayElementAdd* sample_mask_root_item =
+            new RgEditorElementArrayElementAdd(multisample_state_root, kStrVulkanMultisampleSampleMask, [=](int element_index) {
+                RemoveElement(pipeline_multisample_state_create_info->pSampleMask, sample_mask_dimension_, element_index);
+            });
 
         // Set object name.
         sample_mask_root_item->setObjectName(kStrSampleMaskRootItem);
@@ -1950,9 +2091,9 @@ void RgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(RgEditorEl
         sample_mask_root_item->SetMaximumArraySize(2);
 
         // Create the pSampleMask dimension node.
-        RgEditorElement* sample_mask_count_node = MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassInputAttachmentCount,
-            &sample_mask_dimension_,
-            [=] { HandleMultisamplingSampleMaskDimensionChanged(sample_mask_root_item, pipeline_multisample_state_create_info); });
+        RgEditorElement* sample_mask_count_node = MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassInputAttachmentCount, &sample_mask_dimension_, [=] {
+            HandleMultisamplingSampleMaskDimensionChanged(sample_mask_root_item, pipeline_multisample_state_create_info);
+        });
 
         // Set object name.
         sample_mask_count_node->setObjectName(kStrSampleMaskCountNode);
@@ -1966,33 +2107,46 @@ void RgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(RgEditorEl
 
         // Add the "rasterizationSamples" flags node.
         const RgEnumValuesVector& rasterization_samples_enumerators = GetRasterizationSamplesEnumerators();
-        RgEditorElement* rasterization_samples = new RgEditorElementEnum(parent_, kStrVulkanMultisampleRasterizationSamples, rasterization_samples_enumerators, reinterpret_cast<uint32_t*>(&pipeline_multisample_state_create_info->rasterizationSamples));
+        RgEditorElement*          rasterization_samples =
+            new RgEditorElementEnum(parent_,
+                                    kStrVulkanMultisampleRasterizationSamples,
+                                    rasterization_samples_enumerators,
+                                    reinterpret_cast<uint32_t*>(&pipeline_multisample_state_create_info->rasterizationSamples));
         multisample_state_root->AppendChildItem(rasterization_samples);
 
         // Connect to the splitter moved signal to close the drop down.
         RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(rasterization_samples), &RgEditorElementEnum::HotKeyPressedSignal);
+        bool               is_connected      = connect(build_view_vulkan,
+                                    &RgBuildViewVulkan::SplitterMoved,
+                                    static_cast<RgEditorElementEnum*>(rasterization_samples),
+                                    &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         rasterization_samples->setObjectName(kStrRasterizationSamples);
 
         // Connect to the enum list widget status signal.
-        is_connected = connect(rasterization_samples, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        is_connected =
+            connect(rasterization_samples, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(rasterization_samples), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(this,
+                               &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                               static_cast<RgEditorElementEnum*>(rasterization_samples),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "sampleShadingEnable" node.
-        RgEditorElementBool* sample_shading_enable = new RgEditorElementBool(multisample_state_root, kStrVulkanMultisampleSampleShadingEnable, &pipeline_multisample_state_create_info->sampleShadingEnable);
+        RgEditorElementBool* sample_shading_enable = new RgEditorElementBool(
+            multisample_state_root, kStrVulkanMultisampleSampleShadingEnable, &pipeline_multisample_state_create_info->sampleShadingEnable);
         multisample_state_root->AppendChildItem(sample_shading_enable);
 
         // Set object name.
         sample_shading_enable->setObjectName(kStrSampleShadingEnable);
 
         // Add the "minSampleShading" node.
-        RgEditorElement* min_sample_shading_node = MakeNumericElement(multisample_state_root, kStrVulkanMultisampleMinSampleShading, &pipeline_multisample_state_create_info->minSampleShading);
+        RgEditorElement* min_sample_shading_node =
+            MakeNumericElement(multisample_state_root, kStrVulkanMultisampleMinSampleShading, &pipeline_multisample_state_create_info->minSampleShading);
         multisample_state_root->AppendChildItem(min_sample_shading_node);
 
         // Set object name.
@@ -2002,14 +2156,16 @@ void RgPipelineStateModelVulkan::InitializeMultisampleStateCreateInfo(RgEditorEl
         multisample_state_root->AppendChildItem(sample_mask_root_item);
 
         // Add the "alphaToCoverageEnable" node.
-        RgEditorElementBool* alpha_to_coverage_node = new RgEditorElementBool(multisample_state_root, kStrVulkanMultisampleAlphaToCoverageEnable, &pipeline_multisample_state_create_info->alphaToCoverageEnable);
+        RgEditorElementBool* alpha_to_coverage_node = new RgEditorElementBool(
+            multisample_state_root, kStrVulkanMultisampleAlphaToCoverageEnable, &pipeline_multisample_state_create_info->alphaToCoverageEnable);
         multisample_state_root->AppendChildItem(alpha_to_coverage_node);
 
         // Set object name.
         alpha_to_coverage_node->setObjectName(kStrAlphaBlendToCoverageNode);
 
         // Add the "alphaToOneEnable" node.
-        RgEditorElementBool* alpha_to_one_node = new RgEditorElementBool(multisample_state_root, kStrVulkanMultisampleAlphaToOneEnable, &pipeline_multisample_state_create_info->alphaToOneEnable);
+        RgEditorElementBool* alpha_to_one_node =
+            new RgEditorElementBool(multisample_state_root, kStrVulkanMultisampleAlphaToOneEnable, &pipeline_multisample_state_create_info->alphaToOneEnable);
         multisample_state_root->AppendChildItem(alpha_to_one_node);
 
         // Set object name.
@@ -2027,12 +2183,14 @@ void RgPipelineStateModelVulkan::InitializeStencilOpState(RgEditorElement* depth
         const RgEnumValuesVector& stencil_op_enumerators = GetStencilOpEnumerators();
 
         // Add the "failOp" node.
-        RgEditorElement* fail_op_node = new RgEditorElementEnum(parent_, kStrVulkanDepthStencilStateFailOp, stencil_op_enumerators, reinterpret_cast<uint32_t*>(&stencil_op_state->failOp));
+        RgEditorElement* fail_op_node =
+            new RgEditorElementEnum(parent_, kStrVulkanDepthStencilStateFailOp, stencil_op_enumerators, reinterpret_cast<uint32_t*>(&stencil_op_state->failOp));
         depth_stencil_state_root->AppendChildItem(fail_op_node);
 
         // Connect to the splitter moved signal to close the drop down.
         RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(fail_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        bool               is_connected      = connect(
+            build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(fail_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         fail_op_node->setObjectName(kStrFailOpNode);
@@ -2042,16 +2200,19 @@ void RgPipelineStateModelVulkan::InitializeStencilOpState(RgEditorElement* depth
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(fail_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(
+            this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(fail_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "passOp" node.
-        RgEditorElement* pass_op_node = new RgEditorElementEnum(parent_, kStrVulkanDepthStencilStatePassOp, stencil_op_enumerators, reinterpret_cast<uint32_t*>(&stencil_op_state->passOp));
+        RgEditorElement* pass_op_node =
+            new RgEditorElementEnum(parent_, kStrVulkanDepthStencilStatePassOp, stencil_op_enumerators, reinterpret_cast<uint32_t*>(&stencil_op_state->passOp));
         depth_stencil_state_root->AppendChildItem(pass_op_node);
 
         // Connect to the splitter moved signal to close the drop down.
         build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(pass_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected      = connect(
+            build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(pass_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         pass_op_node->setObjectName(kStrPassOpNode);
@@ -2061,16 +2222,19 @@ void RgPipelineStateModelVulkan::InitializeStencilOpState(RgEditorElement* depth
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(pass_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(
+            this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(pass_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "depthFailOp" node.
-        RgEditorElement* depth_fail_op = new RgEditorElementEnum(parent_, kStrVulkanDepthStencilStateDepthFailOp, stencil_op_enumerators, reinterpret_cast<uint32_t*>(&stencil_op_state->depthFailOp));
+        RgEditorElement* depth_fail_op = new RgEditorElementEnum(
+            parent_, kStrVulkanDepthStencilStateDepthFailOp, stencil_op_enumerators, reinterpret_cast<uint32_t*>(&stencil_op_state->depthFailOp));
         depth_stencil_state_root->AppendChildItem(depth_fail_op);
 
         // Connect to the splitter moved signal to close the drop down.
         build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(depth_fail_op), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected      = connect(
+            build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(depth_fail_op), &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         depth_fail_op->setObjectName(kStrDepthFailOp);
@@ -2080,17 +2244,24 @@ void RgPipelineStateModelVulkan::InitializeStencilOpState(RgEditorElement* depth
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(depth_fail_op), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(this,
+                               &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                               static_cast<RgEditorElementEnum*>(depth_fail_op),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "compareOp" node.
         const RgEnumValuesVector& compare_op_enumerators = GetCompareOpEnumerators();
-        RgEditorElement* compare_op_node = new RgEditorElementEnum(parent_, kStrVulkanDepthStencilStateCompareOp, compare_op_enumerators, reinterpret_cast<uint32_t*>(&stencil_op_state->compareOp));
+        RgEditorElement*          compare_op_node        = new RgEditorElementEnum(
+            parent_, kStrVulkanDepthStencilStateCompareOp, compare_op_enumerators, reinterpret_cast<uint32_t*>(&stencil_op_state->compareOp));
         depth_stencil_state_root->AppendChildItem(compare_op_node);
 
         // Connect to the splitter moved signal to close the drop down.
         build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(compare_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected      = connect(build_view_vulkan,
+                               &RgBuildViewVulkan::SplitterMoved,
+                               static_cast<RgEditorElementEnum*>(compare_op_node),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         compare_op_node->setObjectName(kStrCompareOpNode);
@@ -2100,11 +2271,15 @@ void RgPipelineStateModelVulkan::InitializeStencilOpState(RgEditorElement* depth
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(compare_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(this,
+                               &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                               static_cast<RgEditorElementEnum*>(compare_op_node),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "compareMask" node.
-        RgEditorElement* compare_mask_node = MakeNumericElement(depth_stencil_state_root, kStrVulkanDepthStencilStateCompareMask, &stencil_op_state->compareMask);
+        RgEditorElement* compare_mask_node =
+            MakeNumericElement(depth_stencil_state_root, kStrVulkanDepthStencilStateCompareMask, &stencil_op_state->compareMask);
         depth_stencil_state_root->AppendChildItem(compare_mask_node);
 
         // Set object name.
@@ -2126,7 +2301,8 @@ void RgPipelineStateModelVulkan::InitializeStencilOpState(RgEditorElement* depth
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeDepthStencilStateCreateInfo(RgEditorElement* root_element, VkPipelineDepthStencilStateCreateInfo* pipeline_depth_stencil_state_create_info)
+void RgPipelineStateModelVulkan::InitializeDepthStencilStateCreateInfo(RgEditorElement*                       root_element,
+                                                                       VkPipelineDepthStencilStateCreateInfo* pipeline_depth_stencil_state_create_info)
 {
     assert(pipeline_depth_stencil_state_create_info != nullptr);
     if (pipeline_depth_stencil_state_create_info != nullptr)
@@ -2138,21 +2314,24 @@ void RgPipelineStateModelVulkan::InitializeDepthStencilStateCreateInfo(RgEditorE
         depth_stencil_state_root->setObjectName(kStrDepthStencilStateRoot);
 
         // Add the "flags" node.
-        RgEditorElement* flags_item = MakeNumericElement(depth_stencil_state_root, kStrVulkanPipelineMemberFlags, &pipeline_depth_stencil_state_create_info->flags);
+        RgEditorElement* flags_item =
+            MakeNumericElement(depth_stencil_state_root, kStrVulkanPipelineMemberFlags, &pipeline_depth_stencil_state_create_info->flags);
         depth_stencil_state_root->AppendChildItem(flags_item);
 
         // Set object name.
         flags_item->setObjectName(kStrFlagsItem);
 
         // Add the "depthTestEnable" node.
-        RgEditorElementBool* depth_test_enable_node = new RgEditorElementBool(depth_stencil_state_root, kStrVulkanDepthStencilDepthTestEnable, &pipeline_depth_stencil_state_create_info->depthTestEnable);
+        RgEditorElementBool* depth_test_enable_node = new RgEditorElementBool(
+            depth_stencil_state_root, kStrVulkanDepthStencilDepthTestEnable, &pipeline_depth_stencil_state_create_info->depthTestEnable);
         depth_stencil_state_root->AppendChildItem(depth_test_enable_node);
 
         // Set object name.
         depth_test_enable_node->setObjectName(kStrDepthTestEnableNode);
 
         // Add the "depthWriteEnable" node.
-        RgEditorElementBool* depth_write_enable_node = new RgEditorElementBool(depth_stencil_state_root, kStrVulkanDepthStencilDepthWriteEnable, &pipeline_depth_stencil_state_create_info->depthWriteEnable);
+        RgEditorElementBool* depth_write_enable_node = new RgEditorElementBool(
+            depth_stencil_state_root, kStrVulkanDepthStencilDepthWriteEnable, &pipeline_depth_stencil_state_create_info->depthWriteEnable);
         depth_stencil_state_root->AppendChildItem(depth_write_enable_node);
 
         // Set object name.
@@ -2160,33 +2339,46 @@ void RgPipelineStateModelVulkan::InitializeDepthStencilStateCreateInfo(RgEditorE
 
         // Add the "depthCompareOp" node.
         const RgEnumValuesVector& compare_op_enumerators = GetCompareOpEnumerators();
-        RgEditorElement* depth_compare_op_node = new RgEditorElementEnum(parent_, kStrVulkanDepthStencilDepthCompareOp, compare_op_enumerators, reinterpret_cast<uint32_t*>(&pipeline_depth_stencil_state_create_info->depthCompareOp), parent_);
+        RgEditorElement*          depth_compare_op_node  = new RgEditorElementEnum(parent_,
+                                                                         kStrVulkanDepthStencilDepthCompareOp,
+                                                                         compare_op_enumerators,
+                                                                         reinterpret_cast<uint32_t*>(&pipeline_depth_stencil_state_create_info->depthCompareOp),
+                                                                         parent_);
         depth_stencil_state_root->AppendChildItem(depth_compare_op_node);
 
         // Connect to the splitter moved signal to close the drop down.
         RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(depth_compare_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        bool               is_connected      = connect(build_view_vulkan,
+                                    &RgBuildViewVulkan::SplitterMoved,
+                                    static_cast<RgEditorElementEnum*>(depth_compare_op_node),
+                                    &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         depth_compare_op_node->setObjectName(kStrDepthCompareOpNode);
 
         // Connect to the enum list widget status signal.
-        is_connected = connect(depth_compare_op_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        is_connected =
+            connect(depth_compare_op_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(depth_compare_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(this,
+                               &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                               static_cast<RgEditorElementEnum*>(depth_compare_op_node),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Add the "depthBoundsTestEnable" node.
-        RgEditorElementBool* depth_bounds_test_enable_node = new RgEditorElementBool(depth_stencil_state_root, kStrVulkanDepthStencilDepthBoundsTestEnable, &pipeline_depth_stencil_state_create_info->depthBoundsTestEnable);
+        RgEditorElementBool* depth_bounds_test_enable_node = new RgEditorElementBool(
+            depth_stencil_state_root, kStrVulkanDepthStencilDepthBoundsTestEnable, &pipeline_depth_stencil_state_create_info->depthBoundsTestEnable);
         depth_stencil_state_root->AppendChildItem(depth_bounds_test_enable_node);
 
         // Set object name.
         depth_bounds_test_enable_node->setObjectName(kStrDepthBoundsTestEnableNode);
 
         // Add the "stencilTestEnable" node.
-        RgEditorElementBool* stencil_test_enable_node = new RgEditorElementBool(depth_stencil_state_root, kStrVulkanDepthStencilStencilTestEnable, &pipeline_depth_stencil_state_create_info->stencilTestEnable);
+        RgEditorElementBool* stencil_test_enable_node = new RgEditorElementBool(
+            depth_stencil_state_root, kStrVulkanDepthStencilStencilTestEnable, &pipeline_depth_stencil_state_create_info->stencilTestEnable);
         depth_stencil_state_root->AppendChildItem(stencil_test_enable_node);
 
         // Set object name.
@@ -2209,14 +2401,16 @@ void RgPipelineStateModelVulkan::InitializeDepthStencilStateCreateInfo(RgEditorE
         back_stencil_op_state_node->setObjectName(kStrBackStencilOpStateNode);
 
         // Add the "minDepthBounds" node.
-        RgEditorElement* min_depth_bounds_node = MakeNumericElement(depth_stencil_state_root, kStrVulkanDepthStencilMinDepthBounds, &pipeline_depth_stencil_state_create_info->minDepthBounds);
+        RgEditorElement* min_depth_bounds_node =
+            MakeNumericElement(depth_stencil_state_root, kStrVulkanDepthStencilMinDepthBounds, &pipeline_depth_stencil_state_create_info->minDepthBounds);
         depth_stencil_state_root->AppendChildItem(min_depth_bounds_node);
 
         // Set object name.
         min_depth_bounds_node->setObjectName(kStrMinDepthBoundsNode);
 
         // Add the "maxDepthBounds" node.
-        RgEditorElement* max_depth_bounds_node = MakeNumericElement(depth_stencil_state_root, kStrVulkanDepthStencilMaxDepthBounds, &pipeline_depth_stencil_state_create_info->maxDepthBounds);
+        RgEditorElement* max_depth_bounds_node =
+            MakeNumericElement(depth_stencil_state_root, kStrVulkanDepthStencilMaxDepthBounds, &pipeline_depth_stencil_state_create_info->maxDepthBounds);
         depth_stencil_state_root->AppendChildItem(max_depth_bounds_node);
 
         // Set object name.
@@ -2224,7 +2418,8 @@ void RgPipelineStateModelVulkan::InitializeDepthStencilStateCreateInfo(RgEditorE
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(RgEditorElement* root_element, VkPipelineColorBlendStateCreateInfo* pipeline_color_blend_state_create_info)
+void RgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(RgEditorElement*                     root_element,
+                                                                     VkPipelineColorBlendStateCreateInfo* pipeline_color_blend_state_create_info)
 {
     assert(pipeline_color_blend_state_create_info != nullptr);
     if (pipeline_color_blend_state_create_info != nullptr)
@@ -2243,7 +2438,8 @@ void RgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(RgEditorEle
         flags_item->setObjectName(kStrFlagsItem);
 
         // Add the "logicOpEnable" node.
-        RgEditorElementBool* logic_op_enable_node = new RgEditorElementBool(color_blend_state_root, kStrVulkanColorBlendStateLogicOpEnable, &pipeline_color_blend_state_create_info->logicOpEnable);
+        RgEditorElementBool* logic_op_enable_node =
+            new RgEditorElementBool(color_blend_state_root, kStrVulkanColorBlendStateLogicOpEnable, &pipeline_color_blend_state_create_info->logicOpEnable);
         color_blend_state_root->AppendChildItem(logic_op_enable_node);
 
         // Set object name.
@@ -2251,12 +2447,14 @@ void RgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(RgEditorEle
 
         // Add the "logicOp" node.
         const RgEnumValuesVector& log_op_enumerators = GetLogicOpEnumerators();
-        RgEditorElement* logic_op_node = new RgEditorElementEnum(parent_, kStrVulkanColorBlendStateLogicOp, log_op_enumerators, reinterpret_cast<uint32_t*>(&pipeline_color_blend_state_create_info->logicOp));
+        RgEditorElement*          logic_op_node      = new RgEditorElementEnum(
+            parent_, kStrVulkanColorBlendStateLogicOp, log_op_enumerators, reinterpret_cast<uint32_t*>(&pipeline_color_blend_state_create_info->logicOp));
         color_blend_state_root->AppendChildItem(logic_op_node);
 
         // Connect to the splitter moved signal to close the drop down.
         RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(logic_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        bool               is_connected      = connect(
+            build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(logic_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         logic_op_node->setObjectName(kStrLogicOpNode);
@@ -2266,20 +2464,27 @@ void RgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(RgEditorEle
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(logic_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(this,
+                               &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                               static_cast<RgEditorElementEnum*>(logic_op_node),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Attachment array:
         // Create the attachments array root item.
-        RgEditorElementArrayElementAdd* attachments_root_item = new RgEditorElementArrayElementAdd(color_blend_state_root, kStrVulkanColorBlendStateAttachments,
-            [=](int element_index) { RemoveElement(pipeline_color_blend_state_create_info->pAttachments, pipeline_color_blend_state_create_info->attachmentCount, element_index); });
+        RgEditorElementArrayElementAdd* attachments_root_item =
+            new RgEditorElementArrayElementAdd(color_blend_state_root, kStrVulkanColorBlendStateAttachments, [=](int element_index) {
+                RemoveElement(pipeline_color_blend_state_create_info->pAttachments, pipeline_color_blend_state_create_info->attachmentCount, element_index);
+            });
 
         // Set object name.
         attachments_root_item->setObjectName(kStrAttachmentsRootItem);
 
         // Create the attachmentCount member.
-        RgEditorElement* color_blend_attachments_state_count_item = MakeNumericElement(nullptr, kStrVulkanColorBlendStateAttachmentCount,
-            &pipeline_color_blend_state_create_info->attachmentCount, [=] { HandlePipelineColorBlendAttachmentCountChanged(attachments_root_item, pipeline_color_blend_state_create_info); });
+        RgEditorElement* color_blend_attachments_state_count_item =
+            MakeNumericElement(nullptr, kStrVulkanColorBlendStateAttachmentCount, &pipeline_color_blend_state_create_info->attachmentCount, [=] {
+                HandlePipelineColorBlendAttachmentCountChanged(attachments_root_item, pipeline_color_blend_state_create_info);
+            });
 
         // Set object name.
         color_blend_attachments_state_count_item->setObjectName(kStrColorBlendAttachementStateCountItem);
@@ -2308,7 +2513,8 @@ void RgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(RgEditorEle
             element_name_stream << blend_constant_index;
             element_name_stream << "]";
 
-            RgEditorElement* blend_constant_node = MakeNumericElement(blend_constants_root_node, element_name_stream.str().c_str(), &pipeline_color_blend_state_create_info->blendConstants[blend_constant_index]);
+            RgEditorElement* blend_constant_node = MakeNumericElement(
+                blend_constants_root_node, element_name_stream.str().c_str(), &pipeline_color_blend_state_create_info->blendConstants[blend_constant_index]);
             blend_constants_root_node->AppendChildItem(blend_constant_node);
 
             // Set object name.
@@ -2320,17 +2526,25 @@ void RgPipelineStateModelVulkan::InitializeColorBlendStateCreateInfo(RgEditorEle
     }
 }
 
-void RgPipelineStateModelVulkan::HandlePipelineColorBlendAttachmentCountChanged(RgEditorElement* root_element, VkPipelineColorBlendStateCreateInfo* pipeline_color_blend_state_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandlePipelineColorBlendAttachmentCountChanged(RgEditorElement*                     root_element,
+                                                                                VkPipelineColorBlendStateCreateInfo* pipeline_color_blend_state_create_info,
+                                                                                bool                                 first_init)
 {
     ResizeHandler(root_element,
-        pipeline_color_blend_state_create_info->attachmentCount,
-        pipeline_color_blend_state_create_info->pAttachments,
-        kStrVulkanColorBlendAttachmentState,
-        std::bind(&RgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInfo, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-        first_init);
+                  pipeline_color_blend_state_create_info->attachmentCount,
+                  pipeline_color_blend_state_create_info->pAttachments,
+                  kStrVulkanColorBlendAttachmentState,
+                  std::bind(&RgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInfo,
+                            this,
+                            std::placeholders::_1,
+                            std::placeholders::_2,
+                            std::placeholders::_3),
+                  first_init);
 }
 
-void RgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInfo(RgEditorElement* root_element, VkPipelineColorBlendAttachmentState* base_color_blend_attachment_state, int item_index)
+void RgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInfo(RgEditorElement*                     root_element,
+                                                                                  VkPipelineColorBlendAttachmentState* base_color_blend_attachment_state,
+                                                                                  int                                  item_index)
 {
     assert(root_element != nullptr);
     assert(base_color_blend_attachment_state != nullptr);
@@ -2341,7 +2555,8 @@ void RgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
         if (offset_color_blend_attachment_state != nullptr)
         {
             // Add the "blendEnable" node.
-            RgEditorElementBool* blend_enable_node = new RgEditorElementBool(root_element, kStrVulkanColorBlendAttachmentStateBlendEnable, &offset_color_blend_attachment_state->blendEnable);
+            RgEditorElementBool* blend_enable_node =
+                new RgEditorElementBool(root_element, kStrVulkanColorBlendAttachmentStateBlendEnable, &offset_color_blend_attachment_state->blendEnable);
             root_element->AppendChildItem(blend_enable_node);
 
             // Set object name.
@@ -2354,137 +2569,213 @@ void RgPipelineStateModelVulkan::InitializePipelineBlendAttachmentStateCreateInf
             const RgEnumValuesVector& blend_op_enumerators = GetBlendOpEnumerators();
 
             // Add the "srcColorBlendFactor" node.
-            RgEditorElement* src_color_blend_factor_node = new RgEditorElementEnum(parent_, kStrVulkanColorBlendAttachmentStateSrcColorBlendFactor, blend_factor_enumerators, reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->srcColorBlendFactor));
+            RgEditorElement* src_color_blend_factor_node =
+                new RgEditorElementEnum(parent_,
+                                        kStrVulkanColorBlendAttachmentStateSrcColorBlendFactor,
+                                        blend_factor_enumerators,
+                                        reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->srcColorBlendFactor));
             root_element->AppendChildItem(src_color_blend_factor_node);
 
             // Connect to the splitter moved signal to close the drop down.
             RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(src_color_blend_factor_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            bool               is_connected      = connect(build_view_vulkan,
+                                        &RgBuildViewVulkan::SplitterMoved,
+                                        static_cast<RgEditorElementEnum*>(src_color_blend_factor_node),
+                                        &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             src_color_blend_factor_node->setObjectName(kStrSrcColorBlendFactorNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(src_color_blend_factor_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected = connect(
+                src_color_blend_factor_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(src_color_blend_factor_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(src_color_blend_factor_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "dstColorBlendFactor" node.
-            RgEditorElement* dst_color_blend_factor_node = new RgEditorElementEnum(parent_, kStrVulkanColorBlendAttachmentStateDstColorBlendFactor, blend_factor_enumerators, reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->dstColorBlendFactor));
+            RgEditorElement* dst_color_blend_factor_node =
+                new RgEditorElementEnum(parent_,
+                                        kStrVulkanColorBlendAttachmentStateDstColorBlendFactor,
+                                        blend_factor_enumerators,
+                                        reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->dstColorBlendFactor));
             root_element->AppendChildItem(dst_color_blend_factor_node);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(dst_color_blend_factor_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(dst_color_blend_factor_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             dst_color_blend_factor_node->setObjectName(kStrDstColorBlendFactorNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(dst_color_blend_factor_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected = connect(
+                dst_color_blend_factor_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(dst_color_blend_factor_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(dst_color_blend_factor_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "colorBlendOp" node.
-            RgEditorElement* color_blend_op_node = new RgEditorElementEnum(parent_, kStrVulkanColorBlendAttachmentStateColorBlendOp, blend_op_enumerators, reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->colorBlendOp));
+            RgEditorElement* color_blend_op_node = new RgEditorElementEnum(parent_,
+                                                                           kStrVulkanColorBlendAttachmentStateColorBlendOp,
+                                                                           blend_op_enumerators,
+                                                                           reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->colorBlendOp));
             root_element->AppendChildItem(color_blend_op_node);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(color_blend_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(color_blend_op_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             color_blend_op_node->setObjectName(kStrColorBlendOpNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(color_blend_op_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(color_blend_op_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(color_blend_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(color_blend_op_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "srcAlphaBlendFactor" node.
-            RgEditorElement* src_alpha_blend_factor_node = new RgEditorElementEnum(parent_, kStrVulkanColorBlendAttachmentStateSrcAlphaBlendFactor, blend_factor_enumerators, reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->srcAlphaBlendFactor));
+            RgEditorElement* src_alpha_blend_factor_node =
+                new RgEditorElementEnum(parent_,
+                                        kStrVulkanColorBlendAttachmentStateSrcAlphaBlendFactor,
+                                        blend_factor_enumerators,
+                                        reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->srcAlphaBlendFactor));
             root_element->AppendChildItem(src_alpha_blend_factor_node);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(src_alpha_blend_factor_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(src_alpha_blend_factor_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             src_alpha_blend_factor_node->setObjectName(kStrSrcAlphaBlendFactorNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(src_alpha_blend_factor_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected = connect(
+                src_alpha_blend_factor_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(src_alpha_blend_factor_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(src_alpha_blend_factor_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "dstAlphaBlendFactor" node.
-            RgEditorElement* dst_alpha_blend_factor_node = new RgEditorElementEnum(parent_, kStrVulkanColorBlendAttachmentStateDstAlphaBlendFactor, blend_factor_enumerators, reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->dstAlphaBlendFactor));
+            RgEditorElement* dst_alpha_blend_factor_node =
+                new RgEditorElementEnum(parent_,
+                                        kStrVulkanColorBlendAttachmentStateDstAlphaBlendFactor,
+                                        blend_factor_enumerators,
+                                        reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->dstAlphaBlendFactor));
             root_element->AppendChildItem(dst_alpha_blend_factor_node);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(dst_alpha_blend_factor_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(dst_alpha_blend_factor_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.dst_alpha_blend
             dst_alpha_blend_factor_node->setObjectName(kStrDstAlphaBlendFactorNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(dst_alpha_blend_factor_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected = connect(
+                dst_alpha_blend_factor_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(dst_alpha_blend_factor_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(dst_alpha_blend_factor_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "alphaBlendOp" node.
-            RgEditorElement* alpha_blend_op_node = new RgEditorElementEnum(parent_, kStrVulkanColorBlendAttachmentStateAlphaBlendOp, blend_op_enumerators, reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->alphaBlendOp));
+            RgEditorElement* alpha_blend_op_node = new RgEditorElementEnum(parent_,
+                                                                           kStrVulkanColorBlendAttachmentStateAlphaBlendOp,
+                                                                           blend_op_enumerators,
+                                                                           reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->alphaBlendOp));
             root_element->AppendChildItem(alpha_blend_op_node);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(alpha_blend_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(alpha_blend_op_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             alpha_blend_op_node->setObjectName(kStrAlphaBlendOpNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(alpha_blend_op_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(alpha_blend_op_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(alpha_blend_op_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(alpha_blend_op_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "colorWriteMask" member values.
             const RgEnumValuesVector& color_component_flag_enumerators = GetColorComponentFlagEnumerators();
-            RgEditorElement* color_component_write_mask = new RgEditorElementEnum(parent_, kStrVulkanColorBlendAttachmentStateColorWriteMask, color_component_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->colorWriteMask), true);
+            RgEditorElement*          color_component_write_mask =
+                new RgEditorElementEnum(parent_,
+                                        kStrVulkanColorBlendAttachmentStateColorWriteMask,
+                                        color_component_flag_enumerators,
+                                        reinterpret_cast<uint32_t*>(&offset_color_blend_attachment_state->colorWriteMask),
+                                        true);
             root_element->AppendChildItem(color_component_write_mask);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(color_component_write_mask), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(color_component_write_mask),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             color_component_write_mask->setObjectName(kStrColorComponentWriteMask);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(color_component_write_mask, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected = connect(
+                color_component_write_mask, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(color_component_write_mask), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(color_component_write_mask),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
         }
     }
@@ -2521,7 +2812,10 @@ RgEditorElement* RgPipelineStateModelVulkan::InitializeComputePipelineCreateInfo
     return create_info_root_node;
 }
 
-bool RgPipelineStateModelVulkan::LoadPipelineStateFile(QWidget* parent, const std::string& pso_file_path, RgPipelineType pipeline_type, std::string& error_string)
+bool RgPipelineStateModelVulkan::LoadPipelineStateFile(QWidget*           parent,
+                                                       const std::string& pso_file_path,
+                                                       RgPipelineType     pipeline_type,
+                                                       std::string&       error_string)
 {
     bool is_ok = false;
 
@@ -2593,7 +2887,7 @@ bool RgPipelineStateModelVulkan::SavePipelineStateFile(const std::string& pso_fi
     try
     {
         std::string validation_error_string;
-        bool is_valid = CheckValidPipelineState(validation_error_string);
+        bool        is_valid = CheckValidPipelineState(validation_error_string);
 
         assert(is_valid);
         if (is_valid)
@@ -2635,7 +2929,8 @@ void RgPipelineStateModelVulkan::InitializeVkComputePipelineCreateInfo(RgEditorE
     assert(compute_pipeline_create_info != nullptr);
     if (compute_pipeline_create_info != nullptr)
     {
-        VkComputePipelineCreateInfo* vk_compute_pipeline_create_info = static_cast<VkComputePipelineCreateInfo*>(compute_pipeline_create_info->GetComputePipelineCreateInfo());
+        VkComputePipelineCreateInfo* vk_compute_pipeline_create_info =
+            static_cast<VkComputePipelineCreateInfo*>(compute_pipeline_create_info->GetComputePipelineCreateInfo());
         assert(vk_compute_pipeline_create_info != nullptr);
         if (vk_compute_pipeline_create_info != nullptr)
         {
@@ -2647,12 +2942,14 @@ void RgPipelineStateModelVulkan::InitializeVkComputePipelineCreateInfo(RgEditorE
 
             // Add the "flags" member.
             const RgEnumValuesVector& pipeline_flags_enumerators = GetPipelineCreateFlagEnumerators();
-            RgEditorElement* flags_item = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberFlags, pipeline_flags_enumerators, reinterpret_cast<uint32_t*>(&vk_compute_pipeline_create_info->flags), true);
+            RgEditorElement*          flags_item                 = new RgEditorElementEnum(
+                parent_, kStrVulkanPipelineMemberFlags, pipeline_flags_enumerators, reinterpret_cast<uint32_t*>(&vk_compute_pipeline_create_info->flags), true);
             vk_compute_pipeline_create_info_root->AppendChildItem(flags_item);
 
             // Connect to the splitter moved signal to close the drop down.
             RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(flags_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            bool               is_connected      = connect(
+                build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(flags_item), &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             flags_item->setObjectName(kStrFlagsItem);
@@ -2662,11 +2959,15 @@ void RgPipelineStateModelVulkan::InitializeVkComputePipelineCreateInfo(RgEditorE
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(flags_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(flags_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "basePipelineIndex" member.
-            RgEditorElement* base_pipeline_index_create_info = MakeNumericElement(vk_compute_pipeline_create_info_root, kStrVulkanPipelineMemberBaseIndex, &vk_compute_pipeline_create_info->basePipelineIndex);
+            RgEditorElement* base_pipeline_index_create_info = MakeNumericElement(
+                vk_compute_pipeline_create_info_root, kStrVulkanPipelineMemberBaseIndex, &vk_compute_pipeline_create_info->basePipelineIndex);
             vk_compute_pipeline_create_info_root->AppendChildItem(base_pipeline_index_create_info);
 
             // Set object name.
@@ -2695,15 +2996,19 @@ void RgPipelineStateModelVulkan::InitializePipelineLayoutCreateInfo(RgEditorElem
 
         // Descriptor Set Layout array:
         // Create the layout array root item.
-        RgEditorElementArrayElementAdd* descriptor_set_layouts_root_item = new RgEditorElementArrayElementAdd(pipeline_layout_create_info_root, kStrVulkanPipelineLayoutSetLayouts,
-            [=](int element_index) { RemoveElement(pipeline_layout_create_info->pSetLayouts, pipeline_layout_create_info->setLayoutCount, element_index); });
+        RgEditorElementArrayElementAdd* descriptor_set_layouts_root_item =
+            new RgEditorElementArrayElementAdd(pipeline_layout_create_info_root, kStrVulkanPipelineLayoutSetLayouts, [=](int element_index) {
+                RemoveElement(pipeline_layout_create_info->pSetLayouts, pipeline_layout_create_info->setLayoutCount, element_index);
+            });
 
         // Set object name.
         descriptor_set_layouts_root_item->setObjectName(kStrDescriptorSetLayoutsRootItem);
 
         // Create the setLayoutCount member.
-        RgEditorElement* descriptor_set_layout_count_item = MakeNumericElement(nullptr, kStrVulkanPipelineLayoutDescriptorSetLayoutCount,
-            &pipeline_layout_create_info->setLayoutCount, [=] { HandlePipelineLayoutDescriptorSetLayoutCountChanged(descriptor_set_layouts_root_item, pipeline_layout_create_info); });
+        RgEditorElement* descriptor_set_layout_count_item =
+            MakeNumericElement(nullptr, kStrVulkanPipelineLayoutDescriptorSetLayoutCount, &pipeline_layout_create_info->setLayoutCount, [=] {
+                HandlePipelineLayoutDescriptorSetLayoutCountChanged(descriptor_set_layouts_root_item, pipeline_layout_create_info);
+            });
 
         // Set object name.
         descriptor_set_layout_count_item->setObjectName(kStrDescriptorSetLayoutCountItem);
@@ -2719,15 +3024,19 @@ void RgPipelineStateModelVulkan::InitializePipelineLayoutCreateInfo(RgEditorElem
 
         // Push Constants array:
         // Create the push constants array root item.
-        RgEditorElementArrayElementAdd* push_constants_array_root_item = new RgEditorElementArrayElementAdd(pipeline_layout_create_info_root, kStrVulkanPipelineLayoutPushConstantRanges,
-            [=](int element_index) { RemoveElement(pipeline_layout_create_info->pPushConstantRanges, pipeline_layout_create_info->pushConstantRangeCount, element_index); });
+        RgEditorElementArrayElementAdd* push_constants_array_root_item =
+            new RgEditorElementArrayElementAdd(pipeline_layout_create_info_root, kStrVulkanPipelineLayoutPushConstantRanges, [=](int element_index) {
+                RemoveElement(pipeline_layout_create_info->pPushConstantRanges, pipeline_layout_create_info->pushConstantRangeCount, element_index);
+            });
 
         // Set object name.
         push_constants_array_root_item->setObjectName(kStrPushConstantArrayRootItem);
 
         // Create the pushConstantRangeCount member.
-        RgEditorElement* push_constants_count_item = MakeNumericElement(nullptr, kStrVulkanPipelineLayoutPushConstantRangeCount,
-            &pipeline_layout_create_info->pushConstantRangeCount, [=] { HandlePushConstantsCountChanged(push_constants_array_root_item, pipeline_layout_create_info); });
+        RgEditorElement* push_constants_count_item =
+            MakeNumericElement(nullptr, kStrVulkanPipelineLayoutPushConstantRangeCount, &pipeline_layout_create_info->pushConstantRangeCount, [=] {
+                HandlePushConstantsCountChanged(push_constants_array_root_item, pipeline_layout_create_info);
+            });
 
         // Set object name.
         push_constants_count_item->setObjectName(kStrPushConstantsCountItem);
@@ -2743,7 +3052,8 @@ void RgPipelineStateModelVulkan::InitializePipelineLayoutCreateInfo(RgEditorElem
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfo(RgEditorElement* root_element, VkDescriptorSetLayoutCreateInfo* descriptor_set_layout_create_info)
+void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfo(RgEditorElement*                 root_element,
+                                                                         VkDescriptorSetLayoutCreateInfo* descriptor_set_layout_create_info)
 {
     assert(root_element != nullptr);
     assert(descriptor_set_layout_create_info != nullptr);
@@ -2751,35 +3061,50 @@ void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfo(RgEdito
     {
         // Add the "flags" node.
         const RgEnumValuesVector& descriptor_set_layout_create_flags = GetDescriptorSetLayoutCreateFlagEnumerators();
-        RgEditorElement* descriptor_set_layout_flags_node = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberFlags, descriptor_set_layout_create_flags, reinterpret_cast<uint32_t*>(&descriptor_set_layout_create_info->flags), true);
+        RgEditorElement*          descriptor_set_layout_flags_node   = new RgEditorElementEnum(parent_,
+                                                                                    kStrVulkanPipelineMemberFlags,
+                                                                                    descriptor_set_layout_create_flags,
+                                                                                    reinterpret_cast<uint32_t*>(&descriptor_set_layout_create_info->flags),
+                                                                                    true);
         root_element->AppendChildItem(descriptor_set_layout_flags_node);
 
         // Connect to the splitter moved signal to close the drop down.
         RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-        bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(descriptor_set_layout_flags_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        bool               is_connected      = connect(build_view_vulkan,
+                                    &RgBuildViewVulkan::SplitterMoved,
+                                    static_cast<RgEditorElementEnum*>(descriptor_set_layout_flags_node),
+                                    &RgEditorElementEnum::HotKeyPressedSignal);
 
         // Set object name.
         descriptor_set_layout_flags_node->setObjectName(kStrDescriptorSetLayoutFlagsNode);
 
         // Connect to the enum list widget status signal.
-        is_connected = connect(descriptor_set_layout_flags_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+        is_connected = connect(
+            descriptor_set_layout_flags_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
         assert(is_connected);
 
         // Connect the shortcut hot key signal.
-        is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(descriptor_set_layout_flags_node), &RgEditorElementEnum::HotKeyPressedSignal);
+        is_connected = connect(this,
+                               &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                               static_cast<RgEditorElementEnum*>(descriptor_set_layout_flags_node),
+                               &RgEditorElementEnum::HotKeyPressedSignal);
         assert(is_connected);
 
         // Binding array:
         // Create the binding array root item.
-        RgEditorElementArrayElementAdd* descriptor_set_layout_bindings_root_item = new RgEditorElementArrayElementAdd(root_element, kStrVulkanPipelineLayoutDescriptorSetLayoutBindings,
-            [=](int element_index) { RemoveElement(descriptor_set_layout_create_info->pBindings, descriptor_set_layout_create_info->bindingCount, element_index); });
+        RgEditorElementArrayElementAdd* descriptor_set_layout_bindings_root_item =
+            new RgEditorElementArrayElementAdd(root_element, kStrVulkanPipelineLayoutDescriptorSetLayoutBindings, [=](int element_index) {
+                RemoveElement(descriptor_set_layout_create_info->pBindings, descriptor_set_layout_create_info->bindingCount, element_index);
+            });
 
         // Set object name.
         descriptor_set_layout_bindings_root_item->setObjectName(kStrDescriptorSetLayoutBindingsRootItem);
 
         // Create the bindingCount member.
-        RgEditorElement* descriptor_set_binding_count_item = MakeNumericElement(nullptr, kStrVulkanPipelineLayoutDescriptorSetLayoutBindingCount,
-            &descriptor_set_layout_create_info->bindingCount, [=] { HandleDescriptorSetLayoutBindingCountChanged(descriptor_set_layout_bindings_root_item, descriptor_set_layout_create_info); });
+        RgEditorElement* descriptor_set_binding_count_item =
+            MakeNumericElement(nullptr, kStrVulkanPipelineLayoutDescriptorSetLayoutBindingCount, &descriptor_set_layout_create_info->bindingCount, [=] {
+                HandleDescriptorSetLayoutBindingCountChanged(descriptor_set_layout_bindings_root_item, descriptor_set_layout_create_info);
+            });
 
         // Set object name.
         descriptor_set_binding_count_item->setObjectName(kStrDescriptorSetBindingCountItem);
@@ -2795,9 +3120,12 @@ void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutCreateInfo(RgEdito
     }
 }
 
-void RgPipelineStateModelVulkan::HandlePipelineLayoutDescriptorSetLayoutCountChanged(RgEditorElement* root_element, VkPipelineLayoutCreateInfo* pipeline_layout_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandlePipelineLayoutDescriptorSetLayoutCountChanged(RgEditorElement*            root_element,
+                                                                                     VkPipelineLayoutCreateInfo* pipeline_layout_create_info,
+                                                                                     bool                        first_init)
 {
-    ResizeHandler(root_element,
+    ResizeHandler(
+        root_element,
         pipeline_layout_create_info->setLayoutCount,
         pipeline_layout_create_info->pSetLayouts,
         kStrVulkanDescriptorSetLayoutHandle,
@@ -2805,9 +3133,12 @@ void RgPipelineStateModelVulkan::HandlePipelineLayoutDescriptorSetLayoutCountCha
         first_init);
 }
 
-void RgPipelineStateModelVulkan::HandlePushConstantsCountChanged(RgEditorElement* root_element, VkPipelineLayoutCreateInfo* pipeline_layout_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandlePushConstantsCountChanged(RgEditorElement*            root_element,
+                                                                 VkPipelineLayoutCreateInfo* pipeline_layout_create_info,
+                                                                 bool                        first_init)
 {
-    ResizeHandler(root_element,
+    ResizeHandler(
+        root_element,
         pipeline_layout_create_info->pushConstantRangeCount,
         pipeline_layout_create_info->pPushConstantRanges,
         kStrVulkanPushConstantRangeType,
@@ -2815,9 +3146,12 @@ void RgPipelineStateModelVulkan::HandlePushConstantsCountChanged(RgEditorElement
         first_init);
 }
 
-void RgPipelineStateModelVulkan::HandleDescriptorSetLayoutBindingCountChanged(RgEditorElement* root_element, VkDescriptorSetLayoutCreateInfo* descriptor_set_layout_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleDescriptorSetLayoutBindingCountChanged(RgEditorElement*                 root_element,
+                                                                              VkDescriptorSetLayoutCreateInfo* descriptor_set_layout_create_info,
+                                                                              bool                             first_init)
 {
-    ResizeHandler(root_element,
+    ResizeHandler(
+        root_element,
         descriptor_set_layout_create_info->bindingCount,
         descriptor_set_layout_create_info->pBindings,
         kStrVulkanDescriptorSetLayoutBindingType,
@@ -2825,7 +3159,9 @@ void RgPipelineStateModelVulkan::HandleDescriptorSetLayoutBindingCountChanged(Rg
         first_init);
 }
 
-void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutBinding(RgEditorElement* root_element, VkDescriptorSetLayoutBinding* base_descriptor_set_layout, int item_index)
+void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutBinding(RgEditorElement*              root_element,
+                                                                      VkDescriptorSetLayoutBinding* base_descriptor_set_layout,
+                                                                      int                           item_index)
 {
     assert(root_element != nullptr);
     assert(base_descriptor_set_layout != nullptr);
@@ -2836,7 +3172,8 @@ void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutBinding(RgEditorEl
         if (offset_descriptor_set_layout != nullptr)
         {
             // Add the "binding" node.
-            RgEditorElement* descriptor_set_layout_binding_index_node = MakeNumericElement(root_element, kStrVulkanDescriptorSetLayoutBinding, &offset_descriptor_set_layout->binding);
+            RgEditorElement* descriptor_set_layout_binding_index_node =
+                MakeNumericElement(root_element, kStrVulkanDescriptorSetLayoutBinding, &offset_descriptor_set_layout->binding);
             root_element->AppendChildItem(descriptor_set_layout_binding_index_node);
 
             // Set object name.
@@ -2844,26 +3181,37 @@ void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutBinding(RgEditorEl
 
             // Add the "descriptorType" node.
             const RgEnumValuesVector& descriptor_type_enumerators = GetDescriptorTypeEnumerators();
-            RgEditorElement* descriptor_type_node = new RgEditorElementEnum(parent_, kStrVulkanDescriptorSetLayoutBindingDescriptorType, descriptor_type_enumerators, reinterpret_cast<uint32_t*>(&offset_descriptor_set_layout->descriptorType));
+            RgEditorElement*          descriptor_type_node        = new RgEditorElementEnum(parent_,
+                                                                            kStrVulkanDescriptorSetLayoutBindingDescriptorType,
+                                                                            descriptor_type_enumerators,
+                                                                            reinterpret_cast<uint32_t*>(&offset_descriptor_set_layout->descriptorType));
             root_element->AppendChildItem(descriptor_type_node);
 
             // Connect to the splitter moved signal to close the drop down.
             RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(descriptor_type_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            bool               is_connected      = connect(build_view_vulkan,
+                                        &RgBuildViewVulkan::SplitterMoved,
+                                        static_cast<RgEditorElementEnum*>(descriptor_type_node),
+                                        &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             descriptor_type_node->setObjectName(kStrDescriptorTypeNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(descriptor_type_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(descriptor_type_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(descriptor_type_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(descriptor_type_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "descriptorCount" node.
-            RgEditorElement* descriptor_set_layout_binding_count_node = MakeNumericElement(root_element, kStrVulkanDescriptorSetLayoutBindingDescriptorCount, &offset_descriptor_set_layout->descriptorCount);
+            RgEditorElement* descriptor_set_layout_binding_count_node =
+                MakeNumericElement(root_element, kStrVulkanDescriptorSetLayoutBindingDescriptorCount, &offset_descriptor_set_layout->descriptorCount);
             root_element->AppendChildItem(descriptor_set_layout_binding_count_node);
 
             // Set object name.
@@ -2871,22 +3219,33 @@ void RgPipelineStateModelVulkan::InitializeDescriptorSetLayoutBinding(RgEditorEl
 
             // Add the "stageFlags" member node.
             const RgEnumValuesVector& stage_flag_enumerators = GetShaderStageFlagEnumerators();
-            RgEditorElement* stage_flags_node = new RgEditorElementEnum(parent_, kStrVulkanPipelineLayoutStageFlags, stage_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_descriptor_set_layout->stageFlags), true);
+            RgEditorElement*          stage_flags_node       = new RgEditorElementEnum(parent_,
+                                                                        kStrVulkanPipelineLayoutStageFlags,
+                                                                        stage_flag_enumerators,
+                                                                        reinterpret_cast<uint32_t*>(&offset_descriptor_set_layout->stageFlags),
+                                                                        true);
             root_element->AppendChildItem(stage_flags_node);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(stage_flags_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(stage_flags_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             stage_flags_node->setObjectName(kStrStageFlagsNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(stage_flags_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(stage_flags_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(stage_flags_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(stage_flags_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
         }
     }
@@ -2903,7 +3262,8 @@ void RgPipelineStateModelVulkan::InitializeDescriptorSetLayout(RgEditorElement* 
         if (offset_descriptor_set_layout != nullptr)
         {
             // Add the "pDescriptorSetLayout" handle member.
-            RgEditorElement* descriptor_set_layout_handle_node = MakeNumericElement(root_element, kStrVulkanDescriptorSetLayoutHandle, reinterpret_cast<uint32_t*>(offset_descriptor_set_layout));
+            RgEditorElement* descriptor_set_layout_handle_node =
+                MakeNumericElement(root_element, kStrVulkanDescriptorSetLayoutHandle, reinterpret_cast<uint32_t*>(offset_descriptor_set_layout));
             root_element->AppendChildItem(descriptor_set_layout_handle_node);
 
             // Set object name.
@@ -2924,22 +3284,30 @@ void RgPipelineStateModelVulkan::InitializePushConstantRange(RgEditorElement* ro
         {
             // Add the "stageFlags" member node.
             const RgEnumValuesVector& stage_flag_enumerators = GetShaderStageFlagEnumerators();
-            RgEditorElement* stage_flags_node = new RgEditorElementEnum(parent_, kStrVulkanPipelineLayoutStageFlags, stage_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_push_constant->stageFlags), true);
+            RgEditorElement*          stage_flags_node       = new RgEditorElementEnum(
+                parent_, kStrVulkanPipelineLayoutStageFlags, stage_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_push_constant->stageFlags), true);
             root_element->AppendChildItem(stage_flags_node);
 
             // Connect to the splitter moved signal to close the drop down.
             RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(stage_flags_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            bool               is_connected      = connect(build_view_vulkan,
+                                        &RgBuildViewVulkan::SplitterMoved,
+                                        static_cast<RgEditorElementEnum*>(stage_flags_node),
+                                        &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             stage_flags_node->setObjectName(kStrStageFlagsNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(stage_flags_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(stage_flags_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(stage_flags_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(stage_flags_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "offset" member.
@@ -2979,15 +3347,19 @@ void RgPipelineStateModelVulkan::InitializeRenderPassCreateInfo(RgEditorElement*
 
         // Attachment array:
         // Create the attachments array root item.
-        RgEditorElementArrayElementAdd* attachments_root_item = new RgEditorElementArrayElementAdd(render_pass_create_info_root, kStrVulkanRenderPassAttachments,
-            [=](int element_index) { RemoveElement(render_pass_create_info->pAttachments, render_pass_create_info->attachmentCount, element_index); });
+        RgEditorElementArrayElementAdd* attachments_root_item =
+            new RgEditorElementArrayElementAdd(render_pass_create_info_root, kStrVulkanRenderPassAttachments, [=](int element_index) {
+                RemoveElement(render_pass_create_info->pAttachments, render_pass_create_info->attachmentCount, element_index);
+            });
 
         // Set object name.
         attachments_root_item->setObjectName(kStrColorAttachmentsRootItem);
 
         // Create the attachmentCount member.
-        RgEditorElement* attachment_count_item = MakeNumericElement(nullptr, kStrVulkanRenderPassAttachmentCount,
-            &render_pass_create_info->attachmentCount, [=] { HandleRenderPassAttachmentCountChanged(attachments_root_item, render_pass_create_info); });
+        RgEditorElement* attachment_count_item =
+            MakeNumericElement(nullptr, kStrVulkanRenderPassAttachmentCount, &render_pass_create_info->attachmentCount, [=] {
+                HandleRenderPassAttachmentCountChanged(attachments_root_item, render_pass_create_info);
+            });
 
         // Set object name.
         attachment_count_item->setObjectName(kStrAttachmentCountItem);
@@ -3003,36 +3375,37 @@ void RgPipelineStateModelVulkan::InitializeRenderPassCreateInfo(RgEditorElement*
 
         // Subpass array:
         // Create the subpasses array root item.
-        RgEditorElementArrayElementAdd* subpass_root_item = new RgEditorElementArrayElementAdd(render_pass_create_info_root, kStrVulkanRenderPassSubpasses,
-            [=](int element_index)
-        {
-            // Remove the artificial "resolveAttachmentCount" that was configured per-subpass.
-            auto resolve_attachment_count_iter = resolve_attachment_count_per_subpass_.find(element_index);
-            if (resolve_attachment_count_iter != resolve_attachment_count_per_subpass_.end())
-            {
-                // Is the resolveAttachmentCount variable valid?
-                uint32_t* resolve_attachment_count = resolve_attachment_count_iter->second;
-                assert(resolve_attachment_count != nullptr);
-                if (resolve_attachment_count != nullptr)
+        RgEditorElementArrayElementAdd* subpass_root_item =
+            new RgEditorElementArrayElementAdd(render_pass_create_info_root, kStrVulkanRenderPassSubpasses, [=](int element_index) {
+                // Remove the artificial "resolveAttachmentCount" that was configured per-subpass.
+                auto resolve_attachment_count_iter = resolve_attachment_count_per_subpass_.find(element_index);
+                if (resolve_attachment_count_iter != resolve_attachment_count_per_subpass_.end())
                 {
-                    // Destroy the resolveAttachmentCount variable associated with the subpass.
-                    RG_SAFE_DELETE(resolve_attachment_count);
+                    // Is the resolveAttachmentCount variable valid?
+                    uint32_t* resolve_attachment_count = resolve_attachment_count_iter->second;
+                    assert(resolve_attachment_count != nullptr);
+                    if (resolve_attachment_count != nullptr)
+                    {
+                        // Destroy the resolveAttachmentCount variable associated with the subpass.
+                        RG_SAFE_DELETE(resolve_attachment_count);
 
-                    // Erase the variable since the subpass is being destroyed.
-                    resolve_attachment_count_per_subpass_.erase(resolve_attachment_count_iter);
+                        // Erase the variable since the subpass is being destroyed.
+                        resolve_attachment_count_per_subpass_.erase(resolve_attachment_count_iter);
+                    }
                 }
-            }
 
-            // Remove the subpass at the given index.
-            RemoveElement(render_pass_create_info->pSubpasses, render_pass_create_info->subpassCount, element_index);
-        });
+                // Remove the subpass at the given index.
+                RemoveElement(render_pass_create_info->pSubpasses, render_pass_create_info->subpassCount, element_index);
+            });
 
         // Set object name.
         subpass_root_item->setObjectName(kStrSubpassRootItem);
 
         // Create the subpassCount member.
-        RgEditorElement* subpass_description_count_item = MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassCount,
-            &render_pass_create_info->subpassCount, [=] { HandleRenderPassSubpassCountChanged(subpass_root_item, render_pass_create_info); });
+        RgEditorElement* subpass_description_count_item =
+            MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassCount, &render_pass_create_info->subpassCount, [=] {
+                HandleRenderPassSubpassCountChanged(subpass_root_item, render_pass_create_info);
+            });
 
         // Set object name.
         subpass_description_count_item->setObjectName(kStrSubpassDescriptionCountItem);
@@ -3048,15 +3421,19 @@ void RgPipelineStateModelVulkan::InitializeRenderPassCreateInfo(RgEditorElement*
 
         // Dependency array:
         // Create the dependency array root item.
-        RgEditorElementArrayElementAdd* dependencies_root_item = new RgEditorElementArrayElementAdd(render_pass_create_info_root, kStrVulkanRenderPassDependencies,
-            [=](int element_index) { RemoveElement(render_pass_create_info->pDependencies, render_pass_create_info->dependencyCount, element_index); });
+        RgEditorElementArrayElementAdd* dependencies_root_item =
+            new RgEditorElementArrayElementAdd(render_pass_create_info_root, kStrVulkanRenderPassDependencies, [=](int element_index) {
+                RemoveElement(render_pass_create_info->pDependencies, render_pass_create_info->dependencyCount, element_index);
+            });
 
         // Set object name.
         dependencies_root_item->setObjectName(kStrDependenciesRootItem);
 
         // Create the dependencyCount member.
-        RgEditorElement* dependency_description_count_item = MakeNumericElement(nullptr, kStrVulkanRenderPassDependencyCount,
-            &render_pass_create_info->dependencyCount, [=] { HandleRenderPassDependencyCountChanged(dependencies_root_item, render_pass_create_info); });
+        RgEditorElement* dependency_description_count_item =
+            MakeNumericElement(nullptr, kStrVulkanRenderPassDependencyCount, &render_pass_create_info->dependencyCount, [=] {
+                HandleRenderPassDependencyCountChanged(dependencies_root_item, render_pass_create_info);
+            });
 
         // Set object name.
         dependency_description_count_item->setObjectName(kStrDependencyDescriptionCountItem);
@@ -3072,37 +3449,57 @@ void RgPipelineStateModelVulkan::InitializeRenderPassCreateInfo(RgEditorElement*
     }
 }
 
-void RgPipelineStateModelVulkan::HandleRenderPassAttachmentCountChanged(RgEditorElement* root_element, VkRenderPassCreateInfo* render_pass_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleRenderPassAttachmentCountChanged(RgEditorElement*        root_element,
+                                                                        VkRenderPassCreateInfo* render_pass_create_info,
+                                                                        bool                    first_init)
 {
     ResizeHandler(root_element,
-        render_pass_create_info->attachmentCount,
-        render_pass_create_info->pAttachments,
-        kStrVulkanRenderPassAttachmentDescription,
-        std::bind(&RgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreateInfo, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-        first_init);
+                  render_pass_create_info->attachmentCount,
+                  render_pass_create_info->pAttachments,
+                  kStrVulkanRenderPassAttachmentDescription,
+                  std::bind(&RgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreateInfo,
+                            this,
+                            std::placeholders::_1,
+                            std::placeholders::_2,
+                            std::placeholders::_3),
+                  first_init);
 }
 
-void RgPipelineStateModelVulkan::HandleRenderPassSubpassCountChanged(RgEditorElement* root_element, VkRenderPassCreateInfo* render_pass_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleRenderPassSubpassCountChanged(RgEditorElement*        root_element,
+                                                                     VkRenderPassCreateInfo* render_pass_create_info,
+                                                                     bool                    first_init)
 {
     ResizeHandler(root_element,
-        render_pass_create_info->subpassCount,
-        render_pass_create_info->pSubpasses,
-        kStrVulkanRenderPassSubpassDescription,
-        std::bind(&RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInfo, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-        first_init);
+                  render_pass_create_info->subpassCount,
+                  render_pass_create_info->pSubpasses,
+                  kStrVulkanRenderPassSubpassDescription,
+                  std::bind(&RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInfo,
+                            this,
+                            std::placeholders::_1,
+                            std::placeholders::_2,
+                            std::placeholders::_3),
+                  first_init);
 }
 
-void RgPipelineStateModelVulkan::HandleRenderPassDependencyCountChanged(RgEditorElement* root_element, VkRenderPassCreateInfo* render_pass_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleRenderPassDependencyCountChanged(RgEditorElement*        root_element,
+                                                                        VkRenderPassCreateInfo* render_pass_create_info,
+                                                                        bool                    first_init)
 {
     ResizeHandler(root_element,
-        render_pass_create_info->dependencyCount,
-        render_pass_create_info->pDependencies,
-        kStrVulkanRenderPassDependencyDescription,
-        std::bind(&RgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreateInfo, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-        first_init);
+                  render_pass_create_info->dependencyCount,
+                  render_pass_create_info->pDependencies,
+                  kStrVulkanRenderPassDependencyDescription,
+                  std::bind(&RgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreateInfo,
+                            this,
+                            std::placeholders::_1,
+                            std::placeholders::_2,
+                            std::placeholders::_3),
+                  first_init);
 }
 
-void RgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreateInfo(RgEditorElement* root_element, VkAttachmentDescription* base_attachment_description, int item_index)
+void RgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreateInfo(RgEditorElement*         root_element,
+                                                                                     VkAttachmentDescription* base_attachment_description,
+                                                                                     int                      item_index)
 {
     assert(root_element != nullptr);
     assert(base_attachment_description != nullptr);
@@ -3114,12 +3511,19 @@ void RgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
         {
             // Add the "flags" member.
             const RgEnumValuesVector& attachment_description_flag_enumerators = GetAttachmentDescriptionFlagEnumerators();
-            RgEditorElement* flags_element = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberFlags, attachment_description_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->flags), true);
+            RgEditorElement*          flags_element                           = new RgEditorElementEnum(parent_,
+                                                                     kStrVulkanPipelineMemberFlags,
+                                                                     attachment_description_flag_enumerators,
+                                                                     reinterpret_cast<uint32_t*>(&offset_attachment_description->flags),
+                                                                     true);
             root_element->AppendChildItem(flags_element);
 
             // Connect to the splitter moved signal to close the drop down.
             RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(flags_element), &RgEditorElementEnum::HotKeyPressedSignal);
+            bool               is_connected      = connect(build_view_vulkan,
+                                        &RgBuildViewVulkan::SplitterMoved,
+                                        static_cast<RgEditorElementEnum*>(flags_element),
+                                        &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             flags_element->setObjectName(kStrFlagsElement);
@@ -3129,17 +3533,24 @@ void RgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(flags_element), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(flags_element),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "format" member values.
             const RgEnumValuesVector& format_enumerators = GetFormatEnumerators();
-            RgEditorElement* format_element = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberVertexFormat, format_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->format));
+            RgEditorElement*          format_element     = new RgEditorElementEnum(
+                parent_, kStrVulkanPipelineMemberVertexFormat, format_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->format));
             root_element->AppendChildItem(format_element);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(format_element), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(format_element),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             format_element->setObjectName(kStrFormatElement);
@@ -3149,11 +3560,15 @@ void RgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(format_element), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(format_element),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "samples" member.
-            RgEditorElement* samples_item = MakeNumericElement(root_element, kStrVulkanRenderPassAttachmentSamples, reinterpret_cast<uint32_t*>(&offset_attachment_description->samples));
+            RgEditorElement* samples_item =
+                MakeNumericElement(root_element, kStrVulkanRenderPassAttachmentSamples, reinterpret_cast<uint32_t*>(&offset_attachment_description->samples));
             root_element->AppendChildItem(samples_item);
 
             // Set object name.
@@ -3161,12 +3576,16 @@ void RgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
 
             // Add the "loadOp" member values.
             const RgEnumValuesVector& load_op_enumerators = GetAttachmentLoadOpEnumerators();
-            RgEditorElement* load_op_item = new RgEditorElementEnum(parent_, kStrVulkanRenderPassLoadOp, load_op_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->loadOp));
+            RgEditorElement*          load_op_item        = new RgEditorElementEnum(
+                parent_, kStrVulkanRenderPassLoadOp, load_op_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->loadOp));
             root_element->AppendChildItem(load_op_item);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(load_op_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(load_op_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             load_op_item->setObjectName(kStrLoadOpItem);
@@ -3176,17 +3595,24 @@ void RgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(load_op_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(load_op_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "storeOp" member values.
             const RgEnumValuesVector& store_op_enumerators = GetAttachmentStoreOpEnumerators();
-            RgEditorElement* store_op_item = new RgEditorElementEnum(parent_, kStrVulkanRenderPassStoreOp, store_op_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->storeOp));
+            RgEditorElement*          store_op_item        = new RgEditorElementEnum(
+                parent_, kStrVulkanRenderPassStoreOp, store_op_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->storeOp));
             root_element->AppendChildItem(store_op_item);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(store_op_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(store_op_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             store_op_item->setObjectName(kStrStoreOpItem);
@@ -3196,90 +3622,129 @@ void RgPipelineStateModelVulkan::InitializeRenderPassAttachmentDescriptionCreate
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(store_op_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(store_op_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "stencilLoadOp" member values.
-            RgEditorElement* stencil_load_op_item = new RgEditorElementEnum(parent_, kStrVulkanRenderPassStencilLoadOp, load_op_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->stencilLoadOp));
+            RgEditorElement* stencil_load_op_item = new RgEditorElementEnum(
+                parent_, kStrVulkanRenderPassStencilLoadOp, load_op_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->stencilLoadOp));
             root_element->AppendChildItem(stencil_load_op_item);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(stencil_load_op_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(stencil_load_op_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             stencil_load_op_item->setObjectName(kStrStencilLoadOpItem);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(stencil_load_op_item, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(stencil_load_op_item, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(stencil_load_op_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(stencil_load_op_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "stencilStoreOp" member values.
-            RgEditorElement* stencil_store_op_item = new RgEditorElementEnum(parent_, kStrVulkanRenderPassStencilStoreOp, store_op_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->stencilStoreOp));
+            RgEditorElement* stencil_store_op_item = new RgEditorElementEnum(
+                parent_, kStrVulkanRenderPassStencilStoreOp, store_op_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->stencilStoreOp));
             root_element->AppendChildItem(stencil_store_op_item);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(stencil_store_op_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(stencil_store_op_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             stencil_store_op_item->setObjectName(kStrStencilStoreOpItem);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(stencil_store_op_item, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(stencil_store_op_item, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(stencil_store_op_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(stencil_store_op_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "initialLayout" member values.
             const RgEnumValuesVector& image_layout_enumerators = GetImageLayoutEnumerators();
-            RgEditorElement* initial_layout_item = new RgEditorElementEnum(parent_, kStrVulkanRenderPassInitialLayout, image_layout_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->initialLayout));
+            RgEditorElement*          initial_layout_item      = new RgEditorElementEnum(parent_,
+                                                                           kStrVulkanRenderPassInitialLayout,
+                                                                           image_layout_enumerators,
+                                                                           reinterpret_cast<uint32_t*>(&offset_attachment_description->initialLayout));
             root_element->AppendChildItem(initial_layout_item);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(initial_layout_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(initial_layout_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             initial_layout_item->setObjectName(kStrInitialLayoutItem);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(initial_layout_item, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(initial_layout_item, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(initial_layout_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(initial_layout_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "finalLayout" member values.
-            RgEditorElement* final_layout_item = new RgEditorElementEnum(parent_, kStrVulkanRenderPassFinalLayout, image_layout_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->finalLayout));
+            RgEditorElement* final_layout_item = new RgEditorElementEnum(
+                parent_, kStrVulkanRenderPassFinalLayout, image_layout_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_description->finalLayout));
             root_element->AppendChildItem(final_layout_item);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(final_layout_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(final_layout_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             final_layout_item->setObjectName(kStrFinalLayoutItem);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(final_layout_item, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(final_layout_item, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(final_layout_item), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(final_layout_item),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
         }
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInfo(RgEditorElement* root_element, VkSubpassDescription* base_subpass_description, int item_index)
+void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInfo(RgEditorElement*      root_element,
+                                                                                  VkSubpassDescription* base_subpass_description,
+                                                                                  int                   item_index)
 {
     assert(root_element != nullptr);
     assert(base_subpass_description != nullptr);
@@ -3291,12 +3756,17 @@ void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
         {
             // Add the "flags" member.
             const RgEnumValuesVector& subpass_description_flag_enumerators = GetSubpassDescriptionFlagEnumerators();
-            RgEditorElement* flags = new RgEditorElementEnum(parent_, kStrVulkanPipelineMemberFlags, subpass_description_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_subpass_description->flags), true);
+            RgEditorElement*          flags                                = new RgEditorElementEnum(parent_,
+                                                             kStrVulkanPipelineMemberFlags,
+                                                             subpass_description_flag_enumerators,
+                                                             reinterpret_cast<uint32_t*>(&offset_subpass_description->flags),
+                                                             true);
             root_element->AppendChildItem(flags);
 
             // Connect to the splitter moved signal to close the drop down.
             RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(flags), &RgEditorElementEnum::HotKeyPressedSignal);
+            bool               is_connected      = connect(
+                build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(flags), &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             flags->setObjectName(kStrFlags);
@@ -3306,40 +3776,56 @@ void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(flags), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(
+                this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(flags), &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "pipelineBindPoint" member.
             const RgEnumValuesVector& pipeline_bind_point_enumerators = GetPipelineBindPointEnumerators();
-            RgEditorElement* new_pipeline_bind_point_node = new RgEditorElementEnum(parent_, kStrVulkanRenderPassDependencyPipelineBindPoint, pipeline_bind_point_enumerators, reinterpret_cast<uint32_t*>(&offset_subpass_description->pipelineBindPoint));
+            RgEditorElement*          new_pipeline_bind_point_node =
+                new RgEditorElementEnum(parent_,
+                                        kStrVulkanRenderPassDependencyPipelineBindPoint,
+                                        pipeline_bind_point_enumerators,
+                                        reinterpret_cast<uint32_t*>(&offset_subpass_description->pipelineBindPoint));
             root_element->AppendChildItem(new_pipeline_bind_point_node);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(new_pipeline_bind_point_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(new_pipeline_bind_point_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             new_pipeline_bind_point_node->setObjectName(kStrPipelineBindPointNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(new_pipeline_bind_point_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected = connect(
+                new_pipeline_bind_point_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(new_pipeline_bind_point_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(new_pipeline_bind_point_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
-        // Input attachment array:
+            // Input attachment array:
             // Create the input attachment array root item.
-            RgEditorElementArrayElementAdd* input_attachments_root_item = new RgEditorElementArrayElementAdd(root_element, kStrVulkanRenderPassSubpassInputAttachments,
-                [=](int element_index) { RemoveElement(offset_subpass_description->pInputAttachments, offset_subpass_description->inputAttachmentCount, element_index); });
+            RgEditorElementArrayElementAdd* input_attachments_root_item =
+                new RgEditorElementArrayElementAdd(root_element, kStrVulkanRenderPassSubpassInputAttachments, [=](int element_index) {
+                    RemoveElement(offset_subpass_description->pInputAttachments, offset_subpass_description->inputAttachmentCount, element_index);
+                });
 
             // Set object name.
             input_attachments_root_item->setObjectName(kStrInputAttachmentsRootItem);
 
             // Create the input attachment count member.
-            RgEditorElement* input_attachment_count_node = MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassInputAttachmentCount,
-                &offset_subpass_description->inputAttachmentCount, [=] { HandleRenderPassSubpassInputAttachmentCountChanged(input_attachments_root_item, offset_subpass_description); });
+            RgEditorElement* input_attachment_count_node =
+                MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassInputAttachmentCount, &offset_subpass_description->inputAttachmentCount, [=] {
+                    HandleRenderPassSubpassInputAttachmentCountChanged(input_attachments_root_item, offset_subpass_description);
+                });
 
             // Set object name.
             input_attachment_count_node->setObjectName(kStrInputAttachmentCountNode);
@@ -3353,17 +3839,21 @@ void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
             // Initialize the pInputAttachments rows.
             HandleRenderPassSubpassInputAttachmentCountChanged(input_attachments_root_item, offset_subpass_description, true);
 
-        // Color attachment and resolve attachment array:
+            // Color attachment and resolve attachment array:
             // Create the color attachment array root item.
-            RgEditorElementArrayElementAdd* color_attachments_root_item = new RgEditorElementArrayElementAdd(root_element, kStrVulkanRenderPassSubpassColorAttachments,
-                [=](int element_index) { RemoveElement(offset_subpass_description->pColorAttachments, offset_subpass_description->colorAttachmentCount, element_index); });
+            RgEditorElementArrayElementAdd* color_attachments_root_item =
+                new RgEditorElementArrayElementAdd(root_element, kStrVulkanRenderPassSubpassColorAttachments, [=](int element_index) {
+                    RemoveElement(offset_subpass_description->pColorAttachments, offset_subpass_description->colorAttachmentCount, element_index);
+                });
 
             // Set object name.
             color_attachments_root_item->setObjectName(kStrColorAttachmentsRootItem);
 
             // Create the color attachment count member.
-            RgEditorElement* color_attachment_count_node = MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassColorAttachmentCount,
-                &offset_subpass_description->colorAttachmentCount, [=] { HandleRenderPassSubpassColorAttachmentCountChanged(color_attachments_root_item, offset_subpass_description); });
+            RgEditorElement* color_attachment_count_node =
+                MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassColorAttachmentCount, &offset_subpass_description->colorAttachmentCount, [=] {
+                    HandleRenderPassSubpassColorAttachmentCountChanged(color_attachments_root_item, offset_subpass_description);
+                });
 
             // Set object name.
             color_attachment_count_node->setObjectName(kStrColorAttachmentCountNode);
@@ -3380,7 +3870,7 @@ void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
             int subpass_index = item_index;
 
             // Create a new resolve attachment count. Each subpass will get its own.
-            uint32_t* resolve_attachment_count = new uint32_t{};
+            uint32_t* resolve_attachment_count                   = new (std::nothrow) uint32_t{};
             resolve_attachment_count_per_subpass_[subpass_index] = resolve_attachment_count;
 
             // If pResolveAttachments is non-null, we can assume that the dimension of the array matches
@@ -3390,28 +3880,26 @@ void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
                 *resolve_attachment_count = offset_subpass_description->colorAttachmentCount;
             }
 
-        // Resolve attachment array:
+            // Resolve attachment array:
             // Create the resolve attachment array root item.
-            RgEditorElementArrayElementAdd* resolve_attachments_root_item = new RgEditorElementArrayElementAdd(root_element, kStrVulkanRenderPassSubpassResolveAttachments,
-                [=](int element_index)
-            {
-                // Ensure that the element index
-                assert(resolve_attachment_count != nullptr);
-                if (resolve_attachment_count != nullptr)
-                {
-                    // An array item has been trashed. Decrease the corresponding count item.
-                    RemoveElement(offset_subpass_description->pResolveAttachments, *resolve_attachment_count, element_index);
-                }
-            });
+            RgEditorElementArrayElementAdd* resolve_attachments_root_item =
+                new RgEditorElementArrayElementAdd(root_element, kStrVulkanRenderPassSubpassResolveAttachments, [=](int element_index) {
+                    // Ensure that the element index
+                    assert(resolve_attachment_count != nullptr);
+                    if (resolve_attachment_count != nullptr)
+                    {
+                        // An array item has been trashed. Decrease the corresponding count item.
+                        RemoveElement(offset_subpass_description->pResolveAttachments, *resolve_attachment_count, element_index);
+                    }
+                });
 
             // Set object name.
             resolve_attachments_root_item->setObjectName(kStrResolveAttachmentsRootItem);
 
             // Create an artificial resolve attachment count member.
             // This member is not part of the VkSubpassDescription structure, but is required since pResolveAttachments array can be NULL, or equal to colorAttachmentCount.
-            RgEditorElement* resolve_attachment_count_node = MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassResolveAttachmentCount,
-                resolve_attachment_count, [=]
-                {
+            RgEditorElement* resolve_attachment_count_node =
+                MakeNumericElement(resolve_attachments_root_item, kStrVulkanRenderPassSubpassResolveAttachmentCount, resolve_attachment_count, [=] {
                     HandleRenderPassSubpassResolveAttachmentCountChanged(subpass_index, resolve_attachments_root_item, offset_subpass_description);
                 });
 
@@ -3432,7 +3920,7 @@ void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
             if (offset_subpass_description->pDepthStencilAttachment != nullptr)
             {
                 // Create a copy of the depth stencil attachment that can be modified.
-                depth_stencil_attachment_ = new VkAttachmentReference{};
+                depth_stencil_attachment_ = new (std::nothrow) VkAttachmentReference{};
                 memcpy(depth_stencil_attachment_, offset_subpass_description->pDepthStencilAttachment, sizeof(VkAttachmentReference));
                 offset_subpass_description->pDepthStencilAttachment = depth_stencil_attachment_;
 
@@ -3446,15 +3934,19 @@ void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
 
             // Input attachment array:
             // Create the preserveAttachments array root item.
-            RgEditorElementArrayElementAdd* preserveInput_attachments_root_item = new RgEditorElementArrayElementAdd(root_element, kStrVulkanRenderPassSubpassPreserveAttachments,
-                [=](int element_index) { RemoveElement(offset_subpass_description->pPreserveAttachments, offset_subpass_description->preserveAttachmentCount, element_index); });
+            RgEditorElementArrayElementAdd* preserveInput_attachments_root_item =
+                new RgEditorElementArrayElementAdd(root_element, kStrVulkanRenderPassSubpassPreserveAttachments, [=](int element_index) {
+                    RemoveElement(offset_subpass_description->pPreserveAttachments, offset_subpass_description->preserveAttachmentCount, element_index);
+                });
 
             // Set object name.
             preserveInput_attachments_root_item->setObjectName(kStrPreserveInputAttachmentRootItem);
 
             // Create the preserveAttachment count member.
-            RgEditorElement* preserve_attachment_count_node = MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassPreserveAttachmentCount,
-                &offset_subpass_description->preserveAttachmentCount, [=] { HandleRenderPassSubpassPreserveAttachmentCountChanged(preserveInput_attachments_root_item, offset_subpass_description); });
+            RgEditorElement* preserve_attachment_count_node =
+                MakeNumericElement(nullptr, kStrVulkanRenderPassSubpassPreserveAttachmentCount, &offset_subpass_description->preserveAttachmentCount, [=] {
+                    HandleRenderPassSubpassPreserveAttachmentCountChanged(preserveInput_attachments_root_item, offset_subpass_description);
+                });
 
             // Set object name.
             preserve_attachment_count_node->setObjectName(kStrPreserveAttachmentCountNode);
@@ -3471,9 +3963,12 @@ void RgPipelineStateModelVulkan::InitializeRenderPassSubpassDescriptionCreateInf
     }
 }
 
-void RgPipelineStateModelVulkan::HandleRenderPassSubpassInputAttachmentCountChanged(RgEditorElement* root_element, VkSubpassDescription* subpass_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleRenderPassSubpassInputAttachmentCountChanged(RgEditorElement*      root_element,
+                                                                                    VkSubpassDescription* subpass_create_info,
+                                                                                    bool                  first_init)
 {
-    ResizeHandler(root_element,
+    ResizeHandler(
+        root_element,
         subpass_create_info->inputAttachmentCount,
         subpass_create_info->pInputAttachments,
         kStrVulkanRenderSubpassAttachmentReference,
@@ -3481,10 +3976,13 @@ void RgPipelineStateModelVulkan::HandleRenderPassSubpassInputAttachmentCountChan
         first_init);
 }
 
-void RgPipelineStateModelVulkan::HandleRenderPassSubpassColorAttachmentCountChanged(RgEditorElement* root_element, VkSubpassDescription* subpass_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleRenderPassSubpassColorAttachmentCountChanged(RgEditorElement*      root_element,
+                                                                                    VkSubpassDescription* subpass_create_info,
+                                                                                    bool                  first_init)
 {
     // Resize the color attachments array.
-    ResizeHandler(root_element,
+    ResizeHandler(
+        root_element,
         subpass_create_info->colorAttachmentCount,
         subpass_create_info->pColorAttachments,
         kStrVulkanRenderSubpassAttachmentReference,
@@ -3492,7 +3990,10 @@ void RgPipelineStateModelVulkan::HandleRenderPassSubpassColorAttachmentCountChan
         first_init);
 }
 
-void RgPipelineStateModelVulkan::HandleRenderPassSubpassResolveAttachmentCountChanged(int subpass_index, RgEditorElement* root_element, VkSubpassDescription* subpass_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleRenderPassSubpassResolveAttachmentCountChanged(int                   subpass_index,
+                                                                                      RgEditorElement*      root_element,
+                                                                                      VkSubpassDescription* subpass_create_info,
+                                                                                      bool                  first_init)
 {
     uint32_t* subpass_resolve_attachment_count = resolve_attachment_count_per_subpass_.at(subpass_index);
 
@@ -3500,7 +4001,8 @@ void RgPipelineStateModelVulkan::HandleRenderPassSubpassResolveAttachmentCountCh
     if (subpass_resolve_attachment_count != nullptr)
     {
         // Resize the resolve attachments array.
-        ResizeHandler(root_element,
+        ResizeHandler(
+            root_element,
             *subpass_resolve_attachment_count,
             subpass_create_info->pResolveAttachments,
             kStrVulkanRenderSubpassAttachmentReference,
@@ -3509,10 +4011,13 @@ void RgPipelineStateModelVulkan::HandleRenderPassSubpassResolveAttachmentCountCh
     }
 }
 
-void RgPipelineStateModelVulkan::HandleRenderPassSubpassPreserveAttachmentCountChanged(RgEditorElement* root_element, VkSubpassDescription* subpass_create_info, bool first_init)
+void RgPipelineStateModelVulkan::HandleRenderPassSubpassPreserveAttachmentCountChanged(RgEditorElement*      root_element,
+                                                                                       VkSubpassDescription* subpass_create_info,
+                                                                                       bool                  first_init)
 {
     // Resize the preserve attachments array.
-    ResizeHandler(root_element,
+    ResizeHandler(
+        root_element,
         subpass_create_info->preserveAttachmentCount,
         subpass_create_info->pPreserveAttachments,
         kStrVulkanRenderSubpassPreserveAttachmentElementType,
@@ -3531,7 +4036,8 @@ void RgPipelineStateModelVulkan::InitializeAttachmentReference(RgEditorElement* 
         if (offset_attachment_reference != nullptr)
         {
             // Add the "attachment" member.
-            RgEditorElement* attachment_node = MakeNumericElement(root_element, kStrVulkanRenderPassSubpassAttachmentIndex, &offset_attachment_reference->attachment);
+            RgEditorElement* attachment_node =
+                MakeNumericElement(root_element, kStrVulkanRenderPassSubpassAttachmentIndex, &offset_attachment_reference->attachment);
             root_element->AppendChildItem(attachment_node);
 
             // Set object name.
@@ -3539,22 +4045,32 @@ void RgPipelineStateModelVulkan::InitializeAttachmentReference(RgEditorElement* 
 
             // Add the "layout" member node.
             const RgEnumValuesVector& image_layout_enumerators = GetImageLayoutEnumerators();
-            RgEditorElement* image_layout_node = new RgEditorElementEnum(parent_, kStrVulkanRenderPassSubpassAttachmentLayout, image_layout_enumerators, reinterpret_cast<uint32_t*>(&offset_attachment_reference->layout));
+            RgEditorElement*          image_layout_node        = new RgEditorElementEnum(parent_,
+                                                                         kStrVulkanRenderPassSubpassAttachmentLayout,
+                                                                         image_layout_enumerators,
+                                                                         reinterpret_cast<uint32_t*>(&offset_attachment_reference->layout));
             root_element->AppendChildItem(image_layout_node);
 
             // Connect to the splitter moved signal to close the drop down.
             RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(image_layout_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            bool               is_connected      = connect(build_view_vulkan,
+                                        &RgBuildViewVulkan::SplitterMoved,
+                                        static_cast<RgEditorElementEnum*>(image_layout_node),
+                                        &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             image_layout_node->setObjectName(kStrImageLayoutNode);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(image_layout_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(image_layout_node, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(image_layout_node), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(image_layout_node),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
         }
     }
@@ -3571,7 +4087,8 @@ void RgPipelineStateModelVulkan::InitializePreserveAttachment(RgEditorElement* r
         if (offset_reserve_attachment != nullptr)
         {
             // Add the "pReserveAttachment" member.
-            RgEditorElement* preserve_attachment_node = MakeNumericElement(root_element, kStrVulkanRenderPassPreserveAttachment, reinterpret_cast<uint32_t*>(offset_reserve_attachment));
+            RgEditorElement* preserve_attachment_node =
+                MakeNumericElement(root_element, kStrVulkanRenderPassPreserveAttachment, reinterpret_cast<uint32_t*>(offset_reserve_attachment));
             root_element->AppendChildItem(preserve_attachment_node);
 
             // Set object name.
@@ -3580,7 +4097,9 @@ void RgPipelineStateModelVulkan::InitializePreserveAttachment(RgEditorElement* r
     }
 }
 
-void RgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreateInfo(RgEditorElement* root_element, VkSubpassDependency* base_dependency_description, int item_index)
+void RgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreateInfo(RgEditorElement*     root_element,
+                                                                                     VkSubpassDependency* base_dependency_description,
+                                                                                     int                  item_index)
 {
     assert(root_element != nullptr);
     assert(base_dependency_description != nullptr);
@@ -3591,14 +4110,16 @@ void RgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
         if (offset_dependency_description != nullptr)
         {
             // Add the "srcSubpass" member.
-            RgEditorElement* src_subpass = MakeNumericElement(root_element, kStrVulkanRenderPassDependencySrcSubpass, reinterpret_cast<uint32_t*>(&offset_dependency_description->srcSubpass));
+            RgEditorElement* src_subpass = MakeNumericElement(
+                root_element, kStrVulkanRenderPassDependencySrcSubpass, reinterpret_cast<uint32_t*>(&offset_dependency_description->srcSubpass));
             root_element->AppendChildItem(src_subpass);
 
             // Set object name.
             src_subpass->setObjectName(kStrSrcSubpass);
 
             // Add the "dstSubpass" member.
-            RgEditorElement* dst_subpass = MakeNumericElement(root_element, kStrVulkanRenderPassDependencyDstSubpass, reinterpret_cast<uint32_t*>(&offset_dependency_description->dstSubpass));
+            RgEditorElement* dst_subpass = MakeNumericElement(
+                root_element, kStrVulkanRenderPassDependencyDstSubpass, reinterpret_cast<uint32_t*>(&offset_dependency_description->dstSubpass));
             root_element->AppendChildItem(dst_subpass);
 
             // Set object name.
@@ -3608,12 +4129,19 @@ void RgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             const RgEnumValuesVector& stage_flag_enumerators = GetPipelineStageFlagEnumerators();
 
             // Add the "srcStageMask" member.
-            RgEditorElement* src_stage_mask = new RgEditorElementEnum(parent_, kStrVulkanRenderPassDependencySrcStageMask, stage_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_dependency_description->srcStageMask), true);
+            RgEditorElement* src_stage_mask = new RgEditorElementEnum(parent_,
+                                                                      kStrVulkanRenderPassDependencySrcStageMask,
+                                                                      stage_flag_enumerators,
+                                                                      reinterpret_cast<uint32_t*>(&offset_dependency_description->srcStageMask),
+                                                                      true);
             root_element->AppendChildItem(src_stage_mask);
 
             // Connect to the splitter moved signal to close the drop down.
             RgBuildViewVulkan* build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            bool is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(src_stage_mask), &RgEditorElementEnum::HotKeyPressedSignal);
+            bool               is_connected      = connect(build_view_vulkan,
+                                        &RgBuildViewVulkan::SplitterMoved,
+                                        static_cast<RgEditorElementEnum*>(src_stage_mask),
+                                        &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             src_stage_mask->setObjectName(kStrSrcStageMask);
@@ -3623,16 +4151,26 @@ void RgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(src_stage_mask), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(src_stage_mask),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "dstStageMask" member.
-            RgEditorElement* dst_stage_mask = new RgEditorElementEnum(parent_, kStrVulkanRenderPassDependencyDstStageMask, stage_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_dependency_description->dstStageMask), true);
+            RgEditorElement* dst_stage_mask = new RgEditorElementEnum(parent_,
+                                                                      kStrVulkanRenderPassDependencyDstStageMask,
+                                                                      stage_flag_enumerators,
+                                                                      reinterpret_cast<uint32_t*>(&offset_dependency_description->dstStageMask),
+                                                                      true);
             root_element->AppendChildItem(dst_stage_mask);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(dst_stage_mask), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(dst_stage_mask),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             dst_stage_mask->setObjectName(kStrDstStageMask);
@@ -3642,68 +4180,104 @@ void RgPipelineStateModelVulkan::InitializeRenderPassDependencyDescriptionCreate
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(dst_stage_mask), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(dst_stage_mask),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Get the access flag enumerators.
             const RgEnumValuesVector& access_flag_enumerators = GetAccessFlagEnumerators();
 
             // Add the "src_access_mask" member.
-            RgEditorElement* src_access_mask = new RgEditorElementEnum(parent_, kStrVulkanRenderPassDependencySrcAccessMask, access_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_dependency_description->srcAccessMask), true);
+            RgEditorElement* src_access_mask = new RgEditorElementEnum(parent_,
+                                                                       kStrVulkanRenderPassDependencySrcAccessMask,
+                                                                       access_flag_enumerators,
+                                                                       reinterpret_cast<uint32_t*>(&offset_dependency_description->srcAccessMask),
+                                                                       true);
             root_element->AppendChildItem(src_access_mask);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(src_access_mask), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(src_access_mask),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             src_access_mask->setObjectName(kStrSrcAccessMask);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(src_access_mask, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(src_access_mask, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(src_access_mask), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(src_access_mask),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "dstAccessMask" member.
-            RgEditorElement* dst_access_mask = new RgEditorElementEnum(parent_, kStrVulkanRenderPassDependencyDstAccessMask, access_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_dependency_description->dstAccessMask), true);
+            RgEditorElement* dst_access_mask = new RgEditorElementEnum(parent_,
+                                                                       kStrVulkanRenderPassDependencyDstAccessMask,
+                                                                       access_flag_enumerators,
+                                                                       reinterpret_cast<uint32_t*>(&offset_dependency_description->dstAccessMask),
+                                                                       true);
             root_element->AppendChildItem(dst_access_mask);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(dst_access_mask), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(dst_access_mask),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             dst_access_mask->setObjectName(kStrDstAccessMask);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(dst_access_mask, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(dst_access_mask, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(dst_access_mask), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(dst_access_mask),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
 
             // Add the "dependencyFlags" member.
             const RgEnumValuesVector& dependency_flag_enumerators = GetDependencyFlagEnumerators();
-            RgEditorElement* dependency_flags = new RgEditorElementEnum(parent_, kStrVulkanRenderPassDependencyDependencyFlags, dependency_flag_enumerators, reinterpret_cast<uint32_t*>(&offset_dependency_description->dependencyFlags), true);
+            RgEditorElement*          dependency_flags            = new RgEditorElementEnum(parent_,
+                                                                        kStrVulkanRenderPassDependencyDependencyFlags,
+                                                                        dependency_flag_enumerators,
+                                                                        reinterpret_cast<uint32_t*>(&offset_dependency_description->dependencyFlags),
+                                                                        true);
             root_element->AppendChildItem(dependency_flags);
 
             // Connect to the splitter moved signal to close the drop down.
             build_view_vulkan = static_cast<RgBuildViewVulkan*>(parent_);
-            is_connected = connect(build_view_vulkan, &RgBuildViewVulkan::SplitterMoved, static_cast<RgEditorElementEnum*>(dependency_flags), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected      = connect(build_view_vulkan,
+                                   &RgBuildViewVulkan::SplitterMoved,
+                                   static_cast<RgEditorElementEnum*>(dependency_flags),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
 
             // Set object name.
             dependency_flags->setObjectName(kStrDependencyFlags);
 
             // Connect to the enum list widget status signal.
-            is_connected = connect(dependency_flags, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
+            is_connected =
+                connect(dependency_flags, &RgEditorElement::EnumListWidgetStatusSignal, this, &RgPipelineStateModelVulkan::EnumListWidgetStatusSignal);
             assert(is_connected);
 
             // Connect the shortcut hot key signal.
-            is_connected = connect(this, &RgPipelineStateModelVulkan::HotKeyPressedSignal, static_cast<RgEditorElementEnum*>(dependency_flags), &RgEditorElementEnum::HotKeyPressedSignal);
+            is_connected = connect(this,
+                                   &RgPipelineStateModelVulkan::HotKeyPressedSignal,
+                                   static_cast<RgEditorElementEnum*>(dependency_flags),
+                                   &RgEditorElementEnum::HotKeyPressedSignal);
             assert(is_connected);
         }
     }

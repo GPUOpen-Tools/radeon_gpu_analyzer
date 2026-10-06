@@ -6,6 +6,7 @@
 //=============================================================================
 
 // C++.
+#include <algorithm>
 #include <cassert>
 #include <memory>
 #include <sstream>
@@ -28,6 +29,11 @@
 #include <QProcess>
 #include <QDesktopServices>
 
+// Infra.
+#include "qt_isa_gui/utility/shader_source_syntax_highlighter.h"
+#include "qt_isa_gui/widgets/find_text_widget.h"
+#include "qt_isa_gui/widgets/shader_source_code_viewer_searcher.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_app_state.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_build_view.h"
@@ -35,7 +41,6 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_build_settings_view_vulkan.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_build_settings_widget.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_cli_output_view.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_find_text_widget.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_go_to_line_dialog.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view_opencl.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view_vulkan.h"
@@ -60,7 +65,6 @@
 #include "radeon_gpu_analyzer_gui/rg_data_types_opencl.h"
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/rg_factory.h"
-#include "radeon_gpu_analyzer_gui/rg_source_editor_searcher.h"
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "radeon_gpu_analyzer_gui/rg_xml_session_config.h"
@@ -197,10 +201,16 @@ void RgBuildView::ConnectFileSignals()
         assert(is_connected);
 
         // Connect the "Build Settings" button in the file menu.
-        RgMenuBuildSettingsItem* build_settings_item          = menu->GetBuildSettingsItem();
-        const QPushButton*       pBuildSettingsFileMenuButton = build_settings_item->GetBuildSettingsButton();
-        is_connected = connect(pBuildSettingsFileMenuButton, &QPushButton::clicked, this, &RgBuildView::HandleBuildSettingsMenuButtonClicked);
-        assert(is_connected);
+        RgMenuBuildSettingsItem* build_settings_item = menu->GetBuildSettingsItem();
+        if (build_settings_item != nullptr)
+        {
+            const QPushButton* pBuildSettingsFileMenuButton = build_settings_item->GetBuildSettingsButton();
+            if (pBuildSettingsFileMenuButton != nullptr)
+            {
+                is_connected = connect(pBuildSettingsFileMenuButton, &QPushButton::clicked, this, &RgBuildView::HandleBuildSettingsMenuButtonClicked);
+                assert(is_connected);
+            }
+        }
 
         // Connect to the file menu container's mouse click event.
         is_connected = connect(file_menu_view_container_, &RgViewContainer::ViewContainerMouseClickEventSignal, this, &RgBuildView::HandleSetFrameBorderBlack);
@@ -259,7 +269,7 @@ void RgBuildView::ConnectBuildSettingsSignals()
 void RgBuildView::ConnectFindSignals()
 {
     // Connect the find widget's close toggle handler.
-    [[maybe_unused]] bool is_connected = connect(find_widget_, &RgFindTextWidget::CloseWidgetSignal, this, &RgBuildView::HandleFindWidgetVisibilityToggled);
+    [[maybe_unused]] bool is_connected = connect(find_widget_, &FindTextWidget::CloseWidgetSignal, this, &RgBuildView::HandleFindWidgetVisibilityToggled);
     assert(is_connected);
 }
 
@@ -355,7 +365,6 @@ bool RgBuildView::ConnectDisassemblyViewSignals()
         }
 
         // Connect the source code editor focus in signal.
-        assert(current_code_editor_ != nullptr);
         if (current_code_editor_ != nullptr)
         {
             // Connect the source editor's focus in handler.
@@ -578,16 +587,13 @@ void RgBuildView::CreateProjectClone()
     }
 }
 
-void RgBuildView::BuildCurrentProject(std::vector<std::string> binaries_to_build)
+void RgBuildView::BuildCurrentProject()
 {
-    if (binaries_to_build.size() == 0)
-    {
-        // Destroy outputs from previous builds.
-        DestroyProjectBuildArtifacts();
+    // Destroy outputs from previous builds.
+    DestroyProjectBuildArtifacts();
 
-        // Clear the output window.
-        cli_output_window_->ClearText();
-    }
+    // Clear the output window.
+    cli_output_window_->ClearText();
 
     // Set the "is currently building" flag.
     HandleIsBuildInProgressChanged(true);
@@ -596,7 +602,7 @@ void RgBuildView::BuildCurrentProject(std::vector<std::string> binaries_to_build
     emit ProjectBuildStarted();
 
     // The function that will be invoked by the build thread.
-    auto background_task = [&, binaries_to_build] {
+    auto background_task = [&] {
         // Build an output path where all of the build artifacts will be dumped to.
         std::string output_path = CreateProjectBuildOutputPath();
 
@@ -660,43 +666,17 @@ void RgBuildView::BuildCurrentProject(std::vector<std::string> binaries_to_build
                     std::shared_ptr<RgBuildSettings> project_settings = project_->clones[clone_index_]->build_settings;
                     std::string                      binary_name      = kStrBuildSettingsOutputBinaryFileName;
                     is_project_built                                  = RgCliLauncher::BuildProjectCloneOpencl(
-                        project_, clone_index_, output_path, binary_name, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
+                        project_, clone_index_, output_path, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
                 }
                 else if (current_api == RgProjectAPI::kVulkan)
                 {
-                    std::shared_ptr<RgBuildSettings> project_settings = project_->clones[clone_index_]->build_settings;
-                    std::string                      binary_name      = kStrBuildSettingsOutputBinaryFileName;
-                    assert(project_settings != nullptr);
-                    if (project_settings != nullptr && project_settings->binary_file_names.size() > 0)
-                    {
-                        binary_name = project_settings->binary_file_names.at(0);
-                    }
                     is_project_built = RgCliLauncher::BuildProjectCloneVulkan(
-                        project_, clone_index_, output_path, binary_name, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
+                        project_, clone_index_, output_path, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
                 }
                 else if (current_api == RgProjectAPI::kBinary)
                 {
-                    std::shared_ptr<RgBuildSettings> project_settings = project_->clones[clone_index_]->build_settings;
-
-                    assert(project_settings != nullptr);
-                    if (project_settings != nullptr)
-                    {
-                        if (binaries_to_build.size() == 0)
-                        {
-                            is_project_built = RgCliLauncher::BuildProjectCloneBinary(project_,
-                                                                                      clone_index_,
-                                                                                      output_path,
-                                                                                      project_settings->binary_file_names,
-                                                                                      append_build_output,
-                                                                                      gpus_with_build_outputs,
-                                                                                      cancel_bulid_signal_);
-                        }
-                        else
-                        {
-                            is_project_built = RgCliLauncher::BuildProjectCloneBinary(
-                                project_, clone_index_, output_path, binaries_to_build, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
-                        }
-                    }
+                    is_project_built = RgCliLauncher::BuildProjectCloneBinary(
+                        project_, clone_index_, output_path, append_build_output, gpus_with_build_outputs, cancel_bulid_signal_);
                 }
 
                 // Verify that the build was not canceled.
@@ -1491,7 +1471,7 @@ bool RgBuildView::RequestRemoveAllFiles()
     return is_save_accepted;
 }
 
-void RgBuildView::SetSourceCodeText(const std::string& file_full_path)
+void RgBuildView::SetSourceCodeText(const std::string& file_full_path, bool save_file_modified_timestamp /* = true */)
 {
     QString src_code;
 
@@ -1507,11 +1487,14 @@ void RgBuildView::SetSourceCodeText(const std::string& file_full_path)
                 const int v_scroll_position   = current_code_editor_->verticalScrollBar()->value();
 
                 // Set the text.
-                current_code_editor_->setText(src_code);
+                current_code_editor_->SetText(src_code);
 
-                // Remember most recent time file was modified.
-                QFileInfo file_info(file_full_path.c_str());
-                file_modified_time_map_[current_code_editor_] = file_info.lastModified();
+                if (save_file_modified_timestamp)
+                {
+                    // Remember most recent time file was modified.
+                    QFileInfo file_info(file_full_path.c_str());
+                    file_modified_time_map_[current_code_editor_] = file_info.lastModified();
+                }
 
                 // Indicate that a freshly loaded file is considered unmodified.
                 current_code_editor_->document()->setModified(false);
@@ -1532,7 +1515,7 @@ void RgBuildView::SetSourceCodeText(const std::string& file_full_path)
         }
         else
         {
-            current_code_editor_->setText("");
+            current_code_editor_->SetText("");
             current_code_editor_->document()->setModified(false);
         }
     }
@@ -1624,7 +1607,6 @@ void RgBuildView::HandleSourceEditorOpenHeaderRequest(const QString& path)
         if (!is_exist)
         {
             // Try the local directory.
-            assert(current_code_editor_ != nullptr);
             if (current_code_editor_ != nullptr)
             {
                 // Get the directory of the currently edited file.
@@ -1690,34 +1672,38 @@ void RgBuildView::HandleSourceEditorOpenHeaderRequest(const QString& path)
 
 void RgBuildView::HandleCodeEditorTitlebarDismissMsgPressed()
 {
-    assert(current_code_editor_ != nullptr);
     if (current_code_editor_ != nullptr)
     {
         current_code_editor_->SetTitleBarText("");
     }
 }
 
-void RgBuildView::HandleHighlightedCorrelationLineUpdated(int line_number)
+void RgBuildView::HandleHighlightedCorrelationLineUpdated(int line_number, const std::string& src_path)
 {
-    // A list that gets filled with correlated line numbers to highlight in the source editor.
-    QList<int> highlighted_lines;
+    Q_UNUSED(src_path);
 
-    // Only fill up the list with valid correlated lines if possible. Otherwise, nothing will get highlighted.
-    bool is_correlation_enabled = IsLineCorrelationEnabled(current_code_editor_);
-    if (is_correlation_enabled)
-    {
-        // Only scroll to the highlighted line if it's a valid line number.
-        if (line_number != kInvalidCorrelationLineIndex)
+    if (current_code_editor_ != nullptr)
+    {  
+        // A list that gets filled with correlated line numbers to highlight in the source editor.
+        QList<int> highlighted_lines;
+
+        // Only fill up the list with valid correlated lines if possible. Otherwise, nothing will get highlighted.
+        bool is_correlation_enabled = IsLineCorrelationEnabled(current_code_editor_);
+        if (is_correlation_enabled)
         {
-            highlighted_lines.push_back(line_number);
+            // Only scroll to the highlighted line if it's a valid line number.
+            if (line_number != kInvalidCorrelationLineIndex)
+            {
+                highlighted_lines.push_back(line_number);
 
-            // Scroll the source editor to show the highlighted line.
-            current_code_editor_->ScrollToLine(line_number);
+                // Scroll the source editor to show the highlighted line.
+                current_code_editor_->ScrollToLine(line_number);
+            }
         }
-    }
 
-    // Add the correlated input source line number to the editor's highlight list.
-    current_code_editor_->HandleHighlightedLinesSet(highlighted_lines);
+        // Add the correlated input source line number to the editor's highlight list.
+        current_code_editor_->HandleHighlightedLinesSet(highlighted_lines);
+    }
 }
 
 void RgBuildView::HandleIsLineCorrelationEnabled(RgSourceCodeEditor* editor, bool is_enabled)
@@ -1730,7 +1716,7 @@ void RgBuildView::HandleIsLineCorrelationEnabled(RgSourceCodeEditor* editor, boo
     {
         // Invalidate the highlighted correlation lines within the source editor and disassembly views.
         HandleSourceFileSelectedLineChanged(editor, kInvalidCorrelationLineIndex);
-        HandleHighlightedCorrelationLineUpdated(kInvalidCorrelationLineIndex);
+        HandleHighlightedCorrelationLineUpdated(kInvalidCorrelationLineIndex, "");
     }
     else
     {
@@ -1820,13 +1806,11 @@ void RgBuildView::HandleSelectedTargetGpuChanged(const std::string& target_gpu)
         assert(got_outputs);
         if (got_outputs)
         {
-            assert(current_code_editor_ != nullptr);
             if (current_code_editor_ != nullptr)
             {
+                SetTargetGpuLabel();
+
                 std::string current_file_path = GetFilepathForEditor(current_code_editor_);
-
-                disassembly_view_->SetTargetGpuLabel(current_file_path, project_->clones[clone_index_]->build_settings);
-
                 // Does the currently-selected source file have build output for the new Target GPU?
                 auto source_file_outputs_iter = outputs_map.find(current_file_path);
 
@@ -1939,8 +1923,6 @@ void RgBuildView::HandleMenuItemCloseButtonClicked(const std::string& full_path)
     {
         // Remove the input file from the RgBuildView.
         RemoveInputFile(full_path);
-
-        RemoveFileFromMetadata(full_path);
     }
 }
 
@@ -2118,27 +2100,15 @@ void RgBuildView::HandleProjectBuildSuccess()
         ShowCurrentFileDisassembly();
     }
 
-    assert(current_code_editor_ != nullptr);
     if (current_code_editor_ != nullptr)
     {
         // Use the currently-selected line in the source editor to highlight correlated lines in the disassembly table.
         int selected_line_number = current_code_editor_->GetSelectedLineNumber();
         HandleSourceFileSelectedLineChanged(current_code_editor_, selected_line_number);
     }
-    
+
     // Resize the disassembly view.
     HandleDisassemblyTableWidthResizeRequested(0);
-    // Then maximize the size of the disassembly view for Binary Analysis mode.
-    if (disassembly_view_container_ != nullptr && RgConfigManager::Instance().GetCurrentAPI() == RgProjectAPI::kBinary)
-    {
-        std::string filename = menu->GetSelectedFileItem()->GetFilename();
-        if (IsGcnDisassemblyGenerated(filename) && !disassembly_view_container_->IsInMaximizedState())
-        {
-            disassembly_view_container_->SetIsMaximizable(true);
-            disassembly_view_container_->SwitchContainerSize();
-            disassembly_view_container_->SetIsMaximizable(false);
-        }
-    }
 
     // Update the notification message if needed.
     UpdateApplicationNotificationMessage();
@@ -2268,6 +2238,9 @@ void RgBuildView::RemoveEditor(const std::string& filename, bool switch_to_next_
             // There is no more "Current Editor," because it is being closed.
             current_code_editor_->hide();
             current_code_editor_ = nullptr;
+
+            // Also make sure to clear the target editor from the source searcher, since the current editor is being closed.
+            source_searcher_->SetTargetEditor(nullptr);
         }
 
         // Destroy the editor associated with the file that was closed.
@@ -2318,12 +2291,6 @@ void RgBuildView::RemoveInputFile(const std::string& input_file_full_path)
         // Hide the disassembly view when there's no data in it.
         if (disassembly_view_->IsEmpty())
         {
-            // Restore disassembly_view_container_ in Binary mode.
-            if (disassembly_view_container_ != nullptr && config_manager.GetCurrentAPI() == RgProjectAPI::kBinary)
-            {
-                disassembly_view_container_->SetIsMaximizable(true);
-            }
-
             // Minimize the disassembly view before hiding it to preserve correct RgBuildView layout.
             disassembly_view_splitter_->Restore();
 
@@ -2403,12 +2370,6 @@ void RgBuildView::DestroyProjectBuildArtifacts()
         // Hide the disassembly view.
         ToggleDisassemblyViewVisibility(false);
     }
-}
-
-void RgBuildView::RemoveFileFromMetadata(const std::string& full_path)
-{
-    Q_UNUSED(full_path);
-    return;
 }
 
 std::string RgBuildView::GetFilepathForEditor(const RgSourceCodeEditor* editor)
@@ -2519,6 +2480,10 @@ bool RgBuildView::SwitchToEditor(RgSourceCodeEditor* editor)
 
             // The editor being switched to is now the current editor.
             current_code_editor_ = editor;
+
+            QSize size      = current_code_editor_->minimumSize();
+            int   min_width = std::max(find_widget_->sizeHint().width(), size.width());
+            current_code_editor_->setMinimumWidth(min_width);
 
             // Update the editor context.
             UpdateSourceEditorSearchContext();
@@ -2660,6 +2625,9 @@ void RgBuildView::SwitchEditMode(EditMode mode)
             break;
             case EditMode::kBuildSettings:
             {
+                // Hide the find widget when leaving the source code view.
+                ToggleFindWidgetVisibility(false);
+
                 // Disable maximizing the source editor/build settings container.
                 assert(source_view_container_ != nullptr);
                 if (source_view_container_ != nullptr)
@@ -2711,11 +2679,9 @@ void RgBuildView::SwitchEditMode(EditMode mode)
             }
             break;
             default:
+                
                 // Invoke the mode-specific edit mode switch handler.
                 HandleModeSpecificEditMode(mode);
-                view_manager_->SetIsSourceViewCurrent(false);
-                view_manager_->SetIsPsoEditorViewCurrent(true);
-                view_manager_->SetIsBuildSettingsViewCurrent(false);
                 break;
             }
 
@@ -2828,7 +2794,7 @@ void RgBuildView::CreateFindWidget()
     if (find_widget_ == nullptr)
     {
         // Create the find widget, register with the scaling manager.
-        find_widget_ = new RgFindTextWidget(this);
+        find_widget_ = new FindTextWidget(this);
 
         // The find widget is hidden by default.
         find_widget_->hide();
@@ -2837,7 +2803,7 @@ void RgBuildView::CreateFindWidget()
         ConnectFindSignals();
 
         // Create the source code searcher interface.
-        source_searcher_ = new RgSourceEditorSearcher();
+        source_searcher_ = std::unique_ptr<ShaderSourceCodeViewerSearcher>(new ShaderSourceCodeViewerSearcher());
     }
 }
 
@@ -2895,7 +2861,7 @@ bool RgBuildView::GetInputFileOutputs(std::shared_ptr<RgCliBuildOutput> build_ou
     return ret;
 }
 
-RgSourceCodeEditor* RgBuildView::GetEditorForFilepath(const std::string& full_file_path, RgSrcLanguage lang)
+RgSourceCodeEditor* RgBuildView::GetEditorForFilepath(const std::string& full_file_path, ShaderSourceLanguage lang)
 {
     // The source code editor to use for the given filename.
     RgSourceCodeEditor* editor = nullptr;
@@ -3032,7 +2998,7 @@ void RgBuildView::RenameProject(const std::string& full_path)
 
 void RgBuildView::ToggleFindWidgetVisibility(bool is_visible)
 {
-    if (edit_mode_ == EditMode::kSourceCode)
+    if (edit_mode_ == EditMode::kSourceCode || edit_mode_ == EditMode::kSourceCodeTabs)
     {
         // Attach the Find widget to the source editor view.
         UpdateFindWidgetViewAttachment(source_view_stack_, is_visible);
@@ -3100,7 +3066,7 @@ void RgBuildView::UpdateFindWidgetGeometry()
             int available_editor_width = current_code_editor_->width() - scrollbar_width;
 
             // Try to display the find widget with the maximum dimensions that can fit within the source editor.
-            int find_widget_width = find_widget_->maximumWidth();
+            int find_widget_width = find_widget_->sizeHint().width();
             if (find_widget_width > available_editor_width)
             {
                 find_widget_width = available_editor_width;
@@ -3116,7 +3082,7 @@ void RgBuildView::UpdateFindWidgetGeometry()
             }
 
             // Use the unmodified height of the Find Widget in the final dimension.
-            int find_widget_height = find_widget_->maximumHeight();
+            int find_widget_height = find_widget_->sizeHint().height();
 
             // Set the geometry for the widget manually.
             // Offset vertically so the widget doesn't overlap the editor's titlebar.
@@ -3160,7 +3126,7 @@ void RgBuildView::UpdateSourceEditorSearchContext()
     if (source_searcher_ != nullptr && find_widget_ != nullptr)
     {
         // Update the FindWidget's search context to use the source editor searcher.
-        find_widget_->SetSearchContext(source_searcher_);
+        find_widget_->SetSearchContext(source_searcher_.get());
         source_searcher_->SetTargetEditor(current_code_editor_);
     }
 }
@@ -3351,6 +3317,10 @@ void RgBuildView::HandleSaveSettingsButtonClicked()
     {
         SaveCurrentFile(EditMode::kSourceCode);
     }
+    else if (edit_mode_ == EditMode::kSourceCodeTabs)
+    {
+        SaveCurrentFile(EditMode::kSourceCodeTabs);
+    }
     else if (edit_mode_ == EditMode::kBuildSettings)
     {
         // Disable the "Save" button.
@@ -3413,6 +3383,14 @@ void RgBuildView::HandleSetFrameBorderRed()
     if (build_settings_widget_ != nullptr)
     {
         build_settings_widget_->setStyleSheet(kStrBuildViewBuildSettingsWidgetStylesheetRed);
+    }
+}
+
+void RgBuildView::HandleSetFrameBorderPurple()
+{
+    if (build_settings_widget_ != nullptr)
+    {
+        build_settings_widget_->setStyleSheet(kStrBuildViewBuildSettingsWidgetStylesheetPurple);
     }
 }
 

@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include "qt_isa_gui/utility/shader_source_syntax_highlighter.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_data_types.h"
 
@@ -185,7 +187,7 @@ public:
 
     // Detects the type of Vulkan input file.
     // Returns detected file type and corresponding Code Editor language for syntax highlighting.
-    static std::pair<RgVulkanInputType, RgSrcLanguage>
+    static std::pair<RgVulkanInputType, ShaderSourceLanguage>
     DetectInputFileType(const std::string& file_path);
 
     // Update CliLauncher option if spvas file is a text file.
@@ -254,9 +256,6 @@ public:
     //    result --> true.
     static bool IsInList(const std::string& list, const std::string& token, char delim);
 
-    // Find and returns indices of test_to_find in text and return in search_result_indices.
-    static void FindSearchResultIndices(const QString& text, const QString& text_to_find, std::vector<size_t>& search_result_indices);
-
     // **************
     // Strings - END.
     // **************
@@ -297,6 +296,13 @@ public:
     // this would return "Tonga". If the family name is not of the relevant format,
     // the same family name would be returned.
     static std::string RemoveGfxNotation(const std::string& family_name);
+    
+    // Generate a unique key used to identify a source input file and entrypoint. The key consists
+    // of the input source file path and entry point name, joined with a pipe.
+    static std::string GenerateEntrypointKey(const std::string& file_path, const std::string& asic, const std::string& entrypoint_name);
+
+    // Decode a filepath/entrypoint key string into separate tokens.
+    static bool DecodeEntrypointKey(const std::string& entrypoint_key, std::string& file_path, std::string& asic, std::string& entrypoint_name);
 
     // **************
     // Content - END.

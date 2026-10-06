@@ -122,8 +122,7 @@ struct RgBuildSettings
         , additional_include_directories(other.additional_include_directories)
         , additional_options(other.additional_options)
         , compiler_paths(other.compiler_paths)
-        , binary_file_names(other.binary_file_names)
-        , initial_binary_function_name("")
+        , initial_entry_name(other.initial_entry_name)
     {
     }
 
@@ -131,7 +130,7 @@ struct RgBuildSettings
     {
         bool isSame = (target_gpus == other.target_gpus) && (predefined_macros == other.predefined_macros) &&
                       (additional_include_directories == other.additional_include_directories) && (additional_options == other.additional_options) &&
-                      (binary_file_names == other.binary_file_names) && (compiler_paths == other.compiler_paths);
+                      (compiler_paths == other.compiler_paths);
 
         return isSame;
     }
@@ -141,13 +140,12 @@ struct RgBuildSettings
     std::vector<std::string> predefined_macros;
     std::vector<std::string> additional_include_directories;
     std::string              additional_options;
-    std::vector<std::string> binary_file_names;
-
-    // The name of the function to be displayed initially when there are multiple functions in the same file used for binary analysis.
-    std::string initial_binary_function_name;
 
     // Alternative compiler paths: {bin, include, lib}.
     std::tuple<std::string, std::string, std::string> compiler_paths;
+    
+    // The name of the entry to be displayed when there are multiple functions in the same file.
+    std::string initial_entry_name;
 };
 
 // An info structure for each source file in a project.
@@ -158,6 +156,16 @@ struct RgSourceFileInfo
 
     // A flag indicating if the file is correlated with current build output.
     bool is_correlated = false;
+};
+
+// An info structure for each binary file in a project.
+struct RgBinaryFileInfo : public RgSourceFileInfo
+{
+    // A flag indicating if the binary file has been disassembled.
+    bool is_disassembly_generated = false;
+
+    // The binary file's target gpu.
+    std::string target_gpu;
 };
 
 // A base class for project clones.
@@ -181,6 +189,7 @@ struct RgProjectClone
     unsigned                         clone_id = 0;
     std::string                      clone_name;
     std::vector<RgSourceFileInfo>    source_files;
+    std::vector<RgBinaryFileInfo>    binary_files;
     std::shared_ptr<RgBuildSettings> build_settings = nullptr;
 };
 
@@ -346,6 +355,8 @@ struct RgResourceUsageData
     int         available_vgprs;
     int         used_vgprs;
     int         vgpr_spills;
+    int         available_agprs;
+    int         used_agprs;
     int         cl_workgroup_x_dimension;
     int         cl_workgroup_y_dimension;
     int         cl_workgroup_z_dimension;

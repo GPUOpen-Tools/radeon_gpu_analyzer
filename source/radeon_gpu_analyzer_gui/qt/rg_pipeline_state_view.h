@@ -101,7 +101,7 @@ public slots:
 
 protected:
     // The searcher used to search the pipeline state model tree.
-    RgPipelineStateSearcher* pipeline_state_searcher_ = nullptr;
+    std::unique_ptr<RgPipelineStateSearcher> pipeline_state_searcher_;
 
     // A pointer to the tree view being searched. This is used to highlight result rows.
     RgPipelineStateTree* tree_view_ = nullptr;

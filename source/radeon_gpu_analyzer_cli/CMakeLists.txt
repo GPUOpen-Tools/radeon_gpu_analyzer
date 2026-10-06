@@ -1,5 +1,5 @@
 #######################################################################################################################
-### Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+### Copyright (c) 2017-2026 Advanced Micro Devices, Inc. All rights reserved.
 ### @author AMD Developer Tools Team
 #######################################################################################################################
 cmake_minimum_required (VERSION 3.10)
@@ -26,9 +26,6 @@ endif()
 
 # Add this definitions if static linkage is used with the other projects
 add_definitions(-DRGA_BACKEND_STATIC -DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC)
-
-# Add update_check_api
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../../external/update_check_api ${CMAKE_CURRENT_BINARY_DIR}/external/update_check_api)
 
 # Configure a header file to pass some of the CMake settings
 # to the source code
@@ -63,7 +60,6 @@ include_directories("${PROJECT_SOURCE_DIR}/../../external/tsingleton")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/device_info")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/third_party")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/third_party/tinyxml2/Include")
-include_directories(${UPDATECHECKAPI_INC_DIRS})
 
 if (NOT IsDebian)
 # On Debian we use the native Boost libraries
@@ -73,6 +69,7 @@ endif()
 # Windows-specific include directories
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     include_directories("${PROJECT_SOURCE_DIR}/../../external/dx10_asm/include")
+    include_directories("${PROJECT_SOURCE_DIR}/../../external/dx12/agility_sdk/include")
 endif()
 
 # Source files that are common for Windows and Linux
@@ -80,8 +77,6 @@ file(GLOB COMMON_SRC
     "../common/*.cpp"
     "*.cpp"
     "*.h"
-    ${UPDATECHECKAPI_SRC}
-    ${UPDATECHECKAPI_INC}
 )
 
 # Windows-specific include directories
@@ -94,7 +89,7 @@ endif()
 # Pick up the source files that are relevant to the platform
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_executable(radeon_gpu_analyzer_cli ${WINDOWS_INC} ${COMMON_SRC} ${WINDOWS_SRC})
-    
+
     # 64-bit target
     find_library(BOOST_LIBRARY1 libboost_filesystem-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/Boost/boost_1_59_0/lib/VC14/x86_64")
     find_library(BOOST_LIBRARY2 libboost_system-vc140-mt-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/Boost/boost_1_59_0/lib/VC14/x86_64")
@@ -104,12 +99,12 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     find_library(BOOST_LIBRARY2D libboost_system-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/Boost/boost_1_59_0/lib/VC14/x86_64")
     find_library(BOOST_LIBRARY3D libboost_program_options-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/Boost/boost_1_59_0/lib/VC14/x86_64")
     find_library(BOOST_LIBRARY4D libboost_regex-vc140-mt-gd-1_59 HINTS "${PROJECT_SOURCE_DIR}/../../external/third_party/Boost/boost_1_59_0/lib/VC14/x86_64")
- 
+
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     # DeviceInfoLib objects are defined in radeon_gpu_analyzer_backend/CMakeLists.txt
     add_executable(radeon_gpu_analyzer_cli ${COMMON_SRC} ${LINUX_SRC} $<TARGET_OBJECTS:DeviceInfoLib>)
     set_target_properties(radeon_gpu_analyzer_cli PROPERTIES ENABLE_EXPORTS ON)
-    
+
     if(IsDebian)
         # Debian-specific
         # Configure Boost link settings
@@ -183,21 +178,22 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
                            debug ${BOOST_LIBRARY4D}
                            debug ${YAMLCPP_LIBD}
                            debug ${SPIRVCROSS_LIBD}
-                           general ${UPDATECHECKAPI_LIBS}
+                           general AMD::update_check_api
                            general tinyxml2
                            general isa_decoder
+                           general isa_explorer
                            )
 else()
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools
                                ${Boost_LIBRARIES}
                                ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB}
-                               ${UPDATECHECKAPI_LIBS} tinyxml2 isa_decoder)
+                               AMD::update_check_api tinyxml2 isa_decoder isa_explorer)
     else()
         target_link_libraries (radeon_gpu_analyzer_cli radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools
                                ${BOOST_LIBRARY1} ${BOOST_LIBRARY3}
                                ${TINYXML_LIB} ${YAMLCPP_LIB} ${SPIRVCROSS_LIB}
-                               ${UPDATECHECKAPI_LIBS} tinyxml2 isa_decoder)
+                               AMD::update_check_api tinyxml2 isa_decoder isa_explorer)
     endif()
 endif()
 
@@ -243,14 +239,15 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwi
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/disassembler/linux/amdgpu-dis $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/disassembler/amdgpu-dis
         COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/disassembler/amdgpu-dis
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/linux/bin $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/
-        COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/clang-20
+        COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/clang-23
         COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/lld
         COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/llvm-readobj
-        COMMAND ln -s -f ./clang-20 $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/clang
+        COMMAND chmod +x $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/llvm-dwarfdump
+        COMMAND ln -s -f ./clang-23 $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/clang
         COMMAND ln -s -f ./lld $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/ld.lld
         COMMAND ln -s -f ./llvm-readobj $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/llvm-readelf
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/linux/include/opencl-c.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/include/opencl-c.h
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/linux/include/opencl-c-base.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/clang/20/include/opencl-c-base.h
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/linux/include/opencl-c-base.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/clang/23/include/opencl-c-base.h
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/additional-targets $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/additional-targets
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/linux/lib/bitcode $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/bitcode/
     )
@@ -307,7 +304,7 @@ IF(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/disassembler/windows/amdgpu-dis.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/disassembler/amdgpu-dis.exe
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/windows/bin $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/bin/
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/windows/include/opencl-c.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/include/opencl-c.h
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/windows/include/opencl-c-base.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/clang/20/include/opencl-c-base.h
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/windows/include/opencl-c-base.h $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/clang/23/include/opencl-c-base.h
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/additional-targets $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/additional-targets
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/../../external/lc/opencl/windows/lib/bitcode $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/lc/opencl/lib/bitcode/
     )
@@ -317,9 +314,15 @@ IF(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/vulkan/tools/windows/bin/glslangValidator.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/vulkan/glslangValidator.exe
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/vulkan/tools/windows/bin/spirv-as.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/vulkan/spirv-as.exe
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/vulkan/tools/windows/bin/spirv-dis.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/vulkan/spirv-dis.exe
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/dxc/v1.8.2505.1
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/dxc/v1.8.2505.1/dxc.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/dxc/v1.8.2505.1/dxc.exe
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/dxc/v1.8.2505.1/dxcompiler.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/dxc/v1.8.2505.1/dxcompiler.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/dxc/v1.8.2505.1/dxil.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/dxc/v1.8.2505.1/dxil.dll
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/dxc/dxc.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/dxc/dxc.exe
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/dxc/dxcompiler.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/dxc/dxcompiler.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/../../external/dx12/agility_sdk $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/agility_sdk/
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/agility_sdk
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/dx12/agility_sdk/D3D12Core.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/agility_sdk/D3D12Core.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/dx12/agility_sdk/d3d12SDKLayers.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/agility_sdk/d3d12SDKLayers.dll
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/dxc/dxil.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/dxc/dxil.dll
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/dx12/withdll.exe $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/withdll.exe
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/../../external/dx12/umdrepoint.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>/utils/dx12/umdrepoint.dll

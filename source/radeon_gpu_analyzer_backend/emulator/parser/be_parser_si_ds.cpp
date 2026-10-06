@@ -108,24 +108,36 @@ ParserSi::kaStatus ParserSiDs::Parse(GDT_HW_GENERATION hw_generation, Instructio
     if ((hw_generation == GDT_HW_GENERATION_SEAISLAND) || (hw_generation == GDT_HW_GENERATION_SOUTHERNISLAND))
     {
         SIDSInstruction::OP op = GetSIDSOp(hex_instruction);
-        instruction = new SIDSInstruction(offset0, offset1, gds, op, addr, data0, data1, vdst, label, goto_label);
+        instruction = new (std::nothrow) SIDSInstruction(offset0, offset1, gds, op, addr, data0, data1, vdst, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else if (hw_generation == GDT_HW_GENERATION_VOLCANICISLAND)
     {
         VIDSInstruction::OP op = GetVIDSOp(hex_instruction);
-        instruction = new VIDSInstruction(offset0, offset1, gds, op, addr, data0, data1, vdst, label, goto_label);
+        instruction = new (std::nothrow) VIDSInstruction(offset0, offset1, gds, op, addr, data0, data1, vdst, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else if (hw_generation == GDT_HW_GENERATION_GFX9)
     {
         G9DSInstruction::OP op = GetG9DSOp(hex_instruction);
-        instruction = new G9DSInstruction(offset0, offset1, gds, op, addr, data0, data1, vdst, label, goto_label);
+        instruction = new (std::nothrow) G9DSInstruction(offset0, offset1, gds, op, addr, data0, data1, vdst, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else
     {
         status = ParserSi::kStatusUnexpectedHwGeneration;
     }
 
-    return ParserSi::kStatusSuccess;
+    return status;
 }
 
 ParserSi::kaStatus ParserSiDs::Parse(GDT_HW_GENERATION, Instruction::Instruction32Bit, Instruction*&, bool , uint32_t, int /*label =kNoLabel*/ , int /*goto_label =kNoLabel*/)

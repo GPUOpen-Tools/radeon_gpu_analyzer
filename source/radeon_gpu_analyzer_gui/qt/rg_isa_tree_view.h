@@ -40,7 +40,7 @@ public:
     virtual ~RgIsaTreeView();
 
     // Respond to a request to update line correlation wrt. given index.
-    bool UpdateLineCorrelation(const QModelIndex source_index, bool update_source_code_editor);
+    bool UpdateLineCorrelation(const QModelIndex source_index, bool update_source_code_editor, const std::string& src_file_path = "");
 
 public slots:
     // A handler to update the context menu next maximum live VGPR line option.
@@ -61,9 +61,12 @@ protected:
     // Connect signals used for actions in the top level disassembly_view.
     void ConnectDisassemblyViewSignals();
 
+    // Override eventFilter to handle re-enabling the isa tooltip timer when the context menu is hidden.
+    bool eventFilter(QObject* watched, QEvent* event) Q_DECL_OVERRIDE;
+
 signals:
     // A signal emitted when the user changes the correlated ISA row. Parameter is the input file's line number to select.
-    void HighlightedIsaRowChanged(int input_src_line_number);
+    void HighlightedIsaRowChanged(int input_src_line_number, const std::string& input_src_path);
 
     // A signal emitted when the user clicks the context menu to open disassembly file in the Browser.
     void OpenDisassemblyInFileBrowserSignal();
@@ -76,7 +79,7 @@ private slots:
     void HandleOpenContextMenu(const QPoint& widget_click_position);
 
     // Handler invoked when the input src line was changed.
-    void HandleHighlightedInputSrcLineChanged(int src_line_index);
+    void HandleHighlightedInputSrcLineChanged(int src_line_index, const std::string& src_file_path);
 
     // Handler invoked when the clicks the context menu to show next max vgpr line.
     void HandleShowNextMaxVgpr();

@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for CLI Commander interface for compiling with the Vulkan.
@@ -44,17 +44,20 @@ private:
     // Identify the devices requested by user.
     bool InitRequestedAsicListVulkan(const Config& config);
 
+    // Generate XML session summary file.
+    bool GenerateSessionSummary(const Config& config);
+
     // Compile GLSL and HLSL source file(s) to SPIR-V binary files.
     // Note: the sets of glsl and glsl files must not intersect, i.e. each stage may have
     // either a GLSL or an HLSL file but not both.
     // Names of output SPIR-V binary files are returned in "outSpvFiles".
     // (This function calls glslang compiler).
-    bool CompileSourceToSpv(const Config& conf, const BeVkPipelineFiles& glsl_files, const BeVkPipelineFiles& hlsl_files, BeVkPipelineFiles& out_spv_files);
+    bool CompileSourceToSpv(const Config& conf, const BePipelineFiles& glsl_files, const BePipelineFiles& hlsl_files, BePipelineFiles& out_spv_files);
 
     // Compile a SPIR-V binary file to ISA disassembly file(s) and shader statistics file(s) for specified device.
     // (This function invokes VulkanBackend executable).
     // is_vk_offline is set to true, if compilation fell back to vk-spv-offline mode.
-    void CompileSpvToIsaForDevice(const Config& config, const BeVkPipelineFiles& spv_files, const std::string& device, bool is_physical_adapter = false);
+    void CompileSpvToIsaForDevice(const Config& config, const BePipelineFiles& spv_files, const std::string& device, bool is_physical_adapter = false);
 
     // Assemble a SPIR-V text file to SPIR-V binary file.
     // (This function invokes spv-as from SPIR-V Tools.)
@@ -70,17 +73,18 @@ private:
     // Assemble input SPIR-V text files.
     // Names of output SPIR-V binary files are returned in "outSpvFiles".
     // (This function invokes SPIR-V Tools assembler).
-    bool AssembleSpvTxtInputFiles(const Config& config, const BeVkPipelineFiles& spv_txt_files, BeVkPipelineFiles& out_spv_files);
+    bool AssembleSpvTxtInputFiles(const Config& config, const BePipelineFiles& spv_txt_files, BePipelineFiles& out_spv_files);
 
     // Store input file names to the output metadata.
-    void StoreInputFilesToOutputMD(const BeVkPipelineFiles& input_files);
+    void StoreInputFilesToOutputMD(const BePipelineFiles& input_files);
 
     // Store output file names to the output metadata.
-    void StoreOutputFilesToOutputMD(const std::string&           device,
-                                    const BeVkPipelineFiles&     spv_files,
-                                    const BeVkPipelineFiles&     isa_files,
-                                    const BeVkPipelineFiles&     stats_files,
-                                    const BeVkPipelineWaveSizes& wave_sizes);
+    void StoreOutputFilesToOutputMD(const std::string&               device,
+                                    const BePipelineFiles&         spv_files,
+                                    const BePipelineFiles&         isa_files,
+                                    const BePipelineFiles&         stats_files,
+                                    const BeVkPipelineWaveSizes&     wave_sizes,
+                                    const BeVkPipelineShaderHashes&  shader_hashes);
 
     // ---- Data ----
 

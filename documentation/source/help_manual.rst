@@ -46,7 +46,7 @@ To handle the state, we defined a JSON representation of the Vulkan® pipeline s
 You can think of those files as a “recipe” for creating the Vulkan® pipeline state in runtime. To compile your pipeline, RGA would spawn a separate
 process (named VulkanBackend), which would create the Vulkan® instance, configure the pipeline state according to the recipe, and create the VkShaderModule objects from your shaders.
 
-When you create a project within the app, a default .gpso / .cpso file would be generated for you with a default state. The default state is just enough for compiling very basic shaders, however, for most practical use cases, you would have to edit the state to match your shaders (please see the "Pipeline State Editor" section for more details). In the case that the pipeline creation for your shaders fails, the compilation process would fall back to using the offline Vulkan® mode (-s vk-offline-spv). The following warning indicator is displayed in the bottom right corner of the application if this occurs.
+When you create a project within the app, a default .gpso / .cpso file would be generated for you with a default state. The default state is just enough for compiling very basic shaders, however, for most practical use cases, you would have to edit the state to match your shaders (please see the "Pipeline State Editor" section for more details). In the case that the pipeline creation for your shaders fails, the compilation process would fall back to using the offline Vulkan® mode (-s vk-spv-offline). The following warning indicator is displayed in the bottom right corner of the application if this occurs.
 
 .. image:: images/2_1/vk_spv_offline_indicator.png
 
@@ -97,6 +97,8 @@ Settings Tab
 ````````````
 From the Settings tab, you can control the global settings:
 
+.. _application_settings:
+
 Application Settings
 """"""""""""""""""""
 The Application Settings view is used to configure global application settings that aren't associated with a single API mode:
@@ -126,7 +128,7 @@ The Application Settings view is used to configure global application settings t
 
 * **Input files**
 
-	* Associate file extension association: Choose the set of file extensions used to associate RGA with various shader input source files.
+	* File extension association: Choose the set of file extensions used to associate RGA with various shader input source files.
 
 Default Vulkan® Build Settings
 """"""""""""""""""""""""""""""
@@ -168,7 +170,7 @@ Default Vulkan® Build Settings
 
 	* **Enable validation layers:**
 
-		Enable Vulkan® validation layers. This feature is useful when the build process fails at or around the pipeline creation stage. If your compilation failed at the front-end stage (GLSL -> SPIR-V™ or SPIR-V™ text to SPIR-V™ binary), then you will probably get a meaningful error message in the build output from the front-end compiler (glslang). However, if the build failure fails deeper in the stack, there will be very limited error messages, since AMD's shader compiler does not provide error messages. Enabling the validation layers can help shed light on the specific pipeline settings that was not configured properly or did not match your shaders.
+		Enable Vulkan® validation layers. This feature is useful when the build process fails at or around the pipeline creation stage. If your compilation failed at the front-end stage (GLSL -> SPIR-V™ or SPIR-V™ text to SPIR-V™ binary), then you will probably get a meaningful error message in the build output from the front-end compiler (glslang). However, if the build fails deeper in the stack, there will be very limited error messages, since AMD's shader compiler does not provide error messages. Enabling the validation layers can help shed light on the specific pipeline settings that were not configured properly or did not match your shaders.
 
 	* **Additional glslang options:**
 
@@ -193,6 +195,7 @@ After you add or create a new file, RGA will create a project for you and switch
 To learn how to create a project, please visit RGA's Quickstart documentation.
 
 The build view consists of 4 views:
+
 - File Menu
 - Source Code View
 - Disassembly View
@@ -359,35 +362,11 @@ From the Settings tab, you can control the global settings:
 
 Application Settings
 """"""""""""""""""""
-The Application Settings view is used to configure global application settings that aren't associated with a single API mode:
+The Application Settings view is used to configure global application settings that aren't associated with a single API mode. See :ref:`Application Settings <application_settings>` under Vulkan® Mode for the full list of available options.
 
 .. image:: images/010_home_page_b_settings_app.png
 
-* **General**
-
-	* Log file location: The folder in which RGA would generate log files. Upon startup RGA will clean up the log files that are older than 3 days.
-
-	* Project file location: The folder in which RGA would generate project files.
-
-	* Always use auto-generated project names: If checked, RGA will always use the auto-generated project name, without prompting for a rename when creating a new project.
-
-	* Default API on startup: RGA will always enter the selected API Mode upon startup.
-
-	* Color theme: "Detect OS" is the default. This will use the system's setting for the color theme.
-
-* **Disassembly View**
-
-	* Disassembly view columns: The set of disassembly view columns which will be visible by default.
-
-* **Source code editor**
-
-	* Font & Font Size: Configure the default font style and size settings used in the shader source code editor.
-	* Open include files with: Select the default text editor application that's launched when opening include files.
-
-* **Input files**
-
-	* Associate file extension association: Choose the set of file extensions used to associate RGA with various shader input source files.
-
+.. _default_opencl_build_settings:
 
 Default OpenCL™ Build Settings
 """"""""""""""""""""""""""""""
@@ -439,7 +418,7 @@ check the "Enable MAD instructions" checkbox in the global OpenCL™ build setti
 
 	* **Correctly round single-precision floating-point divide and sqrt (-cl-fp32-correctly-rounded-divide-sqrt):**
 
-		Specifies that single precision floating-point divide (x/y and 1/x) and sqrt used in the program source are correctly rounded. If this option is not specified, the minimum numerical accuracy of single precision floating-point divide and sqrt are as defined in section 7.4 of the OpenCL™ specification. This build option can only be specified if the CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT is set in CL_DEVICE_SINGLE_FP_CONFIG (as defined in in the table of allowed values for param_name for clGetDeviceInfo) for devices that the program is being build. clBuildProgram or clCompileProgram will fail to compile the program for a device if the -cl-fp32-correctly-rounded-divide-sqrt option is specified and CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT is not set for the device.
+		Specifies that single precision floating-point divide (x/y and 1/x) and sqrt used in the program source are correctly rounded. If this option is not specified, the minimum numerical accuracy of single precision floating-point divide and sqrt are as defined in section 7.4 of the OpenCL™ specification. This build option can only be specified if the CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT is set in CL_DEVICE_SINGLE_FP_CONFIG (as defined in the table of allowed values for param_name for clGetDeviceInfo) for devices that the program is being built. clBuildProgram or clCompileProgram will fail to compile the program for a device if the -cl-fp32-correctly-rounded-divide-sqrt option is specified and CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT is not set for the device.
 
 	* **Assume strict aliasing rules (-cl-strict-aliasing):**
 
@@ -447,11 +426,11 @@ check the "Enable MAD instructions" checkbox in the global OpenCL™ build setti
 
 	* **Enable MAD instructions (-cl-mad-enable):**
 
-		Allow a * b + c to be replaced by a mad. The mad computes a * b + c with reduced accuracy. For example, some OpenCL™ devices implement mad as truncate the result of a * b before adding it to c.
+		Allow a * b + c to be replaced by a mad. The mad computes a * b + c with reduced accuracy. For example, some OpenCL™ devices implement mad by truncating the result of a * b before adding it to c.
 
 	* **Ignore the signedness of zeros (-cl-no-signed-zeros):**
 
-		Allow optimizations for floating-point arithmetic that ignore the signedness of zero. IEEE 754 arithmetic specifies the behavior of distinct +0.0 and -0.0 values, which then prohibits simplification of expressions such as x+0.0 or 0.0*x (even with -clfinite-math only). This option implies that the sign of a zero result isn't significant.
+		Allow optimizations for floating-point arithmetic that ignore the signedness of zero. IEEE 754 arithmetic specifies the behavior of distinct +0.0 and -0.0 values, which then prohibits simplification of expressions such as x+0.0 or 0.0*x (even with -cl-finite-math-only). This option implies that the sign of a zero result isn't significant.
 
 	* **Allow unsafe optimizations (-cl-unsafe-math-optimizations):**
 
@@ -459,15 +438,11 @@ check the "Enable MAD instructions" checkbox in the global OpenCL™ build setti
 
 	* **Assume no NaN nor infinite (-cl-finite-math-only):**
 
-		Allow optimizations for floating-point arithmetic that assume that arguments and results are not NaNs or +/- infinity. This option may violate the OpenCL™ numerical compliance requirements defined in in section 7.4 for single-precision floating-point, section 9.3.9 for double-precision floating-point, and edge case behavior in section 7.5.
+		Allow optimizations for floating-point arithmetic that assume that arguments and results are not NaNs or +/- infinity. This option may violate the OpenCL™ numerical compliance requirements defined in section 7.4 for single-precision floating-point, section 9.3.9 for double-precision floating-point, and edge case behavior in section 7.5.
 
 	* **Aggressive math optimizations (-cl-fast-relaxed-math):**
 
 		Sets the optimization options -cl-finite-math-only and -cl-unsafe-math-optimizations. This allows optimizations for floating-point arithmetic that may violate the IEEE 754 standard and the OpenCL™ numerical compliance requirements defined in the specification in section 7.4 for single-precision and double-precision floating-point, and edge case behavior in section 7.5. This option causes the preprocessor macro __FAST_RELAXED_MATH__ to be defined in the OpenCL™ program.
-
-	* **Correctly round single-precision floating-point divide and sqrt (-cl-fp32-correctly-rounded-divide-sqrt):**
-
-		Specifies that single precision floating-point divide (x/y and 1/x) and sqrt used in the program source are correctly rounded. If this option is not specified, the minimum numerical accuracy of single precision floating-point divide and sqrt are as defined in section 7.4 of the OpenCL™ specification. This build option can only be specified if the CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT is set in CL_DEVICE_SINGLE_FP_CONFIG (as defined in in the table of allowed values for param_name for clGetDeviceInfo) for devices that the program is being build. clBuildProgram or clCompileProgram will fail to compile the program for a device if the -cl-fp32-correctly-rounded-divide-sqrt option is specified and CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT is not set for the device.
 
 	* **Optimization level:**
 
@@ -491,7 +466,7 @@ check the "Enable MAD instructions" checkbox in the global OpenCL™ build setti
 			Path to alternative compiler's headers folder. The specified folder is expected to contain opencl-c.h header file.
 
 		* **Libraries folder:**
-			Path to alternative compiler's OpenCL™ device libraries folder. The following bitcode files are expected to be in the specified folder: irif.amdgcn.bc, ockl.amdgcn.bc, oclc_correctly_rounded_sqrt_off.amdgcn.bc, oclc_correctly_rounded_sqrt_on.amdgcn.bc, oclc_daz_opt_off.amdgcn.bc, oclc_daz_opt_on.amdgcn.bc, oclc_finite_only_off.amdgcn.bc, oclc_finite_only_on.amdgcn.bc, oclc_isa_version_900.amdgcn.bc, oclc_isa_version_901.amdgcn.bc, oclc_isa_version_902.amdgcn.bc, oclc_unsafe_math_off.amdgcn.bc, oclc_unsafe_math_on.amdgcn.bc, ocml.amdgcn.bc, opencl.amdgcn.bc
+			Path to alternative compiler's OpenCL™ device libraries folder. The following bitcode files are expected to be in the specified folder: hip.bc, ockl.bc, oclc_abi_version_400.bc, oclc_abi_version_500.bc, oclc_abi_version_600.bc, oclc_finite_only_off.bc, oclc_finite_only_on.bc, oclc_isa_version_1010.bc, oclc_isa_version_1011.bc, oclc_isa_version_1012.bc, oclc_isa_version_1030.bc, oclc_isa_version_1031.bc, oclc_isa_version_1032.bc, oclc_isa_version_1034.bc, oclc_isa_version_1035.bc, oclc_isa_version_1100.bc, oclc_isa_version_1101.bc, oclc_isa_version_1102.bc, oclc_isa_version_1103.bc, oclc_isa_version_1150.bc, oclc_isa_version_1151.bc, oclc_isa_version_1152.bc, oclc_isa_version_1153.bc, oclc_isa_version_1200.bc, oclc_isa_version_1201.bc, oclc_isa_version_1250.bc, oclc_isa_version_900.bc, oclc_isa_version_902.bc, oclc_isa_version_904.bc, oclc_isa_version_906.bc, oclc_isa_version_908.bc, oclc_isa_version_909.bc, oclc_isa_version_90a.bc, oclc_isa_version_90c.bc, oclc_isa_version_942.bc, oclc_isa_version_950.bc, oclc_unsafe_math_off.bc, oclc_unsafe_math_on.bc, oclc_wavefrontsize64_off.bc, oclc_wavefrontsize64_on.bc, ocml.bc, opencl.bc
 
 * **Settings command line**
 
@@ -508,6 +483,7 @@ After you add or create a new file, RGA will create a project for you and switch
 To learn how to create a project, please visit RGA's Quickstart documentation.
 
 The build view consists of 4 views:
+
 - File Menu
 - Source Code View
 - Disassembly View
@@ -583,7 +559,7 @@ From the Start tab, you can load a Code Object binary or load an existing RGA pr
 
 Loading a Code Object Binary
 """"""""""""""""""""""""""""
-In binary analysis mode, an RGA Project is a vehicle that constains a single Code Object binary.
+In binary analysis mode, an RGA Project is a vehicle that contains a single Code Object binary.
 
 RGA will automatically create for you the project when you load a Code Object binary file in the Home Page.
 
@@ -595,7 +571,7 @@ You can also do this by clicking on File -> "Load Code Object Binary":
 
 .. image:: images/036_file_load_code_object.png
 
-Additionally, In Binary Analysis mode you can also Drag and drop an existing Code Object onto the RGA window on start page.
+Additionally, in Binary Analysis mode you can also drag and drop an existing Code Object onto the RGA window on start page.
 
 .. image:: images/044_drag_drop_load_code_object.png
 
@@ -617,34 +593,35 @@ From the Settings tab, you can only control the global settings:
 
 Application Settings
 """"""""""""""""""""
-The Application Settings view is used to configure global application settings that aren't associated with a single API mode:
+The Application Settings view is used to configure global application settings that aren't associated with a single API mode. See :ref:`Application Settings <application_settings>` under Vulkan® Mode for details; Binary Analysis mode exposes only the **General** and **Disassembly View** option groups described there (the **Source code editor** and **Input files** groups do not apply to this mode).
 
 .. image:: images/039_home_page_b_settings_app.png
 
-* **General**
+Default Binary Analysis Build Settings
+"""""""""""""""""""""""""""""""""""""""
 
-	* Log file location: The folder in which RGA would generate log files. Upon startup RGA will clean up the log files that are older than 3 days.
+* **Additional source search paths:**
 
-	* Project file location: The folder in which RGA would generate project files.
+	Directories where RGA will search for source files referenced by the Code Object's debug information.
+	When source files are found, source-to-ISA line correlation will be available in the disassembly view.
 
-	* Always use auto-generated project names: If checked, RGA will always use the auto-generated project name, without prompting for a rename when creating a new project.
+* **Prompt to attach source files:**
 
-	* Default API on startup: RGA will always enter the selected API Mode upon startup.
+	During binary analysis, RGA will automatically prompt you to provide search directories if source files referenced in the debug information cannot be found.
+	When unchecked, RGA will proceed with the analysis without prompting.
 
-	* Color theme: "Detect OS" is the default. This will use the system's setting for the color theme.
-
-* **Disassembly View**
-
-	* Disassembly view columns: The set of disassembly view columns which will be visible by default.
+.. image:: images/045_binary_source_search_paths.png
 
 The Build View
 ^^^^^^^^^^^^^^
 
-After you load an exiting Code Object binary, RGA will create a project for you and switch to the Build View.
+After you load an existing Code Object binary, RGA will create a project for you and switch to the Build View.
 To learn how to load an existing project, please visit RGA's Quickstart documentation.
 
-The build view consists of 3 views:
+The build view consists of 4 views:
+
 - File Menu
+- Source Code Tab View
 - Disassembly View
 - Build Output View
 
@@ -656,18 +633,20 @@ and display their contents in the Disassembly View (if any content is available 
 
 .. image:: images/032_project_file_menu.png
 
+Right-clicking on a kernel or entrypoint name provides additional options, including “Reveal kernel name” which displays the full untruncated name in a dialog.
+
 The user can remove an existing file within the project by hovering on the item and clicking on the remove button.
 
 .. image:: images/040_remove_code_object.png
 
-Once the project is empty, another existing Code Object binary can be loaded into the project, by clicking on the "Load Code Object Binary" button in the File Menu.
-Alternately, You can also do this by clicking on File -> “Load Code Object Binary”
+Once the project is empty, another existing Code Object binary can be loaded into the project, by clicking on the “Load Code Object Binary” button in the File Menu.
+Alternatively, you can also do this by clicking on File -> “Load Code Object Binary”
 
 .. image:: images/042_load_code_object_file_menu.png
 
 Build Output View
 `````````````````
-When a Code Object binary is loaded a binary analysis is triggered automatically and the RGA command line app is being launched to execute the build. 
+When a Code Object binary is loaded a binary analysis is triggered automatically and the RGA command line app is being launched to execute the build.
 Its output would be streamed into the Build Output View.
 
 .. image:: images/041_build_view_build_output_binary.png
@@ -675,6 +654,44 @@ Its output would be streamed into the Build Output View.
 Double-clicking on the top black title bar (or clicking on the resize button at its right corner) would maximize/minimize the Build Output View.
 
 The Clear button at the top right corner will clear the text from the view.
+
+Source-to-ISA Line Correlation
+``````````````````````````````
+If the loaded Code Object binary contains debug information, RGA can display source-to-ISA line correlation.
+This does not depend on the API or on the compiler toolchain which produced the Code Object. The requirement is that the
+source was compiled with DWARF debug information embedded into the Code Object.
+
+When the binary is loaded, RGA will attempt to locate the source files referenced in the debug info. If the source files
+cannot be found at their original paths, and “Prompt to attach source files” is enabled in the build settings, the
+“Missing source files for correlation” dialog will appear, listing the missing source files and allowing you to provide
+additional search directories. Search directories can also be configured in advance using the “Additional source search
+paths” build setting.
+
+.. image:: images/046_binary_missing_source_files.png
+
+Once the source files are located, the Source Code View will appear alongside the Disassembly View, and the two views are
+correlated in both directions:
+
+* Selecting a line in the Source Code View highlights every instruction in the Disassembly View which was generated from that line.
+
+* Selecting an instruction in the Disassembly View moves the Source Code View to the line which produced it, switching to the
+  relevant source file tab if the Code Object references more than one source file.
+
+The image below shows a line selected in the Source Code View, with the instructions generated from it highlighted in the
+Disassembly View:
+
+.. image:: images/047_binary_source_to_isa_correlation.png
+
+Used together with the maximum VGPR pressure navigation described in the :ref:`Disassembly View <disassembly_view>` section,
+this allows you to move from a point of peak register pressure in the ISA directly to the source code line responsible for it.
+
+.. image:: images/048_binary_isa_to_source_max_vgpr.png
+
+A source file which could not be located is represented by a placeholder tab, which lists the missing file and offers a link
+to add additional search paths and rerun the analysis.
+
+If the Code Object does not contain debug information, or if the dialog is dismissed without providing search directories,
+the analysis still completes: the Disassembly View is maximized and no Source Code View is shown.
 
 Disassembly View
 ````````````````
@@ -697,14 +714,14 @@ This will display the About dialog.
 In addition to the version number and build date of the RGA app, the About dialog displays the version and build date of the
 RGA command line executable which resides at the GUI app's folder. This allows you to see the details of the RGA command line executable
 that is being used by the GUI app. In the future, you may want to replace the command line executable before running
-the GUI application in a plug-and-play fashion (this is allowed as long as your RGA command line executable is of version 2.0. or above).
+the GUI application in a plug-and-play fashion (this is allowed as long as your RGA command line executable is of version 2.0 or above).
 
 To update RGA, click on "Check for updates" button and follow the instructions to get the latest update.
 
 Switch the API Mode
 ^^^^^^^^^^^^^^^^^^^
 
-The API mode switch is used to toggle the GUI between operating in OpenCL™ Offline, Vulkan® and Binary Analysis mode. The current mode is displayed within the RGA title bar and is also indicated by the color scheme of the application views and status bar (Green = OpenCL™ mode, Red = Vulkan® mode, Purple = Binary Analsis mode).
+The API mode switch is used to toggle the GUI between operating in OpenCL™ Offline, Vulkan® and Binary Analysis mode. The current mode is displayed within the RGA title bar and is also indicated by the color scheme of the application views and status bar (Green = OpenCL™ mode, Red = Vulkan® mode, Purple = Binary Analysis mode).
 
 .. image:: images/2_1/display_current_mode.png
 
@@ -780,6 +797,14 @@ Then checking "Enable validation layers" enables the validation layers.
 
 .. image:: images/2_1/enable_validation_layers_vulkan.png
 
+Force Offline Compilation
+``````````````````````````
+Clicking on "Build settings" button brings up the build settings.
+Checking "Force offline compilation" makes RGA always compile through the offline Vulkan® compiler
+bundled with RGA, bypassing the live driver installed on the system.
+
+.. image:: images/2_1/force_offline_compilation_vulkan.png
+
 Use an alternative front-end compiler
 `````````````````````````````````````
 Clicking on "Build settings" button brings up the build settings.
@@ -788,6 +813,17 @@ added in the text box, or be searched in the file system using the
 browse button next to the text box.
 
 .. image:: images/2_1/use_alternative_compiler_vulkan.png
+
+Generate Debug Info
+````````````````````
+Clicking on "Build settings" button brings up the build settings.
+Under the "Front-end compiler settings (glslang)" section, checking "Generate debug info" instructs
+the front-end compiler to embed debug information in the SPIR-V™ that it generates from your shader
+source. This option only applies to text-based shader source inputs (such as GLSL or HLSL) that are
+compiled by the front-end compiler. Checking this option is required for source-to-ISA line correlation to be available in the disassembly view; if left unchecked, or if
+the shader stage's input is SPIR-V rather than source text, line correlation is disabled.
+
+.. image:: images/2_1/generate_debug_info_vulkan.png
 
 Use the RGA Layer (Beta Feature)
 ````````````````````````````````
@@ -853,7 +889,7 @@ Troubleshooting the RGA Layer
 
 	- **Windows**: Open regedit and make sure that the full path to RGA's manifest file is listed under Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ImplicitLayers. Also, make sure that the path contains both the layer's manifest (JSON) as well as the layer's .dll.
 
-	- **Linux**: Ensure sure that the layer's manifest (JSON) file and .so file are found in /usr/share/vulkan/implicit_layer.d. If this is not the case, run the rga_layer_install script.
+	- **Linux**: Ensure that the layer's manifest (JSON) file and .so file are found in /usr/share/vulkan/implicit_layer.d. If this is not the case, run the rga_layer_install script.
 
 Using the RGA Layer Launcher (Windows Only)
 """""""""""""""""""""""""""""""""""""""""""
@@ -884,16 +920,7 @@ Right click on the disassembly view and click on "Show disassembly file in explo
 
 Use an Alternative Compiler
 ```````````````````````````
-By default, RGA will use the compiler that is bundled with the package. You can use an alternative LLVM-based OpenCL™ compiler which supports the AMDGPU target by providing the following paths in the build settings:
-
-	* **Binaries folder:**
-		Path to alternative compiler's binaries folder. The following executables are expected to be in this folder: clang, lld, llvm-objdump, llvm-readobj.
-
-	* **Includes folder:**
-		Path to alternative compiler's headers folder. The specified folder is expected to contain opencl-c.h header file.
-
-	* **Libraries folder:**
-		Path to alternative compiler's OpenCL™ device libraries folder. The following bitcode files are expected to be in the specified folder: irif.amdgcn.bc, ockl.amdgcn.bc, oclc_correctly_rounded_sqrt_off.amdgcn.bc, oclc_correctly_rounded_sqrt_on.amdgcn.bc, oclc_daz_opt_off.amdgcn.bc, oclc_daz_opt_on.amdgcn.bc, oclc_finite_only_off.amdgcn.bc, oclc_finite_only_on.amdgcn.bc, oclc_isa_version_900.amdgcn.bc, oclc_isa_version_901.amdgcn.bc, oclc_isa_version_902.amdgcn.bc, oclc_unsafe_math_off.amdgcn.bc, oclc_unsafe_math_on.amdgcn.bc, ocml.amdgcn.bc, opencl.amdgcn.bc
+By default, RGA will use the compiler that is bundled with the package. You can use an alternative LLVM-based OpenCL™ compiler which supports the AMDGPU target by providing the binaries, includes, and libraries folder paths described under :ref:`Default OpenCL™ Build Settings <default_opencl_build_settings>`.
 
 Change the Color Theme
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -908,7 +935,7 @@ RGA now supports switching between dark and light color themes.
 
 #. "Detect OS" is the default option and will use the system's setting for the color theme. "Light" theme uses light backgrounds and dark text, while in "Dark" theme RGA will have dark backgrounds with lighter colored text.
 	
-#. After setting the color theme and saving you will be prompted to restart the application. If the application is not restarted not all ui elements will update to reflect the new color theme.
+#. After setting the color theme and saving you will be prompted to restart the application. If the application is not restarted, not all UI elements will update to reflect the new color theme.
 
 .. image:: images/2_1/color_theme_changed_restart_application_dialog.png
 
@@ -937,12 +964,12 @@ Maximize/minimize views in build view      Ctrl+R
 Save file                                  Ctrl+S
 Build project                              Ctrl+Shift+B
 Cancel build                               Ctrl+Shift+T
-Cycle thru various views in build view     Ctrl+Tab & Ctrl+Shift+Tab
-Cycle thru various widgets in build view   Tab & Shift+Tab
+Cycle through views in build view          Ctrl+Tab & Ctrl+Shift+Tab
+Cycle through widgets in build view         Tab & Shift+Tab
 **Disassembly view**
 Find                                       Ctrl+F
 Go to (source line)                        Ctrl+G
-Show/Hide Isa code blocks                  Ctrl+Right & Ctrl+Left
+Show/Hide ISA code blocks                  Ctrl+Right & Ctrl+Left
 **Settings view**
 Restore default settings                   Ctrl+R
 **Vulkan® mode**

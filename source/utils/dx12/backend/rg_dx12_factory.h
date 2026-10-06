@@ -16,7 +16,7 @@
 #include <dxgi1_3.h>
 #include <dxgi1_4.h>
 #include <wrl.h>
-#include "d3dx12.h"
+#include "d3dx12/d3dx12.h"
 using namespace Microsoft::WRL;
 
 // Local.
@@ -54,5 +54,8 @@ namespace rga
 
         // Destroy a hit group subobject that was created by this factory.
         static void DestroyHitGroupSubobject(D3D12_STATE_SUBOBJECT*& hit_group_subobject);
+
+        // Destroy a subobject-to-exports association subobject that was created by this factory.
+        static void DestroySubobjectToExportsAssociationSubobject(D3D12_STATE_SUBOBJECT*& subobject);
     };
 }

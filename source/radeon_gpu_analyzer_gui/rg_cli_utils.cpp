@@ -166,9 +166,9 @@ bool RgCliUtils::GenerateVulkanBuildSettingsString(const RgBuildSettingsVulkan& 
     std::stringstream vulkan_specific_options;
 
     // Vulkan-specific build options.
-    if (build_settings.is_generate_debug_info_checked)
+    if (build_settings.is_compile_offline_checked)
     {
-        vulkan_specific_options << kStrCliOptVulkanGenerateDebugInformation << " ";
+        cmd << kStrCliOptVulkanCompileOffline << " ";
     }
     if (build_settings.is_no_explicit_bindings_checked)
     {
@@ -192,12 +192,33 @@ bool RgCliUtils::GenerateVulkanBuildSettingsString(const RgBuildSettingsVulkan& 
         cmd << kStrCliOptVulkanIcdLocation << " " << "\"" << build_settings.icd_location << "\" ";
     }
 
-    if (!build_settings.glslang_options.empty())
+    if (!build_settings.glslang_options.empty() || build_settings.is_generate_debug_info_checked)
     {
         // Wrap the argument for --glslang-opt with the required token to avoid ambiguity
         // between rga and glslang options.
-        cmd << kStrCliOptVulkanGlslangOptions << " " << "\"" << kStrCliOptGlslangToken <<
-            build_settings.glslang_options << kStrCliOptGlslangToken << "\" ";
+        cmd << kStrCliOptVulkanGlslangOptions << " " << "\"" << kStrCliOptGlslangToken;
+
+        // Check if -gVS is already present in user-provided glslang options.
+        bool is_debug_info_present = false;
+        if (!build_settings.glslang_options.empty())
+        {
+            std::stringstream glslang_options_stream(build_settings.glslang_options);
+            std::string       glslang_option_token;
+            while (glslang_options_stream >> glslang_option_token)
+            {
+                if (glslang_option_token == kStrCliOptVulkanGenerateDebugInformation)
+                {
+                    is_debug_info_present = true;
+                    break;
+                }
+            }
+        }
+
+        if (build_settings.is_generate_debug_info_checked && !is_debug_info_present)
+        {
+            cmd << kStrCliOptVulkanGenerateDebugInformation << " ";
+        }
+        cmd << build_settings.glslang_options << kStrCliOptGlslangToken << "\" ";
     }
 
     if (!std::get<CompilerFolderType::kBin>(build_settings.compiler_paths).empty())
@@ -237,6 +258,13 @@ bool RgCliUtils::GenerateBinaryBuildSettingsString(const RgBuildSettingsBinary& 
             include_path.erase(include_path.size() - 1, 1);
         }
         cmd << kStrCliOptAdditionalIncludePath << " \"" << include_path << "\" ";
+    }
+
+    // Source path substitutions.
+    // Use '|' as delimiter between from and to paths because both paths may contain spaces.
+    for (const auto& [from, to] : build_settings.substitute_paths)
+    {
+        cmd << kStrCliOptSubstitutePath << " \"" << from << kStrCliOptSubstitutePathDelimiter << to << "\" ";
     }
 
     // Preprocessor directives.

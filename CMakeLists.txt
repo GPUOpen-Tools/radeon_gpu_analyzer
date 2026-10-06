@@ -128,6 +128,28 @@ if (RGA_ENABLE_VULKAN)
     add_definitions("-DRGA_ENABLE_VULKAN")
 endif()
 
+# Add cmake utilities
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(dev_tools)
+
+if (NOT BUILD_CLI_ONLY)
+    include(devtools_qt_helper)
+
+    # Qt
+    if (NO_DEFAULT_QT)
+       set (NO_DEFAULT_QT_OPTION "NO_DEFAULT_PATH")
+    endif()
+
+    find_package(Qt6 COMPONENTS Core Gui Widgets Network Widgets Svg Test REQUIRED
+                 HINTS ${QT_PACKAGE_ROOT} ${NO_DEFAULT_QT_OPTION})
+    set (UPDATE_CHECK_API_HEADLESS OFF)
+else()
+    set (UPDATE_CHECK_API_HEADLESS ON)
+endif()
+
+# Add UpdateCheckApi
+add_subdirectory("external/update_check_api")
+
 # Add RGA CLI projects
 if(NOT BUILD_GUI_ONLY)
     if (RGA_ENABLE_VULKAN)

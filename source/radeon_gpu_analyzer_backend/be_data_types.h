@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for rga backend dtaa types.
@@ -13,6 +13,8 @@
 #include <string>
 
 #include <external/amdt_base_tools/Include/gtString.h>
+
+#include "common/rga_shared_data_types.h"
 
 // A structure to hold the shader file names of a given pipeline.
 struct BeProgramPipeline
@@ -51,27 +53,13 @@ struct BeProgramPipeline
     // Mesh shader.
     gtString mesh_shader;
 
-    // Task shader.
+    // Task/Amplification shader.
     gtString task_shader;
 };
 
-// The type of stage used for a shader module.
-enum BePipelineStage : char
-{
-    kVertex,
-    kTessellationControl,
-    kTessellationEvaluation,
-    kGeometry,
-    kFragment,
-    kCompute,
-    kMesh,
-    kTask,
-
-    kCount
-};
-
+using BePipelineStage = RgPipelineStage;
 // An array containing per-stage file names.
-typedef std::array<std::string, BePipelineStage::kCount>  BeVkPipelineFiles;
+typedef std::array<std::string, BePipelineStage::kCount> BePipelineFiles;
 
 // The type of stage used for a shader module.
 enum BeRtxPipelineStage : char
@@ -84,6 +72,7 @@ enum BeRtxPipelineStage : char
     kCallable,
     kTraversal,
     kLaunchKernel,
+    kUnknown,
 
     kCountRtx
 };
@@ -93,71 +82,32 @@ typedef std::array<std::string, BeRtxPipelineStage::kCountRtx> BeRtxPipelineFile
 
 // Ray Tracing Stage Name strings.
 static const BeRtxPipelineFiles kStrRtxStageNames =
-{
-    "RayGeneration",
-    "Intersection",
-    "AnyHit",
-    "ClosestHit",
-    "Miss",
-    "Callable",  
-    "Traversal", 
-    "LaunchKernel"
-};
+    {"RayGeneration", "Intersection", "AnyHit", "ClosestHit", "Miss", "Callable", "Traversal", "LaunchKernel", "Unknown"};
 
 // Rtx Suffixes for stage-specific output files.
 static const BeRtxPipelineFiles kStrRtxStageSuffix = kStrRtxStageNames;
 
 // Dx12 Stage Name strings.
-static const BeVkPipelineFiles kStrDx12StageNames =
-{
-    "vertex",
-    "hull",
-    "domain",
-    "geometry",
-    "pixel",
-    "compute", 
-    "mesh", 
-    "task"
-};
+static const BePipelineFiles kStrDx12StageNames = {"vertex", "hull", "domain", "geometry", "pixel", "compute", "mesh", "amplification"};
 
 // DX12 Suffixes for stage-specific output files.
-static const BeVkPipelineFiles kStrDx12StageSuffix =
-{
-    "vert",
-    "hull",
-    "domain",
-    "geom",
-    "pixel",
-    "comp", 
-    "mesh", 
-    "task"
-};
+static const BePipelineFiles kStrDx12StageSuffix = {"vert", "hull", "domain", "geom", "pixel", "comp", "mesh", "amplification"};
 
 // Vulkan Suffixes for stage-specific output files.
-static const BeVkPipelineFiles kVulkanStageFileSuffix = 
-{
-    "vert", 
-    "tesc", 
-    "tese", 
-    "geom", 
-    "frag", 
-    "comp", 
-    "mesh", 
-    "task"
-};
+static const BePipelineFiles kVulkanStageFileSuffix = {"vert", "tesc", "tese", "geom", "frag", "comp", "mesh", "task"};
 
 // Physical adapter data.
 struct BeVkPhysAdapterInfo
 {
-    uint32_t     id;
-    std::string  name;
-    std::string  vk_driver_version;
-    std::string  vk_api_version;
+    uint32_t    id;
+    std::string name;
+    std::string vk_driver_version;
+    std::string vk_api_version;
 };
 
 enum beWaveSize
 {
-    kUnknown = 0,
+    kUnknownSize = 0,
     kWave32,
     kWave64
 };
@@ -165,7 +115,10 @@ enum beWaveSize
 // An array containing per-stage wave size.
 typedef std::array<beWaveSize, BePipelineStage::kCount> BeVkPipelineWaveSizes;
 
+// An array containing per-stage shader hash.
+typedef std::array<std::string, BePipelineStage::kCount> BeVkPipelineShaderHashes;
+
 // An array containing per-stage wave size.
 typedef std::array<beWaveSize, BeRtxPipelineStage::kCountRtx> BeRtxPipelineWaveSizes;
 
-#endif // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_DATA_TYPES_H_
+#endif  // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_DATA_TYPES_H_

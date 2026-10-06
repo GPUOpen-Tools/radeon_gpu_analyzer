@@ -113,17 +113,29 @@ ParserSi::kaStatus ParserSiSop1::Parse(GDT_HW_GENERATION hw_generation, Instruct
     if ((hw_generation == GDT_HW_GENERATION_SEAISLAND) || (hw_generation == GDT_HW_GENERATION_SOUTHERNISLAND))
     {
         SISOP1Instruction::OP op = GetSISOP1Op(hex_instruction);
-        instruction = new SISOP1Instruction(ssrc0, op, sdst, ridx0, sdstRidx1, label, goto_label);
+        instruction = new (std::nothrow) SISOP1Instruction(ssrc0, op, sdst, ridx0, sdstRidx1, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else if (hw_generation == GDT_HW_GENERATION_VOLCANICISLAND)
     {
         VISOP1Instruction::OP op = GetVISOP1Op(hex_instruction);
-        instruction = new VISOP1Instruction(ssrc0, op, sdst, ridx0, sdstRidx1, label, goto_label);
+        instruction = new (std::nothrow) VISOP1Instruction(ssrc0, op, sdst, ridx0, sdstRidx1, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else if (hw_generation == GDT_HW_GENERATION_GFX9)
     {
         G9SOP1Instruction::OP op = GetG9SOP1Op(hex_instruction);
-        instruction = new G9SOP1Instruction(ssrc0, op, sdst, ridx0, sdstRidx1, label, goto_label);
+        instruction = new (std::nothrow) G9SOP1Instruction(ssrc0, op, sdst, ridx0, sdstRidx1, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else
     {

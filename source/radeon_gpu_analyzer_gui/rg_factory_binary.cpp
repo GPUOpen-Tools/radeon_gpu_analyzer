@@ -9,7 +9,7 @@
 
 // Local.
 #include "radeon_gpu_analyzer_gui/qt/rg_app_state_binary.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_build_settings_view_opencl.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_build_settings_view_binary.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_build_view_binary.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view_binary.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_binary.h"
@@ -67,9 +67,10 @@ std::shared_ptr<RgBuildSettings> RgFactoryBinary::CreateBuildSettings(std::share
     return build_settings;
 }
 
-RgBuildSettingsView* RgFactoryBinary::CreateBuildSettingsView(QWidget*, std::shared_ptr<RgBuildSettings>, bool)
+RgBuildSettingsView* RgFactoryBinary::CreateBuildSettingsView(QWidget* parent, std::shared_ptr<RgBuildSettings> build_settings, bool is_global_settings)
 {
-    return nullptr;
+    assert(build_settings != nullptr);
+    return new RgBuildSettingsViewBinary(parent, *std::static_pointer_cast<RgBuildSettingsBinary>(build_settings), is_global_settings);
 }
 
 RgBuildView* RgFactoryBinary::CreateBuildView(QWidget* parent)

@@ -73,7 +73,7 @@ protected slots:
     virtual void HandleSelectedFileChanged(const std::string& current_file_name, const std::string& new_file_name) override;
 
     // Handler invoked when the user changes the selected line in the current source editor.
-    virtual void HandleSourceFileSelectedLineChanged(RgSourceCodeEditor* editor, int line_number) override;
+    virtual void HandleSourceFileSelectedLineChanged(ShaderSourceCodeViewer* editor, int line_number) override;
 
     // Set the project build settings border color.
     virtual void SetAPISpecificBorderColor() override;

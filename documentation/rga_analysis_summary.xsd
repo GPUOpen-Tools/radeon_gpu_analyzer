@@ -1,0 +1,863 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  RGA Analysis Summary XML Schema Definition
+  Schema version: 1.0.9
+
+  This schema describes the XML output produced by:
+      rga -s bin  --session-summary <file> [--include-target-metadata] <input.co>
+      rga -s opencl --session-summary <file> <input.cl>
+      rga -s vk    --session-summary <file> <pipeline>
+
+  Root element: RgaAnalysisOutput
+  Namespace:    (none)
+
+  Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+  <!-- =========================================================
+       Root element
+       ========================================================= -->
+
+  <xs:element name="RgaAnalysisOutput">
+    <xs:annotation>
+      <xs:documentation>
+        Root element of the RGA analysis summary file.
+        Contains document metadata and one or more analysis results.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Document" type="DocumentType"/>
+        <xs:element name="AnalysisResults" type="AnalysisResultsType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- =========================================================
+       Document metadata
+       ========================================================= -->
+
+  <xs:complexType name="DocumentType">
+    <xs:annotation>
+      <xs:documentation>
+        Top-level document metadata. Currently holds the schema version
+        string so consumers can detect which revision of the schema
+        produced the file.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="SchemaVersion" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Schema version string (e.g. "1.0.9"). Consumers should
+            verify this matches the version they expect before parsing.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       AnalysisResults container
+       ========================================================= -->
+
+  <xs:complexType name="AnalysisResultsType">
+    <xs:annotation>
+      <xs:documentation>
+        Container for all analysis results. There is one AnalysisResult
+        per target GPU architecture that was compiled for.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="AnalysisResult" type="AnalysisResultType"
+                  minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       AnalysisResult
+       ========================================================= -->
+
+  <xs:complexType name="AnalysisResultType">
+    <xs:annotation>
+      <xs:documentation>
+        A single compilation result for one target architecture.
+        Contains the target architecture name, optional architecture
+        metadata, the input file list, and the compilation output.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="TargetArchitecture" type="TargetArchitectureType"/>
+      <xs:element name="Inputs"             type="InputsType"/>
+      <xs:element name="Output"             type="OutputType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Target architecture (name + optional metadata)
+       ========================================================= -->
+
+  <xs:complexType name="TargetArchitectureType">
+    <xs:annotation>
+      <xs:documentation>
+        Identifies the target GPU architecture and optionally provides
+        the architecture-level enumeration tables (branch types, register
+        types, functional groups). The metadata is present only when the
+        --include-target-metadata flag is passed to rga.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="TargetArchitectureName" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            GPU architecture identifier string, e.g. "gfx1100", "mi300".
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="TargetArchitectureMetadata" type="TargetArchitectureMetadataType"
+                  minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>
+            Present only when --include-target-metadata is specified.
+            Provides enumeration tables for all typed values referenced
+            in the analysis output for this architecture.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Target architecture metadata tables
+       ========================================================= -->
+
+  <xs:complexType name="TargetArchitectureMetadataType">
+    <xs:sequence>
+      <xs:element name="BranchInstructionTypes" type="BranchInstructionTypesType"/>
+      <xs:element name="RegisterTypes"          type="RegisterTypesType"/>
+      <xs:element name="InstructionFunctionalGroups" type="InstructionFunctionalGroupsType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BranchInstructionTypesType">
+    <xs:annotation>
+      <xs:documentation>
+        Enumeration of all branch instruction types used by this architecture.
+        The Id values correspond to BranchType strings written elsewhere in
+        the file (e.g. inside BranchInfo/BranchType).
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="BranchInstructionType" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="BranchInstructionTypeId"   type="xs:integer"/>
+            <xs:element name="BranchInstructionTypeName" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="RegisterTypesType">
+    <xs:annotation>
+      <xs:documentation>
+        Enumeration of all register types (e.g. VGPR, SGPR, AGPR) used
+        by this architecture.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="RegisterType" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="RegisterTypeId"   type="xs:integer"/>
+            <xs:element name="RegisterTypeName" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="InstructionFunctionalGroupsType">
+    <xs:annotation>
+      <xs:documentation>
+        Enumeration of all unique (functional group, subgroup) combinations
+        found in this architecture's instruction set. Each entry has a
+        user-friendly group name (e.g. "Vector Memory", "Scalar ALU") and
+        a comma-separated subgroup string (e.g. "Buffer, Load"), or "General" when not applicable.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="InstructionFunctionalGroup" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="InstructionFunctionalGroupId" type="xs:integer"/>
+            <xs:element name="InstructionFunctionalGroupGroupName" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>
+                  Functional group name, e.g. "Vector Memory", "Scalar ALU".
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="InstructionFunctionalGroupSubGroupName" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>
+                  Comma-separated subgroup classification within the group,
+                  e.g. "Buffer, Load", "Flat, Atomic". "General" when not applicable.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="InstructionFunctionalGroupDescription" type="xs:string" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Inputs
+       ========================================================= -->
+
+  <xs:complexType name="InputsType">
+    <xs:annotation>
+      <xs:documentation>
+        List of input file paths that were analyzed in this result.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Input" type="xs:string"
+                  minOccurs="1" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            Path to an input code object or shader file.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Output
+       ========================================================= -->
+
+  <xs:complexType name="OutputType">
+    <xs:annotation>
+      <xs:documentation>
+        The compilation output for this target architecture: the API
+        name and the list of compiled kernels/shaders.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="API" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            API name string, e.g. "OpenCL", "Vulkan", "DXR", "DX12".
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Kernels" type="KernelsType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Kernels container
+       ========================================================= -->
+
+  <xs:complexType name="KernelsType">
+    <xs:sequence>
+      <xs:element name="Kernel" type="KernelType"
+                  minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Kernel
+       ========================================================= -->
+
+  <xs:complexType name="KernelType">
+    <xs:annotation>
+      <xs:documentation>
+        A single compiled kernel or shader entry point with its full
+        ISA analysis and compilation statistics.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="KernelId"   type="xs:integer"/>
+      <xs:element name="KernelName" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Entry point name of the kernel or shader.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="KernelType" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Pipeline stage / kernel type, e.g. "Compute", "Vertex",
+            "Fragment", "RayGeneration", "ClosestHit".
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="ISA"   type="IsaType"/>
+      <xs:element name="Stats" type="StatsType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       ISA
+       ========================================================= -->
+
+  <xs:complexType name="IsaType">
+    <xs:annotation>
+      <xs:documentation>
+        Complete ISA representation: raw disassembly text, structured
+        per-instruction data, basic block list, and control-flow graph.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Disassembly"   type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Full raw ISA disassembly as a single text block,
+            exactly as produced by the assembler/disassembler.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Instructions"  type="InstructionsType"/>
+      <xs:element name="Blocks"        type="BlocksType"/>
+      <xs:element name="CFG"           type="CfgType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Instructions container
+       ========================================================= -->
+
+  <xs:complexType name="InstructionsType">
+    <xs:sequence>
+      <xs:element name="Instruction" type="InstructionType"
+                  minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Instruction
+       ========================================================= -->
+
+  <xs:complexType name="InstructionType">
+    <xs:annotation>
+      <xs:documentation>
+        One ISA instruction line. The InstructionId is used as a stable
+        cross-reference key within the same kernel (e.g. from Blocks).
+        Uses xs:all to tolerate legitimately absent fields:
+        - BinaryRepresentation, Opcode, Offset, InstructionSizeInBytes are absent for
+          OpenGL label pseudo-instructions.
+        - FunctionalGroup, FunctionalSubGroups, InstructionDescription, VgprPressure,
+          VgprAllocation, VgprsAccess, SgprPressure, SgprAllocation, SgprsAccess are
+          absent in VkOffline/LLPC mode (ISA metadata not available).
+      </xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="InstructionId"          type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            0-based sequential identifier, stable within the containing Kernel.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Offset"                 type="xs:string"       minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Byte offset in the binary (hex string, e.g. "0x0000"). Absent for label pseudo-instructions.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="BinaryRepresentation"   type="xs:string"       minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Hex-encoded binary encoding of the instruction. Absent for label pseudo-instructions.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="InstructionSizeInBytes" type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Instruction width in bytes; typically 4 or 8. Absent for label pseudo-instructions.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Opcode"                 type="xs:string"       minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Instruction opcode mnemonic, e.g. "s_load_b32". Absent for label pseudo-instructions.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="InstructionSemantics"   type="InstructionSemanticsType"/>
+      <xs:element name="InstructionDebugInfo"   type="InstructionDebugInfoType"/>
+      <xs:element name="Operands"               type="OperandsType"/>
+      <xs:element name="FunctionalGroup"        type="xs:string"       minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            High-level functional classification, e.g. "ScalarALU", "VectorMemory".
+            Absent in VkOffline/LLPC mode.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="FunctionalSubGroups" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Comma-separated subgroup classification string, e.g. "Buffer, Load".
+            Absent when N/A or in VkOffline/LLPC mode.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="InstructionDescription" type="xs:string"       minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Human-readable description of the instruction's operation. Absent in VkOffline/LLPC mode.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="VgprPressure"           type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Number of live VGPRs at this instruction. Absent in VkOffline/LLPC mode.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="VgprAllocation"         type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Number of VGPRs allocated at this instruction. Absent in VkOffline/LLPC mode.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="VgprsAccess"            type="RegisterAccessListType" minOccurs="0"/>
+      <xs:element name="SgprPressure"           type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Number of live SGPRs at this instruction. Absent in VkOffline/LLPC mode.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="SgprAllocation"         type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Number of SGPRs allocated at this instruction. Absent in VkOffline/LLPC mode.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="SgprsAccess"            type="RegisterAccessListType" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+
+  <!-- Instruction semantics -->
+
+  <xs:complexType name="InstructionSemanticsType">
+    <xs:annotation>
+      <xs:documentation>
+        Semantic classification flags for the instruction: whether it is
+        a label pseudo-instruction and branch metadata if applicable.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="IsLabel"    type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>
+            true if this instruction is a label (not an executable instruction).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="BranchInfo" type="BranchInfoType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BranchInfoType">
+    <xs:sequence>
+      <xs:element name="IsBranch"     type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>true if this instruction is a branch.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="BranchType"   type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Branch type string when IsBranch is true, e.g. "Direct", "Indirect".
+            Absent when IsBranch is false.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="BranchTarget" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Label or address string of the branch target when IsBranch is true.
+            Absent when IsBranch is false.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Instruction debug info -->
+
+  <xs:complexType name="InstructionDebugInfoType">
+    <xs:annotation>
+      <xs:documentation>
+        Source-level debug information mapping the instruction back to
+        the original high-level source file, if available.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="HighLevelSource" type="HighLevelSourceType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="HighLevelSourceType">
+    <xs:sequence>
+      <xs:element name="FileName"   type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Source file name. Absent when debug information is unavailable.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="LineNumber" type="xs:integer" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            1-based line number in the source file. Absent when unavailable.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Operands -->
+
+  <xs:complexType name="OperandsType">
+    <xs:annotation>
+      <xs:documentation>
+        Operand information: a raw text form and a list of structured
+        Operand entries, one per operand slot.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Text"    type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Raw operand text as it appears in the disassembly. Absent for zero-operand instructions.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Operand" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="OperandOrder" type="xs:integer">
+              <xs:annotation>
+                <xs:documentation>0-based position of the operand in the instruction.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Access"       type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Access pattern: "Read", "Write", or "ReadWrite".</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="OperandType"  type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Operand type string, e.g. "SGPR", "VGPR", "Immediate".</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="OperandName"  type="xs:string">
+              <xs:annotation>
+                <xs:documentation>Operand name as it appears in the ISA, e.g. "s0", "v4".</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Per-register access list (shared by VGPR and SGPR) -->
+
+  <xs:complexType name="RegisterAccessListType">
+    <xs:annotation>
+      <xs:documentation>
+        A list of individual register accesses. Used for both VgprsAccess
+        (containing Vgpr elements) and SgprsAccess (containing Sgpr elements).
+        Both element names share the same structure, defined by RegisterAccessEntryType.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="Vgpr" type="RegisterAccessEntryType"/>
+        <xs:element name="Sgpr" type="RegisterAccessEntryType"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="RegisterAccessEntryType">
+    <xs:sequence>
+      <xs:element name="Index"  type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>Physical register index (e.g. 0 for v0/s0).</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Name"   type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Register name string, e.g. "v0", "s4".</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="Access" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Access pattern: "Read", "Write", or "ReadWrite".</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Blocks (basic blocks for CFG display)
+       ========================================================= -->
+
+  <xs:complexType name="BlocksType">
+    <xs:sequence>
+      <xs:element name="Block" type="BlockType"
+                  minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BlockType">
+    <xs:annotation>
+      <xs:documentation>
+        A basic block in the control-flow graph with its predecessor/successor
+        ids, live register information at block boundaries, and the list of
+        instruction references contained in the block.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="BlockId"       type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>Unique 0-based identifier for this block within the kernel.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="BlockLabel"    type="xs:string">
+        <xs:annotation>
+          <xs:documentation>Human-readable label, typically the entry label of the block.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="BlockDisplayLabel" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Human-readable display label derived from ISA branch operands (e.g. "label_0A40"). Present only for blocks that are branch targets.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="BlockMetadata" type="BlockMetadataType"/>
+      <xs:element name="Instructions"  type="BlockInstructionsType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BlockMetadataType">
+    <xs:all>
+      <xs:element name="BlockPredecessorsIds"       type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Comma-separated list of predecessor block IDs. Empty string if the block
+            has no predecessors (i.e. it is the entry block).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="BlockSuccessorsIds"         type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Comma-separated list of successor block IDs. Empty string for the exit block.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="BlockSuccessorsBranchTypes" type="xs:string" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Comma-separated branch type strings corresponding positionally to
+            BlockSuccessorsIds, e.g. "Direct,Indirect".
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="LiveRegistersIn"            type="LiveRegistersType" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Live register state at the start of this block.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="LiveRegistersOut"           type="LiveRegistersType" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Live register state at the end of this block.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="LiveRegistersType">
+    <xs:sequence>
+      <xs:element name="VgprPressure" type="xs:unsignedLong"      minOccurs="0"/>
+      <xs:element name="VgprsAccess"  type="RegisterAccessListType" minOccurs="0"/>
+      <xs:element name="SgprPressure" type="xs:unsignedLong"      minOccurs="0"/>
+      <xs:element name="SgprsAccess"  type="RegisterAccessListType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Instruction references within a block -->
+
+  <xs:complexType name="BlockInstructionsType">
+    <xs:annotation>
+      <xs:documentation>
+        Ordered list of instruction references within a basic block.
+        Each entry refers back to a full Instruction by its InstructionId.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="InstructionReference" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="InstructionId" type="xs:integer" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>
+                  Reference to the InstructionId of the corresponding Instruction
+                  element in the parent ISA/Instructions list.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Opcode"        type="xs:string" minOccurs="0"/>
+            <xs:element name="Operands"      type="xs:string" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>
+                  Operand text of the referenced instruction as it appears
+                  in the disassembly (e.g. "s0, s1, 4"). Opcode is provided
+                  separately in the sibling Opcode element.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Control Flow Graph
+       ========================================================= -->
+
+  <xs:complexType name="CfgType">
+    <xs:annotation>
+      <xs:documentation>
+        Control-flow graph as a list of directed edges between basic blocks.
+        Block nodes are defined in the Blocks section; this section provides
+        only the connectivity.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Branch" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="SourceBlockId"      type="xs:integer">
+              <xs:annotation>
+                <xs:documentation>BlockId of the source basic block.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="DestinationBlockId" type="xs:integer">
+              <xs:annotation>
+                <xs:documentation>BlockId of the destination basic block.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- =========================================================
+       Statistics
+       ========================================================= -->
+
+  <xs:simpleType name="UInt64OrNAType">
+    <xs:annotation>
+      <xs:documentation>
+        Either a non-negative integer, or the literal string "N/A" when the
+        statistic does not apply to the target architecture.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:unsignedLong"/>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="N/A"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:complexType name="StatsType">
+    <xs:annotation>
+      <xs:documentation>
+        Compilation statistics for a kernel: register usage, spills,
+        scratch memory, and LDS usage. Uses xs:all because different CLI modes
+        emit different subsets of fields (e.g. LdsBytesUsed is absent in DX12,
+        ApiShaderHash is absent in OpenGL).
+      </xs:documentation>
+    </xs:annotation>
+    <xs:all>
+      <xs:element name="ApiShaderHash"              type="xs:string"       minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            API-level shader hash as a hex string. Absent when unavailable (e.g. OpenGL).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="VgprsAllocationGranularity" type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Allocation granularity for VGPRs; VgprsAllocated is always a
+            multiple of this value.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="VgprsAllocated"             type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Number of VGPRs allocated by the compiler for this kernel.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="VgprsUsed"                  type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Number of VGPRs actually used (may be less than allocated).</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="VgprsSpilled"               type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Number of VGPRs spilled to scratch memory. A non-zero value
+            indicates a potential performance bottleneck.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="VgprsTotal"                 type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Total VGPRs available on the target device (hardcoded to 256).
+            Useful for computing the maximum occupancy.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="AgprsUsed"                  type="UInt64OrNAType">
+        <xs:annotation>
+          <xs:documentation>
+            Number of AGPRs (accumulation VGPRs) used. "N/A" on architectures
+            without an AGPR file.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="AgprsTotal"                 type="UInt64OrNAType">
+        <xs:annotation>
+          <xs:documentation>
+            Total AGPRs available on the target device. "N/A" on architectures
+            without an AGPR file.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="SgprsAllocated"             type="xs:unsignedLong" minOccurs="0"/>
+      <xs:element name="SgprsUsed"                  type="xs:unsignedLong" minOccurs="0"/>
+      <xs:element name="SgprsSpilled"               type="xs:unsignedLong" minOccurs="0"/>
+      <xs:element name="ScratchMemoryBytes"         type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Scratch memory used by the kernel, in bytes.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="LdsBytesUsed"               type="xs:unsignedLong" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Local Data Share (LDS / shared memory) used by the kernel, in bytes.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+</xs:schema>

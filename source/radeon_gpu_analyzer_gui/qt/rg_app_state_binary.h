@@ -63,6 +63,9 @@ public:
     // Get the stylesheet for the build settings.
     virtual std::string GetBuildSettingsViewStylesheet() const override;
 
+    // Reset current analysis status event.
+    virtual void ResetCurrentAnalysis() override;
+
 private slots:
 
     // A handler invoked when the "Load Code objeect Binary existing  file" signal is emitted.

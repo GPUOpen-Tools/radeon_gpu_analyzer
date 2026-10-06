@@ -442,7 +442,7 @@ CElf::AddSection(
     // Also, we are only prepared to deal with one SYMTAB per object.
     // And DYNSYM is unimplemented.
     // If this code ever gets used to create objects from scratch,
-    // I'll need to adjust this part to mirror the code in CElf::Read().
+    // this part needs to be adjusted to mirror the code in CElf::Read().
     if (type == SHT_DYNSYM ||
         type == SHT_SYMTAB ||
         type == SHT_STRTAB)
@@ -653,7 +653,7 @@ CElf::Read(
 
     if (shstrtabIndex == SHN_XINDEX)
     {
-        // This code is untested (and so is commented out).
+        // This code has not been run (and so is commented out).
         // When we encounter such an object, we will debug it.
         //
         // e_shstrndx

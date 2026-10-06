@@ -225,6 +225,74 @@ namespace rga
         pso_desc.SampleDesc.Count = 1;
     }
 
+    void RgDx12Utils::InitGraphicsPipelineStream(PSO_STREAM& pso_desc)
+    {
+        // Default D3D12 rasterizer state.
+        CD3DX12_RASTERIZER_DESC default_dx12_rasterizer_state;
+        default_dx12_rasterizer_state.FillMode = D3D12_FILL_MODE_SOLID;
+        default_dx12_rasterizer_state.CullMode = D3D12_CULL_MODE_BACK;
+        default_dx12_rasterizer_state.FrontCounterClockwise = FALSE;
+        default_dx12_rasterizer_state.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+        default_dx12_rasterizer_state.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+        default_dx12_rasterizer_state.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+        default_dx12_rasterizer_state.DepthClipEnable = TRUE;
+        default_dx12_rasterizer_state.MultisampleEnable = FALSE;
+        default_dx12_rasterizer_state.AntialiasedLineEnable = FALSE;
+        default_dx12_rasterizer_state.ForcedSampleCount = 0;
+        default_dx12_rasterizer_state.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+
+        // Default D3D12 blend state.
+        CD3DX12_BLEND_DESC default_dx12_blend_state;
+        default_dx12_blend_state.AlphaToCoverageEnable = FALSE;
+        default_dx12_blend_state.IndependentBlendEnable = FALSE;
+        const D3D12_RENDER_TARGET_BLEND_DESC default_render_target_blend_desc =
+        {
+            FALSE,FALSE,
+            D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+            D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+            D3D12_LOGIC_OP_NOOP,
+            D3D12_COLOR_WRITE_ENABLE_ALL,
+        };
+        for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+        {
+            default_dx12_blend_state.RenderTarget[i] = default_render_target_blend_desc;
+        }
+
+        // Default D3D12 depth stencil state.
+        CD3DX12_DEPTH_STENCIL_DESC default_dx12_depth_stencil_state;
+        default_dx12_depth_stencil_state.DepthEnable = TRUE;
+        default_dx12_depth_stencil_state.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+        default_dx12_depth_stencil_state.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+        default_dx12_depth_stencil_state.StencilEnable = FALSE;
+        default_dx12_depth_stencil_state.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+        default_dx12_depth_stencil_state.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+        const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp =
+        { D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
+        default_dx12_depth_stencil_state.FrontFace = defaultStencilOp;
+        default_dx12_depth_stencil_state.BackFace = defaultStencilOp;
+
+        // Set the D3D12 defaults.
+        pso_desc.BlendState = default_dx12_blend_state;
+        pso_desc.DepthStencilState = default_dx12_depth_stencil_state;
+        pso_desc.RasterizerState = default_dx12_rasterizer_state;
+
+        // pso_desc.SampleMask = UINT_MAX;
+
+        // Assume triangle primitive topology type.
+        pso_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+        // Assume single render target.
+        D3D12_RT_FORMAT_ARRAY rtvFormats = {};
+        rtvFormats.NumRenderTargets = 1;
+        rtvFormats.RTFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        pso_desc.RTVFormats = rtvFormats;
+
+        // Assume a single multisample per pixel.
+        DXGI_SAMPLE_DESC sampleDesc{ };
+        sampleDesc.Count = 1;
+        pso_desc.SampleDesc = sampleDesc;
+    }
+
     bool RgDx12Utils::ParseGpsoFile(const std::string& filename, D3D12_GRAPHICS_PIPELINE_STATE_DESC& pso_desc)
     {
         // Error messages.
@@ -344,7 +412,7 @@ namespace rga
                             if (num_input_layout_elems > 0)
                             {
                                 // Allocate the array of InputLayout elements.
-                                elem = new D3D12_INPUT_ELEMENT_DESC[num_input_layout_elems]{0};
+                                elem = new (std::nothrow) D3D12_INPUT_ELEMENT_DESC[num_input_layout_elems]{};
 
                                 for (uint32_t i = 0; i < num_input_layout_elems; i++)
                                 {
@@ -469,8 +537,9 @@ namespace rga
 
                                 if (!should_abort)
                                 {
-                                    // Set the input layout descriptors.
+                                    // Set the input layout descriptors. Transfer ownership to the out-parameter.
                                     pso_desc.InputLayout = {elem, num_input_layout_elems};
+                                    elem                 = nullptr;
                                 }
                             }
                             else
@@ -606,11 +675,239 @@ namespace rga
             {
                 std::cout << kStrErrorFailedToParseGpsoFile << std::endl;
                 ret = false;
+                should_abort = true;
             }
         }
 
         ret = !should_abort && (is_version_checked && is_input_layout_num_elements_checked && is_input_layout_checked &&
             is_primitive_toplogy_type_checked && is_num_render_targets_checked && is_rtv_formats_checked);
+
+        if (!ret && elem != nullptr)
+        {
+            for (uint32_t i = 0; i < num_input_layout_elems; i++)
+            {
+                delete[] elem[i].SemanticName;
+                elem[i].SemanticName = nullptr;
+            }
+            delete[] elem;
+            elem = nullptr;
+        }
+
+        return ret;
+    }
+
+    bool RgDx12Utils::ParseGpsoFile(const std::string& filename, PSO_STREAM& stream)
+    {
+        // Error messages.
+        const char* kStrErrorUnknownSchemaVersion               = "Error: unknown schema version: ";
+        const char* kStrErrorFailedToParseGpsoFile              = "Error: failed to parse .gpso file.";
+        const char* kStrErrorFailedToParseRtvFormatValues       = "Error: failed to parse the RTV format values, line ";
+
+        // Warning messages.
+        const char* kStrWarningUnrecognizedDxgiFormat1            = "Warning: unrecognized DXGI Format \"";
+        const char* kStrWarningUnrecognizedDxgiFormat2            = "\", assuming DXGI_FORMAT_UNKNOWN.";
+        const char* kStrWarningUnrecognizedPrimitiveTopologyType1 = "Error: unrecognized primitive topology type: \"";
+        const char* kStrWarningUnrecognizedPrimitiveTopologyType2 = "\", assuming D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED.";
+        const char* kStrWarningRenderTargetsMismatch              = "Warning: mismatch between number of RTV format values and the NumRenderTargets.";
+        const char* kStrWarningNumRenderTargetsExceedsMax         = "Warning: NumRenderTargets exceeds max of 8, assuming 8.";
+
+        std::string gpso_content;
+        bool ret = false;
+
+        // A flag indicating if we should abort
+        // the processing process due to an error.
+        bool should_abort = false;
+
+        // Flags that indicate whether we covered the relevant blocks.
+        bool is_version_checked = false;
+        bool is_primitive_toplogy_type_checked = false;
+        bool is_num_render_targets_checked = false;
+        bool is_rtv_formats_checked = false;
+
+        // Read the input file
+        bool is_file_read = ReadTextFile(filename, gpso_content);
+        assert(is_file_read);
+        if (is_file_read)
+        {
+            D3D12_RT_FORMAT_ARRAY rtvFormats = {};
+            try
+            {
+                std::istringstream f(gpso_content);
+                std::string line;
+                while (!should_abort && std::getline(f, line))
+                {
+                    // Skip empty lines.
+                    if (line.empty())
+                    {
+                        continue;
+                    }
+
+                    if (line.find('#') == 0)
+                    {
+                        // Schema version.
+                        if (!is_version_checked && line.find(kStrElemSchemaVersion) != std::string::npos)
+                        {
+                            while (std::getline(f, line))
+                            {
+                                if (line.empty())
+                                {
+                                    // Skip empty lines.
+                                    continue;
+                                }
+                                else
+                                {
+                                    // Verify that we are processing a known schema.
+                                    assert(line.compare(kStrElemSchemaVersion10) == 0);
+                                    if (line.compare(kStrElemSchemaVersion10) != 0)
+                                    {
+                                        std::cout << kStrErrorUnknownSchemaVersion << line << std::endl;
+                                        should_abort = true;
+                                    }
+                                    else
+                                    {
+                                        // Version verified.
+                                        is_version_checked = true;
+                                    }
+
+                                    // Continue to the next element.
+                                    break;
+                                }
+                            }
+                        }
+                        else if (!is_primitive_toplogy_type_checked && line.find(kStrElemSchemaPrimitiveTopologyType) != std::string::npos)
+                        {
+                            while (std::getline(f, line))
+                            {
+                                if (line.empty())
+                                {
+                                    // Skip empty lines.
+                                    continue;
+                                }
+                                else
+                                {
+                                    std::string topology_type_str = TrimWhitespace(line);
+                                    D3D12_PRIMITIVE_TOPOLOGY_TYPE prim_topology_type = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+                                    ret = StrToPrimitiveTopologyType(topology_type_str, prim_topology_type);
+                                    assert(ret);
+                                    if (ret)
+                                    {
+                                        stream.PrimitiveTopologyType = prim_topology_type;
+                                        is_primitive_toplogy_type_checked = true;
+                                    }
+                                    else
+                                    {
+                                        std::cout << kStrWarningUnrecognizedPrimitiveTopologyType1 <<
+                                            topology_type_str << kStrWarningUnrecognizedPrimitiveTopologyType2 << std::endl;
+                                    }
+
+                                    // Continue to the next element.
+                                    break;
+                                }
+                            }
+                        }
+                        else if (!is_num_render_targets_checked &&
+                            line.find(kStrElemSchemaNumRenderTargets) != std::string::npos)
+                        {
+                            while (std::getline(f, line))
+                            {
+                                if (line.empty())
+                                {
+                                    // Skip empty lines.
+                                    continue;
+                                }
+                                else
+                                {
+                                    std::string num_render_target_str = TrimWhitespace(line);
+                                    rtvFormats.NumRenderTargets = std::stoi(num_render_target_str);
+                                    is_num_render_targets_checked = true;
+
+                                    // Continue to the next element.
+                                    break;
+                                }
+                            }
+                        }
+                        else if (!is_rtv_formats_checked && line.find(kStrElemSchemaRtvFormats) != std::string::npos)
+                        {
+                            if (rtvFormats.NumRenderTargets > 0)
+                            {
+                                if (rtvFormats.NumRenderTargets > 8)
+                                {
+                                    std::cout << kStrWarningNumRenderTargetsExceedsMax << std::endl;
+
+                                    // Do not exceed the maximum.
+                                    rtvFormats.NumRenderTargets     = 8;
+                                    is_num_render_targets_checked = true;
+                                }
+
+                                while (std::getline(f, line))
+                                {
+                                    if (line.empty())
+                                    {
+                                        // Skip empty lines.
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        // Extract the RTV format values.
+                                        std::vector<std::string> rtv_format_values;
+                                        bool                     rtv_format_parsed = ExtractCurlyBracketedValues(line, rtv_format_values);
+
+                                        if (rtv_format_parsed)
+                                        {
+                                            assert(rtv_format_values.size() == rtvFormats.NumRenderTargets);
+                                            if (rtv_format_values.size() != rtvFormats.NumRenderTargets)
+                                            {
+                                                std::cout << kStrWarningRenderTargetsMismatch << std::endl;
+                                            }
+
+                                            for (uint32_t i = 0; i < rtvFormats.NumRenderTargets; i++)
+                                            {
+                                                DXGI_FORMAT format_value = DXGI_FORMAT_UNKNOWN;
+                                                ret                      = RgDx12Utils::StrToDxgiFormat(rtv_format_values[i], format_value);
+                                                assert(ret);
+                                                if (ret)
+                                                {
+                                                    rtvFormats.RTFormats[i] = format_value;
+                                                }
+                                                else
+                                                {
+                                                    std::cout << kStrWarningUnrecognizedDxgiFormat1 << rtv_format_values[i]
+                                                              << kStrWarningUnrecognizedDxgiFormat2 << std::endl;
+                                                }
+                                            }
+
+                                            // Assume success as long as we did not have to abort.
+                                            is_rtv_formats_checked = !should_abort;
+                                        }
+                                        else
+                                        {
+                                            std::cout << kStrErrorFailedToParseRtvFormatValues << line << std::endl;
+                                            should_abort = true;
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // No RTV formats, must set RTVFormat 0 to DXGI_FORMAT_UNKNOWN.
+                                rtvFormats.NumRenderTargets = 0;
+                                rtvFormats.RTFormats[0]    = DXGI_FORMAT_UNKNOWN;
+                                is_rtv_formats_checked = true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (...)
+            {
+                std::cout << kStrErrorFailedToParseGpsoFile << std::endl;
+                ret = false;
+            }
+
+            stream.RTVFormats = rtvFormats;
+        }
+
+        ret = !should_abort && (is_version_checked && is_primitive_toplogy_type_checked && is_num_render_targets_checked && is_rtv_formats_checked);
         return ret;
     }
 

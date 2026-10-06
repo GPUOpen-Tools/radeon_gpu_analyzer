@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for shader ISA Disassembly view item model.
@@ -7,6 +7,7 @@
 
 // C++.
 #include <cassert>
+#include <cstdlib>
 #include <sstream>
 
 // Qt.
@@ -144,7 +145,7 @@ QVariant RgIsaItemModel::data(const QModelIndex& index, int role) const
                 data.setValue(index_data.is_active_correlation);
                 break;
             case RgIsaItemModel::UserRoles::kIsaRowToSrcLineRole:
-                data.setValue(index_data.input_source_line_index);
+                data.setValue(index_data.source_info);
                 break;
             default:
                 break;
@@ -309,8 +310,17 @@ void RgIsaItemModel::ReadIsaCsvFile(std::string                                 
         uint64_t line_number         = 0;
         int      code_block_position = 0;
 
-        // Read the first ISA instruction line and just move on, as it's just column labels.
+        // Read the header line to detect whether line correlation columns are present.
         QString isa_line = file_stream.readLine();
+        const bool has_line_correlation = isa_line.toStdString().find(kStrCsvColumnSourceLineNumber) != std::string::npos;
+
+        // Column count: 8 with line correlation, 6 without.
+        const int num_csv_columns = has_line_correlation
+            ? static_cast<int>(CsvFileColumns::kCount)
+            : static_cast<int>(CsvFileColumns::kCount) - 2;
+
+        // When no line correlation, opcode is at index 1 instead of 2, etc.
+        const int col_offset = has_line_correlation ? 0 : -1;
 
         InstructionBlock* current_code_block       = new InstructionBlock(code_block_position++, line_number++, " ");
         current_code_block->token.type             = IsaItemModel::TokenType::kLabelType;
@@ -333,11 +343,8 @@ void RgIsaItemModel::ReadIsaCsvFile(std::string                                 
 
                 ParseCsvLine(isa_line, line_tokens, operands);
 
-                int       num_columns            = static_cast<int>(line_tokens.size());
-                const int num_csv_columns        = static_cast<int>(CsvFileColumns::kCount);
-                switch (num_columns)
-                {
-                case 1:
+                int num_columns = static_cast<int>(line_tokens.size());
+                if (num_columns == 1)
                 {
                     std::string code_block_label = line_tokens[0];
                     if (code_block_label.find(":", code_block_label.size() - 1))
@@ -356,13 +363,20 @@ void RgIsaItemModel::ReadIsaCsvFile(std::string                                 
 
                     index_data.push_back(empty_index_data_block);
                 }
-                break;
-                case num_csv_columns:
+                else if (has_line_correlation && num_columns == num_csv_columns - 1)
                 {
+                    // Legacy CSV (RGA 2.14.x and older): same layout minus the trailing source path column.
                     std::string address         = line_tokens[CsvFileColumns::kAddress];
                     std::string op_code         = line_tokens[CsvFileColumns::kOpcode];
                     std::string binary_encoding = line_tokens[CsvFileColumns::kBinaryEncoding];
-                    int input_source_line_index = std::stoi(line_tokens[CsvFileColumns::kSourceLineNumber].c_str());
+
+                    // No source path column, so correlate on the line number alone.
+                    int       input_source_line_index = kInvalidCorrelationLineIndex;
+                    const int source_line             = std::atoi(line_tokens[CsvFileColumns::kSourceLineNumber].c_str());
+                    if (source_line > 0)
+                    {
+                        input_source_line_index = source_line;
+                    }
 
                     InstructionRow* instruction_line = new InstructionRow(line_number++, op_code, address, binary_encoding);
 
@@ -371,15 +385,49 @@ void RgIsaItemModel::ReadIsaCsvFile(std::string                                 
                     current_code_block->instruction_lines.emplace_back(instruction_line);
 
                     RgIndexData rg_index_data{};
-                    rg_index_data.input_source_line_index = input_source_line_index;
+                    rg_index_data.source_info.input_source_line_index = input_source_line_index;
 
                     index_data.at(index_data.size() - 1).push_back(rg_index_data);
                 }
-                break;
-                default:
+                else if (num_columns == num_csv_columns)
+                {
+                    std::string address         = line_tokens[CsvFileColumns::kAddress];
+                    std::string op_code         = line_tokens[CsvFileColumns::kOpcode + col_offset];
+                    std::string binary_encoding = line_tokens[CsvFileColumns::kBinaryEncoding + col_offset];
+
+                    int         input_source_line_index = kInvalidCorrelationLineIndex;
+                    std::string src_path;
+                    if (has_line_correlation)
+                    {
+                        const std::string& source_line_str = line_tokens[CsvFileColumns::kSourceLineNumber];
+                        const std::string& source_path_str = line_tokens[CsvFileColumns::kSourcePath];
+
+                        // Instructions with no line info are emitted as line 0 / UNKNOWN_SOURCE_PATH.
+                        const int source_line = std::atoi(source_line_str.c_str());
+                        if (source_line > 0 && !source_path_str.empty() && source_path_str != kStrUnknownSourcePath)
+                        {
+                            input_source_line_index = source_line;
+                            src_path                = source_path_str;
+                            RgUtils::StandardizePathSeparator(src_path);
+                        }
+                    }
+
+                    InstructionRow* instruction_line = new InstructionRow(line_number++, op_code, address, binary_encoding);
+
+                    ParseSelectableTokens(op_code, instruction_line->op_code_token, operands, instruction_line->operand_tokens, fixed_font_character_width_);
+
+                    current_code_block->instruction_lines.emplace_back(instruction_line);
+
+                    RgIndexData rg_index_data{};
+                    rg_index_data.source_info.input_source_line_index = input_source_line_index;
+                    rg_index_data.source_info.input_source_file_path  = src_path;
+
+                    index_data.at(index_data.size() - 1).push_back(rg_index_data);
+                }
+                else
+                {
                     // Catch cases where the type of line format is unhandled.
                     assert(false);
-                    break;
                 }
             }
         } while (!file_stream.atEnd());
@@ -478,21 +526,35 @@ bool RgIsaItemModel::SetCurrentMaxVgprLine(EntryData::Operation op)
     return ret;
 }
 
-void RgIsaItemModel::SetLineCorrelatedIndices(int input_source_line_index)
+void RgIsaItemModel::SetLineCorrelatedIndices(int input_source_line_index, const std::string& input_source_file_path)
 {
+    if (input_source_line_index == kInvalidCorrelationLineIndex)
+    {
+        for (int i = 0; i < current_index_data_.size(); i++)
+        {
+            for (int j = 0; j < current_index_data_.at(i).size(); j++)
+            {
+                current_index_data_.at(i).at(j).is_active_correlation = false;
+            }
+        }
+        return;
+    }
+
+    std::string sanitized_src_path = input_source_file_path;
+    RgUtils::StandardizePathSeparator(sanitized_src_path);
+
     for (int i = 0; i < current_index_data_.size(); i++)
     {
         for (int j = 0; j < current_index_data_.at(i).size(); j++)
         {
             auto& index_data = current_index_data_.at(i).at(j);
-            if (index_data.input_source_line_index == input_source_line_index)
-            {
-                index_data.is_active_correlation = true;
-            }
-            else
-            {
-                index_data.is_active_correlation = false;
-            }
+            bool  line_matches = (index_data.source_info.input_source_line_index == input_source_line_index);
+
+            // Legacy CSV rows have no source path; fall back to matching on the line number alone.
+            bool  path_matches = input_source_file_path.empty() ||
+                                 index_data.source_info.input_source_file_path.empty() ||
+                                 index_data.source_info.input_source_file_path == sanitized_src_path;
+            index_data.is_active_correlation = (line_matches && path_matches);
         }
     }
 }
@@ -501,7 +563,7 @@ static bool AreOpcodesEqual(const std::string& blocks_op_code, const std::string
 {
     return (vgpr_op_code.compare(blocks_op_code) == 0) || (blocks_op_code.compare(vgpr_op_code + "_e32") == 0) ||
            (blocks_op_code.compare(vgpr_op_code + "_e64") == 0) || (blocks_op_code.compare(vgpr_op_code + "_sdwa") == 0) ||
-           (blocks_op_code.compare(vgpr_op_code + "_dpp") == 0);
+           (blocks_op_code.compare(vgpr_op_code + "_dpp") == 0) || (blocks_op_code.compare(vgpr_op_code + "_e64_dpp") == 0);
 }
 
 bool RgIsaItemModel::ParseLiveVgprsData(const std::string&                                 live_vgpr_file_full_path,
@@ -669,7 +731,7 @@ void RgIsaItemModel::UpdateData(void* data)
     switch (entry_data.operation)
     {
     case EntryData::Operation::kUpdateLineCorrelation:
-        SetLineCorrelatedIndices(entry_data.input_source_line_index);
+        SetLineCorrelatedIndices(entry_data.source_info.input_source_line_index, entry_data.source_info.input_source_file_path);
         break;
 
     case EntryData::Operation::kGoToNextMaxVgpr:
@@ -757,8 +819,11 @@ bool RgIsaItemModel::GetMaxVgprPressureIndices(std::vector<QModelIndex>& source_
     return ret;
 }
 
-QModelIndex RgIsaItemModel::GetFirstLineCorrelatedIndex(int input_source_line_index) const
+QModelIndex RgIsaItemModel::GetFirstLineCorrelatedIndex(int input_source_line_index, const std::string& input_source_file_path) const
 {
+    std::string sanitized_src_path = input_source_file_path;
+    RgUtils::StandardizePathSeparator(sanitized_src_path);
+
     if (input_source_line_index != kInvalidCorrelationLineIndex)
     {
         for (int i = 0; i < current_index_data_.size(); i++)
@@ -766,7 +831,13 @@ QModelIndex RgIsaItemModel::GetFirstLineCorrelatedIndex(int input_source_line_in
             for (int j = 0; j < current_index_data_.at(i).size(); j++)
             {
                 const auto& index_data = current_index_data_.at(i).at(j);
-                if (index_data.input_source_line_index == input_source_line_index)
+                bool  line_matches = (index_data.source_info.input_source_line_index == input_source_line_index);
+
+                // Legacy CSV rows have no source path; fall back to matching on the line number alone.
+                bool  path_matches = input_source_file_path.empty() ||
+                                     index_data.source_info.input_source_file_path.empty() ||
+                                     index_data.source_info.input_source_file_path == sanitized_src_path;
+                if (line_matches && path_matches)
                 {
                     return index(j, 0, index(i, 0));
                 }
@@ -874,7 +945,15 @@ bool RgIsaItemModel::SetArchitecture(const std::string target_gpu)
 {
     bool                    success      = true;
     amdisa::GpuArchitecture architecture = amdisa::GpuArchitecture::kUnknown;
-    if (RgaSharedUtils::IsNavi4Target(target_gpu))
+    vgpr_bit_shift_                      = kDefaultVgprBitShift;
+    if (RgaSharedUtils::IsMi450Target(target_gpu))
+    {
+        architecture = amdisa::GpuArchitecture::kCdna5;
+        // The GUI buckets live VGPR count into 8 color ranges by right-shifting it;
+        // For CDNA5, each bucket spans 1024 / 8 = 128 VGPRs, i.e. a shift of log2(128) = 7.
+        vgpr_bit_shift_ = 7;
+    }
+    else if (RgaSharedUtils::IsNavi4Target(target_gpu))
     {
         architecture = amdisa::GpuArchitecture::kRdna4;
     }

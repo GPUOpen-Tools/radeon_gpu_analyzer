@@ -29,6 +29,7 @@ include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/extension")
 include_directories("${PROJECT_SOURCE_DIR}/../../../../external")
 include_directories("${PROJECT_SOURCE_DIR}/../../../../external/third_party")
+include_directories("${PROJECT_SOURCE_DIR}/../../../../external/dx12/agility_sdk/include")
 include_directories("${PROJECT_SOURCE_DIR}/../../../../")
 include_directories("${PROJECT_SOURCE_DIR}/../../../radeon_gpu_analyzer_backend")
 

@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for rga backend progam builder vulkan class.
@@ -18,11 +18,14 @@
 #include "common/rga_shared_utils.h"
 
 // Local.
+#include "radeon_gpu_analyzer_backend/be_program_builder_binary.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
 #include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
 #include "radeon_gpu_analyzer_backend/be_string_constants.h"
 #include "radeon_gpu_analyzer_backend/be_data_types.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
 #include "source/radeon_gpu_analyzer_cli/kc_utils.h"
+#include "source/radeon_gpu_analyzer_cli/kc_utils_lightning.h"
 #include "source/common/rg_log.h"
 #include "source/common/rga_cli_defs.h"
 
@@ -59,6 +62,9 @@ static const std::string kStrGlslangOptPreprocess = "-E";
 // Glslang option: Pipeline stage.
 static const std::string kStrGlslangOptGlslangStage = "-S";
 
+// Glslang option: Target environment for SPIR-V generation.
+static const std::string kStrGlslangOptTargetEnvSpirv14 = "--target-env spirv1.4";
+
 // Glslang options: Pipeline stage names.
 static const std::string kStrGlslangOptStageVert                   = "vert";
 static const std::string kStrGlslangOptStageTessellationControl    = "tesc";
@@ -66,6 +72,8 @@ static const std::string kStrGlslangOptStageTessellationEvaluation = "tese";
 static const std::string kStrGlslangOptStageGeometry               = "geom";
 static const std::string kStrGlslangOptStageFragment               = "frag";
 static const std::string kStrGlslangOptStageCompute                = "comp";
+static const std::string kStrGlslangOptStageMesh                  = "mesh";
+static const std::string kStrGlslangOptStageTask                  = "task";
 
 // Info messages.
 static const char* kStrGlslangOptDebugInfoBegin = "*** Loader debug info - BEGIN ***";
@@ -77,21 +85,23 @@ static const std::vector<std::string> kValidGlslangGlslExtensions = {kStrGlslang
                                                                      kStrGlslangOptStageTessellationEvaluation,
                                                                      kStrGlslangOptStageGeometry,
                                                                      kStrGlslangOptStageFragment,
-                                                                     kStrGlslangOptStageCompute};
+                                                                     kStrGlslangOptStageCompute,
+                                                                     kStrGlslangOptStageMesh,
+                                                                     kStrGlslangOptStageTask};
 
 // SPIR-V disassembler option: output file.
 static const std::string kStrSpvDisOptOutput = "-o";
 
 // VulkanBackend options: input spv files.
-static const std::array<std::string, BePipelineStage::kCount> kStrVulkanBackendOptStageInputFile = {"--vert", "--tesc", "--tese", "--geom", "--frag", "--comp"};
+static const std::array<std::string, BePipelineStage::kCount> kStrVulkanBackendOptStageInputFile = {"--vert", "--tesc", "--tese", "--geom", "--frag", "--comp", "--mesh", "--task"};
 
 // VulkanBackend options: output ISA disassembly files.
 static const std::array<std::string, BePipelineStage::kCount> kVulkanBackendOptStageIsaFile =
-    {"--vert-isa", "--tesc-isa", "--tese-isa", "--geom-isa", "--frag-isa", "--comp-isa"};
+    {"--vert-isa", "--tesc-isa", "--tese-isa", "--geom-isa", "--frag-isa", "--comp-isa", "--mesh-isa", "--task-isa"};
 
 // VulkanBackend options: output statistics files.
 static const std::array<std::string, BePipelineStage::kCount> kVulkanBackendOptStageStatsFile =
-    {"--vert-stats", "--tesc-stats", "--tese-stats", "--geom-stats", "--frag-stats", "--comp-stats"};
+    {"--vert-stats", "--tesc-stats", "--tese-stats", "--geom-stats", "--frag-stats", "--comp-stats", "--mesh-stats", "--task-stats"};
 
 // VulkanBackend options: output binary file.
 static const std::string kVulkanBackendOptBinFile = "--bin";
@@ -154,9 +164,9 @@ static void CopyValidatioInfo(const std::string& temp_info_file, const std::stri
 
 // Construct command line options for Vulkan Backend.
 static std::string ConstructVulkanBackendOptions(const std::string&       loader_debug,
-                                                 const BeVkPipelineFiles& spv_files,
-                                                 const BeVkPipelineFiles& isa_files,
-                                                 const BeVkPipelineFiles& stats_files,
+                                                 const BePipelineFiles& spv_files,
+                                                 const BePipelineFiles& isa_files,
+                                                 const BePipelineFiles& stats_files,
                                                  const std::string&       bin_file,
                                                  const std::string&       pso_file,
                                                  const std::string&       icd_file,
@@ -323,6 +333,17 @@ static std::string ConstructGlslangOptions(const Config&      config,
         }
 
         opts << " " << kStrGlslangOptSpirvOutput;
+
+        // Mesh and task shaders require GL_EXT_mesh_shader which needs SPIR-V 1.4 or later.
+        if (stage == BePipelineStage::kMesh || stage == BePipelineStage::kTask)
+        {
+            opts << " " << kStrGlslangOptTargetEnvSpirv14;
+        }
+
+        if (config.is_line_numbers_required)
+        {
+            opts << " -g";
+        }
         opts << " " << kStrGlslangOptOutput << " " << KcUtils::Quote(spv_filename);
     }
 
@@ -332,7 +353,7 @@ static std::string ConstructGlslangOptions(const Config&      config,
 }
 
 // Check if ISA disassembly and statistics files are not empty for corresponding input spv files.
-static bool VerifyOutputFiles(const BeVkPipelineFiles& spv_files, const BeVkPipelineFiles& isa_files, const BeVkPipelineFiles& stats_files)
+static bool VerifyOutputFiles(const BePipelineFiles& spv_files, const BePipelineFiles& isa_files, const BePipelineFiles& stats_files)
 {
     bool result = true;
     for (int stage = 0; stage < BePipelineStage::kCount; stage++)
@@ -449,7 +470,7 @@ beStatus beProgramBuilderVulkan::ParseAmdgpudisOutput(const std::string&        
 
                             std::string shader_disassembly = amdgpu_dis_output.substr(curr_pos, shader_offset_end - curr_pos);
                             FilterRelocInstructions(shader_disassembly);
-                            BeUtils::TrimLeadingAndTrailingWhitespace(shader_disassembly, shader_disassembly);
+                            shader_disassembly = BeUtils::TrimLeadingAndTrailingWhitespace(shader_disassembly);
                             shader_to_disassembly[stage_name] = shader_disassembly;
                             success                           = true;
                         }
@@ -702,13 +723,15 @@ bool beProgramBuilderVulkan::WriteIsaFileWithHwMapping(uint32_t                 
                                                        const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
                                                        const std::map<std::string, std::string>& shader_to_disassembly,
                                                        const std::string&                        isa_file,
-                                                       beWaveSize&                               wave_size)
+                                                       beWaveSize&                               wave_size,
+                                                       std::string&                              shader_hash)
 {
-    bool        ret             = false;
-    const auto& dx12_stage_name = kStrDx12StageNames[stage];
+    bool        ret        = false;
+    const auto& stage_name = kStrDx12StageNames[stage];
     std::string hw_mapping_name;
-    bool        valid_hw_mapping_found = beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdpal_pipeline, dx12_stage_name, hw_mapping_name, wave_size);
-    auto        itr                    = shader_to_disassembly.find(hw_mapping_name);
+    bool        valid_hw_mapping_found =
+        beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(amdpal_pipeline, stage_name, shader_hash, hw_mapping_name, wave_size);
+    auto itr = shader_to_disassembly.find(hw_mapping_name);
     if (valid_hw_mapping_found && itr != shader_to_disassembly.end())
     {
         [[maybe_unused]] bool is_file_written = KcUtils::WriteTextFile(isa_file, itr->second, nullptr);
@@ -723,7 +746,7 @@ bool beProgramBuilderVulkan::WriteIsaFileWithHwMapping(uint32_t                 
 
 void WriteIsaFileWithHardcodedMapping(uint32_t                            stage,
                                       std::map<std::string, std::string>& shader_to_disassembly,
-                                      const BeVkPipelineFiles&            isa_files,
+                                      const BePipelineFiles&            isa_files,
                                       std::string&                        error_msg)
 {
     // Count the number of input shaders, since this changes the pipeline type and impacts merged shaders.
@@ -771,6 +794,22 @@ void WriteIsaFileWithHardcodedMapping(uint32_t                            stage,
                     is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly["gs"], nullptr);
                 }
             }
+            else if (stage == BePipelineStage::kMesh)
+            {
+                // Mesh shader is mapped to the geometry stage (gs) in hardware.
+                if (shader_to_disassembly.find("gs") != shader_to_disassembly.end())
+                {
+                    is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly["gs"], nullptr);
+                }
+            }
+            else if (stage == BePipelineStage::kTask)
+            {
+                // Task shader is mapped to the compute stage (cs) in hardware.
+                if (shader_to_disassembly.find("cs") != shader_to_disassembly.end())
+                {
+                    is_file_written = KcUtils::WriteTextFile(isa_files[stage], shader_to_disassembly["cs"], nullptr);
+                }
+            }
 
             assert(is_file_written);
             if (!is_file_written)
@@ -785,11 +824,12 @@ void WriteIsaFileWithHardcodedMapping(uint32_t                            stage,
 }
 
 beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::string&                  bin_file,
-                                                                    const BeVkPipelineFiles&            isa_files,
+                                                                    const BePipelineFiles&            isa_files,
                                                                     bool                                should_print_cmd,
                                                                     std::string&                        amdgpu_dis_stdout,
                                                                     std::map<std::string, std::string>& shader_to_disassembly,
                                                                     BeVkPipelineWaveSizes&              wave_sizes,
+                                                                    BeVkPipelineShaderHashes&           shader_hashes,
                                                                     std::string&                        error_msg)
 {
     beStatus status = kBeStatusVulkanBackendLaunchFailed;
@@ -815,7 +855,7 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
                 if (is_amdgpu_dis_output_parsed && !shader_to_disassembly.empty())
                 {
                     BeAmdPalMetaData::PipelineMetaData pipeline;
-                    beKA::beStatus                     md_status = BeAmdPalMetaData::ParseAmdgpudisMetadata(amdgpu_dis_stdout, pipeline);
+                    beKA::beStatus                     md_status = BeAmdPalMetaData::ParseMetadata(amdgpu_dis_stdout, pipeline);
                     assert(md_status == beKA::beStatus::kBeStatusGraphicsCodeObjMetaDataSuccess);
                     if (md_status == beKA::beStatus::kBeStatusGraphicsCodeObjMetaDataSuccess)
                     {
@@ -824,8 +864,8 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
                         {
                             if (!isa_files[stage].empty())
                             {
-                                bool is_file_written =
-                                    beProgramBuilderVulkan::WriteIsaFileWithHwMapping(stage, pipeline, shader_to_disassembly, isa_files[stage], wave_sizes[stage]);
+                                bool is_file_written = beProgramBuilderVulkan::WriteIsaFileWithHwMapping(
+                                    stage, pipeline, shader_to_disassembly, isa_files[stage], wave_sizes[stage], shader_hashes[stage]);
                                 if (!is_file_written)
                                 {
                                     std::string amdgpu_stage_name;
@@ -858,8 +898,106 @@ beKA::beStatus beProgramBuilderVulkan::AmdgpudisBinaryToDisassembly(const std::s
     return status;
 }
 
+beKA::beStatus beProgramBuilderVulkan::LlvmObjdumpBinaryToDisassembly(const std::string&                  bin_file,
+                                                                      const std::string&                  device,
+                                                                      const std::string&                  compiler_bin_dir,
+                                                                      bool                                line_numbers,
+                                                                      const BePipelineFiles&            isa_files,
+                                                                      bool                                should_print_cmd,
+                                                                      BeAmdPalMetaData::PipelineMetaData& out_pipeline_md,
+                                                                      std::map<std::string, std::string>& shader_to_disassembly,
+                                                                      BeVkPipelineWaveSizes&              wave_sizes,
+                                                                      BeVkPipelineShaderHashes&           shader_hashes,
+                                                                      std::string&                        error_msg)
+{
+    beStatus status = kBeStatusVulkanBackendLaunchFailed;
+    if (bin_file.empty() || !KcUtils::FileNotEmpty(bin_file))
+    {
+        return status;
+    }
+
+    // Step 1: Extract metadata via llvm-readobj.
+    std::string metadata_text, metadata_error;
+    status = BeProgramBuilderLightning::ExtractMetadata(compiler_bin_dir, bin_file, should_print_cmd, metadata_text, metadata_error);
+    if (status != kBeStatusSuccess)
+    {
+        error_msg = metadata_error;
+        return kBeStatusLightningExtractMetadataFailed;
+    }
+
+    // Step 2: Parse metadata to get pipeline info and entry points.
+    beStatus md_status = BeAmdPalMetaData::ParseMetadata(metadata_text, out_pipeline_md);
+    if (md_status != kBeStatusGraphicsCodeObjMetaDataSuccess && md_status != kBeStatusRayTracingCodeObjMetaDataSuccess &&
+        md_status != kBeStatusComputeCodeObjMetaDataSuccess)
+    {
+        error_msg = "Failed to parse pipeline metadata.";
+        return kBeStatusCodeObjMdParsingFailed;
+    }
+
+    auto kernel_names = beProgramBuilderBinary::GetKernelNames(out_pipeline_md);
+
+    // Step 3: Disassemble via llvm-objdump.
+    std::string isa_text, disasm_error;
+    status = BeProgramBuilderLightning::DisassembleBinary(compiler_bin_dir, bin_file, device, line_numbers, should_print_cmd, isa_text, disasm_error);
+    if (status != kBeStatusSuccess || isa_text.empty())
+    {
+        error_msg = disasm_error;
+        return kBeStatusLightningObjDumpLaunchFailed;
+    }
+
+    // Step 4: Format labels and split ISA by kernel.
+    std::string formatted_isa = KcUtilsLightning::FormatLlvmIsaLabels(isa_text);
+    bool        split_ok      = KcUtilsLightning::SplitISAText(formatted_isa, kernel_names, shader_to_disassembly);
+
+    // Step 5: Reduce ISA (strip trampoline code).
+    CmpilerPaths paths = {compiler_bin_dir, "", ""};
+    if (split_ok)
+    {
+        KcUtilsLightning::ReduceISA(bin_file, paths, should_print_cmd, shader_to_disassembly);
+    }
+
+    // Step 6: Remap entry_point names to hardware stage names and write ISA files.
+    for (const auto& stage_md : out_pipeline_md.hardware_stages)
+    {
+        std::string stage_name = BeAmdPalMetaData::GetStageName(stage_md.stage_type);
+        auto        dot_pos    = stage_name.find(".");
+        if (dot_pos != std::string::npos)
+        {
+            std::string hw_stage = stage_name.substr(dot_pos + 1);
+            auto        it       = shader_to_disassembly.find(stage_md.entry_point);
+            if (it != shader_to_disassembly.end())
+            {
+                shader_to_disassembly[hw_stage] = std::move(it->second);
+                shader_to_disassembly.erase(it);
+            }
+        }
+    }
+
+    // Step 7: Write per-stage ISA files using the existing HW mapping logic.
+    for (uint32_t stage = BePipelineStage::kVertex; stage < BePipelineStage::kCount; stage++)
+    {
+        if (!isa_files[stage].empty())
+        {
+            bool is_file_written =
+                WriteIsaFileWithHwMapping(stage, out_pipeline_md, shader_to_disassembly, isa_files[stage], wave_sizes[stage], shader_hashes[stage]);
+            if (!is_file_written)
+            {
+                std::string amdgpu_stage_name;
+                if (BeUtils::BePipelineStageToAmdgpudisStageName(static_cast<BePipelineStage>(stage), amdgpu_stage_name))
+                {
+                    WriteIsaFileWithHardcodedMapping(stage, shader_to_disassembly, isa_files, error_msg);
+                }
+            }
+        }
+    }
+
+    status = kBeStatusSuccess;
+    return status;
+}
+
 bool beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline,
                                                               const std::string&                        api_shader_stage_name,
+                                                              std::string&                              api_shader_stage_hash,
                                                               std::string&                              hw_mapping_str,
                                                               beWaveSize&                               wave_size)
 {
@@ -880,9 +1018,10 @@ bool beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(const BeAmdPalMeta
                     auto        beg                         = stage_name.find(".");
                     if (beg != std::string::npos)
                     {
-                        hw_mapping_str = stage_name.substr(beg + 1);
-                        wave_size      = BeAmdPalMetaData::GetWaveSize(stage.stats.wavefront_size);
-                        ret = true;
+                        api_shader_stage_hash = BeAmdPalMetaData::GetShaderHashString(shader.hash);
+                        hw_mapping_str        = stage_name.substr(beg + 1);
+                        wave_size             = BeAmdPalMetaData::GetWaveSize(stage.stats.wavefront_size);
+                        ret                   = true;
                     }
                 }
             }
@@ -891,19 +1030,22 @@ bool beProgramBuilderVulkan::GetAmdgpuDisApiShaderToHwMapping(const BeAmdPalMeta
     return ret;
 }
 
-beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string&       loader_debug,
-                                                    const BeVkPipelineFiles& spirv_files,
-                                                    const BeVkPipelineFiles& isa_files,
-                                                    const BeVkPipelineFiles& stats_files,
-                                                    const std::string&       bin_file,
-                                                    const std::string&       pso_file,
-                                                    const std::string&       icd_file,
-                                                    const std::string&       validation_output,
-                                                    const std::string&       validation_output_redirection,
-                                                    const std::string&       device,
-                                                    bool                     should_print_cmd,
-                                                    BeVkPipelineWaveSizes&   wave_sizes,
-                                                    std::string&             error_msg)
+beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string&        loader_debug,
+                                                    const BePipelineFiles&  spirv_files,
+                                                    const BePipelineFiles&  isa_files,
+                                                    const BePipelineFiles&  stats_files,
+                                                    const std::string&        bin_file,
+                                                    const std::string&        pso_file,
+                                                    const std::string&        icd_file,
+                                                    const std::string&        validation_output,
+                                                    const std::string&        validation_output_redirection,
+                                                    const std::string&        device,
+                                                    bool                      should_print_cmd,
+                                                    bool                      is_line_numbers_required,
+                                                    const std::string&        compiler_bin_dir,
+                                                    BeVkPipelineWaveSizes&    wave_sizes,
+                                                    BeVkPipelineShaderHashes& shader_hashes,
+                                                    std::string&              error_msg)
 {
     beStatus    status = kBeStatusVulkanBackendLaunchFailed;
     std::string std_out_text, std_err_text;
@@ -944,12 +1086,22 @@ beKA::beStatus beProgramBuilderVulkan::CompileSpirv(const std::string&       loa
         }
 
         // Disassemble the binaries to get the ISA disassembly from the CodeObject's .text section.
-        // For gfx11 targets we need to disassemble the binary CodeObject and extract the disassembly from there.
+        // For gfx11+ targets we disassemble using llvm-objdump (supports --line-numbers --source for DWARF correlation).
         if (RgaSharedUtils::IsNavi3AndBeyond(device) && !isa_files.empty())
         {
-            std::string                        amdgpu_dis_stdout;
+            BeAmdPalMetaData::PipelineMetaData pipeline_md;
             std::map<std::string, std::string> shader_to_disassembly;
-            status = AmdgpudisBinaryToDisassembly(bin_file, isa_files, should_print_cmd, amdgpu_dis_stdout, shader_to_disassembly, wave_sizes, error_msg);
+            status = LlvmObjdumpBinaryToDisassembly(bin_file,
+                                                    device,
+                                                    compiler_bin_dir,
+                                                    is_line_numbers_required,
+                                                    isa_files,
+                                                    should_print_cmd,
+                                                    pipeline_md,
+                                                    shader_to_disassembly,
+                                                    wave_sizes,
+                                                    shader_hashes,
+                                                    error_msg);
         }
     }
 

@@ -33,17 +33,28 @@ static bool OpenIncludeFile(const std::string& include_file_full_path, char*& fi
         if (file_size_in_bytes > 0)
         {
             // Allocate the buffer.
-            file_buffer = new char[file_size_in_bytes];
+            file_buffer = new (std::nothrow) char[file_size_in_bytes];
 
-            // Read the file's contents into the buffer.
-            includeFile.seekg(0, std::ios::beg);
-            includeFile.read(file_buffer, file_size_in_bytes);
+            if (file_buffer != nullptr)
+            {
+                // Read the file's contents into the buffer.
+                includeFile.seekg(0, std::ios::beg);
+                includeFile.read(file_buffer, file_size_in_bytes);
 
-            // Close the file.
-            includeFile.close();
+                // Close the file.
+                includeFile.close();
 
-            // We are done.
-            ret = true;
+                if (!includeFile)
+                {
+                    delete[] file_buffer;
+                    file_buffer = nullptr;
+                }
+                else
+                {
+                    // We are done.
+                    ret = true;
+                }
+            }
         }
     }
 
@@ -185,6 +196,7 @@ STDMETHODIMP D3dIncludeManager::Close(THIS_ LPCVOID data)
 {
     char* buf = (char*)data;
     delete[] buf;
+    buf = nullptr;
     return S_OK;
 }
 #endif

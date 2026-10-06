@@ -50,19 +50,28 @@ ParserSi::kaStatus ParserSiSopp::Parse(GDT_HW_GENERATION hw_generation, Instruct
     Instruction*& instruction, bool, uint32_t, int label /*=kNoLabel*/ , int goto_label /*=kNoLabel*/)
 {
     SOPPInstruction::SIMM16 simm16 = GetSimm16(hex_instruction);
+    kaStatus ret = ParserSi::kStatusSuccess;
 
     if ((hw_generation == GDT_HW_GENERATION_SEAISLAND) || (hw_generation == GDT_HW_GENERATION_SOUTHERNISLAND))
     {
         SISOPPInstruction::OP op = GetSiSoppOp(hex_instruction);
-        instruction = new SISOPPInstruction(simm16, op, label, goto_label);
+        instruction = new (std::nothrow) SISOPPInstruction(simm16, op, label, goto_label);
+        if (instruction == nullptr)
+        {
+            ret = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else
     {
         VISOPPInstruction::OP op = GetViSoppOp(hex_instruction);
-        instruction = new VISOPPInstruction(simm16, op, label, goto_label);
+        instruction = new (std::nothrow) VISOPPInstruction(simm16, op, label, goto_label);
+        if (instruction == nullptr)
+        {
+            ret = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
 
-    return ParserSi::kStatusSuccess;
+    return ret;
 }
 
 ParserSi::kaStatus ParserSiSopp::Parse(GDT_HW_GENERATION, Instruction::Instruction64Bit, Instruction*&, int /*label =kNoLabel*/ , int /*goto_label =kNoLabel*/)

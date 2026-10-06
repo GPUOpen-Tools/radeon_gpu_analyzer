@@ -84,12 +84,21 @@ public:
     // Print given string to stdout if "doPrint" is true.
     static void PrintCmdLine(const std::string& cmd_line, bool should_print_cmd);
 
-    // Split the given string according to the given delimiter,
+    // Split the given string according to the given string delimiter,
     // and store the results in the destination vector.
-    static void SplitString(const std::string& str, char delim, std::vector<std::string>& dst);
+    // If should_trim is true, each token is trimmed of leading/trailing whitespace.
+    static void SplitString(const std::string& str, const std::string& delim, std::vector<std::string>& dst, bool should_trim = false);
 
     // Trim leading and trailing whitespace characters.
-    static void TrimLeadingAndTrailingWhitespace(const std::string& text, std::string& trimmed_text);
+    static std::string TrimLeadingAndTrailingWhitespace(const std::string& text);
+
+    // Returns the substring before the first occurrence of any character in 'delimiters'.
+    // If none found, returns the original string.
+    static std::string SubstringBeforeFirst(const std::string& str, const std::string& delimiters);
+
+    // Returns the substring after the first occurrence of 'delimiter'.
+    // If not found, returns the original string.
+    static std::string SubstringAfterFirst(const std::string& str, char delimiter);
 
     // Returns true if the given string represents a numeric value, and false otherwise.
     static bool IsNumericValue(const std::string& str);
@@ -155,6 +164,11 @@ public:
         return std::any_of(
             part_strings.begin(), part_strings.end(), [&str = std::as_const(str)](std::string_view part_string) { return StartsWith(str, part_string); });
     }
+
+    // Normalizes path separators to the current OS convention using osFilePath::adjustStringToCurrentOS.
+    // On Linux this converts backslashes to forward slashes; on Windows, forward slashes to backslashes.
+    // This is needed for DWARF paths from cross-compiled binaries (e.g. Windows-compiled binary analyzed on Linux).
+    static std::string NormalizePathSeparatorsToCurrentOS(const std::string& path);
 
     // String helper StartsWithAny of part_strings.
     static inline auto EndsWithAny(std::string_view str, std::initializer_list<std::string_view> part_strings) -> bool

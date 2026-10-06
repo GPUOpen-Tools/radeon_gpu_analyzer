@@ -10,7 +10,7 @@
 
 #include <unordered_set>
 
-#include "utils/dx12/backend/d3dx12.h"
+#include "d3dx12/d3dx12.h"
 
 #include "radeon_gpu_analyzer_backend/be_include.h"
 #include "radeon_gpu_analyzer_backend/be_data_types.h"
@@ -50,6 +50,10 @@ struct BeDx12AutoGenInput
 {
     BeDx12ShaderBinaryBlob                    vs_blob;
     std::string                               source_file_path_vs;
+    BeDx12ShaderBinaryBlob                    ms_blob;
+    std::string                               source_file_path_ms;
+    BeDx12ShaderBinaryBlob                    as_blob;
+    std::string                               source_file_path_as;
     BeDx12ShaderBinaryBlob                    ps_blob;
     std::string                               source_file_path_ps;
     BeDx12ShaderBinaryBlob                    cs_blob;
@@ -75,6 +79,7 @@ struct BeDx12AutoGenPipelineInfo
     BeDx12AutoGenFile               root_signature;
     BeDx12AutoGenFile               gpso_file;
     BeDx12AutoGenFile               vertex_shader;
+    BeDx12AutoGenFile               mesh_shader;
     BeDx12AutoGenFile               pixel_shader;
     std::stringstream               dxc_out;
     bool                            should_retain_temp_files = false;

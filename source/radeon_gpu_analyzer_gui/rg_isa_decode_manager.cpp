@@ -26,7 +26,8 @@ namespace
                                                                                       {amdisa::GpuArchitecture::kCdna1, "amdgpu_isa_cdna1.xml"},
                                                                                       {amdisa::GpuArchitecture::kCdna2, "amdgpu_isa_cdna2.xml"},
                                                                                       {amdisa::GpuArchitecture::kCdna3, "amdgpu_isa_cdna3.xml"},
-                                                                                      {amdisa::GpuArchitecture::kCdna4, "amdgpu_isa_cdna4.xml"}};
+                                                                                      {amdisa::GpuArchitecture::kCdna4, "amdgpu_isa_cdna4.xml"},
+                                                                                      {amdisa::GpuArchitecture::kCdna5, "amdgpu_isa_cdna5.xml"}};
 }  // namespace
 
 amdisa::DecodeManager* RgIsaDecodeManager::Get()

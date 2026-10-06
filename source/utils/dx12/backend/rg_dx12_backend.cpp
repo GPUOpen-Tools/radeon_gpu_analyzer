@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for class for creating dx12 backend instance.
@@ -38,6 +38,8 @@ namespace rga
     static const char* kStrXmlNodeGs = "GS";
     static const char* kStrXmlNodePs = "PS";
     static const char* kStrXmlNodeCs = "CS";
+    static const char* kStrXmlNodeMs = "MS";
+    static const char* kStrXmlNodeAs = "TS";
 
     // Messages: errors.
     static const char* kStrErrorPipelineCreateFailure = "Error: failed to create D3D12 graphics pipeline with error code: ";
@@ -59,7 +61,8 @@ namespace rga
     static const char* kStrErrorDxrFailedToCreateStateObject = "Error: failed to create DXR state object. This is likely caused by an error in the state subobject definition.";
     static const char* kStrErrorDxrFailedToRetrievePipelineCount = "Error: failed to retrieve DXR pipeline count.";
     static const char* kStrHintDebugOutput = "Hint: consider enabling the D3D12 layer adding by adding --debug-layer to your rga command, and inspecting the Windows Debug Output for more detailed information on the actual error. "
-        "The Windows Debug Output can be monitored by tools like https://docs.microsoft.com/en-us/sysinternals/downloads/debugview";
+        "The Windows Debug Output can be monitored by tools like sysinternals DebugView.";
+    static const char* kStrErrorDriverDoesntSupportMeshShaders = "Error: the current driver does not support compiling mesh shaders using RGA. Please try to update to a newer driver version.";
 
     // Messages: warnings.
     static const char* kStrWarningMoreThanSinglePipelineBinaryForSinglePipeline1 = "Warning: more than a single pipeline binary detected ";
@@ -89,8 +92,48 @@ namespace rga
         ret = (hr == S_OK && isa_size > 0);
         if (ret)
         {
+            xml_buffer = new (std::nothrow) char[isa_size] {};
+            if (xml_buffer != nullptr)
+            {
+                hr = amd_shader_analyzer_ext->GetShaderIsaCode(*pipeline_handle, xml_buffer, &isa_size, &disassembly);
+                assert(hr == S_OK);
+                ret = (hr == S_OK);
+            }
+        }
+
+        if (!ret && xml_buffer != nullptr)
+        {
+            delete[] xml_buffer;
+            xml_buffer = nullptr;
+        }
+
+        return ret;
+    }
+
+    static bool ExtractXmlContentMesh(IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
+        AmdExtD3DPipelineHandle* pipeline_handle, char*& xml_buffer, std::string&)
+    {
+        IAmdExtD3DShaderAnalyzer4* amd_shader_analyzer_ext4 = static_cast<IAmdExtD3DShaderAnalyzer4*>(amd_shader_analyzer_ext);
+
+        bool ret = false;
+        size_t isa_size = 0;
+        AmdExtD3DPipelineDisassembly2 disassembly;
+        HRESULT hr = amd_shader_analyzer_ext4->GetShaderIsaCode2(*pipeline_handle, nullptr, &isa_size, &disassembly);
+        assert(hr == S_OK);
+        assert(isa_size > 0);
+        ret = (hr == S_OK && isa_size > 0);
+        if (ret)
+        {
             xml_buffer = new char[isa_size] {};
-            hr = amd_shader_analyzer_ext->GetShaderIsaCode(*pipeline_handle, xml_buffer, &isa_size, &disassembly);
+            hr = amd_shader_analyzer_ext4->GetShaderIsaCode2(*pipeline_handle, xml_buffer, &isa_size, &disassembly);
+            // This is a temporary workaround for a driver issue unrelated to the RGA changes or the new extension API.
+            // The size returned by the first call seems incorrect when the API is called again. As a temporary fix for
+            // now, we re-try with the new size.
+            if (hr != S_OK) {
+                delete[] xml_buffer;
+                xml_buffer = new char[isa_size] {};
+                hr = amd_shader_analyzer_ext4->GetShaderIsaCode2(*pipeline_handle, xml_buffer, &isa_size, &disassembly);
+            }
             assert(hr == S_OK);
             ret = (hr == S_OK);
         }
@@ -113,10 +156,13 @@ namespace rga
         ret = (hr == S_OK && amdil_size > 0);
         if (ret)
         {
-            xml_buffer = new char[amdil_size]{};
-            hr         = amd_shader_analyzer_ext->GetShaderAmdIlDisassembly(*pipeline_handle, xml_buffer, &amdil_size, &disassembly);
-            assert(hr == S_OK);
-            ret = (hr == S_OK);
+            xml_buffer = new (std::nothrow) char[amdil_size]{};
+            if (xml_buffer != nullptr)
+            {
+                hr         = amd_shader_analyzer_ext->GetShaderAmdIlDisassembly(*pipeline_handle, xml_buffer, &amdil_size, &disassembly);
+                assert(hr == S_OK);
+                ret = (hr == S_OK);
+            }
             if (ret)
             {
                 if (disassembly.pVertexDisassembly != nullptr)
@@ -153,6 +199,84 @@ namespace rga
             }
         }
 
+        if (!ret && xml_buffer != nullptr)
+        {
+            delete[] xml_buffer;
+            xml_buffer = nullptr;
+        }
+
+        return ret;
+    }
+
+    static bool ExtractAmdilDisassemblyMesh(IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
+                                            AmdExtD3DPipelineHandle*   pipeline_handle,
+                                            char*&                     xml_buffer,
+                                            RgDx12PipelineResults&     results,
+                                            std::string&               )
+    {
+        IAmdExtD3DShaderAnalyzer4* amd_shader_analyzer_ext4 = static_cast<IAmdExtD3DShaderAnalyzer4*>(amd_shader_analyzer_ext);
+
+        bool                         ret        = false;
+        size_t                       amdil_size = 0;
+        AmdExtD3DPipelineDisassembly2 disassembly;
+        HRESULT                      hr = amd_shader_analyzer_ext4->GetShaderAmdIlDisassembly2(*pipeline_handle, nullptr, &amdil_size, &disassembly);
+        assert(hr == S_OK);
+        assert(amdil_size > 0);
+        ret = (hr == S_OK && amdil_size > 0);
+        if (ret)
+        {
+            xml_buffer = new char[amdil_size]{};
+            hr         = amd_shader_analyzer_ext4->GetShaderAmdIlDisassembly2(*pipeline_handle, xml_buffer, &amdil_size, &disassembly);
+            assert(hr == S_OK);
+            ret = (hr == S_OK);
+            if (ret)
+            {
+                if (disassembly.pTaskDisassembly != nullptr)
+                {
+                    std::string amdil_task           = disassembly.pTaskDisassembly;
+                    results.amplification.disassembly_amdil = new char[amdil_task.size()]{0};
+                    memcpy(results.amplification.disassembly_amdil, disassembly.pTaskDisassembly, amdil_task.size()-1);
+                }
+                if (disassembly.pVertexDisassembly != nullptr)
+                {
+                    std::string amdil_vert           = disassembly.pVertexDisassembly;
+                    results.vertex.disassembly_amdil = new char[amdil_vert.size()]{0};
+                    memcpy(results.vertex.disassembly_amdil, disassembly.pVertexDisassembly, amdil_vert.size()-1);
+                }
+                if (disassembly.pHullDisassembly != nullptr)
+                {
+                    std::string amdil_hull         = disassembly.pHullDisassembly;
+                    results.hull.disassembly_amdil = new char[amdil_hull.size()]{0};
+                    std::copy(amdil_hull.begin(), amdil_hull.end(), results.hull.disassembly_amdil);
+                    memcpy(results.hull.disassembly_amdil, disassembly.pHullDisassembly, amdil_hull.size() - 1);
+                }
+                if (disassembly.pDomainDisassembly != nullptr)
+                {
+                    std::string amdil_domain         = disassembly.pDomainDisassembly;
+                    results.domain.disassembly_amdil = new char[amdil_domain.size()]{0};
+                    memcpy(results.domain.disassembly_amdil, disassembly.pDomainDisassembly, amdil_domain.size() - 1);
+                }
+                if (disassembly.pGeometryDisassembly != nullptr)
+                {
+                    std::string amdil_geom             = disassembly.pGeometryDisassembly;
+                    results.geometry.disassembly_amdil = new char[amdil_geom.size()]{0};
+                    memcpy(results.geometry.disassembly_amdil, disassembly.pGeometryDisassembly, amdil_geom.size() - 1);
+                }
+                if (disassembly.pMeshDisassembly != nullptr)
+                {
+                    std::string amdil_mesh             = disassembly.pMeshDisassembly;
+                    results.mesh.disassembly_amdil = new char[amdil_mesh.size()]{0};
+                    memcpy(results.mesh.disassembly_amdil, disassembly.pMeshDisassembly, amdil_mesh.size() - 1);
+                }
+                if (disassembly.pPixelDisassembly != nullptr)
+                {
+                    std::string amdil_pixel         = disassembly.pPixelDisassembly;
+                    results.pixel.disassembly_amdil = new char[amdil_pixel.size()]{0};
+                    memcpy(results.pixel.disassembly_amdil, disassembly.pPixelDisassembly, amdil_pixel.size() - 1);
+                }
+            }
+        }
+
         return ret;
     }
 
@@ -171,10 +295,13 @@ namespace rga
         ret = (hr == S_OK && amdil_size > 0);
         if (ret)
         {
-            xml_buffer = new char[amdil_size]{};
-            hr         = amd_shader_analyzer_ext->GetShaderAmdIlDisassembly(*pipeline_handle, xml_buffer, &amdil_size, &disassembly);
-            assert(hr == S_OK);
-            ret = (hr == S_OK);
+            xml_buffer = new (std::nothrow) char[amdil_size]{};
+            if (xml_buffer != nullptr)
+            {
+                hr         = amd_shader_analyzer_ext->GetShaderAmdIlDisassembly(*pipeline_handle, xml_buffer, &amdil_size, &disassembly);
+                assert(hr == S_OK);
+                ret = (hr == S_OK);
+            }
             if (ret)
             {
                 if (disassembly.pComputeDisassembly != nullptr)
@@ -186,6 +313,12 @@ namespace rga
             }
         }
 
+        if (!ret && xml_buffer != nullptr)
+        {
+            delete[] xml_buffer;
+            xml_buffer = nullptr;
+        }
+
         return ret;
     }
 
@@ -194,7 +327,7 @@ namespace rga
     // call to CreateGraphicsPipeline or CreateComputePipeline using the same ID3D12Device which
     // was used in the call to rgDx12Backend::Init().
     // Returns true on success, false otherwise.
-    static bool RetrieveDisassemblyGraphics(const RgDx12Config&        config,
+    static bool RetrieveDisassemblyGraphics(const RgDx12Config&        ,
                                             IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
                                             AmdExtD3DPipelineHandle*   d3d12_pipeline_state,
                                             RgDx12PipelineResults&     results,
@@ -206,16 +339,6 @@ namespace rga
         tinyxml2::XMLDocument doc;
         char*                 xml_buffer = NULL;
 
-        // AMDIL part.
-        bool is_amdil_required = !config.vert.amdil.empty() || !config.hull.amdil.empty() || !config.domain.amdil.empty() || !config.geom.amdil.empty() ||
-                                 !config.pixel.amdil.empty();
-        if (is_amdil_required)
-        {
-            ret = ExtractAmdilDisassemblyGraphics(amd_shader_analyzer_ext, d3d12_pipeline_state, xml_buffer, results, error_msg);
-            assert(ret);
-        }
-
-        // ISA - always required.
         ret = ExtractXmlContent(amd_shader_analyzer_ext, d3d12_pipeline_state, xml_buffer, error_msg);
         assert(ret);
         assert(xml_buffer != NULL);
@@ -283,6 +406,16 @@ namespace rga
                                                 results.pixel.disassembly = new char[sz] {};
                                                 memcpy(results.pixel.disassembly, disassembly, sz);
                                             }
+                                            else if (shader_type.compare(kStrXmlNodeMs) == 0)
+                                            {
+                                                results.mesh.disassembly = new char[sz] {};
+                                                memcpy(results.mesh.disassembly, disassembly, sz);
+                                            }
+                                            else if (shader_type.compare(kStrXmlNodeAs) == 0)
+                                            {
+                                                results.amplification.disassembly = new char[sz] {};
+                                                memcpy(results.amplification.disassembly, disassembly, sz);
+                                            }
                                             else
                                             {
                                                 assert(false);
@@ -304,16 +437,18 @@ namespace rga
             xml_buffer = NULL;
         }
 
-        ret = (results.vertex.disassembly != nullptr ||
-            results.hull.disassembly != nullptr ||
-            results.domain.disassembly != nullptr ||
-            results.geometry.disassembly != nullptr ||
-            results.pixel.disassembly != nullptr);
+        ret = (results.amplification.disassembly != nullptr ||
+               results.vertex.disassembly != nullptr ||
+               results.hull.disassembly != nullptr ||
+               results.domain.disassembly != nullptr ||
+               results.geometry.disassembly != nullptr ||
+               results.mesh.disassembly != nullptr ||
+               results.pixel.disassembly != nullptr);
 
         return ret;
     }
 
-    static bool RetrieveDisassemblyCompute(const RgDx12Config         config,
+    static bool RetrieveDisassemblyCompute(const RgDx12Config         ,
                                            IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext,
                                            AmdExtD3DPipelineHandle*   d3d12_pipeline_state,
                                            RgDx12ShaderResults&       results,
@@ -324,12 +459,6 @@ namespace rga
         // Parse the XML string.
         tinyxml2::XMLDocument doc;
         char*                 xml_buffer = NULL;
-
-        if (!config.comp.amdil.empty())
-        {
-            ret = ExtractAmdilDisassemblyCompute(amd_shader_analyzer_ext, d3d12_pipeline_state, xml_buffer, results, error_msg);
-            assert(ret);
-        }
 
         ret = ExtractXmlContent(amd_shader_analyzer_ext, d3d12_pipeline_state, xml_buffer, error_msg);
         assert(ret);
@@ -360,8 +489,8 @@ namespace rga
                             if (disassembly_node != nullptr)
                             {
                                 const char* disassembly = disassembly_node->GetText();
-                                assert(disassembly_node != NULL);
-                                if (disassembly_node != NULL)
+                                assert(disassembly != NULL);
+                                if (disassembly != NULL)
                                 {
                                     size_t sz = strlen(disassembly);
                                     assert(sz > 0);
@@ -462,6 +591,12 @@ namespace rga
                                      std::vector<char>&                        pipeline_binary,
                                      std::string&                              error_msg) const;
 
+        bool CompileMeshPipeline(const RgDx12Config&                       config,
+                                 const D3D12_PIPELINE_STATE_STREAM_DESC*   graphics_pso,
+                                 RgDx12PipelineResults&                    results,
+                                 std::vector<char>&                        pipeline_binary,
+                                 std::string&                              error_msg) const;
+
         bool CompileComputePipeline(const RgDx12Config                       config,
                                     const D3D12_COMPUTE_PIPELINE_STATE_DESC* compute_pso,
                                     RgDx12ShaderResults&                     shader_results,
@@ -479,6 +614,7 @@ namespace rga
         HMODULE amd_d3d_dll_handle_ = NULL;
         IAmdExtD3DFactory* amd_ext_object_ = NULL;
         IAmdExtD3DShaderAnalyzer3* amd_shader_analyzer_ext_ = NULL;
+        IAmdExtD3DShaderAnalyzer4* amd_shader_analyzer4_ext_ = NULL;
     };
 
     static void SetShaderResults(const AmdExtD3DShaderStats& shader_stats, RgDx12ShaderResults& results)
@@ -525,6 +661,17 @@ namespace rga
         SetShaderResults(stats.pixelShaderStats, results.pixel);
     }
 
+    static void SetPipelineResults(const AmdExtD3DGraphicsShaderStats2& stats, RgDx12PipelineResults& results)
+    {
+        SetShaderResults(stats.vertexShaderStats, results.vertex);
+        SetShaderResults(stats.taskShaderStats, results.amplification);
+        SetShaderResults(stats.hullShaderStats, results.hull);
+        SetShaderResults(stats.domainShaderStats, results.domain);
+        SetShaderResults(stats.geometryShaderStats, results.geometry);
+        SetShaderResults(stats.meshShaderStats, results.mesh);
+        SetShaderResults(stats.pixelShaderStats, results.pixel);
+    }
+
     bool RgDx12Backend::Impl::InitImpl(ID3D12Device* d3d12_device, bool is_offline_session)
     {
         // Load the user-mode driver.
@@ -547,6 +694,10 @@ namespace rga
                     assert(hr == S_OK);
                     assert(amd_shader_analyzer_ext_ != NULL);
                     ret = (hr == S_OK && amd_shader_analyzer_ext_ != NULL);
+                    // This could fail if the driver doesn't support the new interface. We ignore the failure and will
+                    // check the pointer is valid when we try to use it.
+                    amd_ext_object_->CreateInterface(
+                        d3d12_device, __uuidof(IAmdExtD3DShaderAnalyzer4), reinterpret_cast<void**>(&amd_shader_analyzer4_ext_));
                 }
             }
         }
@@ -616,6 +767,7 @@ namespace rga
 
                 // Free the memory.
                 delete[] gpu_id_list.pGpuIdEntries;
+                gpu_id_list.pGpuIdEntries = nullptr;
             }
         }
         return ret;
@@ -674,6 +826,57 @@ namespace rga
                 msg << kStrErrorPipelineCreateFailure << hr;
                 error_msg = msg.str();
             }
+            delete pipeline_handle;
+            pipeline_handle = nullptr;
+        }
+        return ret;
+
+    }
+
+    bool RgDx12Backend::Impl::CompileMeshPipeline(const RgDx12Config&                    config,
+                                                 const D3D12_PIPELINE_STATE_STREAM_DESC* graphics_pso,
+                                                 RgDx12PipelineResults&                  results,
+                                                 std::vector<char>&                      pipeline_binary,
+                                                 std::string&                            error_msg) const
+    {
+        bool ret = amd_shader_analyzer4_ext_ != nullptr;
+        if (ret)
+        {
+            AmdExtD3DPipelineHandle* pipeline_handle = new AmdExtD3DPipelineHandle{};
+            ID3D12PipelineState* pPipeline = NULL;
+            AmdExtD3DGraphicsShaderStats2 stats;
+            memset(&stats, 0, sizeof(AmdExtD3DGraphicsShaderStats2));
+            HRESULT hr = amd_shader_analyzer4_ext_->CreatePipelineState(graphics_pso,
+                IID_PPV_ARGS(&pPipeline), pipeline_handle);
+            assert(hr == S_OK);
+            ret = (hr == S_OK);
+
+            if (ret)
+            {
+                amd_shader_analyzer4_ext_->GetGraphicsShaderStats2(*pipeline_handle, &stats);
+
+                // Set the statistics values to the output structure.
+                SetPipelineResults(stats, results);
+
+                // Retrieve the disassembly.
+                ret = RetrieveDisassemblyGraphics(config, amd_shader_analyzer4_ext_, pipeline_handle, results, error_msg);
+                assert(ret);
+
+                // Retrieve the pipeline binary.
+                ret = ExtractPipelineBinary(amd_shader_analyzer4_ext_, pipeline_handle, pipeline_binary, error_msg);
+                assert(ret);
+            }
+            else
+            {
+                // Log error messages.
+                std::stringstream msg;
+                msg << kStrErrorPipelineCreateFailure << hr;
+                error_msg = msg.str();
+            }
+        }
+        else
+        {
+            error_msg = kStrErrorDriverDoesntSupportMeshShaders;
         }
         return ret;
 
@@ -690,6 +893,21 @@ namespace rga
         if (impl_ != nullptr)
         {
             ret = impl_->CompileGraphicsPipeline(config, graphics_pso, results, pipeline_binary, error_msg);
+        }
+        return ret;
+    }
+
+    bool RgDx12Backend::CompileMeshPipeline(const RgDx12Config&                     config,
+                                            const D3D12_PIPELINE_STATE_STREAM_DESC* graphics_pso,
+                                            RgDx12PipelineResults&                  results,
+                                            std::vector<char>&                      pipeline_binary,
+                                            std::string&                            error_msg) const
+    {
+        bool ret = false;
+        assert(impl_ != nullptr);
+        if (impl_ != nullptr)
+        {
+            ret = impl_->CompileMeshPipeline(config, graphics_pso, results, pipeline_binary, error_msg);
         }
         return ret;
     }
@@ -738,6 +956,7 @@ namespace rga
                     error_msg.append(kStrErrorPipelineStateCreateFailure);
                     ret = false;
                 }
+                delete pipeline_handle;
             }
         }
 
@@ -815,6 +1034,8 @@ namespace rga
                 error_msg.append(msg.str());
                 ret = false;
             }
+            delete pipeline_handle;
+            pipeline_handle = nullptr;
         }
         return ret;
     }
@@ -868,8 +1089,13 @@ namespace rga
     {
         if (disassembly != nullptr)
         {
-            delete disassembly;
+            delete[] disassembly;
             disassembly = nullptr;
+        }
+        if (disassembly_amdil != nullptr)
+        {
+            delete[] disassembly_amdil;
+            disassembly_amdil = nullptr;
         }
     }
 }

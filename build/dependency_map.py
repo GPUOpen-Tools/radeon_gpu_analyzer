@@ -27,7 +27,6 @@ url_mapping_linux = {
 # the repo in a variable. In future, we can automatically calculate this based on the git config
 github_root = "https://github.com/GPUOpen-Tools/"
 
-# repositories.
 
 github_mapping = {
  # Lib.
@@ -38,10 +37,10 @@ github_mapping = {
  # Src.
     "tsingleton"                     : ["../external/tsingleton",               "d048b8fdea9d84e8939116a442ef70608189f6e2"],
     "common_src_miniz"               : ["../external/miniz",                    "a958cde31565769681aa3d7934c3d38c52940f4e"],
-    "dynamic_library_module"         : ["../external/dynamic_library_module",   "amd-rga-v2.7"],
-    "device_info"                    : ["../external/device_info",              "rga-v2.14.1"],
-    "update_check_api"               : ["../external/update_check_api",         "v2.1.1"],
+    "dynamic_library_module"         : ["../external/dynamic_library_module",   "276d02d20e19af19f3502021ad5c023ba1264a60"],
+    "device_info"                    : ["../external/device_info",              "5fdc92d174775d9ad22326d679b03dd22f0d3488"],
+    "update_check_api"               : ["../external/update_check_api",         "649bde797ee74c10b2afeaffa8b42d2a91407c06"],
  # Qt tools.
-    "qt_common"                      : ["../external/qt_common",                "v4.5.0"],
-    "qt_isa_gui"                     : ["../external/qt_isa_gui",               "v1.3.0"],
+    "qt_common"                      : ["../external/qt_common",                "a7552266363c29e902ad605a3da8a7368cdb7540"],
+    "qt_isa_gui"                     : ["../external/qt_isa_gui",               "2425fed03a2dedae727d7a04ceb2a964fdcc5f97"],
 }

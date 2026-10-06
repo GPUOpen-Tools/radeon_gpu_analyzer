@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for parsing command line options.
@@ -69,8 +69,10 @@ static const char* compiler_paths_opt = "Alternative glslang compiler and SPIR-V
 static const char* hidden_opt = "Options that we don't show with --help.";
 
 // Options and descriptions strings.
-static const char* kStrOptionListAsic      = "l,list-asics";
-static const char* kStrDescriptionListAsic = "List the known GPU codenames, architecture names and variant names. To target a specific GPU, use its codename as the argument to the \"-c\" command line switch.";
+static const char* kStrOptionListAsic = "l,list-asics";
+static const char* kStrDescriptionListAsic =
+    "List the known GPU codenames, architecture names and variant names. To target a specific GPU, use its codename as the argument to the \"-c\" command line "
+    "switch.";
 static const char* kStrOptionAsic          = "c,asic";
 static const char* kStrDescriptionAsic     = "Which ASIC to target.  Repeatable.";
 static const char* kStrOptionVersion       = "version";
@@ -95,15 +97,20 @@ static const char* kStrOptionSourceKind    = "s,source-kind";
 static const char* kStrDescriptionSourceKind =
     "Source platform: dx12 for DirectX 12, dxr for DXR, dx11 for DirectX 11, vulkan for Vulkan, opengl for OpenGL, "
     "opencl for OpenCL offline mode and amdil for AMDIL.";
-static const char* kStrOptionUpdates       = "u,updates";
-static const char* kStrDescriptionUpdates  = "Check for available updates.";
-static const char* kStrOptionVerbose       = "v,verbose";
-static const char* kStrDescriptionVerbose  = "Print command line strings that RGA uses to launch external processes.";
-static const char* kStrOptionCO            = "co";
-static const char* kStrDescriptionCO       = "Full path to the code object input file.";
-static const char* kStrOptionDisTxt        = "disassemble";
-static const char* kStrDescriptionDisTxt   = "Path to output text file where text disassembly of the binary would be saved.";
-static const char* kStrOptionIl            = "il";
+static const char* kStrOptionUpdates               = "u,updates";
+static const char* kStrDescriptionUpdates          = "Check for available updates.";
+static const char* kStrOptionVerbose               = "v,verbose";
+static const char* kStrDescriptionVerbose          = "Print command line strings that RGA uses to launch external processes.";
+static const char* kStrOptionCO                    = "co";
+static const char* kStrDescriptionCO               = "Full path to the code object input file.";
+static const char* kStrOptionDisTxt                = "disassemble";
+static const char* kStrDescriptionDisTxt           = "Path to output text file where text disassembly of the binary would be saved.";
+static const char* kStrOptionIl                    = "il";
+static const char* kStrOptionSessionSummary        = "session-summary";
+static const char* kStrDescriptionSessionSummary   = "Path to output file where session summary of the binary would be saved.";
+static const char* kStrOptionIncludeTargetMetadata = "include-target-metadata";
+static const char* kStrOptionLineNumbers           = "line-numbers";
+static const char* kStrDescriptionLineNumbers      = "Add source line numbers to ISA disassembly.";
 
 static const char* kStrVulkanStageVertexFullPath                 = "Full path to vertex shader input file.";
 static const char* kStrVulkanStageTessellationControlFullPath    = "Full path to tessellation control shader input file.";
@@ -148,6 +155,13 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             (kStrOptionSourceKind, kStrDescriptionSourceKind, po::value<std::string>(config.source_kind))
             (kStrOptionUpdates, kStrDescriptionUpdates)
             (kStrOptionVerbose, kStrDescriptionVerbose)
+            (kStrOptionSessionSummary,
+             "Generate an XML session summary file with decoded ISA, statistics, live register analysis, "
+             "and CFG for all compiled shaders.",
+             po::value<std::string>(config.session_summary_file))
+            (kStrOptionIncludeTargetMetadata,
+             "Include target architecture metadata (branch types, register types, functional groups) "
+             "in the session summary file.")
             ;
 
         // DX Options
@@ -240,6 +254,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("disassemble-spv", "Disassemble SPIR-V binary file. Accepts an optional argument with the full path to the output file where the disassembly would be saved. If not specified, the disassembly would be printed to stdout.", po::value<std::string>(config.spv_txt))
             ("validation", "Enable Vulkan validation layers and dump the output of validation layers to stdout.", po::value<bool>(validation))
             ("validation-file", "Enable Vulkan validation layers and dump the output of validation layers to the text file specified by the option argument.", po::value<std::string>(config.vulkan_validation))
+            ("force-fallback", "Skip the VkRunner compilation attempt and fall through directly to the vk-offline path.", po::value<bool>(config.is_forced_fallback))
 #ifdef VK_HLSL
                 ("list-entries", "List hlsl function names.");
 #else
@@ -297,6 +312,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("gs", "Full path to hlsl file where geometry shader is defined.", po::value<std::string>(config.gs_hlsl))
             ("ps", "Full path to hlsl file where pixel shader is defined.", po::value<std::string>(config.ps_hlsl))
             ("cs", "Full path to hlsl file where compute shader is defined.", po::value<std::string>(config.cs_hlsl))
+            ("ms", "Full path to hlsl file where mesh shader is defined.", po::value<std::string>(config.ms_hlsl))
+            ("as", "Full path to hlsl file where amplification shader is defined.", po::value<std::string>(config.as_hlsl))
             ("all-hlsl", "Full path to the hlsl file to be used for all stages. "
                 "You can use this option if all of your shaders are defined in the same hlsl file, to avoid repeating the --<stage> "
                 "argument. If you use this option in addition to --<stage> or --<stage>-blob, then the --<stage> or --<stage>-blob option "
@@ -305,12 +322,14 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
             // DXBC.
             ("vs-blob", "Full path to compiled DXBC or DXIL binary where vertex shader is found.", po::value<std::string>(config.vs_dxbc))
-            ("hs-blob", "Full path to compiled DXBC or DXIL binary where hull shader is found.", po::value<std::string>(config.hs_dxbc)) 
+            ("hs-blob", "Full path to compiled DXBC or DXIL binary where hull shader is found.", po::value<std::string>(config.hs_dxbc))
             ("ds-blob", "Full path to compiled DXBC or DXIL binary domain shader is found.",  po::value<std::string>(config.ds_dxbc))
             ("gs-blob", "Full path to compiled DXBC or DXIL binary geometry shader is found.", po::value<std::string>(config.gs_dxbc))
             ("ps-blob", "Full path to compiled DXBC or DXIL binary pixel shader is found.",  po::value<std::string>(config.ps_dxbc))
             ("cs-blob", "Full path to compiled DXBC or DXIL binary where compute shader is found.", po::value<std::string>(config.cs_dxbc))
-            
+            ("ms-blob", "Full path to compiled DXBC or DXIL binary where mesh shader is found.", po::value<std::string>(config.ms_dxbc))
+            ("as-blob", "Full path to compiled DXBC or DXIL binary where amplification shader is found.", po::value<std::string>(config.as_dxbc))
+
             // IL Disassembly.
             ("vs-dxil-dis", "Full path to the DXIL or DXBC disassembly output file for vertex shader. "
                 "Note that this option is only valid for textual input (HLSL).",
@@ -330,6 +349,12 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("cs-dxil-dis", "Full path to the DXIL or DXBC disassembly output file for compute shader. "
                 "Note that this option is only valid for textual input (HLSL).",
                 po::value<std::string>(config.cs_dxil_disassembly))
+            ("ms-dxil-dis", "Full path to the DXIL or DXBC disassembly output file for mesh shader. "
+                "Note that this option is only valid for textual input (HLSL).",
+                po::value<std::string>(config.ms_dxil_disassembly))
+            ("as-dxil-dis", "Full path to the DXIL or DXBC disassembly output file for amplification shader. "
+                "Note that this option is only valid for textual input (HLSL).",
+                po::value<std::string>(config.as_dxil_disassembly))
 
             // Target.
             ("vs-entry", "Entry-point name of vertex shader.", po::value<std::string>(config.vs_entry_point))
@@ -338,6 +363,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("gs-entry", "Entry-point name of geometry shader.", po::value<std::string>(config.gs_entry_point))
             ("ps-entry", "Entry-point name of pixel shader.", po::value<std::string>(config.ps_entry_point))
             ("cs-entry", "Entry-point name of compute shader.", po::value<std::string>(config.cs_entry_point))
+            ("ms-entry", "Entry-point name of mesh shader.", po::value<std::string>(config.ms_entry_point))
+            ("as-entry", "Entry-point name of amplification shader.", po::value<std::string>(config.as_entry_point))
 
             // Shader model.
             ("vs-model", "Shader model of vertex shader (e.g. vs_5_1 or vs_6_0).", po::value<std::string>(config.vs_model))
@@ -346,12 +373,14 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("gs-model", "Shader model of geometry shader (e.g. gs_5_1 or gs_6_0).", po::value<std::string>(config.gs_model))
             ("ps-model", "Shader model of pixel shader (e.g. ps_5_1 or ps_6_0).", po::value<std::string>(config.ps_model))
             ("cs-model", "Shader model of compute shader (e.g. cs_5_1 or cs_6_0).", po::value<std::string>(config.cs_model))
+            ("ms-model", "Shader model of mesh shader (e.g. ms_6_5).", po::value<std::string>(config.ms_model))
+            ("as-model", "Shader model of amplification shader (e.g. as_6_5).", po::value<std::string>(config.as_model))
             ("all-model", "Shader model to be used for all stages (e.g. 5_1 or 6_0). Instead of "
                 "specifying the model for each stage specifically, you can use this option to pass the shader model version and RGA "
                 "would auto-generate the relevant model for every stage in the pipeline. Note that if you use this option together "
                 "with any of the <stage>-model options, for any stage <stage> the <stage>-model option would override --all-model.",
                     po::value<std::string>(config.all_model))
-            
+
             // Root signature.
             ("rs-bin", "Full path to the serialized root signature "
                 "to be used in the compilation process.",
@@ -368,7 +397,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             ("rs-macro-version", "The version of the RootSignature macro "
                 "specified through the rs - macro option.By default, 'rootsig_1_1' would be assumed.",
                 po::value<std::string>(config.rs_macro_version))
-            
+
             // Pipeline state.
             ("gpso", "Full path to .gpso file that describes the graphics pipeline state (required for graphics pipelines only)."
                 " You can generate a template by using the --gpso-template option.",
@@ -393,6 +422,9 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         // Binary Analysis mode.
         opts.add_options(binary_opt)
             (kStrOptionCO, kStrDescriptionCO)
+            ("list-source-paths", "List source file paths referenced in the binary's DWARF debug info.")
+            ("substitute-path", "Replace source path prefix in disassembly output. Format: \"<from>|<to>\". Repeatable.",
+                po::value<std::vector<std::string>>())
             ;
 
 #ifdef _LEGACY_OPENCL_ENABLED
@@ -411,7 +443,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
         // Line numbers.
         opts.add_options(line_numbers_opt)
-            ("line-numbers", "Add source line numbers to ISA disassembly.");
+            (kStrOptionLineNumbers, kStrDescriptionLineNumbers);
 
         // Compiler warnings.
         opts.add_options(warnings_opt)
@@ -474,6 +506,11 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.donot_rename_il_files = true;
         }
 
+        if (result.count(kStrOptionIncludeTargetMetadata))
+        {
+            config.include_target_metadata = true;
+        }
+
         if (result.count("list-asics"))
         {
             config.requested_command = Config::kListAsics;
@@ -482,9 +519,27 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.requested_command = Config::kListEntries;
         }
+        else if (result.count("list-source-paths"))
+        {
+            config.requested_command = Config::kListSourcePaths;
+        }
         else if (result.count("gpso-template"))
         {
             config.requested_command = Config::kGenTemplateFile;
+        }
+
+        if (result.count("substitute-path"))
+        {
+            for (const auto& val : result["substitute-path"].as<std::vector<std::string>>())
+            {
+                // Split "from|to" by the pipe delimiter.
+                // Pipe is used because both paths may contain spaces.
+                size_t sep = val.find(kStrCliOptSubstitutePathDelimiter);
+                if (sep != std::string::npos)
+                {
+                    config.substitute_paths.push_back({val.substr(0, sep), val.substr(sep + 1)});
+                }
+            }
         }
 
         if (result.count("intrinsics"))
@@ -502,12 +557,12 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             config.requested_command = Config::kListAdapters;
         }
 
-        if (result.count("parse-isa"))
+        if (result.count("parse-isa") || !config.session_summary_file.empty())
         {
             config.is_parsed_isa_required = true;
         }
 
-        if (result.count("line-numbers"))
+        if (result.count(kStrOptionLineNumbers))
         {
             config.is_line_numbers_required = true;
         }
@@ -579,7 +634,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         if (result.count("livereg-sgpr") && config.sgpr_livereg_analysis_file.empty())
         {
             config.sgpr_livereg_analysis_file = kStrDefaultFilenameLiveregSgpr;
-        }        
+        }
 
         if (result.count("no-suffix-bin") > 0)
         {
@@ -604,16 +659,16 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         {
             config.requested_command = Config::kUpdate;
         }
-        else if (!config.analysis_file.empty() || 
-                 !config.il_file.empty() || 
+        else if (!config.analysis_file.empty() ||
+                 !config.il_file.empty() ||
                  !config.isa_file.empty() ||
-                 !config.livereg_analysis_file.empty() || 
-                 !config.sgpr_livereg_analysis_file.empty() || 
+                 !config.livereg_analysis_file.empty() ||
+                 !config.sgpr_livereg_analysis_file.empty() ||
                  !config.binary_output_file.empty() ||
-                 !config.metadata_file.empty() || 
+                 !config.metadata_file.empty() ||
                  !config.block_cfg_file.empty() ||
-                 !config.inst_cfg_file.empty() || 
-                 !config.spv_txt.empty() || 
+                 !config.inst_cfg_file.empty() ||
+                 !config.spv_txt.empty() ||
                  !config.spv_bin.empty() ||
                  !config.parsed_spv.empty())
         {
@@ -738,6 +793,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
          // Binary Analysis mode does not support the asic,c and binary,b and --il CLI option.
         if (config.mode == beKA::RgaMode::kModeBinary)
         {
+            // Line correlation is on by default in binary analysis mode.
+            config.is_line_numbers_required = true;
             if (result.count("asic"))
             {
                 std::cout << "unrecognized option \'" << kStrOptionAsic << "\'" << std::endl;
@@ -794,7 +851,7 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             std::cout << "*** Legacy OpenCL mode options ***" << std::endl;
             std::cout << "==================================" << std::endl;
             std::cout << opts.help({
-                         generic_opt, 
+                         generic_opt,
                          il_dump_opt,
                          macro_and_include_opt,
                          cl_opt,
@@ -820,10 +877,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             std::cout << "*** DXR mode options (Windows only) ***" << std::endl;
             std::cout << "=======================================" << std::endl;
             std::cout << opts.help({
-                generic_opt, 
-                macro_and_include_opt, 
-                dxr_opt, 
-                dxc_options, 
+                generic_opt,
+                macro_and_include_opt,
+                dxr_opt,
+                dxc_options,
                 dx12_other_options }) << std::endl;
             std::cout << "Examples:" << std::endl;
             std::cout << "  View supported targets for DXR:" << std::endl;
@@ -840,9 +897,9 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             std::cout << "================================" << std::endl;
             opts.custom_help("[options] source_file(s)");
             std::cout << opts.help({
-                generic_opt, 
-                il_dump_opt, 
-                warnings_opt, 
+                generic_opt,
+                il_dump_opt,
+                warnings_opt,
                 macro_and_include_opt,
                 cl_opt,
                 line_numbers_opt }) << std::endl;
@@ -931,6 +988,10 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
         std::cout << "    " << program_name << " -s dx12 -c gfx906 --cs C:\\shaders\\FillLightGridCS_8.hlsl --cs-model cs_5_1 --cs-entry main --rs-bin C:\\RS\\FillLightRS.rs.fxo --isa C:\\output\\lightcs_dis.txt -a C:\\output\\stats.txt" << std::endl;
         std::cout << "  Compile a DXIL or DXBC blob for Navi10 (gfx1010) and generate ISA disassembly:" << std::endl;
         std::cout << "    " << program_name << " -s dx12 -c gfx1010 --cs-blob C:\\shaders\\FillLightGridCS_8.obj --isa C:\\output\\lightcs_dis.txt" << std::endl;
+        std::cout << "  Compile a mesh shader pipeline with mesh (\"MSMain\") and pixel (\"PSMain\") shaders for gfx1201. Generate ISA disassembly and resource usage statistics:" << std::endl;
+        std::cout << "    " << program_name << " -s dx12 -c gfx1201 --ms C:\\shaders\\mesh.hlsl --ms-model ms_6_5 --ms-entry MSMain --ps C:\\shaders\\pixel.hlsl --ps-model ps_6_5 --ps-entry PSMain --gpso C:\\shaders\\state.gpso --rs-macro ROOT_SIG --isa C:\\output\\isa.txt -a C:\\output\\stats.txt" << std::endl;
+        std::cout << "  Compile a mesh shader pipeline with amplification (\"ASMain\"), mesh (\"MSMain\") and pixel (\"PSMain\") shaders from a single HLSL file:" << std::endl;
+        std::cout << "    " << program_name << " -s dx12 -c gfx1201 --all-hlsl C:\\shaders\\shaders.hlsl --as-entry ASMain --as-model as_6_5 --ms-entry MSMain --ms-model ms_6_5 --ps-entry PSMain --ps-model ps_6_5 --gpso C:\\shaders\\state.gpso --rs-macro ROOT_SIG --isa C:\\output\\isa.txt" << std::endl;
         }
         else if ((config.requested_command == Config::kHelp) && (config.mode == beKA::RgaMode::kModeAmdil))
         {
@@ -993,10 +1054,12 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
                     "   2) One or more pipeline stage specific shader files specified by the pipeline stage options (--vert, --tesc, etc.).");
             }
 
-            std::cout << opts.help({
-                         generic_opt, 
-                         opt_level_opt1, 
-                         pipelined_opt_offline }) << std::endl;
+            std::vector<std::string> vk_offline_help_groups = {generic_opt, opt_level_opt1, pipelined_opt_offline};
+            if (config.mode == beKA::RgaMode::kModeVkOffline)
+            {
+                vk_offline_help_groups.push_back(line_numbers_opt);
+            }
+            std::cout << opts.help(vk_offline_help_groups) << std::endl;
 
             std::cout << "Examples:" << std::endl;
             std::cout << "  Compile vertex & fragment shaders for all supported devicesl; extract ISA and statistics:" << std::endl;
@@ -1037,7 +1100,8 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
 
             std::cout << opts.help({
                          generic_opt,
-                         macro_and_include_opt }) << std::endl;
+                         macro_and_include_opt,
+                         line_numbers_opt }) << std::endl;
 
             std::cout << vk_input_shader_type_opts.help({pipelined_opt_offline}) << std::endl;
 
@@ -1090,9 +1154,13 @@ bool ParseCmdLine(int argc, char* argv[], Config& config)
             binary_opts.add_options(binary_opt)
                 (kStrOptionCO, kStrDescriptionCO)
                 ;
+            binary_opts.add_options(line_numbers_opt)
+                (kStrOptionLineNumbers, kStrDescriptionLineNumbers)
+                ;
             std::cout << binary_opts.help({
                          generic_opt,
-                         binary_opt }) << std::endl;
+                         binary_opt,
+                         line_numbers_opt }) << std::endl;
             std::cout << "Examples:" << std::endl;
             std::cout << "  Extract ISA, and statistics for:" << std::endl;
             std::cout << "    " << program_name

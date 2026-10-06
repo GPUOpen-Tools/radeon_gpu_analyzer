@@ -135,13 +135,13 @@ void RgStartTab::ClearRecentProjectsList()
 
 void RgStartTab::CreateContextMenu()
 {
-    open_recent_action_ = new QAction(kStrMainWindowLoadProject, nullptr);
+    open_recent_action_ = new QAction(kStrMainWindowLoadProject, this);
     menu_.addAction(open_recent_action_);
 
     // Add a separator between the current menu items.
     menu_.addSeparator();
 
-    open_containing_folder_action_ = new QAction(kStrFileContextMenuOpenContainingFolder, nullptr);
+    open_containing_folder_action_ = new QAction(kStrFileContextMenuOpenContainingFolder, this);
     menu_.addAction(open_containing_folder_action_);
 }
 

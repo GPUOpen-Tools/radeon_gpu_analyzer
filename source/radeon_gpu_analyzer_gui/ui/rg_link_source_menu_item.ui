@@ -164,11 +164,11 @@
       <enum>Qt::FocusPolicy::NoFocus</enum>
      </property>
      <property name="text">
-      <string>Link Source file</string>
+      <string>Link source files</string>
      </property>
      <property name="icon">
       <iconset resource="../resources/radeon_gpu_analyzer_gui.qrc">
-       <normaloff>:/icons/add_file_icon.svg</normaloff>:/icons/add_file_icon.svg</iconset>
+       <normaloff>:/icons/regenerate_file_icon.svg</normaloff>:/icons/regenerate_file_icon.svg</iconset>
      </property>
     </widget>
    </item>

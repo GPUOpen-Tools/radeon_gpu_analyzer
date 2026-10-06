@@ -1,12 +1,17 @@
-Radeon™ GPU Analyzer 2.14.2 Release Notes
+Radeon™ GPU Analyzer 2.15.0 Release Notes
 =======================================
 Highlights
 ==========
--     Updated the disassembler, addressing a few stability issues.
+-     Added support for the CDNA™ 5 (gfx1250) GPU architecture in Binary Analysis mode (for precompiled HIP Code Object binaries) and OpenCL mode.
+-     Binary Analysis mode: source-to-ISA line correlation is now supported for Code Object binaries which include debug information (requires that the Code Object binary being analyzed is compiled with debug information).
+-     Vulkan mode: source-to-ISA line correlation is now supported for both offline and live driver compilation, and is displayed automatically by the GUI when debug info is available. This feature is experimental in the current release.
+-     AGPR (Accumulator GPR) usage is now displayed in the resource usage view for supported devices, separately from standard VGPR usage.
+-     DX12 mode: added mesh shader pipeline support.
+-     The RGA CLI can now generate a single session summary XML file with the entire output of the session, including ISA, static HW allocation statistics, live register analysis, and CFG for all analyzed binaries or shaders (use --session-summary).
 
 Notes: 
--     With the introduction of 25.20-based Linux drivers, the AMDVLK driver is no longer included in the amdgpu-pro driver package. This is a result of the AMDVLK open-source project being discontinued as mentioned here (https://github.com/GPUOpen-Drivers/AMDVLK/discussions/416). Instead, the RADV open-source Vulkan® driver is installed by default. Consequently, live driver compilation of Vulkan pipelines using RGA is no longer supported with the latest drivers. For a limited transition period, RGA will still bundle the latest amdvlk64.so from the latest 25.10 amdgpu-pro driver release which can be used for reference. RGA will also continue to support Vulkan pipeline compilation on Linux through its offline Vulkan mode.
--     Clock cycle estimates are no longer presented by the upgraded ISA disassembly view in RGA GUI application.
+-	  With the introduction of 25.20-based Linux drivers, the AMDVLK driver is no longer included in the amdgpu-pro driver package. This is a result of the AMDVLK open-source project being discontinued as mentioned here (https://github.com/GPUOpen-Drivers/AMDVLK/discussions/416). Instead, the RADV open-source Vulkan® driver is installed by default. Consequently, live driver compilation of Vulkan pipelines using RGA is no longer supported with the latest drivers. For a limited transition period, RGA will still bundle the latest amdvlk64.so from the latest 25.10 amdgpu-pro driver release which can be used for reference. RGA will also continue to support Vulkan pipeline compilation on Linux through its offline Vulkan mode.
+-     Clock cycle estimates are no longer presented by the upgraded ISA disassembly view in the RGA GUI application.
 -     The new disassembly view presents Functional Groups, leveraging the AMD GPU machine-readable ISA documentation.
 -     For backward compatibility, the RGA CLI output presents Cycle estimates and Functional Unit fields similar to RGA 2.11. 
 -     We are working on a revised performance estimate mechanism and will share more details in a future RGA release.
@@ -15,10 +20,10 @@ Known Issues
 ============
 Vulkan Live Driver Mode
 -----------------------
--	Source to disassembly correlation is not supported by AMD’s shader compiler and is therefore not supported in the UI.
+-	Source-to-disassembly line correlation is experimental in this release and may not be accurate in all cases.
 -	Keyboard navigation is not supported from some views in the GUI application.
 -	The RGA layer is a beta feature. It fails to extract the shaders and pipeline state from certain Vulkan apps.
--	Notifications about the fact that modified SPIR-V binary does not match the disassembly will not appear for loaded projects (in case where the user changed the SPIR-V code, did not build, and re-loaded the project).
+-	Notifications about the fact that modified SPIR-V binary does not match the disassembly will not appear for loaded projects (if the user changed the SPIR-V code, did not build, and re-loaded the project).
 
 Offline OpenCL Mode
 -------------------
@@ -27,7 +32,7 @@ Offline OpenCL Mode
 DirectX 12 Mode
 ---------------
 -	Live register analysis & CFG generation require using the --isa option to generate ISA disassembly. 
--	On Windows 11, Hull shader AMDIL disassembly contains a trail of a few garbage characters.
+-	On Windows 11, Hull shader AMDIL disassembly contains a few trailing garbage characters.
 -	In offline mode, when the D3D debug layer is enabled (--debug-layer) debug output is not captured by the command line tool.
 
 DirectX 11 Mode
@@ -223,17 +228,14 @@ GUI Application
 -	On Linux, if the OS color theme is updated while the RGA GUI application is running, the RGA GUI application will not immediately reflect these changes (the changes will be reflected the next time that you launch the application).
 -   Tooltips and Functional Groups are not supported for pre-RDNA targets.
 
-General
-
-
-Notes for OpenCL Mode Users 
+Notes for OpenCL Mode Users
 ===========================
 The Offline OpenCL mode uses the Lightning Compiler package that ships with RGA, which is based on clang.
 As of version 2.0, RGA allows developers to replace the Lightning Compiler package that ships with the product with a user-provided LLVM-based package. For more information, see the Radeon GPU Analyzer GUI app's help manual, or run the command line tool with –s opencl –h as arguments (look for the “Alternative OpenCL Lightning Compiler” section).
 
 System Requirements
 ===================
-It is generally recommended to use RGA with the latest Radeon Software version. Specifically, to target the RDNA architecture, the latest Radeon Software version is required (except for all Vulkan® modes, OpenCL mode, OpenGL mode and DX11 mode which are independent of the driver).
+It is generally recommended to use RGA with the latest Radeon Software version. Specifically, to target the RDNA architecture, the latest Radeon Software version is required (except Vulkan®, OpenCL, OpenGL, and DX11 modes, which are independent of the driver).
 
 Vulkan Mode
 -----------
@@ -261,4 +263,22 @@ OpenCL mode (-s opencl) is independent of the installed driver and graphics hard
 OpenGL Mode
 -----------
 OpenGL mode (-s opengl) is independent of the installed driver and graphics hardware and should work on any x86-based system.
+
+Release Notes History
+======================
+This section summarizes the Highlights from prior RGA releases.
+
+RGA 2.14
+----------
+-     Analyze precompiled HIP GPU Code Object binaries for the MI-350 (gfx950 CDNA™ 4 architecture) with RGA's Binary Analysis mode.
+-     Compile and analyze OpenCL™ kernels for MI-350 (gfx950 CDNA™ 4 architecture).
+-     Added support for the gfx1153 as a compilation target across all RGA's modes.
+
+RGA 2.14.1
+----------
+-     Updated the disassembler, addressing a few stability issues.
+
+RGA 2.14.2
+----------
+-     Updated the disassembler, addressing a few stability issues.
 

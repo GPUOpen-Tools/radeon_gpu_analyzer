@@ -32,8 +32,11 @@ private:
     // Connect the signals.
     void ConnectSignals();
 
-    // Handler invoked when the user clicks the kernel's "Copy" context menu item.
+    // Handler invoked when the user clicks the "Copy kernel name" context menu item.
     void HandleCopyKernelNameSelection();
+
+    // Handler invoked when the user clicks the "Reveal kernel name" context menu item.
+    void HandleRevealKernelNameSelection();
 
     // Handler invoked when the user wants to open the context menu for the item.
     void HandleOpenContextMenu(const QPoint& local_click_position);
@@ -46,6 +49,9 @@ private:
 
     // The context menu item used to copy the kernel name.
     QAction* copy_kernel_name_action_ = nullptr;
+
+    // The context menu item used to reveal the full kernel name in a popup.
+    QAction* reveal_kernel_name_action_ = nullptr;
 
     // The kernel name clicked on.
     QString kernel_name_;

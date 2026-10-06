@@ -150,12 +150,15 @@ beKA::beStatus BeProgramBuilderDx11::CompileAMDIL(const std::string& program_sou
         LogCallback(ss.str());
 
         // Release the resources.
+        delete curr_elf;
+        curr_elf = nullptr;
         amd_dxx_module_.AmdDxGsaFreeCompiledShader(shader_output.pShaderBinary);
 
         return kBeStatusNoBinaryForDevice;
     }
 
     // Free stuff.
+    delete curr_elf;
     amd_dxx_module_.AmdDxGsaFreeCompiledShader(shader_output.pShaderBinary);
 
     return kBeStatusSuccess;
@@ -374,7 +377,8 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
         }
 
         // Handle custom includes.
-        ID3DInclude* include_mechanism = D3D_COMPILE_STANDARD_FILE_INCLUDE;
+        D3dIncludeManager* include_manager  = nullptr;
+        ID3DInclude*       include_mechanism = D3D_COMPILE_STANDARD_FILE_INCLUDE;
 
         if (!dx_options.include_directories.empty())
         {
@@ -391,7 +395,8 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
             {
                 // Create an include manager.
                 shader_dir_str    = shader_dir.directoryPath().asString();
-                include_mechanism = new D3dIncludeManager(shader_dir_str.asASCIICharArray(), dx_options.include_directories);
+                include_manager   = new D3dIncludeManager(shader_dir_str.asASCIICharArray(), dx_options.include_directories);
+                include_mechanism = include_manager;
             }
         }
 
@@ -414,11 +419,22 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
         catch (...)
         {
             LogCallback(STR_ERROR_D3D_COMPILER_EXCEPTION);
+            if (include_manager != nullptr)
+            {
+                delete include_manager;
+                include_manager = nullptr;
+            }
             return kBeStatusD3dCompileFailed;
         }
 
         // Release resources.
         delete[] macros;
+        macros = nullptr;
+        if (include_manager != nullptr)
+        {
+            delete include_manager;
+            include_manager = nullptr;
+        }
 
         if (error_messages != NULL)
         {
@@ -452,11 +468,11 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
     // down to the driver.  That's what the code below wants.
     // For DX9, the object has no header (it's all byte code).
     // But for DX9, we need to talk to a different driver and that's NYI.
-    if (shader_bytes == nullptr)
+    if (shader_bytes == nullptr && shader != nullptr)
     {
         shader_bytes = (char*)shader->GetBufferPointer();
     }
-    if (shader_byte_count == 0)
+    if (shader_byte_count == 0 && shader != nullptr)
     {
         shader_byte_count = shader->GetBufferSize();
     }
@@ -473,7 +489,7 @@ beKA::beStatus BeProgramBuilderDx11::CompileHLSL(const std::string& program_sour
             ID3DBlob* disassembly = NULL;
             HRESULT   result      = d3d_compile_module_.D3DDisassemble(shader_bytes, shader_byte_count, 0, "", &disassembly);
 
-            if (result == S_OK)
+            if (result == S_OK && disassembly != NULL)
             {
                 shader_bytes          = (char*)disassembly->GetBufferPointer();
                 shader_byte_count     = disassembly->GetBufferSize();
@@ -676,12 +692,15 @@ beKA::beStatus BeProgramBuilderDx11::CompileDXAsm(const std::string& program_sou
         LogCallback(ss.str());
 
         // Release the resources.
+        delete curr_elf;
+        curr_elf = nullptr;
         amd_dxx_module_.AmdDxGsaFreeCompiledShader(shader_output.pShaderBinary);
 
         return kBeStatusNoBinaryForDevice;
     }
 
     // Free stuff.
+    delete curr_elf;
     amd_dxx_module_.AmdDxGsaFreeCompiledShader(shader_output.pShaderBinary);
 
     return kBeStatusSuccess;

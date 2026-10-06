@@ -51,7 +51,14 @@ private:
         kClWorkgroupYDimension,
         kClWorkgroupZDimension,
         kIsaSize,
-        kCount
+
+        // CSV files without AGPR columns end here.
+        kCount,
+
+        // AGPR columns appended after the base columns.
+        kAvailableAgprs = kCount,
+        kUsedAgprs,
+        kCountWithAgprs
     };
 };
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_RESOURCE_USAGE_CSV_FILE_PARSER_H_

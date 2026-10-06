@@ -648,7 +648,7 @@ void RgBuildViewOpencl::HandleSelectedFileChanged(const std::string& old_file_pa
     Q_UNUSED(old_file_path);
 
     // Get a pointer to the editor responsible for displaying the new file.
-    RgSourceCodeEditor* editor = GetEditorForFilepath(new_file_path, RgSrcLanguage::kOpenCL);
+    RgSourceCodeEditor* editor = GetEditorForFilepath(new_file_path, ShaderSourceLanguage::kOpenCL);
     assert(editor != nullptr);
     if (editor != nullptr)
     {
@@ -712,20 +712,22 @@ void RgBuildViewOpencl::HandleSelectedFileChanged(const std::string& old_file_pa
     }
 }
 
-void RgBuildViewOpencl::HandleSourceFileSelectedLineChanged(RgSourceCodeEditor* editor, int line_number)
+void RgBuildViewOpencl::HandleSourceFileSelectedLineChanged(ShaderSourceCodeViewer* editor, int line_number)
 {
     // Handle updating source correlation only when the project isn't currently being built.
     if (!is_build_in_progress_)
     {
-        if (disassembly_view_ != nullptr && !disassembly_view_->IsEmpty())
+        RgSourceCodeEditor* code_editor = qobject_cast<RgSourceCodeEditor*>(editor);
+
+        if (disassembly_view_ != nullptr && !disassembly_view_->IsEmpty() && code_editor != nullptr)
         {
-            const std::string& input_filename = GetFilepathForEditor(editor);
+            const std::string& input_filename  = GetFilepathForEditor(code_editor);
             bool is_disassembled = IsGcnDisassemblyGenerated(input_filename);
             if (is_disassembled)
             {
                 int correlated_line_number = kInvalidCorrelationLineIndex;
 
-                bool is_correlation_enabled = IsLineCorrelationEnabled(editor);
+                bool is_correlation_enabled = IsLineCorrelationEnabled(code_editor);
                 if (is_correlation_enabled)
                 {
                     correlated_line_number = line_number;

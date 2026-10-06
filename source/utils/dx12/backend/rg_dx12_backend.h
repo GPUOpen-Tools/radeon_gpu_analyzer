@@ -83,6 +83,8 @@ namespace rga
         RgDx12ShaderResults domain;
         RgDx12ShaderResults geometry;
         RgDx12ShaderResults pixel;
+        RgDx12ShaderResults mesh;
+        RgDx12ShaderResults amplification;
     };
 
     // Thread group dimensions.
@@ -125,6 +127,12 @@ namespace rga
             std::vector<char>& pipeline_binary,
             std::string& error_msg) const;
 
+        bool CompileMeshPipeline(const RgDx12Config& config,
+            const D3D12_PIPELINE_STATE_STREAM_DESC* graphics_pso,
+            RgDx12PipelineResults& results,
+            std::vector<char>& pipeline_binary,
+            std::string& error_msg) const;
+
         // Compile a compute pipeline to generate the disassembly, compiler resource usage info
         // and thread group dimensions.
         // compute_pso should be fully set up for pipeline creation, and reference the shader.
@@ -139,7 +147,7 @@ namespace rga
             std::string& error_msg) const;
 
 #ifdef RGA_DXR_ENABLED
-        // Compile all ray tracing pipelines to generate the compiled code object binaries 
+        // Compile all ray tracing pipelines to generate the compiled code object binaries
         // for all pipelines (each pipeline is designated by the raygeneration shader name).
         // ray_tracing_state_object should contain all required data for the DXR State Object creation.
         // Any error messages would be set into error_msg.

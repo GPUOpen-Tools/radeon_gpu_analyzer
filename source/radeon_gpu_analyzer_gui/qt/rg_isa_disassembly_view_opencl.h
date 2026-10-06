@@ -23,9 +23,6 @@ public:
     // Populate the disassembly view using the given clone and build outputs.
     virtual bool PopulateBuildOutput(const std::shared_ptr<RgProjectClone> project_clone, const RgBuildOutputsMap& build_outputs) override;
 
-    // Check if the current API has line correlation supported.
-    bool IsLineCorrelationSupported() const override;
-
 protected:
     // Set the border stylesheet.
     virtual void SetBorderStylesheet(bool is_selected) override;
@@ -33,4 +30,5 @@ protected:
     // Populate the disassembly view with the given CLI build output.
     bool PopulateDisassemblyView(const std::vector<RgSourceFileInfo>& source_files, const RgBuildOutputsMap& build_output);
 };
+
 #endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_DISASSEMBLY_VIEW_OPENCL_H_

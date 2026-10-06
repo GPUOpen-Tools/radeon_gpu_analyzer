@@ -20,9 +20,10 @@
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
-RgViewManager::RgViewManager(QWidget* parent) :
-    parent_(parent),
-    focus_view_index_(-1)
+RgViewManager::RgViewManager(QWidget* parent)
+    : QObject(parent)
+    , parent_(parent)
+    , focus_view_index_(-1)
 {
     CreateActions();
 

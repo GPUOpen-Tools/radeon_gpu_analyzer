@@ -239,7 +239,7 @@ protected:
     QWidget* app_notification_widget_ = nullptr;
 
     // Timer to synchronize the blinking of the notification.
-    QTimer* app_notification_blinking_timer_ = new QTimer();
+    QTimer* app_notification_blinking_timer_ = new QTimer(this);
 
     Ui::RgMainWindow ui_;
 
@@ -335,8 +335,8 @@ protected slots:
     // Handler for building the current program.
     void HandleBuildProjectEvent();
 
-    // Handler for having the cli reproduce the disassembly files for the current binary analysis project.
-    void HandleDissasembleBinaryFilesEvent(std::vector<std::string> binaries_to_build = {});
+    // Handler for analyzing the current program.
+    void HandleAnalyzeProjectEvent();
 
     // Handler for viewing the program build settings.
     void HandleBuildSettingsEvent();

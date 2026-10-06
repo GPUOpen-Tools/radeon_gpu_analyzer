@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for rga backend progam builder vulkan offline class.
@@ -24,18 +24,38 @@
 // *** INTERNALLY LINKED SYMBOLS - START ***
 // *****************************************
 
+// Devices not supported by the VK-offline compiler (amdllpc).
+static const std::set<std::string> kUnsupportedDevicesVkOffline = {"gfx900",
+                                                                   "gfx902",
+                                                                   "gfx904",
+                                                                   "gfx906",
+                                                                   "gfx908",
+                                                                   "gfx90a",
+                                                                   "gfx90c",
+                                                                   "gfx942",
+                                                                   "gfx950",
+                                                                   "gfx1010",
+                                                                   "gfx1011",
+                                                                   "gfx1012",
+                                                                   "gfx1030",
+                                                                   "gfx1031",
+                                                                   "gfx1032",
+                                                                   "gfx1033",
+                                                                   "gfx1034",
+                                                                   "gfx1035",
+                                                                   "gfx1250"};
+
 // Targets of Amdllpc gfxip and corresponding DeviceInfo names.
-static const std::map<std::string, std::string> kVkAmdllpcTargetsToDeviceInfoTargets = {
-    {"gfx1100", "11.0.0"}, 
-    {"gfx1101", "11.0.1"}, 
-    {"gfx1102", "11.0.2"}, 
-    {"gfx1103", "11.0.3"}, 
-    {"gfx1150", "11.5.0"},
-    {"gfx1151", "11.5.1"}, 
-    {"gfx1152", "11.5.2"}, 
-    {"gfx1153", "11.5.3"},
-    {"gfx1200", "12.0.0"}, 
-    {"gfx1201", "12.0.1"}};
+static const std::map<std::string, std::string> kVkAmdllpcTargetsToDeviceInfoTargets = {{"gfx1100", "11.0.0"},
+                                                                                        {"gfx1101", "11.0.1"},
+                                                                                        {"gfx1102", "11.0.2"},
+                                                                                        {"gfx1103", "11.0.3"},
+                                                                                        {"gfx1150", "11.5.0"},
+                                                                                        {"gfx1151", "11.5.1"},
+                                                                                        {"gfx1152", "11.5.2"},
+                                                                                        {"gfx1153", "11.5.3"},
+                                                                                        {"gfx1200", "12.0.0"},
+                                                                                        {"gfx1201", "12.0.1"}};
 
 static bool GetAmdllpcPath(std::string& amdllpc_path)
 {
@@ -130,7 +150,7 @@ static beKA::beStatus AddAmdllpcInputFileNames(const VkOfflineOptions& options, 
             cmd << "\"" << options.pipeline_shaders.mesh_shader.asASCIICharArray() << "\" ";
             is_stage_input = true;
         }
-        
+
         // Task shader.
         if (!options.pipeline_shaders.task_shader.isEmpty())
         {
@@ -169,8 +189,7 @@ static void AddAmdllpcOutputFileNames(const VkOfflineOptions& options, std::stri
     auto add_output_file = [&](bool flag, const std::string& option, const std::string& fileName) {
         if (flag || is_spirv || is_pipe_file)
         {
-            cmd << option << "\"" << fileName << "\""
-                << " ";
+            cmd << option << "\"" << fileName << "\"" << " ";
         }
     };
 
@@ -238,19 +257,24 @@ beKA::beStatus BeProgramBuilderVkOffline::CompileWithAmdllpc(const VkOfflineOpti
     GetAmdllpcPath(amdllpc_path);
 
     std::string device_gfx_ip;
-    bool is_device_valid = GetAmdllpcGfxIpForVulkan(vulkan_options, device_gfx_ip);
+    bool        is_device_valid = GetAmdllpcGfxIpForVulkan(vulkan_options, device_gfx_ip);
     if (is_device_valid && !device_gfx_ip.empty())
     {
         // Build the command for invoking amdspv.
         std::stringstream cmd;
         cmd << amdllpc_path;
 
-        // amdllpc.exe -v --gfxip=11 C:\vkoffline\bloom\bloom1_vert.spv --log-file-outs=log.txt -o out.bin 
+        // amdllpc.exe -v --gfxip=11 C:\vkoffline\bloom\bloom1_vert.spv --log-file-outs=log.txt -o out.bin
         cmd << " -v";
-        
+
         cmd << " --include-llvm-ir";
 
         cmd << " --auto-layout-desc";
+
+        if (vulkan_options.is_line_numbers_required)
+        {
+            cmd << " --trim-debug-info=false";
+        }
 
         // Redirect build log to a temporary file.
         const gtString kAmdllpcTmpOutputFile = L"amdllpcTempFile.txt";
@@ -271,8 +295,7 @@ beKA::beStatus BeProgramBuilderVkOffline::CompileWithAmdllpc(const VkOfflineOpti
         cmd << "--gfxip=" << device_gfx_ip << " ";
 
         if ((ret = AddAmdllpcInputFileNames(vulkan_options, cmd)) == beKA::kBeStatusSuccess)
-        {        
-
+        {
             if (!vulkan_options.pipe_file.empty())
             {
                 // Append the .pipe file name (no command line option is needed since the extension is .pipe).
@@ -280,7 +303,7 @@ beKA::beStatus BeProgramBuilderVkOffline::CompileWithAmdllpc(const VkOfflineOpti
             }
 
             // Launch amdllpc.
-            gtString amdllpc_output;
+            gtString    amdllpc_output;
             std::string cmdStr = cmd.str();
             BeUtils::PrintCmdLine(cmdStr, should_print_cmd);
             bool is_launch_success = osExecAndGrabOutput(cmd.str().c_str(), cancel_signal, amdllpc_output);
@@ -336,13 +359,18 @@ beKA::beStatus BeProgramBuilderVkOffline::CompileWithAmdllpc(const VkOfflineOpti
 bool BeProgramBuilderVkOffline::GetVulkanVersion(gtString& vk_version) const
 {
     const wchar_t* kBeStrVulkanVersion = L"Based on Vulkan 1.0 Specification.";
-    vk_version = kBeStrVulkanVersion;
+    vk_version                         = kBeStrVulkanVersion;
     return true;
 }
 
 bool BeProgramBuilderVkOffline::GetSupportedDevices(std::set<std::string>& device_list)
 {
     std::vector<GDT_GfxCardInfo> tmp_card_list;
-    bool ret = BeUtils::GetAllGraphicsCards(tmp_card_list, device_list);
+    bool                         ret = BeUtils::GetAllGraphicsCards(tmp_card_list, device_list);
     return ret;
+}
+
+const std::set<std::string>& BeProgramBuilderVkOffline::GetUnsupportedDevices()
+{
+    return kUnsupportedDevicesVkOffline;
 }

@@ -19,16 +19,22 @@ ParserSi::kaStatus ParserSiVop::Parse(GDT_HW_GENERATION hw_generation, Instructi
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             SIVOP1Instruction::Vop1Op op1 = static_cast<SIVOP1Instruction::Vop1Op>(hex_instruction_temp);
-            instruction = new SIVOP1Instruction(32, encoding, op1, label, goto_label);
-            ret = ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) SIVOP1Instruction(32, encoding, op1, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret = ParserSi::kStatusSuccess;
+            }
         }
         else if (VOPInstruction::kEncodingVop2 == encoding)
         {
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             SIVOP2Instruction::Vop2Op op2 = static_cast<SIVOP2Instruction::Vop2Op>(hex_instruction_temp);
-            instruction = new SIVOP2Instruction(32, encoding, op2, label, goto_label);
-            ret = ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) SIVOP2Instruction(32, encoding, op2, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret = ParserSi::kStatusSuccess;
+            }
         }
 
         else if (VOPInstruction::kEncodingVopC == encoding)
@@ -36,8 +42,11 @@ ParserSi::kaStatus ParserSiVop::Parse(GDT_HW_GENERATION hw_generation, Instructi
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             SIVOPCInstruction::VopcOp opc = static_cast<SIVOPCInstruction::VopcOp>(hex_instruction_temp);
-            instruction = new SIVOPCInstruction(32, encoding, opc, label, goto_label);
-            ret = ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) SIVOPCInstruction(32, encoding, opc, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret = ParserSi::kStatusSuccess;
+            }
         }
     }
     else if (hw_generation == GDT_HW_GENERATION_VOLCANICISLAND)
@@ -47,16 +56,22 @@ ParserSi::kaStatus ParserSiVop::Parse(GDT_HW_GENERATION hw_generation, Instructi
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             VIVOP1Instruction::Vop1Op op1 = static_cast<VIVOP1Instruction::Vop1Op>(hex_instruction_temp);
-            instruction = new VIVOP1Instruction(32, encoding, op1, label, goto_label);
-            ret = ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) VIVOP1Instruction(32, encoding, op1, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret = ParserSi::kStatusSuccess;
+            }
         }
         else if (VOPInstruction::kEncodingVop2 == encoding)
         {
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             VIVOP2Instruction::Vop2Op op2 = static_cast<VIVOP2Instruction::Vop2Op>(hex_instruction_temp);
-            instruction = new VIVOP2Instruction(32, encoding, op2, label, goto_label);
-            ret = ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) VIVOP2Instruction(32, encoding, op2, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret = ParserSi::kStatusSuccess;
+            }
         }
 
         else if (VOPInstruction::kEncodingVopC == encoding)
@@ -64,8 +79,11 @@ ParserSi::kaStatus ParserSiVop::Parse(GDT_HW_GENERATION hw_generation, Instructi
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             VIVOPCInstruction::VopcOp opc = static_cast<VIVOPCInstruction::VopcOp>(hex_instruction_temp);
-            instruction = new VIVOPCInstruction(32, encoding, opc, label, goto_label);
-            ret = ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) VIVOPCInstruction(32, encoding, opc, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret = ParserSi::kStatusSuccess;
+            }
         }
     }
     else if (hw_generation == GDT_HW_GENERATION_GFX9)
@@ -75,16 +93,22 @@ ParserSi::kaStatus ParserSiVop::Parse(GDT_HW_GENERATION hw_generation, Instructi
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             G9VOP1Instruction::Vop1Op op1 = static_cast<G9VOP1Instruction::Vop1Op>(hex_instruction_temp);
-            instruction = new G9VOP1Instruction(32, encoding, op1, label, goto_label);
-            ret = ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) G9VOP1Instruction(32, encoding, op1, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret = ParserSi::kStatusSuccess;
+            }
         }
         else if (VOPInstruction::kEncodingVop2 == encoding)
         {
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             G9VOP2Instruction::Vop2Op op2 = static_cast<G9VOP2Instruction::Vop2Op>(hex_instruction_temp);
-            instruction = new G9VOP2Instruction(32, encoding, op2, label, goto_label);
-            ret = ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) G9VOP2Instruction(32, encoding, op2, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret = ParserSi::kStatusSuccess;
+            }
         }
 
         else if (VOPInstruction::kEncodingVopC == encoding)
@@ -92,8 +116,11 @@ ParserSi::kaStatus ParserSiVop::Parse(GDT_HW_GENERATION hw_generation, Instructi
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             VIVOPCInstruction::VopcOp opc = static_cast<VIVOPCInstruction::VopcOp>(hex_instruction_temp);
-            instruction = new VIVOPCInstruction(32, encoding, opc, label, goto_label);
-            ret = ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) VIVOPCInstruction(32, encoding, opc, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret = ParserSi::kStatusSuccess;
+            }
         }
     }
     else
@@ -116,8 +143,11 @@ ParserSi::kaStatus ParserSiVop::Parse(GDT_HW_GENERATION hw_generation, Instructi
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             SIVOP3Instruction::Vop3Op op3 = static_cast<SIVOP3Instruction::Vop3Op>(hex_instruction_temp);
-            instruction = new SIVOP3Instruction(64, encoding, op3, label, goto_label);
-            ret =  ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) SIVOP3Instruction(64, encoding, op3, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret =  ParserSi::kStatusSuccess;
+            }
         }
     }
     else if (hw_generation == GDT_HW_GENERATION_GFX9)
@@ -126,16 +156,22 @@ ParserSi::kaStatus ParserSiVop::Parse(GDT_HW_GENERATION hw_generation, Instructi
         {
             uint64_t hex_instruction_temp = (hex_instruction >> 16) & 0x7F;
             G9VOP3Instruction::Vop3Op op3 = static_cast<G9VOP3Instruction::Vop3Op>(hex_instruction_temp);
-            instruction = new G9VOP3Instruction(64, encoding, op3, label, goto_label);
-            ret =  ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) G9VOP3Instruction(64, encoding, op3, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret =  ParserSi::kStatusSuccess;
+            }
         }
         else if (VOPInstruction::kEncodingVop3 == encoding)
         {
             uint64_t hex_instruction_temp = hex_instruction << 15;
             hex_instruction_temp = hex_instruction_temp >> 24;
             G9VOP3Instruction::Vop3Op op3 = static_cast<G9VOP3Instruction::Vop3Op>(hex_instruction_temp);
-            instruction = new G9VOP3Instruction(64, encoding, op3, label, goto_label);
-            ret =  ParserSi::kStatusSuccess;
+            instruction = new (std::nothrow) G9VOP3Instruction(64, encoding, op3, label, goto_label);
+            if (instruction != nullptr)
+            {
+                ret =  ParserSi::kStatusSuccess;
+            }
         }
     }
     else

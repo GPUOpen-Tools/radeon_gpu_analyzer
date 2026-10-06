@@ -130,17 +130,29 @@ ParserSi::kaStatus ParserSiSop2::Parse(GDT_HW_GENERATION hw_generation, Instruct
     if ((hw_generation == GDT_HW_GENERATION_SEAISLAND) || (hw_generation == GDT_HW_GENERATION_SOUTHERNISLAND))
     {
         SISOP2Instruction::OP op = GetSiSop2Op(hex_instruction);
-        instruction = new SISOP2Instruction(ssrc0, ssrc1, sdst, op, ridx0, ridx1, sdstRidx, is_literal_32b, literal_32b, label, goto_label);
+        instruction = new (std::nothrow) SISOP2Instruction(ssrc0, ssrc1, sdst, op, ridx0, ridx1, sdstRidx, is_literal_32b, literal_32b, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else if (hw_generation == GDT_HW_GENERATION_VOLCANICISLAND)
     {
         VISOP2Instruction::OP op = GetViSop2Op(hex_instruction);
-        instruction = new VISOP2Instruction(ssrc0, ssrc1, sdst, op, ridx0, ridx1, sdstRidx, is_literal_32b, literal_32b, label, goto_label);
+        instruction = new (std::nothrow) VISOP2Instruction(ssrc0, ssrc1, sdst, op, ridx0, ridx1, sdstRidx, is_literal_32b, literal_32b, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else if (hw_generation == GDT_HW_GENERATION_GFX9)
     {
         G9SOP2Instruction::OP op = GetG9Sop2Op(hex_instruction);
-        instruction = new G9SOP2Instruction(ssrc0, ssrc1, sdst, op, ridx0, ridx1, sdstRidx, is_literal_32b, literal_32b, label, goto_label);
+        instruction = new (std::nothrow) G9SOP2Instruction(ssrc0, ssrc1, sdst, op, ridx0, ridx1, sdstRidx, is_literal_32b, literal_32b, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else
     {

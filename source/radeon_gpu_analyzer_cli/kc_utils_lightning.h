@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for OpenCL helper functions.
@@ -11,12 +11,13 @@
 #include <string>
 
 // Backend.
-#include "source/radeon_gpu_analyzer_backend/be_include.h"
-#include "source/radeon_gpu_analyzer_backend/be_opencl_definitions.h"
+#include "radeon_gpu_analyzer_backend/be_include.h"
+#include "radeon_gpu_analyzer_backend/be_opencl_definitions.h"
+#include "radeon_gpu_analyzer_backend/be_metadata_llvm.h"
 
 // Local.
-#include "source/radeon_gpu_analyzer_cli/kc_data_types.h"
 #include "radeon_gpu_analyzer_cli/kc_config.h"
+#include "radeon_gpu_analyzer_cli/kc_data_types.h"
 
 // Kernel Header Strings.
 static const std::string kLcKernelIsaHeader1 = "AMD Kernel Code for ";
@@ -27,8 +28,14 @@ static const std::string kLcKernelIsaHeader3 = "@kernel ";
 class KcUtilsLightning
 {
 public:
-    KcUtilsLightning(RgClOutputMetadata& output_metadata, bool should_print_cmd, LoggingCallbackFunction log_callback)
-        : output_metadata_(output_metadata)
+    KcUtilsLightning(const std::string&      binary_codeobj_file,
+                     const std::string&      text_disassembly_file,
+                     RgClOutputMetadata&     output_metadata,
+                     bool                    should_print_cmd,
+                     LoggingCallbackFunction log_callback)
+        : binary_codeobj_file_(binary_codeobj_file)
+        , text_disassembly_file_(text_disassembly_file)
+        , output_metadata_(output_metadata)
         , should_print_cmd_(should_print_cmd)
         , log_callback_(log_callback)
     {
@@ -37,6 +44,37 @@ public:
     // Log Error Status.
     static void LogErrorStatus(beKA::beStatus status, const std::string& error_msg);
 
+    // Convert ISA text to CSV form with additional data.
+    static bool GetParsedIsaCsvText(const std::string& isaText, const std::string& device, bool add_line_numbers, std::string& csvText);
+
+    // Store ISA text in the file.
+    static beKA::beStatus WriteIsaToFile(const std::string& file_name, const std::string& isa_text, LoggingCallbackFunction log_callback);
+
+    // Extract the list of entry points from the source file specified by "fileName".
+    static bool ExtractEntries(const std::string& filename, const Config& config, const CmpilerPaths& compiler_paths, RgEntryData& entry_data);
+
+    // Pre-fix ISA Text with Header.
+    static std::string PrefixWithISAHeader(const std::string& kernel_name, const std::string& kernel_isa_text);
+
+    // Replace labels of format "address   <label_name>:" with "label_name:"
+    static std::string FormatLlvmIsaLabels(const std::string& isa_text);
+
+    // Split ISA text into separate per-kernel ISA fragments. The fragments are returned in the
+    // "kernelIsaTextMap" map.
+    static bool SplitISAText(const std::string&                  isa_text,
+                             const std::vector<std::string>&     kernel_names,
+                             std::map<std::string, std::string>& kernel_isa_text_map);
+
+    // Remove unused code from the ISA disassembly.
+    static bool ReduceISA(const std::string& bin_file, const CmpilerPaths& compiler_paths, bool verbose, std::map<std::string, std::string>& kernel_isa_texts);
+
+    // Perform post-processing actions.
+    void RunPostProcessingSteps(const Config& config, const CmpilerPaths& compiler_paths) const;
+
+    // Delete all temporary files created by RGA.
+    static void DeleteTempFiles(const RgClOutputMetadata& output_metadata);
+
+private:
     // Parse ISA files and generate separate files that contain parsed ISA in CSV format.
     bool ParseIsaFilesToCSV(bool add_line_numbers) const;
 
@@ -55,23 +93,14 @@ public:
     // Extract Resource Usage (statistics) data.
     beKA::beStatus ExtractStatistics(const Config& config) const;
 
-    // Convert ISA text to CSV form with additional data.
-    static bool GetParsedIsaCsvText(const std::string& isaText, const std::string& device, bool add_line_numbers, std::string& csvText);
-
-    // Store ISA text in the file.
-    static beKA::beStatus WriteIsaToFile(const std::string& file_name, const std::string& isa_text, LoggingCallbackFunction log_callback);
-
-    // Extract the list of entry points from the source file specified by "fileName".
-    static bool ExtractEntries(const std::string& filename, const Config& config, const CmpilerPaths& compiler_paths, RgEntryData& entry_data);
-
-    // Pre-fix ISA Text with Header.
-    static std::string PrefixWithISAHeader(const std::string& kernel_name, const std::string& kernel_isa_text);
-
-    // Delete all temporary files created by RGA.
-    static void DeleteTempFiles(const RgClOutputMetadata& output_metadata);
-
 private:
     // ---- DATA ----
+
+    // Binary code object file name.
+    std::string binary_codeobj_file_;
+
+    // Text disassembly file name.
+    std::string text_disassembly_file_;
 
     // Output Metadata.
     RgClOutputMetadata& output_metadata_;
@@ -81,6 +110,5 @@ private:
 
     // Log callback function.
     LoggingCallbackFunction log_callback_;
-
 };
 #endif  // RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_LIGHTNING_H_

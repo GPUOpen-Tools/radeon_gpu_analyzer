@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for DXR helper functions.
@@ -15,17 +15,17 @@
 #include "common/rg_log.h"
 
 // Backend.
-#include "source/radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
-#include "source/radeon_gpu_analyzer_backend/be_program_builder_binary.h"
-#include "source/radeon_gpu_analyzer_backend/be_utils.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_binary.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
+#include "radeon_gpu_analyzer_backend/be_utils.h"
 
 // Local.
-#include "source/radeon_gpu_analyzer_cli/kc_utils_dxr.h"
-#include "source/radeon_gpu_analyzer_cli/kc_utils_vulkan.h"
-#include "source/radeon_gpu_analyzer_cli/kc_xml_writer.h"
-#include "source/radeon_gpu_analyzer_cli/kc_statistics_device_props.h"
-#include "source/radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
-#include "source/radeon_gpu_analyzer_cli/kc_utils.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
+#include "radeon_gpu_analyzer_cli/kc_statistics_device_props.h"
+#include "radeon_gpu_analyzer_cli/kc_utils.h"
+#include "radeon_gpu_analyzer_cli/kc_utils_dxr.h"
+#include "radeon_gpu_analyzer_cli/kc_utils_vulkan.h"
+#include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
 
 static const char* kStrKernelName                                 = "Kernel name: ";
 static const char* kStrErrorFailedToCreateOutputFilenameForKernel = "Error: failed to construct output file name for kernel: ";
@@ -63,12 +63,13 @@ bool KcUtilsDxr::ParseIsaFilesToCSV(bool line_numbers) const
             bool status = KcUtils::ReadTextFile(output_files.isa_file, isa, nullptr);
             if (status)
             {
-                if ((status = KcUtilsVulkan::GetParsedIsaCsvText(isa, device, line_numbers, parsed_isa)) == true)
+                if ((status = KcUtils::GetParsedIsaCsvText(isa, device, line_numbers, parsed_isa)) == true)
                 {
                     status = (KcUtils::GetParsedISAFileName(output_files.isa_file, parsed_isa_filename) == beKA::kBeStatusSuccess);
                     if (status)
                     {
-                        status = (KcUtilsVulkan::WriteIsaToFile(parsed_isa_filename, parsed_isa, log_callback_) == beKA::kBeStatusSuccess);
+                        session_output_files_.insert(parsed_isa_filename);
+                        status = (KcUtils::WriteIsaToFile(parsed_isa_filename, parsed_isa, log_callback_) == beKA::kBeStatusSuccess);
                     }
                     if (status)
                     {
@@ -276,6 +277,7 @@ bool KcUtilsDxr::ExtractCFG(const Config& config) const
                 }
                 else
                 {
+                    outputFiles.cfg_file = cfg_out_filename.asASCIICharArray();
                     std::cout << kStrInfoSuccess << std::endl;
                 }
             }
@@ -297,9 +299,13 @@ bool KcUtilsDxr::ExtractCFG(const Config& config) const
 
 beKA::beStatus KcUtilsDxr::ExtractStatistics(const Config& config, const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md) const
 {
-    std::string    base_stats_filename = config.analysis_file;
-    beKA::beStatus status              = beKA::beStatus::kBeStatusSuccess;
-    std::string    device              = "";
+    std::string base_stats_filename = config.analysis_file;
+    if (base_stats_filename.empty())
+    {
+        base_stats_filename = KcUtils::ConstructTempFileName(kStrDefaultExtensionStats, kStrDefaultExtensionCsv);
+    }
+    beKA::beStatus status = beKA::beStatus::kBeStatusSuccess;
+    std::string    device = "";
 
     for (auto& outputMDItem : output_metadata_)
     {
@@ -321,19 +327,25 @@ beKA::beStatus KcUtilsDxr::ExtractStatistics(const Config& config, const BeAmdPa
                     success = true;
                 }
             }
-            std::stringstream ss;
-            ss << "." << kernel_name;
-            std::string dot_kernel_name{ss.str()};
-            for (const auto& shader : amdpal_pipeline_md.shaders)
+            // Only attempt hardware-stage stats lookup if shader_functions didn't yield results.
+            // Raytracing shader function names (e.g., "MyMissShader") are not valid HW stage names
+            // and GetStageType() would throw std::runtime_error for them.
+            if (!success)
             {
-                if (shader.shader_subtype != BeAmdPalMetaData::ShaderSubtype::kUnknown)
+                std::stringstream ss;
+                ss << "." << kernel_name;
+                std::string dot_kernel_name{ss.str()};
+                for (const auto& shader : amdpal_pipeline_md.shaders)
                 {
-                    for (const auto& hs : amdpal_pipeline_md.hardware_stages)
+                    if (shader.shader_subtype != BeAmdPalMetaData::ShaderSubtype::kUnknown)
                     {
-                        if (hs.stage_type == BeAmdPalMetaData::GetStageType(dot_kernel_name))
+                        for (const auto& hs : amdpal_pipeline_md.hardware_stages)
                         {
-                            stats   = hs.stats;
-                            success = true;
+                            if (hs.stage_type == BeAmdPalMetaData::GetStageType(dot_kernel_name))
+                            {
+                                stats   = hs.stats;
+                                success = true;
+                            }
                         }
                     }
                 }
@@ -353,14 +365,14 @@ beKA::beStatus KcUtilsDxr::ExtractStatistics(const Config& config, const BeAmdPa
                     base_stats_filename, kStrDefaultExtensionStats, kStrDefaultExtensionCsv, concat_kernel_name, current_device, stats_filename);
                 if (!outputMDItem.second.isa_file.empty() && !stats_filename.empty())
                 {
-                    stats                       = KcUtilsVulkan::PopulateAnalysisData(stats, current_device);
+                    stats                       = KcUtils::PopulateAnalysisData(stats, current_device);
                     bool        isComputeBitSet = RgaEntryTypeUtils::IsComputeBitSet(outputMDItem.second.entry_type);
                     std::size_t stage{};
                     if (BeUtils::BeAmdgpudisStageNameToBeRayTracingStage(kernel_subtype, stage))
                     {
                         BeRtxPipelineFiles isa_files;
                         BeRtxPipelineFiles stats_files;
-                        std::string        stats_str = KcUtilsVulkan::BuildStatisticsStr(stats, stage, isComputeBitSet);
+                        std::string        stats_str = KcUtils::BuildStatisticsStr(stats, stage, isComputeBitSet);
 
                         bool is_file_written = KcUtils::WriteTextFile(stats_filename, stats_str, log_callback_);
                         if (is_file_written)
@@ -387,25 +399,6 @@ beKA::beStatus KcUtilsDxr::ExtractStatistics(const Config& config, const BeAmdPa
     LogResult(status == kBeStatusSuccess);
 
     return status;
-}
-
-void KcUtilsDxr::DeleteTempFiles(const RgClOutputMetadata& output_metadata)
-{
-    for (const auto& out_file_data : output_metadata)
-    {
-        const RgOutputFiles out_files = out_file_data.second;
-        gtString            filename;
-        if (out_files.is_bin_file_temp && KcUtils::FileNotEmpty(out_files.bin_file))
-        {
-            filename.fromASCIIString(out_files.bin_file.c_str());
-            KcUtils::DeleteFile(filename);
-        }
-        if (out_files.is_isa_file_temp && KcUtils::FileNotEmpty(out_files.isa_file))
-        {
-            filename.fromASCIIString(out_files.isa_file.c_str());
-            KcUtils::DeleteFile(filename);
-        }
-    }
 }
 
 std::string KcUtilsDxr::CombineKernelAndKernelSubtype(const std::string& kernel, const std::string& kernel_subtype)
@@ -451,27 +444,27 @@ std::pair<std::string, std::string> KcUtilsDxr::SeparateKernelAndKernelSubtype(c
 }
 
 beKA::beStatus KcUtilsDxr::ConvertStats(const BeRtxPipelineFiles& isaFiles,
-                                                   const BeRtxPipelineFiles& stats_files,
-                                                   const Config&             config,
-                                                   const std::string&        device)
+                                        const BeRtxPipelineFiles& stats_files,
+                                        const Config&             config,
+                                        const std::string&        device)
 {
     beKA::beStatus status = beKA::beStatus::kBeStatusSuccess;
     for (int stage = 0; stage < BeRtxPipelineStage::kCountRtx && status == beKA::beStatus::kBeStatusSuccess; stage++)
     {
         if (!stats_files[stage].empty())
         {
-            status = KcUtilsVulkan::ConvertStats(isaFiles[stage], stats_files[stage], config, device);
+            status = KcUtils::ConvertStats(isaFiles[stage], stats_files[stage], config, device);
         }
     }
     return status;
 }
 
 void KcUtilsDxr::ConstructOutputFileName(const std::string& base_output_filename,
-                                                    const std::string& default_suffix,
-                                                    const std::string& default_extension,
-                                                    const std::string& entry_point_name,
-                                                    const std::string& device_name,
-                                                    std::string&       generated_filename)
+                                         const std::string& default_suffix,
+                                         const std::string& default_extension,
+                                         const std::string& entry_point_name,
+                                         const std::string& device_name,
+                                         std::string&       generated_filename)
 {
     KcUtils::ConstructOutputFileName(base_output_filename, default_suffix, default_extension, entry_point_name, device_name, generated_filename);
     auto found = session_output_files_.find(generated_filename);
@@ -497,5 +490,56 @@ void KcUtilsDxr::ConstructOutputFileName(const std::string& base_output_filename
 
         session_output_files_.insert(new_filename);
         generated_filename = std::move(new_filename);
+    }
+}
+
+void KcUtilsDxr::RunPostProcessingSteps(const Config& config) const
+{
+    beKA::beStatus status = beKA::beStatus::kBeStatusSuccess;
+
+    // Generate CSV files with parsed ISA if required.
+    if (config.is_parsed_isa_required)
+    {
+        status = ParseIsaFilesToCSV(config.is_line_numbers_required) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusParseIsaToCsvFailed;
+    }
+
+    // Analyze live registers if requested.
+    bool is_livereg_required = !config.livereg_analysis_file.empty();
+    if (is_livereg_required && (status == beKA::beStatus::kBeStatusSuccess))
+    {
+        // Perform Live Registers analysis if required.
+        status = PerformLiveVgprAnalysis(config) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusParseIsaToCsvFailed;
+    }
+    bool is_live_sgpr_required = !config.sgpr_livereg_analysis_file.empty();
+    if (is_live_sgpr_required && (status == beKA::beStatus::kBeStatusSuccess))
+    {
+        // Perform Live Registers analysis if required.
+        status = PerformLiveSgprAnalysis(config) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusParseIsaToCsvFailed;
+    }
+
+    bool is_cfg_required = (!config.block_cfg_file.empty() || !config.inst_cfg_file.empty());
+    if (is_cfg_required && (status == beKA::beStatus::kBeStatusSuccess))
+    {
+        // Extract Control Flow Graph.
+        ExtractCFG(config);
+    }
+}
+
+void KcUtilsDxr::DeleteTempFiles(const RgClOutputMetadata& output_metadata)
+{
+    for (const auto& out_file_data : output_metadata)
+    {
+        const RgOutputFiles out_files = out_file_data.second;
+        gtString            filename;
+        if (out_files.is_bin_file_temp && KcUtils::FileNotEmpty(out_files.bin_file))
+        {
+            filename.fromASCIIString(out_files.bin_file.c_str());
+            KcUtils::DeleteFile(filename);
+        }
+        if (out_files.is_isa_file_temp && KcUtils::FileNotEmpty(out_files.isa_file))
+        {
+            filename.fromASCIIString(out_files.isa_file.c_str());
+            KcUtils::DeleteFile(filename);
+        }
     }
 }

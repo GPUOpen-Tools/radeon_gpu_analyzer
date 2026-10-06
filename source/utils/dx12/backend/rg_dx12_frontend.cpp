@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for dx12 and dxr frontend class.
@@ -10,7 +10,7 @@
 #include <d3dcompiler.h>
 #include <d3dcommon.h>
 #include <wrl.h>
-#include "../backend/d3dx12.h"
+#include "d3dx12/d3dx12.h"
 
 // C++.
 #include <cassert>
@@ -37,24 +37,14 @@ namespace rga
     // *** CONSTANTS - START ***
 
     // Errors.
-    static const char* kStrErrorGraphicsShaderAmdilDisassemblyExtractionFailure1 = "Error: failed to extract AMDIL disassembly for ";
     static const char* kStrErrorRootSignatureExtractionFailure = "Error: failed to extract root signature from DXCB binary.";
     static const char* kStrErrorLocalRootSignatureCreateFromFileFailure = "Error: failed to create local root signature from file: ";
     static const char* kStrErrorGlobalRootSignatureCreateFromFileFailure = "Error: failed to create global root signature from file: ";
     static const char* kStrErrorShaderCompilationFailure = "Error: failed to compile shader: ";
-    static const char* kStrErrorComputeShaderDisassemblyExtractionFailure = "Error: failed to extract GCN ISA disassembly for compute shader.";
-    static const char* kStrErrorGraphicsShaderDisassemblyExtractionFailure1 = "Error: failed to extract GCN ISA disassembly for ";
-    static const char* kStrErrorGraphicsShaderDisassemblyExtractionFailure2 = " shader.";
     static const char* kStrErrorRootSignatureCompileFailure = "Error: failed to compile root signature.";
     static const char* kStrErrorDxbcDisassembleFailure = "Error: failed to disassemble compute shader DXBC binary.";
-    static const char* kStrErrorExtractComputeShaderStatsFailure = "Error: failed to extract compute shader statistics.";
-    static const char* kStrErrorExtractComputeShaderDisassemblyFailure = "Error: failed to extract compute shader disassembly.";
-    static const char* kStrErrorExtractComputeShaderAmdilDisassemblyFailure = "Error: failed to extract compute shader AMDIL disassembly.";
     static const char* kStrErrorExtractComputePipelineBinaryFailure = "Error: failed to extract compute pipeline binary.";
     static const char* kStrErrorExtractGraphicsShaderStatsFailure = "Error: failed to extract graphics pipeline binary.";
-    static const char* kStrErrorExtractGraphicsShaderOutputFailure1 = "Error: failed to extract ";
-    static const char* kStrErrorExtractGraphicsShaderStatsFailure2 = " shader statistics.";
-    static const char* kStrErrorExtractGraphicsShaderDisassemblyFailure2 = " shader disassembly.";
     static const char* kStrErrorFrontEndCompilationFailure = "Error: front-end compilation of hlsl to DXBC failed.";
     static const char* kStrErrorFailedToFindDx12Adapter = "Error: failed to find a DX12 display adapter.";
     static const char* kStrErrorGraphicsPipelineCreationFailure = "Error: graphics pipeline creation failed.";
@@ -95,23 +85,10 @@ namespace rga
     //static const char* kStrWarningBinaryExtractionNotSupportedMultiplePipelines2 = " - there is currently no support for pipeline binary extraction when multiple pipelines are generated.";
 
     // Info.
-    static const char* kStrInfoExtractComputeShaderDisassemblyAmdil = "Extracting compute shader AMDIL disassembly...";
-    static const char* kStrInfoExtractGraphicsShaderDisassemblyAmdilSuccess = " shader AMDIL disassembly extracted successfully.";
-    static const char* kStrInfoExtractGraphicsShaderDisassemblyAmdil = " shader AMDIL disassembly...";
-    static const char* kStrInfoExtractComputeShaderStats = "Extracting compute shader statistics...";
-    static const char* kStrInfoExtractComputeShaderDisassembly = "Extracting compute shader disassembly...";
-    static const char* kStrInfoExtractGraphicsShaderDisassembly = " shader disassembly...";
     static const char* kStrInfoExtractComputePipelineBinary = "Extracting compute pipeline binary...";
     static const char* kStrInfoExtractGraphicsPipelineBinary = "Extracting graphics pipeline binary...";
-    static const char* kStrInfoExtractGraphicsShaderOutput1 = "Extracting ";
-    static const char* kStrInfoExtractGraphicsShaderStats2 = " shader statistics...";
-    static const char* kStrInfoExtractComputeShaderStatsSuccess = "Compute shader statistics extracted successfully.";
-    static const char* kStrInfoExtractComputeShaderDisassemblySuccess = "Compute shader disassembly extracted successfully.";
-    static const char* kStrInfoExtractComputeShaderAmdilDisassemblySuccess  = "Compute shader AMDIL disassembly extracted successfully.";
     static const char* kStrInfoExtractComputePipelineBinarySuccess = "Compute pipeline binary extracted successfully.";
     static const char* kStrInfoExtractGraphicsPipelineBinarySuccess = "Graphics pipeline binary extracted successfully.";
-    static const char* kStrInfoExtractGraphicsShaderStatsSuccess = " shader statistics extracted successfully.";
-    static const char* kStrInfoExtractGraphicsShaderDisassemblySuccess = " shader disassembly extracted successfully.";
     static const char* kStrInfoExtractRayTracingBinarySuccess = "Pipeline binary extracted successfully.";
     static const char* kStrInfoExtractRayTracingPipelineBinaryByIndex1 = "Extracting pipeline binary for pipeline ";
     static const char* kStrInfoCompilingRootSignatureFromHlsl1 = "Compiling root signature defined in HLSL file ";
@@ -124,7 +101,7 @@ namespace rga
     static const char* kStrInfoDxrPipelineCompilationGenerated1 = "Compilation generated ";
     static const char* kStrInfoDxrPipelineCompilationGeneratedMultiplePipelines2 = " pipeline binaries.";
     static const char* kStrInfoDxrPipelineCompilationGeneratedSinglePipeline2 = " pipeline binary.";
-    
+
     // *** CONSTANTS - END ***
 
     // *** STATICALLY-LINKED UTITILIES - START ***
@@ -155,38 +132,6 @@ namespace rga
         serialized_stats << "    - stackSizeBytes                            = " << stats.stack_size_bytes << std::endl;
         serialized_stats << "    - isInlined                                 = " << (stats.is_inlined ? 1 : 0) << std::endl;
 #endif
-    }
-
-    // Serialize a graphics shader's statistics.
-    static bool SerializeDx12StatsGraphics(const RgDx12ShaderResults& stats, const std::string& output_filename)
-    {
-        // Convert the statistics to string.
-        std::stringstream serialized_stats;
-        Dx12StatsToString(stats, serialized_stats);
-
-        // Write the results to the output file.
-        bool ret = RgDx12Utils::WriteTextFile(output_filename, serialized_stats.str());
-        assert(ret);
-        return ret;
-    }
-
-    // Serialize a compute shader's statistics including the thread group dimensions.
-    static bool SerializeDx12StatsCompute(const RgDx12ShaderResults& stats, const RgDx12ThreadGroupSize& thread_group_size,
-        const std::string& output_filename)
-    {
-        // Serialize the common shader stats.
-        std::stringstream serialized_stats;
-        Dx12StatsToString(stats, serialized_stats);
-
-        // Serialize and append the compute thread group size.
-        serialized_stats << "    - computeWorkGroupSizeX" << " = " << thread_group_size.x << std::endl;
-        serialized_stats << "    - computeWorkGroupSizeY" << " = " << thread_group_size.y << std::endl;
-        serialized_stats << "    - computeWorkGroupSizeZ" << " = " << thread_group_size.z << std::endl;
-
-        // Write the results to the output file.
-        bool ret = RgDx12Utils::WriteTextFile(output_filename, serialized_stats.str());
-        assert(ret);
-        return ret;
     }
 
     // Serialize a raytracing pipeline statistics.
@@ -343,15 +288,6 @@ namespace rga
         }
 
         return ret;
-    }
-
-    static bool WriteDxbcFile(const D3D12_SHADER_BYTECODE& bytecode, const std::string& output_file)
-    {
-        char* buffer = (char*)bytecode.pShaderBytecode;
-        std::vector<char> comp_bytecode(buffer, buffer + bytecode.BytecodeLength);
-        bool is_file_written = RgDx12Utils::WriteBinaryFile(output_file, comp_bytecode);
-        assert(is_file_written);
-        return is_file_written;
     }
 
     static bool DisassembleDxbc(const D3D12_SHADER_BYTECODE& bytecode, const std::string& output_file)
@@ -550,117 +486,118 @@ namespace rga
         std::string& error_msg) const
     {
         bool ret = false;
-        compute_pso = new D3D12_COMPUTE_PIPELINE_STATE_DESC();
-
-        // If the input is DXBC binary, we do not need front-end compilation.
-        bool is_front_end_compilation_required = !config.comp.hlsl.empty();
-
-        // If the root signature was already created, use it. Otherwise,
-        // try to extract it from the DXBC binary after compiling the HLSL code.
-        bool should_extract_root_signature = !config.rs_macro.empty();
-
-        // Check if the user provided a serialized root signature file.
-        bool is_serialized_root_signature = !config.rs_serialized.empty();
-
-        // Buffer to hold DXBC compiled shader.
-        D3D12_SHADER_BYTECODE bytecode;
-
-        if (is_front_end_compilation_required)
+        compute_pso = new (std::nothrow) D3D12_COMPUTE_PIPELINE_STATE_DESC();
+        if (compute_pso != nullptr)
         {
-            // Compile the HLSL file.
-            ret = CompileHlslShader(config, config.comp.hlsl, config.comp.entry_point,
-                config.comp.shader_model, bytecode, error_msg);
-            assert(ret);
-            if (ret)
-            {
-                compute_pso->CS = bytecode;
-            }
-            else
-            {
-                error_msg = kStrErrorShaderCompilationFailure;
-                error_msg.append("compute\n");
-            }
-        }
-        else
-        {
-            // Read the compiled HLSL binary.
-            ret = ReadDxbcBinary(config.comp.dxbc, bytecode);
-            assert(ret);
-            if (ret)
-            {
-                compute_pso->CS = bytecode;
-            }
-        }
+            // If the input is DXBC binary, we do not need front-end compilation.
+            bool is_front_end_compilation_required = !config.comp.hlsl.empty();
 
-        if (!config.comp.dxbcOut.empty())
-        {
-            // If the user wants to dump the bytecode as a binary, do it here.
-            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(bytecode, config.comp.dxbcOut);
-            assert(is_dxbc_written);
-        }
+            // If the root signature was already created, use it. Otherwise,
+            // try to extract it from the DXBC binary after compiling the HLSL code.
+            bool should_extract_root_signature = !config.rs_macro.empty();
 
-        if (ret)
-        {
-            if (!config.comp.dxbc_disassembly.empty())
-            {
-                // If the user wants to dump the bytecode disassembly, do it here.
-                [[maybe_unused]] bool is_dxbc_disassembly_generated = DisassembleDxbc(bytecode, config.comp.dxbc_disassembly);
-                assert(is_dxbc_disassembly_generated);
-            }
+            // Check if the user provided a serialized root signature file.
+            bool is_serialized_root_signature = !config.rs_serialized.empty();
 
-            if (should_extract_root_signature)
+            // Buffer to hold DXBC compiled shader.
+            D3D12_SHADER_BYTECODE bytecode;
+
+            if (is_front_end_compilation_required)
             {
-                // If the input is HLSL, we need to compile the root signature out of the HLSL file.
-                // Otherwise, if the input is a DXBC binary and it has a root signature baked into it,
-                // then the root signature would be automatically fetched from the binary, there is no
-                // need to set it into the PSO's root signature field.
-                ComPtr<ID3DBlob> compiled_rs;
-                ret = CompileRootSignature(config, compiled_rs);
-                if (ret)
-                {
-                    // Create the root signature through the device and assign it to our PSO.
-                    std::vector<uint8_t> root_signature_buffer;
-                    root_signature_buffer.resize(compiled_rs->GetBufferSize());
-                    memcpy(root_signature_buffer.data(), compiled_rs->GetBufferPointer(),
-                        compiled_rs->GetBufferSize());
-                    device_.Get()->CreateRootSignature(0, root_signature_buffer.data(),
-                        root_signature_buffer.size(), IID_PPV_ARGS(&compute_pso->pRootSignature));
-                    assert(compute_pso->pRootSignature != nullptr);
-                    ret = compute_pso->pRootSignature != nullptr;
-                }
-            }
-            else if (is_serialized_root_signature)
-            {
-                // Read the root signature from the file and recreate it.
-                std::vector<char> root_signature_buffer;
-                ret = RgDx12Utils::ReadBinaryFile(config.rs_serialized, root_signature_buffer);
+                // Compile the HLSL file.
+                ret = CompileHlslShader(config, config.comp.hlsl, config.comp.entry_point,
+                    config.comp.shader_model, bytecode, error_msg);
                 assert(ret);
                 if (ret)
                 {
-                    device_.Get()->CreateRootSignature(0, root_signature_buffer.data(),
-                        root_signature_buffer.size(), IID_PPV_ARGS(&compute_pso->pRootSignature));
-                    assert(compute_pso->pRootSignature != nullptr);
-                    ret = compute_pso->pRootSignature != nullptr;
+                    compute_pso->CS = bytecode;
+                }
+                else
+                {
+                    error_msg = kStrErrorShaderCompilationFailure;
+                    error_msg.append("compute\n");
                 }
             }
             else
             {
-                // If we got here, it means that the user did not explicitly provide a root
-                // signature (using --rs-bin or --rs-macro). Therefore, the assumption is that
-                // the root signature was defined in HLSL code. By trying to explicitly create the
-                // root signature from the blob, we effectively check if a root signature was
-                // properly defined in the HLSL code.
-                device_.Get()->CreateRootSignature(0, bytecode.pShaderBytecode,
-                    bytecode.BytecodeLength, IID_PPV_ARGS(&compute_pso->pRootSignature));
-                assert(compute_pso->pRootSignature != nullptr);
-                ret = compute_pso->pRootSignature != nullptr;
-                if (!ret)
+                // Read the compiled HLSL binary.
+                ret = ReadDxbcBinary(config.comp.dxbc, bytecode);
+                assert(ret);
+                if (ret)
                 {
-                    std::cout << kStrErrorDxrRootSignatureFailureHlsl1 <<
-                        kStrErrorDxrRootSignatureFailureHlsl2Compute << kStrErrorDxrRootSignatureFailureHlsl3 << std::endl;
-                    std::cout << kStrErrorDxrRootSignatureFailureHlsl4 << std::endl;
+                    compute_pso->CS = bytecode;
                 }
             }
+
+            if (ret)
+            {
+                if (!config.comp.dxbc_disassembly.empty())
+                {
+                    // If the user wants to dump the bytecode disassembly, do it here.
+                    [[maybe_unused]] bool is_dxbc_disassembly_generated = DisassembleDxbc(bytecode, config.comp.dxbc_disassembly);
+                    assert(is_dxbc_disassembly_generated);
+                }
+
+                if (should_extract_root_signature)
+                {
+                    // If the input is HLSL, we need to compile the root signature out of the HLSL file.
+                    // Otherwise, if the input is a DXBC binary and it has a root signature baked into it,
+                    // then the root signature would be automatically fetched from the binary, there is no
+                    // need to set it into the PSO's root signature field.
+                    ComPtr<ID3DBlob> compiled_rs;
+                    ret = CompileRootSignature(config, compiled_rs);
+                    if (ret)
+                    {
+                        // Create the root signature through the device and assign it to our PSO.
+                        std::vector<uint8_t> root_signature_buffer;
+                        root_signature_buffer.resize(compiled_rs->GetBufferSize());
+                        memcpy(root_signature_buffer.data(), compiled_rs->GetBufferPointer(),
+                            compiled_rs->GetBufferSize());
+                        device_.Get()->CreateRootSignature(0, root_signature_buffer.data(),
+                            root_signature_buffer.size(), IID_PPV_ARGS(&compute_pso->pRootSignature));
+                        assert(compute_pso->pRootSignature != nullptr);
+                        ret = compute_pso->pRootSignature != nullptr;
+                    }
+                }
+                else if (is_serialized_root_signature)
+                {
+                    // Read the root signature from the file and recreate it.
+                    std::vector<char> root_signature_buffer;
+                    ret = RgDx12Utils::ReadBinaryFile(config.rs_serialized, root_signature_buffer);
+                    assert(ret);
+                    if (ret)
+                    {
+                        device_.Get()->CreateRootSignature(0, root_signature_buffer.data(),
+                            root_signature_buffer.size(), IID_PPV_ARGS(&compute_pso->pRootSignature));
+                        assert(compute_pso->pRootSignature != nullptr);
+                        ret = compute_pso->pRootSignature != nullptr;
+                    }
+                }
+                else
+                {
+                    // If we got here, it means that the user did not explicitly provide a root
+                    // signature (using --rs-bin or --rs-macro). Therefore, the assumption is that
+                    // the root signature was defined in HLSL code. By trying to explicitly create the
+                    // root signature from the blob, we effectively check if a root signature was
+                    // properly defined in the HLSL code.
+                    device_.Get()->CreateRootSignature(0, bytecode.pShaderBytecode,
+                        bytecode.BytecodeLength, IID_PPV_ARGS(&compute_pso->pRootSignature));
+                    assert(compute_pso->pRootSignature != nullptr);
+                    ret = compute_pso->pRootSignature != nullptr;
+                    if (!ret)
+                    {
+                        std::cout << kStrErrorDxrRootSignatureFailureHlsl1 <<
+                            kStrErrorDxrRootSignatureFailureHlsl2Compute << kStrErrorDxrRootSignatureFailureHlsl3 << std::endl;
+                        std::cout << kStrErrorDxrRootSignatureFailureHlsl4 << std::endl;
+                    }
+                }
+            }
+        }
+
+        if (!ret && compute_pso != nullptr)
+        {
+            delete compute_pso;
+            compute_pso = nullptr;
         }
 
         return ret;
@@ -713,7 +650,7 @@ namespace rga
         {
             // Compile the hull shader.
             ret = CompileHlslShader(config, config.hull.hlsl, config.hull.entry_point,
-                config.hull.shader_model, bytecode.vert, error_msg);
+                config.hull.shader_model, bytecode.hull, error_msg);
             assert(ret);
             if (ret)
             {
@@ -822,33 +759,218 @@ namespace rga
         return ret;
     }
 
-    static void DumpDxbcBinaries(const RgDx12Config& config, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& pso)
+    static bool CompileMeshShaders(const RgDx12Config& config,
+        RgDx12PipelineByteCode& bytecode, PSO_STREAM& stream,
+        std::string& error_msg)
     {
-        if (!config.vert.dxbcOut.empty())
+        bool ret = false;
+
+        // If the input is DXBC binary, we do not need front-end compilation.
+        RgPipelineBool is_front_end_compilation_required;
+        is_front_end_compilation_required.vert = !config.vert.hlsl.empty();
+        is_front_end_compilation_required.hull = !config.hull.hlsl.empty();
+        is_front_end_compilation_required.domain = !config.domain.hlsl.empty();
+        is_front_end_compilation_required.geom = !config.geom.hlsl.empty();
+        is_front_end_compilation_required.pixel = !config.pixel.hlsl.empty();
+        is_front_end_compilation_required.mesh = !config.mesh.hlsl.empty();
+        is_front_end_compilation_required.amplification = !config.amplification.hlsl.empty();
+
+        // Vertex.
+        if (is_front_end_compilation_required.vert)
         {
-            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(pso.VS, config.vert.dxbcOut);
-            assert(is_dxbc_written);
+            // Compile the vertex shader.
+            ret = CompileHlslShader(config, config.vert.hlsl, config.vert.entry_point,
+                config.vert.shader_model, bytecode.vert, error_msg);
+            assert(ret);
+            if (ret)
+            {
+                stream.VS = bytecode.vert;
+            }
+            else
+            {
+                error_msg = kStrErrorShaderCompilationFailure;
+                error_msg.append("vertex\n");
+            }
         }
-        if (!config.hull.dxbcOut.empty())
+        else if (!config.vert.dxbc.empty())
         {
-            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(pso.HS, config.hull.dxbcOut);
-            assert(is_dxbc_written);
+            // Read the compiled vertex shader.
+            ret = ReadDxbcBinary(config.vert.dxbc, bytecode.vert);
+            assert(ret);
+            if (ret)
+            {
+                stream.VS = bytecode.vert;
+            }
         }
-        if (!config.domain.dxbcOut.empty())
+
+        // Hull.
+        if (is_front_end_compilation_required.hull)
         {
-            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(pso.DS, config.domain.dxbcOut);
-            assert(is_dxbc_written);
+            // Compile the hull shader.
+            ret = CompileHlslShader(config, config.hull.hlsl, config.hull.entry_point,
+                config.hull.shader_model, bytecode.hull, error_msg);
+            assert(ret);
+            if (ret)
+            {
+                stream.HS = bytecode.hull;
+            }
+            else
+            {
+                error_msg = kStrErrorShaderCompilationFailure;
+                error_msg.append("hull\n");
+            }
         }
-        if (!config.geom.dxbcOut.empty())
+        else if (!config.hull.dxbc.empty())
         {
-            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(pso.GS, config.geom.dxbcOut);
-            assert(is_dxbc_written);
+            // Read the compiled hull shader.
+            ret = ReadDxbcBinary(config.hull.dxbc, bytecode.hull);
+            assert(ret);
+            if (ret)
+            {
+                stream.HS = bytecode.hull;
+            }
         }
-        if (!config.pixel.dxbcOut.empty())
+
+        // Domain.
+        if (is_front_end_compilation_required.domain)
         {
-            [[maybe_unused]] bool is_dxbc_written = WriteDxbcFile(pso.PS, config.pixel.dxbcOut);
-            assert(is_dxbc_written);
+            // Compile the domain shader.
+            ret = CompileHlslShader(config, config.domain.hlsl, config.domain.entry_point,
+                config.domain.shader_model, bytecode.domain, error_msg);
+            assert(ret);
+            if (ret)
+            {
+                stream.DS = bytecode.domain;
+            }
+            else
+            {
+                error_msg = kStrErrorShaderCompilationFailure;
+                error_msg.append("domain\n");
+            }
         }
+        else if (!config.domain.dxbc.empty())
+        {
+            // Read the compiled domain shader.
+            ret = ReadDxbcBinary(config.domain.dxbc, bytecode.domain);
+            assert(ret);
+            if (ret)
+            {
+                stream.DS = bytecode.domain;
+            }
+        }
+
+        // Geometry.
+        if (is_front_end_compilation_required.geom)
+        {
+            // Compile the geometry shader.
+            ret = CompileHlslShader(config, config.geom.hlsl, config.geom.entry_point,
+                config.geom.shader_model, bytecode.geom, error_msg);
+            assert(ret);
+            if (ret)
+            {
+                stream.GS = bytecode.geom;
+            }
+            else
+            {
+                error_msg = kStrErrorShaderCompilationFailure;
+                error_msg.append("geometry\n");
+            }
+        }
+        else if (!config.geom.dxbc.empty())
+        {
+            // Read the compiled geometry shader.
+            ret = ReadDxbcBinary(config.geom.dxbc, bytecode.geom);
+            assert(ret);
+            if (ret)
+            {
+                stream.GS = bytecode.geom;
+            }
+        }
+
+        // Pixel.
+        if (is_front_end_compilation_required.pixel)
+        {
+            // Compile the pixel shader.
+            ret = CompileHlslShader(config, config.pixel.hlsl, config.pixel.entry_point,
+                config.pixel.shader_model, bytecode.pixel, error_msg);
+            assert(ret);
+            if (ret)
+            {
+                stream.PS = bytecode.pixel;
+            }
+            else
+            {
+                error_msg = kStrErrorShaderCompilationFailure;
+                error_msg.append("pixel\n");
+            }
+        }
+        else if (!config.pixel.dxbc.empty())
+        {
+            // Read the compiled pixel shader.
+            ret = ReadDxbcBinary(config.pixel.dxbc, bytecode.pixel);
+            assert(ret);
+            if (ret)
+            {
+                stream.PS = bytecode.pixel;
+            }
+        }
+
+        // Mesh.
+        if (is_front_end_compilation_required.mesh)
+        {
+            // Compile the mesh shader.
+            ret = CompileHlslShader(config, config.mesh.hlsl, config.mesh.entry_point,
+                config.mesh.shader_model, bytecode.mesh, error_msg);
+            assert(ret);
+            if (ret)
+            {
+                stream.MS = bytecode.mesh;
+            }
+            else
+            {
+                error_msg = kStrErrorShaderCompilationFailure;
+                error_msg.append("mesh\n");
+            }
+        }
+        else if (!config.mesh.dxbc.empty())
+        {
+            // Read the compiled mesh shader.
+            ret = ReadDxbcBinary(config.mesh.dxbc, bytecode.mesh);
+            assert(ret);
+            if (ret)
+            {
+                stream.MS = bytecode.mesh;
+            }
+        }
+
+        // Amplification.
+        if (is_front_end_compilation_required.amplification)
+        {
+            // Compile the amplification shader.
+            ret = CompileHlslShader(config, config.amplification.hlsl, config.amplification.entry_point,
+                config.amplification.shader_model, bytecode.amplification, error_msg);
+            assert(ret);
+            if (ret)
+            {
+                stream.AS = bytecode.amplification;
+            }
+            else
+            {
+                error_msg = kStrErrorShaderCompilationFailure;
+                error_msg.append("amplification\n");
+            }
+        }
+        else if (!config.amplification.dxbc.empty())
+        {
+            // Read the compiled amplification shader.
+            ret = ReadDxbcBinary(config.amplification.dxbc, bytecode.amplification);
+            assert(ret);
+            if (ret)
+            {
+                stream.AS = bytecode.amplification;
+            }
+        }
+        return ret;
     }
 
     static void DumpDxbcDisassembly(const RgDx12Config& config, const RgDx12PipelineByteCode& bytecode)
@@ -886,8 +1008,148 @@ namespace rga
         bool ret = false;
 
         // Create and initialize graphics pipeline state descriptor.
-        pso = new D3D12_GRAPHICS_PIPELINE_STATE_DESC();
-        RgDx12Utils::InitGraphicsPipelineStateDesc(*pso);
+        pso = new (std::nothrow) D3D12_GRAPHICS_PIPELINE_STATE_DESC();
+        if (pso != nullptr)
+        {
+            RgDx12Utils::InitGraphicsPipelineStateDesc(*pso);
+
+            // If the root signature was already created, use it. Otherwise,
+            // try to extract it from the DXBC binary after compiling the HLSL code.
+            bool should_extract_root_signature = !config.rs_macro.empty();
+
+            // Check if the user provided a serialized root signature file.
+            bool is_serialized_root_signature = !config.rs_serialized.empty();
+
+            RgDx12PipelineByteCode bytecode = {};
+
+            // Compile the graphics pipeline shaders.
+            ret = CompileGraphicsShaders(config, bytecode, pso, error_msg);
+
+            assert(ret);
+            if (ret)
+            {
+                // If the user wants to dump the bytecode disassembly, do it here.
+                DumpDxbcDisassembly(config, bytecode);
+
+                if (should_extract_root_signature)
+                {
+                    ComPtr<ID3DBlob> compiled_rs;
+                    ret = CompileRootSignature(config, compiled_rs);
+                    if (ret)
+                    {
+                        // Create the root signature through the device and assign it to our PSO.
+                        std::vector<uint8_t> root_signature_buffer;
+                        root_signature_buffer.resize(compiled_rs->GetBufferSize());
+                        memcpy(root_signature_buffer.data(), compiled_rs->GetBufferPointer(),
+                            compiled_rs->GetBufferSize());
+                        device_.Get()->CreateRootSignature(0, root_signature_buffer.data(),
+                            root_signature_buffer.size(), IID_PPV_ARGS(&pso->pRootSignature));
+                        assert(pso->pRootSignature != nullptr);
+                        ret = pso->pRootSignature != nullptr;
+                    }
+                }
+                else if (is_serialized_root_signature)
+                {
+                    // Read the root signature from the file and recreate it.
+                    std::vector<char> root_signature_buffer;
+                    ret = RgDx12Utils::ReadBinaryFile(config.rs_serialized, root_signature_buffer);
+                    assert(ret);
+                    if (ret)
+                    {
+                        device_.Get()->CreateRootSignature(0, root_signature_buffer.data(),
+                            root_signature_buffer.size(), IID_PPV_ARGS(&pso->pRootSignature));
+                        assert(pso->pRootSignature != nullptr);
+                        ret = pso->pRootSignature != nullptr;
+                        if (pso->pRootSignature == nullptr)
+                        {
+                            std::cerr << kStrErrorRsFileCompileFailed << config.rs_serialized << std::endl;
+                        }
+                    }
+                    else
+                    {
+                        std::cerr << kStrErrorRsFileReadFailed << config.rs_serialized << std::endl;
+                    }
+                }
+                else
+                {
+                    // Make sure that the root signature exists in one of the blobs.
+                    bool does_rs_exists = false;
+
+                    // Go through each of the existing blobs, and try to create the root signature
+                    // from it. If the root signature was defined together with the [RootSignature()]
+                    // attribute in HLSL code, the root signature creation from the blob should succeed.
+
+                    // Vert blob.
+                    if (bytecode.vert.pShaderBytecode != nullptr && bytecode.vert.BytecodeLength > 0)
+                    {
+                        device_.Get()->CreateRootSignature(0, bytecode.vert.pShaderBytecode,
+                            bytecode.vert.BytecodeLength, IID_PPV_ARGS(&pso->pRootSignature));
+                        ret = pso->pRootSignature != nullptr;
+                        does_rs_exists = (pso->pRootSignature != nullptr);
+                    }
+
+                    // Hull blob.
+                    if (!does_rs_exists && bytecode.hull.pShaderBytecode != nullptr && bytecode.hull.BytecodeLength > 0)
+                    {
+                        device_.Get()->CreateRootSignature(0, bytecode.hull.pShaderBytecode,
+                            bytecode.hull.BytecodeLength, IID_PPV_ARGS(&pso->pRootSignature));
+                        ret = pso->pRootSignature != nullptr;
+                        does_rs_exists = (pso->pRootSignature != nullptr);
+                    }
+
+                    // Domain blob.
+                    if (!does_rs_exists && bytecode.domain.pShaderBytecode != nullptr && bytecode.domain.BytecodeLength > 0)
+                    {
+                        device_.Get()->CreateRootSignature(0, bytecode.domain.pShaderBytecode,
+                            bytecode.domain.BytecodeLength, IID_PPV_ARGS(&pso->pRootSignature));
+                        ret = pso->pRootSignature != nullptr;
+                        does_rs_exists = (pso->pRootSignature != nullptr);
+                    }
+
+                    // Geometry blob.
+                    if (!does_rs_exists && bytecode.geom.pShaderBytecode != nullptr && bytecode.geom.BytecodeLength > 0)
+                    {
+                        device_.Get()->CreateRootSignature(0, bytecode.geom.pShaderBytecode,
+                            bytecode.geom.BytecodeLength, IID_PPV_ARGS(&pso->pRootSignature));
+                        ret = pso->pRootSignature != nullptr;
+                        does_rs_exists = (pso->pRootSignature != nullptr);
+                    }
+
+                    // Pixel blob.
+                    if (!does_rs_exists && bytecode.pixel.pShaderBytecode != nullptr && bytecode.pixel.BytecodeLength > 0)
+                    {
+                        device_.Get()->CreateRootSignature(0, bytecode.pixel.pShaderBytecode,
+                            bytecode.pixel.BytecodeLength, IID_PPV_ARGS(&pso->pRootSignature));
+                        ret = pso->pRootSignature != nullptr;
+                        does_rs_exists = (pso->pRootSignature != nullptr);
+                    }
+
+                    assert(does_rs_exists);
+                    if (!does_rs_exists)
+                    {
+                        std::cout << kStrErrorDxrRootSignatureFailureHlsl1 <<
+                            kStrErrorDxrRootSignatureFailureHlsl2Graphics << kStrErrorDxrRootSignatureFailureHlsl3 << std::endl;
+                    }
+                }
+            }
+        }
+
+        if (!ret && pso != nullptr)
+        {
+            delete pso;
+            pso = nullptr;
+        }
+
+        return ret;
+    }
+
+    bool rgDx12Frontend::CreateMeshPipeline(const RgDx12Config& config,
+        PSO_STREAM& stream, std::string& error_msg) const
+    {
+        bool ret = false;
+
+        // Create and initialize graphics pipeline state descriptor.
+        RgDx12Utils::InitGraphicsPipelineStream(stream);
 
         // If the root signature was already created, use it. Otherwise,
         // try to extract it from the DXBC binary after compiling the HLSL code.
@@ -899,10 +1161,7 @@ namespace rga
         RgDx12PipelineByteCode bytecode = {};
 
         // Compile the graphics pipeline shaders.
-        ret = CompileGraphicsShaders(config, bytecode, pso, error_msg);
-
-        // If the user wants to dump the bytecode as a binary, do it here.
-        DumpDxbcBinaries(config, *pso);
+        ret = CompileMeshShaders(config, bytecode, stream, error_msg);
 
         assert(ret);
         if (ret)
@@ -922,9 +1181,9 @@ namespace rga
                     memcpy(root_signature_buffer.data(), compiled_rs->GetBufferPointer(),
                         compiled_rs->GetBufferSize());
                     device_.Get()->CreateRootSignature(0, root_signature_buffer.data(),
-                        root_signature_buffer.size(), IID_PPV_ARGS(&pso->pRootSignature));
-                    assert(pso->pRootSignature != nullptr);
-                    ret = pso->pRootSignature != nullptr;
+                        root_signature_buffer.size(), IID_PPV_ARGS(&stream.pRootSignature));
+                    assert(stream.pRootSignature != nullptr);
+                    ret = stream.pRootSignature != nullptr;
                 }
             }
             else if (is_serialized_root_signature)
@@ -936,10 +1195,10 @@ namespace rga
                 if (ret)
                 {
                     device_.Get()->CreateRootSignature(0, root_signature_buffer.data(),
-                        root_signature_buffer.size(), IID_PPV_ARGS(&pso->pRootSignature));
-                    assert(pso->pRootSignature != nullptr);
-                    ret = pso->pRootSignature != nullptr;
-                    if (pso->pRootSignature == nullptr)
+                        root_signature_buffer.size(), IID_PPV_ARGS(&stream.pRootSignature));
+                    assert(stream.pRootSignature != nullptr);
+                    ret = stream.pRootSignature != nullptr;
+                    if (stream.pRootSignature == nullptr)
                     {
                         std::cerr << kStrErrorRsFileCompileFailed << config.rs_serialized << std::endl;
                     }
@@ -962,45 +1221,63 @@ namespace rga
                 if (bytecode.vert.pShaderBytecode != nullptr && bytecode.vert.BytecodeLength > 0)
                 {
                     device_.Get()->CreateRootSignature(0, bytecode.vert.pShaderBytecode,
-                        bytecode.vert.BytecodeLength, IID_PPV_ARGS(&pso->pRootSignature));
-                    ret = pso->pRootSignature != nullptr;
-                    does_rs_exists = (pso->pRootSignature != nullptr);
+                        bytecode.vert.BytecodeLength, IID_PPV_ARGS(&stream.pRootSignature));
+                    ret = stream.pRootSignature != nullptr;
+                    does_rs_exists = (stream.pRootSignature != nullptr);
                 }
 
                 // Hull blob.
                 if (!does_rs_exists && bytecode.hull.pShaderBytecode != nullptr && bytecode.hull.BytecodeLength > 0)
                 {
                     device_.Get()->CreateRootSignature(0, bytecode.hull.pShaderBytecode,
-                        bytecode.hull.BytecodeLength, IID_PPV_ARGS(&pso->pRootSignature));
-                    ret = pso->pRootSignature != nullptr;
-                    does_rs_exists = (pso->pRootSignature != nullptr);
+                        bytecode.hull.BytecodeLength, IID_PPV_ARGS(&stream.pRootSignature));
+                    ret = stream.pRootSignature != nullptr;
+                    does_rs_exists = (stream.pRootSignature != nullptr);
                 }
 
                 // Domain blob.
                 if (!does_rs_exists && bytecode.domain.pShaderBytecode != nullptr && bytecode.domain.BytecodeLength > 0)
                 {
                     device_.Get()->CreateRootSignature(0, bytecode.domain.pShaderBytecode,
-                        bytecode.domain.BytecodeLength, IID_PPV_ARGS(&pso->pRootSignature));
-                    ret = pso->pRootSignature != nullptr;
-                    does_rs_exists = (pso->pRootSignature != nullptr);
+                        bytecode.domain.BytecodeLength, IID_PPV_ARGS(&stream.pRootSignature));
+                    ret = stream.pRootSignature != nullptr;
+                    does_rs_exists = (stream.pRootSignature != nullptr);
                 }
 
                 // Geometry blob.
                 if (!does_rs_exists && bytecode.geom.pShaderBytecode != nullptr && bytecode.geom.BytecodeLength > 0)
                 {
                     device_.Get()->CreateRootSignature(0, bytecode.geom.pShaderBytecode,
-                        bytecode.geom.BytecodeLength, IID_PPV_ARGS(&pso->pRootSignature));
-                    ret = pso->pRootSignature != nullptr;
-                    does_rs_exists = (pso->pRootSignature != nullptr);
+                        bytecode.geom.BytecodeLength, IID_PPV_ARGS(&stream.pRootSignature));
+                    ret = stream.pRootSignature != nullptr;
+                    does_rs_exists = (stream.pRootSignature != nullptr);
                 }
 
                 // Pixel blob.
                 if (!does_rs_exists && bytecode.pixel.pShaderBytecode != nullptr && bytecode.pixel.BytecodeLength > 0)
                 {
                     device_.Get()->CreateRootSignature(0, bytecode.pixel.pShaderBytecode,
-                        bytecode.pixel.BytecodeLength, IID_PPV_ARGS(&pso->pRootSignature));
-                    ret = pso->pRootSignature != nullptr;
-                    does_rs_exists = (pso->pRootSignature != nullptr);
+                        bytecode.pixel.BytecodeLength, IID_PPV_ARGS(&stream.pRootSignature));
+                    ret = stream.pRootSignature != nullptr;
+                    does_rs_exists = (stream.pRootSignature != nullptr);
+                }
+
+                // Mesh blob
+                if (!does_rs_exists && bytecode.mesh.pShaderBytecode != nullptr && bytecode.mesh.BytecodeLength > 0)
+                {
+                    device_.Get()->CreateRootSignature(0, bytecode.mesh.pShaderBytecode,
+                        bytecode.mesh.BytecodeLength, IID_PPV_ARGS(&stream.pRootSignature));
+                    ret = stream.pRootSignature != nullptr;
+                    does_rs_exists = (stream.pRootSignature != nullptr);
+                }
+
+                // Amplification blob
+                if (!does_rs_exists && bytecode.amplification.pShaderBytecode != nullptr && bytecode.amplification.BytecodeLength > 0)
+                {
+                    device_.Get()->CreateRootSignature(0, bytecode.amplification.pShaderBytecode,
+                        bytecode.amplification.BytecodeLength, IID_PPV_ARGS(&stream.pRootSignature));
+                    ret = stream.pRootSignature != nullptr;
+                    does_rs_exists = (stream.pRootSignature != nullptr);
                 }
 
                 assert(does_rs_exists);
@@ -1093,7 +1370,7 @@ namespace rga
         return ret;
     }
 
-    bool rgDx12Frontend::Init(bool is_dxr_session, bool is_offline_session)
+    bool rgDx12Frontend::Init(bool is_dxr_session, bool is_mesh_shader, bool is_offline_session)
     {
         bool ret = false;
 
@@ -1114,7 +1391,7 @@ namespace rga
                 // Initialize the backend with the D3D12 device.
                 ret = backend_.Init(device_.Get(), is_offline_session);
                 assert(ret);
-                if (ret && is_dxr_session)
+                if (ret && (is_dxr_session || is_mesh_shader))
                 {
                     // Create the DXR interface.
                     hr = device_->QueryInterface(IID_PPV_ARGS(&dxr_device_));
@@ -1160,64 +1437,6 @@ namespace rga
                 assert(ret);
                 if (ret)
                 {
-                    if (!config.comp.isa.empty())
-                    {
-                        // Save results to file: GCN ISA disassembly.
-                        assert(results.disassembly != nullptr);
-                        if (results.disassembly != nullptr)
-                        {
-                            // GCN ISA Disassembly.
-                            std::cout << kStrInfoExtractComputeShaderDisassembly << std::endl;
-                            ret = RgDx12Utils::WriteTextFile(config.comp.isa, results.disassembly);
-
-                            // Report the result to the user.
-                            std::cout << (ret ? kStrInfoExtractComputeShaderDisassemblySuccess :
-                                kStrErrorExtractComputeShaderDisassemblyFailure) << std::endl;
-                        }
-                        else
-                        {
-                            std::cerr << kStrErrorComputeShaderDisassemblyExtractionFailure << std::endl;
-                        }
-                        assert(ret);
-                    }
-
-                    // AMDIL.
-                    if (!config.comp.amdil.empty())
-                    {
-                        // Save results to file: AMDIL disassembly.
-                        assert(results.disassembly_amdil != nullptr);
-                        if (results.disassembly_amdil != nullptr)
-                        {
-                            // AMDIL Disassembly.
-                            std::cout << kStrInfoExtractComputeShaderDisassemblyAmdil << std::endl;
-                            ret = RgDx12Utils::WriteTextFile(config.comp.amdil, results.disassembly_amdil);
-
-                            // Report the result to the user.
-                            std::cout << (ret ? kStrInfoExtractComputeShaderAmdilDisassemblySuccess : kStrErrorExtractComputeShaderAmdilDisassemblyFailure)
-                                      << std::endl;
-                        }
-                        else
-                        {
-                            std::cerr << kStrErrorExtractComputeShaderAmdilDisassemblyFailure << std::endl;
-                        }
-                        assert(ret);
-                    }
-
-
-                    if (!config.comp.stats.empty())
-                    {
-                        // Save results to file: statistics.
-                        std::cout << kStrInfoExtractComputeShaderStats << std::endl;
-                        bool isStatsSaved = SerializeDx12StatsCompute(results, thread_group_size, config.comp.stats);
-                        assert(isStatsSaved);
-                        ret = ret && isStatsSaved;
-
-                        // Report the result to the user.
-                        std::cout << (isStatsSaved ? kStrInfoExtractComputeShaderStatsSuccess :
-                            kStrErrorExtractComputeShaderStatsFailure) << std::endl;
-                        assert(ret);
-                    }
-
                     if (!config.pipeline_binary.empty())
                     {
                         // Pipeline binary.
@@ -1242,88 +1461,8 @@ namespace rga
                 std::cerr << kStrHintRootSignatureFailure << std::endl;
             }
         }
-        return ret;
-    }
-
-    static bool WriteGraphicsShaderOutputFiles(const RgDx12ShaderConfig& shader_config,
-        const RgDx12ShaderResults& shader_results, const std::string& stage_name)
-    {
-        bool ret = true;
-        if (!shader_config.isa.empty())
-        {
-            // Save results to file: GCN ISA disassembly.
-            assert(shader_results.disassembly != nullptr);
-            if (shader_results.disassembly != nullptr)
-            {
-                // GCN ISA Disassembly.
-                std::cout << kStrInfoExtractGraphicsShaderOutput1 << stage_name <<
-                    kStrInfoExtractGraphicsShaderDisassembly << std::endl;
-                ret = RgDx12Utils::WriteTextFile(shader_config.isa, shader_results.disassembly);
-                assert(ret);
-
-                // Report the result to the user.
-                if (ret)
-                {
-                    std::cout << stage_name << kStrInfoExtractGraphicsShaderDisassemblySuccess << std::endl;
-                }
-                else
-                {
-                    std::cerr << kStrErrorExtractGraphicsShaderOutputFailure1 << stage_name <<
-                        kStrErrorExtractGraphicsShaderDisassemblyFailure2 << std::endl;
-                }
-            }
-            else
-            {
-                std::cerr << kStrErrorGraphicsShaderDisassemblyExtractionFailure1 << stage_name << kStrErrorGraphicsShaderDisassemblyExtractionFailure2
-                          << std::endl;
-            }
-
-            if (!shader_config.amdil.empty())
-            {
-                // Save results to file: AMDIL disassembly.
-                assert(shader_results.disassembly_amdil != nullptr);
-                if (shader_results.disassembly_amdil != nullptr)
-                {
-                    // AMDIL disassembly.
-                    std::cout << kStrInfoExtractGraphicsShaderOutput1 << stage_name << kStrInfoExtractGraphicsShaderDisassemblyAmdil << std::endl;
-                    ret = RgDx12Utils::WriteTextFile(shader_config.amdil, shader_results.disassembly_amdil);
-                    assert(ret);
-
-                    // Report the result to the user.
-                    if (ret)
-                    {
-                        std::cout << stage_name << kStrInfoExtractGraphicsShaderDisassemblyAmdilSuccess << std::endl;
-                    }
-                    else
-                    {
-                        std::cout << kStrErrorGraphicsShaderAmdilDisassemblyExtractionFailure1 << stage_name
-                                  << kStrErrorGraphicsShaderDisassemblyExtractionFailure2 << std::endl;
-                    }
-                }
-            }
-        }
-
-        if (!shader_config.stats.empty())
-        {
-            // Save results to file: statistics.
-            std::cout << kStrInfoExtractGraphicsShaderOutput1 << stage_name <<
-                kStrInfoExtractGraphicsShaderStats2 << std::endl;
-            bool isStatsSaved = SerializeDx12StatsGraphics(shader_results, shader_config.stats);
-            assert(isStatsSaved);
-            ret = ret && isStatsSaved;
-
-            // Report the result to the user.
-            if (isStatsSaved)
-            {
-                std::cout << stage_name << kStrInfoExtractGraphicsShaderStatsSuccess << std::endl;
-            }
-            else
-            {
-                std::cout << kStrErrorExtractGraphicsShaderOutputFailure1 << stage_name <<
-                    kStrErrorExtractGraphicsShaderStatsFailure2 << std::endl;
-            }
-        }
-
+        delete pso;
+        pso = nullptr;
         return ret;
     }
 
@@ -1335,7 +1474,7 @@ namespace rga
 
         bool ret = CreateGraphicsPipeline(config, pso, error_msg);
         assert(ret);
-        if (ret)
+        if (ret && pso != nullptr)
         {
             // Create the graphics pipeline state.
             ID3D12PipelineState* graphics_pso = nullptr;
@@ -1373,6 +1512,10 @@ namespace rga
                             root_signature_buffer.size(), IID_PPV_ARGS(&pso->pRootSignature));
                         assert(pso->pRootSignature != nullptr);
                         ret = pso->pRootSignature != nullptr;
+                        if (pso->pRootSignature == nullptr)
+                        {
+                            std::cerr << kStrErrorRsFileCompileFailed << config.rs_serialized << std::endl;
+                        }
                     }
                 }
                 else
@@ -1394,6 +1537,11 @@ namespace rga
                             root_signature_buffer.size(), IID_PPV_ARGS(&pso->pRootSignature));
                         assert(pso->pRootSignature != nullptr);
                         ret = pso->pRootSignature != nullptr;
+                        if (pso->pRootSignature == nullptr)
+                        {
+                            std::cerr << kStrErrorDxrRootSignatureFailureHlsl1 <<
+                                kStrErrorDxrRootSignatureFailureHlsl2Graphics << kStrErrorDxrRootSignatureFailureHlsl3 << std::endl;
+                        }
                     }
                 }
 
@@ -1409,18 +1557,125 @@ namespace rga
 
                     if (ret)
                     {
-                        // Write the output files (for applicable stages).
-                        ret = WriteGraphicsShaderOutputFiles(config.vert, results.vertex, "vertex");
-                        assert(ret);
-                        ret = WriteGraphicsShaderOutputFiles(config.hull, results.hull, "hull");
-                        assert(ret);
-                        ret = WriteGraphicsShaderOutputFiles(config.domain, results.domain, "domain");
-                        assert(ret);
-                        ret = WriteGraphicsShaderOutputFiles(config.geom, results.geometry, "geometry");
-                        assert(ret);
-                        ret = WriteGraphicsShaderOutputFiles(config.pixel, results.pixel, "pixel");
-                        assert(ret);
+                        // Write the pipeline binary file.
+                        if (!config.pipeline_binary.empty())
+                        {
+                            std::cout << kStrInfoExtractGraphicsPipelineBinary << std::endl;
+                            ret = !pipeline_binary.empty() && RgDx12Utils::WriteBinaryFile(config.pipeline_binary, pipeline_binary);
 
+                            // Report the result to the user.
+                            std::cout << (ret ? kStrInfoExtractGraphicsPipelineBinarySuccess :
+                                kStrErrorExtractGraphicsShaderStatsFailure) << std::endl;
+                        }
+                    }
+                }
+                else
+                {
+                    std::stringstream msg;
+                    if (!error_msg.empty())
+                    {
+                        msg << std::endl;
+                    }
+                    msg << kStrErrorGraphicsPipelineCreationFailure << std::endl;
+                    msg << kStrHintUseDebugLayer << std::endl;
+                    msg << kStrHintRootSignatureFailure << std::endl;
+                    error_msg.append(msg.str());
+                }
+            }
+            else
+            {
+                std::cerr << kStrErrorGpsoFileParseFailed << std::endl;
+            }
+        }
+        return ret;
+    }
+
+    bool rgDx12Frontend::CompileMeshPipeline(const RgDx12Config& config, std::string& error_msg) const
+    {
+        PSO_STREAM stream{ };
+        RgDx12PipelineResults results = {};
+        std::vector<char> pipeline_binary;
+
+        bool ret = CreateMeshPipeline(config, stream, error_msg);
+        assert(ret);
+        if (ret)
+        {
+            // Create the graphics pipeline state.
+            ID3D12PipelineState* graphics_pso = nullptr;
+
+            // For graphics, we must use a .gpso file.
+            bool is_pso_file_parsed = false;
+            if (!config.rs_pso.empty())
+            {
+                // Load the .gpso file that the user provided, and extract the
+                // relevant pipeline state.
+                is_pso_file_parsed = RgDx12Utils::ParseGpsoFile(config.rs_pso, stream);
+                assert(is_pso_file_parsed);
+            }
+            else
+            {
+                // Use a default pso.
+                assert(false);
+                std::cout << "Warning: no pipeline state file received. Use the --gpso switch to provide a graphics pipeline description." << std::endl;
+            }
+
+            if (is_pso_file_parsed)
+            {
+                // Check if the user provided a serialized root signature file.
+                bool is_serialized_root_signature = !config.rs_serialized.empty();
+
+                // Read the root signature from the file and recreate it.
+                if (is_serialized_root_signature)
+                {
+                    std::vector<char> root_signature_buffer;
+                    ret = RgDx12Utils::ReadBinaryFile(config.rs_serialized, root_signature_buffer);
+                    assert(ret);
+                    if (ret)
+                    {
+                        device_.Get()->CreateRootSignature(0, root_signature_buffer.data(),
+                            root_signature_buffer.size(), IID_PPV_ARGS(&stream.pRootSignature));
+                        assert(stream.pRootSignature != nullptr);
+                        ret = stream.pRootSignature != nullptr;
+                    }
+                }
+                else
+                {
+                    // If the input is HLSL, we need to compile the root signature out of the HLSL file.
+                    // Otherwise, if the input is a DXBC binary and it has a root signature baked into it,
+                    // then the root signature would be automatically fetched from the binary, there is no
+                    // need to set it into the PSO's root signature field.
+                    ComPtr<ID3DBlob> compiled_rs;
+                    ret = CompileRootSignature(config, compiled_rs);
+                    if (ret)
+                    {
+                        // Create the root signature through the device and assign it to our PSO.
+                        std::vector<uint8_t> root_signature_buffer;
+                        root_signature_buffer.resize(compiled_rs->GetBufferSize());
+                        memcpy(root_signature_buffer.data(), compiled_rs->GetBufferPointer(),
+                            compiled_rs->GetBufferSize());
+                        device_.Get()->CreateRootSignature(0, root_signature_buffer.data(),
+                            root_signature_buffer.size(), IID_PPV_ARGS(&stream.pRootSignature));
+                        assert(stream.pRootSignature != nullptr);
+                        ret = stream.pRootSignature != nullptr;
+                    }
+                }
+
+                D3D12_PIPELINE_STATE_STREAM_DESC pso = {};
+                pso.SizeInBytes = sizeof(PSO_STREAM);
+                pso.pPipelineStateSubobjectStream = &stream;
+
+                // Create the graphics pipeline.
+                HRESULT hr = dxr_device_->CreatePipelineState(&pso, IID_PPV_ARGS(&graphics_pso));
+                assert(SUCCEEDED(hr));
+                ret = SUCCEEDED(hr);
+
+                if (ret)
+                {
+                    ret = backend_.CompileMeshPipeline(config, &pso, results, pipeline_binary, error_msg);
+                    assert(ret);
+
+                    if (ret)
+                    {
                         // Write the pipeline binary file.
                         if (!config.pipeline_binary.empty())
                         {
@@ -1671,7 +1926,7 @@ namespace rga
                                         // Track the current pipeline's results.
                                         results_pipeline_mode.push_back(curr_pipeline_results_metadata);
                                     }
-                                }                        
+                                }
 
                                 // Output metadata file.
                                 if (!config.output_metadata.empty())

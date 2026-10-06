@@ -8,10 +8,11 @@
 // C++.
 #include <cassert>
 
+#include "qt_isa_gui/widgets/find_text_widget.h"
+
 // Local.
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_build_view_graphics.h"
-#include "radeon_gpu_analyzer_gui/qt/rg_find_text_widget.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_maximize_splitter.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_menu_graphics.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_pipeline_state_model.h"
@@ -19,6 +20,7 @@
 #include "radeon_gpu_analyzer_gui/qt/rg_source_code_editor.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_source_editor_titlebar.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_view_container.h"
+#include "radeon_gpu_analyzer_gui/qt/rg_view_manager.h"
 #include "radeon_gpu_analyzer_gui/rg_pipeline_state_searcher.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
@@ -102,13 +104,20 @@ void RgBuildViewGraphics::HandleModeSpecificEditMode(EditMode new_mode)
             pipeline_state_view_->SetInitialWidgetFocus();
         }
     }
+
+    if (view_manager_ != nullptr)
+    {
+        view_manager_->SetIsSourceViewCurrent(false);
+        view_manager_->SetIsPsoEditorViewCurrent(true);
+        view_manager_->SetIsBuildSettingsViewCurrent(false);
+    }
 }
 
 void RgBuildViewGraphics::ConnectPsoFindSignals()
 {
     // Connect the find widget's close toggle handler.
     [[maybe_unused]] bool is_connected =
-        connect(pso_find_widget_, &RgFindTextWidget::CloseWidgetSignal, this, &RgBuildViewGraphics::HandleFindWidgetVisibilityToggled);
+        connect(pso_find_widget_, &FindTextWidget::CloseWidgetSignal, this, &RgBuildViewGraphics::HandleFindWidgetVisibilityToggled);
     assert(is_connected);
 }
 

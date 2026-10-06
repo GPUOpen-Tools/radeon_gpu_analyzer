@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2013-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2013-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for Parse for the shader isa.
@@ -15,19 +15,19 @@
 #include <set>
 
 #ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4309)
+#pragma warning(push)
+#pragma warning(disable : 4309)
 #endif
 #include "be_parser_si.h"
 #include "be_isa_program_graph.h"
 #include "source/radeon_gpu_analyzer_backend/be_include.h"
 #ifdef _WIN32
-    #pragma warning(pop)
+#pragma warning(pop)
 #endif
 
 // Constants.
 static const char* kStrHsailDisassemblyTokenStart = "Disassembly for ";
-static const char* kStrHsailDisassemblyTokenEnd = "\nend\n";
+static const char* kStrHsailDisassemblyTokenEnd   = "\nend\n";
 
 class ParserIsa
 {
@@ -38,14 +38,28 @@ public:
     ~ParserIsa();
 
     // Parse the 32 instruction.
-    bool Parse(const std::string& isa_line, GDT_HW_GENERATION asic_generation, Instruction::Instruction32Bit instruction_hex,
-               const std::string& src_line, int srcLineNum, bool is_literal_32b = false, uint32_t literal_32b = 0,
-               int label = kNoLabel, int goto_label = kNoLabel, int line_count = 0);
+    bool Parse(const std::string&            isa_line,
+               GDT_HW_GENERATION             asic_generation,
+               Instruction::Instruction32Bit instruction_hex,
+               const std::string&            src_path,
+               const std::string&            src_line,
+               int                           srcLineNum,
+               bool                          is_literal_32b = false,
+               uint32_t                      literal_32b    = 0,
+               int                           label          = kNoLabel,
+               int                           goto_label     = kNoLabel,
+               int                           line_count     = 0);
 
     // Parse the 64 instruction.
-    bool Parse(const std::string& isa_line, GDT_HW_GENERATION asic_generation, Instruction::Instruction64Bit instruction_hex,
-               const std::string& src_line, int srcLineNum, int label = kNoLabel,
-               int goto_label = kNoLabel, int line_count = 0);
+    bool Parse(const std::string&            isa_line,
+               GDT_HW_GENERATION             asic_generation,
+               Instruction::Instruction64Bit instruction_hex,
+               const std::string&            src_path,
+               const std::string&            src_line,
+               int                           srcLineNum,
+               int                           label      = kNoLabel,
+               int                           goto_label = kNoLabel,
+               int                           line_count = 0);
 
     // Parse the ISA.
     bool Parse(const std::string& isa);
@@ -58,13 +72,22 @@ public:
     // params - string representation of the instruction's parameters.
     // binary_representation - string representation of the instruction's binary representation.
     // offset - string representation of the instruction's offset within the program.
-    bool SplitIsaLine(const std::string& isa_source_code_line, std::string& instruction_opcode,
-        std::string& params, std::string& binary_representation, std::string& offset) const;
+    bool SplitIsaLine(const std::string& isa_source_code_line,
+                      std::string&       instruction_opcode,
+                      std::string&       params,
+                      std::string&       binary_representation,
+                      std::string&       offset) const;
 
     // Get all ISA instructions for the program.
-    const std::vector<Instruction*>& GetInstructions() const { return instructions_;}
+    const std::vector<Instruction*>& GetInstructions() const
+    {
+        return instructions_;
+    }
 
-    unsigned int GetCodeLength() const { return code_len_; }
+    unsigned int GetCodeLength() const
+    {
+        return code_len_;
+    }
 
 private:
     // Reset all instruction counters.
@@ -79,8 +102,8 @@ private:
     // Parse the ISA disassembly line by line, and store the instructions internally.
     bool ParseToVector(const std::string& isa);
 
-    unsigned int sgprs_ = 0;
-    unsigned int vgprs_ = 0;
+    unsigned int sgprs_    = 0;
+    unsigned int vgprs_    = 0;
     unsigned int code_len_ = 0;
 
     // all instructions generated for the ISA
@@ -93,4 +116,4 @@ private:
     ISAProgramGraph isa_graph_;
 };
 
-#endif //RGA_RADEONGPUANALYZERBACKEND_SRC_EMULATOR_PARSER_BE_ISA_PARSER_H_
+#endif  //RGA_RADEONGPUANALYZERBACKEND_SRC_EMULATOR_PARSER_BE_ISA_PARSER_H_

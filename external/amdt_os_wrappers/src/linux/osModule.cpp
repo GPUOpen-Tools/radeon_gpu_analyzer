@@ -281,40 +281,42 @@ bool osGetModuleArchitectures(const osFilePath& modulePath, gtVector<osModuleArc
             // Read the module's ELF header
             size_t elfHeaderSize = sizeof(Elf32_Ehdr);
             gtUByte* fileHeaderBuff = (u_char*)malloc(elfHeaderSize);
-
-            size_t readBytes = read(fdModule, fileHeaderBuff, elfHeaderSize);
-            GT_IF_WITH_ASSERT(readBytes == elfHeaderSize)
+            GT_IF_WITH_ASSERT(fileHeaderBuff != NULL)
             {
-                // Verify that we are handling an ELF file:
-                Elf32_Ehdr* pELFHeader = (Elf32_Ehdr*)fileHeaderBuff;
-                bool isELFHeaderValid = (pELFHeader->e_ident[EI_MAG0] == 0x7F) &&
-                                        (pELFHeader->e_ident[EI_MAG1] == 'E') &&
-                                        (pELFHeader->e_ident[EI_MAG2] == 'L') &&
-                                        (pELFHeader->e_ident[EI_MAG3] == 'F');
-                GT_IF_WITH_ASSERT(isELFHeaderValid)
+                size_t readBytes = read(fdModule, fileHeaderBuff, elfHeaderSize);
+                GT_IF_WITH_ASSERT(readBytes == elfHeaderSize)
                 {
-                    // Get the ELF file's required architecture:
-                    Elf32_Half elfMachineType = pELFHeader->e_machine;
-
-                    // If the ELF file's required architecture is Intel I386:
-                    if (elfMachineType == EM_386)
+                    // Verify that we are handling an ELF file:
+                    Elf32_Ehdr* pELFHeader = (Elf32_Ehdr*)fileHeaderBuff;
+                    bool isELFHeaderValid = (pELFHeader->e_ident[EI_MAG0] == 0x7F) &&
+                                            (pELFHeader->e_ident[EI_MAG1] == 'E') &&
+                                            (pELFHeader->e_ident[EI_MAG2] == 'L') &&
+                                            (pELFHeader->e_ident[EI_MAG3] == 'F');
+                    GT_IF_WITH_ASSERT(isELFHeaderValid)
                     {
-                        archs.push_back(OS_I386_ARCHITECTURE);
-                        retVal = true;
-                    }
+                        // Get the ELF file's required architecture:
+                        Elf32_Half elfMachineType = pELFHeader->e_machine;
 
-                    // If the ELF file's required architecture is AMD X86_64:
-                    if (elfMachineType == EM_X86_64)
-                    {
-                        archs.push_back(OS_X86_64_ARCHITECTURE);
-                        retVal = true;
+                        // If the ELF file's required architecture is Intel I386:
+                        if (elfMachineType == EM_386)
+                        {
+                            archs.push_back(OS_I386_ARCHITECTURE);
+                            retVal = true;
+                        }
+
+                        // If the ELF file's required architecture is AMD X86_64:
+                        if (elfMachineType == EM_X86_64)
+                        {
+                            archs.push_back(OS_X86_64_ARCHITECTURE);
+                            retVal = true;
+                        }
                     }
                 }
-            }
 
-            // Release the header buffer:
-            free(fileHeaderBuff);
-            fileHeaderBuff = NULL;
+                // Release the header buffer:
+                free(fileHeaderBuff);
+                fileHeaderBuff = NULL;
+            }
 
             // Close the input module file:
             close(fdModule);

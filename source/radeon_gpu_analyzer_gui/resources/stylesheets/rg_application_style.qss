@@ -76,17 +76,17 @@ RgIsaDisassemblyView #viewTitlebar #line
 /********************************************************************/
 /* Find text widget
 /********************************************************************/
-RgFindTextWidget QPushButton
+FindTextWidget #match_case_
 {
     border: 1px solid palette(text);
 }
 
-RgFindTextWidget QPushButton:hover:!pressed
+FindTextWidget #match_case_:hover:!pressed
 {
     border: 1px solid palette(text);
 }
 
-RgFindTextWidget QPushButton:checked
+FindTextWidget #match_case_:checked
 {
     background: palette(highlight);
     border: 1px solid palette(text);
@@ -203,6 +203,40 @@ RgGlobalSettingsView RgComboBox, ScaledFontComboBox
 RgGlobalSettingsView#columnVisibilityArrowPushButton
 {
     font-size: 9.75pt;
+}
+
+/********************************************************************/
+/* Binary Analysis build settings view.
+/********************************************************************/
+RgBuildSettingsViewBinary #allOptionsTextEdit
+{
+    background: palette(alternate-base);
+}
+
+RgBuildSettingsViewBinary #settingsCommandLineHeaderLabel
+{
+    background: palette(alternate-base);
+}
+
+RgBuildSettingsViewBinary #generalHeaderLabel
+{
+    background: palette(alternate-base);
+}
+
+RgBuildSettingsViewBinary #binaryOptionsHeaderLabel
+{
+    background: palette(alternate-base);
+}
+
+RgBuildSettingsViewBinary #outputFilesLabel
+{
+    background: palette(alternate-base);
+}
+
+RgBuildSettingsViewBinary RgComboBox
+{
+    combobox-popup: 0; 
+    padding: 0px 0px 0px 0px;
 }
 
 /********************************************************************/

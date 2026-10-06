@@ -23,20 +23,19 @@
 // DXC files and folder path string constants.
 static const wchar_t* kDxCompilerFileName = L"dxcompiler.dll";
 static const wchar_t* kDxIlFileName       = L"dxil.dll";
-static const wchar_t* kDxcDefaultpath     = L"utils\\dx12\\dxc\\";
+static const wchar_t* kDxcDefaultpath     = L"utils\\dx12\\dxc\\v1.8.2505.1\\";
 
 // DXC create instance function name string constant.
 static const char* kStrDxcCreateInstance = "DxcCreateInstance";
 
 // Errors and warning strings.
-static const char* kStrErrorDxcUtils = "Error: Failed to initialize DXC utils.\n";
-static const char* kStrErrorDxcCompiler = "Error: Failed to initialize DXC compiler.\n";
-static const char* kStrDebugLayerEnabled = "Info: enabled Debug Layer.\n";
-static const char* kStrDebugLayerFailed = "Warning: failed to enable Debug Layer.\n";
+static const char* kStrErrorDxcUtils            = "Error: Failed to initialize DXC utils.\n";
+static const char* kStrErrorDxcCompiler         = "Error: Failed to initialize DXC compiler.\n";
+static const char* kStrDebugLayerEnabled        = "Info: enabled Debug Layer.\n";
+static const char* kStrDebugLayerFailed         = "Warning: failed to enable Debug Layer.\n";
 static const char* kStrLoadDXCCompilerLibFailed = "Error: Failed to load DXC shader compiler library \"dxcompiler.dll\".\n";
 static const char* kStrLoadDXCCompilerFallbackA = "Warning: could not find dxcompiler.dll in ";
 static const char* kStrLoadDXCCompilerFallbackB = " falling back to loading the packaged version.\n";
-
 
 BeDx12Compiler::BeDx12Compiler(const Config& config, bool needs_dxc_compiler, std::stringstream& out)
 {
@@ -61,7 +60,6 @@ BeDx12Compiler::BeDx12Compiler(const Config& config, bool needs_dxc_compiler, st
                     out << kStrErrorDxcCompiler;
                 }
             }
-
         }
         else
         {
@@ -85,6 +83,8 @@ bool BeDx12Compiler::LoadSrcBlob(const Config&           config,
         switch (stage)
         {
         case BePipelineStage::kVertex:
+        case BePipelineStage::kMesh:
+        case BePipelineStage::kTask:
         case BePipelineStage::kFragment:
         case BePipelineStage::kCompute:
             ret = BeUtils::ReadBinaryFile(source_file_path, shader_blob);
@@ -157,7 +157,7 @@ std::optional<DxcCreateInstanceProc> BeDx12Compiler::LoadDxcLibrary(const Config
         result = BeDx12Compiler::LoadDxcLibraryFromDirectoryUtil(BeDx12Utils::asCharArray(config.dxc_path).c_str());
         if (!result.has_value())
         {
-            out << kStrLoadDXCCompilerFallbackA << config.dxc_path << kStrLoadDXCCompilerFallbackB;            
+            out << kStrLoadDXCCompilerFallbackA << config.dxc_path << kStrLoadDXCCompilerFallbackB;
         }
     }
 
@@ -177,8 +177,8 @@ std::optional<DxcCreateInstanceProc> BeDx12Compiler::LoadDxcLibrary(const Config
 std::optional<DxcCreateInstanceProc> BeDx12Compiler::LoadDxcLibraryFromDirectoryUtil(const wchar_t* dir)
 {
     std::optional<DxcCreateInstanceProc> result;
-    std::wstring dxcompiler_path_str;
-    std::wstring dxil_path_str;
+    std::wstring                         dxcompiler_path_str;
+    std::wstring                         dxil_path_str;
     if (dir && *dir)
     {
         const std::filesystem::path dxc_dir = std::filesystem::path(dir);
@@ -187,10 +187,27 @@ std::optional<DxcCreateInstanceProc> BeDx12Compiler::LoadDxcLibraryFromDirectory
     }
     else
     {
+        wchar_t exe_path[MAX_PATH] = {0};
+        std::wstring full_path;
+        DWORD   len                = GetModuleFileNameW(nullptr, exe_path, MAX_PATH);
+        if (len == 0 || len == MAX_PATH)
+        {
+            result = std::nullopt;
+        }
+        else
+        {
+            full_path = exe_path;
+            size_t       last_backslash = full_path.rfind('\\');
+            if (last_backslash != std::string::npos)
+            {
+                full_path.resize(last_backslash + 1);
+            }
+        }
+
         std::wstringstream dxc_wss, dxil_wss;
-        dxc_wss << kDxcDefaultpath << kDxCompilerFileName;
+        dxc_wss << full_path << kDxcDefaultpath << kDxCompilerFileName;
         dxcompiler_path_str = dxc_wss.str();
-        dxil_wss << kDxcDefaultpath << kDxIlFileName;
+        dxil_wss << full_path << kDxcDefaultpath << kDxIlFileName;
         dxil_path_str = dxil_wss.str();
     }
 
@@ -233,7 +250,7 @@ bool BeDx12Compiler::CompileSrc(const Config&         config,
             shader_source_buffer.Size      = shader_source->GetBufferSize();
             shader_source_buffer.Encoding  = 0;
 
-            BeDxcIncludeHandler dx12_include_handler{GetUtils(), source_file_path, config.include_path};
+            BeDxcIncludeHandler       dx12_include_handler{GetUtils(), source_file_path, config.include_path};
             std::vector<std::wstring> dxc_compiler_args;
             if (dx12_include_handler.InitIncludeHandler() && GetDxcCompilerArgs(config, stage, dxc_compiler_args))
             {
@@ -264,7 +281,8 @@ bool BeDx12Compiler::CompileSrc(const Config&         config,
 
                         if (ret)
                         {
-                            status = BeDx12Utils::CheckHr(dxc_output.dxc_result->GetOutput(DXC_OUT_ROOT_SIGNATURE, IID_PPV_ARGS(&dxc_output_binary), &dxc_output_name));
+                            status = BeDx12Utils::CheckHr(
+                                dxc_output.dxc_result->GetOutput(DXC_OUT_ROOT_SIGNATURE, IID_PPV_ARGS(&dxc_output_binary), &dxc_output_name));
                             if (status == beKA::beStatus::kBeStatusSuccess && dxc_output_binary->GetBufferSize() > 0)
                             {
                                 dxc_output.has_root_signature = true;
@@ -294,7 +312,7 @@ bool BeDx12Compiler::CompileSrc(const Config&         config,
                         ret = false;
                     }
                 }
-            }            
+            }
         }
     }
     return ret;
@@ -380,6 +398,12 @@ bool BeDx12Compiler::GetShaderStageModel(const Config& config, const BePipelineS
     case BePipelineStage::kVertex:
         model_string = BeDx12Utils::GenerateShaderModel(config.vs_model, config, BePipelineStage::kVertex);
         break;
+    case BePipelineStage::kMesh:
+        model_string = BeDx12Utils::GenerateShaderModel(config.ms_model, config, BePipelineStage::kMesh);
+        break;
+    case BePipelineStage::kTask:
+        model_string = BeDx12Utils::GenerateShaderModel(config.as_model, config, BePipelineStage::kTask);
+        break;
     case BePipelineStage::kFragment:
         model_string = BeDx12Utils::GenerateShaderModel(config.ps_model, config, BePipelineStage::kFragment);
         break;
@@ -400,6 +424,12 @@ bool BeDx12Compiler::GetShaderStageEntry(const Config& config, const BePipelineS
     {
     case BePipelineStage::kVertex:
         entry_string = config.vs_entry_point;
+        break;
+    case BePipelineStage::kMesh:
+        entry_string = config.ms_entry_point;
+        break;
+    case BePipelineStage::kTask:
+        entry_string = config.as_entry_point;
         break;
     case BePipelineStage::kFragment:
         entry_string = config.ps_entry_point;

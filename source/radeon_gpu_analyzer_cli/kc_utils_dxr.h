@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for DXR helper functions.
@@ -19,19 +19,41 @@
 #include "radeon_gpu_analyzer_cli/kc_data_types.h"
 #include "radeon_gpu_analyzer_cli/kc_config.h"
 
-
 // Class for DXR mode utility functions for ISA post-processing.
 class KcUtilsDxr
 {
 public:
-    KcUtilsDxr(RgClOutputMetadata&     output_metadata,
-               bool                    should_print_cmd,
-               LoggingCallbackFunction log_callback)
-        : output_metadata_(output_metadata)
+    KcUtilsDxr(const std::string& binary_codeobj_file, RgClOutputMetadata& output_metadata, bool should_print_cmd, LoggingCallbackFunction log_callback)
+        : binary_codeobj_file_(binary_codeobj_file)
+        , output_metadata_(output_metadata)
         , should_print_cmd_(should_print_cmd)
         , log_callback_(log_callback)
-    {}
+    {
+    }
 
+    // Extract Resource Usage (statistics) data.
+    beKA::beStatus ExtractStatistics(const Config& config, const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md) const;
+    // Helper function that combines the kernel and shader_subtype to kernel_shader_subtype.
+    static std::string CombineKernelAndKernelSubtype(const std::string& kernel, const std::string& shader_subtype);
+
+    // Helper function that sepeartes the kernel and shader_subtype from kernel_shader_subtype.
+    static std::pair<std::string, std::string> SeparateKernelAndKernelSubtype(const std::string& combined_name);
+
+    // Wrapper around KcUtils::ConstructOutputFileName() to keep track of session output files.
+    static void ConstructOutputFileName(const std::string& base_output_filename,
+                                        const std::string& default_suffix,
+                                        const std::string& default_extension,
+                                        const std::string& entry_point_name,
+                                        const std::string& device_name,
+                                        std::string&       generated_filename);
+
+    // Perform post-processing actions.
+    void RunPostProcessingSteps(const Config& config) const;
+
+    // Delete all temporary files created by RGA.
+    static void DeleteTempFiles(const RgClOutputMetadata& output_metadata);
+
+private:
     // Parse ISA files and generate separate files that contain parsed ISA in CSV format.
     bool ParseIsaFilesToCSV(bool add_line_numbers) const;
 
@@ -44,34 +66,15 @@ public:
     // Extract program Control Flow Graph.
     bool ExtractCFG(const Config& config) const;
 
-    // Extract Resource Usage (statistics) data.
-    beKA::beStatus ExtractStatistics(const Config& config, const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md) const;
-
-    // Helper function that combines the kernel and shader_subtype to kernel_shader_subtype.
-    static std::string CombineKernelAndKernelSubtype(const std::string& kernel, const std::string& shader_subtype);
-
-    // Helper function that sepeartes the kernel and shader_subtype from kernel_shader_subtype.
-    static std::pair<std::string, std::string> SeparateKernelAndKernelSubtype(const std::string& combined_name);
-
     // Convert statistics file from Graphics mode into normal RGA stats format.
     static beKA::beStatus ConvertStats(const BeRtxPipelineFiles& isaFiles,
                                        const BeRtxPipelineFiles& stats_files,
-                                       const Config&            config,
-                                       const std::string&       device);
-
-    // Wrapper around KcUtils::ConstructOutputFileName() to keep track of session output files.
-    static void ConstructOutputFileName(const std::string& base_output_filename,
-                                        const std::string& default_suffix,
-                                        const std::string& default_extension,
-                                        const std::string& entry_point_name,
-                                        const std::string& device_name,
-                                        std::string&       generated_filename);
-
-    // Delete all temporary files created by RGA.
-    static void DeleteTempFiles(const RgClOutputMetadata& output_metadata);
-
-private:
+                                       const Config&             config,
+                                       const std::string&        device);
     // ---- DATA ----
+
+    // Binary code object file name.
+    std::string binary_codeobj_file_;
 
     // Output Metadata.
     RgClOutputMetadata& output_metadata_;
@@ -84,7 +87,6 @@ private:
 
     // Ouput files generated for the CLI session.
     static std::set<std::string> session_output_files_;
-
 };
 
 #endif  // RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_DXR_H_

@@ -14,8 +14,12 @@
 // Qt.
 #include <QDateTime>
 
+// Infra.
+#include "qt_isa_gui/utility/shader_source_syntax_highlighter.h"
+#include "qt_isa_gui/widgets/shader_source_code_viewer.h"
+#include "qt_isa_gui/widgets/shader_source_code_viewer_searcher.h"
+
 // Local.
-#include "source/radeon_gpu_analyzer_gui/qt/rg_syntax_highlighter.h"
 #include "source/radeon_gpu_analyzer_gui/qt/rg_unsaved_items_dialog.h"
 #include "source/radeon_gpu_analyzer_gui/rg_data_types.h"
 #include "ui_rg_build_view.h"
@@ -28,11 +32,10 @@ class RgCliOutputView;
 class RgFactory;
 class RgMenu;
 class RgMenuTitlebar;
-class RgFindTextWidget;
+class FindTextWidget;
 class RgIsaDisassemblyView;
 class RgMaximizeSplitter;
 class RgSourceCodeEditor;
-class RgSourceEditorSearcher;
 class RgSourceEditorTitlebar;
 class RgViewContainer;
 class RgViewManager;
@@ -50,6 +53,7 @@ enum class EditMode
 {
     kEmpty,
     kSourceCode,
+    kSourceCodeTabs,
     kBuildSettings,
     kPipelineSettings,
 };
@@ -118,11 +122,8 @@ public:
     // Returns "true" if the user selected to proceed with the build, or "false" otherwise.
     virtual bool SaveCurrentState();
 
-    // Builds the current project. 
-    // Optionally, when given a list of binaries file paths in binary analysis mode, only builds those binaries 
-    // and adds them to the existing project, rather than clearing the project and building all binaries in the project settings. 
-    // In other modes, since there are no binaries to build this is empty by default.
-    void BuildCurrentProject(std::vector<std::string> binaries_to_build = {});
+    // Builds the current project.
+    virtual void BuildCurrentProject();
 
     // Create the file menu.
     bool CreateFileMenu();
@@ -135,7 +136,7 @@ public:
     bool IsBuildInProgress() const;
 
     // Build a list of all source files that are currently modified.
-    void GetUnsavedSourceFiles(QStringList& unsaved_source_files);
+    virtual void GetUnsavedSourceFiles(QStringList& unsaved_source_files);
 
     // Initialize the RgBuildView user interface.
     bool InitializeView();
@@ -168,10 +169,10 @@ public:
     RgUnsavedItemsDialog::UnsavedFileDialogResult RequestSaveFiles(const QStringList& unsaved_files);
 
     // Requests a save for unsaved files and then removes all files if accepted.
-    bool RequestRemoveAllFiles();
+    virtual bool RequestRemoveAllFiles();
 
     // Sets the contents of the given file as the text in the RgSourceCodeEditor.
-    virtual void SetSourceCodeText(const std::string& file_full_path);
+    void SetSourceCodeText(const std::string& file_full_path, bool save_file_modified_timestamp = true);
 
     // Toggle the visibility of the disassembly view.
     void ToggleDisassemblyViewVisibility(bool is_visible);
@@ -198,7 +199,7 @@ public:
     void ConnectSourcecodeEditorSignals(RgSourceCodeEditor* editor);
 
     // Open the build settings interface.
-    virtual void OpenBuildSettings();
+    void OpenBuildSettings();
 
     // Populate the RgBuildView with the current project.
     bool PopulateBuildView();
@@ -213,7 +214,7 @@ public:
     void RestoreViewLayout();
 
     // Retrieve the RgSourceCodeEditor instance to use for the given filename.
-    RgSourceCodeEditor* GetEditorForFilepath(const std::string& full_file_path, RgSrcLanguage lang = RgSrcLanguage::Unknown);
+    virtual RgSourceCodeEditor* GetEditorForFilepath(const std::string& full_file_path, ShaderSourceLanguage lang = ShaderSourceLanguage::Unknown);
 
     // Cancel the current build.
     void CancelCurrentBuild();
@@ -285,9 +286,6 @@ signals:
     // A signal emitted to programatically trigger a project build.
     void BuildProjectEvent();
 
-    // A signal emitted to programatically disassemble the given binary files into the project.
-    void DissasembleBinaryFilesEvent(std::vector<std::string> bin_file_paths = {});
-
     // Signal emitted when the user changes the selected entry point index for a given file.
     void SelectedEntrypointChanged(const std::string& target_gpu, const std::string& input_file_path, const std::string& selected_entrypoint_name);
 
@@ -349,6 +347,9 @@ public slots:
     // Handler for when the build settings frame border needs to be set red.
     void HandleSetFrameBorderRed();
 
+    // Handler for when the build settings frame border needs to be set purple.
+    void HandleSetFrameBorderPurple();
+
     // Handler for when the build settings frame border needs to be set black.
     void HandleSetFrameBorderBlack();
 
@@ -372,10 +373,16 @@ protected slots:
     virtual void HandleSelectedFileChanged(const std::string& current_file_name, const std::string& new_file_name) = 0;
 
     // Handler invoked when the user changes the selected line in the current source editor.
-    virtual void HandleSourceFileSelectedLineChanged(RgSourceCodeEditor* editor, int line_number) = 0;
+    virtual void HandleSourceFileSelectedLineChanged(ShaderSourceCodeViewer* editor, int line_number) = 0;
 
     // Set the project build settings border color.
     virtual void SetAPISpecificBorderColor() = 0;
+
+    // Handler invoked when the user changes the current target GPU.
+    void HandleSelectedTargetGpuChanged(const std::string& target_gpu);
+
+    // Handler invoked when the correlated highlighted line index in the current file is updated.
+    virtual void HandleHighlightedCorrelationLineUpdated(int line_number, const std::string& src_path);
 
 private slots:
     // Handler invoked when the source editor is hidden from view.
@@ -390,14 +397,8 @@ private slots:
     // Handler invoked when the "Dismiss Message" button is pushed in the code editor titlebar.
     void HandleCodeEditorTitlebarDismissMsgPressed();
 
-    // Handler invoked when the correlated highlighted line index in the current file is updated.
-    void HandleHighlightedCorrelationLineUpdated(int line_number);
-
     // Handler invoked when the ability to correlate line numbers between input source and disassembly changes.
     void HandleIsLineCorrelationEnabled(RgSourceCodeEditor* editor, bool is_enabled);
-
-    // Handler invoked when the user changes the current target GPU.
-    void HandleSelectedTargetGpuChanged(const std::string& target_gpu);
 
     // Handler invoked when the find widget should be toggled.
     void HandleFindWidgetVisibilityToggled();
@@ -473,9 +474,6 @@ protected:
     // Remove all build outputs associated with the given input file.
     void DestroyBuildOutputsForFile(const std::string& input_file_full_path);
 
-    // Function to remove the file from the metadata. Does nothing unless reimplemented by the api specific class.
-    virtual void RemoveFileFromMetadata(const std::string& full_path);
-
     // Handle API-specific RgBuildView mode switching.
     // Do nothing by default, as RgBuildView does not require mode-specific behavior.
     virtual void HandleModeSpecificEditMode(EditMode new_mode)
@@ -525,7 +523,7 @@ protected:
     void SetViewContentsWidget(QWidget* new_contents);
 
     // Display the "Are you sure you want to remove this file?" dialog, and if so, remove the file.
-    bool ShowRemoveFileConfirmation(const std::string& message_string, const std::string& full_path);
+    virtual bool ShowRemoveFileConfirmation(const std::string& message_string, const std::string& full_path);
 
     // Switch the current RgSourceCodeEditor to the given instance.
     bool SwitchToEditor(RgSourceCodeEditor* editor);
@@ -540,17 +538,24 @@ protected:
     void SwitchEditMode(EditMode mode);
 
     // Remove the relevant RgSourceCodeEditor from the view when a file has been closed.
-    void RemoveEditor(const std::string& filename, bool switch_to_next_file = true);
+    virtual void RemoveEditor(const std::string& filename, bool switch_to_next_file = true);
 
     // Update the application notification message.
     virtual void UpdateApplicationNotificationMessage() = 0;
 
     // Remove the given input file from the RgBuildView.
-    void RemoveInputFile(const std::string& input_file_full_path);
+    virtual void RemoveInputFile(const std::string& input_file_full_path);
 
-private:
     // Is the user currently allowed to change the RgBuildView's EditMode?
     bool CanSwitchEditMode();
+
+    // Set the target gpu label and architecture in the model.
+    virtual void SetTargetGpuLabel() {};
+
+    // Update the FindWidget's search context using the current source code editor.
+    void UpdateSourceEditorSearchContext();
+
+private:
 
     // Has the code in the given editor been modified since the latest build?
     bool CheckSourcesModifiedSinceLastBuild(RgSourceCodeEditor* code_editor);
@@ -559,7 +564,7 @@ private:
     void ClearBuildView();
 
     // Clear the map of sourcecode editors.
-    void ClearEditors();
+    virtual void ClearEditors();
 
     // Create the build settings interface to edit project settings.
     void CreateBuildSettingsView();
@@ -574,7 +579,7 @@ private:
     bool GetInputFileOutputs(std::shared_ptr<RgCliBuildOutput> build_outputs, InputFileToBuildOutputsMap& outputs) const;
 
     // Update the filename for an open file.
-    void RenameFile(const std::string& old_file_path, const std::string& new_file_path);
+    virtual void RenameFile(const std::string& old_file_path, const std::string& new_file_path);
 
     // Update the project name.
     void RenameProject(const std::string& full_path);
@@ -583,16 +588,13 @@ private:
     bool LoadDisassemblyFromBuildOutput();
 
     // Handle displaying the build view when all files have been closed.
-    void SwitchToFirstRemainingFile();
+    virtual void SwitchToFirstRemainingFile();
 
     // Update the correlation state for the given source file.
-    void UpdateSourceFileCorrelationState(const std::string& file_path, bool is_correlated);
-
-    // Update the FindWidget's search context using the current source code editor.
-    void UpdateSourceEditorSearchContext();
+    virtual void UpdateSourceFileCorrelationState(const std::string& file_path, bool is_correlated);
 
     // Check if the currently open source file has been modified externally.
-    void CheckExternalFileModification();
+    virtual void CheckExternalFileModification();
 
     // Handle reloading the file after external file modification.
     virtual void HandleExternalFileModification(const QFileInfo& file_info);
@@ -680,10 +682,10 @@ protected:
     std::unordered_map<std::string, bool> pending_file_modifications_;  
 
     // A find widget used to edit source code.
-    RgFindTextWidget* find_widget_ = nullptr;
+    FindTextWidget* find_widget_ = nullptr;
 
-    // An interface used to allow the RgFindTextWidget to search source editor code.
-    RgSourceEditorSearcher* source_searcher_ = nullptr;
+    // An interface used to allow the FindTextWidget to search source editor code.
+    std::unique_ptr<ShaderSourceCodeViewerSearcher> source_searcher_;
 
     // A widget to contain the build settings and the save buttons.
     RgBuildSettingsWidget* build_settings_widget_ = nullptr;

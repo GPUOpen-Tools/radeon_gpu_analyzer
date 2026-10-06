@@ -674,7 +674,7 @@ bool RgVulkanBackend::InitVulkan(bool should_enable_validation)
     {
         // Notify the user about the failure.
         std::cerr << kStrVulkanErrorCouldNotLocateVulkanLoader;
-        if (strlen(icd_path) > 0)
+        if (icd_path != nullptr && strlen(icd_path) > 0)
         {
             std::cerr << ": " << icd_path;
         }

@@ -24,6 +24,7 @@ class BeDx12Reflection
     struct HlslOutput
     {
         std::string vs;
+        std::string ms;
         std::string ps;
         std::string gpso;
         std::string root_signature;
@@ -31,7 +32,7 @@ class BeDx12Reflection
 
     // Auto-Generate Dx12 files for single shader compilation.
     beKA::beStatus AutoGenerateFiles(IDxcUtils*                dxc_utils,
-                                     const BeDx12AutoGenInput& input, 
+                                     const BeDx12AutoGenInput& input,
                                      HlslOutput&               hlsl_output,
                                      std::stringstream&        err) const;
 
@@ -56,11 +57,15 @@ class BeDx12Reflection
      beKA::beStatus GenerateRootSignatureCompute(const DxcReflectionOutput& cs_dxc_output,
                                                  std::string&               root_signauture_hlsl,
                                                  std::stringstream&         err) const;
-     
+
      // Auto-Generate root signature for graphics pipeline.
      beKA::beStatus GenerateRootSignatureGraphics(UINT64                     shader_requires_flags,
                                                   bool                       has_vs,
                                                   const DxcReflectionOutput& vs_output,
+                                                  bool                       has_ms,
+                                                  const DxcReflectionOutput& ms_output,
+                                                  bool                       has_as,
+                                                  const DxcReflectionOutput& as_output,
                                                   bool                       has_ps,
                                                   const DxcReflectionOutput& ps_output,
                                                   std::string&               root_signauture_hlsl,
@@ -71,17 +76,18 @@ class BeDx12Reflection
                                         const DxcReflectionOutput&                dxc_output,
                                         std::string&                              pixel_shader,
                                         std::stringstream&                        err) const;
-    
+
      // Auto-Generate vertex shader.
      beKA::beStatus GenerateVertexShader(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* gpso,
                                          const DxcReflectionOutput&                dxc_output,
                                          std::string&                              vertex_shader,
                                          std::stringstream&                        err) const;
-    
+
      // Auto-Generate Gpso file.
      beKA::beStatus GenerateGpso(UINT64                     shader_requires_flags,
-                                 bool                       has_vs, 
+                                 bool                       has_vs,
                                  const DxcReflectionOutput& vs_output,
+                                 bool                       has_ms,
                                  bool                       has_ps,
                                  const DxcReflectionOutput& ps_output,
                                  std::string&               gpso_text,

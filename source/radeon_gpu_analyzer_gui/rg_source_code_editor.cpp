@@ -20,38 +20,11 @@
 #include "radeon_gpu_analyzer_gui/rg_definitions.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
-// Highglight color for the selcted line the cursor is on.
-static QColor kColorHighlightedRow[ColorThemeType::kColorThemeTypeCount] = {QColor(Qt::yellow).lighter(170), QColor(80, 80, 40, 100)};
-
-RgSourceCodeEditor::RgSourceCodeEditor(QWidget* parent, RgSrcLanguage lang)
-    : QPlainTextEdit(parent)
+RgSourceCodeEditor::RgSourceCodeEditor(QWidget* parent, ShaderSourceLanguage lang)
+    : ShaderSourceCodeViewer(parent, lang)
 {
-    line_number_area_ = new LineNumberArea(this);
-
-    // The duration of time between the text cursor blinking on and off.
-    static const int kCursorBlinkToggleDurationMs = 500;
-
-    // Create the blinking cursor update timer.
-    cursor_blink_timer_ = new QTimer(this);
-    cursor_blink_timer_->setInterval(kCursorBlinkToggleDurationMs);
-    cursor_blink_timer_->start();
-
-    // Connect signals.
-    ConnectSignals();
-
-    // Set the border color.
-    setObjectName("sourceCodeEditor");
-
-    // Create the syntax highlighter.
-    if (lang != RgSrcLanguage::Unknown)
-    {
-        syntax_highlighter_ = new RgSyntaxHighlighter(document(), lang);
-    }
-
-    UpdateLineNumberAreaWidth(0);
-
-    // Initialize rendering of highlighted lines within the editor.
-    UpdateCursorPosition();
+    // The parent class is read only so make sure the text can be edited.
+    setReadOnly(false);
 
     // Set the default font.
     QTextDocument* doc = this->document();
@@ -61,18 +34,7 @@ RgSourceCodeEditor::RgSourceCodeEditor(QWidget* parent, RgSrcLanguage lang)
         font.setFamily(kStrBuildViewFontFamily);
         font.setPointSize(kBuildViewFontSize);
         doc->setDefaultFont(font);
-
-        // A tab is the same width as 4 spaces.
-        QFontMetrics metrics(font);
-        int          tab_width = metrics.horizontalAdvance(' ') * 4;
-        setTabStopDistance(tab_width);
     }
-
-    // Configure the word wrap mode.
-    setWordWrapMode(QTextOption::NoWrap);
-
-    // Disable accepting dropped files.
-    setAcceptDrops(false);
 
     // Set up the open header file action.
     open_header_file_action_ = new QAction(tr(kStrSourceEditorContextMenuOpenHeader), this);
@@ -81,43 +43,24 @@ RgSourceCodeEditor::RgSourceCodeEditor(QWidget* parent, RgSrcLanguage lang)
     cut_text_action_ = new QAction(tr(kStrSourceEditorContextMenuCut), this);
     cut_text_action_->setShortcut(QKeySequence(kSourceEditorHotkeyContextMenuCut));
 
-    // Copy action.
-    copy_text_action_ = new QAction(tr(kStrSourceEditorContextMenuCopy), this);
-    copy_text_action_->setShortcut(QKeySequence(kSourceEditorHotkeyContextMenuCopy));
-
     // Paste action.
     paste_text_action_ = new QAction(tr(kStrSourceEditorContextMenuPaste), this);
     paste_text_action_->setShortcut(QKeySequence(kSourceEditorHotkeyContextMenuPaste));
 
-    // Select All action.
-    select_all_text_action_ = new QAction(tr(kStrSourceEditorContextMenuSelectAll), this);
-    cut_text_action_->setShortcut(QKeySequence(kSourceEditorHotkeyContextMenuCut));
-
     // Open header file.
-    bool is_connected = connect(open_header_file_action_, &QAction::triggered, this, &RgSourceCodeEditor::HandleOpenHeaderFile);
-    assert(is_connected);
+    connect(open_header_file_action_, &QAction::triggered, this, &RgSourceCodeEditor::HandleOpenHeaderFile);
 
-    // Cut action.
-    is_connected = connect(cut_text_action_, &QAction::triggered, this, &QPlainTextEdit::cut);
-    assert(is_connected);
+    connect(cut_text_action_, &QAction::triggered, this, &QPlainTextEdit::cut);
 
-    // Copy action.
-    is_connected = connect(copy_text_action_, &QAction::triggered, this, &QPlainTextEdit::copy);
-    assert(is_connected);
+    connect(paste_text_action_, &QAction::triggered, this, &QPlainTextEdit::paste);
 
-    // Paste action.
-    is_connected = connect(paste_text_action_, &QAction::triggered, this, &QPlainTextEdit::paste);
-    assert(is_connected);
-
-    // Select All action.
-    is_connected = connect(select_all_text_action_, &QAction::triggered, this, &QPlainTextEdit::selectAll);
-    assert(is_connected);
-
-    context_menu_ = this->createStandardContextMenu();
+    // The context menu as well as the copy and select all options should have been initialized by the base class.
+    assert(copy_text_action_ != nullptr);
+    assert(select_all_text_action_ != nullptr);
     assert(context_menu_ != nullptr);
-    if (context_menu_ != nullptr)
+    if (context_menu_ != nullptr && select_all_text_action_ != nullptr && copy_text_action_ != nullptr)
     {
-        // Reconstruct the context menu.
+        // Clear and add back all the actions so that the new actions can be placed in the menu in the desired order.
         context_menu_->clear();
         context_menu_->addAction(open_header_file_action_);
         context_menu_->addSeparator();
@@ -126,121 +69,7 @@ RgSourceCodeEditor::RgSourceCodeEditor(QWidget* parent, RgSrcLanguage lang)
         context_menu_->addAction(paste_text_action_);
         context_menu_->addSeparator();
         context_menu_->addAction(select_all_text_action_);
-        this->setContextMenuPolicy(Qt::CustomContextMenu);
-
-        // Set hand pointer for the context menu.
-        context_menu_->setCursor(Qt::PointingHandCursor);
-
-        // Connect the signal for showing the context menu.
-        is_connected = connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(ShowContextMenu(const QPoint&)));
-        assert(is_connected);
-    }
-}
-
-int RgSourceCodeEditor::LineNumberAreaWidth() const
-{
-    int digits = 1;
-    int max    = qMax(1, blockCount());
-    while (max >= 10)
-    {
-        max /= 10;
-        ++digits;
-    }
-
-    int space = 15 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
-
-    return space;
-}
-
-void RgSourceCodeEditor::ScrollToLine(int line_number)
-{
-    // Compute the last visible text block.
-    QTextBlock first_visible              = firstVisibleBlock();
-    auto       last_visible_line_position = QPoint(0, viewport()->height() - 1);
-    QTextBlock last_visible_block         = cursorForPosition(last_visible_line_position).block();
-
-    // Get the first and last visible line numbers in the editor.
-    int first_visible_line_number = firstVisibleBlock().blockNumber();
-    int last_visible_line_number  = last_visible_block.blockNumber();
-
-    // Only scroll the textbox if the target line is not currently visible.
-    // Scroll 5 lines above the cursor position if the cursor is too close to the editor upper bound.
-    bool is_on_creen = (first_visible_line_number < line_number) && (line_number < last_visible_line_number);
-    if (!is_on_creen)
-    {
-        // Compensate for the scrollbar being zero-based, while the incoming line number is one-based.
-        int scroll_line = line_number - 1;
-
-        // Scroll to 5 lines above the given line index.
-        verticalScrollBar()->setValue(scroll_line - 5);
-    }
-    else if (line_number - first_visible_line_number < 5)
-    {
-        verticalScrollBar()->setValue(verticalScrollBar()->value() - 5);
-    }
-}
-
-void RgSourceCodeEditor::setText(const QString& txt)
-{
-    QTextDocument* doc = this->document();
-    if (doc != nullptr)
-    {
-        // Set the text.
-        doc->setPlainText(txt);
-
-        // Set the cursor to the first line and column.
-        this->moveCursor(QTextCursor::Start);
-        this->ensureCursorVisible();
-    }
-}
-
-void RgSourceCodeEditor::clearText(const QString& txt)
-{
-    Q_UNUSED(txt);
-
-    QTextDocument* doc = this->document();
-    if (doc != nullptr && !doc->isEmpty())
-    {
-        doc->clear();
-    }
-}
-
-const std::string& RgSourceCodeEditor::GetTitleBarText()
-{
-    return title_bar_notification_text_;
-}
-
-void RgSourceCodeEditor::SetTitleBarText(const std::string& text)
-{
-    title_bar_notification_text_ = text;
-}
-
-void RgSourceCodeEditor::HandleToggleCursorVisibility()
-{
-    // Toggle the visibility of the cursor and trigger a repaint.
-    is_cursor_visible_ = !is_cursor_visible_;
-    viewport()->update();
-}
-
-void RgSourceCodeEditor::UpdateLineNumberAreaWidth(int /* new_block_count */)
-{
-    setViewportMargins(LineNumberAreaWidth(), 0, 0, 0);
-}
-
-void RgSourceCodeEditor::UpdateLineNumberArea(const QRect& rect, int dy)
-{
-    if (dy)
-    {
-        line_number_area_->scroll(0, dy);
-    }
-    else
-    {
-        line_number_area_->update(0, rect.y(), line_number_area_->width(), rect.height());
-    }
-
-    if (rect.contains(viewport()->rect()))
-    {
-        UpdateLineNumberAreaWidth(0);
+        setContextMenuPolicy(Qt::CustomContextMenu);
     }
 }
 
@@ -288,42 +117,8 @@ void RgSourceCodeEditor::HandleOpenHeaderFile()
     }
 }
 
-bool RgSourceCodeEditor::GetCurrentLineText(QString& line_text)
-{
-    // Get the current line.
-    QTextCursor cursor = this->textCursor();
-    cursor.movePosition(QTextCursor::StartOfLine);
-    int lines = 1;
-    while (cursor.positionInBlock() > 0)
-    {
-        cursor.movePosition(QTextCursor::Up);
-        lines++;
-    }
-
-    QTextBlock block = cursor.block().previous();
-    while (block.isValid())
-    {
-        lines += block.lineCount();
-        block = block.previous();
-    }
-
-    // Extract the current line's text.
-    bool is_valid = GetTextAtLine(lines, line_text) && !line_text.isEmpty();
-    return is_valid;
-}
-
-bool RgSourceCodeEditor::IsIncludeDirectiveLine(const QString& line_text)
-{
-    // We use this token to identify if a line is an include directive.
-    static const char* INCLUDE_DIR_TOKEN    = "#include ";
-    bool               is_include_directive = line_text.startsWith(INCLUDE_DIR_TOKEN);
-    return is_include_directive;
-}
-
 void RgSourceCodeEditor::ShowContextMenu(const QPoint& pt)
 {
-    Q_UNUSED(pt);
-
     // Is the open header file action relevant.
     QString line_text;
 
@@ -331,51 +126,14 @@ void RgSourceCodeEditor::ShowContextMenu(const QPoint& pt)
     // only when the line is an include directive.
     open_header_file_action_->setEnabled(IsIncludeDirectiveLine(line_text));
 
-    // Only enable cut, copy if there is text selected.
-    QTextCursor cursor        = this->textCursor();
-    bool        has_selection = cursor.hasSelection();
-    cut_text_action_->setEnabled(has_selection);
-    copy_text_action_->setEnabled(has_selection);
-
-    // Paste is enabled if there is anything in the clipboard.
-    QString clipboard = QApplication::clipboard()->text();
-    paste_text_action_->setEnabled(!clipboard.isEmpty());
-
-    // Show the context menu to the user where the mouse is.
-    assert(context_menu_ != nullptr);
-    if (context_menu_ != nullptr)
-    {
-        context_menu_->exec(QCursor::pos());
-    }
-}
-
-void RgSourceCodeEditor::ConnectSignals()
-{
-    bool is_connected = connect(this, &RgSourceCodeEditor::blockCountChanged, this, &RgSourceCodeEditor::UpdateLineNumberAreaWidth);
-    assert(is_connected);
-
-    is_connected = connect(this, &RgSourceCodeEditor::updateRequest, this, &RgSourceCodeEditor::UpdateLineNumberArea);
-    assert(is_connected);
-
-    is_connected = connect(this, &RgSourceCodeEditor::cursorPositionChanged, this, &RgSourceCodeEditor::UpdateCursorPosition);
-    assert(is_connected);
-
-    is_connected = connect(cursor_blink_timer_, &QTimer::timeout, this, &RgSourceCodeEditor::HandleToggleCursorVisibility);
-    assert(is_connected);
+    ShaderSourceCodeViewer::ShowContextMenu(pt);
 }
 
 void RgSourceCodeEditor::HighlightCursorLine(QList<QTextEdit::ExtraSelection>& selections)
 {
     if (!isReadOnly())
     {
-        QTextEdit::ExtraSelection current_line_selection;
-        current_line_selection.format.setBackground(kColorHighlightedRow[QtCommon::QtUtils::ColorTheme::Get().GetColorTheme()]);
-        current_line_selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-        current_line_selection.cursor = textCursor();
-        current_line_selection.cursor.clearSelection();
-
-        // Add the current line's selection to the output list.
-        selections.append(current_line_selection);
+        ShaderSourceCodeViewer::HighlightCursorLine(selections);
     }
 }
 
@@ -383,308 +141,64 @@ void RgSourceCodeEditor::HighlightCorrelatedSourceLines(QList<QTextEdit::ExtraSe
 {
     if (!isReadOnly())
     {
-        QTextDocument* file_document = document();
-        for (int row_index : highlighted_row_indices_)
-        {
-            QTextEdit::ExtraSelection selection;
-            selection.format.setBackground(kColorHighlightedRow[QtCommon::QtUtils::ColorTheme::Get().GetColorTheme()]);
-            selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-
-            QTextBlock  line_text_block = file_document->findBlockByLineNumber(row_index - 1);
-            QTextCursor cursor(line_text_block);
-            selection.cursor = cursor;
-            selection.cursor.clearSelection();
-
-            // Add the line highlight to the output list.
-            selections.append(selection);
-        }
-    }
-}
-
-void RgSourceCodeEditor::HandleHighlightedLinesSet(const QList<int>& line_indices)
-{
-    // Set the list of highlighted lines.
-    highlighted_row_indices_ = line_indices;
-
-    // A list of highlights to apply to the source editor lines.
-    QList<QTextEdit::ExtraSelection> extra_selections;
-
-    // Automatic correlation: add highlights for the disassembly-correlated source lines.
-    HighlightCorrelatedSourceLines(extra_selections);
-
-    // If there aren't any correlated lines to highlight, just highlight the user's currently-selected line.
-    if (extra_selections.empty())
-    {
-        // Standard user selection: add a highlight for the current line.
-        HighlightCursorLine(extra_selections);
-    }
-
-    // Set the line selections in the source editor.
-    setExtraSelections(extra_selections);
-
-    // Track the current and previously-selected line numbers.
-    int        current_line         = GetSelectedLineNumber();
-    static int last_cursor_position = current_line;
-    if (current_line != last_cursor_position)
-    {
-        last_cursor_position = current_line;
-    }
-}
-
-void RgSourceCodeEditor::SetHighlightedLines(const QList<int>& line_indices)
-{
-    // Set the list of highlighted lines.
-    highlighted_row_indices_ = line_indices;
-
-    // Perform the cursor position change related logic.
-    UpdateCursorPositionHelper(true);
-
-    if (!line_indices.isEmpty())
-    {
-        // Emit a signal indicating that the highlighted line has changed.
-        emit SelectedLineChanged(this, line_indices[0]);
-    }
-}
-
-void RgSourceCodeEditor::UpdateCursorPositionHelper(bool is_correlated)
-{
-    // A list of highlights to apply to the source editor lines.
-    QList<QTextEdit::ExtraSelection> extra_selections;
-
-    if (is_correlated)
-    {
-        // Automatic correlation: add highlights for the disassembly-correlated source lines.
-        HighlightCorrelatedSourceLines(extra_selections);
-    }
-
-    // If there aren't any correlated lines to highlight, just highlight the user's currently-selected line.
-    if (extra_selections.empty())
-    {
-        // Standard user selection: add a highlight for the current line.
-        HighlightCursorLine(extra_selections);
-    }
-
-    // Set the line selections in the source editor.
-    setExtraSelections(extra_selections);
-
-    // Track the current and previously-selected line numbers.
-    int        current_line         = GetSelectedLineNumber();
-    static int last_cursor_position = current_line;
-    if (current_line != last_cursor_position)
-    {
-        // If the selected line number has changed, emit a signal.
-        emit SelectedLineChanged(this, current_line);
-        last_cursor_position = current_line;
-    }
-}
-
-void RgSourceCodeEditor::paintEvent(QPaintEvent* event)
-{
-    // Invoke the default QPlainTextEdit paint function.
-    QPlainTextEdit::paintEvent(event);
-
-    // Paint the cursor manually.
-    if (is_cursor_visible_)
-    {
-        QPainter cursor_painter(viewport());
-
-        // Draw the cursor on top of the text editor.
-        QRect cursor_line = cursorRect();
-        cursor_line.setWidth(1);
-        cursor_painter.fillRect(cursor_line, Qt::SolidPattern);
-    }
-}
-
-void RgSourceCodeEditor::resizeEvent(QResizeEvent* event)
-{
-    QPlainTextEdit::resizeEvent(event);
-
-    QRect cr = contentsRect();
-    line_number_area_->setGeometry(QRect(cr.left(), cr.top(), LineNumberAreaWidth(), cr.height()));
-
-    emit EditorResized();
-}
-
-void RgSourceCodeEditor::hideEvent(QHideEvent* event)
-{
-    Q_UNUSED(event);
-
-    emit EditorHidden();
-}
-
-void RgSourceCodeEditor::UpdateCursorPosition()
-{
-    UpdateCursorPositionHelper(false);
-}
-
-bool RgSourceCodeEditor::SetSyntaxHighlighting(RgSrcLanguage lang)
-{
-    bool result = (lang != RgSrcLanguage::Unknown);
-    if (result)
-    {
-        if (syntax_highlighter_ != nullptr)
-        {
-            delete syntax_highlighter_;
-        }
-        syntax_highlighter_ = new RgSyntaxHighlighter(document(), lang);
-    }
-
-    return result;
-}
-
-int RgSourceCodeEditor::GetSelectedLineNumber() const
-{
-    return textCursor().blockNumber() + 1;
-}
-
-bool RgSourceCodeEditor::GetTextAtLine(int line_number, QString& text) const
-{
-    bool ret = false;
-
-    bool is_line_valid = line_number >= 1 && line_number < document()->blockCount();
-    if (is_line_valid)
-    {
-        QTextBlock lineBlock = document()->findBlockByLineNumber(line_number - 1);
-        text                 = lineBlock.text();
-        ret                  = true;
-    }
-
-    return ret;
-}
-
-void RgSourceCodeEditor::LineNumberAreaPaintEvent(QPaintEvent* event)
-{
-    QPainter painter(line_number_area_);
-
-    painter.fillRect(event->rect(), qApp->palette().color(QPalette::AlternateBase));
-
-    QTextBlock block        = firstVisibleBlock();
-    int        block_number = block.blockNumber();
-    int        top          = (int)blockBoundingGeometry(block).translated(contentOffset()).top();
-    int        bottom       = top + (int)blockBoundingRect(block).height();
-
-    while (block.isValid() && top <= event->rect().bottom())
-    {
-        if (block.isVisible() && bottom >= event->rect().top())
-        {
-            QString number = QString::number(block_number + 1);
-
-            painter.setPen(qApp->palette().color(QPalette::Text));
-
-            QFont default_font = this->document()->defaultFont();
-            painter.setFont(default_font);
-            painter.drawText(0, top, line_number_area_->width(), fontMetrics().height(), Qt::AlignCenter, number);
-        }
-
-        block  = block.next();
-        top    = bottom;
-        bottom = top + (int)blockBoundingRect(block).height();
-        ++block_number;
+        ShaderSourceCodeViewer::HighlightCorrelatedSourceLines(selections);
     }
 }
 
 void RgSourceCodeEditor::mousePressEvent(QMouseEvent* event)
 {
-    // Close the context menu if it is open.
-    if (context_menu_ != nullptr)
+    // Disable disassembly view's scroll bar signals.
+    // This is needed because when the user clicks on source code editor,
+    // the disassembly view's scroll bars emit a signal, causing the
+    // disassembly view's border to be colored red, and now the user
+    // will see both the source code editor and the disassembly view
+    // with a red border around it.
+    emit DisableScrollbarSignals();
+
+    emit SourceCodeEditorFocusInEvent();
+
+    // In read-only placeholder editors, detect clicks on the "Click here" link line.
+    // cursorForPosition maps clicks in empty space below text to the last block,
+    // so we also check that the click is within the block's visual bounding rect.
+    if (isReadOnly() && event->button() == Qt::LeftButton)
     {
-        context_menu_->close();
+        QTextCursor cursor = cursorForPosition(event->pos());
+        QTextBlock  block  = cursor.block();
+        if (block.text().contains(kStrMissingSourceClickHereText))
+        {
+            QRectF block_rect = blockBoundingGeometry(block).translated(contentOffset());
+            if (block_rect.contains(QPointF(event->pos())))
+            {
+                emit OpenSourceSearchDirectoriesRequested();
+                emit EnableScrollbarSignals();
+                return;
+            }
+        }
     }
 
-    // Only open the context menu on right-click.
-    // In that case do not process the event further.
-    if (event != nullptr && event->button() == Qt::RightButton)
-    {
-        // Simulate a left click event to bring us to the current line.
-        Qt::MouseButtons buttons;
-        QMouseEvent*     dummy_event =
-            new QMouseEvent(event->type(), event->position(), event->globalPosition(), Qt::MouseButton::LeftButton, buttons, event->modifiers());
-        emit mousePressEvent(dummy_event);
-    }
-    else
-    {
-        // Disable disassembly view's scroll bar signals.
-        // This is needed because when the user clicks on source code editor,
-        // the disassembly view's scroll bars emit a signal, causing the
-        // disassembly view's border to be colored red, and now the user
-        // will see both the source code editor and the disassembly view
-        // with a red border around it.
-        emit DisableScrollbarSignals();
+    ShaderSourceCodeViewer::mousePressEvent(event);
 
-        emit SourceCodeEditorFocusInEvent();
-
-        // Pass the event onto the base class.
-        QPlainTextEdit::mousePressEvent(event);
-
-        // Enable disassembly view's scroll bar signals.
-        emit EnableScrollbarSignals();
-    }
+    // Enable disassembly view's scroll bar signals.
+    emit EnableScrollbarSignals();
 }
 
-void RgSourceCodeEditor::mouseDoubleClickEvent(QMouseEvent* event)
+void RgSourceCodeEditor::mouseMoveEvent(QMouseEvent* event)
 {
-    Q_UNUSED(event);
-
-    static QColor kHighlightGreenColor     = QColor::fromRgb(124, 252, 0);
-    static QColor kHighlightDarkGreenColor = QColor::fromRgb(0, 172, 102);
-
-    if (QtCommon::QtUtils::ColorTheme::Get().GetColorTheme() == ColorThemeType::kColorThemeTypeDark)
+    // In read-only placeholder editors, show a hand cursor over the "Click here" link line.
+    if (isReadOnly())
     {
-        kHighlightGreenColor     = QColor::fromRgb(72, 128, 0);
-        kHighlightDarkGreenColor = QColor::fromRgb(0, 51, 26);
+        QTextCursor cursor = cursorForPosition(event->pos());
+        QTextBlock  block  = cursor.block();
+        QRectF      block_rect = blockBoundingGeometry(block).translated(contentOffset());
+        if (block.text().contains(kStrMissingSourceClickHereText) && block_rect.contains(QPointF(event->pos())))
+        {
+            viewport()->setCursor(Qt::PointingHandCursor);
+        }
+        else
+        {
+            viewport()->setCursor(Qt::ArrowCursor);
+        }
     }
 
-    // Override the double-click event to avoid QPlainTextEdit
-    // from interpreting the sequence that happens when we simulate
-    // a left click as an event of a triple click and select the entire
-    // row's text.
-
-    // Get the word under the cursor.
-    QTextCursor cursor = this->textCursor();
-    cursor.select(QTextCursor::SelectionType::WordUnderCursor);
-    this->setTextCursor(cursor);
-
-    // Highlight the current line with yellow background.
-    QTextEdit::ExtraSelection current_line_selection;
-    current_line_selection.format.setBackground(kColorHighlightedRow[QtCommon::QtUtils::ColorTheme::Get().GetColorTheme()]);
-    current_line_selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-    current_line_selection.cursor = textCursor();
-    current_line_selection.cursor.clearSelection();
-
-    // Add the current line's selection to the output list.
-    QList<QTextEdit::ExtraSelection> extra_selections;
-    extra_selections.append(current_line_selection);
-
-    // Setup foreground and background colors to
-    // highlight the double clicked word.
-    QBrush  background_brush(kHighlightGreenColor);
-    QBrush  text_brush(QtCommon::QtUtils::ColorTheme::Get().GetCurrentThemeColors().graphics_scene_text_color);
-    QPen    outline_color(Qt::gray, 1);
-    QString selected_text = cursor.selectedText();
-
-    // Get indices of all matching text.
-    std::vector<size_t> search_result_indices;
-    RgUtils::FindSearchResultIndices(this->toPlainText(), selected_text, search_result_indices);
-
-    for (auto text_position : search_result_indices)
-    {
-        QTextEdit::ExtraSelection selected_word;
-        selected_word.cursor = QTextCursor(document());
-        selected_word.cursor.setPosition(static_cast<int>(text_position));
-        selected_word.cursor.setPosition(static_cast<int>(text_position) + selected_text.length(), QTextCursor::KeepAnchor);
-        selected_word.format.setForeground(text_brush);
-        selected_word.format.setBackground(background_brush);
-        selected_word.format.setProperty(QTextFormat::OutlinePen, outline_color);
-
-        // Save the selection.
-        extra_selections.append(selected_word);
-    }
-
-    // Highlight the current selection in darker green.
-    QPalette palette = this->palette();
-    palette.setColor(QPalette::Highlight, kHighlightDarkGreenColor);
-    setPalette(palette);
-
-    // Set the selections that were just created.
-    setExtraSelections(extra_selections);
+    ShaderSourceCodeViewer::mouseMoveEvent(event);
 }

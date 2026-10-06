@@ -160,20 +160,29 @@ ParserSi::kaStatus ParserSiMimg::Parse(GDT_HW_GENERATION hw_generation, Instruct
     MIMGInstruction::SRSRC srsrc = GetSrsrc(hex_instructions);
     MIMGInstruction::SSAMP ssamp = GetSsamp(hex_instructions);
 
+    ParserSi::kaStatus ret = ParserSi::kStatusSuccess;
     if ((hw_generation == GDT_HW_GENERATION_SEAISLAND) || (hw_generation == GDT_HW_GENERATION_SOUTHERNISLAND))
     {
         SIMIMGInstruction::OP op = GetOpSimimg(hex_instructions, instruction_kind);
-        instruction = new SIMIMGInstruction(dmask, unorm, glc, da, r128, tfe, lwe, op, vaddr, vdata, srsrc, slc,
-                                            ssamp, instruction_kind, label, goto_label);
+        instruction = new (std::nothrow) SIMIMGInstruction(dmask, unorm, glc, da, r128, tfe, lwe, op, vaddr, vdata, srsrc, slc,
+                                                           ssamp, instruction_kind, label, goto_label);
+        if (instruction == nullptr)
+        {
+            ret = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else
     {
         VIMIMGInstruction::OP op = GetOpVimimg(hex_instructions, instruction_kind);
-        instruction = new VIMIMGInstruction(dmask, unorm, glc, da, r128, tfe, lwe, op, vaddr, vdata, srsrc, slc,
-                                            ssamp, instruction_kind, label, goto_label);
+        instruction = new (std::nothrow) VIMIMGInstruction(dmask, unorm, glc, da, r128, tfe, lwe, op, vaddr, vdata, srsrc, slc,
+                                                           ssamp, instruction_kind, label, goto_label);
+        if (instruction == nullptr)
+        {
+            ret = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
 
-    return ParserSi::kStatusSuccess;
+    return ret;
 }
 
 ParserSi::kaStatus ParserSiMimg::Parse(GDT_HW_GENERATION, Instruction::Instruction32Bit, Instruction*&, bool, uint32_t, int, int)

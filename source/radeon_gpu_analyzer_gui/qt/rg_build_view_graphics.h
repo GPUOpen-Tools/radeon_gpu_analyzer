@@ -19,6 +19,7 @@
 // Forward declarations.
 class RgPipelineStateModel;
 class RgPipelineStateView;
+class FindTextWidget;
 
 // A special RgBuildView base class used in Graphics API modes.
 class RgBuildViewGraphics : public RgBuildView
@@ -88,7 +89,7 @@ protected:
     QFrame* pso_editor_frame_ = nullptr;
 
     // A find widget used for PSO editor.
-    RgFindTextWidget* pso_find_widget_ = nullptr;
+    FindTextWidget* pso_find_widget_ = nullptr;
 
     // Context menu for adding/creating file.
     QMenu* add_create_context_menu_ = nullptr;

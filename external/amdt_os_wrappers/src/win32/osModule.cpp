@@ -419,31 +419,35 @@ bool osGetSystemModuleVersionAsString(const gtString& moduleName, gtString& modu
         // Allocate a memory for the version information:
         LPBYTE lpbyVIB = (LPBYTE)malloc(dwSize);
 
-
-        BOOL rcGetInfo = ::GetFileVersionInfo(modulePath.asString().asCharArray(), 0, dwSize, lpbyVIB);
-        GT_IF_WITH_ASSERT(rcGetInfo == TRUE)
+        GT_IF_WITH_ASSERT(lpbyVIB != NULL)
         {
-            UINT uLen = 0;
-            LPVOID lpVSFFI = NULL;
-
-            if (::VerQueryValue(lpbyVIB, L"\\", (LPVOID*)&lpVSFFI, &uLen))
+            BOOL rcGetInfo = ::GetFileVersionInfo(modulePath.asString().asCharArray(), 0, dwSize, lpbyVIB);
+            GT_IF_WITH_ASSERT(rcGetInfo == TRUE)
             {
-                // Fixed File Info (FFI):
-                VS_FIXEDFILEINFO vsffi;
-                ::CopyMemory(&vsffi, lpVSFFI, sizeof(VS_FIXEDFILEINFO));
-                GT_IF_WITH_ASSERT(vsffi.dwSignature == VS_FFI_SIGNATURE)
-                {
-                    int majorVersion = HIWORD(vsffi.dwFileVersionMS);
-                    int minorVersion = LOWORD(vsffi.dwFileVersionMS);
-                    int buildNumber = HIWORD(vsffi.dwFileVersionLS);
-                    int fileVersion = LOWORD(vsffi.dwFileVersionLS);
-                    moduleVersion.appendFormattedString(L"%d.%d.%d.%d", majorVersion, minorVersion, buildNumber, fileVersion);
-                    retVal = true;
-                }
+                UINT uLen = 0;
+                LPVOID lpVSFFI = NULL;
 
-                ::ZeroMemory(&vsffi, sizeof(VS_FIXEDFILEINFO));
-                free(lpbyVIB);
+                if (::VerQueryValue(lpbyVIB, L"\\", (LPVOID*)&lpVSFFI, &uLen))
+                {
+                    // Fixed File Info (FFI):
+                    VS_FIXEDFILEINFO vsffi;
+                    ::CopyMemory(&vsffi, lpVSFFI, sizeof(VS_FIXEDFILEINFO));
+                    GT_IF_WITH_ASSERT(vsffi.dwSignature == VS_FFI_SIGNATURE)
+                    {
+                        int majorVersion = HIWORD(vsffi.dwFileVersionMS);
+                        int minorVersion = LOWORD(vsffi.dwFileVersionMS);
+                        int buildNumber = HIWORD(vsffi.dwFileVersionLS);
+                        int fileVersion = LOWORD(vsffi.dwFileVersionLS);
+                        moduleVersion.appendFormattedString(L"%d.%d.%d.%d", majorVersion, minorVersion, buildNumber, fileVersion);
+                        retVal = true;
+                    }
+
+                    ::ZeroMemory(&vsffi, sizeof(VS_FIXEDFILEINFO));
+                }
             }
+
+            free(lpbyVIB);
+            lpbyVIB = nullptr;
         }
     }
 

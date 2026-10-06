@@ -50,15 +50,24 @@ struct RgBuildSettingsBinary : public RgBuildSettings
     // Copy constructor used to initialize using another instance.
     RgBuildSettingsBinary(const RgBuildSettingsBinary& other)
         : RgBuildSettings(other)
+        , prompt_to_attach_source_dirs(other.prompt_to_attach_source_dirs)
     {
     }
 
     // Determine if the supplied settings are the same as the current settings.
     virtual bool HasSameSettings(const RgBuildSettingsBinary& other) const
     {
-        bool isSame = RgBuildSettings::HasSameSettings(other);
+        bool isSame = RgBuildSettings::HasSameSettings(other) && prompt_to_attach_source_dirs == other.prompt_to_attach_source_dirs;
         return isSame;
     }
+
+    // Binary-specific build settings.
+    bool prompt_to_attach_source_dirs = true;
+
+    // Ephemeral: source path substitution pairs derived fresh each build from
+    // additional_include_directories + current binaries' DWARF paths.
+    // Not serialized to the project config file.
+    std::vector<std::pair<std::string, std::string>> substitute_paths;
 };
 
 // A clone of an Binary project.

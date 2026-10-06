@@ -327,10 +327,6 @@ void RgMainWindow::ConnectBuildViewSignals()
             is_connected = connect(build_view, &RgBuildView::BuildProjectEvent, this, &RgMainWindow::HandleBuildProjectEvent);
             assert(is_connected);
 
-            // Connect the disassemble binary files event.
-            is_connected = connect(build_view, &RgBuildView::DissasembleBinaryFilesEvent, this, &RgMainWindow::HandleDissasembleBinaryFilesEvent);
-            assert(is_connected);
-
             // Connect the update application notification message signal.
             is_connected =
                 connect(build_view, &RgBuildView::UpdateApplicationNotificationMessageSignal, this, &RgMainWindow::HandleUpdateAppNotificationMessage);
@@ -682,11 +678,11 @@ void RgMainWindow::CreateBuildMenuActions()
     }
     else
     {
-        // Build current project action.
+        // Analyze current project action.
         disassemble_binaries_action_ = new QAction(tr(kStrMenuBarAnalyzeProject), this);
         disassemble_binaries_action_->setStatusTip(tr(kStrMenuBarAnalyzeProjectTooltip));
         disassemble_binaries_action_->setShortcut(QKeySequence(kActionHotkeyBuildProject));
-        is_connected = connect(disassemble_binaries_action_, &QAction::triggered, this, [this]() { RgMainWindow::HandleDissasembleBinaryFilesEvent({}); });
+        is_connected = connect(disassemble_binaries_action_, &QAction::triggered, this, &RgMainWindow::HandleAnalyzeProjectEvent);
         assert(is_connected);
     }
 
@@ -1312,7 +1308,7 @@ void RgMainWindow::dragEnterEvent(QDragEnterEvent* event)
         const QMimeData* mime_data = event->mimeData();
 
         // Make sure the drop data has a list of file urls.
-        if (mime_data->hasUrls())
+        if (mime_data != nullptr && mime_data->hasUrls())
         {
             // Check to make sure at least one of the files is valid.
             for (QUrl& url : mime_data->urls())
@@ -1473,25 +1469,22 @@ void RgMainWindow::HandleBuildProjectEvent()
     }
 }
 
-void RgMainWindow::HandleDissasembleBinaryFilesEvent(std::vector<std::string> binaries_to_build)
+void RgMainWindow::HandleAnalyzeProjectEvent()
 {
+    // Switch to the pipeline state view.
     assert(app_state_ != nullptr);
     if (app_state_ != nullptr)
     {
-        // Emit a signal to indicate view change.
-        emit HotKeyPressedSignal();
+        std::shared_ptr<RgAppStateAnalysis> analysis_app_state = std::static_pointer_cast<RgAppStateAnalysis>(app_state_);
 
-        RgBuildView* build_view = app_state_->GetBuildView();
-        if (build_view != nullptr)
+        assert(analysis_app_state != nullptr);
+        if (analysis_app_state != nullptr)
         {
-            // Save all source files and settings when a new build is started.
-            if (build_view->SaveCurrentState())
-            {
-                // Now build the project.
-                build_view->BuildCurrentProject(binaries_to_build);
-            }
+            analysis_app_state->ResetCurrentAnalysis();
         }
     }
+    
+    HandleBuildProjectEvent();
 }
 
 void RgMainWindow::HandleBuildSettingsEvent()
@@ -1592,17 +1585,9 @@ void RgMainWindow::HandleSelectedFileChanged(const std::string& old_file, const 
     Q_UNUSED(old_file);
     Q_UNUSED(new_file);
 
-    assert(app_state_ != nullptr);
-    if (app_state_ != nullptr && app_state_->IsAnalysis())
-    {
-        ;
-    }
-    else
-    {
-        // Enable the Edit menu functionality.
-        go_to_line_action_->setEnabled(true);
-        find_action_->setEnabled(true);
-    }
+    // Enable the Edit menu functionality.
+    go_to_line_action_->setEnabled(true);
+    find_action_->setEnabled(true);
 }
 
 void RgMainWindow::HandleProjectCreated()
@@ -1618,10 +1603,10 @@ void RgMainWindow::HandleProjectLoaded(std::shared_ptr<RgProject> project)
     {
         // Update the application title with the project's name.
         SetWindowTitle(project->project_name);
-        assert(project->clones[0] != nullptr);
+        assert(!project->clones.empty() && project->clones[0] != nullptr);
 
         // If there are no files in the project, disable source and build related menu items.
-        if ((project->clones[0] != nullptr) && (project->IsEmpty()))
+        if (!project->clones.empty() && (project->clones[0] != nullptr) && (project->IsEmpty()))
         {
             // Disable the build-related actions, except for the build settings action.
             if (!app_state_->IsAnalysis())
@@ -1747,30 +1732,24 @@ void RgMainWindow::ResetViewStateAfterBuild()
     app_state_->ResetViewStateAfterBuild();
 
     assert(app_state_ != nullptr);
-    if (app_state_ != nullptr && app_state_->IsAnalysis())
+    if (app_state_ != nullptr)
     {
-        disassemble_binaries_action_->setEnabled(true);
-        build_settings_action_->setEnabled(false);
-        cancel_build_action_->setEnabled(false);
-
-        go_to_line_action_->setEnabled(false);
-        find_action_->setEnabled(false);
-
-        open_project_action_->setEnabled(true);
-        back_to_home_action_->setEnabled(true);
-    }
-    else
-    {
-        // Re-enable all menu items, since the build is over.
-        build_project_action_->setEnabled(true);
         cancel_build_action_->setEnabled(false);
         open_project_action_->setEnabled(true);
         back_to_home_action_->setEnabled(true);
         build_settings_action_->setEnabled(true);
-        assert(app_state_ != nullptr);
-        if (app_state_ != nullptr && app_state_->IsGraphics() && pipeline_state_action_ != nullptr)
+
+        if (app_state_->IsAnalysis())
         {
-            pipeline_state_action_->setEnabled(true);
+            disassemble_binaries_action_->setEnabled(true);
+        }
+        else
+        {
+            build_project_action_->setEnabled(true);
+            if (app_state_->IsGraphics() && pipeline_state_action_ != nullptr)
+            {
+                pipeline_state_action_->setEnabled(true);
+            }
         }
     }
 
@@ -1939,12 +1918,12 @@ void RgMainWindow::CreateAppNotificationMessageLabel(const std::string& message,
     if (app_state_ != nullptr)
     {
         // Create a widget to hold the labels.
-        app_notification_widget_ = new QWidget();
+        app_notification_widget_ = new QWidget(this);
         app_notification_widget_->setToolTip(QString::fromStdString(tooltip));
 
         // Create icon and text labels.
-        QIcon*  icon       = new QIcon(kIconResourceRemoveNotification);
-        QPixmap pixmap     = icon->pixmap(QSize(24, 24));
+        QIcon   icon       = QIcon(kIconResourceRemoveNotification);
+        QPixmap pixmap     = icon.pixmap(QSize(24, 24));
         QLabel* icon_label = new QLabel(app_notification_widget_);
         icon_label->setPixmap(pixmap);
         QLabel* text_label = new QLabel(QString::fromStdString(message), app_notification_widget_);
@@ -2062,6 +2041,13 @@ void RgMainWindow::HandleEditModeChanged(EditMode mode)
     switch (mode)
     {
     case (EditMode::kSourceCode):
+    {
+        // Switch the save shortcut.
+        SwitchSaveShortcut(SaveActionType::kSaveFile);
+
+        break;
+    }
+    case (EditMode::kSourceCodeTabs):
     {
         // Switch the save shortcut.
         SwitchSaveShortcut(SaveActionType::kSaveFile);

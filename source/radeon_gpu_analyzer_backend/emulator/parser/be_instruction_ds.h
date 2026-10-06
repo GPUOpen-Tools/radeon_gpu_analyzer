@@ -231,11 +231,11 @@ public:
         kDsREAD2St64B32,
         // R = signext(DS[A][7:0]}; signed byte read.
         kDsReadI8,
-        // R = {24�h0,DS[A][7:0]}; unsigned byte read.
+        // R = {24'h0,DS[A][7:0]}; unsigned byte read.
         kDsReadU8,
         // R = signext(DS[A][15:0]}; signed short read.
         kDsReadI16,
-        // R = {16�h0,DS[A][15:0]}; unsigned short read.
+        // R = {16'h0,DS[A][15:0]}; unsigned short read.
         kDsReadU16,
         // Consume entries from a buffer.
         kDsCONSUME,

@@ -1679,7 +1679,7 @@ public:
                 // Read each individual element in the array of create info.
                 for (auto item_iter = first_item; item_iter != last_item; ++item_iter)
                 {
-                    VkDescriptorSetLayoutCreateInfo* new_descriptor_set_layout = new VkDescriptorSetLayoutCreateInfo{};
+                    VkDescriptorSetLayoutCreateInfo* new_descriptor_set_layout = new (std::nothrow) VkDescriptorSetLayoutCreateInfo{};
                     assert(new_descriptor_set_layout != nullptr);
                     if (new_descriptor_set_layout != nullptr)
                     {
@@ -1847,10 +1847,13 @@ public:
         VkSampleMask* sample_mask = nullptr;
         if (IsCreateInfoExists(file, kStrMemberNamePSampleMask))
         {
-            sample_mask = new VkSampleMask[(uint32_t)create_info->rasterizationSamples];
-            for (uint32_t index = 0; index < (uint32_t)create_info->rasterizationSamples; ++index)
+            sample_mask = new (std::nothrow) VkSampleMask[(uint32_t)create_info->rasterizationSamples];
+            if (sample_mask != nullptr)
             {
-                sample_mask[index] = file[kStrMemberNamePSampleMask][index];
+                for (uint32_t index = 0; index < (uint32_t)create_info->rasterizationSamples; ++index)
+                {
+                    sample_mask[index] = file[kStrMemberNamePSampleMask][index];
+                }
             }
         }
         return sample_mask;
@@ -1943,10 +1946,13 @@ public:
                 assert(false);
             }
 
-            sample_mask = new VkSampleMask[sample_mask_array_dimension]{};
-            for (int index = 0; index < sample_mask_array_dimension; ++index)
+            sample_mask = new (std::nothrow) VkSampleMask[sample_mask_array_dimension]{};
+            if (sample_mask != nullptr)
             {
-                sample_mask[index] = file[kStrMemberNamePSampleMask][index];
+                for (int index = 0; index < sample_mask_array_dimension; ++index)
+                {
+                    sample_mask[index] = file[kStrMemberNamePSampleMask][index];
+                }
             }
         }
         return sample_mask;
@@ -2021,78 +2027,87 @@ bool RgPsoSerializerVulkan::ReadStructureFromFile(const std::string& file_path, 
     if (create_info_array != nullptr)
     {
         // Create a new PSO State structure.
-        RgPsoGraphicsVulkan* create_info = new RgPsoGraphicsVulkan{};
-
-        // Initialize the create info to assign structure pointers to internal create info members.
-        create_info->Initialize();
-
-        // Open a file to write the structure data to.
-        std::ifstream file_stream;
-        file_stream.open(file_path.c_str(), std::ofstream::in);
-
-        assert(file_stream.is_open());
-        if (file_stream.is_open())
+        RgPsoGraphicsVulkan* create_info = new (std::nothrow) RgPsoGraphicsVulkan{};
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            // Read the JSON file.
-            nlohmann::json structure;
-            should_abort = !ReadJsonFile(file_stream, file_path, structure, error_string);
+            // Initialize the create info to assign structure pointers to internal create info members.
+            create_info->Initialize();
 
-            // Close the file stream.
-            file_stream.close();
+            // Open a file to write the structure data to.
+            std::ifstream file_stream;
+            file_stream.open(file_path.c_str(), std::ofstream::in);
 
-            if (!should_abort)
+            assert(file_stream.is_open());
+            if (file_stream.is_open())
             {
-                // Is there a pipeline model version tag? Extract the version number if possible.
-                RgPipelineModelVersion model_version = RgPipelineModelVersion::kUnknown;
-                if (IsCreateInfoExists(structure, kStrPipelineModelVersion))
-                {
-                    model_version = static_cast<RgPipelineModelVersion>(structure[kStrPipelineModelVersion].get<int>());
-                }
-                else
-                {
-                    // Versioning doesn't exist in the initial revision of the pipeline state file.
-                    // When the model version tag isn't found, assume VERSION_1_0.
-                    model_version = RgPipelineModelVersion::kVERSION_1_0;
-                }
+                // Read the JSON file.
+                nlohmann::json structure;
+                should_abort = !ReadJsonFile(file_stream, file_path, structure, error_string);
 
-                assert(model_version != RgPipelineModelVersion::kUnknown);
-                if (model_version != RgPipelineModelVersion::kUnknown)
+                // Close the file stream.
+                file_stream.close();
+
+                if (!should_abort)
                 {
-                    // Always write the most recent version of the pipeline state file.
-                    std::shared_ptr<rgPsoSerializerVulkanImpl_Version_1_0> serializer = CreateSerializer(model_version);
-                    assert(serializer != nullptr);
-                    if (serializer != nullptr)
+                    // Is there a pipeline model version tag? Extract the version number if possible.
+                    RgPipelineModelVersion model_version = RgPipelineModelVersion::kUnknown;
+                    if (IsCreateInfoExists(structure, kStrPipelineModelVersion))
                     {
-                        // Read the structure data from the JSON file.
-                        if (serializer->ReadStructure(create_info, structure))
-                        {
-                            // Assign the deserialized pipeline state file to the output pointer.
-                            *create_info_array = create_info;
+                        model_version = static_cast<RgPipelineModelVersion>(structure[kStrPipelineModelVersion].get<int>());
+                    }
+                    else
+                    {
+                        // Versioning doesn't exist in the initial revision of the pipeline state file.
+                        // When the model version tag isn't found, assume VERSION_1_0.
+                        model_version = RgPipelineModelVersion::kVERSION_1_0;
+                    }
 
-                            ret = true;
+                    assert(model_version != RgPipelineModelVersion::kUnknown);
+                    if (model_version != RgPipelineModelVersion::kUnknown)
+                    {
+                        // Always write the most recent version of the pipeline state file.
+                        std::shared_ptr<rgPsoSerializerVulkanImpl_Version_1_0> serializer = CreateSerializer(model_version);
+                        assert(serializer != nullptr);
+                        if (serializer != nullptr)
+                        {
+                            // Read the structure data from the JSON file.
+                            if (serializer->ReadStructure(create_info, structure))
+                            {
+                                // Assign the deserialized pipeline state file to the output pointer.
+                                *create_info_array = create_info;
+
+                                ret = true;
+                            }
+                            else
+                            {
+                                error_string = kStrErrFailedToLoadPipelineTypeMismatch;
+                            }
                         }
                         else
                         {
-                            error_string = kStrErrFailedToLoadPipelineTypeMismatch;
+                            error_string = kStrErrFailedUnsupportedVersion;
                         }
                     }
                     else
                     {
-                        error_string = kStrErrFailedUnsupportedVersion;
+                        error_string = kStrErrFailedToReadPipelineVersion;
                     }
                 }
-                else
-                {
-                    error_string = kStrErrFailedToReadPipelineVersion;
-                }
             }
-        }
-        else
-        {
-            std::stringstream error_stream;
-            error_stream << kStrErrFailedToReadFile;
-            error_stream << file_path;
-            error_string = error_stream.str();
+            else
+            {
+                std::stringstream error_stream;
+                error_stream << kStrErrFailedToReadFile;
+                error_stream << file_path;
+                error_string = error_stream.str();
+            }
+
+            if (!ret)
+            {
+                delete create_info;
+                create_info = nullptr;
+            }
         }
     }
 
@@ -2108,73 +2123,82 @@ bool RgPsoSerializerVulkan::ReadStructureFromFile(const std::string& file_path, 
     if (create_info_array != nullptr)
     {
         // Create a new PSO State structure.
-        RgPsoComputeVulkan* create_info = new RgPsoComputeVulkan{};
-
-        // Initialize the create info to assign structure pointers to internal create info members.
-        create_info->Initialize();
-
-        // Open a file to write the structure data to.
-        std::ifstream file_stream;
-        file_stream.open(file_path.c_str(), std::ofstream::in);
-
-        assert(file_stream.is_open());
-        if (file_stream.is_open())
+        RgPsoComputeVulkan* create_info = new (std::nothrow) RgPsoComputeVulkan{};
+        assert(create_info != nullptr);
+        if (create_info != nullptr)
         {
-            // Read the JSON file.
-            nlohmann::json structure;
-            should_abort = !ReadJsonFile(file_stream, file_path, structure, error_string);
+            // Initialize the create info to assign structure pointers to internal create info members.
+            create_info->Initialize();
 
-            if (!should_abort)
+            // Open a file to write the structure data to.
+            std::ifstream file_stream;
+            file_stream.open(file_path.c_str(), std::ofstream::in);
+
+            assert(file_stream.is_open());
+            if (file_stream.is_open())
             {
-                // Is there a pipeline model version tag? Extract the version number if possible.
-                RgPipelineModelVersion model_version = RgPipelineModelVersion::kUnknown;
-                if (IsCreateInfoExists(structure, kStrPipelineModelVersion))
-                {
-                    model_version = static_cast<RgPipelineModelVersion>(structure[kStrPipelineModelVersion].get<int>());
-                }
-                else
-                {
-                    // Versioning doesn't exist in the initial revision of the pipeline state file.
-                    // When the model version tag isn't found, assume VERSION_1_0.
-                    model_version = RgPipelineModelVersion::kVERSION_1_0;
-                }
+                // Read the JSON file.
+                nlohmann::json structure;
+                should_abort = !ReadJsonFile(file_stream, file_path, structure, error_string);
 
-                assert(model_version != RgPipelineModelVersion::kUnknown);
-                if (model_version != RgPipelineModelVersion::kUnknown)
+                if (!should_abort)
                 {
-                    // Always write the most recent version of the pipeline state file.
-                    std::shared_ptr<rgPsoSerializerVulkanImpl_Version_1_0> serializer = CreateSerializer(model_version);
-                    assert(serializer != nullptr);
-                    if (serializer != nullptr)
+                    // Is there a pipeline model version tag? Extract the version number if possible.
+                    RgPipelineModelVersion model_version = RgPipelineModelVersion::kUnknown;
+                    if (IsCreateInfoExists(structure, kStrPipelineModelVersion))
                     {
-                        if (serializer->ReadStructure(create_info, structure))
+                        model_version = static_cast<RgPipelineModelVersion>(structure[kStrPipelineModelVersion].get<int>());
+                    }
+                    else
+                    {
+                        // Versioning doesn't exist in the initial revision of the pipeline state file.
+                        // When the model version tag isn't found, assume VERSION_1_0.
+                        model_version = RgPipelineModelVersion::kVERSION_1_0;
+                    }
+
+                    assert(model_version != RgPipelineModelVersion::kUnknown);
+                    if (model_version != RgPipelineModelVersion::kUnknown)
+                    {
+                        // Always write the most recent version of the pipeline state file.
+                        std::shared_ptr<rgPsoSerializerVulkanImpl_Version_1_0> serializer = CreateSerializer(model_version);
+                        assert(serializer != nullptr);
+                        if (serializer != nullptr)
                         {
-                            // Assign the deserialized pipeline state file to the output pointer.
-                            *create_info_array = create_info;
-                            ret = true;
+                            if (serializer->ReadStructure(create_info, structure))
+                            {
+                                // Assign the deserialized pipeline state file to the output pointer.
+                                *create_info_array = create_info;
+                                ret = true;
+                            }
+                            else
+                            {
+                                error_string = kStrErrFailedToLoadPipelineTypeMismatch;
+                            }
                         }
                         else
                         {
-                            error_string = kStrErrFailedToLoadPipelineTypeMismatch;
+                            error_string = kStrErrFailedUnsupportedVersion;
                         }
                     }
                     else
                     {
-                        error_string = kStrErrFailedUnsupportedVersion;
+                        error_string = kStrErrFailedToReadPipelineVersion;
                     }
                 }
-                else
-                {
-                    error_string = kStrErrFailedToReadPipelineVersion;
-                }
             }
-        }
-        else
-        {
-            std::stringstream error_stream;
-            error_stream << kStrErrFailedToReadFile;
-            error_stream << file_path;
-            error_string = error_stream.str();
+            else
+            {
+                std::stringstream error_stream;
+                error_stream << kStrErrFailedToReadFile;
+                error_stream << file_path;
+                error_string = error_stream.str();
+            }
+
+            if (!ret)
+            {
+                delete create_info;
+                create_info = nullptr;
+            }
         }
     }
 

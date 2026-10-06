@@ -8,6 +8,11 @@
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_BUILD_VIEW_VULKAN_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_BUILD_VIEW_VULKAN_H_
 
+// C++.
+#include <map>
+#include <string>
+#include <utility>
+
 // Local.
 #include "source/radeon_gpu_analyzer_gui/qt/rg_build_view_graphics.h"
 #include "source/common/rga_shared_data_types.h"
@@ -80,8 +85,15 @@ public:
     // Check if the current API has line correlation supported.
     virtual bool IsLineCorrelationSupported() const override;
 
+    // Called after a successful build to update line correlation state in editors.
+    virtual void CurrentBuildSucceeded() override;
+
     // Get the graphics pipeline menu (left panel).
     virtual RgMenuGraphics* GetGraphicsFileMenu() override;
+
+    // Scrolls the source editor for the given pipeline stage to its entrypoint's first line
+    // and moves the cursor there, so that post-build line correlation is triggered automatically.
+    void HighlightPipelineStageStartLine(const std::string& input_file_path, const std::string& entrypoint_name);
 
     // Set the focus to file menu.
     virtual void FocusOnFileMenu() override;
@@ -120,7 +132,10 @@ protected slots:
     virtual void HandleSelectedFileChanged(const std::string& current_file_name, const std::string& new_file_name) override;
 
     // Handler invoked when the user changes the selected line in the current source editor.
-    virtual void HandleSourceFileSelectedLineChanged(RgSourceCodeEditor* editor, int line_number) override;
+    virtual void HandleSourceFileSelectedLineChanged(ShaderSourceCodeViewer* editor, int line_number) override;
+
+    // Handler invoked when the highlighted ISA row changes, used to switch to the correct source file.
+    virtual void HandleHighlightedCorrelationLineUpdated(int line_number, const std::string& src_path) override;
 
     // A handler invoked when the pipeline state file should be saved.
     virtual bool HandlePipelineStateFileSaved() override;
@@ -180,6 +195,11 @@ protected:
     // Check if the given source editor has line correlation enabled.
     virtual bool IsLineCorrelationEnabled(RgSourceCodeEditor* source_editor) override;
 
+    // Update the correlation state for the given source file.
+    // No-op for Vulkan: shader stages are stored in pipeline.shader_stages (not source_files),
+    // and IsLineCorrelationEnabled is overridden to not use the is_correlated flag.
+    virtual void UpdateSourceFileCorrelationState(const std::string& file_path, bool is_correlated) override;
+
     // Check if the given source file path already exists within the project's current clone.
     virtual bool IsSourceFileInProject(const std::string& source_file_path) const override;
 
@@ -220,6 +240,15 @@ private:
     // Returns "true" if succeeded or "false" otherwise.
     // The name (full path) of output SPIR-V disassembly file is returned in "spv_disasm_file".
     bool DisasmSpvFile(const std::string& spv_file, std::string& spv_disasm_file);
+
+    // Maps entrypoint name to {min_source_line, max_source_line} for each input file.
+    using EntryToSourceLineRange = std::map<std::string, std::pair<uint32_t, uint32_t>>;
+
+    // Find the entrypoint name for the given source line number (by range lookup).
+    bool GetEntrypointNameForLineNumber(const std::string& file_path, int line_number, std::string& entry_name) const;
+
+    // Tracks the source line range associated with each entrypoint per file, populated after build.
+    std::map<std::string, EntryToSourceLineRange> entrypoint_line_numbers_;
 
     // The Vulkan file menu.
     RgMenuVulkan* file_menu_ = nullptr;

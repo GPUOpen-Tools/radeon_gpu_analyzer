@@ -189,17 +189,8 @@ void RgAppStateBinary::OpenFilesInBuildView(const QStringList& file_paths)
             // Update the project to reference to selected source file.
             build_view_->AddExistingCodeObjFileToProject(str_file_paths);
 
-            // Switch to the build view if there's at least one file being edited.
-            if (!build_view_->HasSourceCodeEditors())
-            {
-                // Show the build view as the central widget.
-                main_window_->SwitchToView(RgMainWindow::MainWindowView::kBuildView);
-            }
-            else
-            {
-                // The project was not created successfully, so clean up the build view.
-                main_window_->DestroyBuildView();
-            }
+            // Show the build view as the central widget.
+            main_window_->SwitchToView(RgMainWindow::MainWindowView::kBuildView);
         }
     }
 }
@@ -260,4 +251,13 @@ std::string RgAppStateBinary::GetBuildSettingsViewStylesheet() const
 {
     const char* kStrBinaryBuildSettingsStylesheet = "";
     return kStrBinaryBuildSettingsStylesheet;
+}
+
+void RgAppStateBinary::ResetCurrentAnalysis()
+{
+    assert(build_view_ != nullptr);
+    if (build_view_ != nullptr)
+    {
+        build_view_->ResetCurrentProjectBinaries();
+    }
 }

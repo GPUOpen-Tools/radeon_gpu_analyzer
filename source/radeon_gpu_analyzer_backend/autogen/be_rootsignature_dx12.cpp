@@ -19,6 +19,12 @@ static bool ShaderStageToVisibility(BePipelineStage stage, D3D12_SHADER_VISIBILI
     case BePipelineStage::kFragment:
         visibility = D3D12_SHADER_VISIBILITY_PIXEL;
         break;
+    case BePipelineStage::kMesh:
+        visibility = D3D12_SHADER_VISIBILITY_MESH;
+        break;
+    case BePipelineStage::kTask:
+        visibility = D3D12_SHADER_VISIBILITY_AMPLIFICATION;
+        break;
     case BePipelineStage::kCompute:
         visibility = D3D12_SHADER_VISIBILITY_ALL;
         break;
@@ -661,6 +667,10 @@ beKA::beStatus BeDx12Reflection::GenerateRootSignatureCompute(const DxcReflectio
 beKA::beStatus BeDx12Reflection::GenerateRootSignatureGraphics(UINT64                     shader_requires_flags,
                                                                bool                       has_vs,
                                                                const DxcReflectionOutput& vs_output,
+                                                               bool                       has_ms,
+                                                               const DxcReflectionOutput& ms_output,
+                                                               bool                       has_as,
+                                                               const DxcReflectionOutput& as_output,
                                                                bool                       has_ps,
                                                                const DxcReflectionOutput& ps_output,
                                                                std::string&               root_signauture_hlsl,
@@ -672,6 +682,16 @@ beKA::beStatus BeDx12Reflection::GenerateRootSignatureGraphics(UINT64           
     {
         rc = root_signature_generator.SetShaderResourceBindings(
             BePipelineStage::kVertex, vs_output.resource_bindings.data(), vs_output.resource_bindings.size(), err);
+    }
+    if (has_ms)
+    {
+        rc = root_signature_generator.SetShaderResourceBindings(
+            BePipelineStage::kMesh, ms_output.resource_bindings.data(), ms_output.resource_bindings.size(), err);
+    }
+    if (has_as)
+    {
+        rc = root_signature_generator.SetShaderResourceBindings(
+            BePipelineStage::kTask, as_output.resource_bindings.data(), as_output.resource_bindings.size(), err);
     }
     if (has_ps)
     {

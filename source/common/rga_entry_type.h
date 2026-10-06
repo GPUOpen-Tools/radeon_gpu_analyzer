@@ -259,6 +259,38 @@ public:
         return std::nullopt;
     }
 
+    // Returns the conventional stage-specific file extension for the given entry type,
+    // or empty string if none exists (e.g. compute, ray tracing, OpenCL, unknown).
+    static std::string GetStageExtension(RgaEntryType entry_type)
+    {
+        switch (entry_type)
+        {
+        case RgaEntryType::kVkVertex:
+        case RgaEntryType::kGlVertex:
+        case RgaEntryType::kDxVertex:      return entry_type == RgaEntryType::kDxVertex ? "vs" : "vert";
+        case RgaEntryType::kVkTessControl:
+        case RgaEntryType::kGlTessControl: return "tesc";
+        case RgaEntryType::kDxHull:        return "hs";
+        case RgaEntryType::kVkTessEval:
+        case RgaEntryType::kGlTessEval:    return "tese";
+        case RgaEntryType::kDxDomain:      return "ds";
+        case RgaEntryType::kVkGeometry:
+        case RgaEntryType::kGlGeometry:    return "geom";
+        case RgaEntryType::kDxGeometry:    return "gs";
+        case RgaEntryType::kVkFragment:
+        case RgaEntryType::kGlFragment:    return "frag";
+        case RgaEntryType::kDxPixel:       return "ps";
+        case RgaEntryType::kVkCompute:
+        case RgaEntryType::kGlCompute:     return "comp";
+        case RgaEntryType::kDxCompute:     return "cs";
+        case RgaEntryType::kVkMesh:        return "mesh";
+        case RgaEntryType::kDxMesh:        return "ms";
+        case RgaEntryType::kVkTask:        return "task";
+        case RgaEntryType::kDxAmplification: return "as";
+        default:                           return "";
+        }
+    }
+
     static bool CompareEntryTypeStr(const std::string& entry_str_lhs, const std::string& entry_str_rhs)
     {
         auto lhs = GetEntryType(entry_str_lhs);

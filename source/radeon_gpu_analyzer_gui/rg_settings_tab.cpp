@@ -54,7 +54,7 @@ void RgSettingsTab::Initialize()
 
     // Create the API-specific build settings view and add it to the Settings Tab.
     build_settings_view_ = CreateApiBuildSettingsView();
-    assert(build_settings_view_ != nullptr || (current_api == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
+    assert(build_settings_view_ != nullptr);
     if (build_settings_view_ != nullptr)
     {
         AddSettingsView(build_settings_view_);
@@ -282,7 +282,7 @@ void RgSettingsTab::SaveSettings()
         global_settings_view_->SaveSettings();
     }
 
-    assert(build_settings_view_ != nullptr || (GetApiType() == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
+    assert(build_settings_view_ != nullptr);
     if (build_settings_view_ != nullptr && build_settings_view_->GetHasPendingChanges())
     {
         // Save default build settings.
@@ -341,7 +341,7 @@ void RgSettingsTab::HandleRestoreDefaultsSettingsClicked()
 void RgSettingsTab::UpdateBuildSettingsTitle(bool has_pending_changes)
 {
     QListWidgetItem* item = ui_.settingsListWidget->item(static_cast<int>(SettingsListWidgetEntries::kApi));
-    assert(item != nullptr || (GetApiType() == RgProjectAPI::kBinary && item == nullptr));
+    assert(item != nullptr);
     if (item != nullptr)
     {
         std::string settings_title;
@@ -436,6 +436,8 @@ RgUnsavedItemsDialog::UnsavedFileDialogResult RgSettingsTab::ShowSaveSettingsCon
 
             // Set the focus to settings tab so keyboard shortcuts work.
             setFocus();
+
+            unsaved_changes_dialog->deleteLater();
         }
     }
 
@@ -468,7 +470,7 @@ void RgSettingsTab::SetGlobalSettingsStylesheet(const std::string& stylesheet)
 
 void RgSettingsTab::SetBuildSettingsStylesheet(const std::string& stylesheet)
 {
-    assert(build_settings_view_ != nullptr || (GetApiType() == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
+    assert(build_settings_view_ != nullptr);
     if (build_settings_view_ != nullptr)
     {
         build_settings_view_->setStyleSheet(stylesheet.c_str());
@@ -477,7 +479,7 @@ void RgSettingsTab::SetBuildSettingsStylesheet(const std::string& stylesheet)
 
 void RgSettingsTab::HandleSettingsListWidgetClick(int index)
 {
-    assert(build_settings_view_ != nullptr || (GetApiType() == RgProjectAPI::kBinary && build_settings_view_ == nullptr));
+    assert(build_settings_view_ != nullptr);
     assert(global_settings_view_ != nullptr);
 
     bool is_saved_enabled = false;

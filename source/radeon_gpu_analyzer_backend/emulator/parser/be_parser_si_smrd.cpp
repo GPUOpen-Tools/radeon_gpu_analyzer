@@ -97,7 +97,11 @@ ParserSi::kaStatus ParserSiSmrd::Parse(GDT_HW_GENERATION hw_generation, Instruct
     SMRDInstruction::SBASE sbase  = GetSBase(hex_instruction);
     SMRDInstruction::SDST sdst = GetSdst(hex_instruction, ridx);
     SISMRDInstruction::OP op = GetSiSmrdOp(hex_instruction);
-    instruction = new SISMRDInstruction(offset, imm, sbase, sdst, ridx, op, label, goto_label);
+    instruction = new (std::nothrow) SISMRDInstruction(offset, imm, sbase, sdst, ridx, op, label, goto_label);
+    if (instruction == nullptr)
+    {
+        return ParserSi::kStatusUnexpectedHwGeneration;
+    }
 
     return ParserSi::kStatusSuccess;
 }
@@ -115,7 +119,11 @@ ParserSi::kaStatus ParserSiSmrd::Parse(GDT_HW_GENERATION hw_generation, Instruct
     SMRDInstruction::SBASE sbase = GetSBase(Instruction::Instruction32Bit(hex_instruction & 0xffff));
     SMRDInstruction::SDST sdst = GetSdst(Instruction::Instruction32Bit(hex_instruction & 0xffff), ridx);
     VISMEMInstruction::OP op = GetViSmrdOp(hex_instruction);
-    instruction = new VISMEMInstruction(offset, imm, sbase, sdst, ridx, op, label, goto_label);
+    instruction = new (std::nothrow) VISMEMInstruction(offset, imm, sbase, sdst, ridx, op, label, goto_label);
+    if (instruction == nullptr)
+    {
+        return ParserSi::kStatusUnexpectedHwGeneration;
+    }
 
     return ParserSi::kStatusSuccess;
 }

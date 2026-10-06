@@ -54,6 +54,12 @@
 
 static const uint32_t SPV_BINARY_MAGIC_NUMBER = 0x07230203;
 
+// String Constants.
+
+static const char kEntrypointKeySeparator = '|';  // A separator used in joining an input source file path, target asic and an entry point name.
+// Such a string is used to uniquely identify an entry point with potential for
+// name collisions between separate source files and gpus.
+
 // *** INTERNALLY-LINKED AUXILIARY FUNCTIONS - START ***
 
 static bool OpenFileDialogHelper(QWidget*           parent,
@@ -437,6 +443,36 @@ std::string RgUtils::RemoveGfxNotation(const std::string& family_name)
         fixed_group_name = family_name;
     }
     return fixed_group_name;
+}
+
+std::string RgUtils::GenerateEntrypointKey(const std::string& file_path, const std::string& asic, const std::string& entrypoint_name)
+{
+    // In some cases it may not be possible to identify a given entry point by name when multiple
+    // entrypoints use the same name. Return a unique key based on the input filename and the
+    // entry point name, so that each entry point can be identified correctly.
+    return file_path + kEntrypointKeySeparator + asic + kEntrypointKeySeparator + entrypoint_name;
+}
+
+bool RgUtils::DecodeEntrypointKey(const std::string& entrypoint_key, std::string& file_path, std::string& asic, std::string& entrypoint_name)
+{
+    bool ret = false;
+
+    // Attempt to split the given entry point key string into source file path and entry point name strings.
+    std::vector<std::string> file_path_and_entrypoint_name_list;
+    RgUtils::splitString(entrypoint_key, kEntrypointKeySeparator, file_path_and_entrypoint_name_list);
+
+    // Verify that only 2 tokens are found. One for the source file path, and another for entry point name.
+    size_t token_count = file_path_and_entrypoint_name_list.size();
+    assert(token_count == 3);
+    if (token_count == 3)
+    {
+        file_path       = file_path_and_entrypoint_name_list[0];
+        asic            = file_path_and_entrypoint_name_list[1];
+        entrypoint_name = file_path_and_entrypoint_name_list[2];
+        ret             = true;
+    }
+
+    return ret;
 }
 
 bool RgUtils::GetFirstValidOutputGpu(const RgBuildOutputsMap& build_outputs, std::string& first_valid_gpu, std::shared_ptr<RgCliBuildOutput>& output)
@@ -1171,7 +1207,7 @@ bool RgUtils::AppendFiles(const std::string& first_file_full_path, const std::st
 
     base_file.close();
     append_file.close();
-    
+
     return true;
 }
 
@@ -1301,13 +1337,13 @@ bool RgUtils::ConstructSpvDisasmFileName(const std::string& proj_folder, const s
     return result;
 }
 
-std::pair<RgVulkanInputType, RgSrcLanguage> RgUtils::DetectInputFileType(const std::string& file_path)
+std::pair<RgVulkanInputType, ShaderSourceLanguage> RgUtils::DetectInputFileType(const std::string& file_path)
 {
-    std::pair<RgVulkanInputType, RgSrcLanguage> ret = {RgVulkanInputType::kUnknown, RgSrcLanguage::Unknown};
+    std::pair<RgVulkanInputType, ShaderSourceLanguage> ret = {RgVulkanInputType::kUnknown, ShaderSourceLanguage::Unknown};
 
     if (RgUtils::IsSpvBinFile(file_path))
     {
-        ret = {RgVulkanInputType::kSpirv, RgSrcLanguage::kSPIRV_Text};
+        ret = {RgVulkanInputType::kSpirv, ShaderSourceLanguage::kSPIRV_Text};
     }
     else
     {
@@ -1319,15 +1355,15 @@ std::pair<RgVulkanInputType, RgSrcLanguage> RgUtils::DetectInputFileType(const s
 
         if (QString(QString(global_settings->input_file_ext_spv_txt.c_str())).split(kStrVkFileExtDelimiter).contains(ext))
         {
-            ret = {RgVulkanInputType::kSpirvTxt, RgSrcLanguage::kSPIRV_Text};
+            ret = {RgVulkanInputType::kSpirvTxt, ShaderSourceLanguage::kSPIRV_Text};
         }
         else if (QString(global_settings->input_file_ext_glsl.c_str()).split(kStrVkFileExtDelimiter).contains(ext))
         {
-            ret = {RgVulkanInputType::kGlsl, RgSrcLanguage::kGLSL};
+            ret = {RgVulkanInputType::kGlsl, ShaderSourceLanguage::kGLSL};
         }
         else if (QString(global_settings->input_file_ext_hlsl.c_str()).split(kStrVkFileExtDelimiter).contains(ext))
         {
-            ret = {RgVulkanInputType::kHlsl, RgSrcLanguage::kHLSL};
+            ret = {RgVulkanInputType::kHlsl, ShaderSourceLanguage::kHLSL};
         }
     }
 
@@ -1623,27 +1659,6 @@ bool RgUtils::IsInList(const std::string& list, const std::string& token, char d
     }
 
     return ret;
-}
-
-void RgUtils::FindSearchResultIndices(const QString& text, const QString& text_to_find, std::vector<size_t>& search_result_indices)
-{
-    // Make sure that neither text value is empty.
-    if (!text.isEmpty() && !text_to_find.isEmpty())
-    {
-        // Step the cursor through the entire field of text to search.
-        size_t cursor_index = text.indexOf(text_to_find, 0);
-
-        // Step through the text to search until we hit the end.
-        size_t search_string_length = text_to_find.size();
-        while (cursor_index != std::string::npos)
-        {
-            // Found a result occurrence. Push it into the results list.
-            search_result_indices.push_back(cursor_index);
-
-            // Search for the next result location.
-            cursor_index = text.indexOf(text_to_find, static_cast<int>(cursor_index + search_string_length));
-        }
-    }
 }
 
 bool RgUtils::IsSpvasTextFile(const std::string& stage_input_file, std::string& stage_abbreviation)

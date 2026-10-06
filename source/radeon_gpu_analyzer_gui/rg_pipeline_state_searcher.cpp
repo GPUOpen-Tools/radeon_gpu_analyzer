@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for class responsible for searching a source editor using an RgFindTextWidget.
@@ -19,6 +19,9 @@
 // The value used to represent the state where a search doesn't return any results.
 static const int kInvalidSearchLocation = -1;
 
+// The value used to represent the offset between the 0-based index of the search result vector, and the 1-based index shown in the UI.
+static const int kSearchStartIndex = 1;
+
 RgPipelineStateSearcher::RgPipelineStateSearcher()
     : last_found_position_(kInvalidSearchLocation)
 {
@@ -26,11 +29,7 @@ RgPipelineStateSearcher::RgPipelineStateSearcher()
 
 uint32_t RgPipelineStateSearcher::GetSupportedOptions()
 {
-    return
-        SupportedOptions::kFindPrevious |
-        SupportedOptions::kFindNext |
-        SupportedOptions::kFilterTree |
-        SupportedOptions::kMatchCase;
+    return SupportedOptions::kFindPrevious | SupportedOptions::kFindNext | SupportedOptions::kFilterTree | SupportedOptions::kMatchCase;
 }
 
 bool RgPipelineStateSearcher::Find(const QString& search_string, SearchDirection direction)
@@ -103,6 +102,13 @@ void RgPipelineStateSearcher::SelectResults()
             }
         }
     }
+}
+
+void RgPipelineStateSearcher::GetSearchResults(int& match_index, int& total_matches)
+{
+    // Start at 1 not 0.
+    match_index   = last_found_position_ + kSearchStartIndex;
+    total_matches = static_cast<int>(search_results_.result_occurrences.size());
 }
 
 void RgPipelineStateSearcher::SetSearchOptions(const SearchOptions& options)

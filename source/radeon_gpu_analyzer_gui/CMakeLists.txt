@@ -8,22 +8,12 @@ project (radeon_gpu_analyzer_gui)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Add cmake utilities
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include(devtools_qt_helper)
-include(dev_tools)
-
 # Add RGA macro.
 add_definitions(-D__RGA)
 
 # Enable C++ exceptions
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
-endif()
-
-# Qt
-if (NO_DEFAULT_QT)
-  set (NO_DEFAULT_QT_OPTION "NO_DEFAULT_PATH")
 endif()
 
 # Find Vulkan SDK
@@ -41,18 +31,12 @@ if (RGA_ENABLE_VULKAN)
     endif()
 endif()
 
-find_package(Qt6 COMPONENTS Core Gui Widgets Network Widgets Svg Test REQUIRED
-             HINTS ${QT_PACKAGE_ROOT} ${NO_DEFAULT_QT_OPTION})
-
 get_target_property(QtCoreLocation Qt6::Core LOCATION)
 get_filename_component(Qt6_LIB_DIR ${QtCoreLocation} DIRECTORY)
 set(Qt6_ROOT_DIR "${Qt6_LIB_DIR}/..")
 
 # Add this definitions if static linkage is used with the other projects
 add_definitions(-DAMDTBASETOOLS_STATIC -DAMDTOSWRAPPERS_STATIC)
-
-# Add UpdateCheckAPI
-add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/../../external/update_check_api update_check_api)
 
 # Include folders
 include_directories("${PROJECT_SOURCE_DIR}/")
@@ -69,7 +53,6 @@ include_directories("${PROJECT_SOURCE_DIR}/../../external")
 include_directories("${PROJECT_SOURCE_DIR}/../../")
 include_directories("${PROJECT_SOURCE_DIR}/../common")
 include_directories("${PROJECT_SOURCE_DIR}/../../external/third_party/spdlog/spdlog-1.14.1/include")
-include_directories(${UPDATECHECKAPI_INC_DIRS})
 if (GUI_AUTOMATION)
     include_directories("${PROJECT_SOURCE_DIR}/../../external/rga_internal_utils/tests_gui/include")
 endif()
@@ -81,25 +64,20 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/../../external/qt_isa_gui" "../qt_isa_gu
 
 file(GLOB  CPP_INC
      "*.h"
-     ${UPDATECHECKAPI_INC}
 )
 
 file(GLOB  CPP_SRC
      "*.cpp"
      "../common/*.cpp"
      "../common/vulkan/*.cpp"
-     ${UPDATECHECKAPI_SRC}
-     ${UPDATECHECKAPI_QT_SRC}
 )
 
 file(GLOB  UI_SRC
      "ui/*.ui"
-     ${UPDATECHECKAPI_QT_UI}
 )
 
 file(GLOB  MOC_INC
      "qt/*.h"
-     ${UPDATECHECKAPI_QT_INC}
 )
 
 file(GLOB  RES_SRC
@@ -172,9 +150,9 @@ endif()
 target_include_directories(tinyxml2 PUBLIC ${TINYXML2_DIR})
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers general Qt6::Gui Qt6::Widgets Qt6::Core QtCustomWidgets QtUtils qt_isa_widgets qt_isa_utility ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} tinyxml2 ${EXTRA_LIBS})
+    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers general Qt6::Gui Qt6::Widgets Qt6::Core QtCustomWidgets QtUtils qt_isa_widgets qt_isa_utility ${QT_TEST_LIB} AMD::update_check_api_qt tinyxml2 ${EXTRA_LIBS})
 else()
-    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers Qt6::Gui Qt6::Widgets Qt6::Core QtCustomWidgets QtUtils qt_isa_widgets qt_isa_utility ${QT_TEST_LIB} ${UPDATECHECKAPI_LIBS} tinyxml2 ${EXTRA_LIBS})
+    target_link_libraries(radeon_gpu_analyzer_gui AMDTBaseTools AMDTOSWrappers Qt6::Gui Qt6::Widgets Qt6::Core QtCustomWidgets QtUtils qt_isa_widgets qt_isa_utility ${QT_TEST_LIB} AMD::update_check_api_qt tinyxml2 ${EXTRA_LIBS})
 endif()
 
 # Copy the RGA-Updates file into the output directory for ease of testing.

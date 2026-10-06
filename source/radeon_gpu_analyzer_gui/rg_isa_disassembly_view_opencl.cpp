@@ -27,7 +27,7 @@ bool RgIsaDisassemblyViewOpencl::PopulateBuildOutput(const std::shared_ptr<RgPro
     assert(project_clone != nullptr);
     if (project_clone != nullptr)
     {
-        std::vector<RgSourceFileInfo>& project_source_files = project_clone->source_files;
+        const auto& project_source_files = project_clone->source_files;
 
         ui_.targetGpuPushButton->setVisible(true);
         ui_.binary_target_gpu_->setVisible(false);
@@ -38,11 +38,6 @@ bool RgIsaDisassemblyViewOpencl::PopulateBuildOutput(const std::shared_ptr<RgPro
     }
 
     return ret;
-}
-
-bool RgIsaDisassemblyViewOpencl::IsLineCorrelationSupported() const
-{
-    return true;
 }
 
 void RgIsaDisassemblyViewOpencl::SetBorderStylesheet(bool is_selected)
@@ -62,23 +57,23 @@ bool RgIsaDisassemblyViewOpencl::PopulateDisassemblyView(const std::vector<RgSou
     // Iterate through each target GPU's output.
     for (auto gpu_outputs_iter = build_output.begin(); gpu_outputs_iter != build_output.end(); ++gpu_outputs_iter)
     {
-        const std::string& target_gpu = gpu_outputs_iter->first;
+        const std::string&                target_gpu       = gpu_outputs_iter->first;
         std::shared_ptr<RgCliBuildOutput> gpu_build_output = gpu_outputs_iter->second;
-        bool is_valid_output = gpu_build_output != nullptr;
+        bool                              is_valid_output  = gpu_build_output != nullptr;
         assert(is_valid_output);
         if (is_valid_output)
         {
-            std::shared_ptr<RgCliBuildOutputOpencl> gpu_build_output_opencl =
-                std::dynamic_pointer_cast<RgCliBuildOutputOpencl>(gpu_build_output);
+            std::shared_ptr<RgCliBuildOutputOpencl> gpu_build_output_opencl = std::dynamic_pointer_cast<RgCliBuildOutputOpencl>(gpu_build_output);
 
             // Step through the outputs map, and load the disassembly data for each input file.
-            for (auto output_iter = gpu_build_output_opencl->per_file_output.begin(); output_iter != gpu_build_output_opencl->per_file_output.end(); ++output_iter)
+            for (auto output_iter = gpu_build_output_opencl->per_file_output.begin(); output_iter != gpu_build_output_opencl->per_file_output.end();
+                 ++output_iter)
             {
                 const std::string& source_file_path = output_iter->first;
 
                 // Only load build outputs for files in the given list of source files.
                 RgSourceFilePathSearcher source_file_searcher(source_file_path);
-                auto source_file_iter = std::find_if(source_files.begin(), source_files.end(), source_file_searcher);
+                auto                     source_file_iter = std::find_if(source_files.begin(), source_files.end(), source_file_searcher);
                 if (source_file_iter != source_files.end())
                 {
                     // Get the list of outputs for the input file.

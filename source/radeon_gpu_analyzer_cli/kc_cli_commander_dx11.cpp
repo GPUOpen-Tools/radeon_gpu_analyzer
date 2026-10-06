@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for CLI Commander interface for compiling for DX11.
@@ -29,7 +29,9 @@ static const int  kDxMaxSupportedShaderModelMinor = 0;
 
 // Error strings.
 static const std::string kStrDx11NaValue = "N/A";
-static const char* kStrErrorShaderModelNotSupported = "Error: shader model 5.1 and above is not supported in DX11 mode. Please use DX12 mode (rga -s dx12 -h).";
+static const char* kStrErrorShaderModelNotSupported        = "Error: shader model 5.1 and above is not supported in DX11 mode. Please use DX12 mode (rga -s dx12 -h).";
+static const char* kStrErrorDx11SessionSummaryNotSupported = "Error: --session-summary is not supported in DX11 mode.";
+static const char* kStrErrorAmdilSessionSummaryNotSupported = "Error: --session-summary is not supported in AMDIL mode.";
 static const char* kStrErrorDx11CannotListAdapters = "Error: failed to get the list of display adapters installed on this system.";
 static const char* kStrErrorDx11AdapterSetFailed = "Error: failed to set display adapter with provided ID.";
 static const char* kStrErrorDx11IncorrectShaderModel = "Error: Unsupported or incorrect DX target profile provided: ";
@@ -48,7 +50,7 @@ static const char* kStrInfoDx11DxAsmCodeGenerationSuccess = "DX ASM code generat
 static const char* kStrInfoDx11DxAsmCodeGenerationFailure = "DX ASM code generation failed.";
 
 // Unsupported devices.
-static const std::set<std::string> kUnsupportedDevicesDx11 = {"gfx902", "gfx904", "gfx908", "gfx90a", "gfx942", "gfx950", "gfx1033"};
+static const std::set<std::string> kUnsupportedDevicesDx11 = {"gfx902", "gfx904", "gfx908", "gfx90a", "gfx942", "gfx950", "gfx1033", "gfx1250"};
 
 KcCliCommanderDX::KcCliCommanderDX(void)
 {
@@ -378,6 +380,18 @@ void KcCliCommanderDX::RunCompileCommands(const Config& config, LoggingCallBackF
         std::vector <std::string> device_analysis_data;
 
         // Check flags first.
+        if (config.mode == RgaMode::kModeDx11 && !config.session_summary_file.empty())
+        {
+            std::cout << kStrErrorDx11SessionSummaryNotSupported << std::endl;
+            return;
+        }
+
+        if (config.mode == RgaMode::kModeAmdil && !config.session_summary_file.empty())
+        {
+            std::cout << kStrErrorAmdilSessionSummaryNotSupported << std::endl;
+            return;
+        }
+
         if (config.mode == RgaMode::kModeDx11 && config.profile.length() == 0 && !config.dxbc_input_dx11)
         {
             std::stringstream log;

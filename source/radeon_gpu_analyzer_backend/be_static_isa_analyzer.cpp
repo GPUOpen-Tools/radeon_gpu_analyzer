@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for rga backend isa static analyzer class.
@@ -36,7 +36,7 @@ static const std::string kShaeOptLiveregWave64 = "--wave-size 64";
 static const std::string kShaeOptLiveregWave32 = "--wave-size 32";
 static const std::string kShaeOptLiveregSgpr   = "--reg-type sgpr";
 
-static const std::string kShaeOptCfgPerBlock = "dump-bb-cfg";
+static const std::string kShaeOptCfgPerBlock       = "dump-bb-cfg";
 static const std::string kShaeOptCfgPerInstruciton = "dump-pi-cfg";
 
 static bool GetLiveRegAnalyzerPath(std::string& analyzer_path)
@@ -61,7 +61,7 @@ static bool GetLiveRegAnalyzerPath(std::string& analyzer_path)
     analyzer_path = "x86\\shae.exe";
 #endif
 
-#endif // AMD_INTERNAL
+#endif  // AMD_INTERNAL
     return true;
 }
 
@@ -78,6 +78,7 @@ static std::string GetShaeIsaCmd(const gtString& target)
     const gtString kShaeGfx11   = L"gfx11";
     const gtString kShaeGfx11_5 = L"gfx11_5";
     const gtString kShaeGfx12   = L"gfx12";
+    const gtString kShaeGfx12_5 = L"gfx12_5";
 
     const gtString kShaeGfx1100 = L"gfx1100";
     const gtString kShaeGfx1101 = L"gfx1101";
@@ -91,7 +92,11 @@ static std::string GetShaeIsaCmd(const gtString& target)
     bool              should_add_arch_option = false;
     std::stringstream shae_gfx_generation;
     shae_gfx_generation << kShaeOptionIsa.asASCIICharArray() << " ";
-    if (RgaSharedUtils::IsNavi4Target(target.asASCIICharArray()))
+    if (RgaSharedUtils::IsMi450Target(target.asASCIICharArray()))
+    {
+        shae_gfx_generation << kShaeGfx12_5.asASCIICharArray();
+    }
+    else if (RgaSharedUtils::IsNavi4Target(target.asASCIICharArray()))
     {
         shae_gfx_generation << kShaeGfx12.asASCIICharArray();
 
@@ -159,14 +164,17 @@ static std::string GetShaeIsaCmd(const gtString& target)
     return shae_gfx_generation.str().c_str();
 }
 
-static beKA::beStatus PerformAnalysis(const gtString& isa_filename, const gtString& target, const gtString& output_filename,
-    const std::string& shae_cmd, bool should_print_cmd)
+static beKA::beStatus PerformAnalysis(const gtString&    isa_filename,
+                                      const gtString&    target,
+                                      const gtString&    output_filename,
+                                      const std::string& shae_cmd,
+                                      bool               should_print_cmd)
 {
     beStatus ret = kBeStatusGeneralFailed;
 
     // Get the ISA analyzer's path.
     std::string analyzer_path;
-    bool is_ok = GetLiveRegAnalyzerPath(analyzer_path);
+    bool        is_ok = GetLiveRegAnalyzerPath(analyzer_path);
 
     if (is_ok && !analyzer_path.empty())
     {
@@ -177,8 +185,8 @@ static beKA::beStatus PerformAnalysis(const gtString& isa_filename, const gtStri
         {
             // Construct the command.
             std::stringstream cmd;
-            cmd << analyzer_path << " " << GetShaeIsaCmd(target) << " " << shae_cmd << " \"" << isa_filename.asASCIICharArray()
-                << "\" \"" << output_filename.asASCIICharArray() << '"';
+            cmd << analyzer_path << " " << GetShaeIsaCmd(target) << " " << shae_cmd << " \"" << isa_filename.asASCIICharArray() << "\" \""
+                << output_filename.asASCIICharArray() << '"';
 
             // Cancel signal. Not in use for now.
             bool should_cancel = false;
@@ -214,15 +222,14 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::PreprocessIsaFile(const std::string& i
     beStatus ret = kBeStatusGeneralFailed;
 
     // Filter out the relevant lines.
-    const char* kTokenSgpr = "sgpr_count";
-    const char* kTokenVgpr = "vgpr_count";
+    const char*       kTokenSgpr = "sgpr_count";
+    const char*       kTokenVgpr = "vgpr_count";
     std::stringstream prcessed_content;
-    std::ifstream infile(isa_filename);
-    std::string line;
+    std::ifstream     infile(isa_filename);
+    std::string       line;
     while (std::getline(infile, line))
     {
-        if (line.find(kTokenSgpr) == std::string::npos &&
-            line.find(kTokenVgpr) == std::string::npos)
+        if (line.find(kTokenSgpr) == std::string::npos && line.find(kTokenVgpr) == std::string::npos)
         {
             prcessed_content << line << std::endl;
         }
@@ -232,7 +239,7 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::PreprocessIsaFile(const std::string& i
     assert(is_content_valid);
     if (is_content_valid)
     {
-        bool is_file_written = KcUtils::WriteTextFile(output_filename , prcessed_content.str(), nullptr);
+        bool is_file_written = KcUtils::WriteTextFile(output_filename, prcessed_content.str(), nullptr);
         assert(is_file_written);
         if (is_file_written)
         {
@@ -242,7 +249,8 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::PreprocessIsaFile(const std::string& i
     return ret;
 }
 
-beKA::beStatus beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtString& isa_filename, const gtString& target,
+beKA::beStatus beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtString& isa_filename,
+                                                                      const gtString& target,
                                                                       const gtString& output_filename,
                                                                       beWaveSize      wave_size,
                                                                       bool            should_print_cmd,
@@ -251,7 +259,7 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtSt
     std::stringstream shae_option;
     switch (wave_size)
     {
-    case kUnknown:
+    case kUnknownSize:
         // Let Shae deduce the wave size from the disassembly.
         shae_option << kShaeOptLivereg;
         if (is_reg_type_sgpr)
@@ -266,7 +274,7 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtSt
         {
             shae_option << " " << kShaeOptLiveregSgpr;
         }
-        shae_option  << " " << kShaeOptLiveregWave32;
+        shae_option << " " << kShaeOptLiveregWave32;
         break;
     case kWave64:
         // Force wave64.
@@ -286,14 +294,17 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(const gtSt
     return PerformAnalysis(isa_filename, target, output_filename, shae_option.str(), should_print_cmd);
 }
 
-beKA::beStatus beKA::BeStaticIsaAnalyzer::GenerateControlFlowGraph(const gtString& isa_filename, const gtString& target, const gtString& output_filename,
-    bool is_per_instruction, bool should_print_cmd)
+beKA::beStatus beKA::BeStaticIsaAnalyzer::GenerateControlFlowGraph(const gtString& isa_filename,
+                                                                   const gtString& target,
+                                                                   const gtString& output_filename,
+                                                                   bool            is_per_instruction,
+                                                                   bool            should_print_cmd)
 {
     beStatus ret = kBeStatusGeneralFailed;
 
     // Get the ISA analyzer's path.
     std::string analyzer_path;
-    bool is_ok = GetLiveRegAnalyzerPath(analyzer_path);
+    bool        is_ok = GetLiveRegAnalyzerPath(analyzer_path);
 
     if (is_ok && !analyzer_path.empty())
     {
@@ -305,8 +316,8 @@ beKA::beStatus beKA::BeStaticIsaAnalyzer::GenerateControlFlowGraph(const gtStrin
             // Construct the command.
             std::stringstream cmd;
             const std::string kShaeOptCfg = is_per_instruction ? kShaeOptCfgPerInstruciton : kShaeOptCfgPerBlock;
-            cmd << analyzer_path << " " << GetShaeIsaCmd(target) << " " << kShaeOptCfg << " " << '"' << isa_filename.asASCIICharArray()
-                << "\" \"" << output_filename.asASCIICharArray() << '"';
+            cmd << analyzer_path << " " << GetShaeIsaCmd(target) << " " << kShaeOptCfg << " " << '"' << isa_filename.asASCIICharArray() << "\" \""
+                << output_filename.asASCIICharArray() << '"';
 
             // Cancel signal. Not in use for now.
             bool should_cancel = false;

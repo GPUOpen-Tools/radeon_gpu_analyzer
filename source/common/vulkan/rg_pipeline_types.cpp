@@ -29,6 +29,127 @@ void RgPsoCreateInfoVulkan::InitializePipelineLayoutCreateInfo()
     m_pPipelineLayoutCreateInfo->pPushConstantRanges = nullptr;
 }
 
+RgPsoGraphicsVulkan::~RgPsoGraphicsVulkan()
+{
+    if (m_pipelineCreateInfo.pStages != nullptr)
+    {
+        for (uint32_t i = 0; i < m_pipelineCreateInfo.stageCount; ++i)
+        {
+            if (m_pipelineCreateInfo.pStages[i].pSpecializationInfo != nullptr)
+            {
+                delete[] m_pipelineCreateInfo.pStages[i].pSpecializationInfo->pMapEntries;
+                delete[] m_pipelineCreateInfo.pStages[i].pSpecializationInfo->pData;
+                delete m_pipelineCreateInfo.pStages[i].pSpecializationInfo;
+            }
+            delete[] m_pipelineCreateInfo.pStages[i].pName;
+        }
+        delete[] m_pipelineCreateInfo.pStages;
+        m_pipelineCreateInfo.pStages = nullptr;
+    }
+
+    if (m_pipelineCreateInfo.pDynamicState != nullptr)
+    {
+        delete[] m_pipelineCreateInfo.pDynamicState->pDynamicStates;
+        delete m_pipelineCreateInfo.pDynamicState;
+        m_pipelineCreateInfo.pDynamicState = nullptr;
+    }
+
+    if (m_pVertexInputStateCreateInfo != nullptr)
+    {
+        delete[] m_pVertexInputStateCreateInfo->pVertexAttributeDescriptions;
+        m_pVertexInputStateCreateInfo->pVertexAttributeDescriptions = nullptr;
+        delete[] m_pVertexInputStateCreateInfo->pVertexBindingDescriptions;
+        m_pVertexInputStateCreateInfo->pVertexBindingDescriptions = nullptr;
+        delete m_pVertexInputStateCreateInfo;
+        m_pVertexInputStateCreateInfo = nullptr;
+    }
+
+    delete m_pInputAssemblyStateCreateInfo;
+    m_pInputAssemblyStateCreateInfo = nullptr;
+
+    delete m_pTessellationStateCreateInfo;
+    m_pTessellationStateCreateInfo = nullptr;
+
+    if (m_pViewportStateCreateInfo != nullptr)
+    {
+        delete[] m_pViewportStateCreateInfo->pScissors;
+        m_pViewportStateCreateInfo->pScissors = nullptr;
+        delete[] m_pViewportStateCreateInfo->pViewports;
+        m_pViewportStateCreateInfo->pViewports = nullptr;
+        delete m_pViewportStateCreateInfo;
+        m_pViewportStateCreateInfo = nullptr;
+    }
+
+    delete m_pRasterizationStateCreateInfo;
+    m_pRasterizationStateCreateInfo = nullptr;
+
+    if (m_pMultisampleStateCreateInfo != nullptr)
+    {
+        delete[] m_pMultisampleStateCreateInfo->pSampleMask;
+        m_pMultisampleStateCreateInfo->pSampleMask = nullptr;
+        delete m_pMultisampleStateCreateInfo;
+        m_pMultisampleStateCreateInfo = nullptr;
+    }
+
+    delete m_pDepthStencilStateCreateInfo;
+    m_pDepthStencilStateCreateInfo = nullptr;
+
+    if (m_pColorBlendStateCreateInfo != nullptr)
+    {
+        delete[] m_pColorBlendStateCreateInfo->pAttachments;
+        m_pColorBlendStateCreateInfo->pAttachments = nullptr;
+        delete m_pColorBlendStateCreateInfo;
+        m_pColorBlendStateCreateInfo = nullptr;
+    }
+
+    if (m_pRenderPassCreateInfo != nullptr)
+    {
+        if (m_pRenderPassCreateInfo->pSubpasses != nullptr)
+        {
+            for (uint32_t i = 0; i < m_pRenderPassCreateInfo->subpassCount; ++i)
+            {
+                delete[] m_pRenderPassCreateInfo->pSubpasses[i].pInputAttachments;
+                delete[] m_pRenderPassCreateInfo->pSubpasses[i].pColorAttachments;
+                delete[] m_pRenderPassCreateInfo->pSubpasses[i].pResolveAttachments;
+                delete m_pRenderPassCreateInfo->pSubpasses[i].pDepthStencilAttachment;
+                delete[] m_pRenderPassCreateInfo->pSubpasses[i].pPreserveAttachments;
+            }
+
+            delete[] m_pRenderPassCreateInfo->pSubpasses;
+            m_pRenderPassCreateInfo->pSubpasses = nullptr;
+        }
+
+        delete[] m_pRenderPassCreateInfo->pAttachments;
+        m_pRenderPassCreateInfo->pAttachments = nullptr;
+        delete[] m_pRenderPassCreateInfo->pDependencies;
+        m_pRenderPassCreateInfo->pDependencies = nullptr;
+        delete m_pRenderPassCreateInfo;
+        m_pRenderPassCreateInfo = nullptr;
+    }
+
+    if (m_pPipelineLayoutCreateInfo != nullptr)
+    {
+        delete[] m_pPipelineLayoutCreateInfo->pSetLayouts;
+        m_pPipelineLayoutCreateInfo->pSetLayouts = nullptr;
+        delete[] m_pPipelineLayoutCreateInfo->pPushConstantRanges;
+        m_pPipelineLayoutCreateInfo->pPushConstantRanges = nullptr;
+        delete m_pPipelineLayoutCreateInfo;
+        m_pPipelineLayoutCreateInfo = nullptr;
+    }
+
+    for (VkDescriptorSetLayoutCreateInfo* descriptor_set_layout_create_info : m_descriptorSetLayoutCreateInfo)
+    {
+        if (descriptor_set_layout_create_info != nullptr)
+        {
+            delete[] descriptor_set_layout_create_info->pBindings;
+            descriptor_set_layout_create_info->pBindings = nullptr;
+            delete descriptor_set_layout_create_info;
+            descriptor_set_layout_create_info = nullptr;
+        }
+    }
+    m_descriptorSetLayoutCreateInfo.clear();
+}
+
 void RgPsoGraphicsVulkan::Initialize()
 {
     // Zero out the initial state structure.

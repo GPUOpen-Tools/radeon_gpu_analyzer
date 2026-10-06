@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Main entry point for dx12 backend.
@@ -26,7 +26,7 @@ using namespace Microsoft::WRL;
 #ifdef _WIN32
 // Agility SDK exports.
 extern "C" {
-__declspec(dllexport) extern const UINT D3D12SDKVersion = 613;
+__declspec(dllexport) extern const UINT D3D12SDKVersion = 618;
 }
 
 extern "C" {
@@ -93,8 +93,9 @@ static bool IsInputValid(rga::RgDx12Config& config)
             }
             else
             {
-                // Vertex shader must be present.
-                if (config.vert.hlsl.empty() && config.vert.dxbc.empty())
+                // Vertex or mesh shader must be present.
+                if (config.vert.hlsl.empty() && config.vert.dxbc.empty() &&
+                    config.mesh.hlsl.empty() && config.mesh.dxbc.empty())
                 {
                     std::cout << kStrErrorNoInputFileProvided1 << "vertex" <<
                         kStrErrorNoInputFileProvided2 << std::endl;
@@ -132,16 +133,30 @@ static bool IsInputValid(rga::RgDx12Config& config)
                         kStrErrorMultipleInputFilesPerStage2 << std::endl;
                     ret = false;
                 }
+                if (ret && !config.mesh.hlsl.empty() && !config.mesh.dxbc.empty())
+                {
+                    std::cout << kStrErrorMultipleInputFilesPerStage1 << "mesh" <<
+                        kStrErrorMultipleInputFilesPerStage2 << std::endl;
+                    ret = false;
+                }
+                if (ret && !config.amplification.hlsl.empty() && !config.amplification.dxbc.empty())
+                {
+                    std::cout << kStrErrorMultipleInputFilesPerStage1 << "amplification" <<
+                        kStrErrorMultipleInputFilesPerStage2 << std::endl;
+                    ret = false;
+                }
             }
         }
 
         // Do not mix and match compute and non-compute shaders.
         if ((!config.comp.hlsl.empty() || !config.comp.dxbc.empty()) &&
-            ((!config.vert.hlsl.empty() || !config.vert.dxbc.empty())    ||
-            (!config.hull.hlsl.empty() || !config.hull.dxbc.empty())     ||
-                (!config.domain.hlsl.empty() || !config.domain.dxbc.empty()) ||
-                (!config.geom.hlsl.empty() || !config.geom.dxbc.empty()) ||
-                (!config.pixel.hlsl.empty() || !config.pixel.dxbc.empty())))
+            ((!config.vert.hlsl.empty() || !config.vert.dxbc.empty())     ||
+             (!config.hull.hlsl.empty() || !config.hull.dxbc.empty())     ||
+             (!config.domain.hlsl.empty() || !config.domain.dxbc.empty()) ||
+             (!config.geom.hlsl.empty() || !config.geom.dxbc.empty())     ||
+             (!config.pixel.hlsl.empty() || !config.pixel.dxbc.empty())   ||
+             (!config.mesh.hlsl.empty() || !config.mesh.dxbc.empty())     ||
+             (!config.amplification.hlsl.empty() || !config.amplification.dxbc.empty())))
         {
             std::cout << kStrErrorMixComputeAndGraphics << std::endl;
             ret = false;
@@ -215,12 +230,7 @@ int main(int argc, char* argv[])
                 // Compute.
                 ("comp", "Full path to the HLSL file where the compute shader is defined.", cxxopts::value<std::string>(config.comp.hlsl))
                 ("comp-dxbc", "Full path to the compute shader's compiled DXBC binary.", cxxopts::value<std::string>(config.comp.dxbc))
-                ("comp-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.comp.isa))
-                ("comp-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.comp.amdil))
-                ("comp-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.comp.stats))
                 ("comp-entry", "Name of the entry point.", cxxopts::value<std::string>(config.comp.entry_point))
-                ("comp-dxbc-dump", "Full path to output file for compiled compute shader DXBC binary.",
-                    cxxopts::value<std::string>(config.comp.dxbcOut))
                 ("comp-dxbc-dis", "Full path to output file for compiled compute shader DXBC disassembly.",
                     cxxopts::value<std::string>(config.comp.dxbc_disassembly))
                 ("comp-target", "Shader model for compute shader (e.g. \"cs_5_0\" or \"cs_5_1\".", cxxopts::value<std::string>(config.comp.shader_model))
@@ -228,12 +238,7 @@ int main(int argc, char* argv[])
                 // Vertex.
                 ("vert", "Full path to the HLSL file where the vertex shader is defined.", cxxopts::value<std::string>(config.vert.hlsl))
                 ("vert-dxbc", "Full path to the vertex shader's compiled DXBC binary.", cxxopts::value<std::string>(config.vert.dxbc))
-                ("vert-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.vert.isa))
-                ("vert-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.vert.amdil))
-                ("vert-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.vert.stats))
                 ("vert-entry", "Name of the entry point.", cxxopts::value<std::string>(config.vert.entry_point))
-                ("vert-dxbc-dump", "Full path to output file for compiled vertex shader DXBC binary.",
-                    cxxopts::value<std::string>(config.vert.dxbcOut))
                 ("vert-dxbc-dis", "Full path to output file for compiled vertex shader DXBC disassembly.",
                     cxxopts::value<std::string>(config.vert.dxbc_disassembly))
                 ("vert-target", "Shader model for vertex shader (e.g. \"vs_5_0\" or \"vs_5_1\".", cxxopts::value<std::string>(config.vert.shader_model))
@@ -241,12 +246,7 @@ int main(int argc, char* argv[])
                 // Hull.
                 ("hull", "Full path to the HLSL file where the hull shader is defined.", cxxopts::value<std::string>(config.hull.hlsl))
                 ("hull-dxbc", "Full path to the hull shader's compiled DXBC binary.", cxxopts::value<std::string>(config.hull.dxbc))
-                ("hull-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.hull.isa))
-                ("hull-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.hull.amdil))
-                ("hull-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.hull.stats))
                 ("hull-entry", "Name of the entry point.", cxxopts::value<std::string>(config.hull.entry_point))
-                ("hull-dxbc-dump", "Full path to output file for compiled hull shader DXBC binary.",
-                    cxxopts::value<std::string>(config.hull.dxbcOut))
                 ("hull-dxbc-dis", "Full path to output file for compiled hull shader DXBC disassembly.",
                     cxxopts::value<std::string>(config.hull.dxbc_disassembly))
                 ("hull-target", "Shader model for hull shader (e.g. \"hs_5_0\" or \"hs_5_1\".", cxxopts::value<std::string>(config.hull.shader_model))
@@ -254,12 +254,7 @@ int main(int argc, char* argv[])
                 // Domain.
                 ("domain", "Full path to the HLSL file where the domain shader is defined.", cxxopts::value<std::string>(config.domain.hlsl))
                 ("domain-dxbc", "Full path to the domain shader's compiled DXBC binary.", cxxopts::value<std::string>(config.domain.dxbc))
-                ("domain-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.domain.isa))
-                ("domain-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.domain.amdil))
-                ("domain-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.domain.stats))
                 ("domain-entry", "Name of the entry point.", cxxopts::value<std::string>(config.domain.entry_point))
-                ("domain-dxbc-dump", "Full path to output file for compiled domain shader DXBC binary.",
-                    cxxopts::value<std::string>(config.domain.dxbcOut))
                 ("domain-dxbc-dis", "Full path to output file for compiled domain shader DXBC disassembly.",
                     cxxopts::value<std::string>(config.domain.dxbc_disassembly))
                 ("domain-target", "Shader model for domain shader (e.g. \"ds_5_0\" or \"ds_5_1\".", cxxopts::value<std::string>(config.domain.shader_model))
@@ -267,12 +262,7 @@ int main(int argc, char* argv[])
                 // Geometry.
                 ("geom", "Full path to the HLSL file where the geometry shader is defined.", cxxopts::value<std::string>(config.geom.hlsl))
                 ("geom-dxbc", "Full path to the geometry shader's compiled DXBC binary.", cxxopts::value<std::string>(config.geom.dxbc))
-                ("geom-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.geom.isa))
-                ("geom-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.geom.amdil))
-                ("geom-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.geom.stats))
                 ("geom-entry", "Name of the entry point.", cxxopts::value<std::string>(config.geom.entry_point))
-                ("geom-dxbc-dump", "Full path to output file for compiled geometry shader DXBC binary.",
-                    cxxopts::value<std::string>(config.geom.dxbcOut))
                 ("geom-dxbc-dis", "Full path to output file for compiled geometry shader DXBC disassembly.",
                     cxxopts::value<std::string>(config.geom.dxbc_disassembly))
                 ("geom-target", "Shader model for geometry shader (e.g. \"gs_5_0\" or \"gs_5_1\".", cxxopts::value<std::string>(config.geom.shader_model))
@@ -280,15 +270,28 @@ int main(int argc, char* argv[])
                 // Pixel.
                 ("pixel", "Full path to the HLSL file where the pixel shader is defined.", cxxopts::value<std::string>(config.pixel.hlsl))
                 ("pixel-dxbc", "Full path to the pixel shader's compiled DXBC binary.", cxxopts::value<std::string>(config.pixel.dxbc))
-                ("pixel-isa", "Full path to ISA disassembly output file.", cxxopts::value<std::string>(config.pixel.isa))
-                ("pixel-amdil", "Full path to AMDIL disassembly output file.", cxxopts::value<std::string>(config.pixel.amdil))
-                ("pixel-stats", "Full path to resource usage output file.", cxxopts::value<std::string>(config.pixel.stats))
                 ("pixel-entry", "Name of the entry point.", cxxopts::value<std::string>(config.pixel.entry_point))
-                ("pixel-dxbc-dump", "Full path to output file for compiled pixel shader DXBC binary.",
-                    cxxopts::value<std::string>(config.pixel.dxbcOut))
                 ("pixel-dxbc-dis", "Full path to output file for compiled pixel shader DXBC disassembly.",
                         cxxopts::value<std::string>(config.pixel.dxbc_disassembly))
                 ("pixel-target", "Shader model for pixel shader (e.g. \"ps_5_0\" or \"ps_5_1\".", cxxopts::value<std::string>(config.pixel.shader_model))
+
+                // Mesh.
+                ("mesh", "Full path to the HLSL file where the mesh shader is defined.", cxxopts::value<std::string>(config.mesh.hlsl))
+                ("mesh-dxbc", "Full path to the mesh shader's compiled DXBC binary.", cxxopts::value<std::string>(config.mesh.dxbc))
+                ("mesh-entry", "Name of the entry point.", cxxopts::value<std::string>(config.mesh.entry_point))
+                ("mesh-dxbc-dis", "Full path to output file for compiled mesh shader DXBC disassembly.",
+                        cxxopts::value<std::string>(config.mesh.dxbc_disassembly))
+                ("mesh-target", "Shader model for mesh shader (e.g. \"ms_6_5\".", cxxopts::value<std::string>(config.mesh.shader_model))
+
+                // Amplification.
+                ("amplification", "Full path to the HLSL file where the amplification shader is defined.", cxxopts::value<std::string>(config.amplification.hlsl))
+                ("amplification-dxbc", "Full path to the amplification shader's compiled DXBC binary.", cxxopts::value<std::string>(config.amplification.dxbc))
+                ("amplification-entry", "Name of the entry point.", cxxopts::value<std::string>(config.amplification.entry_point))
+                ("amplification-dxbc-dis", "Full path to output file for compiled amplification shader DXBC disassembly.",
+                        cxxopts::value<std::string>(config.amplification.dxbc_disassembly))
+                ("amplification-target", "Shader model for amplification shader (e.g. \"as_6_5\".", cxxopts::value<std::string>(config.amplification.shader_model))
+                ("mesh-shaders", "Configure backend for mesh shaders.",
+                        cxxopts::value<bool>(config.is_mesh_shader))
 
                 // DX12 graphics or compute.
                 ("rs-macro", "The name of the RootSignature macro in the HLSL code. If specified, the root signature "
@@ -348,6 +351,7 @@ int main(int argc, char* argv[])
             {
                 // Check if this is a DXR or standard graphics or compute pipeline.
                 bool is_dxr = config.is_config_dxr;
+                bool is_mesh_shader = config.is_mesh_shader;
 
                 if (config.should_enable_debug_layer)
                 {
@@ -372,9 +376,9 @@ int main(int argc, char* argv[])
                 // If the user wants to target a virtual target, convert to upper case.
                 // Here we assume that the CLI passed the correct string. Input validation
                 // should be performed at the CLI level.
-                D3D_FEATURE_LEVEL feature_level = is_dxr ? D3D_FEATURE_LEVEL_12_0 : D3D_FEATURE_LEVEL_11_0;
+                D3D_FEATURE_LEVEL feature_level = (is_dxr || is_mesh_shader) ? D3D_FEATURE_LEVEL_12_0 : D3D_FEATURE_LEVEL_11_0;
                 rga::rgDx12Frontend rgFrontend(feature_level);
-                is_ok = rgFrontend.Init(is_dxr, config.is_offline_session);
+                is_ok = rgFrontend.Init(is_dxr, is_mesh_shader, config.is_offline_session);
                 assert(is_ok);
                 if (is_ok)
                 {
@@ -427,15 +431,21 @@ int main(int argc, char* argv[])
                             {
                                 // Graphics pipeline.
                                 std::cout << kStrInfoCompilingGraphicsPipeline << std::endl;
-                                is_ok = rgFrontend.CompileGraphicsPipeline(config, error_msg);
+                                if (is_mesh_shader)
+                                {
+                                    is_ok = rgFrontend.CompileMeshPipeline(config, error_msg);
+                                }
+                                else
+                                {
+                                    is_ok = rgFrontend.CompileGraphicsPipeline(config, error_msg);
+                                }
                             }
                         }
-                        assert(is_ok);
-
                         if (!error_msg.empty())
                         {
                             std::cerr << error_msg << std::endl;
                         }
+                        assert(is_ok);
                     }
                 }
                 else

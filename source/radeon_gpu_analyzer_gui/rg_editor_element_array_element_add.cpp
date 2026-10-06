@@ -99,6 +99,8 @@ void RgEditorElementArrayElementAdd::SetArraySizeElement(RgEditorElementNumeric<
     if (array_size_element != nullptr)
     {
         array_size_element_ = array_size_element;
+        array_size_element_->setParent(this);
+        array_size_element_->hide();
     }
 }
 

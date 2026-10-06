@@ -1,5 +1,5 @@
 #######################################################################################################################
-### Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+### Copyright (c) 2017-2026 Advanced Micro Devices, Inc. All rights reserved.
 ### @author AMD Developer Tools Team
 #######################################################################################################################
 cmake_minimum_required (VERSION 3.10)
@@ -9,9 +9,11 @@ project (radeon_gpu_analyzer_backend)
 set (radeon_gpu_analyzer_backend_VERSION_MAJOR 1)
 set (radeon_gpu_analyzer_backend_VERSION_MINOR 2)
 
-# Before fetching the isa_decoder, set this variable so we only pull in 
+# Before fetching the isa_decoder, set this variable so we only pull in
 # the isa_decoder, and skip the command line interface, examples, and tests.
-set (EXCLUDE_ISA_CLI_EXAMPLES_TESTS ON)
+set (EXCLUDE_ISA_EXAMPLES ON)
+set (EXCLUDE_ISA_CLI ON)
+set (EXCLUDE_ISA_TESTS ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -69,7 +71,8 @@ endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     include_directories("${PROJECT_SOURCE_DIR}/../../external/dx10_asm/include")
     include_directories("${PROJECT_SOURCE_DIR}/../utils/dx12/backend")
-    include_directories("${PROJECT_SOURCE_DIR}/../../external/dxc/inc")
+    include_directories("${PROJECT_SOURCE_DIR}/../../external/dxc/v1.8.2505.1/inc")
+    include_directories("${PROJECT_SOURCE_DIR}/../../external/dx12/agility_sdk/include")
 endif()
 
 # Source files that are common to Windows and Linux
@@ -160,4 +163,4 @@ else()
 endif()
 
 # Link libraries
-target_link_libraries(radeon_gpu_analyzer_backend AMDTOSWrappers AMDTBaseTools)
+target_link_libraries(radeon_gpu_analyzer_backend isa_decoder isa_explorer AMDTOSWrappers AMDTBaseTools)

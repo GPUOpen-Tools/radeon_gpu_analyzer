@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for CLI utility functions.
@@ -16,6 +16,7 @@
 #include "external/amdt_base_tools/Include/gtString.h"
 
 // Backend.
+#include "radeon_gpu_analyzer_backend/be_analysis_summary.h"
 #include "radeon_gpu_analyzer_backend/be_data_types.h"
 #include "radeon_gpu_analyzer_backend/be_include.h"
 
@@ -59,15 +60,20 @@ public:
     // Helper function to construct the output file name in Analyzer CLI's output format, which combines
     // the base output file name, the target device name and the rendering pipeline stage.
     // Returns true if succeeded and false in case of error.
-    static bool AdjustRenderingPipelineOutputFileNames(const std::string& base_output_filename, const std::string& default_suffix,
-                                                       const std::string& default_extension, const std::string& device, BeProgramPipeline& pipeline_files);
+    static bool AdjustRenderingPipelineOutputFileNames(const std::string& base_output_filename,
+                                                       const std::string& default_suffix,
+                                                       const std::string& default_extension,
+                                                       const std::string& device,
+                                                       BeProgramPipeline& pipeline_files);
 
     // Creates the statistics file according to the user's configuration.
     // config: the user's configuration
     // analysis_data: a map that contains each device's statistics data
     // callback: the log callback
-    static bool CreateStatisticsFile(const gtString& filename, const Config& config,
-                                     const std::map<std::string, beKA::AnalysisData>& analysis_data, LoggingCallbackFunction callback);
+    static bool CreateStatisticsFile(const gtString&                                  filename,
+                                     const Config&                                    config,
+                                     const std::map<std::string, beKA::AnalysisData>& analysis_data,
+                                     LoggingCallbackFunction                          callback);
 
     // Creates the statistics file according to the user's configuration.
     // filename: the target statistics file name
@@ -75,18 +81,24 @@ public:
     // device: the target device
     // analysisData: the device's statistics data.
     // logCallback: the log callback
-    static void CreateStatisticsFile(const gtString& filename, const Config& config,
-                                     const std::string& device, const beKA::AnalysisData& analysis_data, LoggingCallbackFunction callback);
+    static void CreateStatisticsFile(const gtString&           filename,
+                                     const Config&             config,
+                                     const std::string&        device,
+                                     const beKA::AnalysisData& analysis_data,
+                                     LoggingCallbackFunction   callback);
 
     // Generates the CLI statistics file header.
     // csv_separator - the character that is being used
-    static std::string GetStatisticsCsvHeaderString(char csv_separator);
+    static std::string GetStatisticsCsvHeaderString(char csv_separator, bool include_agprs = false);
 
     // Returns the CLI statistics CSV separator, according to the user's configuration.
     static char GetCsvSeparator(const Config& config);
 
     // Converts the device statistics to a CSV string.
-    static std::string DeviceStatisticsToCsvString(const Config& config, const std::string& device, const beKA::AnalysisData& statistics);
+    static std::string DeviceStatisticsToCsvString(const Config& config, const std::string& device, const beKA::AnalysisData& statistics, bool include_agprs = false);
+
+    // Reads the device statistics CSV file to stats struct.
+    static bool ReadStatisticsFile(const std::string& filename, beKA::AnalysisData& stats);
 
     // Deletes the a file from the file system.
     // file_full_path - the full path to the file to be deleted.
@@ -105,8 +117,11 @@ public:
     // device - the name of the device for which the statistics where generated
     // stats_parser - a parser to be used to parse the backend raw statistics file
     // callback - a log callback
-    static void ReplaceStatisticsFile(const gtString& statistics_file, const Config& config, const std::string& device,
-                                      IStatisticsParser& stats_parser, LoggingCallbackFunction callback);
+    static void ReplaceStatisticsFile(const gtString&         statistics_file,
+                                      const Config&           config,
+                                      const std::string&      device,
+                                      IStatisticsParser&      stats_parser,
+                                      LoggingCallbackFunction callback);
 
     // Performs live register analysis for the ISA in the given file, and dumps
     // the output to the given output file name.
@@ -119,10 +134,10 @@ public:
     static bool PerformLiveRegisterAnalysis(const gtString&         isa_filename,
                                             const gtString&         target,
                                             const gtString&         output_filename,
-                                            LoggingCallbackFunction callback, 
+                                            LoggingCallbackFunction callback,
                                             bool                    print_cmd,
                                             bool                    is_reg_type_sgpr = false,
-                                            beWaveSize              wave_size = beWaveSize::kUnknown);
+                                            beWaveSize              wave_size        = beWaveSize::kUnknownSize);
 
     // Performs live register analysis for the ISA in the given file, and dumps
     // the output to the given output file name.
@@ -132,7 +147,7 @@ public:
     // callback - callback to log messages
     // print_cmd - print command line to stdout
     static bool PerformLiveRegisterAnalysis(const std::string&      isa_filename,
-                                            const std::string&      target, 
+                                            const std::string&      target,
                                             const std::string&      output_filename,
                                             LoggingCallbackFunction callback,
                                             bool                    print_cmd,
@@ -144,8 +159,12 @@ public:
     // outputFileName - the output file name
     // callback - callback to log messages
     // print_cmd - print command line to stdout
-    static bool GenerateControlFlowGraph(const gtString& isa_file_name, const gtString& target, const gtString& outputFileName,
-                                         LoggingCallbackFunction callback, bool perInstCfg, bool print_cmd);
+    static bool GenerateControlFlowGraph(const gtString&         isa_file_name,
+                                         const gtString&         target,
+                                         const gtString&         outputFileName,
+                                         LoggingCallbackFunction callback,
+                                         bool                    perInstCfg,
+                                         bool                    print_cmd);
 
     // Generates control flow graph for the given ISA.
     // isa_file_name - the disassembled ISA file name
@@ -153,8 +172,12 @@ public:
     // outputFileName - the output file name
     // callback - callback to log messages
     // print_cmd - print command line to stdout
-    static bool GenerateControlFlowGraph(const std::string& isa_file_name, const std::string& target, const std::string& outputFileName,
-        LoggingCallbackFunction callback, bool perInstCfg, bool print_cmd);
+    static bool GenerateControlFlowGraph(const std::string&      isa_file_name,
+                                         const std::string&      target,
+                                         const std::string&      outputFileName,
+                                         LoggingCallbackFunction callback,
+                                         bool                    perInstCfg,
+                                         bool                    print_cmd);
 
     // Generates an output file name in the Analyzer CLI format.
     // base_output_filename - the base output file name as configured by the user's command
@@ -162,24 +185,30 @@ public:
     // entry_point_name - the name of the entry point to which the output file refers (can be empty if not relevant)
     // device_name - the name of the target device to which the output file refers (can be empty if not relevant)
     // generated_filename - an output variable to hold the generated file name
-    static void ConstructOutputFileName(const std::string& base_output_filename, const std::string& default_suffix,
-                                        const std::string& default_extension, const std::string& entry_point_name,
-                                        const std::string& device_name, gtString& generated_filename);
+    static void ConstructOutputFileName(const std::string& base_output_filename,
+                                        const std::string& default_suffix,
+                                        const std::string& default_extension,
+                                        const std::string& entry_point_name,
+                                        const std::string& device_name,
+                                        gtString&          generated_filename);
 
     // std::string version of ConstructOutputFileName().
-    static void ConstructOutputFileName(const std::string& base_output_filename, const std::string& default_suffix,
-                                        const std::string& default_extension, const std::string& entry_point_name,
-                                        const std::string& device_name, std::string& generated_filename);
+    static void ConstructOutputFileName(const std::string& base_output_filename,
+                                        const std::string& default_suffix,
+                                        const std::string& default_extension,
+                                        const std::string& entry_point_name,
+                                        const std::string& device_name,
+                                        std::string&       generated_filename);
 
     // Construct output file name based on provided base name, device name and extension.
     // The file name is the full path.
     // If base name is empty, the (temp folder name + temp file name) will be used.
     static bool ConstructOutFileName(const std::string& baseFileName,
-        const std::string& stage,
-        const std::string& device,
-        const std::string& ext,
-        std::string& out_filename,
-        bool should_append_suffix = true);
+                                     const std::string& stage,
+                                     const std::string& device,
+                                     const std::string& ext,
+                                     std::string&       out_filename,
+                                     bool               should_append_suffix = true);
 
     // Checks if the file name is too long for the OS.
     // file_path - the disassembled ISA file name
@@ -261,10 +290,10 @@ public:
     static void DeletePipelineFiles(const BeProgramPipeline& files);
 
     // Returns the list of devices that are disabled for all modes.
-    static const std::vector<std::string>  GetRgaDisabledDevices();
+    static const std::vector<std::string> GetRgaDisabledDevices();
 
     // Prints the version of RGA backend (for all modes).
-    static void  PrintRgaVersion();
+    static void PrintRgaVersion();
 
     // Launch a process with provided executable name and command line arguments.
     // \param[in]  exec_path   the executable path
@@ -276,8 +305,14 @@ public:
     // \param[out] std_err     the content of stderr stream dumped by launched process
     // \param[out] exit_code   the exit code returned by launched process
     // Returns status of process launch.
-    static ProcessStatus LaunchProcess(const std::string& exec_path, const std::string& args, const std::string& dir,
-                                       unsigned long time_out, bool print_cmd, std::string& std_out, std::string& std_err, long& exit_code);
+    static ProcessStatus LaunchProcess(const std::string& exec_path,
+                                       const std::string& args,
+                                       const std::string& dir,
+                                       unsigned long      time_out,
+                                       bool               print_cmd,
+                                       std::string&       std_out,
+                                       std::string&       std_err,
+                                       long&              exit_code);
 
 #ifdef _WIN32
     // Launch a process with provided executable name and command line arguments.
@@ -300,25 +335,25 @@ public:
                                        bool               print_cmd,
                                        bool               print_dbg,
                                        std::string_view   dbg_prologue,
-                                       std::string_view   dbg_epilogue, 
+                                       std::string_view   dbg_epilogue,
                                        std::string&       std_out,
                                        std::string&       std_err,
                                        long&              exit_code);
 #endif
 
     // Open new CLI log file and delete old files (older than 1 week).
-    static bool  InitCLILogFile(const Config& config);
+    static bool InitCLILogFile(const Config& config);
 
     // Case-insensitive string compare.
     // Returns "true" if provided strings are equal or "false" otherwise.
-    static bool  StrCmpNoCase(const std::string& s1, const std::string& s2);
+    static bool StrCmpNoCase(const std::string& s1, const std::string& s2);
 
     // Returns file extension.
     static std::string GetFileExtension(const std::string& file_path);
 
     // Set environment variable var_name to var_value.
     // Returns true on success, false otherwise.
-    static bool SetEnvrironmentVariable(const::std::string& var_name, const std::string var_value);
+    static bool SetEnvrironmentVariable(const ::std::string& var_name, const std::string var_value);
 
     // Read the value of an environment variable var_name into var_value.
     // Returns true on success, false otherwise.
@@ -353,7 +388,7 @@ public:
     static std::string AdjustBaseFileNameLivereg(const std::string& user_input_filename, const std::string& device);
 
     // Adjust base file name for live register analysis output file.
-    static std::string AdjustBaseFileNameLiveregSgpr(const std::string& user_input_filename, const std::string& device);    
+    static std::string AdjustBaseFileNameLiveregSgpr(const std::string& user_input_filename, const std::string& device);
 
     // Adjust base file name for cfg output file.
     static std::string AdjustBaseFileNameCfg(const std::string& user_input_filename, const std::string& device);
@@ -361,11 +396,40 @@ public:
     // Invoke the amdgpu-dis executable.
     static bool InvokeAmdgpudis(const std::string& cmd_line_options, bool should_print_cmd, std::string& out_text, std::string& error_txt);
 
- private:
+    // Convert ISA text to CSV form with additional data.
+    static bool GetParsedIsaCsvText(const std::string& isa_text, const std::string& device, bool add_line_numbers, std::string& csv_text);
+
+    // Store ISA text on disk.
+    static beKA::beStatus WriteIsaToFile(const std::string& file_name, const std::string& isa_text, LoggingCallbackFunction log_callback);
+
+    // Utility for populating statistics Analysis data from amdgpu metadata.
+    static beKA::AnalysisData PopulateAnalysisData(const beKA::AnalysisData& stats, const std::string& current_device);
+
+    // Utility for extracting statistics.
+    static std::string BuildStatisticsStr(const beKA::AnalysisData& stats, std::size_t stage, bool is_compute_bit_set);
+
+    // Util to convert stats.
+    static beKA::beStatus ConvertStats(const std::string& isa_file, const std::string& stats_file, const Config& config, const std::string& device);
+
+    // Generate summary struct for the given kernel or shader
+    // kernel_name - the name of the kernel
+    // target - the target device name
+    // output_files - the output file generate for this kernel
+    // summary - the summary struct
+    // callback - callback to log messages
+    // verbose - flag to print detailed log messages
+    static bool GenerateKernelSummary(const std::string&          target,
+                                      const std::string&          kernel_name,
+                                      const RgOutputFiles&        output_files,
+                                      RgaAnalysisSummary::Kernel& summary,
+                                      LoggingCallbackFunction     callback,
+                                      bool                        verbose);
+
+private:
     // This is a static class (no instances).
     KcUtils(const KcUtils& other);
     KcUtils()  = default;
     ~KcUtils() = default;
 };
 
-#endif // RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_H_
+#endif  // RGA_RADEONGPUANALYZERCLI_SRC_KC_UTILS_H_

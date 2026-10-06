@@ -11,11 +11,30 @@
 #include <vector>
 
 // D3D12.
-#include <d3d12.h>
+#include "d3dx12/d3dx12.h"
 #include <wrl/client.h>
 
 namespace rga
 {
+    struct PSO_STREAM {
+        CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
+        CD3DX12_PIPELINE_STATE_STREAM_VS VS;
+        CD3DX12_PIPELINE_STATE_STREAM_PS PS;
+        CD3DX12_PIPELINE_STATE_STREAM_DS DS;
+        CD3DX12_PIPELINE_STATE_STREAM_HS HS;
+        CD3DX12_PIPELINE_STATE_STREAM_GS GS;
+        CD3DX12_PIPELINE_STATE_STREAM_AS AS;
+        CD3DX12_PIPELINE_STATE_STREAM_MS MS;
+
+        CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER RasterizerState;
+        CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC BlendState;
+        CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL DepthStencilState;
+        CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
+        CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_DESC SampleDesc;
+        CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
+        CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
+    };
+
     class RgDx12Utils
     {
     public:
@@ -57,10 +76,12 @@ namespace rga
 
         // Init D3D12 graphics pipeline state descriptor to D3D12 default values.
         static void InitGraphicsPipelineStateDesc(D3D12_GRAPHICS_PIPELINE_STATE_DESC& pso_desc);
+        static void InitGraphicsPipelineStream(PSO_STREAM& pso_desc);
 
         // Parse gpso file and set the read values to the pipeline state descriptor.
         // Returns true on success and false otherwise.
         static bool ParseGpsoFile(const std::string& filename, D3D12_GRAPHICS_PIPELINE_STATE_DESC& pso_desc);
+        static bool ParseGpsoFile(const std::string& filename, PSO_STREAM& stream);
 
         // Convert a DXGI_FORMAT enum string representation to the relevant enum value.
         // Returns true on success, and false otherwise.

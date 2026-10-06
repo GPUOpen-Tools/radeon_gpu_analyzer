@@ -39,11 +39,6 @@
 #include "radeon_gpu_analyzer_gui/rg_string_constants.h"
 #include "radeon_gpu_analyzer_gui/rg_utils.h"
 
-// A separator used in joining an input source file path, target asic and an entry point name.
-// Such a string is used to uniquely identify an entry point with potential for
-// name collisions between separate source files and gpus.
-static const char kEntrypointKeySeparator = '|';
-
 RgIsaDisassemblyView::RgIsaDisassemblyView(QWidget* parent)
     : QWidget(parent)
 {
@@ -131,11 +126,19 @@ void RgIsaDisassemblyView::RemoveInputFileEntries(const std::string& input_file_
 void RgIsaDisassemblyView::HandleInputFileSelectedLineChanged(const std::string& target_gpu,
                                                               const std::string& input_file_path,
                                                               std::string&       entry_name,
-                                                              int                line_index)
+                                                              int                line_index,
+                                                              std::string        binary_file_path)
 {
-    HandleSelectedEntrypointChanged(target_gpu, input_file_path, entry_name);
+    if (binary_file_path != "")
+    {
+        HandleSelectedEntrypointChanged(target_gpu, binary_file_path, entry_name);
+    }
+    else
+    {
+        HandleSelectedEntrypointChanged(target_gpu, input_file_path, entry_name);
+    }
 
-    emit InputSourceHighlightedLineChanged(line_index);
+    emit InputSourceHighlightedLineChanged(line_index, input_file_path);
 }
 
 void RgIsaDisassemblyView::HandleSelectedEntrypointChanged(const std::string& target_gpu,
@@ -143,7 +146,7 @@ void RgIsaDisassemblyView::HandleSelectedEntrypointChanged(const std::string& ta
                                                            const std::string& selected_entrypoint_name)
 {
     // Generate a key string used to identify a named entry point within a given input source file.
-    std::string entrypoint_name_key = GenerateEntrypointKey(input_file_path, target_gpu, selected_entrypoint_name);
+    std::string entrypoint_name_key = RgUtils::GenerateEntrypointKey(input_file_path, target_gpu, selected_entrypoint_name);
 
     if (current_disassembly_view_data_key_ != entrypoint_name_key)
     {
@@ -238,11 +241,6 @@ void RgIsaDisassemblyView::SetFocusOnSearchWidget()
 RgIsaTreeView* RgIsaDisassemblyView::GetTreeView() const
 {
     return rg_isa_tree_view_;
-}
-
-bool RgIsaDisassemblyView::IsLineCorrelationSupported() const
-{
-    return false;
 }
 
 void RgIsaDisassemblyView::HandleTargetGpuChanged()
@@ -539,7 +537,7 @@ bool RgIsaDisassemblyView::PopulateDisassemblyEntries(const GpuToEntryVector& gp
                     const std::string& live_vgprs_file_path = live_Vgprs_file_iter->file_path;
 
                     // Generate a key string used to identify a named entry point within a given input source file.
-                    std::string entrypoint_name_key = GenerateEntrypointKey(entry.input_file_path, gpu_name, entry.entrypoint_name);
+                    std::string entrypoint_name_key = RgUtils::GenerateEntrypointKey(entry.input_file_path, gpu_name, entry.entrypoint_name);
 
                     // Associate the kernel name with the data for the disassembly view.
                     disassembly_view_input_files_map_[entrypoint_name_key] = {disassembly_csv_file_path, live_vgprs_file_path};
@@ -674,7 +672,7 @@ void RgIsaDisassemblyView::DestroyDisassemblyViewDataForFile(const std::string& 
     {
         // Search the map for entries to remove.
         std::string file_path, gpu, entry_name;
-        DecodeEntrypointKey(iter->first, file_path, gpu, entry_name);
+        RgUtils::DecodeEntrypointKey(iter->first, file_path, gpu, entry_name);
         if (file_path == input_file_path)
         {
             view_data_to_remove.push_back(iter->first);
@@ -739,39 +737,6 @@ void RgIsaDisassemblyView::SetCursor()
     ui_.rawTextPushButton->setCursor(Qt::PointingHandCursor);
     ui_.targetGpuPushButton->setCursor(Qt::PointingHandCursor);
     ui_.viewMaximizeButton->setCursor(Qt::PointingHandCursor);
-}
-
-std::string RgIsaDisassemblyView::GenerateEntrypointKey(const std::string& file_path, const std::string& asic, const std::string& entrypoint_name) const
-{
-    // In some cases it may not be possible to identify a given entry point by name when multiple
-    // entrypoints use the same name. Return a unique key based on the input filename and the
-    // entry point name, so that each entry point can be identified correctly.
-    return file_path + kEntrypointKeySeparator + asic + kEntrypointKeySeparator + entrypoint_name;
-}
-
-bool RgIsaDisassemblyView::DecodeEntrypointKey(const std::string& entrypoint_key,
-                                               std::string&       file_path,
-                                               std::string&       asic,
-                                               std::string&       entrypoint_name) const
-{
-    bool ret = false;
-
-    // Attempt to split the given entry point key string into source file path and entry point name strings.
-    std::vector<std::string> file_path_and_entrypoint_name_list;
-    RgUtils::splitString(entrypoint_key, kEntrypointKeySeparator, file_path_and_entrypoint_name_list);
-
-    // Verify that only 2 tokens are found. One for the source file path, and another for entry point name.
-    size_t token_count = file_path_and_entrypoint_name_list.size();
-    assert(token_count == 3);
-    if (token_count == 3)
-    {
-        file_path       = file_path_and_entrypoint_name_list[0];
-        asic            = file_path_and_entrypoint_name_list[1];
-        entrypoint_name = file_path_and_entrypoint_name_list[2];
-        ret             = true;
-    }
-
-    return ret;
 }
 
 void RgIsaDisassemblyView::HandleDisassemblyViewClicked()

@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for binary analysis compute strategy.
@@ -7,13 +7,15 @@
 
 // C++.
 #include <cassert>
+#include <string>
 
 // Shared.
-#include "common/rga_entry_type.h"
+#include "common/rga_cli_defs.h"
 #include "common/rg_log.h"
 
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_utils.h"
+#include "radeon_gpu_analyzer_backend/be_isa_spec_metadata.h"
 #include "radeon_gpu_analyzer_backend/be_opencl_definitions.h"
 #include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
 
@@ -26,14 +28,13 @@
 
 static const char* kAmdgpuDisKernelName = "amdgpu_kernel_";
 
-beKA::beStatus ComputeBinaryWorkflowStrategy::WriteOutputFiles(const Config&                             config,
-                                                               const std::string&                        asic,
-                                                               const std::map<std::string, std::string>& kernel_to_disassembly,
-                                                               const BeAmdPalMetaData::PipelineMetaData& ,
-                                                               std::string&                              error_msg)
+beKA::beStatus KcCliComputeBinaryAnalysisStrategy::WriteOutputFiles(const Config&                             config,
+                                                                    const std::string&                        asic,
+                                                                    const std::map<std::string, std::string>& kernel_to_disassembly,
+                                                                    std::string&                              error_msg)
 {
-    beKA::beStatus     status   = beKA::beStatus::kBeStatusGeneralFailed;
-    const std::string& isa_file = config.isa_file;
+    beKA::beStatus     status                 = beKA::beStatus::kBeStatusGeneralFailed;
+    const std::string& isa_file               = config.isa_file;
     size_t             long_kernel_name_count = 0;
 
     for (const auto& kernel : kernel_to_disassembly)
@@ -83,11 +84,11 @@ beKA::beStatus ComputeBinaryWorkflowStrategy::WriteOutputFiles(const Config&    
     return status;
 }
 
-void ComputeBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config&      config,
-                                                               const std::string& asic,
-                                                               const std::string& kernel_name,
-                                                               const std::string& kernel_abbreviation,
-                                                               const std::string& isa_filename)
+void KcCliComputeBinaryAnalysisStrategy::StoreOutputFilesToOutputMD(const Config&      config,
+                                                                    const std::string& asic,
+                                                                    const std::string& kernel_name,
+                                                                    const std::string& kernel_abbreviation,
+                                                                    const std::string& isa_filename)
 {
     RgOutputFiles outFiles                = RgOutputFiles(RgaEntryType::kOpenclKernel, isa_filename, binary_codeobj_file_);
     outFiles.input_file                   = kernel_name;
@@ -97,63 +98,22 @@ void ComputeBinaryWorkflowStrategy::StoreOutputFilesToOutputMD(const Config&    
     output_metadata_[{asic, kernel_name}] = outFiles;
 }
 
-void ComputeBinaryWorkflowStrategy::RunPostProcessingSteps(const Config& config, const BeAmdPalMetaData::PipelineMetaData&)
+void KcCliComputeBinaryAnalysisStrategy::RunPostProcessingSteps(const Config& config)
 {
-    CmpilerPaths compiler_paths   = {config.compiler_bin_path, config.compiler_inc_path, config.compiler_lib_path};
-    bool         should_print_cmd = config.print_process_cmd_line;
-
-    KcUtilsLightning util(output_metadata_, should_print_cmd, log_callback_);
-    beKA::beStatus   status = beKA::beStatus::kBeStatusSuccess;
-
-    // Generate CSV files with parsed ISA if required.
-    if (config.is_parsed_isa_required)
-    {
-        status = util.ParseIsaFilesToCSV(config.is_line_numbers_required) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusParseIsaToCsvFailed;
-    }
-
-    // Extract Statistics if required.
-    if (status == beKA::beStatus::kBeStatusSuccess)
-    {
-        util.ExtractStatistics(config);
-    }
-
-    // Block post-processing until quality of analysis engine improves when processing llvm disassembly.
-    bool is_livereg_required = !config.livereg_analysis_file.empty();
-    if (is_livereg_required && (status == beKA::beStatus::kBeStatusSuccess))
-    {
-        // Perform Live Registers analysis if required.
-        util.PerformLiveVgprAnalysis(config);
-    }
-
-    bool is_sgpr_livereg_required = !config.sgpr_livereg_analysis_file.empty();
-    if (is_sgpr_livereg_required && (status == beKA::beStatus::kBeStatusSuccess))
-    {
-        // Perform Live Registers analysis if required.
-        util.PerformLiveSgprAnalysis(config);
-    }
-
-    bool is_cfg_required = (!config.block_cfg_file.empty() || !config.inst_cfg_file.empty());
-    if (is_cfg_required && (status == beKA::beStatus::kBeStatusSuccess))
-    {
-        // Extract Control Flow Graph.
-        util.ExtractCFG(config);
-    }
-
-    // Extract CodeObj metadata if required.
-    if ((status == beKA::beStatus::kBeStatusSuccess) && !config.metadata_file.empty())
-    {
-        util.ExtractMetadata(compiler_paths, config.metadata_file);
-    }
+    CmpilerPaths     compiler_paths   = {config.compiler_bin_path, config.compiler_inc_path, config.compiler_lib_path};
+    bool             should_print_cmd = config.print_process_cmd_line;
+    KcUtilsLightning util(binary_codeobj_file_, "", output_metadata_, should_print_cmd, log_callback_);
+    util.RunPostProcessingSteps(config, compiler_paths);
 }
 
-bool ComputeBinaryWorkflowStrategy::GenerateSessionMetadataFile(const Config& config)
+bool KcCliComputeBinaryAnalysisStrategy::GenerateSessionMetadataFile(const Config& config)
 {
-    RgFileEntryData file_kernel_data;
-    bool            ret = !config.session_metadata_file.empty();
+    bool ret = !config.session_metadata_file.empty();
     assert(ret);
+
     if (ret && !output_metadata_.empty())
     {
-        ret = KcXmlWriter::GenerateClSessionMetadataFile(config.session_metadata_file, file_kernel_data, output_metadata_);
+        ret = KcXmlWriter::GenerateBinaryAnalysisSessionMetadataFile(config.session_metadata_file, binary_codeobj_file_, output_metadata_);
         if (!ret)
         {
             std::stringstream msg;
@@ -164,5 +124,35 @@ bool ComputeBinaryWorkflowStrategy::GenerateSessionMetadataFile(const Config& co
 
     KcUtilsLightning::DeleteTempFiles(output_metadata_);
 
+    return ret;
+}
+
+bool KcCliComputeBinaryAnalysisStrategy::GeneratCompilationSummary(const Config& config, const std::string& asic, RgaAnalysisSummary::AnalysisResult& result)
+{
+    bool ret = !config.session_summary_file.empty();
+    if (ret && !output_metadata_.empty())
+    {
+        result.target_architecture_ = asic;
+
+        if (config.include_target_metadata)
+        {
+            beKA::BeIsaSpecExplorer::PopulateFromSpec(asic, result.target_architecture_metadata_);
+        }
+
+        result.inputs_.inputs_.push_back(binary_codeobj_file_);
+        result.output_.api_ = kStrRgaModeOpenclOffline;
+
+        for (const auto& out_file_data : output_metadata_)
+        {
+            RgaAnalysisSummary::Kernel kernel;
+            ret = ret && KcUtils::GenerateKernelSummary(
+                             out_file_data.first.first, out_file_data.first.second, out_file_data.second, kernel, log_callback_, config.print_process_cmd_line);
+            if (ret)
+            {
+                kernel.kernel_id_ = static_cast<int>(result.output_.kernels_.size());
+                result.output_.kernels_.emplace_back(kernel);
+            }
+        }
+    }
     return ret;
 }

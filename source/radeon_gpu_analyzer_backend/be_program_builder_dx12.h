@@ -44,9 +44,9 @@ public:
                                  const std::string& target_device,
                                  std::string&       out_text,
                                  std::string&       error_msg,
-                                 BeVkPipelineFiles& generated_isa_files,
-                                 BeVkPipelineFiles& generated_amdil_files,
-                                 BeVkPipelineFiles& generated_stat_files,
+                                 BePipelineFiles& generated_isa_files,
+                                 BePipelineFiles& generated_amdil_files,
+                                 BePipelineFiles& generated_stat_files,
                                  std::string&       generated_binary_file);
 
     // Compile for DXR based on the user-provided options.
@@ -103,9 +103,9 @@ private:
                      const std::string& target_device,
                      std::string&       out_text,
                      std::string&       error_msg,
-                     BeVkPipelineFiles& generated_isa_files,
-                     BeVkPipelineFiles& generated_amdil_files,
-                     BeVkPipelineFiles& generated_stat_files,
+                     BePipelineFiles& generated_isa_files,
+                     BePipelineFiles& generated_amdil_files,
+                     BePipelineFiles& generated_stat_files,
                      std::string&       generated_binary_file);
 
     // Enable RGA's driver stack for a specific target. We do this before launching DX12Backend

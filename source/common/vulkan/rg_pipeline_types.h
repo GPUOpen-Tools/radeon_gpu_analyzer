@@ -22,8 +22,11 @@ struct rgVkPipelineLayoutCreateInfo
     // CTOR.
     rgVkPipelineLayoutCreateInfo() = default;
 
-    // Do not free the memory - leave that for the code that instantiates this object.
-    ~rgVkPipelineLayoutCreateInfo() = default;
+    // Destructor.
+    ~rgVkPipelineLayoutCreateInfo()
+    {
+        delete m_pVkPipelineLayoutCreateInfo;
+    };
 
     // The original object.
     VkPipelineLayoutCreateInfo* m_pVkPipelineLayoutCreateInfo = new VkPipelineLayoutCreateInfo{};
@@ -37,8 +40,7 @@ struct rgVkPipelineLayoutCreateInfo
 class RgPsoCreateInfoVulkan : public RgPsoCreateInfo
 {
 public:
-
-    RgPsoCreateInfoVulkan() = default;
+    RgPsoCreateInfoVulkan()          = default;
     virtual ~RgPsoCreateInfoVulkan() = default;
 
     // Retrieve a pointer to the pipeline layout create info structure.
@@ -78,22 +80,49 @@ class RgPsoGraphicsVulkan : public RgPsoCreateInfoVulkan
 {
 public:
     RgPsoGraphicsVulkan() = default;
-    virtual ~RgPsoGraphicsVulkan() = default;
+    ~RgPsoGraphicsVulkan();
 
     // Initialize the graphics pipeline create info using suitable defaults.
     void Initialize();
 
     // *** Setters - BEGIN. ***
 
-    void SetRenderPassCreateInfo(VkRenderPassCreateInfo* render_pass_create_info) { m_pRenderPassCreateInfo = render_pass_create_info; }
-    void SetMultisampleStateCreateInfo(VkPipelineMultisampleStateCreateInfo* pMultiSampleStateCreateInfo) { /*m_pMultisampleStateCreateInfo*/ m_pipelineCreateInfo.pMultisampleState = pMultiSampleStateCreateInfo; }
-    void SetVertexInputStateCreateInfo(VkPipelineVertexInputStateCreateInfo* pVertexInputStateCreateInfo) { /*m_pVertexInputStateCreateInfo*/ m_pipelineCreateInfo.pVertexInputState = pVertexInputStateCreateInfo; }
-    void SetRasterizationStateCreateInfo(VkPipelineRasterizationStateCreateInfo* pRasterizationStateCreateInfo) { /*m_pRasterizationStateCreateInfo*/ m_pipelineCreateInfo.pRasterizationState = pRasterizationStateCreateInfo; }
-    void SetInputAssemblyStateCreateInfo(VkPipelineInputAssemblyStateCreateInfo* pInputAssemblyStateCreateInfo) { /*m_pInputAssemblyStateCreateInfo*/ m_pipelineCreateInfo.pInputAssemblyState = pInputAssemblyStateCreateInfo; }
-    void SetColorBlendStateCreateInfo(VkPipelineColorBlendStateCreateInfo* pColorBlendStateCreateInfo) { /*m_pColorBlendStateCreateInfo*/ m_pipelineCreateInfo.pColorBlendState = pColorBlendStateCreateInfo; }
-    void SetViweportStateCreateInfo(VkPipelineViewportStateCreateInfo* pViewportStateCreateInfo) { /*m_pViewportStateCreateInfo*/ m_pipelineCreateInfo.pViewportState = pViewportStateCreateInfo; }
-    void SetDepthStencilStateCreateInfo(VkPipelineDepthStencilStateCreateInfo* pDepthStencilStateCreateInfo) { /*m_pDepthStencilStateCreateInfo*/ m_pipelineCreateInfo.pDepthStencilState = pDepthStencilStateCreateInfo; }
-    void SetPipelineLayoutCreateInfo(VkPipelineLayoutCreateInfo* pipeline_layout_create_info) { m_pPipelineLayoutCreateInfo = pipeline_layout_create_info; }
+    void SetRenderPassCreateInfo(VkRenderPassCreateInfo* render_pass_create_info)
+    {
+        m_pRenderPassCreateInfo = render_pass_create_info;
+    }
+    void SetMultisampleStateCreateInfo(VkPipelineMultisampleStateCreateInfo* pMultiSampleStateCreateInfo)
+    { /*m_pMultisampleStateCreateInfo*/
+        m_pipelineCreateInfo.pMultisampleState = pMultiSampleStateCreateInfo;
+    }
+    void SetVertexInputStateCreateInfo(VkPipelineVertexInputStateCreateInfo* pVertexInputStateCreateInfo)
+    { /*m_pVertexInputStateCreateInfo*/
+        m_pipelineCreateInfo.pVertexInputState = pVertexInputStateCreateInfo;
+    }
+    void SetRasterizationStateCreateInfo(VkPipelineRasterizationStateCreateInfo* pRasterizationStateCreateInfo)
+    { /*m_pRasterizationStateCreateInfo*/
+        m_pipelineCreateInfo.pRasterizationState = pRasterizationStateCreateInfo;
+    }
+    void SetInputAssemblyStateCreateInfo(VkPipelineInputAssemblyStateCreateInfo* pInputAssemblyStateCreateInfo)
+    { /*m_pInputAssemblyStateCreateInfo*/
+        m_pipelineCreateInfo.pInputAssemblyState = pInputAssemblyStateCreateInfo;
+    }
+    void SetColorBlendStateCreateInfo(VkPipelineColorBlendStateCreateInfo* pColorBlendStateCreateInfo)
+    { /*m_pColorBlendStateCreateInfo*/
+        m_pipelineCreateInfo.pColorBlendState = pColorBlendStateCreateInfo;
+    }
+    void SetViweportStateCreateInfo(VkPipelineViewportStateCreateInfo* pViewportStateCreateInfo)
+    { /*m_pViewportStateCreateInfo*/
+        m_pipelineCreateInfo.pViewportState = pViewportStateCreateInfo;
+    }
+    void SetDepthStencilStateCreateInfo(VkPipelineDepthStencilStateCreateInfo* pDepthStencilStateCreateInfo)
+    { /*m_pDepthStencilStateCreateInfo*/
+        m_pipelineCreateInfo.pDepthStencilState = pDepthStencilStateCreateInfo;
+    }
+    void SetPipelineLayoutCreateInfo(VkPipelineLayoutCreateInfo* pipeline_layout_create_info)
+    {
+        m_pPipelineLayoutCreateInfo = pipeline_layout_create_info;
+    }
 
     // *** Setters - END. ***
 
@@ -165,28 +194,28 @@ private:
     VkGraphicsPipelineCreateInfo m_pipelineCreateInfo = {};
 
     // Vertex input state create info.
-    VkPipelineVertexInputStateCreateInfo*      m_pVertexInputStateCreateInfo = nullptr;
+    VkPipelineVertexInputStateCreateInfo* m_pVertexInputStateCreateInfo = nullptr;
 
     // Input assembly state create info.
-    VkPipelineInputAssemblyStateCreateInfo*    m_pInputAssemblyStateCreateInfo = nullptr;
+    VkPipelineInputAssemblyStateCreateInfo* m_pInputAssemblyStateCreateInfo = nullptr;
 
     // Tessellation state create info.
-    VkPipelineTessellationStateCreateInfo*     m_pTessellationStateCreateInfo = nullptr;
+    VkPipelineTessellationStateCreateInfo* m_pTessellationStateCreateInfo = nullptr;
 
     // Viewport state create info.
-    VkPipelineViewportStateCreateInfo*         m_pViewportStateCreateInfo = nullptr;
+    VkPipelineViewportStateCreateInfo* m_pViewportStateCreateInfo = nullptr;
 
     // Rasterization state create info.
-    VkPipelineRasterizationStateCreateInfo*    m_pRasterizationStateCreateInfo = nullptr;
+    VkPipelineRasterizationStateCreateInfo* m_pRasterizationStateCreateInfo = nullptr;
 
     // Multisample state create info.
-    VkPipelineMultisampleStateCreateInfo*      m_pMultisampleStateCreateInfo = nullptr;
+    VkPipelineMultisampleStateCreateInfo* m_pMultisampleStateCreateInfo = nullptr;
 
     // Depth stencil state create info.
-    VkPipelineDepthStencilStateCreateInfo*     m_pDepthStencilStateCreateInfo = nullptr;
+    VkPipelineDepthStencilStateCreateInfo* m_pDepthStencilStateCreateInfo = nullptr;
 
     // Color blend state create info.
-    VkPipelineColorBlendStateCreateInfo*       m_pColorBlendStateCreateInfo = nullptr;
+    VkPipelineColorBlendStateCreateInfo* m_pColorBlendStateCreateInfo = nullptr;
 
     // Render pass create info.
     VkRenderPassCreateInfo* m_pRenderPassCreateInfo = nullptr;
@@ -196,7 +225,7 @@ private:
 class RgPsoComputeVulkan : public RgPsoCreateInfoVulkan
 {
 public:
-    RgPsoComputeVulkan() = default;
+    RgPsoComputeVulkan()          = default;
     virtual ~RgPsoComputeVulkan() = default;
 
     // Initialize the compute pipeline create info using suitable defaults.

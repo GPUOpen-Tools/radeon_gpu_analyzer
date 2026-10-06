@@ -1,11 +1,12 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for CLI utility functions.
 //=============================================================================
-// XML.
-#include "tinyxml2.h"
+
+// C++.
+#include <algorithm>
 
 // Infra.
 #include "external/amdt_base_tools/Include/gtString.h"
@@ -18,51 +19,48 @@
 #include "update_check_api.h"
 
 // Common.
-#include "source/common/rga_cli_defs.h"
+#include "common/rg_log.h"
+#include "common/rga_cli_defs.h"
+#include "common/rga_shared_data_types.h"
+#include "common/rga_shared_utils.h"
+#include "common/rga_version_info.h"
 
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_static_isa_analyzer.h"
-#include "radeon_gpu_analyzer_backend/be_utils.h"
 #include "radeon_gpu_analyzer_backend/be_string_constants.h"
-
-// Shared.
-#include "common/rga_shared_utils.h"
+#include "radeon_gpu_analyzer_backend/be_utils.h"
+#include "radeon_gpu_analyzer_backend/emulator/parser/be_isa_parser.h"
 
 // Local.
-#include "radeon_gpu_analyzer_cli/kc_utils.h"
-#include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_commander.h"
-#include "common/rga_xml_constants.h"
-#include "common/rga_shared_utils.h"
-#include "common/rg_log.h"
-#include "common/rga_version_info.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 #include "radeon_gpu_analyzer_cli/kc_statistics_device_props.h"
+#include "radeon_gpu_analyzer_cli/kc_utils.h"
 
 #ifndef _WIN32
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #include <dirent.h>
 #endif
 
-using namespace beKA;
-
 // Constants.
-static const gtString  kRgaCliLogFileName           = L"rga_cli";
-static const gtString  kRgaCliLogFileExt            = L"log";
-static const gtString  kRgaCliParsedIsaFileExt      = L"csv";
-static const gtString  kRgaCliTempStdoutFilename    = L"rga_stdout";
-static const gtString  kRgaCliTempStdoutFileExt     = L"txt";
-static const gtString  kRgaCliTempStderrFilename    = L"rga_stderr";
-static const gtString  kRgaCliTempStderrFileExt     = L"txt";
-static const char*     kStrFopenModeAppend          = "a";
+static const gtString kRgaCliLogFileName        = L"rga_cli";
+static const gtString kRgaCliLogFileExt         = L"log";
+static const gtString kRgaCliParsedIsaFileExt   = L"csv";
+static const gtString kRgaCliTempStdoutFilename = L"rga_stdout";
+static const gtString kRgaCliTempStdoutFileExt  = L"txt";
+static const gtString kRgaCliTempStderrFilename = L"rga_stderr";
+static const gtString kRgaCliTempStderrFileExt  = L"txt";
+static const char*    kStrFopenModeAppend       = "a";
 
 // Constants: error messages.
-static const char* kStrErrorCannotLocateLiveregAnalyzer     = "Error: cannot locate the live register analyzer.";
-static const char* kStrErrorCannotLaunchLiveregAnalyzer     = "Error: cannot launch the live register analyzer.";
-static const char* kStrErrorCannotLaunchCfgAnalyzer         = "Error: cannot launch the control graph generator.";
-static const char* kStrErrorCannotFindIsaFile               = "Error: ISA file not found.";
-static const char* kStrErrorCouldNotDetectTarget            = "Error: could not detect target GPU -> ";
-static const char* kStrErrorAmbiguousTarget                 = "Error: ambiguous target GPU name -> ";
-static const char* kStrErrorFailedToOpenLogFile             = "Error: failed to open log file: ";
+static const char* kStrErrorCannotLocateLiveregAnalyzer  = "Error: cannot locate the live register analyzer.";
+static const char* kStrErrorCannotLaunchLiveregAnalyzer  = "Error: cannot launch the live register analyzer.";
+static const char* kStrErrorCannotLaunchCfgAnalyzer      = "Error: cannot launch the control graph generator.";
+static const char* kStrErrorCannotFindIsaFile            = "Error: ISA file not found.";
+static const char* kStrErrorCouldNotDetectTarget         = "Error: could not detect target GPU -> ";
+static const char* kStrErrorAmbiguousTarget              = "Error: ambiguous target GPU name -> ";
+static const char* kStrErrorFailedToOpenLogFile          = "Error: failed to open log file: ";
+static const char* kStrErrorFailedToDecodeIsaDisassembly = "Error: failed to decode isa disassembly.";
 
 // Constants: warning messages.
 static const char* kStrWarningFailedToDeleteLogFiles = "Warning: failed to delete old log files.";
@@ -73,17 +71,49 @@ static const char* kStrLaunchingExternalProcess = "Info: launching external proc
 // Log messages.
 static const char* kStrRgaCliLogsStart = "RGA CLI process started.";
 
+// Stats file constants.
+static const char* kStrInfoCsvHeaderDevice                    = "DEVICE";
+static const char* kStrInfoCsvScratchMemory                   = "SCRATCH_MEM";
+static const char* kStrInfoCsvHeaderThreadsPerWorkgroup       = "THREADS_PER_WORKGROUP";
+static const char* kStrInfoCsvHeaderWavefrontSize             = "WAVEFRONT_SIZE";
+static const char* kStrInfoCsvHeaderLdsBytesMax               = "AVAILABLE_LDS_BYTES";
+static const char* kStrInfoCsvHeaderLdsBytesActual            = "USED_LDS_BYTES";
+static const char* kStrInfoCsvHeaderSgprAvailable             = "AVAILABLE_SGPRs";
+static const char* kStrInfoCsvHeaderSgprUsed                  = "USED_SGPRs";
+static const char* kStrInfoCsvHeaderSgprSpills                = "SGPR_SPILLS";
+static const char* kStrInfoCsvHeaderVgprAvailable             = "AVAILABLE_VGPRs";
+static const char* kStrInfoCsvHeaderVgprUsed                  = "USED_VGPRs";
+static const char* kStrInfoCsvHeaderVgprSpills                = "VGPR_SPILLS";
+static const char* kStrInfoCsvHeaderAgprAvailable             = "AVAILABLE_AGPRs";
+static const char* kStrInfoCsvHeaderAgprUsed                  = "USED_AGPRs";
+static const char* kStrInfoCsvHeaderOpenclWorkgroupDimensionX = "CL_WORKGROUP_X_DIMENSION";
+static const char* kStrInfoCsvHeaderOpenclWorkgroupDimensionY = "CL_WORKGROUP_Y_DIMENSION";
+static const char* kStrInfoCsvHeaderOpenclWorkgroupDimensionZ = "CL_WORKGROUP_Z_DIMENSION";
+static const char* kStrInfoCsvHeaderIsaSizeBytes              = "ISA_SIZE";
+
 #ifdef WIN32
-const int  kWindowsDateStringLength                 = 14;
-const int  kWindowsDateStringYearOffset             = 10;
-const int  kWindowsDateStringMonthOffset            =  7;
-const int  kWindowsDateStringDayOffset              =  4;
+const int kWindowsDateStringLength      = 14;
+const int kWindowsDateStringYearOffset  = 10;
+const int kWindowsDateStringMonthOffset = 7;
+const int kWindowsDateStringDayOffset   = 4;
 #endif
 
-// This container references the disabled devices. At certain times it might be empty.
-static const std::vector<std::string>  kRgaDisabledDevices = { };
+// Vulkan statistics tags.
+static const std::string kStrVulkanStatsTitle                = "Statistics:";
+static const std::string kStrVulkanStatsTagNumUsedSgprs      = "resourceUsage.numUsedSgprs";
+static const std::string kStrVulkanStatsTagNumUsedVgprs      = "resourceUsage.numUsedVgprs";
+static const std::string kStrVulkanStatsTagNumAvailableVgprs = "numAvailableVgprs";
+static const std::string kStrVulkanStatsTagNumAvailableSgprs = "numAvailableSgprs";
+static const std::string kStrVulkanStatsTagLdsSize           = "resourceUsage.ldsSizePerLocalWorkGroup";
+static const std::string kStrVulkanStatsTagLdsUsage          = "resourceUsage.ldsUsageSizeInBytes";
+static const std::string kStrVulkanStatsTagScratchMem        = "resourceUsage.scratchMemUsageInBytes";
+static const std::string kStrVulkanStatsTagNumUsedAgprs      = "resourceUsage.numUsedAgprs";
+static const std::string kStrVulkanStatsTagNumAvailableAgprs = "numAvailableAgprs";
 
-static bool GetRGATempDir(osDirectory & dir);
+// This container references the disabled devices. At certain times it might be empty.
+static const std::vector<std::string> kRgaDisabledDevices = {};
+
+static bool GetRGATempDir(osDirectory& dir);
 
 static std::string AdjustBaseFileName(const std::string& user_input_filename, const std::string& device, const char* base_filename)
 {
@@ -91,11 +121,11 @@ static std::string AdjustBaseFileName(const std::string& user_input_filename, co
     if (ret.empty())
     {
         // Generate a default file name if needed.
-        gtString  temp_isa_filename, isa_file_ext;
+        gtString temp_isa_filename, isa_file_ext;
         temp_isa_filename << (std::string(kStrDefaultFilenameIsa) + device).c_str();
         isa_file_ext << kStrDefaultExtensionIsa;
         gtString isa_output_filename = KcUtils::ConstructTempFileName(temp_isa_filename, isa_file_ext);
-        ret = isa_output_filename.asASCIICharArray();
+        ret                          = isa_output_filename.asASCIICharArray();
     }
     else
     {
@@ -119,7 +149,7 @@ static std::string AdjustBaseFileName(const std::string& user_input_filename, co
 
 bool KcUtils::ValidateShaderFileName(const char* shader_type, const std::string& shader_filename, std::stringstream& log_msg)
 {
-    bool is_shader_name_valid = true;
+    bool     is_shader_name_valid = true;
     gtString shader_filename_as_gtstr;
     shader_filename_as_gtstr << shader_filename.c_str();
     osFilePath shaderFile(shader_filename_as_gtstr);
@@ -128,7 +158,7 @@ bool KcUtils::ValidateShaderFileName(const char* shader_type, const std::string&
     {
         const char* const kStrErrorCannotFindShaderPrefix = "Error: cannot find ";
         const char* const kStrErrorCannotFindShaderSuffix = " shader: ";
-        is_shader_name_valid = false;
+        is_shader_name_valid                              = false;
         log_msg << kStrErrorCannotFindShaderPrefix << shader_type << kStrErrorCannotFindShaderSuffix << shader_filename << std::endl;
     }
 
@@ -137,10 +167,10 @@ bool KcUtils::ValidateShaderFileName(const char* shader_type, const std::string&
 
 bool KcUtils::ValidateShaderOutputDir(const std::string& output_filename, std::stringstream& log_msg)
 {
-    bool is_shader_output_dir_valid = true;
+    bool     is_shader_output_dir_valid = true;
     gtString shader_filename_as_gtstr;
     shader_filename_as_gtstr << output_filename.c_str();
-    osFilePath shader_file(shader_filename_as_gtstr);
+    osFilePath  shader_file(shader_filename_as_gtstr);
     osDirectory output_dir;
     shader_file.getFileDirectory(output_dir);
 
@@ -155,20 +185,21 @@ bool KcUtils::ValidateShaderOutputDir(const std::string& output_filename, std::s
     return is_shader_output_dir_valid;
 }
 
-bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_output_filename, const std::string& default_suffix,
-                                                     const std::string& default_ext, const std::string& device,
+bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_output_filename,
+                                                     const std::string& default_suffix,
+                                                     const std::string& default_ext,
+                                                     const std::string& device,
                                                      BeProgramPipeline& pipeline_files)
 {
     // Stage abbreviations for output file names.
-    static const char* kStrVertexStageNameAbbreviation = "vert";
-    static const char* kStrTessellationControlStageNameAbbreviation = "tesc";
+    static const char* kStrVertexStageNameAbbreviation                 = "vert";
+    static const char* kStrTessellationControlStageNameAbbreviation    = "tesc";
     static const char* kStrTessellationEvaluationStageNameAbbreviation = "tese";
-    static const char* kStrGeometryStageNameAbbreviation = "geom";
-    static const char* kStrFragmentStageNameAbbreviation = "frag";
-    static const char* kStrComputeStageNameAbbreviation = "comp";
-    static const char* kStrMeshStageNameAbbreviation = "mesh";
-    static const char* kStrTaskStageNameAbbreviation = "task";
-
+    static const char* kStrGeometryStageNameAbbreviation               = "geom";
+    static const char* kStrFragmentStageNameAbbreviation               = "frag";
+    static const char* kStrComputeStageNameAbbreviation                = "comp";
+    static const char* kStrMeshStageNameAbbreviation                   = "mesh";
+    static const char* kStrTaskStageNameAbbreviation                   = "task";
 
     // Clear the existing pipeline.
     pipeline_files.ClearAll();
@@ -187,7 +218,7 @@ bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_out
     }
 
     osDirectory output_dir;
-    bool status = true;
+    bool        status = true;
 
     // Use system temp folder if no path is provided by a user.
     if (base_output_filename.empty())
@@ -223,7 +254,6 @@ bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_out
             pipeline_files.compute_shader << fixed_filename << "_" << original_filename.asASCIICharArray();
             pipeline_files.mesh_shader << fixed_filename << "_" << original_filename.asASCIICharArray();
             pipeline_files.task_shader << fixed_filename << "_" << original_filename.asASCIICharArray();
-
         }
         else if (!default_suffix.empty())
         {
@@ -248,21 +278,21 @@ bool KcUtils::AdjustRenderingPipelineOutputFileNames(const std::string& base_out
         pipeline_files.task_shader << "_" << kStrTaskStageNameAbbreviation;
 
         pipeline_files.vertex_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
-        pipeline_files.tessellation_control_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
-        pipeline_files.tessellation_evaluation_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
+        pipeline_files.tessellation_control_shader << "."
+                                                   << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
+        pipeline_files.tessellation_evaluation_shader << "."
+                                                      << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
         pipeline_files.geometry_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
         pipeline_files.fragment_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
         pipeline_files.compute_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
         pipeline_files.mesh_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
         pipeline_files.task_shader << "." << (original_file_extension.isEmpty() ? default_ext.c_str() : original_file_extension.asASCIICharArray());
-
     }
 
     return status;
 }
 
-
-std::string KcUtils::DeviceStatisticsToCsvString(const Config& config, const std::string& device, const beKA::AnalysisData& statistics)
+std::string KcUtils::DeviceStatisticsToCsvString(const Config& config, const std::string& device, const beKA::AnalysisData& statistics, bool include_agprs)
 {
     std::stringstream output;
 
@@ -270,7 +300,7 @@ std::string KcUtils::DeviceStatisticsToCsvString(const Config& config, const std
     char csv_separator = GetCsvSeparator(config);
     output << device << csv_separator;
 
-     // Scratch registers.
+    // Scratch registers.
     output << beKA::AnalysisData::na_or(statistics.scratch_memory_used) << csv_separator;
 
     // Work-items per work-group.
@@ -311,13 +341,148 @@ std::string KcUtils::DeviceStatisticsToCsvString(const Config& config, const std
     // ISA size.
     output << beKA::AnalysisData::na_or(statistics.isa_size);
 
+    if (include_agprs)
+    {
+        // Available AGPRs.
+        output << csv_separator << beKA::AnalysisData::na_or(statistics.num_agprs_available);
+
+        // Used AGPRs.
+        output << csv_separator << beKA::AnalysisData::na_or(statistics.num_agprs_used);
+    }
+
     output << std::endl;
 
     return output.str().c_str();
 }
 
-bool KcUtils::CreateStatisticsFile(const gtString& filename, const Config& config,
-                                   const std::map<std::string, beKA::AnalysisData>& analysis_data, LoggingCallbackFunction log_callback)
+// Helper function to parse uint64_t from string, returns -1 for "N/A"
+static uint64_t ParseStatValue(const std::string& value)
+{
+    if (value == "N/A" || value.empty())
+    {
+        return beKA::kCalValue64Na;
+    }
+    try
+    {
+        return std::stoull(value);
+    }
+    catch (const std::exception&)
+    {
+        return beKA::kCalValue64Na;
+    }
+}
+
+// Helper function to split CSV line
+static std::vector<std::string> SplitCsvLine(const std::string& line, char separator)
+{
+    std::vector<std::string> tokens;
+    std::stringstream        string_stream(line);
+    std::string              token;
+
+    while (std::getline(string_stream, token, separator))
+    {
+        // Trim whitespace
+        token.erase(0, token.find_first_not_of(" \t"));
+        token.erase(token.find_last_not_of(" \t") + 1);
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+// Helper function to detect CSV separator from file
+static char DetectCsvSeparator(const std::string& header_line)
+{
+    // Try common separators and pick the one that gives the most fields
+    std::vector<char> candidates     = {',', ';', '\t', '|'};
+    char              best_separator = ',';
+    size_t            max_fields     = 0;
+
+    for (char separator_candidate : candidates)
+    {
+        std::vector<std::string> fields = SplitCsvLine(header_line, separator_candidate);
+        if (fields.size() > max_fields)
+        {
+            max_fields     = fields.size();
+            best_separator = separator_candidate;
+        }
+    }
+
+    return best_separator;
+}
+
+bool KcUtils::ReadStatisticsFile(const std::string& filename, beKA::AnalysisData& stats)
+{
+    std::ifstream input_file(filename);
+    if (!input_file.is_open())
+    {
+        return false;
+    }
+
+    std::string line;
+
+    if (!std::getline(input_file, line))
+    {
+        return false;
+    }
+
+    std::vector<std::string> headers;
+    std::vector<std::string> values;
+
+    // Detect CSV separator from header line
+    char separator = DetectCsvSeparator(line);
+    headers        = SplitCsvLine(line, separator);
+
+    // Read data line (assuming single row of data after header)
+    if (!std::getline(input_file, line))
+    {
+        return false;
+    }
+
+    values = SplitCsvLine(line, separator);
+
+    // Ensure headers and values have same size
+    if (headers.size() != values.size())
+    {
+        return false;
+    }
+
+    // Create a map for easy field lookup
+    std::map<std::string, std::string> field_map;
+    for (size_t i = 0; i < headers.size(); ++i)
+    {
+        field_map[headers[i]] = values[i];
+    }
+
+    // Parse each field using the extracted constants
+    stats.scratch_memory_used = ParseStatValue(field_map.count(kStrInfoCsvScratchMemory) ? field_map.at(kStrInfoCsvScratchMemory) : "");
+    stats.num_threads_per_group_total =
+        ParseStatValue(field_map.count(kStrInfoCsvHeaderThreadsPerWorkgroup) ? field_map.at(kStrInfoCsvHeaderThreadsPerWorkgroup) : "");
+    stats.wavefront_size      = ParseStatValue(field_map.count(kStrInfoCsvHeaderWavefrontSize) ? field_map.at(kStrInfoCsvHeaderWavefrontSize) : "");
+    stats.lds_size_available  = ParseStatValue(field_map.count(kStrInfoCsvHeaderLdsBytesMax) ? field_map.at(kStrInfoCsvHeaderLdsBytesMax) : "");
+    stats.lds_size_used       = ParseStatValue(field_map.count(kStrInfoCsvHeaderLdsBytesActual) ? field_map.at(kStrInfoCsvHeaderLdsBytesActual) : "");
+    stats.num_sgprs_available = ParseStatValue(field_map.count(kStrInfoCsvHeaderSgprAvailable) ? field_map.at(kStrInfoCsvHeaderSgprAvailable) : "");
+    stats.num_sgprs_used      = ParseStatValue(field_map.count(kStrInfoCsvHeaderSgprUsed) ? field_map.at(kStrInfoCsvHeaderSgprUsed) : "");
+    stats.num_sgpr_spills     = ParseStatValue(field_map.count(kStrInfoCsvHeaderSgprSpills) ? field_map.at(kStrInfoCsvHeaderSgprSpills) : "");
+    stats.num_vgprs_available = ParseStatValue(field_map.count(kStrInfoCsvHeaderVgprAvailable) ? field_map.at(kStrInfoCsvHeaderVgprAvailable) : "");
+    stats.num_vgprs_used      = ParseStatValue(field_map.count(kStrInfoCsvHeaderVgprUsed) ? field_map.at(kStrInfoCsvHeaderVgprUsed) : "");
+    stats.num_vgpr_spills     = ParseStatValue(field_map.count(kStrInfoCsvHeaderVgprSpills) ? field_map.at(kStrInfoCsvHeaderVgprSpills) : "");
+    stats.num_agprs_available = ParseStatValue(field_map.count(kStrInfoCsvHeaderAgprAvailable) ? field_map.at(kStrInfoCsvHeaderAgprAvailable) : "");
+    stats.num_agprs_used      = ParseStatValue(field_map.count(kStrInfoCsvHeaderAgprUsed) ? field_map.at(kStrInfoCsvHeaderAgprUsed) : "");
+    stats.num_threads_per_group_x =
+        ParseStatValue(field_map.count(kStrInfoCsvHeaderOpenclWorkgroupDimensionX) ? field_map.at(kStrInfoCsvHeaderOpenclWorkgroupDimensionX) : "");
+    stats.num_threads_per_group_y =
+        ParseStatValue(field_map.count(kStrInfoCsvHeaderOpenclWorkgroupDimensionY) ? field_map.at(kStrInfoCsvHeaderOpenclWorkgroupDimensionY) : "");
+    stats.num_threads_per_group_z =
+        ParseStatValue(field_map.count(kStrInfoCsvHeaderOpenclWorkgroupDimensionZ) ? field_map.at(kStrInfoCsvHeaderOpenclWorkgroupDimensionZ) : "");
+    stats.isa_size = ParseStatValue(field_map.count(kStrInfoCsvHeaderIsaSizeBytes) ? field_map.at(kStrInfoCsvHeaderIsaSizeBytes) : "");
+
+    return true;
+}
+
+bool KcUtils::CreateStatisticsFile(const gtString&                                  filename,
+                                   const Config&                                    config,
+                                   const std::map<std::string, beKA::AnalysisData>& analysis_data,
+                                   LoggingCallbackFunction                          log_callback)
 {
     bool ret = false;
 
@@ -330,14 +495,18 @@ bool KcUtils::CreateStatisticsFile(const gtString& filename, const Config& confi
 
     if (output.is_open())
     {
+        // Check if any target device has AGPR support.
+        bool include_agprs = std::any_of(analysis_data.begin(), analysis_data.end(),
+            [](const auto& pair) { return RgaSharedUtils::HasAgprSupport(pair.first); });
+
         // Write the header.
-        output << GetStatisticsCsvHeaderString(csv_separator) << std::endl;
+        output << GetStatisticsCsvHeaderString(csv_separator, include_agprs) << std::endl;
 
         // Write the device data.
         for (const auto& device_stats_pair : analysis_data)
         {
             // Write a line of CSV.
-            output << DeviceStatisticsToCsvString(config, device_stats_pair.first, device_stats_pair.second);
+            output << DeviceStatisticsToCsvString(config, device_stats_pair.first, device_stats_pair.second, include_agprs);
         }
 
         output.close();
@@ -346,34 +515,15 @@ bool KcUtils::CreateStatisticsFile(const gtString& filename, const Config& confi
     else if (log_callback != nullptr)
     {
         std::stringstream log;
-        log << kStrErrorCannotOpenFileForWriteA << filename.asASCIICharArray() <<
-              kStrErrorCannotOpenFileForWriteB << std::endl;
+        log << kStrErrorCannotOpenFileForWriteA << filename.asASCIICharArray() << kStrErrorCannotOpenFileForWriteB << std::endl;
         log_callback(log.str());
     }
 
     return ret;
 }
 
-std::string KcUtils::GetStatisticsCsvHeaderString(char csv_separator)
+std::string KcUtils::GetStatisticsCsvHeaderString(char csv_separator, bool include_agprs)
 {
-    // CSV file.
-    static const char* kStrInfoCsvHeaderDevice = "DEVICE";
-    static const char* kStrInfoCsvScratchMemory = "SCRATCH_MEM";
-    static const char* kStrInfoCsvHeaderThreadsPerWorkgroup = "THREADS_PER_WORKGROUP";
-    static const char* kStrInfoCsvHeaderWavefrontSize = "WAVEFRONT_SIZE";
-    static const char* kStrInfoCsvHeaderLdsBytesMax = "AVAILABLE_LDS_BYTES";
-    static const char* kStrInfoCsvHeaderLdsBytesActual = "USED_LDS_BYTES";
-    static const char* kStrInfoCsvHeaderSgprAvailable = "AVAILABLE_SGPRs";
-    static const char* kStrInfoCsvHeaderSgprUsed = "USED_SGPRs";
-    static const char* kStrInfoCsvHeaderSgprSpills = "SGPR_SPILLS";
-    static const char* kStrInfoCsvHeaderVgprAvailable = "AVAILABLE_VGPRs";
-    static const char* kStrInfoCsvHeaderVgprUsed = "USED_VGPRs";
-    static const char* kStrInfoCsvHeaderVgprSpills = "VGPR_SPILLS";
-    static const char* kStrInfoCsvHeaderOpenclWorkgroupDimensionX = "CL_WORKGROUP_X_DIMENSION";
-    static const char* kStrInfoCsvHeaderOpenclWorkgroupDimensionY = "CL_WORKGROUP_Y_DIMENSION";
-    static const char* kStrInfoCsvHeaderOpenclWorkgroupDimensionZ = "CL_WORKGROUP_Z_DIMENSION";
-    static const char* kStrInfoCsvHeaderIsaSizeBytes = "ISA_SIZE";
-
     std::stringstream output;
     output << kStrInfoCsvHeaderDevice << csv_separator;
     output << kStrInfoCsvScratchMemory << csv_separator;
@@ -391,11 +541,19 @@ std::string KcUtils::GetStatisticsCsvHeaderString(char csv_separator)
     output << kStrInfoCsvHeaderOpenclWorkgroupDimensionY << csv_separator;
     output << kStrInfoCsvHeaderOpenclWorkgroupDimensionZ << csv_separator;
     output << kStrInfoCsvHeaderIsaSizeBytes;
+    if (include_agprs)
+    {
+        output << csv_separator << kStrInfoCsvHeaderAgprAvailable;
+        output << csv_separator << kStrInfoCsvHeaderAgprUsed;
+    }
     return output.str().c_str();
 }
 
-void KcUtils::CreateStatisticsFile(const gtString& filename, const Config& config, const std::string& device,
-                                   const beKA::AnalysisData& device_statistics, LoggingCallbackFunction log_callback)
+void KcUtils::CreateStatisticsFile(const gtString&           filename,
+                                   const Config&             config,
+                                   const std::string&        device,
+                                   const beKA::AnalysisData& device_statistics,
+                                   LoggingCallbackFunction   log_callback)
 {
     // Create a temporary map and invoke the general routine.
     std::map<std::string, beKA::AnalysisData> tmp_map;
@@ -413,23 +571,37 @@ char KcUtils::GetCsvSeparator(const Config& config)
         {
             switch (config.csv_separator[1])
             {
-                case 'a': csv_separator = '\a'; break;
+            case 'a':
+                csv_separator = '\a';
+                break;
 
-                case 'b': csv_separator = '\b'; break;
+            case 'b':
+                csv_separator = '\b';
+                break;
 
-                case 'f': csv_separator = '\f'; break;
+            case 'f':
+                csv_separator = '\f';
+                break;
 
-                case 'n': csv_separator = '\n'; break;
+            case 'n':
+                csv_separator = '\n';
+                break;
 
-                case 'r': csv_separator = '\r'; break;
+            case 'r':
+                csv_separator = '\r';
+                break;
 
-                case 't': csv_separator = '\t'; break;
+            case 't':
+                csv_separator = '\t';
+                break;
 
-                case 'v': csv_separator = '\v'; break;
+            case 'v':
+                csv_separator = '\v';
+                break;
 
-                default:
-                    csv_separator = config.csv_separator[1];
-                    break;
+            default:
+                csv_separator = config.csv_separator[1];
+                break;
             }
         }
     }
@@ -444,7 +616,7 @@ char KcUtils::GetCsvSeparator(const Config& config)
 
 bool KcUtils::DeleteFile(const gtString& file_full_path)
 {
-    bool ret = false;
+    bool       ret = false;
     osFilePath path(file_full_path);
 
     if (path.exists())
@@ -471,8 +643,11 @@ bool KcUtils::IsDirectory(const std::string& dir_path)
     return file_path.isDirectory();
 }
 
-void KcUtils::ReplaceStatisticsFile(const gtString& statistics_file, const Config& config,
-                                    const std::string& device, IStatisticsParser& stats_parser, LoggingCallbackFunction log_cb)
+void KcUtils::ReplaceStatisticsFile(const gtString&         statistics_file,
+                                    const Config&           config,
+                                    const std::string&      device,
+                                    IStatisticsParser&      stats_parser,
+                                    LoggingCallbackFunction log_cb)
 {
     // Parse the backend statistics.
     beKA::AnalysisData statistics;
@@ -487,9 +662,9 @@ void KcUtils::ReplaceStatisticsFile(const gtString& statistics_file, const Confi
 
 // Evaluates the result by a backend analysis session. Prints the relevant message.
 // Returns true if analysis succeeded, false otherwise.
-static bool EvaluateAnalysisResult(beStatus rc, LoggingCallbackFunction callback)
+static bool EvaluateAnalysisResult(beKA::beStatus rc, LoggingCallbackFunction callback)
 {
-    if (rc != kBeStatusSuccess)
+    if (rc != beKA::kBeStatusSuccess)
     {
         // Inform the user in case of an error.
         std::stringstream msg;
@@ -527,7 +702,6 @@ static bool EvaluateAnalysisResult(beStatus rc, LoggingCallbackFunction callback
         {
             if (callback != nullptr)
             {
-
                 callback(error_msg);
             }
             else
@@ -537,10 +711,10 @@ static bool EvaluateAnalysisResult(beStatus rc, LoggingCallbackFunction callback
         }
     }
 
-    return (rc == kBeStatusSuccess);
+    return (rc == beKA::kBeStatusSuccess);
 }
 
-bool KcUtils::PerformLiveRegisterAnalysis(const gtString&         isa_filename, 
+bool KcUtils::PerformLiveRegisterAnalysis(const gtString&         isa_filename,
                                           const gtString&         target,
                                           const gtString&         output_filename,
                                           LoggingCallbackFunction callback,
@@ -549,12 +723,12 @@ bool KcUtils::PerformLiveRegisterAnalysis(const gtString&         isa_filename,
                                           beWaveSize              wave_size)
 {
     // Call the backend.
-    beStatus rc = BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isa_filename, target, output_filename, wave_size, print_cmd, is_reg_type_sgpr);
+    beKA::beStatus rc = beKA::BeStaticIsaAnalyzer::PerformLiveRegisterAnalysis(isa_filename, target, output_filename, wave_size, print_cmd, is_reg_type_sgpr);
 
     return EvaluateAnalysisResult(rc, callback);
 }
 
-bool KcUtils::PerformLiveRegisterAnalysis(const std::string&      isa_filename, 
+bool KcUtils::PerformLiveRegisterAnalysis(const std::string&      isa_filename,
                                           const std::string&      target,
                                           const std::string&      output_filename,
                                           LoggingCallbackFunction callback,
@@ -573,42 +747,46 @@ bool KcUtils::PerformLiveRegisterAnalysis(const std::string&      isa_filename,
     return PerformLiveRegisterAnalysis(isa_name_gtstr, target_gtstr, output_filename_gtstr, callback, print_cmd, is_reg_type_sgpr);
 }
 
-bool KcUtils::GenerateControlFlowGraph(const gtString& isa_file_name, const gtString& target, const gtString& output_filename,
-                                       LoggingCallbackFunction callback, bool per_inst_cfg, bool printCmd)
+bool KcUtils::GenerateControlFlowGraph(const gtString&         isa_file_name,
+                                       const gtString&         target,
+                                       const gtString&         output_filename,
+                                       LoggingCallbackFunction callback,
+                                       bool                    per_inst_cfg,
+                                       bool                    printCmd)
 {
     // Call the backend.
-    beStatus rc = BeStaticIsaAnalyzer::GenerateControlFlowGraph(isa_file_name, target, output_filename, per_inst_cfg, printCmd);
-    if (rc != kBeStatusSuccess && callback != nullptr)
+    beKA::beStatus rc = beKA::BeStaticIsaAnalyzer::GenerateControlFlowGraph(isa_file_name, target, output_filename, per_inst_cfg, printCmd);
+    if (rc != beKA::kBeStatusSuccess && callback != nullptr)
     {
         // Inform the user in case of an error.
         std::stringstream msg;
 
         switch (rc)
         {
-            case beKA::kBeStatusShaeCannotLocateAnalyzer:
-                // Failed to locate the ISA analyzer.
-                msg << kStrErrorCannotLocateLiveregAnalyzer << std::endl;
-                break;
+        case beKA::kBeStatusShaeCannotLocateAnalyzer:
+            // Failed to locate the ISA analyzer.
+            msg << kStrErrorCannotLocateLiveregAnalyzer << std::endl;
+            break;
 
-            case beKA::kBeStatusShaeIsaFileNotFound:
-                // ISA file not found.
-                msg << kStrErrorCannotFindIsaFile << std::endl;
-                break;
+        case beKA::kBeStatusShaeIsaFileNotFound:
+            // ISA file not found.
+            msg << kStrErrorCannotFindIsaFile << std::endl;
+            break;
 
-            case beKA::kBeStatusShaeFailedToLaunch:
+        case beKA::kBeStatusShaeFailedToLaunch:
 #ifndef __linux__
-                // Failed to launch the ISA analyzer.
-                // On Linux, there is an issue with this return code due to the
-                // executable format that we use for the backend.
-                msg << kStrErrorCannotLaunchCfgAnalyzer << std::endl;
+            // Failed to launch the ISA analyzer.
+            // On Linux, there is an issue with this return code due to the
+            // executable format that we use for the backend.
+            msg << kStrErrorCannotLaunchCfgAnalyzer << std::endl;
 #endif
-                break;
+            break;
 
-            case beKA::kBeStatusGeneralFailed:
-            default:
-                // Generic error message.
-                msg << kStrErrorCannotPerformLiveregAnalysis << std::endl;
-                break;
+        case beKA::kBeStatusGeneralFailed:
+        default:
+            // Generic error message.
+            msg << kStrErrorCannotPerformLiveregAnalysis << std::endl;
+            break;
         }
 
         const std::string& error_msg = msg.str();
@@ -618,11 +796,15 @@ bool KcUtils::GenerateControlFlowGraph(const gtString& isa_file_name, const gtSt
         }
     }
 
-    return (rc == kBeStatusSuccess);
+    return (rc == beKA::kBeStatusSuccess);
 }
 
-bool KcUtils::GenerateControlFlowGraph(const std::string& isa_filename, const std::string& target, const std::string& output_filename,
-    LoggingCallbackFunction pCallback, bool per_inst_cfg, bool print_cmd)
+bool KcUtils::GenerateControlFlowGraph(const std::string&      isa_filename,
+                                       const std::string&      target,
+                                       const std::string&      output_filename,
+                                       LoggingCallbackFunction pCallback,
+                                       bool                    per_inst_cfg,
+                                       bool                    print_cmd)
 {
     // Convert the arguments to gtString.
     gtString isa_name_gtstr;
@@ -636,9 +818,12 @@ bool KcUtils::GenerateControlFlowGraph(const std::string& isa_filename, const st
     return GenerateControlFlowGraph(isa_name_gtstr, target_gtstr, output_filename_gtstr, pCallback, per_inst_cfg, print_cmd);
 }
 
-void KcUtils::ConstructOutputFileName(const std::string& base_output_filename, const std::string& default_suffix,
-                                      const std::string& default_extension, const std::string& kernel_name,
-                                      const std::string& device_name, gtString& generated_filename)
+void KcUtils::ConstructOutputFileName(const std::string& base_output_filename,
+                                      const std::string& default_suffix,
+                                      const std::string& default_extension,
+                                      const std::string& kernel_name,
+                                      const std::string& device_name,
+                                      gtString&          generated_filename)
 {
     // Convert the base output file name to gtString.
     gtString base_output_filename_as_gtstr;
@@ -693,22 +878,29 @@ void KcUtils::ConstructOutputFileName(const std::string& base_output_filename, c
     generated_filename = output_file_path.asString();
 }
 
-void KcUtils::ConstructOutputFileName(const std::string& base_output_file_name, const std::string& default_suffix,
-                                      const std::string& default_extension, const std::string& entry_point_name,
-                                      const std::string& device_name, std::string& generated_filename)
+void KcUtils::ConstructOutputFileName(const std::string& base_output_file_name,
+                                      const std::string& default_suffix,
+                                      const std::string& default_extension,
+                                      const std::string& entry_point_name,
+                                      const std::string& device_name,
+                                      std::string&       generated_filename)
 {
-    gtString  out_filename_gtstr;
+    gtString out_filename_gtstr;
     ConstructOutputFileName(base_output_file_name, default_suffix, default_extension, entry_point_name, device_name, out_filename_gtstr);
     generated_filename = out_filename_gtstr.asASCIICharArray();
 }
 
-bool KcUtils::ConstructOutFileName(const std::string& base_filename, const std::string& stage,
-    const std::string& device, const std::string& ext, std::string& out_filename, bool should_append_suffix)
+bool KcUtils::ConstructOutFileName(const std::string& base_filename,
+                                   const std::string& stage,
+                                   const std::string& device,
+                                   const std::string& ext,
+                                   std::string&       out_filename,
+                                   bool               should_append_suffix)
 {
-    static const std::string  STR_TEMP_FILE_NAME = "rga-temp-out";
-    bool status = false;
-    gtString name = L"";
-    std::string base_name = base_filename;
+    static const std::string STR_TEMP_FILE_NAME = "rga-temp-out";
+    bool                     status             = false;
+    gtString                 name               = L"";
+    std::string              base_name          = base_filename;
 
     // If base output file name is not provided, create a temp file name (in the temp folder).
     if (!base_name.empty())
@@ -718,7 +910,7 @@ bool KcUtils::ConstructOutFileName(const std::string& base_filename, const std::
     else
     {
         base_name = KcUtils::ConstructTempFileName(STR_TEMP_FILE_NAME, ext);
-        status = !base_name.empty();
+        status    = !base_name.empty();
         if (!status)
         {
             RgLog::stdOut << kStrErrorFailedCreateOutputFilename << std::endl;
@@ -740,7 +932,7 @@ bool KcUtils::ConstructOutFileName(const std::string& base_filename, const std::
 
             // We are done.
             out_filename = out_name;
-            status = true;
+            status       = true;
         }
         else
         {
@@ -754,7 +946,7 @@ bool KcUtils::ConstructOutFileName(const std::string& base_filename, const std::
 bool KcUtils::IsFileNameTooLong(const std::string& file_path)
 {
     size_t   kLongestFilePathLength = 256;
-    bool     ret = false;
+    bool     ret                    = false;
     gtString gtstr_file_path;
     gtstr_file_path << file_path.c_str();
     osFilePath os_file_path(gtstr_file_path);
@@ -774,7 +966,7 @@ void KcUtils::AppendSuffix(std::string& filename, const std::string& suffix)
         filename_gtstr << filename.c_str();
         suffix_gtstr << suffix.c_str();
         osFilePath filePath(filename_gtstr);
-        gtString base_filename;
+        gtString   base_filename;
         filePath.getFileName(base_filename);
         base_filename += L"_";
         base_filename += suffix_gtstr;
@@ -783,11 +975,11 @@ void KcUtils::AppendSuffix(std::string& filename, const std::string& suffix)
     }
 }
 
-gtString KcUtils::ConstructTempFileName(const gtString& prefix, const gtString & ext)
+gtString KcUtils::ConstructTempFileName(const gtString& prefix, const gtString& ext)
 {
     const unsigned int kMAX_ATTEMPTS = 1024;
-    osDirectory  rga_temp_dir;
-    gtString  ret = L"";
+    osDirectory        rga_temp_dir;
+    gtString           ret = L"";
 
     if (GetRGATempDir(rga_temp_dir))
     {
@@ -826,7 +1018,7 @@ gtString KcUtils::ConstructTempFileName(const gtString& prefix, const gtString &
     return ret;
 }
 
-std::string KcUtils::ConstructTempFileName(const std::string & prefix, const std::string & ext)
+std::string KcUtils::ConstructTempFileName(const std::string& prefix, const std::string& ext)
 {
     gtString prefix_gtstr, ext_gtstr, filename_gtstr;
     prefix_gtstr << prefix.c_str();
@@ -852,20 +1044,18 @@ bool KcUtils::GetMarketingNameToCodenameMapping(DeviceNameMap& cards_map)
 // Stores the result in "dstName".
 static void ReduceDeviceName(std::string& name)
 {
-    std::transform(name.begin(), name.end(), name.begin(), [](const char& c) {return static_cast<char>(std::tolower(c));});
-    name.erase(std::remove_if(name.begin(), name.end(), [](const char& c) {return (std::isspace(c) || c == '-');}), name.end());
+    std::transform(name.begin(), name.end(), name.begin(), [](const char& c) { return static_cast<char>(std::tolower(c)); });
+    name.erase(std::remove_if(name.begin(), name.end(), [](const char& c) { return (std::isspace(c) || c == '-'); }), name.end());
 }
 
 // Helper function that interprets the matched devices found by the "KcUtils::FindGPUArchName()".
-static bool ResolveMatchedDevices(const KcUtils::DeviceNameMap& matched_devices, const std::string& device,
-                                  bool print_info, bool print_unknown_device_error)
+static bool ResolveMatchedDevices(const KcUtils::DeviceNameMap& matched_devices, const std::string& device, bool print_info, bool print_unknown_device_error)
 {
-    bool status = false;
+    bool              status = false;
     std::stringstream out_msg, error_msg;
 
     // Routine printing the architecture name and all its device names to required stream.
-    auto print_arch_and_devices = [&](const KcUtils::DeviceNameMap::value_type& arch, std::stringstream& s)
-    {
+    auto print_arch_and_devices = [&](const KcUtils::DeviceNameMap::value_type& arch, std::stringstream& s) {
         s << arch.first << std::endl;
         for (const std::string& marketing_name : arch.second)
         {
@@ -913,7 +1103,7 @@ static bool ResolveMatchedDevices(const KcUtils::DeviceNameMap& matched_devices,
 
 bool KcUtils::FindGPUArchName(const std::string& device, std::string& matched_device, bool print_info, bool allow_unknown_device)
 {
-    bool status = false;
+    bool        status              = false;
     const char* kFILTER_INDICATOR_1 = ":";
     const char* kFILTER_INDICATOR_2 = "Not Used";
 
@@ -931,8 +1121,8 @@ bool KcUtils::FindGPUArchName(const std::string& device, std::string& matched_de
     {
         for (const auto& pair : cards_mapping)
         {
-            const std::string& arch_name = pair.first;
-            std::string  reduced_arch_name = arch_name;
+            const std::string& arch_name         = pair.first;
+            std::string        reduced_arch_name = arch_name;
             ReduceDeviceName(reduced_arch_name);
 
             // If we found a match with an arch name -- add it to the list of matched archs and continue.
@@ -952,12 +1142,11 @@ bool KcUtils::FindGPUArchName(const std::string& device, std::string& matched_de
             }
             else
             {
-                bool  added_arch = false;
+                bool added_arch = false;
                 for (const std::string& marketing_name : pair.second)
                 {
                     // We do not want to display names that contain these strings.
-                    if (marketing_name.find(kFILTER_INDICATOR_1) ==
-                        std::string::npos && marketing_name.find(kFILTER_INDICATOR_2) == std::string::npos)
+                    if (marketing_name.find(kFILTER_INDICATOR_1) == std::string::npos && marketing_name.find(kFILTER_INDICATOR_2) == std::string::npos)
                     {
                         std::string reduced_marketing_name = marketing_name;
                         ReduceDeviceName(reduced_marketing_name);
@@ -968,7 +1157,7 @@ bool KcUtils::FindGPUArchName(const std::string& device, std::string& matched_de
                             if (!added_arch)
                             {
                                 matched_devices[arch_name] = std::set<std::string>();
-                                added_arch = true;
+                                added_arch                 = true;
                             }
                             matched_devices[arch_name].emplace(marketing_name);
                         }
@@ -982,7 +1171,7 @@ bool KcUtils::FindGPUArchName(const std::string& device, std::string& matched_de
     if (ResolveMatchedDevices(matched_devices, device, print_info, !allow_unknown_device))
     {
         matched_device = (*(matched_devices.begin())).first;
-        status = true;
+        status         = true;
     }
 
     return status;
@@ -990,11 +1179,11 @@ bool KcUtils::FindGPUArchName(const std::string& device, std::string& matched_de
 
 // Returns a subdirectory of the OS temp directory where RGA keeps all temporary files.
 // Creates the subdirectory if it does not exists.
-bool GetRGATempDir(osDirectory & dir)
+bool GetRGATempDir(osDirectory& dir)
 {
     const gtString kAMD_RGA_TEMP_DIR_1 = L"GPUOpen";
     const gtString kAMD_RGA_TEMP_DIR_2 = L"rga";
-    bool  ret = true;
+    bool           ret                 = true;
 
     osFilePath temp_dir_path(osFilePath::OS_TEMP_DIRECTORY);
     temp_dir_path.appendSubDirectory(kAMD_RGA_TEMP_DIR_1);
@@ -1055,14 +1244,13 @@ bool KcUtils::PrintAsicList(const std::set<std::string>& required_devices, const
     const char* kFILTER_INDICATOR_1 = ":";
     const char* kFILTER_INDICATOR_2 = "Not Used";
 
-    bool result = false;
+    bool                                         result = false;
     std::map<std::string, std::set<std::string>> cards_mapping;
-    bool rc = KcUtils::GetMarketingNameToCodenameMapping(cards_mapping);
+    bool                                         rc = KcUtils::GetMarketingNameToCodenameMapping(cards_mapping);
 
     // Sort the mappings.
-    std::map<std::string, std::set<std::string>,
-        decltype(&BeUtils::DeviceNameLessThan)> cards_mapping_sorted(cards_mapping.begin(),
-        cards_mapping.end(), &BeUtils::DeviceNameLessThan);
+    std::map<std::string, std::set<std::string>, decltype(&BeUtils::DeviceNameLessThan)> cards_mapping_sorted(
+        cards_mapping.begin(), cards_mapping.end(), &BeUtils::DeviceNameLessThan);
 
     if (rc && !cards_mapping_sorted.empty())
     {
@@ -1072,9 +1260,8 @@ bool KcUtils::PrintAsicList(const std::set<std::string>& required_devices, const
             // If "disdDevices" is provided, do not pring devices from this set.
             // The "reqdDevices" contains short arch names (like "gfx804"), while
             // the container has extended names: "gfx804 (Graphics IP v8)".
-            auto is_in_device_list = [](const std::set<std::string>& list, const std::string & device)
-            {
-                for (auto & d : list)
+            auto is_in_device_list = [](const std::set<std::string>& list, const std::string& device) {
+                for (auto& d : list)
                     if (RgaSharedUtils::ToLower(device).find(RgaSharedUtils::ToLower(d)) != std::string::npos)
                         return true;
                 return false;
@@ -1087,8 +1274,7 @@ bool KcUtils::PrintAsicList(const std::set<std::string>& required_devices, const
                 for (const std::string& card : pair.second)
                 {
                     // Filter out internal names.
-                    if (card.find(kFILTER_INDICATOR_1) == std::string::npos &&
-                        card.find(kFILTER_INDICATOR_2) == std::string::npos)
+                    if (card.find(kFILTER_INDICATOR_1) == std::string::npos && card.find(kFILTER_INDICATOR_2) == std::string::npos)
                     {
                         RgLog::stdOut << "\t" << card << std::endl;
                     }
@@ -1104,7 +1290,7 @@ bool KcUtils::PrintAsicList(const std::set<std::string>& required_devices, const
 
 bool KcUtils::GetParsedISAFileName(const std::string& isa_filename, std::string& parsed_isa_filename)
 {
-    gtString  filename_gtstr;
+    gtString filename_gtstr;
     filename_gtstr.fromASCIIString(isa_filename.c_str());
     osFilePath filePath(filename_gtstr);
     filePath.setFileExtension(kRgaCliParsedIsaFileExt);
@@ -1117,10 +1303,14 @@ std::string KcUtils::Quote(const std::string& str)
     return (str.find(' ') == std::string::npos ? str : (std::string("\"") + str + '"'));
 }
 
-void KcUtils::DeletePipelineFiles(const BeProgramPipeline & files)
+void KcUtils::DeletePipelineFiles(const BeProgramPipeline& files)
 {
-    auto deleteFile = [](const gtString& filename)
-                      { if (!filename.isEmpty() && FileNotEmpty(filename.asASCIICharArray())) { KcUtils::DeleteFile(filename); } };
+    auto deleteFile = [](const gtString& filename) {
+        if (!filename.isEmpty() && FileNotEmpty(filename.asASCIICharArray()))
+        {
+            KcUtils::DeleteFile(filename);
+        }
+    };
 
     deleteFile(files.vertex_shader);
     deleteFile(files.tessellation_control_shader);
@@ -1157,14 +1347,20 @@ void KcUtils::PrintRgaVersion()
 }
 
 #ifdef _WIN32
-KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, const std::string& args, const std::string& dir,
-    unsigned long, bool print_cmd, std::string& std_out, std::string& std_err, long& exit_code)
+KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path,
+                                              const std::string& args,
+                                              const std::string& dir,
+                                              unsigned long,
+                                              bool         print_cmd,
+                                              std::string& std_out,
+                                              std::string& std_err,
+                                              long&        exit_code)
 {
     ProcessStatus status = ProcessStatus::kSuccess;
-    exit_code = 0;
+    exit_code            = 0;
 
     // Set working directory, executable and arguments.
-    osFilePath  work_dir;
+    osFilePath work_dir;
     if (dir == "")
     {
         work_dir.setPath(osFilePath::OS_CURRENT_DIRECTORY);
@@ -1178,8 +1374,7 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, cons
 
     // Log the invocation event.
     std::stringstream msg;
-    msg << kStrLaunchingExternalProcess << exec_path.c_str()
-        << " " << args.c_str();
+    msg << kStrLaunchingExternalProcess << exec_path.c_str() << " " << args.c_str();
 
     RgLog::file << msg.str() << std::endl;
     if (print_cmd)
@@ -1192,12 +1387,11 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, cons
     cmd << exec_path.c_str() << " " << args.c_str();
 
     // Launch the process.
-    bool should_cancel = false;
-    gtString working_dir = work_dir.asString();
+    bool     should_cancel = false;
+    gtString working_dir   = work_dir.asString();
     gtString cmd_output;
     gtString cmd_output_err;
-    bool is_launch_success = osExecAndGrabOutputAndError(cmd.str().c_str(), should_cancel,
-        working_dir, cmd_output, cmd_output_err);
+    bool     is_launch_success = osExecAndGrabOutputAndError(cmd.str().c_str(), should_cancel, working_dir, cmd_output, cmd_output_err);
 
     // Read stdout and stderr.
     std_out = cmd_output.asASCIICharArray();
@@ -1214,14 +1408,14 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, cons
 KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path,
                                               const std::string& args,
                                               const std::string& dir,
-                                              unsigned long      ,
-                                              bool               print_cmd,
-                                              bool               print_dbg,
-                                              std::string_view   dbg_prologue,
-                                              std::string_view   dbg_epilogue, 
-                                              std::string&       std_out,
-                                              std::string&       std_err,
-                                              long&              exit_code)
+                                              unsigned long,
+                                              bool             print_cmd,
+                                              bool             print_dbg,
+                                              std::string_view dbg_prologue,
+                                              std::string_view dbg_epilogue,
+                                              std::string&     std_out,
+                                              std::string&     std_err,
+                                              long&            exit_code)
 {
     ProcessStatus status = ProcessStatus::kSuccess;
     exit_code            = 0;
@@ -1276,8 +1470,8 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path,
     }
 
     // Read stdout and stderr.
-    std_out   = cmd_output.asASCIICharArray();
-    std_err   = cmd_output_err.asASCIICharArray();
+    std_out = cmd_output.asASCIICharArray();
+    std_err = cmd_output_err.asASCIICharArray();
 
     if (!is_launch_success)
     {
@@ -1288,23 +1482,29 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path,
 }
 
 #else
-KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, const std::string& args, const std::string& dir,
-    unsigned long time_out, bool print_cmd, std::string& std_out, std::string& std_err, long& exit_code)
+KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path,
+                                              const std::string& args,
+                                              const std::string& dir,
+                                              unsigned long      time_out,
+                                              bool               print_cmd,
+                                              std::string&       std_out,
+                                              std::string&       std_err,
+                                              long&              exit_code)
 {
-    osProcessId      compiler_proc_id;
-    osProcessHandle  compiler_proc_handle;
-    osThreadHandle   compiler_thread_handle;
-    ProcessStatus    status = ProcessStatus::kSuccess;
+    osProcessId     compiler_proc_id;
+    osProcessHandle compiler_proc_handle;
+    osThreadHandle  compiler_thread_handle;
+    ProcessStatus   status = ProcessStatus::kSuccess;
 
     // Set working directory, executable and arguments.
-    osFilePath  work_dir;
+    osFilePath work_dir;
     if (dir == "")
     {
         work_dir.setPath(osFilePath::OS_CURRENT_DIRECTORY);
     }
     else
     {
-        gtString  dir_gtstr;
+        gtString dir_gtstr;
         dir_gtstr << dir.c_str();
         work_dir.setFileDirectory(dir_gtstr);
     }
@@ -1314,8 +1514,8 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, cons
     args_gtstr << args.c_str();
 
     // Create temporary files for stdout/stderr.
-    gtString  out_filename = KcUtils::ConstructTempFileName(kRgaCliTempStdoutFilename, kRgaCliTempStdoutFileExt);
-    gtString  err_filename = KcUtils::ConstructTempFileName(kRgaCliTempStderrFilename, kRgaCliTempStderrFileExt);
+    gtString out_filename = KcUtils::ConstructTempFileName(kRgaCliTempStdoutFilename, kRgaCliTempStdoutFileExt);
+    gtString err_filename = KcUtils::ConstructTempFileName(kRgaCliTempStderrFilename, kRgaCliTempStderrFileExt);
 
     if (out_filename.isEmpty() || err_filename.isEmpty())
     {
@@ -1324,8 +1524,7 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, cons
     else
     {
         std::stringstream msg;
-        msg << kStrLaunchingExternalProcess << exec_path_gtstr.asASCIICharArray()
-            << " " << args_gtstr.asASCIICharArray();
+        msg << kStrLaunchingExternalProcess << exec_path_gtstr.asASCIICharArray() << " " << args_gtstr.asASCIICharArray();
 
         RgLog::file << msg.str() << std::endl;
 
@@ -1340,14 +1539,14 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, cons
         args_gtstr += err_filename;
 
         // Launch a process.
-        bool  proc_status = osLaunchSuspendedProcess(exec_path_gtstr,
-            args_gtstr,
-            work_dir,
-            compiler_proc_id,
-            compiler_proc_handle,
-            compiler_thread_handle,
-            false,  // Don't create a window
-            true);  // Redirect stdout & stderr
+        bool proc_status = osLaunchSuspendedProcess(exec_path_gtstr,
+                                                    args_gtstr,
+                                                    work_dir,
+                                                    compiler_proc_id,
+                                                    compiler_proc_handle,
+                                                    compiler_thread_handle,
+                                                    false,  // Don't create a window
+                                                    true);  // Redirect stdout & stderr
 
         if (proc_status && osResumeSuspendedProcess(compiler_proc_id, compiler_proc_handle, compiler_thread_handle, false))
         {
@@ -1394,7 +1593,7 @@ KcUtils::ProcessStatus KcUtils::LaunchProcess(const std::string& exec_path, cons
 
 bool KcUtils::FileNotEmpty(const std::string filename)
 {
-    bool  ret = false;
+    bool ret = false;
     if (!filename.empty())
     {
         std::ifstream file(filename);
@@ -1431,7 +1630,7 @@ bool KcUtils::ReadProgramSource(const std::string& input_file, std::string& prog
     }
 
     std::ifstream::pos_type file_size = 0;
-    file_size = input.tellg();
+    file_size                         = input.tellg();
     if (file_size == static_cast<std::ifstream::pos_type>(0))
     {
         input.close();
@@ -1449,7 +1648,7 @@ bool KcUtils::ReadProgramSource(const std::string& input_file, std::string& prog
 
 bool KcUtils::WriteBinaryFile(const std::string& filename, const std::vector<char>& content, LoggingCallbackFunction callback)
 {
-    bool ret = false;
+    bool          ret = false;
     std::ofstream output;
     output.open(filename.c_str(), std::ios::binary);
 
@@ -1473,7 +1672,7 @@ bool KcUtils::WriteBinaryFile(const std::string& filename, const std::vector<cha
 
 bool KcUtils::ReadTextFile(const std::string& filename, std::string& content, LoggingCallbackFunction callback)
 {
-    bool ret = false;
+    bool          ret = false;
     std::ifstream input;
     input.open(filename.c_str());
 
@@ -1526,32 +1725,32 @@ bool KcUtils::WriteTextFile(const std::string& filename, const std::string& cont
 // Get current system time.
 static bool CurrentTime(struct tm& time_buffer)
 {
-    bool ret = false;
+    bool              ret = false;
     std::stringstream suffix;
-    time_t  current_time = std::time(0);
+    time_t            current_time = std::time(0);
 #ifdef _WIN32
     struct tm* time_local = &time_buffer;
-    ret = (localtime_s(time_local, &current_time) == 0);
+    ret                   = (localtime_s(time_local, &current_time) == 0);
 #else
     struct tm* time_local = localtime(&current_time);
     if (time_local != nullptr)
     {
         time_buffer = *time_local;
-        ret = true;
+        ret         = true;
     }
 #endif
     return ret;
 }
 
 // Delete log files older than 1 week.
-static bool  DeleteOldLogs()
+static bool DeleteOldLogs()
 {
-    bool  ret = false;
-    const double kOneWeekSeconds = static_cast<double>(7*24*60*60);
-    osDirectory tmp_dir;
+    bool         ret             = false;
+    const double kOneWeekSeconds = static_cast<double>(7 * 24 * 60 * 60);
+    osDirectory  tmp_dir;
     if ((ret = GetRGATempDir(tmp_dir)) == true)
     {
-        gtString log_file_pattern;
+        gtString           log_file_pattern;
         gtList<osFilePath> file_paths;
         log_file_pattern << kRgaCliLogFileName.asASCIICharArray() << "*." << kRgaCliLogFileExt.asASCIICharArray();
         if (tmp_dir.getContainedFilePaths(log_file_pattern, osDirectory::SORT_BY_DATE_ASCENDING, file_paths))
@@ -1561,7 +1760,7 @@ static bool  DeleteOldLogs()
                 osStatStructure file_stat;
                 if ((ret = (osWStat(path.asString(), file_stat) == 0)) == true)
                 {
-                    time_t file_time = file_stat.st_ctime;
+                    time_t    file_time = file_stat.st_ctime;
                     struct tm time;
                     if ((ret = CurrentTime(time)) == true)
                     {
@@ -1579,7 +1778,7 @@ static bool  DeleteOldLogs()
 }
 
 // Perform log file initialization.
-bool  KcUtils::InitCLILogFile(const Config& config)
+bool KcUtils::InitCLILogFile(const Config& config)
 {
     bool status = DeleteOldLogs();
     if (!status)
@@ -1591,24 +1790,27 @@ bool  KcUtils::InitCLILogFile(const Config& config)
     if (log_filename.empty())
     {
         gtString filename_gtstr = KcUtils::ConstructTempFileName(kRgaCliLogFileName, kRgaCliLogFileExt);
-        log_filename = filename_gtstr.asASCIICharArray();
+        log_filename            = filename_gtstr.asASCIICharArray();
     }
 
     if ((status = !log_filename.empty()) == true)
     {
         struct tm tt;
-        status = CurrentTime(tt);
-        auto zero_ext = [](int n) { std::string n_str = std::to_string(n); return (n < 10 ? std::string("0") + n_str : n_str); };
+        status        = CurrentTime(tt);
+        auto zero_ext = [](int n) {
+            std::string n_str = std::to_string(n);
+            return (n < 10 ? std::string("0") + n_str : n_str);
+        };
 
         // Add time prefix to the log file name if file name is not specified by the "--log" option.
         if (config.log_file.empty())
         {
             // Append current date/time to the log file name.
             std::stringstream suffix;
-            suffix << "-" << std::to_string(tt.tm_year + 1900) << zero_ext(tt.tm_mon + 1) << zero_ext(tt.tm_mday) <<
-                "-" << zero_ext(tt.tm_hour) << zero_ext(tt.tm_min) << zero_ext(tt.tm_sec);
+            suffix << "-" << std::to_string(tt.tm_year + 1900) << zero_ext(tt.tm_mon + 1) << zero_ext(tt.tm_mday) << "-" << zero_ext(tt.tm_hour)
+                   << zero_ext(tt.tm_min) << zero_ext(tt.tm_sec);
 
-            size_t  ext_offset = log_filename.rfind('.');
+            size_t ext_offset = log_filename.rfind('.');
             log_filename.insert((ext_offset == std::string::npos ? log_filename.size() : ext_offset), suffix.str());
         }
 
@@ -1626,25 +1828,25 @@ bool  KcUtils::InitCLILogFile(const Config& config)
     return status;
 }
 
-bool KcUtils::StrCmpNoCase(const std::string & s1, const std::string & s2)
+bool KcUtils::StrCmpNoCase(const std::string& s1, const std::string& s2)
 {
     std::string s1_u = s1, s2_u = s2;
-    std::transform(s1_u.begin(), s1_u.end(), s1_u.begin(), [](unsigned char c) {return static_cast<unsigned char>(std::toupper(c));});
-    std::transform(s2_u.begin(), s2_u.end(), s2_u.begin(), [](unsigned char c) {return static_cast<unsigned char>(std::toupper(c));});
+    std::transform(s1_u.begin(), s1_u.end(), s1_u.begin(), [](unsigned char c) { return static_cast<unsigned char>(std::toupper(c)); });
+    std::transform(s2_u.begin(), s2_u.end(), s2_u.begin(), [](unsigned char c) { return static_cast<unsigned char>(std::toupper(c)); });
     return (s1_u == s2_u);
 }
 
-std::string KcUtils::GetFileExtension(const std::string & file_path)
+std::string KcUtils::GetFileExtension(const std::string& file_path)
 {
     // Try deducing from the extension.
-    gtString  gfilePath;
+    gtString gfilePath;
     gfilePath << file_path.c_str();
     osFilePath path(gfilePath);
-    gtString file_ext_gtstr;
+    gtString   file_ext_gtstr;
     return (path.getFileExtension(file_ext_gtstr) ? file_ext_gtstr.asASCIICharArray() : "");
 }
 
-bool KcUtils::SetEnvrironmentVariable(const::std::string& var_name, const std::string var_value)
+bool KcUtils::SetEnvrironmentVariable(const ::std::string& var_name, const std::string var_value)
 {
     // Convert to gtString.
     gtString var_name_gtstr;
@@ -1654,7 +1856,7 @@ bool KcUtils::SetEnvrironmentVariable(const::std::string& var_name, const std::s
 
     // Set the environment variable.
     osEnvironmentVariable env_var_vk_loader_debug(var_name_gtstr, var_value_gtstr);
-    bool ret = osSetCurrentProcessEnvVariable(env_var_vk_loader_debug);
+    bool                  ret = osSetCurrentProcessEnvVariable(env_var_vk_loader_debug);
 
     return ret;
 }
@@ -1699,7 +1901,7 @@ bool KcUtils::UpdatePathEnvVar()
 void KcUtils::CheckForUpdates()
 {
     UpdateCheck::VersionInfo rga_cli_version;
-    std::string build_date_string(kStrRgaBuildDate);
+    std::string              build_date_string(kStrRgaBuildDate);
 
     if (build_date_string == kStrRgaBuildDateDev)
     {
@@ -1740,7 +1942,9 @@ void KcUtils::CheckForUpdates()
         {
             std::cout << "New version available!" << std::endl;
 
-            for (std::vector<UpdateCheck::ReleaseInfo>::const_iterator release_iter = update_info.releases.cbegin(); release_iter != update_info.releases.cend(); ++release_iter)
+            for (std::vector<UpdateCheck::ReleaseInfo>::const_iterator release_iter = update_info.releases.cbegin();
+                 release_iter != update_info.releases.cend();
+                 ++release_iter)
             {
                 std::cout << "Description: " << release_iter->title << std::endl;
                 std::cout << "Version: " << release_iter->version.ToString() << " (" << UpdateCheck::ReleaseTypeToString(release_iter->type) << ")"
@@ -1787,13 +1991,13 @@ void KcUtils::CheckForUpdates()
 bool KcUtils::IsPostPorcessingSupported(const std::string& isa_file_path)
 {
     std::string contents;
-    bool ret = KcUtils::ReadTextFile(isa_file_path, contents, nullptr);
+    bool        ret = KcUtils::ReadTextFile(isa_file_path, contents, nullptr);
     if (ret)
     {
         // If we manage to find a "basic block" symbol, it means
         // that we cannot post-process the disassembly at the moment.
         size_t bbLocation = contents.find("_L1:");
-        ret = (bbLocation == std::string::npos);
+        ret               = (bbLocation == std::string::npos);
     }
     return ret;
 }
@@ -1801,12 +2005,12 @@ bool KcUtils::IsPostPorcessingSupported(const std::string& isa_file_path)
 bool KcUtils::IsLlpcDisassembly(const std::string& isa_file_path)
 {
     std::string contents;
-    bool ret = KcUtils::ReadTextFile(isa_file_path, contents, nullptr);
+    bool        ret = KcUtils::ReadTextFile(isa_file_path, contents, nullptr);
     if (ret)
     {
         const char* kLlpcToken = "_amdgpu_";
-        size_t llpc_token = contents.find(kLlpcToken);
-        ret = (llpc_token != std::string::npos);
+        size_t      llpc_token = contents.find(kLlpcToken);
+        ret                    = (llpc_token != std::string::npos);
     }
     return ret;
 }
@@ -1864,4 +2068,223 @@ bool KcUtils::InvokeAmdgpudis(const std::string& cmd_line_options, bool should_p
         amdgpu_dis_exe.asString().asASCIICharArray(), cmd_line_options, "", kProcessWaitInfinite, should_print_cmd, out_txt, error_msg, exit_code);
 
     return status == KcUtils::ProcessStatus::kSuccess;
+}
+
+bool KcUtils::GenerateKernelSummary(const std::string&          target,
+                                    const std::string&          kernel_name,
+                                    const RgOutputFiles&        output_files,
+                                    RgaAnalysisSummary::Kernel& summary,
+                                    LoggingCallbackFunction     callback,
+                                    bool                        verbose)
+{
+    summary.kernel_name_ = kernel_name;
+    bool ret             = RgaEntryTypeUtils::GetEntryTypeStr(output_files.entry_type, summary.kernel_type_);
+
+    ret = ret && beKA::BeAnalysisSummaryUtils::ReadKernelIsaDisassembly(output_files.isa_file, summary.text_disassembly_, callback);
+
+    if (ret && !output_files.isa_csv_file.empty())
+    {
+        ret = beKA::BeAnalysisSummaryUtils::ParseCsvIsaDisassembly(
+            target, kernel_name, output_files.isa_csv_file, summary.instructions_, output_files.cfg_file.empty(), summary.cfg_.blocks_, verbose);
+        if (!ret && callback != nullptr)
+        {
+            std::stringstream log;
+            log << kStrErrorFailedToDecodeIsaDisassembly << "\n";
+            callback(log.str());
+        }
+    }
+
+    if (ret && !output_files.livereg_file.empty())
+    {
+        ret = beKA::BeAnalysisSummaryUtils::ParseKernelRegisterFile(
+            beKA::BeIsaSpecExplorer::RegisterType::kVGPR, output_files.livereg_file, summary.instructions_, summary.stats_);
+    }
+
+    if (ret && !output_files.livereg_sgpr_file.empty())
+    {
+        ret = beKA::BeAnalysisSummaryUtils::ParseKernelRegisterFile(
+            beKA::BeIsaSpecExplorer::RegisterType::kSGPR, output_files.livereg_sgpr_file, summary.instructions_, summary.stats_);
+    }
+
+    if (ret && !output_files.cfg_file.empty())
+    {
+        ret = beKA::BeAnalysisSummaryUtils::ParseCfgFile(output_files.cfg_file, summary.instructions_, summary.cfg_);
+    }
+
+    if (!output_files.stats_file.empty())
+    {
+        ret = ret && beKA::BeAnalysisSummaryUtils::ParseStatsFile(output_files.stats_file, summary.stats_);
+    }
+
+    if (ret)
+    {
+        summary.stats_.api_shader_hash_ = output_files.api_shader_hash;
+    }
+
+    return ret;
+}
+
+bool KcUtils::GetParsedIsaCsvText(const std::string& isa_text, const std::string& device, bool add_line_numbers, std::string& csv_text)
+{
+    // CSV headers defined in rga_shared_data_types.h.
+
+    bool        ret = false;
+    std::string parsed_isa;
+    if (BeProgramBuilder::ParseIsaToCsv(isa_text, device, parsed_isa, add_line_numbers, /*is_header_required=*/true) == beKA::kBeStatusSuccess)
+    {
+        csv_text = (add_line_numbers ? kStrCsvHeaderWithLineCorrelation : kStrCsvHeaderNoLineCorrelation) + parsed_isa;
+        ret      = true;
+    }
+    return ret;
+}
+
+beKA::beStatus KcUtils::WriteIsaToFile(const std::string& file_name, const std::string& isa_text, LoggingCallbackFunction log_callback)
+{
+    beKA::beStatus ret = beKA::beStatus::kBeStatusInvalid;
+    ret = KcUtils::WriteTextFile(file_name, isa_text, log_callback) ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusWriteToFileFailed;
+    if (ret != beKA::beStatus::kBeStatusSuccess)
+    {
+        RgLog::stdErr << kStrErrorFailedToWriteIsaFile << file_name << std::endl;
+    }
+    return ret;
+}
+
+beKA::AnalysisData KcUtils::PopulateAnalysisData(const beKA::AnalysisData& stats, const std::string& current_device)
+{
+    beKA::AnalysisData ret = stats;
+    if (kRgaDeviceProps.count(current_device))
+    {
+        // Lambda returning hardcoded value if value = -1 or the value itself otherwise.
+        auto               hardcoded_or = [](uint64_t val, uint64_t hc_val) { return (val == (int64_t)-1 ? hc_val : val); };
+        const DeviceProps& deviceProps  = kRgaDeviceProps.at(current_device);
+        ret.lds_size_available          = deviceProps.available_lds_bytes;
+        ret.num_sgprs_available         = hardcoded_or(stats.num_sgprs_available, deviceProps.available_sgprs);
+        ret.num_vgprs_available         = hardcoded_or(stats.num_vgprs_available, deviceProps.available_vgprs);
+        ret.num_agprs_available         = deviceProps.available_agprs;
+    }
+    return ret;
+}
+
+std::string KcUtils::BuildStatisticsStr(const beKA::AnalysisData& stats, std::size_t stage, bool is_compute_bit_set)
+{
+    std::stringstream statistics_stream;
+
+    statistics_stream << "Statistics:" << std::endl;
+    statistics_stream << "    - shaderStageMask                           = " << stage << std::endl;
+    statistics_stream << "    - resourceUsage.numUsedVgprs                = " << stats.num_vgprs_used << std::endl;
+    statistics_stream << "    - resourceUsage.numUsedSgprs                = " << stats.num_sgprs_used << std::endl;
+    statistics_stream << "    - resourceUsage.ldsSizePerLocalWorkGroup    = " << stats.lds_size_available << std::endl;
+    statistics_stream << "    - resourceUsage.ldsUsageSizeInBytes         = " << stats.lds_size_used << std::endl;
+    statistics_stream << "    - resourceUsage.scratchMemUsageInBytes      = " << stats.scratch_memory_used << std::endl;
+    statistics_stream << "    - numPhysicalVgprs                          = " << 1536 << std::endl;
+    statistics_stream << "    - numPhysicalSgprs                          = " << 2048 << std::endl;
+    statistics_stream << "    - numAvailableVgprs                         = " << stats.num_vgprs_available << std::endl;
+    statistics_stream << "    - numAvailableSgprs                         = " << stats.num_sgprs_available << std::endl;
+    statistics_stream << "    - resourceUsage.numUsedAgprs                = " << stats.num_agprs_used << std::endl;
+    statistics_stream << "    - numAvailableAgprs                         = " << stats.num_agprs_available << std::endl;
+
+    if (is_compute_bit_set)
+    {
+        statistics_stream << "    - computeWorkGroupSize" << 0 << " = " << stats.num_threads_per_group_x << std::endl;
+        statistics_stream << "    - computeWorkGroupSize" << 1 << " = " << stats.num_threads_per_group_y << std::endl;
+        statistics_stream << "    - computeWorkGroupSize" << 2 << " = " << stats.num_threads_per_group_z << std::endl;
+    }
+
+    return statistics_stream.str();
+}
+
+// Parse the content of Vulkan stats and store values to "data" structure.
+static bool ParseVulkanStats(const std::string isa_text, const std::string& stats_text, beKA::AnalysisData& data)
+{
+    bool              result = false;
+    std::string       line, tag, dash, equals;
+    std::stringstream text_content(stats_text), sLine;
+    uint64_t          value;
+
+    // Read the statistics text line by line and parse each line.
+    // Skip the 1st line which is the title.
+    if ((result = std::getline(text_content, line) && line == kStrVulkanStatsTitle) == true)
+    {
+        while (result && std::getline(text_content, line))
+        {
+            sLine.clear();
+            sLine << line;
+            sLine >> dash >> tag >> equals >> value;
+            if ((result = (dash == "-" && equals == "=")) == true)
+            {
+                if (tag == kStrVulkanStatsTagNumUsedVgprs)
+                {
+                    data.num_vgprs_used = value;
+                }
+                else if (tag == kStrVulkanStatsTagNumAvailableVgprs)
+                {
+                    data.num_vgprs_available = value;
+                }
+                else if (tag == kStrVulkanStatsTagNumUsedSgprs)
+                {
+                    data.num_sgprs_used = value;
+                }
+                else if (tag == kStrVulkanStatsTagNumAvailableSgprs)
+                {
+                    data.num_sgprs_available = value;
+                }
+                else if (tag == kStrVulkanStatsTagLdsSize)
+                {
+                    data.lds_size_available = value;
+                }
+                else if (tag == kStrVulkanStatsTagLdsUsage)
+                {
+                    data.lds_size_used = value;
+                }
+                else if (tag == kStrVulkanStatsTagScratchMem)
+                {
+                    data.scratch_memory_used = value;
+                }
+                else if (tag == kStrVulkanStatsTagNumUsedAgprs)
+                {
+                    data.num_agprs_used = value;
+                }
+                else if (tag == kStrVulkanStatsTagNumAvailableAgprs)
+                {
+                    data.num_agprs_available = value;
+                }
+            }
+        }
+    }
+
+    // Add the ISA size.
+    assert(result);
+    if (result)
+    {
+        ParserIsa isa_parser;
+        if ((result = isa_parser.ParseForSize(isa_text)) == true)
+        {
+            data.isa_size = isa_parser.GetCodeLength();
+        }
+    }
+
+    assert(result);
+    return result;
+}
+
+beKA::beStatus KcUtils::ConvertStats(const std::string& isa_file, const std::string& stats_file, const Config& config, const std::string& device)
+{
+    bool        result = false;
+    std::string stats_text, isa_text;
+    auto        log_func = [](const std::string& s) { RgLog::stdOut << s; };
+
+    bool is_stats_file_read = (result = KcUtils::ReadTextFile(stats_file, stats_text, log_func));
+    bool is_isa_file_read   = (result = KcUtils::ReadTextFile(isa_file, isa_text, log_func));
+    if (is_stats_file_read && is_isa_file_read)
+    {
+        beKA::AnalysisData stats_data;
+        if ((result = ParseVulkanStats(isa_text, stats_text, stats_data)) == true)
+        {
+            gtString filename_gtstr;
+            filename_gtstr << stats_file.c_str();
+            KcUtils::CreateStatisticsFile(filename_gtstr, config, device, stats_data, nullptr);
+            result = (KcUtils::FileNotEmpty(stats_file));
+        }
+    }
+    return (result ? beKA::beStatus::kBeStatusSuccess : beKA::beStatus::kBeStatusVulkanParseStatsFailed);
 }

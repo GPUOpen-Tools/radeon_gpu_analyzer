@@ -182,20 +182,30 @@ ParserSi::kaStatus ParserSiMtbuf::Parse(GDT_HW_GENERATION hw_generation, Instruc
     MTBUFInstruction::TFE tfe = GetTfe(hex_instruction);
     MTBUFInstruction::SOFFSET soffset = GetSOFFSET(hex_instruction, ridx);
 
+    kaStatus ret = ParserSi::kStatusSuccess;
+
     if ((hw_generation == GDT_HW_GENERATION_SEAISLAND) || (hw_generation == GDT_HW_GENERATION_SOUTHERNISLAND))
     {
         SIMTBUFInstruction::OP op = GetSiOpMtbuf(hex_instruction, instruction_kind);
-        instruction = new SIMTBUFInstruction(offset, offen, idxen, glc, addr64, op, dfmt, nmft, vaddr, vdata, srsrc, slc,
-                                             tfe, soffset, ridx, instruction_kind, label, goto_label);
+        instruction = new (std::nothrow) SIMTBUFInstruction(offset, offen, idxen, glc, addr64, op, dfmt, nmft, vaddr, vdata, srsrc, slc,
+                                                            tfe, soffset, ridx, instruction_kind, label, goto_label);
+        if (instruction == nullptr)
+        {
+            ret = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else
     {
         VIMTBUFInstruction::OP op = GetViOpMtbuf(hex_instruction, instruction_kind);
-        instruction = new VIMTBUFInstruction(offset, offen, idxen, glc, addr64, op, dfmt, nmft, vaddr, vdata, srsrc, slc,
-                                             tfe, soffset, ridx, instruction_kind, label, goto_label);
+        instruction = new (std::nothrow) VIMTBUFInstruction(offset, offen, idxen, glc, addr64, op, dfmt, nmft, vaddr, vdata, srsrc, slc,
+                                                            tfe, soffset, ridx, instruction_kind, label, goto_label);
+        if (instruction == nullptr)
+        {
+            ret = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
 
-    return ParserSi::kStatusSuccess;
+    return ret;
 }
 
 ParserSi::kaStatus ParserSiMtbuf::Parse(GDT_HW_GENERATION, Instruction::Instruction32Bit,

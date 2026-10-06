@@ -41,6 +41,12 @@ std::string BeDx12Utils::GetShaderModelPrefix(BePipelineStage stage)
     case kCompute:
         ret = "cs";
         break;
+    case kMesh:
+        ret = "ms";
+        break;
+    case kTask:
+        ret = "as";
+        break;
     case kCount:
     default:
         // We shouldn't get here.
@@ -86,6 +92,20 @@ bool BeDx12Utils::GetShaderStageSourceFileName(const Config& config, const BePip
         if (!config.vs_hlsl.empty())
         {
             source_filename = BeDx12Utils::GetAbsoluteFileName(config.vs_hlsl);
+            break;
+        }
+        [[fallthrough]];
+    case BePipelineStage::kMesh:
+        if (!config.ms_hlsl.empty())
+        {
+            source_filename = BeDx12Utils::GetAbsoluteFileName(config.ms_hlsl);
+            break;
+        }
+        [[fallthrough]];
+    case BePipelineStage::kTask:
+        if (!config.as_hlsl.empty())
+        {
+            source_filename = BeDx12Utils::GetAbsoluteFileName(config.as_hlsl);
             break;
         }
         [[fallthrough]];
@@ -202,7 +222,7 @@ bool BeDx12Utils::ParseShaderModel(const std::string& shader_model_str, ShaderMo
     try
     {
         std::vector<std::string> model_components;
-        BeUtils::SplitString(shader_model_str, '_', model_components);
+        BeUtils::SplitString(shader_model_str, std::string("_"), model_components);
         assert(model_components.size() > 2);
         if (model_components.size() > 2)
         {

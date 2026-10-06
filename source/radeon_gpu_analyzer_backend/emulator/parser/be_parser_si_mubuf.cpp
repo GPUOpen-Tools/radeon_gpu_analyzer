@@ -241,20 +241,32 @@ ParserSi::kaStatus ParserSiMubuf::Parse(GDT_HW_GENERATION hwGen, Instruction::In
     if ((hwGen == GDT_HW_GENERATION_SEAISLAND) || (hwGen == GDT_HW_GENERATION_SOUTHERNISLAND))
     {
         SIMUBUFInstruction::OP op = GetSiOpMubuf(hex_instruction, instruction_kind);
-        instruction = new SIMUBUFInstruction(offset, offen, idxen, glc, addr64, lds, op, vaddr, vdata, srsrc, slc,
-                                             tfe, soffset, ridx, instruction_kind, label, goto_label);
+        instruction = new (std::nothrow) SIMUBUFInstruction(offset, offen, idxen, glc, addr64, lds, op, vaddr, vdata, srsrc, slc,
+                                                            tfe, soffset, ridx, instruction_kind, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else if (hwGen == GDT_HW_GENERATION_VOLCANICISLAND)
     {
         VIMUBUFInstruction::OP op = GetViOpMubuf(hex_instruction, instruction_kind);
-        instruction = new VIMUBUFInstruction(offset, offen, idxen, glc, addr64, lds, op, vaddr, vdata, srsrc, slc,
-                                             tfe, soffset, ridx, instruction_kind, label, goto_label);
+        instruction = new (std::nothrow) VIMUBUFInstruction(offset, offen, idxen, glc, addr64, lds, op, vaddr, vdata, srsrc, slc,
+                                                            tfe, soffset, ridx, instruction_kind, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else if (hwGen == GDT_HW_GENERATION_GFX9)
     {
         G9MUBUFInstruction::OP op = GetVegaOpMubuf(hex_instruction, instruction_kind);
-        instruction = new G9MUBUFInstruction(offset, offen, idxen, glc, addr64, lds, op, vaddr, vdata, srsrc, slc,
-                                             tfe, soffset, ridx, instruction_kind, label, goto_label);
+        instruction = new (std::nothrow) G9MUBUFInstruction(offset, offen, idxen, glc, addr64, lds, op, vaddr, vdata, srsrc, slc,
+                                                            tfe, soffset, ridx, instruction_kind, label, goto_label);
+        if (instruction == nullptr)
+        {
+            status = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else
     {

@@ -167,18 +167,22 @@ public:
     virtual ParserSi::kaStatus Parse(GDT_HW_GENERATION, Instruction::Instruction64Bit hexInstruction, Instruction*& instruction,
                                      int label_ = kNoLabel, int iGotoLabel = kNoLabel) override
     {
-        instruction = new FLATInstruction((uint16_t)INSTRUCTION_FIELD(hexInstruction, FLAT, OFFSET, 0),
-                                               0 != INSTRUCTION_FIELD(hexInstruction, FLAT, LDS,   13),
-                                           (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, SEG,   14),
-                                               0 != INSTRUCTION_FIELD(hexInstruction, FLAT, GLC,   16),
-                                               0 != INSTRUCTION_FIELD(hexInstruction, FLAT, SLC,   17),
-                                           (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, OP,    18),
-                                           (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, ADDR,  32),
-                                           (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, DATA,  40),
-                                           (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, SADDR, 48),
-                                               0 != INSTRUCTION_FIELD(hexInstruction, FLAT, NV,    55),
-                                           (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, VDST,  56),
-                                          label_, iGotoLabel);
+        instruction = new (std::nothrow) FLATInstruction((uint16_t)INSTRUCTION_FIELD(hexInstruction, FLAT, OFFSET, 0),
+                                                              0 != INSTRUCTION_FIELD(hexInstruction, FLAT, LDS,   13),
+                                                          (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, SEG,   14),
+                                                              0 != INSTRUCTION_FIELD(hexInstruction, FLAT, GLC,   16),
+                                                              0 != INSTRUCTION_FIELD(hexInstruction, FLAT, SLC,   17),
+                                                          (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, OP,    18),
+                                                          (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, ADDR,  32),
+                                                          (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, DATA,  40),
+                                                          (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, SADDR, 48),
+                                                              0 != INSTRUCTION_FIELD(hexInstruction, FLAT, NV,    55),
+                                                          (uint8_t)INSTRUCTION_FIELD(hexInstruction, FLAT, VDST,  56),
+                                                         label_, iGotoLabel);
+        if (instruction == nullptr)
+        {
+            return ParserSi::kStatusUnexpectedHwGeneration;
+        }
         return ParserSi::kStatusSuccess;
     }
 

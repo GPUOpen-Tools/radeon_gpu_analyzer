@@ -89,7 +89,11 @@ ParserSi::kaStatus ParserSiExp::Parse(GDT_HW_GENERATION, Instruction::Instructio
     vsrc[2] = GetVsrc(hex_instruction, 2);
     vsrc[3] = GetVsrc(hex_instruction, 3);
 
-    instruction = new EXPInstruction(en, target, compr, done, vm, vsrc[0], vsrc[1], vsrc[2], vsrc[3], label, goto_label);
+    instruction = new (std::nothrow) EXPInstruction(en, target, compr, done, vm, vsrc[0], vsrc[1], vsrc[2], vsrc[3], label, goto_label);
+    if (instruction == nullptr)
+    {
+        return ParserSi::kStatusUnexpectedHwGeneration;
+    }
     return ParserSi::kStatusSuccess;
 }
 

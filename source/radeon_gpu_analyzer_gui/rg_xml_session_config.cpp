@@ -262,7 +262,10 @@ bool RgXMLSessionConfig::RemoveBinaryFileFromMetadata(const std::string& session
                     // Write the first node to the file.
                     tinyxml2::XMLDocument new_first_doc(true, tinyxml2::Whitespace::COLLAPSE_WHITESPACE);
                     tinyxml2::XMLNode*    new_first_node = first_node->DeepClone(&new_first_doc);
-                    new_first_doc.LinkEndChild(new_first_node);
+                    if (new_first_node != nullptr)
+                    {
+                        new_first_doc.LinkEndChild(new_first_node);
+                    }
 
                     tinyxml2::XMLPrinter first_node_printer(xml_file);
                     new_first_doc.Print(&first_node_printer);
@@ -283,8 +286,11 @@ bool RgXMLSessionConfig::RemoveBinaryFileFromMetadata(const std::string& session
                             {
                                 tinyxml2::XMLDocument new_doc(true, tinyxml2::Whitespace::COLLAPSE_WHITESPACE);
                                 tinyxml2::XMLNode*    new_node = current_node->DeepClone(&new_doc);
-                                new_doc.LinkEndChild(new_node);
-
+                                if (new_node != nullptr)
+                                {
+                                    new_doc.LinkEndChild(new_node);
+                                }
+                                
                                 tinyxml2::XMLPrinter printer(xml_file);
                                 new_doc.Print(&printer);
                             }

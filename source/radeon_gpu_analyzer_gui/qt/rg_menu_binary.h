@@ -94,6 +94,9 @@ signals:
     // Signal emitted when the project was built successfully.
     void ProjectBuildSuccess();
 
+    // Handler invoked when the selected entry point has been changed.
+    void LinkSourceCodeButtonClicked();
+
 public slots:
     // Handler for when a build has started.
     virtual void HandleBuildStarted() override;
@@ -128,6 +131,9 @@ public slots:
 
     // Handler invoked when the user changes the currently selected file item.
     virtual void HandleSelectedFileChanged(RgMenuFileItem* selected) override;
+
+    // Handler invoked when the selected entry point has been changed.
+    void HandleLinkSourceCodeActionEnabled(bool is_enabled);
 
 protected slots:
     // Handler invoked when the user triggers the next menu item action.

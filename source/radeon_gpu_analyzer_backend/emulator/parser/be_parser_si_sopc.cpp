@@ -89,18 +89,28 @@ ParserSi::kaStatus ParserSiSopC::Parse(GDT_HW_GENERATION hw_generation, Instruct
     SOPCInstruction::SSRC ssrc0 = GetSsrc(hex_instruction, ridx0, 0);
     SOPCInstruction::SSRC ssrc1 = GetSsrc(hex_instruction, ridx1, 1);
 
+    kaStatus ret = ParserSi::kStatusSuccess;
+
     if ((hw_generation == GDT_HW_GENERATION_SEAISLAND) || (hw_generation == GDT_HW_GENERATION_SOUTHERNISLAND))
     {
         SISOPCInstruction::OP op = GetSiSopcOp(hex_instruction);
-        instruction = new SISOPCInstruction(ssrc0, ssrc1, op, ridx0, ridx1, label, goto_label);
+        instruction = new (std::nothrow) SISOPCInstruction(ssrc0, ssrc1, op, ridx0, ridx1, label, goto_label);
+        if (instruction == nullptr)
+        {
+            ret = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else
     {
         VISOPCInstruction::OP op = GetViSopcOp(hex_instruction);
-        instruction = new VISOPCInstruction(ssrc0, ssrc1, op, ridx0, ridx1, label, goto_label);
+        instruction = new (std::nothrow) VISOPCInstruction(ssrc0, ssrc1, op, ridx0, ridx1, label, goto_label);
+        if (instruction == nullptr)
+        {
+            ret = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
 
-    return ParserSi::kStatusSuccess;
+    return ret;
 }
 
 ParserSi::kaStatus ParserSiSopC::Parse(GDT_HW_GENERATION, Instruction::Instruction64Bit, Instruction*&, int /*iLabel =kNoLabel*/ , int/* goto_label =kNoLabel*/)

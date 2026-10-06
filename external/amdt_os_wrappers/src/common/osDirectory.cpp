@@ -388,6 +388,8 @@ gtString osDirectory::FindFile(const gtString& requestedFile)
         {
             osDirectory* subDir = new osDirectory(*iter);
             foundPath = subDir->FindFile(requestedFile);
+            delete subDir;
+            subDir = nullptr;
 
             if (!foundPath.isEmpty())
             {

@@ -676,15 +676,14 @@ const char* osLinuxProcFileSystemReader::findNextToken(const char* pCurrPos)
 {
     const char* retVal = 0;
 
-    // Eat all none space chars:
-    while ((*pCurrPos != ' ') && (*pCurrPos != 0))
+    if (pCurrPos != nullptr)
     {
-        pCurrPos++;
-    }
+        // Eat all none space chars:
+        while ((*pCurrPos != ' ') && (*pCurrPos != 0))
+        {
+            pCurrPos++;
+        }
 
-    // If we didn't reach the end of the file:
-    if (pCurrPos != 0)
-    {
         // Eat all spaces:
         while (*pCurrPos == ' ')
         {

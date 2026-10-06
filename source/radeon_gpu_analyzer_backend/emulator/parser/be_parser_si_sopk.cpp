@@ -113,19 +113,31 @@ ParserSi::kaStatus ParserSiSopk::Parse(GDT_HW_GENERATION hw_generation, Instruct
         case GDT_HW_GENERATION_SOUTHERNISLAND:
         {
             SISOPKInstruction::OP op = GetSiSopkOp(hex_instruction);
-            instruction = new SISOPKInstruction(simm16, op, sdst, simm16_ridx, sdstRidx, label, goto_label);
+            instruction = new (std::nothrow) SISOPKInstruction(simm16, op, sdst, simm16_ridx, sdstRidx, label, goto_label);
+            if (instruction == nullptr)
+            {
+                status = kStatusUnexpectedHwGeneration;
+            }
             break;
         }
         case GDT_HW_GENERATION_VOLCANICISLAND:
         {
             VISOPKInstruction::OP op = GetViSopkOp(hex_instruction);
-            instruction = new VISOPKInstruction(simm16, op, sdst, simm16_ridx, sdstRidx, label, goto_label);
+            instruction = new (std::nothrow) VISOPKInstruction(simm16, op, sdst, simm16_ridx, sdstRidx, label, goto_label);
+            if (instruction == nullptr)
+            {
+                status = kStatusUnexpectedHwGeneration;
+            }
             break;
         }
         case GDT_HW_GENERATION_GFX9:
         {
             G9SOPKInstruction::OP op = GetVegaSopkOp(hex_instruction);
-            instruction = new G9SOPKInstruction(simm16, op, sdst, simm16_ridx, sdstRidx, label, goto_label);
+            instruction = new (std::nothrow) G9SOPKInstruction(simm16, op, sdst, simm16_ridx, sdstRidx, label, goto_label);
+            if (instruction == nullptr)
+            {
+                status = kStatusUnexpectedHwGeneration;
+            }
             break;
         }
         default:

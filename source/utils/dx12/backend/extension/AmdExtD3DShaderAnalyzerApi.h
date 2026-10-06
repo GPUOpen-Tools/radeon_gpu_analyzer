@@ -79,7 +79,9 @@ enum AmdExtD3DShaderStageTypeFlags : UINT
     AmdExtD3DShaderStageHull     = 0x00000004,
     AmdExtD3DShaderStageDomain   = 0x00000008,
     AmdExtD3DShaderStageGeometry = 0x00000010,
-    AmdExtD3DShaderStagePixel    = 0x00000020
+    AmdExtD3DShaderStagePixel    = 0x00000020,
+    AmdExtD3DShaderStageMesh     = 0x00000040,
+    AmdExtD3DShaderStageTask     = 0x00000080,
 };
 
 /**
@@ -141,6 +143,22 @@ struct AmdExtD3DGraphicsShaderStats
 
 /**
 ***********************************************************************************************************************
+* @brief Shader statistics for graphics pipeline that include mesh shaders
+***********************************************************************************************************************
+*/
+struct AmdExtD3DGraphicsShaderStats2
+{
+    AmdExtD3DShaderStats vertexShaderStats;     ///< Vertex Shader stats
+    AmdExtD3DShaderStats taskShaderStats;       ///< Task Shader stats
+    AmdExtD3DShaderStats hullShaderStats;       ///< Hull Shader stats
+    AmdExtD3DShaderStats domainShaderStats;     ///< Domain Shader stats
+    AmdExtD3DShaderStats geometryShaderStats;   ///< Geometry Shader stats
+    AmdExtD3DShaderStats meshShaderStats;       ///< Mesh Shader stats
+    AmdExtD3DShaderStats pixelShaderStats;      ///< Pixel Shader stats
+};
+
+/**
+***********************************************************************************************************************
 * @brief Shader statistics for compute pipeline
 ***********************************************************************************************************************
 */
@@ -164,6 +182,23 @@ struct AmdExtD3DPipelineDisassembly
     const char* pHullDisassembly;      ///< Pointer to hull shader disassembly buffer
     const char* pDomainDisassembly;    ///< Pointer to domain shader disassembly buffer
     const char* pGeometryDisassembly;  ///< Pointer to geometry shader disassembly buffer
+    const char* pPixelDisassembly;     ///< Pointer to pixel shader disassembly buffer
+};
+
+/**
+***********************************************************************************************************************
+* @brief Shader disassembly code for different shader stage
+***********************************************************************************************************************
+*/
+struct AmdExtD3DPipelineDisassembly2
+{
+    const char* pComputeDisassembly;   ///< Pointer to compute shader disassembly buffer
+    const char* pTaskDisassembly;      ///< Pointer to task shader disassembly buffer
+    const char* pVertexDisassembly;    ///< Pointer to vertex shader disassembly buffer
+    const char* pHullDisassembly;      ///< Pointer to hull shader disassembly buffer
+    const char* pDomainDisassembly;    ///< Pointer to domain shader disassembly buffer
+    const char* pGeometryDisassembly;  ///< Pointer to geometry shader disassembly buffer
+    const char* pMeshDisassembly;      ///< Pointer to mesh shader disassembly buffer
     const char* pPixelDisassembly;     ///< Pointer to pixel shader disassembly buffer
 };
 
@@ -389,4 +424,36 @@ IAmdExtD3DShaderAnalyzer3 : public IAmdExtD3DShaderAnalyzer2
         char*                         pAmdilCode,
         size_t*                       pAmdilCodeSize,
         AmdExtD3DPipelineDisassembly* pDisassembly) = 0;
+};
+
+/**
+***********************************************************************************************************************
+* @brief Version 4 Shader Analyzer extension API object (adding mesh shaders support)
+***********************************************************************************************************************
+*/
+interface __declspec(uuid("7710E672-392F-47EA-BEC5-44CDAC25CAB3"))
+IAmdExtD3DShaderAnalyzer4 : public IAmdExtD3DShaderAnalyzer3
+{
+    virtual HRESULT CreatePipelineState(
+        const D3D12_PIPELINE_STATE_STREAM_DESC *pDesc,
+        REFIID                                  riid,
+        void**                                  ppPipelineState,
+        AmdExtD3DPipelineHandle*                pPipelineHandle) = 0;
+
+    // Get graphic shader stats
+    virtual HRESULT GetGraphicsShaderStats2(
+        AmdExtD3DPipelineHandle        pipelineHandle,
+        AmdExtD3DGraphicsShaderStats2* pGraphicsShaderStats) = 0;
+
+    virtual HRESULT GetShaderAmdIlDisassembly2(
+        AmdExtD3DPipelineHandle        pipelineHandle,
+        char*                          pAmdilCode,
+        size_t*                        pAmdilCodeSize,
+        AmdExtD3DPipelineDisassembly2* pDisassembly) = 0;
+
+    virtual HRESULT GetShaderIsaCode2(
+        AmdExtD3DPipelineHandle       pipelineHandle,
+        char*                          pIsaCode,
+        size_t*                        pIsaCodeSize,
+        AmdExtD3DPipelineDisassembly2* pDisassembly) = 0;
 };

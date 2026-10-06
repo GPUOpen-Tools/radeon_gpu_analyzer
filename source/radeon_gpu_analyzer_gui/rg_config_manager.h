@@ -25,7 +25,7 @@ struct RgWindowConfig;
 enum class RgProjectAPI : char;
 enum RgPipelineStage : char;
 
-// A structure with a predicate used to search a RgSourceFileInfo vector for a specific file path.
+// A structure with a predicate used to search a RgInputFileInfo vector for a specific file path.
 struct RgSourceFilePathSearcher
 {
     // Default constructor used to provide the path to search for.
@@ -34,7 +34,7 @@ struct RgSourceFilePathSearcher
     {
     }
 
-    // An overloaded function call operator used to compare file paths between RgSourceFileInfo instances.
+    // An overloaded function call operator used to compare file paths between RgInputFileInfo instances.
     bool operator()(const RgSourceFileInfo& file_info) const;
 
     // The target file path to search for.
@@ -90,14 +90,23 @@ public:
     // Remove a source file path from the given program clone.
     void RemoveSourceFilePath(std::shared_ptr<RgProject> program, int clone_index, const std::string& source_file_path) const;
 
+    // Remove the binary code object file from the given program clone.
+    void RemoveProjectBinaryFilePath(std::shared_ptr<RgProject> program, int clone_index, const std::string& binary_file_path) const;
+
     // Retrieve a source file path from a program by clone index.
     void GetProjectSourceFilePaths(std::shared_ptr<RgProject> program, int clone_index, std::vector<std::string>& source_file_paths) const;
 
-    // Retrieve the code object file paths from a program by clone index.
-    std::vector<std::string> GetProjectBinaryFilePath(std::shared_ptr<RgProject> program, int clone_index) const;
+    // Retrieve the binary code object file paths from a program by clone index.
+    void GetProjectBinaryFilePaths(std::shared_ptr<RgProject> program, int clone_index, std::vector<std::string>& binary_file_paths) const;
 
     // Update the file path to a file that has already been added to a program clone.
     void UpdateSourceFilepath(const std::string& old_file_path, const std::string& new_file_path, std::shared_ptr<RgProject> program, int clone_index);
+
+    // Update the file path to a file that has already been added to a program clone.
+    void UpdateBinaryFilepath(const std::string& old_file_path, const std::string& new_file_path, std::shared_ptr<RgProject> program, int clone_index);
+
+    // Reset analysis status of current project binaries.
+    void ResetProjectBinaryFileStatus(std::shared_ptr<RgProject> program, int clone_index);
 
     // Update the file path for a shader stage source file that has been renamed.
     static void UpdateShaderStageFilePath(const std::string&               old_file_path,

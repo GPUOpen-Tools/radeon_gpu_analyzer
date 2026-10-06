@@ -56,19 +56,28 @@ namespace rga
     D3D12_STATE_SUBOBJECT* RgDx12Factory::CreateSubobjectToExportsAssociationSubobject(const D3D12_STATE_SUBOBJECT* subobject_to_associate,
         const std::vector<std::wstring>& exports)
     {
-        D3D12_STATE_SUBOBJECT* pRet = new D3D12_STATE_SUBOBJECT{};
-        pRet->Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-
-        // Descriptor.
-        D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION* desc = new D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION{};
-        pRet->pDesc = desc;
-        desc->pSubobjectToAssociate = subobject_to_associate;
-        const uint32_t num_exports = static_cast<uint32_t>(exports.size());
-        desc->NumExports = num_exports;
-        desc->pExports = new LPCWSTR[num_exports]{};
-        for (uint32_t i = 0; i < num_exports; i++)
+        D3D12_STATE_SUBOBJECT* pRet = new (std::nothrow) D3D12_STATE_SUBOBJECT{};
+        if (pRet != nullptr)
         {
-            desc->pExports[i] = exports[i].c_str();
+            pRet->Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
+
+            // Descriptor.
+            D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION* desc = new (std::nothrow) D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION{};
+            if (desc != nullptr)
+            {
+                pRet->pDesc = desc;
+                desc->pSubobjectToAssociate = subobject_to_associate;
+                const uint32_t num_exports = static_cast<uint32_t>(exports.size());
+                desc->NumExports = num_exports;
+                desc->pExports = new (std::nothrow) LPCWSTR[num_exports]{};
+                if (desc->pExports != nullptr)
+                {
+                    for (uint32_t i = 0; i < num_exports; i++)
+                    {
+                        desc->pExports[i] = exports[i].c_str();
+                    }
+                }
+            }
         }
         return pRet;
     }
@@ -146,6 +155,26 @@ namespace rga
             delete hit_group_subobject;
             hit_group_subobject = nullptr;
        }
+    }
+
+    void RgDx12Factory::DestroySubobjectToExportsAssociationSubobject(D3D12_STATE_SUBOBJECT*& subobject)
+    {
+        if (subobject != nullptr)
+        {
+            if (subobject->pDesc != nullptr)
+            {
+                D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION* desc = (D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION*)(subobject->pDesc);
+                if (desc->pExports != nullptr)
+                {
+                    delete[] desc->pExports;
+                    desc->pExports = nullptr;
+                }
+                delete subobject->pDesc;
+                subobject->pDesc = nullptr;
+            }
+            delete subobject;
+            subobject = nullptr;
+        }
     }
 
 }

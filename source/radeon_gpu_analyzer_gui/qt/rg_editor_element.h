@@ -99,7 +99,7 @@ public:
     explicit RgEditorElement(QWidget* parent, const std::string& member_name,
         RgEditorDataType data_type = RgEditorDataType::kVoid,
         std::function<void()> value_changed_callback = nullptr);
-    virtual ~RgEditorElement() = default;
+    ~RgEditorElement() = default;
 
     // Get the data held within this item.
     virtual QVariant Data(int column) const;
@@ -276,7 +276,7 @@ protected:
     std::function<void()> value_changed_callback_ = nullptr;
 
     // A vector of child nodes for this item.
-    std::vector<std::shared_ptr<RgEditorElement>> child_items_;
+    std::vector<RgEditorElement*> child_items_;
 
     // The name of the member being edited.
     std::string member_name_;

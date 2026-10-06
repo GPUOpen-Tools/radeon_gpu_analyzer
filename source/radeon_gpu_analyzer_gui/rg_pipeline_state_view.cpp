@@ -64,7 +64,7 @@ void RgPipelineStateView::hideEvent(QHideEvent* event)
 
 RgPipelineStateSearcher* RgPipelineStateView::GetSearcher() const
 {
-    return pipeline_state_searcher_;
+    return pipeline_state_searcher_.get();
 }
 
 bool RgPipelineStateView::GetSelectedText(std::string& selected_text_string) const
@@ -117,7 +117,7 @@ void RgPipelineStateView::InitializeModel(RgPipelineStateModel* pipeline_state_m
         ui_.settingsTree->SetRootItem(model_root_item);
 
         // Create the pipeline state tree searcher instance.
-        pipeline_state_searcher_ = new RgPipelineStateSearcher();
+        pipeline_state_searcher_ = std::make_unique<RgPipelineStateSearcher>();
 
         // Attach a pipeline searcher instance to be used by the find widget.
         assert(pipeline_state_searcher_ != nullptr);

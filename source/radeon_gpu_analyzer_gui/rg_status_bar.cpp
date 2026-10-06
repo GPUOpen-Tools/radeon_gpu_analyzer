@@ -149,7 +149,7 @@ RgStatusBar::RgStatusBar(QStatusBar* status_bar, QWidget* parent) :
     api_mode_tree_widget_->installEventFilter(this);
 
     // Set the delegate for the first row of tree widget.
-    RgApiTreeWidgetItemStyleDelegate* item_delegate = new RgApiTreeWidgetItemStyleDelegate();
+    RgApiTreeWidgetItemStyleDelegate* item_delegate = new RgApiTreeWidgetItemStyleDelegate(api_mode_tree_widget_);
     api_mode_tree_widget_->setItemDelegateForRow(0, item_delegate);
 }
 

@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for rga backend progam builder vulkan offline class.
@@ -92,12 +92,15 @@ struct VkOfflineOptions : public beKA::CompileOptions
 
     // True to generate shader compiler statistics.
     bool is_stats_required = false;
+
+    // True to preserve debug info in the compiled binary (for source-line correlation).
+    bool is_line_numbers_required = false;
 };
 
 class BeProgramBuilderVkOffline : public BeProgramBuilder
 {
 public:
-    BeProgramBuilderVkOffline() = default;
+    BeProgramBuilderVkOffline()  = default;
     ~BeProgramBuilderVkOffline() = default;
 
     virtual beKA::beStatus GetKernelIlText(const std::string& device, const std::string& kernel, std::string& il) override;
@@ -115,6 +118,9 @@ public:
 
     /// Retrieves the list of supported devices.
     static bool GetSupportedDevices(std::set<std::string>& device_list);
+
+    /// Retrieves the set of devices not supported by the VK-offline compiler.
+    static const std::set<std::string>& GetUnsupportedDevices();
 };
 
-#endif // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_VK_OFFLINE_H_
+#endif  // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_VK_OFFLINE_H_

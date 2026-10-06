@@ -224,17 +224,29 @@ void RgIncludeDirectoriesView::OnListItemChanged(QListWidgetItem* item)
                     RgUtils::ShowErrorMessageBox(kStrIncludeDirDialogDirAlreadySelected, this);
                 }
 
-                editing_invalid_entry_ = true;
-            }
+                // Revert the invalid entry: restore the previous value or clear it.
+                if (item_row < items_list_.count())
+                {
+                    item->setText(items_list_[item_row]);
+                }
+                else
+                {
+                    item->setText("");
+                }
 
-            // Update local data.
-            if (item_row < items_list_.count())
-            {
-                items_list_[item_row] = new_directory;
+                editing_invalid_entry_ = true;
             }
             else
             {
-                items_list_.append(new_directory);
+                // Update local data.
+                if (item_row < items_list_.count())
+                {
+                    items_list_[item_row] = new_directory;
+                }
+                else
+                {
+                    items_list_.append(new_directory);
+                }
             }
         }
 

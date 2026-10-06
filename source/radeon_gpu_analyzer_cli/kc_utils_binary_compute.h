@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for binary analysis compute strategy.
@@ -11,27 +11,28 @@
 #include "radeon_gpu_analyzer_cli/kc_utils_binary_default.h"
 
 // Post-processing workflow strategy functions for compute workflows.
-class ComputeBinaryWorkflowStrategy : public BinaryWorkflowStrategy
+class KcCliComputeBinaryAnalysisStrategy : public KcCliBinaryAnalysisStrategy
 {
 public:
-    ComputeBinaryWorkflowStrategy(std::string binary_codeobj_file, LoggingCallbackFunction log_callback)
+    KcCliComputeBinaryAnalysisStrategy(std::string binary_codeobj_file, LoggingCallbackFunction log_callback)
         : binary_codeobj_file_(binary_codeobj_file)
         , log_callback_(log_callback)
-    {
-    }
+    {}
 
     // Write Isa file(s) to disk for compute workflows.
     beKA::beStatus WriteOutputFiles(const Config&                             config,
                                     const std::string&                        asic,
                                     const std::map<std::string, std::string>& kernel_to_disassembly,
-                                    const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md,
                                     std::string&                              error_msg) override;
 
     // Perform post-processing actions for compute workflows.
-    void RunPostProcessingSteps(const Config& config, const BeAmdPalMetaData::PipelineMetaData& amdpal_pipeline_md) override;
+    void RunPostProcessingSteps(const Config& config) override;
 
     // Generates the metadata for the binary.
     bool GenerateSessionMetadataFile(const Config& config) override;
+
+    // Generates the analysis output for the binary.
+    bool GeneratCompilationSummary(const Config& config, const std::string& asic, RgaAnalysisSummary::AnalysisResult& result) override;
 
 private:
     // Store output file names to the output metadata for compute workflows.
@@ -41,7 +42,6 @@ private:
                                     const std::string& kernel_abbreviation,
                                     const std::string& isa_filename);
 
-    
     // Path to binary code object on disk.
     std::string binary_codeobj_file_;
 

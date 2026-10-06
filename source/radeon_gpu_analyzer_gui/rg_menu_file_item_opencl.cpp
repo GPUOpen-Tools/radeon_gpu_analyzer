@@ -654,7 +654,7 @@ void RgMenuFileItemOpencl::HandleEntrypointClicked()
 
     // Is the selected item valid?
     QItemSelectionModel* selection_model = ui_.entrypointListView->selectionModel();
-    if (selection_model->currentIndex().isValid())
+    if (selection_model != nullptr && selection_model->currentIndex().isValid())
     {
         // Pull the filename out of the selected item.
         const std::string& file_path    = GetFilename();

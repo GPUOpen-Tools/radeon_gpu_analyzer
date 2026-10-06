@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for CLI Commander interface for compiling with the OpenGL Compiler (glc).
@@ -8,10 +8,15 @@
 // C++.
 #include <iterator>
 
+// Common.
+#include "common/rg_log.h"
+
 // Backend.
 #include "DeviceInfo.h"
+#include "radeon_gpu_analyzer_backend/be_analysis_summary.h"
 #include "radeon_gpu_analyzer_backend/be_backend.h"
-
+#include "radeon_gpu_analyzer_backend/be_isa_spec_metadata.h"
+#include "radeon_gpu_analyzer_backend/be_utils.h"
 // Infra.
 #include "external/amdt_base_tools/Include/gtAssert.h"
 #include "external/amdt_os_wrappers/Include/osFilePath.h"
@@ -19,15 +24,15 @@
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_opengl.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_isa_spec_loader.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
 #include "radeon_gpu_analyzer_cli/kc_statistics_parser_opengl.h"
 #include "radeon_gpu_analyzer_cli/kc_utils.h"
-#include "radeon_gpu_analyzer_backend/be_utils.h"
+#include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
 
 // Constants.
 static const char* kStrErrorOpenglIsaParsingFailed = "Error: failed to parse ISA into CSV.";
 static const char* kStrErrorOpenglCannotExtractVersion = "Error: unable to extract the OpenGL version.";
-static const char* kStrErrTextFileWriteFailed          = "Error: unable to write to statistics file.";
 static const char* kStrErrNoInputFile = "Error: no input file received.";
 
 // Unsupported devices.
@@ -48,60 +53,28 @@ static const std::set<std::string> kUnsupportedDevicesOpengl = {"gfx900",
                                                                 "gfx1032",
                                                                 "gfx1033",
                                                                 "gfx1034",
-                                                                "gfx1035"};
-
-void KcCliCommanderOpenGL::GlcStatsToString(const beKA::AnalysisData& stats, std::stringstream& serialized_stats)
-{
-    serialized_stats << "Statistics:" << std::endl;
-    serialized_stats << "    - USED_VGPRs                              = " << stats.num_vgprs_used << std::endl;
-    serialized_stats << "    - USED_SGPRs                              = " << stats.num_sgprs_used << std::endl;
-    serialized_stats << "    - resourceUsage.ldsSizePerLocalWorkGroup  = 65536" << std::endl;
-    serialized_stats << "    - LDS_USED                                = " << stats.lds_size_used << std::endl;
-    serialized_stats << "    - SCRATCH_SIZE                            = " << stats.scratch_memory_used << std::endl;
-    serialized_stats << "    - AVAILABLE_VGPRs                         = 256" << std::endl;
-    serialized_stats << "    - AVAILABLE_SGPRs                         = 106" << std::endl;
-    serialized_stats << "    - ISA_SIZE                                = " << stats.isa_size << std::endl;
-}
-
-bool KcCliCommanderOpenGL::WriteTextFile(const gtString& filename, const std::string& content)
-{
-    bool          ret = false;
-    std::ofstream output;
-    output.open(filename.asASCIICharArray());
-
-    if (output.is_open())
-    {
-        output << content << std::endl;
-        output.close();
-        ret = true;
-    }
-    else
-    {
-        std::cerr << kStrErrTextFileWriteFailed << filename.asASCIICharArray() << std::endl;
-    }
-
-    return ret;
-}
+                                                                "gfx1035", 
+                                                                "gfx1250"};
 
 void KcCliCommanderOpenGL::CreateStatisticsFile(const gtString&         statistics_file,
-                                 const Config&           ,
+                                 const Config&           config,
                                  const std::string&      device,
                                  IStatisticsParser&      stats_parser,
-                                 LoggingCallbackFunction )
+                                 LoggingCallbackFunction log_callback)
 {
     // Parse the backend statistics.
     beKA::AnalysisData statistics;
     stats_parser.ParseStatistics(device, statistics_file, statistics);
 
+    // Set available-register values that the backend does not populate.
+    statistics.num_vgprs_available = 256;
+    statistics.num_sgprs_available = 106;
+    statistics.lds_size_available  = 65536;
+
     // Delete the older statistics file.
     DeleteFile(statistics_file);
 
-    // Create a new statistics file in the CLI format.
-    std::stringstream serialized_stats;
-    GlcStatsToString(statistics, serialized_stats);
-
-    // Write the stats to text file.
-    WriteTextFile(statistics_file, serialized_stats.str());
+    KcUtils::CreateStatisticsFile(statistics_file, config, device, statistics, log_callback);
 }
 
 bool KcCliCommanderOpenGL::DeleteFile(const gtString& file_full_path)
@@ -398,6 +371,12 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
             std::set<std::string, decltype(&BeUtils::DeviceNameLessThan)> sorted_unique_names(target_devices.begin(),
                 target_devices.end(), BeUtils::DeviceNameLessThan);
 
+            if (!config.session_summary_file.empty())
+            {
+                std::vector<std::string> asic_names(sorted_unique_names.begin(), sorted_unique_names.end());
+                KcCliIsaSpecLoader::LoadIsaSpecsFromXML(true, config.include_target_metadata, asic_names);
+            }
+
             for (const std::string& device : sorted_unique_names)
             {
                 if (!should_abort && kUnsupportedDevicesOpengl.find(device) == kUnsupportedDevicesOpengl.end())
@@ -508,7 +487,7 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                                 {
                                     if ((status = KcUtils::ReadTextFile(isa_filename.asASCIICharArray(), isa_text, log_callback_)) == true)
                                     {
-                                        status = (BeProgramBuilder::ParseIsaToCsv(isa_text, device, parsed_isa_text) == beKA::beStatus::kBeStatusSuccess);
+                                        status = KcUtils::GetParsedIsaCsvText(isa_text, device, config.is_line_numbers_required, parsed_isa_text);
                                         if (status)
                                         {
                                             status = KcUtils::GetParsedISAFileName(isa_filename.asASCIICharArray(), parsed_isa_file_name);
@@ -738,6 +717,17 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                                                                   config.print_process_cmd_line);
                             }
                         }
+
+                        // Print GLC's output string if user requests verbose output.
+                        if (!glc_output.isEmpty() && config.print_process_cmd_line)
+                        {
+                            log_msg << glc_output.asASCIICharArray() << std::endl;
+                        }
+
+                        if (!config.session_summary_file.empty())
+                        {
+                            StoreOutputFilesToOutputMD(device, gl_options, config);
+                        }
                     }
                     else
                     {
@@ -750,6 +740,12 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                         {
                             log_msg << kStrErrorOutputFileVerificationFailed << std::endl;
                         }
+
+                        // Notify the user about build errors in GLC's output if any.
+                        if (!glc_output.isEmpty())
+                        {
+                            log_msg << glc_output.asASCIICharArray() << std::endl;
+                        }
                     }
 
                     // Delete temporary files
@@ -758,18 +754,18 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
                         KcUtils::DeletePipelineFiles(gl_options.isa_disassembly_output_files);
                     }
 
-                    // Notify the user about build errors if any.
-                    if (!glc_output.isEmpty())
-                    {
-                        log_msg << glc_output.asASCIICharArray() << std::endl;
-                    }
-
                     // Print the message for the current device.
                     callback(log_msg.str());
 
                     // Clear the output stream for the next iteration.
                     log_msg.str("");
                 }
+            }
+
+            // Generate the XML session summary if requested.
+            if (!config.session_summary_file.empty())
+            {
+                GenerateSessionSummary(config);
             }
         }
     }
@@ -783,5 +779,189 @@ void KcCliCommanderOpenGL::RunCompileCommands(const Config& config, LoggingCallb
     {
         callback(log_msg.str());
     }
+}
+
+void KcCliCommanderOpenGL::StoreOutputFilesToOutputMD(const std::string& device, const OpenglOptions& gl_options, const Config& config)
+{
+    // GL stage index mapping (mesh/task are not supported in OpenGL).
+    static constexpr RgaEntryType kGlStageEntryTypes[BePipelineStage::kCount] = {
+        RgaEntryType::kGlVertex,
+        RgaEntryType::kGlTessControl,
+        RgaEntryType::kGlTessEval,
+        RgaEntryType::kGlGeometry,
+        RgaEntryType::kGlFragment,
+        RgaEntryType::kGlCompute,
+        RgaEntryType::kUnknown,  // Mesh shader - not supported in OpenGL.
+        RgaEntryType::kUnknown   // Task shader - not supported in OpenGL.
+    };
+
+    const std::string* kGlStageInputFiles[BePipelineStage::kCount] = {
+        &config.vertex_shader,
+        &config.tess_control_shader,
+        &config.tess_evaluation_shader,
+        &config.geometry_shader,
+        &config.fragment_shader,
+        &config.compute_shader,
+        nullptr,  // mesh
+        nullptr   // task
+    };
+
+    const gtString* kGlStageIsaFiles[BePipelineStage::kCount] = {
+        &gl_options.isa_disassembly_output_files.vertex_shader,
+        &gl_options.isa_disassembly_output_files.tessellation_control_shader,
+        &gl_options.isa_disassembly_output_files.tessellation_evaluation_shader,
+        &gl_options.isa_disassembly_output_files.geometry_shader,
+        &gl_options.isa_disassembly_output_files.fragment_shader,
+        &gl_options.isa_disassembly_output_files.compute_shader,
+        nullptr,  // mesh
+        nullptr   // task
+    };
+
+    const gtString* kGlStageStatsFiles[BePipelineStage::kCount] = {
+        &gl_options.stats_output_files.vertex_shader,
+        &gl_options.stats_output_files.tessellation_control_shader,
+        &gl_options.stats_output_files.tessellation_evaluation_shader,
+        &gl_options.stats_output_files.geometry_shader,
+        &gl_options.stats_output_files.fragment_shader,
+        &gl_options.stats_output_files.compute_shader,
+        nullptr,  // mesh
+        nullptr   // task
+    };
+
+    const gtString* kGlStageLiveregFiles[BePipelineStage::kCount] = {
+        &gl_options.livereg_output_files.vertex_shader,
+        &gl_options.livereg_output_files.tessellation_control_shader,
+        &gl_options.livereg_output_files.tessellation_evaluation_shader,
+        &gl_options.livereg_output_files.geometry_shader,
+        &gl_options.livereg_output_files.fragment_shader,
+        &gl_options.livereg_output_files.compute_shader,
+        nullptr,  // mesh
+        nullptr   // task
+    };
+
+    const gtString* kGlStageLiveregSgprFiles[BePipelineStage::kCount] = {
+        &gl_options.livereg_sgpr_output_files.vertex_shader,
+        &gl_options.livereg_sgpr_output_files.tessellation_control_shader,
+        &gl_options.livereg_sgpr_output_files.tessellation_evaluation_shader,
+        &gl_options.livereg_sgpr_output_files.geometry_shader,
+        &gl_options.livereg_sgpr_output_files.fragment_shader,
+        &gl_options.livereg_sgpr_output_files.compute_shader,
+        nullptr,  // mesh
+        nullptr   // task
+    };
+
+    const gtString* kGlStageCfgFiles[BePipelineStage::kCount] = {
+        &gl_options.cfg_output_files.vertex_shader,
+        &gl_options.cfg_output_files.tessellation_control_shader,
+        &gl_options.cfg_output_files.tessellation_evaluation_shader,
+        &gl_options.cfg_output_files.geometry_shader,
+        &gl_options.cfg_output_files.fragment_shader,
+        &gl_options.cfg_output_files.compute_shader,
+        nullptr,  // mesh
+        nullptr   // task
+    };
+
+    if (output_metadata_.find(device) == output_metadata_.end())
+    {
+        RgVkOutputMetadata md;
+        RgOutputFiles      out_files(device);
+        md.fill(out_files);
+        output_metadata_[device] = md;
+    }
+
+    RgVkOutputMetadata& device_md = output_metadata_[device];
+    for (int stage = 0; stage < BePipelineStage::kCount; stage++)
+    {
+        if (kGlStageIsaFiles[stage] == nullptr || kGlStageIsaFiles[stage]->isEmpty())
+        {
+            continue;
+        }
+
+        std::string isa_csv_filename;
+        if (config.is_parsed_isa_required)
+        {
+            KcUtils::GetParsedISAFileName(kGlStageIsaFiles[stage]->asASCIICharArray(), isa_csv_filename);
+        }
+
+        RgOutputFiles& stage_md    = device_md[stage];
+        stage_md.entry_type        = kGlStageEntryTypes[stage];
+        stage_md.device            = device;
+        stage_md.isa_file          = kGlStageIsaFiles[stage]->asASCIICharArray();
+        stage_md.isa_csv_file      = isa_csv_filename;
+        stage_md.stats_file        = (kGlStageStatsFiles[stage] && !kGlStageStatsFiles[stage]->isEmpty())
+                                         ? kGlStageStatsFiles[stage]->asASCIICharArray()
+                                         : "";
+        stage_md.livereg_file      = (kGlStageLiveregFiles[stage] && !kGlStageLiveregFiles[stage]->isEmpty())
+                                         ? kGlStageLiveregFiles[stage]->asASCIICharArray()
+                                         : "";
+        stage_md.livereg_sgpr_file = (kGlStageLiveregSgprFiles[stage] && !kGlStageLiveregSgprFiles[stage]->isEmpty())
+                                         ? kGlStageLiveregSgprFiles[stage]->asASCIICharArray()
+                                         : "";
+        stage_md.cfg_file          = (kGlStageCfgFiles[stage] && !kGlStageCfgFiles[stage]->isEmpty())
+                                         ? kGlStageCfgFiles[stage]->asASCIICharArray()
+                                         : "";
+        stage_md.input_file        = (kGlStageInputFiles[stage] && !kGlStageInputFiles[stage]->empty())
+                                         ? *kGlStageInputFiles[stage]
+                                         : "";
+        stage_md.wave_size         = beWaveSize::kWave64;
+    }
+}
+
+bool KcCliCommanderOpenGL::GenerateSessionSummary(const Config& config)
+{
+    bool ret = !config.session_summary_file.empty() && !output_metadata_.empty();
+    if (ret)
+    {
+        RgaAnalysisSummary summary;
+
+        for (const auto& [device, stage_array] : output_metadata_)
+        {
+            RgaAnalysisSummary::AnalysisResult result;
+            result.target_architecture_ = device;
+            if (config.include_target_metadata)
+            {
+                beKA::BeIsaSpecExplorer::PopulateFromSpec(device, result.target_architecture_metadata_);
+            }
+            result.output_.api_ = kStrRgaModeOpengl;
+
+            for (int stage = 0; stage < BePipelineStage::kCount; stage++)
+            {
+                const RgOutputFiles& out = stage_array[stage];
+                if (out.isa_file.empty())
+                {
+                    continue;
+                }
+                if (!out.input_file.empty())
+                {
+                    result.inputs_.inputs_.push_back(out.input_file);
+                }
+                std::string stage_name;
+                RgaEntryTypeUtils::GetEntryTypeStr(out.entry_type, stage_name);
+                RgaAnalysisSummary::Kernel kernel;
+                if (KcUtils::GenerateKernelSummary(device, stage_name, out, kernel, log_callback_, config.print_process_cmd_line))
+                {
+                    kernel.kernel_id_ = static_cast<int>(result.output_.kernels_.size());
+                    result.output_.kernels_.push_back(std::move(kernel));
+                }
+            }
+
+            if (result.inputs_.inputs_.empty())
+            {
+                result.inputs_.inputs_ = config.input_files;
+            }
+
+            if (!result.output_.kernels_.empty())
+            {
+                summary.results_.push_back(std::move(result));
+            }
+        }
+
+        ret = KcXmlWriter::WriteAnalysisSummaryToFile(summary, config.session_summary_file);
+        if (!ret)
+        {
+            RgLog::stdOut << kStrErrorFailedToGenerateSessionSummary << std::endl;
+        }
+    }
+    return ret;
 }
 

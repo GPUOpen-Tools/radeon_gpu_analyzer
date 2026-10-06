@@ -23,7 +23,8 @@ static const std::string kRgaDataModel2_1 = "2.1";
 static const std::string kRgaDataModel2_2 = "2.2";
 static const std::string kRgaDataModel2_3 = "2.3";
 static const std::string kRgaDataModel2_4 = "2.4";
-static const std::string kRgaDataModel    = kRgaDataModel2_4;
+static const std::string kRgaDataModel2_5 = "2.5";
+static const std::string kRgaDataModel    = kRgaDataModel2_5;
 
 // The XML declaration string.
 static const char* kRgaXmlDeclaration = "xml version = \"1.0\" encoding = \"UTF-8\"";
@@ -77,9 +78,6 @@ static const char* kXmlNodeUseGeneratedProjectNames = "UseGeneratedProjectNames"
 static const char* kXmlNodeAlternativeCompilerBinDir = "AlternativeCompilerBin";
 static const char* kXmlNodeAlternativeCompilerIncDir = "AlternativeCompilerInc";
 static const char* kXmlNodeAlternativeCompilerLibDir = "AlternativeCompilerLib";
-
-// Binary input file.
-static const char* kXmlNodeGlobalBinaryInputFileName = "BinaryInputFileName";
 
 // *******************************
 // *** OPENCL-SPECIFIC - BEGIN ***
@@ -206,9 +204,41 @@ static const char* kXmlNodeVulkanEnableValidationLayer = "EnableValidationLayer"
 // Binary output file association.
 static const char* kXmlNodeGlobalBinaryOutputFileName = "BinaryOutputFileName";
 
+// Used to serialize the compile-offline build setting.
+static const char* kXmlNodeVulkanOfflineCompilation = "EnableVkOffline";
+
 // *******************************
 // *** VULKAN-SPECIFIC - END ***
 // *******************************
+
+// *******************************
+// *** BINARY-SPECIFIC - BEGIN ***
+// *******************************
+
+// Binary input files tag.
+static const char* kXmlNodeCloneBinaryFiles = "BinaryInputFiles";
+
+// Binary input file, as written by data models 2.0-2.4 (read-only).
+static const char* kXmlNodeLegacyBinaryInputFileName = "BinaryInputFileName";
+
+// Binary input file.
+static const char* kXmlNodeCloneBinaryFile = "BinaryInputFile";
+
+// Input code object target gpu.
+static const char* kXmlNodeCloneBinaryTargetGpu = "TargetGpu";
+
+// Is input code object disassembled? (boolean).
+static const char* kXmlNodeIsDisassemblyGenerated = "IsDisassemblyGenerated";
+
+// InitialEntryName.
+static const char* kXmlNodeBinaryInitialEntryName = "BinaryInitialEntryName";
+
+// Prompt to attach source.
+static const char* kXmlNodeBinaryPromptToAttachSrc = "PromptToAttachSrc";
+
+// *****************************
+// *** BINARY-SPECIFIC - END ***
+// *****************************
 
 // *******************************
 // *** GLOBAL SETTINGS - BEGIN ***

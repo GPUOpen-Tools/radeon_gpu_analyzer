@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2024-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for CLI Commander interface for binary code objects.
@@ -7,6 +7,7 @@
 
 // C++.
 #include <filesystem>
+#include <iostream>
 #include <string>
 
 // Shared.
@@ -15,12 +16,15 @@
 
 // Backend.
 #include "radeon_gpu_analyzer_backend/be_program_builder_binary.h"
+#include "radeon_gpu_analyzer_backend/be_program_builder_lightning.h"
 #include "radeon_gpu_analyzer_backend/be_program_builder_vulkan.h"
 #include "radeon_gpu_analyzer_backend/be_utils.h"
 
 // Local.
 #include "radeon_gpu_analyzer_cli/kc_cli_commander_binary.h"
+#include "radeon_gpu_analyzer_cli/kc_cli_isa_spec_loader.h"
 #include "radeon_gpu_analyzer_cli/kc_cli_string_constants.h"
+#include "radeon_gpu_analyzer_cli/kc_utils_binary.h"
 #include "radeon_gpu_analyzer_cli/kc_xml_writer.h"
 
 const char kMultipleBinaryFolderNumberWildcardToken = '*';
@@ -58,6 +62,51 @@ Config create_updated_config_for_binary(const Config& config, size_t binary_inde
     return config_updated;
 }
 
+bool KcCliCommanderBinary::ListSourcePaths(const Config& config, LoggingCallbackFunction)
+{
+    if (config.input_files.empty())
+    {
+        RgLog::stdErr << "Error: no input file provided for --list-source-paths." << std::endl;
+        return false;
+    }
+
+    if (config.input_files.size() > 1)
+    {
+        RgLog::stdErr << "Error: --list-source-paths expects exactly one input binary file." << std::endl;
+        return false;
+    }
+
+    const std::string& binary_file = config.input_files[0];
+    std::string        output;
+    std::string        error_text;
+    beKA::beStatus     status = BeProgramBuilderLightning::ListSourcePaths(binary_file, config.print_process_cmd_line, output, error_text);
+
+    if (status != beKA::beStatus::kBeStatusSuccess)
+    {
+        if (!error_text.empty())
+        {
+            RgLog::stdErr << error_text << std::endl;
+        }
+        else
+        {
+            RgLog::stdErr << "Error: failed to extract source paths from binary." << std::endl;
+        }
+        return false;
+    }
+
+    // Print the output (source paths) to stdout.
+    if (!output.empty())
+    {
+        std::cout << output;
+        if (output.back() != '\n')
+        {
+            std::cout << std::endl;
+        }
+    }
+
+    return true;
+}
+
 void KcCliCommanderBinary::RunCompileCommands(const Config& config, LoggingCallbackFunction log_callback)
 {
     const bool            verbose = config.print_process_cmd_line;
@@ -69,28 +118,26 @@ void KcCliCommanderBinary::RunCompileCommands(const Config& config, LoggingCallb
         {
             Config             config_updated  = create_updated_config_for_binary(config, i);
             const auto&        input_file_name = config.input_files[i];
-            const std::string& bin_file_name   = KcUtils::Quote(input_file_name);
+            const std::string& bin_file_name   = input_file_name;
             auto               found           = binary_file_to_binary_analysis_map_.find(bin_file_name);
             if (found == binary_file_to_binary_analysis_map_.end())
             {
-                status = IsBinaryInputValid(config_updated, verbose, bin_file_name);
-                std::string amdgpu_dis_stdout;
-                std::string amdgpu_dis_stderr;
-                if (status == beKA::beStatus::kBeStatusSuccess)
+                auto [it, inserted] = binary_file_to_binary_analysis_map_.emplace(bin_file_name, KcCliBinaryAnalysis{bin_file_name, log_callback});
+                if (inserted)
                 {
-                    status = DisassembleBinary(bin_file_name, verbose, amdgpu_dis_stdout, amdgpu_dis_stderr);
-                    assert(status == beKA::beStatus::kBeStatusSuccess);
-                }
-
-                if (status == beKA::beStatus::kBeStatusSuccess)
-                {
-                    std::set<std::string> matched_devices;
-                    status = InitRequestedAsicBinary(config_updated, verbose, devices, bin_file_name, amdgpu_dis_stdout, matched_devices);
-                    if (status == beKA::beStatus::kBeStatusSuccess && matched_devices.size() == 1)
+                    std::string text_disassembly, target_device;
+                    status = it->second.DisassembleCodeObject(config_updated, text_disassembly);
+                if (status == beKA::beStatus::kBeStatusSuccess && it->second.GetTargetDevice(target_device))
                     {
-                        std::vector<std::string> asics(matched_devices.begin(), matched_devices.end());
-                        binary_file_to_binary_analysis_map_[bin_file_name] = KcCliBinaryAnalysis{asics[0], bin_file_name, log_callback};
-                        status = binary_file_to_binary_analysis_map_[bin_file_name].AnalyzeCodeObject(config_updated, amdgpu_dis_stdout);
+                        std::set<std::string> matched_devices;
+                        status = InitRequestedAsicBinary(config_updated, verbose, devices, bin_file_name, target_device, matched_devices);
+                        if (status == beKA::beStatus::kBeStatusSuccess && matched_devices.size() == 1)
+                        {
+                            std::vector<std::string> asics(matched_devices.begin(), matched_devices.end());
+                            KcCliIsaSpecLoader::LoadIsaSpecsFromXML(!config.session_summary_file.empty(), config.include_target_metadata, asics);
+
+                            status = it->second.AnalyzeCodeObject(config_updated, text_disassembly);
+                        }
                     }
                 }
             }
@@ -100,20 +147,7 @@ void KcCliCommanderBinary::RunCompileCommands(const Config& config, LoggingCallb
 
 bool KcCliCommanderBinary::RunPostCompileSteps(const Config& config)
 {
-    bool ret = !config.session_metadata_file.empty();
-    if (ret)
-    {
-        for (const auto& [filename, analysis] : binary_file_to_binary_analysis_map_)
-        {
-            ret = analysis.GenerateSessionMetadataFile(config);
-            if (!ret)
-            {
-                RgLog::stdOut << kStrErrorFailedToGenerateSessionMetdata << std::endl;
-                break;
-            }
-        }
-    }
-    return ret;
+    return GenerateSessionSummary(config) || GenerateSessionMetadataFile(config);
 }
 
 bool KcCliCommanderBinary::GenerateBinaryAnalysisVersionInfo(const std::string& filename)
@@ -143,104 +177,21 @@ beKA::beStatus KcCliCommanderBinary::GetSupportedTargets(std::set<std::string>& 
     return status;
 }
 
-beKA::beStatus KcCliCommanderBinary::IsBinaryInputValid(const Config& config, bool verbose, const std::string& binary_codeobj_file) const
-{
-    if (verbose)
-    {
-        KcCliBinaryAnalysis::LogPreStep(kStrInfoValidateBinFile, binary_codeobj_file);
-    }
-
-    beKA::beStatus ret = beKA::beStatus::kBeStatusGeneralFailed;
-
-    // Determine if an input file is required.
-    bool is_input_file_required = (!config.isa_file.empty() || !config.analysis_file.empty() || !config.livereg_analysis_file.empty() ||
-                                   !config.sgpr_livereg_analysis_file.empty() || !config.block_cfg_file.empty() || !config.inst_cfg_file.empty());
-
-    if (is_input_file_required)
-    {
-        if (KcUtils::FileNotEmpty(binary_codeobj_file))
-        {
-            ret = beKA::beStatus::kBeStatusSuccess;
-        }
-        else
-        {
-            ret = beKA::beStatus::kBeStatusBinaryInvalidInput;
-        }
-    }
-    else
-    {
-        // It is valid to provide no input if none is required.
-        ret = beKA::beStatus::kBeStatusSuccess;
-    }
-
-    if (verbose)
-    {
-        KcCliBinaryAnalysis::LogResult(ret == beKA::beStatus::kBeStatusSuccess);
-    }
-
-    KcCliBinaryAnalysis::LogErrorStatus(ret, binary_codeobj_file);
-
-    return ret;
-}
-
-beKA::beStatus KcCliCommanderBinary::DisassembleBinary(const std::string& bin_file, bool verbose, std::string& out_text, std::string& error_txt) const
-{
-    KcCliBinaryAnalysis::LogPreStep(kStrInfoDisassemblingBinary, bin_file);
-
-    beKA::beStatus ret = KcUtils::InvokeAmdgpudis(bin_file, verbose, out_text, error_txt) ? beKA::beStatus::kBeStatusSuccess
-                                                                                          : beKA::beStatus::kBeStatusVulkanAmdgpudisLaunchFailed;
-    if (out_text.empty())
-    {
-        ret = beKA::beStatus::kBeStatusVulkanAmdgpudisLaunchFailed;
-    }
-
-    KcCliBinaryAnalysis::LogResult(ret == beKA::beStatus::kBeStatusSuccess);
-    KcCliBinaryAnalysis::LogErrorStatus(ret, error_txt);
-    return ret;
-}
-
-bool KcCliCommanderBinary::ExtractDeviceFromAmdgpudisOutput(const std::string& amdgpu_dis_output, std::string& device)
-{
-    bool ret = false;
-    assert(!amdgpu_dis_output.empty());
-    if (!amdgpu_dis_output.empty())
-    {
-        const char* kAmdgpuDisDeviceTextToken = "-mcpu=";
-
-        // Get to the -mcpu section.
-        size_t curr_pos = amdgpu_dis_output.find(kAmdgpuDisDeviceTextToken);
-        assert(curr_pos != std::string::npos);
-        if (curr_pos != std::string::npos)
-        {
-            const size_t device_offset_end   = amdgpu_dis_output.find(" ", curr_pos + strlen(kAmdgpuDisDeviceTextToken));
-            const size_t device_offset_begin = curr_pos + strlen(kAmdgpuDisDeviceTextToken);
-            device                           = amdgpu_dis_output.substr(device_offset_begin, device_offset_end - device_offset_begin);
-            ret                              = true;
-        }
-    }
-    return ret;
-}
-
 beKA::beStatus KcCliCommanderBinary::InitRequestedAsicBinary(const Config&                config,
                                                              bool                         verbose,
                                                              const std::set<std::string>& supported_devices,
                                                              const std::string&           binary_codeobj_file,
-                                                             const std::string&           amdgpu_dis_output,
+                                                             const std::string&           target_device,
                                                              std::set<std::string>&       matched_targets)
 {
     beKA::beStatus result = beKA::beStatus::kBeStatusSuccess;
 
     if (verbose)
     {
-        KcCliBinaryAnalysis::LogPreStep(kStrInfoDetectBinTargetDevice, binary_codeobj_file);
+        KcUtilsBinary::LogPreStep(kStrInfoDetectBinTargetDevice, binary_codeobj_file);
     }
 
-    std::string device;
-    bool        is_device_extracted = ExtractDeviceFromAmdgpudisOutput(amdgpu_dis_output, device);
-    assert(is_device_extracted);
-    assert(!device.empty());
-
-    if (InitRequestedAsicList({device}, config.mode, supported_devices, matched_targets, false))
+    if (InitRequestedAsicList({target_device}, config.mode, supported_devices, matched_targets, false))
     {
         if (matched_targets.size() != 1)
         {
@@ -254,9 +205,53 @@ beKA::beStatus KcCliCommanderBinary::InitRequestedAsicBinary(const Config&      
 
     if (verbose)
     {
-        KcCliBinaryAnalysis::LogResult(result == beKA::beStatus::kBeStatusSuccess);
-        KcCliBinaryAnalysis::LogErrorStatus(result, binary_codeobj_file);
+        KcUtilsBinary::LogResult(result == beKA::beStatus::kBeStatusSuccess);
+        KcUtilsBinary::LogErrorStatus(result, binary_codeobj_file);
     }
 
     return result;
+}
+
+bool KcCliCommanderBinary::GenerateSessionMetadataFile(const Config& config)
+{
+    bool ret = !config.session_metadata_file.empty();
+    if (ret)
+    {
+        for (const auto& [filename, analysis] : binary_file_to_binary_analysis_map_)
+        {
+            ret = analysis.GenerateSessionMetadataFile(config);
+            if (!ret)
+            {
+                RgLog::stdOut << kStrErrorFailedToGenerateSessionMetdata << std::endl;
+                break;
+            }
+        }
+    }
+    return ret;
+}
+
+bool KcCliCommanderBinary::GenerateSessionSummary(const Config& config)
+{
+    bool ret = !config.session_summary_file.empty();
+    if (ret)
+    {
+        RgaAnalysisSummary summary;
+        for (const auto& [filename, analysis] : binary_file_to_binary_analysis_map_)
+        {
+            RgaAnalysisSummary::AnalysisResult result;
+            ret = analysis.GeneratCompilationSummary(config, result);
+            if (ret)
+            {
+                summary.results_.emplace_back(result);
+            }
+        }
+        // Write summary xml file.
+        ret = KcXmlWriter::WriteAnalysisSummaryToFile(summary, config.session_summary_file);
+
+        if (!ret)
+        {
+            RgLog::stdOut << kStrErrorFailedToGenerateSessionSummary << std::endl;
+        }
+    }
+    return ret;
 }

@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2017-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for rga shared data types.
@@ -22,7 +22,7 @@ enum class RgVulkanInputType
 class RgPsoCreateInfo
 {
 public:
-    RgPsoCreateInfo() = default;
+    RgPsoCreateInfo()          = default;
     virtual ~RgPsoCreateInfo() = default;
 };
 
@@ -47,6 +47,38 @@ enum RgPipelineStage : char
     // The compute shader stage.
     kCompute,
 
+    // The mesh shader stage.
+    kMesh,
+
+    // The task shader stage.
+    kTask,
+
     // The total count of pipeline stage types.
     kCount
 };
+
+// RGA csv file headers.
+enum class RgCsvFileColumns
+{
+    kAddress,
+    kSourceLineNumber,
+    kOpcode,
+    kOperands,
+    kFunctionalUnit,
+    kCycles,
+    kBinaryEncoding,
+    kSourcePath,
+    kCount,
+};
+
+// CSV headers for parsed ISA output.
+static const char* kStrCsvHeaderWithLineCorrelation =
+    "Address, Source Line Number, Opcode, Operands, Functional Unit, Cycles, Binary Encoding, Source Line Path\n";
+static const char* kStrCsvHeaderNoLineCorrelation =
+    "Address, Opcode, Operands, Functional Unit, Cycles, Binary Encoding\n";
+
+// CSV column name for source line number (used to detect line correlation in CSV headers).
+static const char* kStrCsvColumnSourceLineNumber = "Source Line Number";
+
+// Default value for the source path column when no source file is associated with an instruction.
+static const char* kStrUnknownSourcePath = "UNKNOWN_SOURCE_PATH";

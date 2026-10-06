@@ -7,8 +7,8 @@
 #ifndef RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_PIPELINE_STATE_SEARCHER_H_
 #define RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_PIPELINE_STATE_SEARCHER_H_
 
-// Local.
-#include "radeon_gpu_analyzer_gui/qt/rg_find_text_widget.h"
+// Infra.
+#include "qt_isa_gui/widgets/find_text_widget.h"
 
 // Forward declarations.
 class RgEditorElement;
@@ -62,6 +62,9 @@ public:
     // Reset the current search.
     virtual void ResetSearch() override;
 
+    // Get the search results.
+    void GetSearchResults(int& match_index, int& total_matches);
+
     // Select the current search result in the source editor.
     virtual void SelectResults() override;
 
@@ -96,4 +99,4 @@ private:
     // A list of search results.
     SearchResultData search_results_ = {};
 };
-#endif // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_PIPELINE_STATE_SEARCHER_H_
+#endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_RG_PIPELINE_STATE_SEARCHER_H_

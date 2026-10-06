@@ -1,11 +1,11 @@
 #######################################################################################################################
-### Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
+### Copyright (c) 2017-2026 Advanced Micro Devices, Inc. All rights reserved.
 ### @author AMD Developer Tools Team
 #######################################################################################################################
 include(FetchContent)
 
 set (GITHUB_REPO_PREFIX "https://github.com/GPUOpen-Tools")
-set (ISA_SPEC_MANAGER_BRANCH "507111dea876c3d4d268c1c86344835446791e41")
+set (ISA_SPEC_MANAGER_BRANCH "512971f75854ef8496d5acbd5576ad5d082cdcb3")
 
 if (NOT TARGET isa_decoder)
     if (NOT ISA_SPEC_MANAGER_DIR)
@@ -22,7 +22,13 @@ if (NOT TARGET isa_decoder)
     endif ()
 endif ()
 
-set(ISA_DECODER_XML_URL "https://gpuopen.com/download/machine-readable-isa/latest")
+# The isa_explorer target may not exist if isa_spec_manager was first included by
+# qt_isa_gui with EXCLUDE_ISA_CLI_EXAMPLES_TESTS=ON. Add it explicitly when needed.
+if (NOT TARGET isa_explorer)
+    add_subdirectory("${PROJECT_SOURCE_DIR}/../../external/isa_spec_manager/source/isa_explorer" isa_explorer)
+endif ()
+
+set(ISA_DECODER_XML_URL "https://gpuopen.com/download/machine-readable-isa/latest/")
 set(ISA_DECODER_XML_DIR "${PROJECT_SOURCE_DIR}/../../external/isa_spec_xml")
 
 FetchContent_Declare(

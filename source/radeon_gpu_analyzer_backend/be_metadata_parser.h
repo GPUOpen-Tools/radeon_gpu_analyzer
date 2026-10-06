@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2024-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for rga code object metadata parser class.
@@ -9,6 +9,7 @@
 #define RGA_RADEONGPUANALYZERBACKEND_SRC_BE_METADATA_PARSER_H_
 
 // C++.
+#include <iomanip>
 #include <string>
 #include <vector>
 
@@ -35,7 +36,6 @@ public:
 class BeAmdPalMetaData
 {
 public:
-
     // Enum to represent different stages in hardware pipeline.
     enum class StageType
     {
@@ -49,43 +49,74 @@ public:
     };
 
     // Enum to represent different shader types.
-    enum class ShaderType
-    {
-        kVertex,
-        kHull,
-        kDomain,
-        kGeometry,
-        kPixel,
-        kCompute,
-        kMesh,
-        kTask
-    };
+    using ShaderType = BePipelineStage;
 
     // Enum to represent different shader subtypes.
-    enum class ShaderSubtype
+    using ShaderSubtype = BeRtxPipelineStage;
+
+    // Struct to holds a 128 bit hash.
+    struct ApiShaderHash
     {
-        kUnknown,
-        kRayGeneration,
-        kMiss,
-        kAnyHit,
-        kClosestHit,
-        kIntersection,
-        kCallable,
-        kTraversal,
-        kLaunchKernel
+        // The low 64 bits of the hash.
+        uint64_t low = 0;
+        // The high 64 bits of the hash.
+        uint64_t high = 0;
+
+        // Overload the output stream operator for easy printing.
+        friend std::ostream& operator<<(std::ostream& os, const ApiShaderHash& hash)
+        {
+            os << Hash128BitToStr(hash.high, hash.low);
+            return os;
+        }
+
+    private:
+        // Convert the 128 bit hash to a string representation.
+        static std::string Hash64BitToStr(uint64_t hash_val)
+        {
+            char buffer[19] = {};
+            snprintf(buffer, 19, "%016llX", static_cast<long long unsigned int>(hash_val));
+            return std::string(buffer);
+        }
+
+        // Convert the hash to a 128 bit string representation.
+        static std::string Hash128BitToStr(uint64_t upper_bits, uint64_t lower_bits)
+        {
+            std::string out;
+
+            if (upper_bits == 0 && lower_bits == 0)
+            {
+                out = "N/A";
+            }
+            else
+            {
+                if (upper_bits == 0)
+                {
+                    out = "0x" + Hash64BitToStr(lower_bits);
+                }
+                else
+                {
+                    out = "0x" + Hash64BitToStr(upper_bits) + Hash64BitToStr(lower_bits);
+                }
+            }
+
+            return out;
+        }
     };
 
     // Struct to hold hardware stage details.
     struct HardwareStageMetaData
     {
         StageType          stage_type;
+        std::string        entry_point;
         beKA::AnalysisData stats;
     };
 
     // Struct to hold shader function details.
     struct ShaderFunctionMetaData
     {
-        std::string        name;
+        std::string        name;      // Demangled name (for display/output).
+        std::string        raw_name;  // Raw mangled name from metadata YAML key (for ELF symbol matching).
+        ApiShaderHash      hash;
         ShaderSubtype      shader_subtype;
         beKA::AnalysisData stats;
     };
@@ -94,6 +125,7 @@ public:
     struct ShaderMetaData
     {
         ShaderType    shader_type;
+        ApiShaderHash hash;
         StageType     hardware_mapping;
         ShaderSubtype shader_subtype = ShaderSubtype::kUnknown;
     };
@@ -101,6 +133,7 @@ public:
     // Struct to hold amdpal pipeline details.
     struct PipelineMetaData
     {
+        std::string                         device;
         std::string                         api;
         std::vector<HardwareStageMetaData>  hardware_stages;
         std::vector<ShaderFunctionMetaData> shader_functions;
@@ -135,8 +168,46 @@ public:
     static std::string GetShaderSubtypeName(ShaderSubtype subtype);
 
     // Parses amdgpu-dis output and extracts code object metadata.
-    static beKA::beStatus ParseAmdgpudisMetadata(const std::string& amdgpu_dis_output, BeAmdPalMetaData::PipelineMetaData& pipeline);
+    static beKA::beStatus ParseMetadata(const std::string& metadata_text, PipelineMetaData& pipeline);
 
+    // Converts ApiShaderHash to string representation.
+    static std::string GetShaderHashString(const ApiShaderHash& hash);
 };
 
-#endif // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_METADATA_PARSER_H_
+// Metadata Parsed from amdhsa metadata string.
+class BeAmdHsaMetaData
+{
+public:
+    // Kernel statistics.
+    struct KernelProperties
+    {
+        size_t wavefront_num_sgprs    = 0;
+        size_t work_item_num_vgprs    = 0;
+        size_t work_item_num_agprs    = 0;
+        size_t wavefront_size         = 0;
+        size_t workgroup_segment_size = 0;
+        size_t private_segment_size   = 0;
+        size_t sgpr_spills            = 0;
+        size_t vgpr_spills            = 0;
+        size_t isa_size               = 0;
+    };
+
+    // Maps  kernel_name --> KernelProperties.
+    using KernelPropertiesMap = std::map<std::string, KernelProperties>;
+
+    // Contatiner of Kernel Names.
+    using KernelNames = std::vector<std::string>;
+
+    // Struct to hold amdhsa kernel details.
+    struct AmdHsaMetaData
+    {
+        std::string         device;
+        KernelNames         kernel_names;
+        KernelPropertiesMap props_map;
+    };
+
+    // Parses amdgpu-dis output and extracts code object metadata.
+    static beKA::beStatus ParseMetadata(const std::string& metadata_text, AmdHsaMetaData& md);
+};
+
+#endif  // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_METADATA_PARSER_H_

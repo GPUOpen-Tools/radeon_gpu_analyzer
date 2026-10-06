@@ -98,6 +98,16 @@ void RgResourceUsageView::PopulateView(const RgResourceUsageData& resource_usage
     }
 
     resource_usage_header_stream << EndResourceSection(is_vgpr_hazard);
+
+    // Only show AGPRs if the device has AGPR support (available > 0).
+    bool is_agpr_hazard = false;
+    if (resource_usage.available_agprs > 0)
+    {
+        is_agpr_hazard = (resource_usage.used_agprs >= resource_usage.available_agprs);
+        resource_usage_header_stream << " | " << StartResourceSection(is_agpr_hazard) << "<b>" << kStrResourceUsageAgprs << "</b>: " <<
+            resource_usage.used_agprs << " / " << resource_usage.available_agprs << EndResourceSection(is_agpr_hazard);
+    }
+
     resource_usage_header_stream << " | ";
 
     // Create a string to display the number of SGPRs used over the number available.
@@ -112,14 +122,16 @@ void RgResourceUsageView::PopulateView(const RgResourceUsageData& resource_usage
     resource_usage_header_stream << " | ";
 
     // LDS.
-    // Convert the LDS used and available byte counts to an abbreviated file size with an acronym.
     QString lds_bytes_used;
     QString lds_bytes_available;
+    QtCommon::QtUtils::GetFilesizeAcronymFromByteCount(resource_usage.used_lds_bytes, lds_bytes_used);
     QtCommon::QtUtils::GetFilesizeAcronymFromByteCount(resource_usage.available_lds_bytes, lds_bytes_available);
     is_lds_hazard = (resource_usage.used_lds_bytes >= resource_usage.available_lds_bytes);
 
-    // Set the LDS usage string in the view.
-    resource_usage_header_stream << StartResourceSection(is_lds_hazard) << "<b>" << kStrResourceUsageLds << "</b>: " << resource_usage.used_lds_bytes << (resource_usage.used_lds_bytes > 0 ? " B" : "") << " / " << lds_bytes_available.toStdString() << EndResourceSection(is_lds_hazard) << " | ";
+    resource_usage_header_stream << StartResourceSection(is_lds_hazard) << "<b>" << kStrResourceUsageLds << "</b>: " <<
+        resource_usage.used_lds_bytes << " B (" << lds_bytes_used.toStdString() << ") / " <<
+        resource_usage.available_lds_bytes << " B (" << lds_bytes_available.toStdString() << ")" <<
+        EndResourceSection(is_lds_hazard) << " | ";
 
     // Scratch memory.
     QString scratch_mem;
@@ -141,7 +153,7 @@ void RgResourceUsageView::PopulateView(const RgResourceUsageData& resource_usage
     }
 
     // We have a hazard if any of the resources produces a hazard.
-    is_resource_usage_hazard = is_vgpr_hazard || is_sgpr_hazard || is_lds_hazard || is_scratch_memory_hazard || is_icache_hazard;
+    is_resource_usage_hazard = is_vgpr_hazard || is_agpr_hazard || is_sgpr_hazard || is_lds_hazard || is_scratch_memory_hazard || is_icache_hazard;
 
     // Show the warning icon if a hazard was detected.
     ui_.warningLabel->setVisible(is_resource_usage_hazard);

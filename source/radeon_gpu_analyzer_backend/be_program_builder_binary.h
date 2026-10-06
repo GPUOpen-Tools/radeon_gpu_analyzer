@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2023-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for rga backend progam builder binary analysis class.
@@ -44,7 +44,7 @@ public:
 
         // Vulkan.
         kVulkan,
-        
+
         // Vulkan ray tracing.
         kVulkanRT,
 
@@ -65,7 +65,7 @@ public:
     static std::string GetStrFromApi(ApiEnum api);
 
     // Gets the Suffixes for stage-specific output files for given Api mode.
-    static BeVkPipelineFiles GetStageFileSuffixesFromApi(ApiEnum api);
+    static BePipelineFiles GetStageFileSuffixesFromApi(ApiEnum api);
 
     // Gets the api mode from the amdpal pipeline metadata.
     static ApiEnum GetApiFromPipelineMetadata(const BeAmdPalMetaData::PipelineMetaData& pipeline);
@@ -73,5 +73,7 @@ public:
     // Get entry types for specific pipeline or raytracing stage.
     static RgaEntryType GetEntryType(ApiEnum api, uint32_t stage);
 
+    // Collects the amdhsa kernels names based on hardware stages in the amdpal pipeline metaddata.
+    static BeAmdHsaMetaData::KernelNames GetKernelNames(const BeAmdPalMetaData::PipelineMetaData& pipeline);
 };
 #endif  // RGA_RADEONGPUANALYZERBACKEND_SRC_BE_PROGRAM_BUILDER_BINARY_H_

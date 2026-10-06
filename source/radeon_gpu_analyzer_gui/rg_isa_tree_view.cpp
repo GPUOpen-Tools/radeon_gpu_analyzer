@@ -12,6 +12,7 @@
 #include "qt_common/utils/qt_util.h"
 
 // Local.
+#include "radeon_gpu_analyzer_gui/rg_utils.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_disassembly_view.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_proxy_model.h"
 #include "radeon_gpu_analyzer_gui/qt/rg_isa_tree_view.h"
@@ -23,7 +24,7 @@ RgIsaTreeView::RgIsaTreeView(QWidget* parent, RgIsaDisassemblyView* disassembly_
     : IsaTreeView(parent)
     , parent_disassembly_view_(disassembly_view)
 {
-    RgIsaItemDelegate* rg_isa_item_delegate = new RgIsaItemDelegate(this);
+    RgIsaItemDelegate* rg_isa_item_delegate = new RgIsaItemDelegate(this, this);
     ReplaceDelegate(rg_isa_item_delegate);
 
      // Explicitly set style for the tooltip background color, and connect it to theme color update.
@@ -49,11 +50,14 @@ void RgIsaTreeView::HandleScrolledToIndex(const QModelIndex source_index)
     UpdateLineCorrelation(source_index, true);
 }
 
-bool RgIsaTreeView::UpdateLineCorrelation(const QModelIndex source_index, bool update_source_code_editor)
+bool RgIsaTreeView::UpdateLineCorrelation(const QModelIndex source_index, bool update_source_code_editor, const std::string& src_file_path)
 {
     bool ret = false;
 
-    if (parent_disassembly_view_ != nullptr && parent_disassembly_view_->IsLineCorrelationSupported())
+    std::string sanitized_src_path = src_file_path;
+    RgUtils::StandardizePathSeparator(sanitized_src_path);
+
+    if (parent_disassembly_view_ != nullptr)
     {
         const RgIsaProxyModel* proxy = qobject_cast<const RgIsaProxyModel*>(this->model());
         RgIsaItemModel*        model = nullptr;
@@ -67,7 +71,7 @@ bool RgIsaTreeView::UpdateLineCorrelation(const QModelIndex source_index, bool u
         }
         else
         {
-            model = qobject_cast<RgIsaItemModel*>(model);
+            model = qobject_cast<RgIsaItemModel*>(this->model());
         }
 
         isa_tree_view_index = isa_tree_view_index.siblingAtColumn(IsaItemModel::kLineNumber);
@@ -76,33 +80,41 @@ bool RgIsaTreeView::UpdateLineCorrelation(const QModelIndex source_index, bool u
         {
             if (isa_tree_view_index.isValid())
             {
-                // Line in the input src correlated with the current line in the isa.
-                int correlated_src_line_index = isa_tree_view_index.data(RgIsaItemModel::UserRoles::kIsaRowToSrcLineRole).toInt();
-
-                RgIsaItemModel::EntryData entry_data{};
-                entry_data.input_source_line_index = correlated_src_line_index;
-                entry_data.operation               = RgIsaItemModel::EntryData::Operation::kUpdateLineCorrelation;
-                model->UpdateData(&entry_data);
-
-                if (update_source_code_editor)
+                const QVariant isa_row_to_src_line_data = isa_tree_view_index.data(RgIsaItemModel::UserRoles::kIsaRowToSrcLineRole);
+                if (isa_row_to_src_line_data.isValid())
                 {
-                    emit HighlightedIsaRowChanged(correlated_src_line_index);
-                }
+                    RgIsaItemModel::EntryData entry_data{};
+                    entry_data.source_info = qvariant_cast<RgIsaItemModel::SrcLineInfo>(isa_row_to_src_line_data);
 
-                ret = true;
+                    // If the caller provided a source file path (source-to-ISA direction),
+                    // use it to constrain correlation to only the active source file.
+                    if (!sanitized_src_path.empty())
+                    {
+                        entry_data.source_info.input_source_file_path = sanitized_src_path;
+                    }
+
+                    entry_data.operation = RgIsaItemModel::EntryData::Operation::kUpdateLineCorrelation;
+                    model->UpdateData(&entry_data);
+
+                    if (update_source_code_editor)
+                    {
+                        emit HighlightedIsaRowChanged(entry_data.source_info.input_source_line_index, entry_data.source_info.input_source_file_path);
+                    }
+
+                    ret = true;
+                }
             }
             else
             {
                 RgIsaItemModel::EntryData entry_data{};
-                entry_data.input_source_line_index = kInvalidCorrelationLineIndex;
-                entry_data.operation               = RgIsaItemModel::EntryData::Operation::kUpdateLineCorrelation;
+                entry_data.operation = RgIsaItemModel::EntryData::Operation::kUpdateLineCorrelation;
                 model->UpdateData(&entry_data);
 
                 viewport()->update();
             }
         }
     }
-    
+
     return ret;
 }
 
@@ -184,6 +196,7 @@ void RgIsaTreeView::InitializeContextMenu()
 {
     // Create the context menu instance.
     context_menu_ = new QMenu(this);
+    context_menu_->installEventFilter(this);
 
     // Set the cursor for the context menu.
     context_menu_->setCursor(Qt::PointingHandCursor);
@@ -202,6 +215,21 @@ void RgIsaTreeView::InitializeContextMenu()
 
     // Connect the context menu signals.
     ConnectContextMenuSignals();
+}
+
+bool RgIsaTreeView::eventFilter(QObject* watched, QEvent* event)
+{
+    if (watched == context_menu_ && event->type() == QEvent::Type::Hide)
+    {
+        // Re-enable the isa tooltip timer now that the context menu is hidden.
+        RgIsaItemDelegate* item_delegate = qobject_cast<RgIsaItemDelegate*>(itemDelegate());
+        if (item_delegate != nullptr)
+        {
+            item_delegate->ConnectTooltipTimerCallback(true);
+        }
+    }
+
+    return IsaTreeView::eventFilter(watched, event);
 }
 
 void RgIsaTreeView::ConnectDisassemblyViewSignals()
@@ -228,6 +256,15 @@ void RgIsaTreeView::HandleCopyDisassemblyClicked()
 
 void RgIsaTreeView::HandleOpenContextMenu(const QPoint& widget_click_position)
 {
+    // Hide the tooltip and make sure it doesn't appear after the context menu is shown.
+    RgIsaItemDelegate* item_delegate = qobject_cast<RgIsaItemDelegate*>(itemDelegate());
+    if (item_delegate != nullptr)
+    {
+        // Disables the tooltip timer. Will need to be re-enabled when the context menu is hidden.
+        item_delegate->ConnectTooltipTimerCallback(false);
+        item_delegate->HideTooltip();
+    }
+
     // Convert the widget's local click position to the global screen position.
     const QPoint click_point = mapToGlobal(widget_click_position);
 
@@ -235,7 +272,7 @@ void RgIsaTreeView::HandleOpenContextMenu(const QPoint& widget_click_position)
     context_menu_->exec(click_point);
 }
 
-void RgIsaTreeView::HandleHighlightedInputSrcLineChanged(int src_line_index)
+void RgIsaTreeView::HandleHighlightedInputSrcLineChanged(int src_line_index, const std::string& src_file_path)
 {
     const RgIsaProxyModel* proxy = qobject_cast<const RgIsaProxyModel*>(this->model());
     RgIsaItemModel*        model = nullptr;
@@ -246,18 +283,18 @@ void RgIsaTreeView::HandleHighlightedInputSrcLineChanged(int src_line_index)
     }
     else
     {
-        model = qobject_cast<RgIsaItemModel*>(model);
+        model = qobject_cast<RgIsaItemModel*>(this->model());
     }
 
     if (model != nullptr)
     {
-        QModelIndex isa_tree_view_index = model->GetFirstLineCorrelatedIndex(src_line_index);
+        QModelIndex isa_tree_view_index = model->GetFirstLineCorrelatedIndex(src_line_index, src_file_path);
         if (isa_tree_view_index.isValid())
         {
             ScrollToIndex(isa_tree_view_index, false, false, false);
         }
 
-        UpdateLineCorrelation(isa_tree_view_index, false);
+        UpdateLineCorrelation(isa_tree_view_index, false, src_file_path);
     }
 }
 
@@ -272,7 +309,7 @@ void RgIsaTreeView::HandleShowNextMaxVgpr()
     }
     else
     {
-        model = qobject_cast<RgIsaItemModel*>(model);
+        model = qobject_cast<RgIsaItemModel*>(this->model());
     }
 
     if (model != nullptr)
@@ -302,7 +339,7 @@ void RgIsaTreeView::HandleShowPrevMaxVgpr()
     }
     else
     {
-        model = qobject_cast<RgIsaItemModel*>(model);
+        model = qobject_cast<RgIsaItemModel*>(this->model());
     }
 
     if (model != nullptr)

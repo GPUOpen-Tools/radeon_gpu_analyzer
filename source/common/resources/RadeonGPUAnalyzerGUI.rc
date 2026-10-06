@@ -68,7 +68,7 @@ BEGIN
             VALUE "FileVersion", RADEON_GPU_ANALYZER_VERSION_STRING
             VALUE "InternalName", "RadeonGPUAnalyzerGUI"
             VALUE "OriginalFilename", "RadeonGPUAnalyzerGUI" ".exe"
-            VALUE "LegalCopyright", "Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved"
             VALUE "ProductName", "Radeon GPU Analyzer GUI"
             VALUE "ProductVersion", RADEON_GPU_ANALYZER_VERSION_STRING
         END

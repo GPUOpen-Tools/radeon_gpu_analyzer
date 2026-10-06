@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for rga backend progam builder dx12 class.
@@ -50,7 +50,7 @@ using namespace rga;
 static const wchar_t* kStrEnvVarNameAmdVirtualGpuId = L"AmdVirtualGpuId";
 static const wchar_t* kDx12BackendDir               = L"utils/dx12";
 static const wchar_t* kDx12BackendExe               = L"dx12_backend";
-static const wchar_t* DX12_DXC_DIR                  = L"utils/dx12/dxc";
+static const wchar_t* DX12_DXC_DIR                  = L"utils/dx12/dxc/v1.8.2505.1";
 static const wchar_t* DX12_DXC_EXE                  = L"dxc";
 static const wchar_t* kDx12OfflineBackend           = L"withDll";
 static const wchar_t* kDx12OfflineKmtmuxer          = L"umdrepoint";
@@ -63,35 +63,38 @@ static const char*    kStrDxrNullPipelineName       = "null";
 // Error messages.
 static const char* kStrErrorNoSupportedTarget1 = "Error: no supported target detected for '";
 static const char* kStrErrorNoSupportedTarget2 = "', ";
-static const char* kStrErrorNoSupportedTargetHintInstallDriver = "which is the default target. Please make sure that you have the latest AMD drivers installed.";
+static const char* kStrErrorNoSupportedTargetHintInstallDriver =
+    "which is the default target. Please make sure that you have the latest AMD drivers installed.";
 static const char* kStrErrorNoSupportedTargetHintRetrieveDx12Targets = "For the list of supported targets run: rga -s dx12 -l";
-static const char* kStrErrorFailedToSetEnvVar = "Error: failed to set the environment variable for the DX12 backend.";
-static const char* kStrErrorCannotRetrieveSupportedTargetList = "Error: cannot retrieve the list of targets supported by the driver. Consider adding --offline to the rga command to use the AMD driver (amdxc64.dll) that is bundled with the tool.";
-static const char* kStrErrorFailedToInvokeDx12Backend = "Error: failed to invoke the DX12 backend.";
-static const char* kStrErrorInvalidShaderModel = "Error: invalid shader model: ";
-static const char* kStrErrorHlslToDxilCompilationFailed1 = "Error: DXC HLSL->DXIL compilation of ";
-static const char* kStrErrorHlslToDxilCompilationFailed2 = " shader failed.";
-static const char* kStrErrorDxcLaunchFailed = "failed to launch DXC.";
+static const char* kStrErrorFailedToSetEnvVar                        = "Error: failed to set the environment variable for the DX12 backend.";
+static const char* kStrErrorCannotRetrieveSupportedTargetList =
+    "Error: cannot retrieve the list of targets supported by the driver. Consider adding --offline to the rga command to use the AMD driver (amdxc64.dll) that "
+    "is bundled with the tool.";
+static const char* kStrErrorFailedToInvokeDx12Backend              = "Error: failed to invoke the DX12 backend.";
+static const char* kStrErrorInvalidShaderModel                     = "Error: invalid shader model: ";
+static const char* kStrErrorHlslToDxilCompilationFailed1           = "Error: DXC HLSL->DXIL compilation of ";
+static const char* kStrErrorHlslToDxilCompilationFailed2           = " shader failed.";
+static const char* kStrErrorDxcLaunchFailed                        = "failed to launch DXC.";
 static const char* kStrErrorFailedToConstructLiveregOutputFilename = "Error: failed to construct live register analysis output file name.";
 static const char* kStrErrorFailedToConstructCfgOutputFilename     = "Error: failed to construct control-flow graph output file name.";
 
 // Info messages.
-static const char* kStrInfoFrontEndCompilationWithDxc1 = "Performing front-end compilation of ";
-static const char* kStrInfoFrontEndCompilationWithDxc2 = " through DXC... ";
+static const char* kStrInfoFrontEndCompilationWithDxc1   = "Performing front-end compilation of ";
+static const char* kStrInfoFrontEndCompilationWithDxc2   = " through DXC... ";
 static const char* kStrInfoFrontEndCompilationWithDxcDxr = " HLSL file through DXC.";
-static const char* kStrInfoFrontEndCompilationSuccess = "Front-end compilation success.";
-static const char* kStrInfoDxcOutputPrologue = "*** Output from DXC - START ***";
-static const char* kStrInfoDxcOutputEpilogue = "*** Output from DXC - END ***";
-static const char* kStrInfoDebuglayerOutputPrologue = "*** Output from D3D12 Debug Layer - START ***";
-static const char* kStrInfoDebuglayerOutputEpilogue = "*** Output from D3D12 Debug Layer - END ***";
-static const char* kStrInfoDxcUsingDxcFromUserPath = "Using DXC from user-provided path: ";
-static const char* kStrInfoDxcReadingOptionsFromFile = "Info: reading additional DXC options from file: ";
-static const char* kStrInfoDxcOptionsFileReadSuccess = "Info: DXC options file read successfully. Passing DXC the following options: ";
+static const char* kStrInfoFrontEndCompilationSuccess    = "Front-end compilation success.";
+static const char* kStrInfoDxcOutputPrologue             = "*** Output from DXC - START ***";
+static const char* kStrInfoDxcOutputEpilogue             = "*** Output from DXC - END ***";
+static const char* kStrInfoDebuglayerOutputPrologue      = "*** Output from D3D12 Debug Layer - START ***";
+static const char* kStrInfoDebuglayerOutputEpilogue      = "*** Output from D3D12 Debug Layer - END ***";
+static const char* kStrInfoDxcUsingDxcFromUserPath       = "Using DXC from user-provided path: ";
+static const char* kStrInfoDxcReadingOptionsFromFile     = "Info: reading additional DXC options from file: ";
+static const char* kStrInfoDxcOptionsFileReadSuccess     = "Info: DXC options file read successfully. Passing DXC the following options: ";
 
 // Warning messages.
-static const char* kStrWarningDxcPathNotFound1 = "Warning: could not detect DXC in path: ";
-static const char* kStrWarningDxcPathNotFound2 = ". Falling back to using the DXC package that ships with RGA.";
-static const char* kStrWarningDxcOptionsFileEmpty = "Warning: DXC options file empty: ";
+static const char* kStrWarningDxcPathNotFound1      = "Warning: could not detect DXC in path: ";
+static const char* kStrWarningDxcPathNotFound2      = ". Falling back to using the DXC package that ships with RGA.";
+static const char* kStrWarningDxcOptionsFileEmpty   = "Warning: DXC options file empty: ";
 static const char* kStrWarningDxcOptionsFileMissing = "Warning: DXC options file not found: ";
 
 // Tokens.
@@ -112,11 +115,11 @@ static const char* kStrOptionIncludePath               = "-I";
 static const char* kStrOptionPreprocessorDefines       = "-D";
 static const char* kStrOptionDxilDisassemblyOutputFile = "-Fc";
 
-static void AddDebugLayerCommand(const Config &config, std::stringstream& cmd)
+static void AddDebugLayerCommand(const Config& config, std::stringstream& cmd)
 {
-    if (config.dx12_debug_layer_enabled)
+    if (config.dx12_debug_layer_enabled || config.is_line_numbers_required)
     {
-        cmd << "--debug-layer " << std::endl;
+        cmd << "--debug-layer ";
     }
 }
 
@@ -128,9 +131,10 @@ static void FilterWithDllOutput(const Config& config, std::string& out_text)
         size_t line_start = out_text.find(kDx12OfflineBackendAscii);
         while (line_start != std::string::npos)
         {
-            size_t line_end = out_text.find('\n', line_start);
-            auto   iter     = out_text.erase(line_start, line_end - line_start + 1);
-            line_start      = out_text.find(kDx12OfflineBackendAscii);
+            size_t line_end    = out_text.find('\n', line_start);
+            size_t erase_count = (line_end == std::string::npos) ? (out_text.size() - line_start) : (line_end - line_start + 1);
+            out_text.erase(line_start, erase_count);
+            line_start = out_text.find(kDx12OfflineBackendAscii);
         }
     }
 }
@@ -237,6 +241,13 @@ static bool InvokeDxc(const Config&                   config,
         }
     }
 
+    // When source-line correlation is requested, inject debug info flags so the
+    // driver embeds DWARF into the code object (required by llvm-objdump --line-numbers --source).
+    if (config.is_line_numbers_required && !invoke_for_rootsig_compilation)
+    {
+        cmd << "-Zi -Qembed_debug ";
+    }
+
     // Additional options from the user if given.
     if (!config.dxc_opt.empty())
     {
@@ -291,9 +302,9 @@ static bool InvokeDxc(const Config&                   config,
     // Shader HLSL file.
     cmd << "\"" << shader_hlsl << "\"";
 
-    long        exit_code = 0;
-    osFilePath  dxc_exe;
-    bool is_user_dxc_path_valid = false;
+    long       exit_code = 0;
+    osFilePath dxc_exe;
+    bool       is_user_dxc_path_valid = false;
     if (!config.dxc_path.empty())
     {
         // Remove trailing "\" if present.
@@ -316,8 +327,7 @@ static bool InvokeDxc(const Config&                   config,
         }
         else
         {
-            std::cout << kStrWarningDxcPathNotFound1 <<
-                fixed_dxc_path << kStrWarningDxcPathNotFound2 << std::endl;
+            std::cout << kStrWarningDxcPathNotFound1 << fixed_dxc_path << kStrWarningDxcPathNotFound2 << std::endl;
         }
     }
 
@@ -332,14 +342,8 @@ static bool InvokeDxc(const Config&                   config,
     dxc_output.clear();
     dxc_errors.clear();
 
-    KcUtils::ProcessStatus status = KcUtils::LaunchProcess(dxc_exe.asString().asASCIICharArray(),
-        cmd.str(),
-        "",
-        kProcessWaitInfinite,
-        config.print_process_cmd_line,
-        dxc_output,
-        dxc_errors,
-        exit_code);
+    KcUtils::ProcessStatus status = KcUtils::LaunchProcess(
+        dxc_exe.asString().asASCIICharArray(), cmd.str(), "", kProcessWaitInfinite, config.print_process_cmd_line, dxc_output, dxc_errors, exit_code);
 
     assert(status == KcUtils::ProcessStatus::kSuccess);
     ret = (status == KcUtils::ProcessStatus::kSuccess);
@@ -349,16 +353,14 @@ static bool InvokeDxc(const Config&                   config,
 
 static bool CompileHlslWithDxcDxr(const Config& config, const std::string& hlsl_file, const std::string& shader_model, std::string& dxil_output_file)
 {
-    bool ret = false;
+    bool        ret               = false;
     const char* kDxrFileStageName = "dxr";
-    bool shouldAbort = !KcUtils::ConstructOutFileName("", kDxrFileStageName,
-        STR_DXIL_FILE_NAME, STR_DXIL_FILE_SUFFIX, dxil_output_file);
+    bool        shouldAbort       = !KcUtils::ConstructOutFileName("", kDxrFileStageName, STR_DXIL_FILE_NAME, STR_DXIL_FILE_SUFFIX, dxil_output_file);
     assert(!shouldAbort);
     if (!shouldAbort)
     {
         // Notify the user.
-        std::cout << kStrInfoFrontEndCompilationWithDxc1 << hlsl_file <<
-            kStrInfoFrontEndCompilationWithDxcDxr << std::endl;
+        std::cout << kStrInfoFrontEndCompilationWithDxc1 << hlsl_file << kStrInfoFrontEndCompilationWithDxcDxr << std::endl;
 
         // Perform the front-end compilation through DXC.
         std::string dxc_output;
@@ -407,29 +409,29 @@ static bool CompileHlslWithDxcDxr(const Config& config, const std::string& hlsl_
             }
             else
             {
-                std::cout << kStrErrorHlslToDxilCompilationFailed1 <<
-                    hlsl_file << "." << std::endl;
+                std::cout << kStrErrorHlslToDxilCompilationFailed1 << hlsl_file << "." << std::endl;
                 ret = false;
             }
         }
-
     }
 
     return ret;
 }
 
-static bool CompileHlslWithDxc(const Config& config, const std::string& hlsl_file, BePipelineStage stage, const std::string& shader_model,
-    const std::string& entry_point, std::string& dxil_output_file)
+static bool CompileHlslWithDxc(const Config&      config,
+                               const std::string& hlsl_file,
+                               BePipelineStage    stage,
+                               const std::string& shader_model,
+                               const std::string& entry_point,
+                               std::string&       dxil_output_file)
 {
-    bool ret = false;
-    bool should_abort = !KcUtils::ConstructOutFileName("", kStrDx12StageSuffix[stage],
-        STR_DXIL_FILE_NAME, STR_DXIL_FILE_SUFFIX, dxil_output_file);
+    bool ret          = false;
+    bool should_abort = !KcUtils::ConstructOutFileName("", kStrDx12StageSuffix[stage], STR_DXIL_FILE_NAME, STR_DXIL_FILE_SUFFIX, dxil_output_file);
     assert(!should_abort);
     if (!should_abort)
     {
         // Notify the user.
-        std::cout << kStrInfoFrontEndCompilationWithDxc1 << kStrDx12StageNames[stage] << " shader" <<
-            kStrInfoFrontEndCompilationWithDxc2 << std::endl;
+        std::cout << kStrInfoFrontEndCompilationWithDxc1 << kStrDx12StageNames[stage] << " shader" << kStrInfoFrontEndCompilationWithDxc2 << std::endl;
 
         // Perform the front-end compilation through DXC.
         std::string dxc_output;
@@ -478,8 +480,7 @@ static bool CompileHlslWithDxc(const Config& config, const std::string& hlsl_fil
             }
             else
             {
-                std::cout << kStrErrorHlslToDxilCompilationFailed1 <<
-                    kStrDx12StageNames[stage] << kStrErrorHlslToDxilCompilationFailed2 << std::endl;
+                std::cout << kStrErrorHlslToDxilCompilationFailed1 << kStrDx12StageNames[stage] << kStrErrorHlslToDxilCompilationFailed2 << std::endl;
                 ret = false;
             }
         }
@@ -487,11 +488,11 @@ static bool CompileHlslWithDxc(const Config& config, const std::string& hlsl_fil
     return ret;
 }
 
-static beStatus InvokeDx12Backend(const Config&      config, 
-                                  const std::string& cmd_line_options, 
+static beStatus InvokeDx12Backend(const Config&      config,
+                                  const std::string& cmd_line_options,
                                   bool               should_print_cmd,
-                                  bool               should_print_dbg, 
-                                  std::string&       out_text, 
+                                  bool               should_print_dbg,
+                                  std::string&       out_text,
                                   std::string&       error_msg)
 {
     beStatus ret = beStatus::kBeStatusSuccess;
@@ -500,7 +501,7 @@ static beStatus InvokeDx12Backend(const Config&      config,
     osFilePath dx12_offline_exe;
     osFilePath dx12_kmtmuxer;
     osFilePath dx12_amdxc_driver;
-    long exit_code = 0;
+    long       exit_code = 0;
 
     // DX12 backend.
     osGetCurrentApplicationPath(dx12_backend_exe, false);
@@ -532,9 +533,9 @@ static beStatus InvokeDx12Backend(const Config&      config,
         if (!config.alternative_amdxc.empty())
         {
             // Use the user provided driver.
-            const char *kDx12DriverName = "amdxc64.dll";
-            is_alternative_driver_path_found = (config.alternative_amdxc.find(kDx12DriverName) != std::string::npos) &&
-                KcUtils::FileNotEmpty(config.alternative_amdxc);
+            const char* kDx12DriverName = "amdxc64.dll";
+            is_alternative_driver_path_found =
+                (config.alternative_amdxc.find(kDx12DriverName) != std::string::npos) && KcUtils::FileNotEmpty(config.alternative_amdxc);
             if (!is_alternative_driver_path_found)
             {
                 std::cout << "Warning: cannot find the provided alternative amdxc64.dll: " << config.alternative_amdxc << std::endl;
@@ -545,6 +546,7 @@ static beStatus InvokeDx12Backend(const Config&      config,
                 gtString amdxc_path_gtstr;
                 amdxc_path_gtstr << config.alternative_amdxc.c_str();
                 dx12_amdxc_driver.setFullPathFromString(amdxc_path_gtstr);
+                dx12_amdxc_driver.resolveToAbsolutePath();
             }
         }
 
@@ -577,7 +579,7 @@ static beStatus InvokeDx12Backend(const Config&      config,
             cmd_update_stream << " /d:\"" << dx12_kmtmuxer.asString().asASCIICharArray() << "\" ";
 
             // Set the environment variable.
-            wchar_t* kKmtMuxerEnvVar = L"URSubDx12Path";
+            wchar_t*              kKmtMuxerEnvVar = L"URSubDx12Path";
             [[maybe_unused]] BOOL rc              = SetEnvironmentVariable(kKmtMuxerEnvVar, dx12_amdxc_driver.asString().asCharArray());
             std::cout << "Info: using amdxc64.dll from " << dx12_amdxc_driver.asString().asASCIICharArray() << std::endl;
             assert(rc == TRUE);
@@ -594,8 +596,8 @@ static beStatus InvokeDx12Backend(const Config&      config,
 
     if (ret == beStatus::kBeStatusSuccess)
     {
-        const osFilePath&      backend_exe = (config.dx12_offline_session ? dx12_offline_exe : dx12_backend_exe);
-        std::stringstream      backend_exe_fixed;
+        const osFilePath& backend_exe = (config.dx12_offline_session ? dx12_offline_exe : dx12_backend_exe);
+        std::stringstream backend_exe_fixed;
         backend_exe_fixed << "\"" << backend_exe.asString().asASCIICharArray() << "\"";
         KcUtils::ProcessStatus status = KcUtils::ProcessStatus::kLaunchFailed;
         if (config.dx12_debug_layer_enabled && !config.dx12_no_debug_output && !config.dx12_offline_session)
@@ -637,9 +639,10 @@ static beStatus InvokeDx12Backend(const Config&      config,
 BeProgramBuilderDx12::~BeProgramBuilderDx12(void)
 {
     if (!dxc_autogen_pipeline_info_.should_retain_temp_files)
-    {       
+    {
         BeUtils::DeleteFileFromDisk(dxc_autogen_pipeline_info_.root_signature.filename);
         BeUtils::DeleteFileFromDisk(dxc_autogen_pipeline_info_.vertex_shader.filename);
+        BeUtils::DeleteFileFromDisk(dxc_autogen_pipeline_info_.mesh_shader.filename);
         BeUtils::DeleteFileFromDisk(dxc_autogen_pipeline_info_.pixel_shader.filename);
         BeUtils::DeleteFileFromDisk(dxc_autogen_pipeline_info_.gpso_file.filename);
         for (const auto& temp_file : dxc_autogen_pipeline_info_.other_temporary_files)
@@ -649,14 +652,13 @@ BeProgramBuilderDx12::~BeProgramBuilderDx12(void)
     }
 }
 
-beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
-    std::vector<std::string>& gpus, std::map<std::string, int>& driver_ids)
+beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config, std::vector<std::string>& gpus, std::map<std::string, int>& driver_ids)
 {
     driver_ids.clear();
     std::string errors;
 
     // Retrieve the list of targets.
-    std::string supported_gpus;
+    std::string           supported_gpus;
     [[maybe_unused]] BOOL rc = SetEnvironmentVariable(kStrEnvVarNameAmdVirtualGpuId, L"0");
     assert(rc == TRUE);
 
@@ -667,7 +669,7 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
     {
         // Post-process the list.
         std::vector<std::string> split_gpu_names;
-        BeUtils::SplitString(supported_gpus, '\n', split_gpu_names);
+        BeUtils::SplitString(supported_gpus, std::string("\n"), split_gpu_names);
         assert(!split_gpu_names.empty());
         if (!split_gpu_names.empty())
         {
@@ -679,7 +681,7 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
                 {
                     // Break by ':'.
                     std::vector<std::string> split_names_colon;
-                    BeUtils::SplitString(driver_name, ':', split_names_colon);
+                    BeUtils::SplitString(driver_name, std::string(":"), split_names_colon);
                     assert(!split_names_colon.empty());
                     if (!split_names_colon.empty())
                     {
@@ -688,8 +690,10 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
                         });
 
                         // Check if the name needs to be corrected to the "standard" name used by this tool.
-                        auto corrected_name = std::find_if(kPalDeviceNameMapping.cbegin(), kPalDeviceNameMapping.cend(),
-                            [&](const std::pair<std::string, std::string>& device) { return (device.first == split_names_colon[0]); });
+                        auto corrected_name =
+                            std::find_if(kPalDeviceNameMapping.cbegin(), kPalDeviceNameMapping.cend(), [&](const std::pair<std::string, std::string>& device) {
+                                return (device.first == split_names_colon[0]);
+                            });
 
                         if (corrected_name == kPalDeviceNameMapping.end())
                         {
@@ -705,7 +709,7 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
                         {
                             // Break by '->'.
                             std::vector<std::string> split_names_arrow;
-                            BeUtils::SplitString(split_names_colon[1], '-', split_names_arrow);
+                            BeUtils::SplitString(split_names_colon[1], std::string("-"), split_names_arrow);
                             assert(!split_names_arrow.empty());
                             if (!split_names_arrow.empty())
                             {
@@ -716,14 +720,14 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
 
                                 // Get the id for this device.
                                 std::vector<std::string> split_triangular_bracket;
-                                BeUtils::SplitString(split_names_arrow[1], '>', split_triangular_bracket);
+                                BeUtils::SplitString(split_names_arrow[1], std::string(">"), split_triangular_bracket);
                                 assert(split_triangular_bracket.size() > 1);
                                 if (split_triangular_bracket.size() > 1)
                                 {
                                     try
                                     {
                                         // Track the ID for both codename and gfx name.
-                                        int id = std::stoi(split_triangular_bracket[1], nullptr);
+                                        int id                           = std::stoi(split_triangular_bracket[1], nullptr);
                                         driver_ids[split_names_colon[0]] = id;
                                         driver_ids[split_names_arrow[0]] = id;
 
@@ -736,8 +740,7 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
                                     catch (...)
                                     {
                                         const char* kStrErrorFailedToParseDeviceId = "Error: failed to parse device ID: ";
-                                        std::cout << kStrErrorFailedToParseDeviceId <<
-                                            split_triangular_bracket[1] << std::endl;
+                                        std::cout << kStrErrorFailedToParseDeviceId << split_triangular_bracket[1] << std::endl;
                                     }
                                 }
                             }
@@ -748,7 +751,7 @@ beKA::beStatus BeProgramBuilderDx12::GetSupportGpus(const Config& config,
 
             assert(!gpus.empty());
             std::vector<GDT_GfxCardInfo> card_list;
-            std::set<std::string> known_arch_names;
+            std::set<std::string>        known_arch_names;
             // Get the list of known GPU architectures from DeviceInfo.
             bool is_all_cards_extracted = BeUtils::GetAllGraphicsCards(card_list, known_arch_names, true);
             assert(is_all_cards_extracted);
@@ -862,32 +865,32 @@ void HandleRootSignatureArgument(const Config&                          config,
                                  const BeDx12Utils::ShaderModelVersion& shader_model_gs,
                                  const BeDx12Utils::ShaderModelVersion& shader_model_ps,
                                  const BeDx12Utils::ShaderModelVersion& shader_model_cs,
+                                 const BeDx12Utils::ShaderModelVersion& shader_model_ms,
+                                 const BeDx12Utils::ShaderModelVersion& shader_model_as,
                                  std::stringstream&                     cmd,
                                  std::string&                           dxil_compiled)
 {
     if (!config.rs_bin.empty())
     {
-        cmd << "--rs-bin "
-            << "\"" << config.rs_bin << "\" ";
+        cmd << "--rs-bin " << "\"" << config.rs_bin << "\" ";
     }
-    
+
     if (shader_model_vs.IsAboveShaderModel_5_1() || shader_model_hs.IsAboveShaderModel_5_1() || shader_model_ds.IsAboveShaderModel_5_1() ||
-        shader_model_gs.IsAboveShaderModel_5_1() || shader_model_ps.IsAboveShaderModel_5_1() || shader_model_cs.IsAboveShaderModel_5_1())
+        shader_model_gs.IsAboveShaderModel_5_1() || shader_model_ps.IsAboveShaderModel_5_1() || shader_model_cs.IsAboveShaderModel_5_1() ||
+        shader_model_ms.IsAboveShaderModel_5_1() || shader_model_as.IsAboveShaderModel_5_1())
     {
         if (!config.rs_hlsl.empty())
         {
             if (CompileRootSignatureWithDxc(config, config.rs_hlsl, config.rs_macro_version, config.rs_macro, dxil_compiled))
             {
-                cmd << "--rs-bin "
-                    << "\"" << dxil_compiled << "\" ";
+                cmd << "--rs-bin " << "\"" << dxil_compiled << "\" ";
             }
         }
         else if (!config.all_hlsl.empty() && !config.rs_macro.empty())
         {
             if (CompileRootSignatureWithDxc(config, config.all_hlsl, config.rs_macro_version, config.rs_macro, dxil_compiled))
             {
-                cmd << "--rs-bin "
-                    << "\"" << dxil_compiled << "\" ";
+                cmd << "--rs-bin " << "\"" << dxil_compiled << "\" ";
             }
         }
     }
@@ -895,23 +898,19 @@ void HandleRootSignatureArgument(const Config&                          config,
     {
         if (!config.rs_hlsl.empty())
         {
-            cmd << "--rs-hlsl "
-                << "\"" << config.rs_hlsl << "\" ";
+            cmd << "--rs-hlsl " << "\"" << config.rs_hlsl << "\" ";
         }
         else if (!config.all_hlsl.empty())
         {
-            cmd << "--rs-hlsl "
-                << "\"" << config.all_hlsl << "\" ";
+            cmd << "--rs-hlsl " << "\"" << config.all_hlsl << "\" ";
         }
         if (!config.rs_macro.empty())
         {
-            cmd << "--rs-macro "
-                << "\"" << config.rs_macro << "\" ";
+            cmd << "--rs-macro " << "\"" << config.rs_macro << "\" ";
         }
         if (!config.rs_macro_version.empty())
         {
-            cmd << "--rs-macro-version "
-                << "\"" << config.rs_macro_version << "\" ";
+            cmd << "--rs-macro-version " << "\"" << config.rs_macro_version << "\" ";
         }
     }
 }
@@ -944,8 +943,7 @@ bool HandleHlslArgument(const Config&                    config,
             else
             {
                 // Compile the HLSL file through DXC.
-                ret = CompileHlslWithDxc(config, hlsl_file,
-                    stage, shader_model_generated, entry_point, dxil_compiled);
+                ret = CompileHlslWithDxc(config, hlsl_file, stage, shader_model_generated, entry_point, dxil_compiled);
                 if (ret)
                 {
                     // Pass the compilation output to the backend as a binary.
@@ -987,7 +985,7 @@ bool BeProgramBuilderDx12::EnableNullBackendForDevice(const Config& config, cons
             {
                 // Set the environment variable.
                 std::wstring value = std::to_wstring(iter->second);
-                BOOL rc = SetEnvironmentVariable(kStrEnvVarNameAmdVirtualGpuId, value.c_str());
+                BOOL         rc    = SetEnvironmentVariable(kStrEnvVarNameAmdVirtualGpuId, value.c_str());
                 assert(rc == TRUE);
                 ret = (rc == TRUE);
                 if (!ret)
@@ -1004,7 +1002,7 @@ bool BeProgramBuilderDx12::EnableNullBackendForDevice(const Config& config, cons
                     std::cout << kStrErrorNoSupportedTargetHintInstallDriver;
                 }
 
-                std::cout << std::endl  << kStrErrorNoSupportedTargetHintRetrieveDx12Targets << std::endl;
+                std::cout << std::endl << kStrErrorNoSupportedTargetHintRetrieveDx12Targets << std::endl;
             }
         }
         else
@@ -1024,13 +1022,13 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
                                              const std::string& target_device,
                                              std::string&       out_text,
                                              std::string&       error_msg,
-                                             BeVkPipelineFiles& generated_isa_files,
-                                             BeVkPipelineFiles& generated_amdil_files,
-                                             BeVkPipelineFiles& generated_stats_files,
+                                             BePipelineFiles& generated_isa_files,
+                                             BePipelineFiles& /*generated_amdil_files*/,
+                                             BePipelineFiles& /*generated_stats_files*/,
                                              std::string&       generated_binary_files)
 {
     beKA::beStatus ret = beStatus::kBeStatusInvalid;
-    bool rc = EnableNullBackendForDevice(config, target_device);
+    bool           rc  = EnableNullBackendForDevice(config, target_device);
     assert(rc);
     if (rc)
     {
@@ -1044,6 +1042,8 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
         BeDx12Utils::ShaderModelVersion shader_model_version_gs{};
         BeDx12Utils::ShaderModelVersion shader_model_version_ps{};
         BeDx12Utils::ShaderModelVersion shader_model_version_cs{};
+        BeDx12Utils::ShaderModelVersion shader_model_version_ms{};
+        BeDx12Utils::ShaderModelVersion shader_model_version_as{};
 
         // Names of DXIL files generated by this stage in
         // case that the shader model is not a legacy one.
@@ -1053,6 +1053,8 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
         std::string dxil_compiled_gs;
         std::string dxil_compiled_ps;
         std::string dxil_compiled_cs;
+        std::string dxil_compiled_ms;
+        std::string dxil_compiled_as;
         std::string dxil_compiled_rs;
 
         // Build the command line invocation for the backend.
@@ -1070,7 +1072,10 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
         // Input files - HLSL.
         if (!should_abort && !config.vs_hlsl.empty())
         {
-            should_abort = !HandleHlslArgument(config, BePipelineStage::kVertex, "vert", config.vs_hlsl,
+            should_abort = !HandleHlslArgument(config,
+                                               BePipelineStage::kVertex,
+                                               "vert",
+                                               config.vs_hlsl,
                                                config.vs_model,
                                                config.vs_entry_point,
                                                shader_model_version_vs,
@@ -1079,7 +1084,10 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
         }
         if (!should_abort && !config.hs_hlsl.empty())
         {
-            should_abort = !HandleHlslArgument(config, BePipelineStage::kTessellationControl, "hull", config.hs_hlsl,
+            should_abort = !HandleHlslArgument(config,
+                                               BePipelineStage::kTessellationControl,
+                                               "hull",
+                                               config.hs_hlsl,
                                                config.hs_model,
                                                config.hs_entry_point,
                                                shader_model_version_hs,
@@ -1088,7 +1096,10 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
         }
         if (!should_abort && !config.ds_hlsl.empty())
         {
-            should_abort = !HandleHlslArgument(config, BePipelineStage::kTessellationEvaluation, "domain", config.ds_hlsl,
+            should_abort = !HandleHlslArgument(config,
+                                               BePipelineStage::kTessellationEvaluation,
+                                               "domain",
+                                               config.ds_hlsl,
                                                config.ds_model,
                                                config.ds_entry_point,
                                                shader_model_version_ds,
@@ -1097,16 +1108,40 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
         }
         if (!should_abort && !config.gs_hlsl.empty())
         {
-            should_abort = !HandleHlslArgument(config, BePipelineStage::kGeometry, "geom", config.gs_hlsl,
+            should_abort = !HandleHlslArgument(config,
+                                               BePipelineStage::kGeometry,
+                                               "geom",
+                                               config.gs_hlsl,
                                                config.gs_model,
                                                config.gs_entry_point,
                                                shader_model_version_gs,
                                                cmd,
                                                dxil_compiled_gs);
         }
+        if (!should_abort && !config.ms_hlsl.empty())
+        {
+            should_abort = !HandleHlslArgument(config, BePipelineStage::kMesh, "mesh", config.ms_hlsl,
+                                               config.ms_model,
+                                               config.ms_entry_point,
+                                               shader_model_version_ms,
+                                               cmd,
+                                               dxil_compiled_ms);
+        }
+        if (!should_abort && !config.as_hlsl.empty())
+        {
+            should_abort = !HandleHlslArgument(config, BePipelineStage::kTask, "amplification", config.as_hlsl,
+                                               config.as_model,
+                                               config.as_entry_point,
+                                               shader_model_version_as,
+                                               cmd,
+                                               dxil_compiled_as);
+        }
         if (!should_abort && !config.ps_hlsl.empty())
         {
-            should_abort = !HandleHlslArgument(config, BePipelineStage::kFragment, "pixel", config.ps_hlsl,
+            should_abort = !HandleHlslArgument(config,
+                                               BePipelineStage::kFragment,
+                                               "pixel",
+                                               config.ps_hlsl,
                                                config.ps_model,
                                                config.ps_entry_point,
                                                shader_model_version_ps,
@@ -1115,7 +1150,10 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
         }
         if (!should_abort && !config.cs_hlsl.empty())
         {
-            should_abort = !HandleHlslArgument(config, BePipelineStage::kCompute, "comp", config.cs_hlsl,
+            should_abort = !HandleHlslArgument(config,
+                                               BePipelineStage::kCompute,
+                                               "comp",
+                                               config.cs_hlsl,
                                                config.cs_model,
                                                config.cs_entry_point,
                                                shader_model_version_cs,
@@ -1132,21 +1170,20 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
                 {
                     if (CompileRootSignatureWithDxc(config, config.cs_hlsl, config.rs_macro_version, config.rs_macro, dxil_compiled_rs))
                     {
-                        cmd << "--rs-bin "
-                            << "\"" << dxil_compiled_rs << "\" ";
+                        cmd << "--rs-bin " << "\"" << dxil_compiled_rs << "\" ";
                     }
                 }
                 else
                 {
-                    cmd << " --rs-hlsl "
-                        << "\"" << config.cs_hlsl << "\" ";
+                    cmd << " --rs-hlsl " << "\"" << config.cs_hlsl << "\" ";
                 }
             }
-
         }
 
         if (!should_abort)
         {
+            bool has_mesh_shaders = false;
+
             // Input files - DXBC.
             if (!config.vs_dxbc.empty())
             {
@@ -1171,6 +1208,16 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
             if (!config.cs_dxbc.empty())
             {
                 cmd << "--comp-dxbc " << "\"" << config.cs_dxbc << "\" ";
+            }
+            if (!config.ms_dxbc.empty())
+            {
+                cmd << "--mesh-dxbc " << "\"" << config.ms_dxbc << "\" ";
+                has_mesh_shaders = true;
+            }
+            if (!config.as_dxbc.empty())
+            {
+                cmd << "--amplification-dxbc " << "\"" << config.as_dxbc << "\" ";
+                has_mesh_shaders = true;
             }
 
             // Entry point.
@@ -1198,6 +1245,16 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
             {
                 cmd << "--comp-entry " << config.cs_entry_point << " ";
             }
+            if (!config.ms_entry_point.empty())
+            {
+                cmd << "--mesh-entry " << config.ms_entry_point << " ";
+                has_mesh_shaders = true;
+            }
+            if (!config.as_entry_point.empty())
+            {
+                cmd << "--amplification-entry " << config.as_entry_point << " ";
+                has_mesh_shaders = true;
+            }
 
             // Shader model.
             std::string vs_model_generated = !config.vs_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.vs_model, config, BePipelineStage::kVertex) : "";
@@ -1206,6 +1263,8 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
             std::string gs_model_generated = !config.gs_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.gs_model, config, BePipelineStage::kGeometry) : "";
             std::string ps_model_generated = !config.ps_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.ps_model, config, BePipelineStage::kFragment) : "";
             std::string cs_model_generated = !config.cs_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.cs_model, config, BePipelineStage::kCompute) : "";
+            std::string ms_model_generated = !config.ms_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.ms_model, config, BePipelineStage::kMesh) : "";
+            std::string as_model_generated = !config.as_hlsl.empty() ? BeDx12Utils::GenerateShaderModel(config.as_model, config, BePipelineStage::kTask) : "";
 
             if (!vs_model_generated.empty())
             {
@@ -1231,6 +1290,16 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
             {
                 cmd << "--comp-target " << cs_model_generated << " ";
             }
+            if (!ms_model_generated.empty())
+            {
+                cmd << "--mesh-target " << ms_model_generated << " ";
+                has_mesh_shaders = true;
+            }
+            if (!as_model_generated.empty())
+            {
+                cmd << "--amplification-target " << as_model_generated << " ";
+                has_mesh_shaders = true;
+            }
 
             // Root signature.
             HandleRootSignatureArgument(config,
@@ -1240,6 +1309,8 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
                                         shader_model_version_gs,
                                         shader_model_version_ps,
                                         shader_model_version_cs,
+                                        shader_model_version_ms,
+                                        shader_model_version_as,
                                         cmd,
                                         dxil_compiled_rs);
 
@@ -1259,7 +1330,8 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
 
             // Package the ISA and statistics file names in separate containers for pre-processing.
             std::string input_files[BePipelineStage::kCount] = { config.vs_hlsl, config.hs_hlsl,
-                config.ds_hlsl, config.gs_hlsl, config.ps_hlsl, config.cs_hlsl };
+                config.ds_hlsl, config.gs_hlsl, config.ps_hlsl, config.cs_hlsl, config.ms_hlsl,
+                config.as_hlsl };
 
             // If DXBC is used as an input instead of HLSL, replace the input file.
             if (input_files[BePipelineStage::kVertex].empty() && !config.vs_dxbc.empty())
@@ -1286,66 +1358,25 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
             {
                 input_files[BePipelineStage::kCompute] = config.cs_dxbc;
             }
+            if (input_files[BePipelineStage::kMesh].empty() && !config.ms_dxbc.empty())
+            {
+                input_files[BePipelineStage::kMesh] = config.ms_dxbc;
+                has_mesh_shaders = true;
+            }
+            if (input_files[BePipelineStage::kTask].empty() && !config.as_dxbc.empty())
+            {
+                input_files[BePipelineStage::kTask] = config.as_dxbc;
+                has_mesh_shaders = true;
+            }
             for (int stage = 0; stage < BePipelineStage::kCount; stage++)
             {
                 if (!input_files[stage].empty())
                 {
-                    // ISA files.
                     if (!config.isa_file.empty())
                     {
-                        bool isFileNameConstructed = KcUtils::ConstructOutFileName(config.isa_file,
-                            kStrDx12StageSuffix[stage], target_device_lower, "isa", generated_isa_files[stage]);
+                        [[maybe_unused]] bool isFileNameConstructed =
+                            KcUtils::ConstructOutFileName(config.isa_file, kStrDx12StageSuffix[stage], target_device_lower, "isa", generated_isa_files[stage]);
                         assert(isFileNameConstructed);
-                        if (isFileNameConstructed && !generated_isa_files[stage].empty())
-                        {
-                            cmd << " --" << kStrDx12StageSuffix[stage] << "-isa "
-                                << "\"" << generated_isa_files[stage] << "\" ";
-
-                            // Delete that file if it already exists.
-                            if (BeUtils::IsFilePresent(generated_isa_files[stage]))
-                            {
-                                BeUtils::DeleteFileFromDisk(generated_isa_files[stage]);
-                            }
-                        }
-                    }
-
-                    // AMDIL files.
-                    if (!config.il_file.empty())
-                    {
-                        bool isFileNameConstructed = KcUtils::ConstructOutFileName(config.il_file,
-                            kStrDx12StageSuffix[stage], target_device_lower, "amdil", generated_amdil_files[stage]);
-                        assert(isFileNameConstructed);
-                        if (isFileNameConstructed && !generated_amdil_files[stage].empty())
-                        {
-                            cmd << " --" << kStrDx12StageSuffix[stage] << "-amdil "
-                                << "\"" << generated_amdil_files[stage] << "\" ";
-
-                            // Delete that file if it already exists.
-                            if (BeUtils::IsFilePresent(generated_amdil_files[stage]))
-                            {
-                                BeUtils::DeleteFileFromDisk(generated_amdil_files[stage]);
-                            }
-                        }
-                    }
-
-                    // Statistics files.
-                    if (!config.analysis_file.empty())
-                    {
-                        bool is_filename_constructed = KcUtils::ConstructOutFileName(config.analysis_file,
-                            kStrDx12StageSuffix[stage], target_device_lower,
-                            kStrDefaultExtensionStats, generated_stats_files[stage]);
-                        assert(is_filename_constructed);
-                        if (is_filename_constructed && !generated_stats_files[stage].empty())
-                        {
-                            cmd << " --" << kStrDx12StageSuffix[stage] << "-stats "
-                                << "\"" << generated_stats_files[stage] << "\" ";
-                        }
-
-                        // Delete that file if it already exists.
-                        if (BeUtils::IsFilePresent(generated_isa_files[stage]))
-                        {
-                            BeUtils::DeleteFileFromDisk(generated_isa_files[stage]);
-                        }
                     }
                 }
             }
@@ -1376,15 +1407,29 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
             {
                 cmd << "--comp-dxbc-dis \"" << config.cs_dxil_disassembly << "\" ";
             }
+            if (!config.ms_hlsl.empty() && !config.ms_dxil_disassembly.empty() && shader_model_version_ms.IsBelowShaderModel_5_1())
+            {
+                cmd << "--mesh-dxbc-dis \"" << config.ms_dxil_disassembly << "\" ";
+            }
+            if (!config.as_hlsl.empty() && !config.as_dxil_disassembly.empty() && shader_model_version_as.IsBelowShaderModel_5_1())
+            {
+                cmd << "--amplification-dxbc-dis \"" << config.as_dxil_disassembly << "\" ";
+            }
 
-            // Pipeline binary.
-            if (!config.binary_output_file.empty())
+            // Pipeline binary, always extract so the CLI can disassemble with llvm-objdump.
             {
                 std::string binary_output_name_per_device;
-                bool is_filename_constructed = KcUtils::ConstructOutFileName(config.binary_output_file,
-                    "", target_device_lower, "bin", binary_output_name_per_device);
-                assert(is_filename_constructed);
-                if (is_filename_constructed && !binary_output_name_per_device.empty())
+                if (!config.binary_output_file.empty())
+                {
+                    [[maybe_unused]] bool is_filename_constructed =
+                        KcUtils::ConstructOutFileName(config.binary_output_file, "", target_device_lower, "bin", binary_output_name_per_device);
+                    assert(is_filename_constructed);
+                }
+                else
+                {
+                    binary_output_name_per_device = KcUtils::ConstructTempFileName("rga-dx12-pipeline", "bin");
+                }
+                if (!binary_output_name_per_device.empty())
                 {
                     cmd << "-b \"" << binary_output_name_per_device << "\" ";
 
@@ -1399,6 +1444,11 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
                 cmd << "--pso \"" << config.pso_dx12 << "\" ";
             }
 
+            if (has_mesh_shaders)
+            {
+                cmd << "--mesh-shaders ";
+            }
+
             // D3D12 debug layer.
             AddDebugLayerCommand(config, cmd);
 
@@ -1407,8 +1457,8 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
             assert(ret == kBeStatusSuccess);
             if (ret == kBeStatusSuccess)
             {
-                bool is_success = out_text.find(kStrDx12TokenBackendErrorToken) == std::string::npos &&
-                    error_msg.find(kStrDx12TokenBackendErrorToken) == std::string::npos;
+                bool is_success =
+                    out_text.find(kStrDx12TokenBackendErrorToken) == std::string::npos && error_msg.find(kStrDx12TokenBackendErrorToken) == std::string::npos;
                 if (!is_success)
                 {
                     ret = kBeStatusdx12CompileFailure;
@@ -1450,10 +1500,18 @@ beKA::beStatus BeProgramBuilderDx12::Compile(const Config&      config,
                 {
                     KcUtils::DeleteFile(dxil_compiled_cs);
                 }
+                if (KcUtils::FileNotEmpty(dxil_compiled_as))
+                {
+                    KcUtils::DeleteFile(dxil_compiled_as);
+                }
+                if (KcUtils::FileNotEmpty(dxil_compiled_ms))
+                {
+                    KcUtils::DeleteFile(dxil_compiled_ms);
+                }
                 if (KcUtils::FileNotEmpty(dxil_compiled_rs))
                 {
                     KcUtils::DeleteFile(dxil_compiled_rs);
-                }                
+                }
             }
         }
     }
@@ -1468,7 +1526,7 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
                                                         std::string&                       error_msg)
 {
     beKA::beStatus ret = beStatus::kBeStatusInvalid;
-    bool rc = EnableNullBackendForDevice(config, target_device);
+    bool           rc  = EnableNullBackendForDevice(config, target_device);
     assert(rc);
     if (rc)
     {
@@ -1502,7 +1560,7 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
 
         // Create a text file with a HLSL->DXIL mapping in case that
         // HLSL front-end compilation was performed.
-        std::string hlsl_mapping_file;
+        std::string       hlsl_mapping_file;
         std::stringstream hlsl_mapping_content;
 
         // Compile HLSL files if needed.
@@ -1528,8 +1586,8 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
 
         if (!temp_dxil_files.empty())
         {
-            hlsl_mapping_file = KcUtils::ConstructTempFileName("rga-hlsl-dxr-mapping", kStrDefaultExtensionText);
-            bool is_hlsl_mappinig_file_created =  KcUtils::WriteTextFile(hlsl_mapping_file, hlsl_mapping_content.str(), nullptr);
+            hlsl_mapping_file                  = KcUtils::ConstructTempFileName("rga-hlsl-dxr-mapping", kStrDefaultExtensionText);
+            bool is_hlsl_mappinig_file_created = KcUtils::WriteTextFile(hlsl_mapping_file, hlsl_mapping_content.str(), nullptr);
             assert(is_hlsl_mappinig_file_created);
             if (!is_hlsl_mappinig_file_created)
             {
@@ -1572,8 +1630,7 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
                 KcUtils::ConstructOutFileName(config.binary_output_file, FILE_NAME_TOKEN_DXR, target_device_lower, "bin", generated_binary_file);
             if (is_filename_constructed && !generated_binary_file.empty())
             {
-                cmd << "--dxr-bin "
-                    << "\"" << generated_binary_file << "\" ";
+                cmd << "--dxr-bin " << "\"" << generated_binary_file << "\" ";
             }
 
             // Delete that file if it already exists.
@@ -1596,8 +1653,8 @@ beKA::beStatus BeProgramBuilderDx12::CompileDXRPipeline(const Config&           
             assert(ret == kBeStatusSuccess);
             if (ret == kBeStatusSuccess)
             {
-                bool is_success = out_text.find(kStrDx12TokenBackendErrorToken) == std::string::npos &&
-                    error_msg.find(kStrDx12TokenBackendErrorToken) == std::string::npos;
+                bool is_success =
+                    out_text.find(kStrDx12TokenBackendErrorToken) == std::string::npos && error_msg.find(kStrDx12TokenBackendErrorToken) == std::string::npos;
 
                 if (is_success)
                 {
@@ -1655,6 +1712,9 @@ static std::string GenerateModelString(const Config& config, BePipelineStage sha
     case BePipelineStage::kVertex:
         model = BeDx12Utils::GenerateShaderModel(config.vs_model, config, BePipelineStage::kVertex);
         break;
+    case BePipelineStage::kMesh:
+        model = BeDx12Utils::GenerateShaderModel(config.ms_model, config, BePipelineStage::kMesh);
+        break;
     case BePipelineStage::kFragment:
         model = BeDx12Utils::GenerateShaderModel(config.ps_model, config, BePipelineStage::kFragment);
         break;
@@ -1709,10 +1769,10 @@ void BeProgramBuilderDx12::PrintAutoGenerationStatus()
     PrintAutoGenFileStatus(dxc_autogen_pipeline_info_.root_signature, "root signature", dxc_autogen_pipeline_info_.autogen_dir);
     PrintAutoGenFileStatus(dxc_autogen_pipeline_info_.gpso_file, "graphics pipeline state", dxc_autogen_pipeline_info_.autogen_dir);
     PrintAutoGenFileStatus(dxc_autogen_pipeline_info_.vertex_shader, "vertex shader", dxc_autogen_pipeline_info_.autogen_dir);
+    PrintAutoGenFileStatus(dxc_autogen_pipeline_info_.mesh_shader, "mesh shader", dxc_autogen_pipeline_info_.autogen_dir);
     PrintAutoGenFileStatus(dxc_autogen_pipeline_info_.pixel_shader, "pixel shader", dxc_autogen_pipeline_info_.autogen_dir);
 
-    std::string dxc_output;
-    BeUtils::TrimLeadingAndTrailingWhitespace(dxc_autogen_pipeline_info_.dxc_out.str(), dxc_output);
+    std::string dxc_output = BeUtils::TrimLeadingAndTrailingWhitespace(dxc_autogen_pipeline_info_.dxc_out.str());
     if (!dxc_output.empty())
     {
         std::cout << kStrInfoDxcOutputPrologue << "\n";
@@ -1725,9 +1785,9 @@ beKA::beStatus BeProgramBuilderDx12::CompileDX12Pipeline(const Config&      user
                                                          const std::string& target_device,
                                                          std::string&       out_text,
                                                          std::string&       error_msg,
-                                                         BeVkPipelineFiles& generated_isa_files,
-                                                         BeVkPipelineFiles& generated_amdil_files,
-                                                         BeVkPipelineFiles& generated_stats_files,
+                                                         BePipelineFiles& generated_isa_files,
+                                                         BePipelineFiles& generated_amdil_files,
+                                                         BePipelineFiles& generated_stats_files,
                                                          std::string&       generated_binary_files)
 {
     beKA::beStatus ret = beStatus::kBeStatusInvalid;
@@ -1761,11 +1821,15 @@ beKA::beStatus BeProgramBuilderDx12::CompileDX12Pipeline(const Config&      user
             updated_config.ps_entry_point = kPSEntryPoint;
             if (updated_config.all_model.empty())
             {
-                updated_config.ps_model = GenerateModelString(updated_config, BePipelineStage::kVertex, BePipelineStage::kFragment);
+                // If we are generating the PS, we expect a VS or MS to have been provided
+                assert(!updated_config.vs_model.empty() || !updated_config.ms_model.empty());
+                BePipelineStage source_stage = !updated_config.vs_model.empty() ? BePipelineStage::kVertex : BePipelineStage::kMesh;
+                updated_config.ps_model = GenerateModelString(updated_config, source_stage, BePipelineStage::kFragment);
             }
         }
 
-        ret = Compile(updated_config, target_device, out_text, error_msg, generated_isa_files, generated_amdil_files, generated_stats_files, generated_binary_files);
+        ret = Compile(
+            updated_config, target_device, out_text, error_msg, generated_isa_files, generated_amdil_files, generated_stats_files, generated_binary_files);
 
         if (dxc_autogen_pipeline_info_.vertex_shader.status == BeDx12AutoGenStatus::kSuccess)
         {
@@ -1773,17 +1837,23 @@ beKA::beStatus BeProgramBuilderDx12::CompileDX12Pipeline(const Config&      user
             dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_amdil_files[BePipelineStage::kVertex]);
             dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_stats_files[BePipelineStage::kVertex]);
         }
+        if (dxc_autogen_pipeline_info_.mesh_shader.status == BeDx12AutoGenStatus::kSuccess)
+        {
+            dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_isa_files[BePipelineStage::kMesh]);
+            dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_amdil_files[BePipelineStage::kMesh]);
+            dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_stats_files[BePipelineStage::kMesh]);
+        }
         if (dxc_autogen_pipeline_info_.pixel_shader.status == BeDx12AutoGenStatus::kSuccess)
         {
             dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_isa_files[BePipelineStage::kFragment]);
             dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_amdil_files[BePipelineStage::kFragment]);
             dxc_autogen_pipeline_info_.other_temporary_files.insert(generated_stats_files[BePipelineStage::kFragment]);
         }
-
     }
     else
     {
-        ret = Compile(user_input, target_device, out_text, error_msg, generated_isa_files, generated_amdil_files, generated_stats_files, generated_binary_files);
+        ret =
+            Compile(user_input, target_device, out_text, error_msg, generated_isa_files, generated_amdil_files, generated_stats_files, generated_binary_files);
     }
     return ret;
 }

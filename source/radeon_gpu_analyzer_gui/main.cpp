@@ -99,6 +99,9 @@ int main(int argc, char* argv[])
             if (global_settings->should_prompt_for_api || selected_api == RgProjectAPI::kUnknown)
             {
                 RgStartupDialog startup_dialog;
+#ifdef _WIN32
+                SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+#endif
 
 #ifdef RGA_GUI_AUTOMATION
                 tester.StartupDlgCreated(&startup_dialog);

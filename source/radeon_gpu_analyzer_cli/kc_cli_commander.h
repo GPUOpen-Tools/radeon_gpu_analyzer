@@ -47,6 +47,9 @@ public:
     // Dump the extracted entry points to stdout.
     virtual bool ListEntries(const Config& config, LoggingCallbackFunction callback);
 
+    // Extract source file paths from DWARF debug info and dump to stdout.
+    virtual bool ListSourcePaths(const Config& config, LoggingCallbackFunction callback);
+
 protected:
     // -- Functions --
 

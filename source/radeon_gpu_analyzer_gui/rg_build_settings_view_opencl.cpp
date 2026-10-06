@@ -439,6 +439,8 @@ void RgBuildSettingsViewOpencl::HandleAddTargetGpusButtonClick()
         // Inform the UI of a possible change to the pending state.
         HandlePendingChangesStateChanged(GetHasPendingChanges());
     }
+
+    target_gpus_dialog_->deleteLater();
 }
 
 void RgBuildSettingsViewOpencl::HandleTextEditChanged()

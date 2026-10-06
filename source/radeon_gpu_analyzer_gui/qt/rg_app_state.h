@@ -145,6 +145,9 @@ class RgAppStateAnalysis : public RgAppState
 public:
     RgAppStateAnalysis();
     virtual ~RgAppStateAnalysis() = default;
+
+    // Reset analysis status event.
+    virtual void ResetCurrentAnalysis() = 0;
 };
 
 #endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_APP_STATE_H_

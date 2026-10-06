@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for shader ISA Disassembly view item model.
@@ -53,6 +53,15 @@ public:
         kUserRolesCount
     };
 
+    // Source code info corresponding the instruction row.
+    struct SrcLineInfo
+    {
+        // Source file path.
+        std::string input_source_file_path;
+        // Source line number.
+        int input_source_line_index = kInvalidCorrelationLineIndex;
+    };
+
     typedef struct EntryData
     {
         // Target GPU asic.
@@ -62,7 +71,7 @@ public:
         // Path to current entry's isa file.
         std::string vgpr_file_path;
         // Current entry's highlighted input src line number.
-        int input_source_line_index = kInvalidCorrelationLineIndex;
+        SrcLineInfo source_info;
 
         enum class Operation
         {
@@ -90,10 +99,10 @@ public:
         std::string opcode;
         // Flag for max vgpr row.
         bool is_max_vgpr_row = false;
-        // Input src line index correlated to the row.
-        int input_source_line_index = kInvalidCorrelationLineIndex;
         // Flag for if the the row is correlated to the higlighted src row.
         bool is_active_correlation = false;
+        // Input src line sc path for the row.
+        SrcLineInfo source_info;
         // Tooltip for the vgpr column for the row.
         std::string vgpr_tooltip;
     } RgIndexData;
@@ -118,10 +127,14 @@ public:
     bool GetMaxVgprPressureIndices(std::vector<QModelIndex>& source_indices) const;
 
     // Get the first isa row index for the given input source line number.
-    QModelIndex GetFirstLineCorrelatedIndex(int input_source_line_index) const;
+    // When input_source_file_path is non-empty, only rows whose source path matches are considered.
+    QModelIndex GetFirstLineCorrelatedIndex(int input_source_line_index, const std::string& input_source_file_path = "") const;
 
     // Get the isa row index for the current max vgpr.
     QModelIndex GetMaxVgprIndex() const;
+
+    // Get the bit-shift used to map live VGPR counts to color range indices for the current target.
+    int GetVgprBitShift() const { return vgpr_bit_shift_; }
 
     // Set target gpu asic for the model.
     bool SetArchitecture(const std::string target_gpu);
@@ -143,6 +156,7 @@ protected:
         kFunctionalUnit,
         kCycles,
         kBinaryEncoding,
+        kSourcePath,
         kCount,
     };
 
@@ -178,6 +192,13 @@ protected:
     // Livereg analysis data for the entry.
     RgLiveregData current_livereg_data_;
 
+    // Default bit-shift for mapping live VGPR count into one of 8 color range indices (kVgprRangeColors.size()).
+    // Derived from: log2(256 VGPRs / 8 ranges) = log2(32) = 5.
+    static constexpr int kDefaultVgprBitShift = 5;
+
+    // Bit-shift used for the current target; overridden in SetArchitecture() for non-default targets.
+    int vgpr_bit_shift_ = kDefaultVgprBitShift;
+
     // Parses a single line of isa in the form of string into the list of strings, one for each column and a list of operands.
     // isa_line           A single line of isa in the form of a std::string that needs to be parsed.
     // line_tokens        Will contain each column separated out into its own string. The operands are all contained in a single string.
@@ -205,8 +226,9 @@ protected:
     // Set the next/prev max vgpr line update.
     bool SetCurrentMaxVgprLine(EntryData::Operation op);
 
-    // Updates higlighted isa rows for the input source line number.
-    void SetLineCorrelatedIndices(int input_source_line_index);
+    // Updates highlighted isa rows for the input source line number.
+    // When input_source_file_path is non-empty, only rows whose source path matches are highlighted.
+    void SetLineCorrelatedIndices(int input_source_line_index, const std::string& input_source_file_path = "");
 
     // Helper function to create vgpr column tooltip.
     void CreateVgprTooltip(std::string& tooltip, const std::string& num_live_registers) const;
@@ -220,4 +242,7 @@ protected:
     // Cached livereg data for all entries.
     std::unordered_map<std::string, RgLiveregData> cached_livereg_data_;
 };
+
+Q_DECLARE_METATYPE(RgIsaItemModel::SrcLineInfo);
+
 #endif  // RGA_RADEONGPUANALYZERGUI_INCLUDE_QT_RG_ISA_ITEM_MODEL_H_

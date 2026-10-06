@@ -52,18 +52,28 @@ ParserSi::kaStatus ParserSiVintrp::Parse(GDT_HW_GENERATION hw_generation, Instru
     VINTRPInstruction::ATTR attr = GetATTR(hex_instruction);
     VINTRPInstruction::VDST vdst = GetVDST(hex_instruction);
 
+    kaStatus ret = ParserSi::kStatusSuccess;
+
     if ((hw_generation == GDT_HW_GENERATION_SEAISLAND) || (hw_generation == GDT_HW_GENERATION_SOUTHERNISLAND))
     {
         SIVINTRPInstruction::OP op = GetSIVINTRPOp(hex_instruction);
-        instruction = new SIVINTRPInstruction(vsrc, attrchan, attr, op, vdst, label, goto_label);
+        instruction = new (std::nothrow) SIVINTRPInstruction(vsrc, attrchan, attr, op, vdst, label, goto_label);
+        if (instruction == nullptr)
+        {
+            ret = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
     else
     {
         VIVINTRPInstruction::OP op = GetVIVINTRPOp(hex_instruction);
-        instruction = new VIVINTRPInstruction(vsrc, attrchan, attr, op, vdst, label, goto_label);
+        instruction = new (std::nothrow) VIVINTRPInstruction(vsrc, attrchan, attr, op, vdst, label, goto_label);
+        if (instruction == nullptr)
+        {
+            ret = ParserSi::kStatusUnexpectedHwGeneration;
+        }
     }
 
-    return ParserSi::kStatusSuccess;
+    return ret;
 }
 
 ParserSi::kaStatus ParserSiVintrp::Parse(GDT_HW_GENERATION, Instruction::Instruction64Bit, Instruction*&, int /*label =kNoLabel*/ , int /*goto_label =kNoLabel*/)

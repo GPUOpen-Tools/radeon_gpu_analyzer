@@ -700,6 +700,7 @@ struct RgBuildSettingsVulkan : public RgBuildSettings
         is_use_hlsl_block_offsets_checked(other.is_use_hlsl_block_offsets_checked),
         is_use_hlsl_io_mapping_checked(other.is_use_hlsl_io_mapping_checked),
         is_enable_validation_layers_checked(other.is_enable_validation_layers_checked),
+        is_compile_offline_checked(other.is_compile_offline_checked),
         icd_location(other.icd_location),
         glslang_options(other.glslang_options),
         binary_file_name(other.binary_file_name)
@@ -713,6 +714,7 @@ struct RgBuildSettingsVulkan : public RgBuildSettings
             (is_use_hlsl_block_offsets_checked == other.is_use_hlsl_block_offsets_checked) &&
             (is_use_hlsl_io_mapping_checked == other.is_use_hlsl_io_mapping_checked) &&
             (is_enable_validation_layers_checked == other.is_enable_validation_layers_checked) &&
+            (is_compile_offline_checked == other.is_compile_offline_checked) &&
             (icd_location == other.icd_location) &&
             (glslang_options == other.glslang_options) &&
             (binary_file_name == other.binary_file_name);
@@ -720,11 +722,16 @@ struct RgBuildSettingsVulkan : public RgBuildSettings
         return isSame;
     }
 
-    bool is_generate_debug_info_checked = false;
+    bool is_generate_debug_info_checked = true;
     bool is_no_explicit_bindings_checked = false;
     bool is_use_hlsl_block_offsets_checked = false;
     bool is_use_hlsl_io_mapping_checked = false;
     bool is_enable_validation_layers_checked = false;
+#ifdef _WIN32
+    bool is_compile_offline_checked = false;
+#else
+    bool is_compile_offline_checked = true;
+#endif
     std::string icd_location;
     std::string glslang_options;
     std::string binary_file_name;

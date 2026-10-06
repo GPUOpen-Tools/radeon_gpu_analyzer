@@ -505,7 +505,7 @@ void RgMenuFileItemGraphics::dropEvent(QDropEvent* event)
     const QMimeData* mime_data = event->mimeData();
 
     // Make sure the drop data has a file.
-    if (mime_data->hasUrls())
+    if (mime_data != nullptr && mime_data->hasUrls())
     {
         // Check to make sure the file is valid.
         QUrl url = mime_data->urls().at(0);

@@ -5,6 +5,7 @@
         <file>stylesheets/rg_application_style.qss</file>
         <file>icons/add_element_icon.svg</file>
         <file>icons/add_file_icon.svg</file>
+        <file>icons/regenerate_file_icon.svg</file>
         <file>icons/arrow_down.svg</file>
         <file>icons/arrow_left.svg</file>
         <file>icons/arrow_right.svg</file>

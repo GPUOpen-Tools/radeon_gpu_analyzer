@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>RgPipelineStateEditorWidgetEnum</class>
- <widget class="QWidget" name="rgPipelineStateEditorWidgetEnum">
+ <widget class="QWidget" name="RgPipelineStateEditorWidgetEnum">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>60</width>
-    <height>20</height>
+    <width>575</width>
+    <height>97</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -21,7 +21,7 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="sizeConstraint">
-    <enum>QLayout::SetDefaultConstraint</enum>
+    <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -47,7 +47,7 @@
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">background-color: white</string>
+      <string notr="true"/>
      </property>
      <property name="text">
       <string>PushButton</string>

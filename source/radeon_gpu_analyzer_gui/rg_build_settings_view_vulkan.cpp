@@ -104,8 +104,6 @@ void RgBuildSettingsViewVulkan::HideHLSLOptions()
 {
     // Hide HLSL options for now.
     ui_.vulkanOptionsHeaderLabel->hide();
-    ui_.generateDebugInfoCheckBox->hide();
-    ui_.generateDebugInfoLabel->hide();
     ui_.noExplicitBindingsCheckBox->hide();
     ui_.noExplicitBindingsLabel->hide();
     ui_.useHLSLBlockOffsetsCheckBox->hide();
@@ -119,6 +117,9 @@ void RgBuildSettingsViewVulkan::ConnectCheckBoxClickedEvents()
    bool is_connected = false;
 
     is_connected = connect(ui_.generateDebugInfoCheckBox, &RgCheckBox::clicked, this, &RgBuildSettingsViewVulkan::HandleCheckBoxClickedEvent);
+    assert(is_connected);
+
+    is_connected = connect(ui_.vkOfflineCheckBox, &RgCheckBox::clicked, this, &RgBuildSettingsViewVulkan::HandleCheckBoxClickedEvent);
     assert(is_connected);
 
     is_connected = connect(ui_.noExplicitBindingsCheckBox, &RgCheckBox::clicked, this, &RgBuildSettingsViewVulkan::HandleCheckBoxClickedEvent);
@@ -142,6 +143,7 @@ void RgBuildSettingsViewVulkan::PushToWidgets(const RgBuildSettingsVulkan& setti
     QSignalBlocker signal_blocker_predefined_macros_line_edit(ui_.predefinedMacrosLineEdit);
     QSignalBlocker signal_blocker_include_directories_line_edit(ui_.includeDirectoriesLineEdit);
     QSignalBlocker signal_blocker_generate_debug_info_check_box(ui_.generateDebugInfoCheckBox);
+    QSignalBlocker signal_blocker_vk_offline_check_box(ui_.vkOfflineCheckBox);
     QSignalBlocker signal_blocker_no_explicit_bindings_check_box(ui_.noExplicitBindingsCheckBox);
     QSignalBlocker signal_blocker_use_hlsl_block_offsets_check_box(ui_.useHLSLBlockOffsetsCheckBox);
     QSignalBlocker signal_blocker_use_hlsl_io_mapping_check_box(ui_.useHLSLIOMappingCheckBox);
@@ -163,6 +165,7 @@ void RgBuildSettingsViewVulkan::PushToWidgets(const RgBuildSettingsVulkan& setti
 
     // Items below are Vulkan-specific build settings only.
     ui_.generateDebugInfoCheckBox->setChecked(settings.is_generate_debug_info_checked);
+    ui_.vkOfflineCheckBox->setChecked(settings.is_compile_offline_checked);
     ui_.noExplicitBindingsCheckBox->setChecked(settings.is_no_explicit_bindings_checked);
     ui_.useHLSLBlockOffsetsCheckBox->setChecked(settings.is_use_hlsl_block_offsets_checked);
     ui_.useHLSLIOMappingCheckBox->setChecked(settings.is_use_hlsl_io_mapping_checked);
@@ -199,6 +202,7 @@ RgBuildSettingsVulkan RgBuildSettingsViewVulkan::PullFromWidgets() const
 
     // Vulkan-specific settings.
     settings.is_generate_debug_info_checked = ui_.generateDebugInfoCheckBox->isChecked();
+    settings.is_compile_offline_checked = ui_.vkOfflineCheckBox->isChecked();
     settings.is_no_explicit_bindings_checked = ui_.noExplicitBindingsCheckBox->isChecked();
     settings.is_use_hlsl_block_offsets_checked = ui_.useHLSLBlockOffsetsCheckBox->isChecked();
     settings.is_use_hlsl_io_mapping_checked = ui_.useHLSLIOMappingCheckBox->isChecked();
@@ -249,6 +253,10 @@ void RgBuildSettingsViewVulkan::ConnectSignals()
 
     // Handle changes to the Generate Debug Info checkbox.
     is_connected = connect(this->ui_.generateDebugInfoCheckBox, &RgCheckBox::stateChanged, this, &RgBuildSettingsViewVulkan::HandleCheckboxStateChanged);
+    assert(is_connected);
+
+    // Handle changes to the VK Offline checkbox.
+    is_connected = connect(this->ui_.vkOfflineCheckBox, &RgCheckBox::stateChanged, this, &RgBuildSettingsViewVulkan::HandleCheckboxStateChanged);
     assert(is_connected);
 
     // Handle changes to the No Explicit Bindings checkbox.
@@ -553,6 +561,8 @@ void RgBuildSettingsViewVulkan::HandleAddTargetGpusButtonClick()
         // Inform the UI of a possible change to the pending state.
         HandlePendingChangesStateChanged(GetHasPendingChanges());
     }
+
+    target_gpus_dialog_->deleteLater();
 }
 
 void RgBuildSettingsViewVulkan::HandleTextEditChanged()
@@ -734,6 +744,7 @@ void RgBuildSettingsViewVulkan::SetCursor()
     ui_.useHLSLBlockOffsetsCheckBox->setCursor(Qt::PointingHandCursor);
     ui_.useHLSLIOMappingCheckBox->setCursor(Qt::PointingHandCursor);
     ui_.enableValidationLayersCheckBox->setCursor(Qt::PointingHandCursor);
+    ui_.vkOfflineCheckBox->setCursor(Qt::PointingHandCursor);
 }
 
 void RgBuildSettingsViewVulkan::HandleIncludeDirsBrowseButtonClick()

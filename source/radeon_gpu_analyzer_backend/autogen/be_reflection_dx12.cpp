@@ -40,15 +40,35 @@ beKA::beStatus BeDx12Reflection::AutoGenerateFiles(IDxcUtils*                dxc
         {
             const bool       has_vs                = !refection_input.vs_blob.empty();
             const bool       has_ps                = !refection_input.ps_blob.empty();
+            const bool       has_ms                = !refection_input.ms_blob.empty();
+            const bool       has_as                = !refection_input.as_blob.empty();
             UINT64           shader_requires_flags = 0;
             DxcReflectionOutput vs_reflection_output = {};
             DxcReflectionOutput ps_reflection_output = {};
+            DxcReflectionOutput ms_reflection_output = {};
+            DxcReflectionOutput as_reflection_output = {};
             if (has_vs)
             {
                 rc = CreateReflection(dxc_utils, refection_input.source_file_path_vs, refection_input.vs_blob, vs_reflection_output);
                 if (rc == beKA::beStatus::kBeStatusSuccess)
                 {
                     shader_requires_flags |= vs_reflection_output.shader_reflection_ptr->GetRequiresFlags();
+                }
+            }
+            if (has_ms)
+            {
+                rc = CreateReflection(dxc_utils, refection_input.source_file_path_ms, refection_input.ms_blob, ms_reflection_output);
+                if (rc == beKA::beStatus::kBeStatusSuccess)
+                {
+                    shader_requires_flags |= ms_reflection_output.shader_reflection_ptr->GetRequiresFlags();
+                }
+            }
+            if (has_as)
+            {
+                rc = CreateReflection(dxc_utils, refection_input.source_file_path_as, refection_input.as_blob, as_reflection_output);
+                if (rc == beKA::beStatus::kBeStatusSuccess)
+                {
+                    shader_requires_flags |= as_reflection_output.shader_reflection_ptr->GetRequiresFlags();
                 }
             }
             if (has_ps)
@@ -67,26 +87,33 @@ beKA::beStatus BeDx12Reflection::AutoGenerateFiles(IDxcUtils*                dxc
                 if (!refection_input.is_root_signature_specified)
                 {
                     rc = GenerateRootSignatureGraphics(
-                        shader_requires_flags, has_vs, vs_reflection_output, has_ps, ps_reflection_output, hlsl_output.root_signature, err);
+                        shader_requires_flags, has_vs, vs_reflection_output, has_ms, ms_reflection_output, has_as, as_reflection_output, has_ps, ps_reflection_output, hlsl_output.root_signature, err);
                 }
 
                 if (rc == beKA::beStatus::kBeStatusSuccess)
                 {
                     // Genererate VS/PS Shader.
-                    if (!has_vs)
+                    if (!(has_vs || has_ms))
                     {
                         rc = GenerateVertexShader(refection_input.parsed_gpso_file, ps_reflection_output, hlsl_output.vs, err);
                     }
                     if (!has_ps)
                     {
-                        rc = GeneratePixelShader(refection_input.parsed_gpso_file, vs_reflection_output, hlsl_output.ps, err);
+                        if (has_ms)
+                        {
+                            rc = GeneratePixelShader(refection_input.parsed_gpso_file, ms_reflection_output, hlsl_output.ps, err);
+                        }
+                        else
+                        {
+                            rc = GeneratePixelShader(refection_input.parsed_gpso_file, vs_reflection_output, hlsl_output.ps, err);
+                        }
                     }
                 }
 
                 if (rc == beKA::beStatus::kBeStatusSuccess && !refection_input.parsed_gpso_file)
                 {
                     // Generate GPSO.
-                    rc = GenerateGpso(shader_requires_flags, has_vs, vs_reflection_output, has_ps, ps_reflection_output, hlsl_output.gpso, err);
+                    rc = GenerateGpso(shader_requires_flags, has_vs, vs_reflection_output, has_ms, has_ps, ps_reflection_output, hlsl_output.gpso, err);
                 }
 
             }

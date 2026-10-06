@@ -517,8 +517,8 @@ void RgTargetGpusDialog::PopulateTableData(std::shared_ptr<RgCliVersionInfo> ver
 
                 // Sort the GPU families in reverse order so that for the new AMD
                 // GPU naming scheme (gfxABCD) we will have the newer families on top.
-                std::sort(gpu_families.rbegin(), gpu_families.rend(), [&](RgGpuFamily familyA, RgGpuFamily familyB) {
-                    return familyA.family_name < familyB.family_name;
+                std::sort(gpu_families.rbegin(), gpu_families.rend(), [&](RgGpuFamily family_one, RgGpuFamily family_two) {
+                    return family_one.family_name < family_two.family_name;
                 });
 
                 // Step through each family within the architecture.

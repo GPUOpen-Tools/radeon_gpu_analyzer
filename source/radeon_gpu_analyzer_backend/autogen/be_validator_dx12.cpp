@@ -28,18 +28,20 @@
 
 // Constant error strings.
 static const char* kStrErrorNoGpsoFileA = "Error: .gpso file must be provided for graphics pipelines (use the --pso option).";
-static const char* kStrErrorNoGpsoFileB = ".gpso file could be auto-generated for pipelines with vertex, pixel, or compute shaders.";
+static const char* kStrErrorNoGpsoFileB = ".gpso file could be auto-generated for pipelines with vertex, mesh, pixel, or compute shaders.";
 static const char* kStrErrorNoGpsoFileHintA = "The format of a .gpso file is : ";
 static const char* kStrErrorNoGpsoFileHintB = "See --gpso-template option for more info.";
 static const char* kStrErrorDxrRootSignatureHlslFileDefinedA =
     "Error: use --rs-hlsl option together with --rs-macro to specify the HLSL file where the macro is defined.";
-static const char* kStrErrorDxrRootSignatureHlslFileDefinedB       = "root signature file could be auto-generated for pipelines with vertex, pixel, or compute shaders.";
+static const char* kStrErrorDxrRootSignatureHlslFileDefinedB       = "root signature file could be auto-generated for pipelines with vertex, mesh, pixel, or compute shaders.";
 static const char* kStrErrorNoIsaNoStatsOption                     = "Error: one of --isa or -a/--analysis or -b/--binary options must be provided.";
 static const char* kStrErrorMixComputeGraphicsInputA               = "Error: cannot mix compute and graphics for ";
 static const char* kStrErrorMixComputeGraphicsInputShader          = "shader input files.";
 static const char* kStrErrorMixComputeGraphicsInputDxilDisassembly = "DXIL/DXBC disassembly output file.";
 static const char* kStrErrorMixComputeGraphicsInputShaderModel     = "shader model.";
 static const char* kStrErrorMixComputeGraphicsInputEntryPoint      = "entry point.";
+static const char* kStrErrorDx12MixMeshTraditional                 = "Error: cannot mix mesh/amplification shaders with vertex, hull, domain, or geometry shaders.";
+static const char* kStrErrorDx12AmplificationWithoutMesh           = "Error: amplification shader requires a mesh shader. Please provide a mesh shader using --ms or --ms-blob.";
 static const char* kStrErrorDx12TwoInputFilesPerStageA             = "Error: both HLSL and DXBC input files specified for ";
 static const char* kStrErrorDx12TwoInputFilesPerStageB             = "shader. Only a single input file can be passed per stage.";
 static const char* kStrErrorDx12NoShaderModelProvidedA             = "Error: no shader model provided for ";
@@ -61,8 +63,10 @@ static const char* kStrWarningDxrBinaryExtractionNotSupportedInShaderMode =
     "Warning: pipeline binary extraction (-b option) "
     "is not supported in Shader mode.";
 static const char* kStrInfoInvalidPipelineOptionAutogen =
-    "Info: Shader/state autogeneration only supported for graphics pipelines that include a VS, PS or a combination thereof.";
+    "Info: Shader/state autogeneration only supported for graphics pipelines that include a VS or MS, PS or a combination thereof.";
 static const char* kStrInfoInvalidAutogenDirectory = "Error: Invalid folder path provided for autogenerating the missing component of D3D12 pipeline.";
+static const char* kStrErrorInvalidShaderModelA = "Error: Invalid shader model for ";
+static const char* kStrErrorInvalidShaderModelB = " stage. Expected model is 6_5 or higher.";
 
 // Validates the input arguments for a specific stage, and prints appropriate error messages to the console.
 static bool IsShaderInputsValid(const Config&      config,
@@ -103,6 +107,21 @@ static bool IsShaderInputsValid(const Config&      config,
         }
     }
 
+    if (!shader_model.empty() &&
+        (stage_name == kStrDx12StageNames[BePipelineStage::kTask] ||
+         stage_name == kStrDx12StageNames[BePipelineStage::kMesh]))
+    {
+        // Expected model is 6_5 or higher
+        int version_major = std::atoi(shader_model.substr(3, 1).c_str());
+        int version_minor = std::atoi(shader_model.substr(5, 1).c_str());
+
+        if (version_major < 6 || (version_major == 6 && version_minor < 5))
+        {
+            std::cout << kStrErrorInvalidShaderModelA << stage_name << kStrErrorInvalidShaderModelB << std::endl;
+            ret = false;
+        }
+    }
+
     return ret;
 }
 
@@ -126,7 +145,10 @@ static bool IsAutogeneratePipelinePossible(const Config& config)
         !config.hs_model.empty() || !config.ds_model.empty() || !config.gs_model.empty() || !config.hs_entry_point.empty() || !config.ds_entry_point.empty() ||
         !config.gs_entry_point.empty())
     {
-        bool is_complete_graphics_pipeline = ((!config.vs_hlsl.empty() || !config.vs_dxbc.empty()) && (!config.ps_hlsl.empty() || !config.ps_dxbc.empty()));
+        bool has_vs = (!config.vs_hlsl.empty() || !config.vs_dxbc.empty());
+        bool has_ms = (!config.ms_hlsl.empty() || !config.ms_dxbc.empty());
+        bool has_ps = (!config.ps_hlsl.empty() || !config.ps_dxbc.empty());
+        bool is_complete_graphics_pipeline = (has_vs || has_ms) && has_ps;
         if (!is_complete_graphics_pipeline)
         {
             std::cout << kStrInfoInvalidPipelineOptionAutogen << "\n";
@@ -149,12 +171,14 @@ static bool IsInputValidPSOAndRS(const Config& config, const BeDx12AutoGenPipeli
     {
         // Verify that we have a valid PSO file.
         if (config.cs_hlsl.empty() && config.cs_dxbc.empty() && config.pso_dx12.empty() &&
-            (!config.vs_hlsl.empty() || !config.vs_dxbc.empty() || !config.hs_hlsl.empty() || !config.hs_dxbc.empty() || !config.ds_hlsl.empty() ||
-             !config.ds_dxbc.empty() || !config.gs_hlsl.empty() || !config.gs_dxbc.empty() || !config.ps_hlsl.empty() || !config.ps_dxbc.empty()))
+            (!config.vs_hlsl.empty() || !config.vs_dxbc.empty() || !config.ms_hlsl.empty() || !config.ms_dxbc.empty() ||
+             !config.hs_hlsl.empty() || !config.hs_dxbc.empty() || !config.ds_hlsl.empty() || !config.ds_dxbc.empty() ||
+             !config.gs_hlsl.empty() || !config.gs_dxbc.empty() || !config.ps_hlsl.empty() || !config.ps_dxbc.empty()))
         {
             std::cout << kStrErrorNoGpsoFileA << "\n";
             std::cout << kStrErrorNoGpsoFileB << "\n";
             std::cout << kStrErrorNoGpsoFileHintA << "\n" << kStrTemplateGpsoFileContent << "\n" << kStrErrorNoGpsoFileHintB << "\n";
+            ret = false;
         }
     }
 
@@ -190,26 +214,27 @@ static bool IsInputValidDX12(const Config& config)
     if (ret)
     {
         if ((!config.cs_dxbc.empty() || !config.cs_hlsl.empty()) &&
-            ((!config.vs_dxbc.empty() || !config.hs_dxbc.empty() || !config.ds_dxbc.empty() || !config.gs_dxbc.empty() || !config.ps_dxbc.empty()) ||
-             (!config.vs_hlsl.empty() || !config.hs_hlsl.empty() || !config.ds_hlsl.empty() || !config.gs_hlsl.empty() || !config.ps_hlsl.empty())))
+            ((!config.vs_dxbc.empty() || !config.ms_dxbc.empty() || !config.as_dxbc.empty() || !config.hs_dxbc.empty() || !config.ds_dxbc.empty() || !config.gs_dxbc.empty() || !config.ps_dxbc.empty()) ||
+             (!config.vs_hlsl.empty() || !config.ms_hlsl.empty() || !config.as_hlsl.empty() || !config.hs_hlsl.empty() || !config.ds_hlsl.empty() || !config.gs_hlsl.empty() || !config.ps_hlsl.empty())))
         {
             ret = false;
             std::cout << kStrErrorMixComputeGraphicsInputA << kStrErrorMixComputeGraphicsInputShader << "\n";
         }
         else if (!config.cs_dxil_disassembly.empty() &&
-                 (!config.vs_dxil_disassembly.empty() || !config.hs_dxil_disassembly.empty() || !config.ds_dxil_disassembly.empty() ||
-                  !config.gs_dxil_disassembly.empty() || !config.ps_dxil_disassembly.empty()))
+                 (!config.vs_dxil_disassembly.empty() || !config.ms_dxil_disassembly.empty() || !config.as_dxil_disassembly.empty() || !config.hs_dxil_disassembly.empty() ||
+                  !config.ds_dxil_disassembly.empty() || !config.gs_dxil_disassembly.empty() || !config.ps_dxil_disassembly.empty()))
         {
             ret = false;
             std::cout << kStrErrorMixComputeGraphicsInputA << kStrErrorMixComputeGraphicsInputDxilDisassembly << "\n";
         }
         else if (!config.cs_model.empty() &&
-                 (!config.vs_model.empty() || !config.hs_model.empty() || !config.ds_model.empty() || !config.gs_model.empty() || !config.ps_model.empty()))
+                 (!config.vs_model.empty() || !config.ms_model.empty() || !config.as_model.empty() || !config.hs_model.empty() || !config.ds_model.empty() || !config.gs_model.empty() || !config.ps_model.empty()))
         {
             ret = false;
             std::cout << kStrErrorMixComputeGraphicsInputA << kStrErrorMixComputeGraphicsInputShaderModel << "\n";
         }
-        else if (!config.cs_entry_point.empty() && (!config.vs_entry_point.empty() || !config.hs_entry_point.empty() || !config.ds_entry_point.empty() ||
+        else if (!config.cs_entry_point.empty() && (!config.vs_entry_point.empty() || !config.ms_entry_point.empty() || !config.as_entry_point.empty() ||
+                                                    !config.hs_entry_point.empty() || !config.ds_entry_point.empty() ||
                                                     !config.gs_entry_point.empty() || !config.ps_entry_point.empty()))
         {
             ret = false;
@@ -227,6 +252,16 @@ static bool IsInputValidDX12(const Config& config)
         else if (!config.vs_hlsl.empty() && !config.vs_dxbc.empty())
         {
             std::cout << kStrErrorDx12TwoInputFilesPerStageA << "vertex " << kStrErrorDx12TwoInputFilesPerStageB << "\n";
+            ret = false;
+        }
+        else if (!config.ms_hlsl.empty() && !config.ms_dxbc.empty())
+        {
+            std::cout << kStrErrorDx12TwoInputFilesPerStageA << "mesh " << kStrErrorDx12TwoInputFilesPerStageB << "\n";
+            ret = false;
+        }
+        else if (!config.as_hlsl.empty() && !config.as_dxbc.empty())
+        {
+            std::cout << kStrErrorDx12TwoInputFilesPerStageA << "amplification " << kStrErrorDx12TwoInputFilesPerStageB << "\n";
             ret = false;
         }
         else if (!config.hs_hlsl.empty() && !config.hs_dxbc.empty())
@@ -247,6 +282,31 @@ static bool IsInputValidDX12(const Config& config)
         else if (!config.ps_hlsl.empty() && !config.ps_dxbc.empty())
         {
             std::cout << kStrErrorDx12TwoInputFilesPerStageA << "pixel " << kStrErrorDx12TwoInputFilesPerStageB << "\n";
+            ret = false;
+        }
+    }
+
+    // Validate that mesh/amplification shaders are not mixed with vertex/hull/domain/geometry shaders.
+    if (ret)
+    {
+        bool has_mesh_pipeline = !config.ms_hlsl.empty() || !config.ms_dxbc.empty() || !config.as_hlsl.empty() || !config.as_dxbc.empty();
+        bool has_traditional   = !config.vs_hlsl.empty() || !config.vs_dxbc.empty() || !config.hs_hlsl.empty() || !config.hs_dxbc.empty() ||
+                                 !config.ds_hlsl.empty() || !config.ds_dxbc.empty() || !config.gs_hlsl.empty() || !config.gs_dxbc.empty();
+        if (has_mesh_pipeline && has_traditional)
+        {
+            std::cout << kStrErrorDx12MixMeshTraditional << "\n";
+            ret = false;
+        }
+    }
+
+    // Validate that amplification shaders are paired with mesh shaders.
+    if (ret)
+    {
+        bool has_as_pipeline = !config.as_hlsl.empty() || !config.as_dxbc.empty();
+        bool has_ms_pipeline = !config.ms_hlsl.empty() || !config.ms_dxbc.empty();
+        if (has_as_pipeline && !has_ms_pipeline)
+        {
+            std::cout << kStrErrorDx12AmplificationWithoutMesh << "\n";
             ret = false;
         }
     }
@@ -298,6 +358,20 @@ static bool IsInputValidDX12(const Config& config)
             {
                 ret = false;
             }
+
+            // Mesh.
+            if (!IsShaderInputsValid(
+                    config, config.ms_hlsl, config.ms_model, config.ms_entry_point, config.ms_dxbc, kStrDx12StageNames[BePipelineStage::kMesh]))
+            {
+                ret = false;
+            }
+
+            // Amplification.
+            if (!IsShaderInputsValid(
+                    config, config.as_hlsl, config.as_model, config.as_entry_point, config.as_dxbc, kStrDx12StageNames[BePipelineStage::kTask]))
+            {
+                ret = false;
+            }
         }
     }
 
@@ -305,6 +379,10 @@ static bool IsInputValidDX12(const Config& config)
     if (ret)
     {
         if (!IsDxbcInputValid(config.vs_dxbc, kStrDx12StageNames[BePipelineStage::kVertex]))
+        {
+            ret = false;
+        }
+        if (!IsDxbcInputValid(config.ms_dxbc, kStrDx12StageNames[BePipelineStage::kMesh]))
         {
             ret = false;
         }
@@ -317,6 +395,10 @@ static bool IsInputValidDX12(const Config& config)
             ret = false;
         }
         if (!IsDxbcInputValid(config.gs_dxbc, kStrDx12StageNames[BePipelineStage::kGeometry]))
+        {
+            ret = false;
+        }
+        if (!IsDxbcInputValid(config.as_dxbc, kStrDx12StageNames[BePipelineStage::kTask]))
         {
             ret = false;
         }
@@ -406,8 +488,8 @@ bool BeDx12PipelineValidator::ValidateAndGenerateDx12Pipeline(const Config& conf
             {
                 AutoGenerateMissingPipeline(config, info);
             }
+            is_input_valid = IsInputValidPSOAndRS(config, info);
         }
-        is_input_valid = IsInputValidPSOAndRS(config, info);
     }
     return is_input_valid;
 }
@@ -449,7 +531,7 @@ void BeDx12PipelineValidator::AutoGenerateMissingPipeline(const Config& config, 
         if (info.autogen_status == BeDx12AutoGenStatus::kRequired)
         {
             beKA::beStatus rc = generator.GenerateFiles(
-                config, info.source_code, info.autogen_dir, info.root_signature, info.gpso_file, info.vertex_shader, info.pixel_shader, info.dxc_out);
+                config, info.source_code, info.autogen_dir, info.root_signature, info.gpso_file, info.vertex_shader, info.mesh_shader, info.pixel_shader, info.dxc_out);
             if (rc == beKA::beStatus::kBeStatusSuccess)
             {
                 info.autogen_status = BeDx12AutoGenStatus::kSuccess;

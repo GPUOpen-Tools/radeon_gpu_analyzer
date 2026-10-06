@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2024-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Implementation for dx12 file auto generator class.
@@ -54,7 +54,59 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
             is_dxc_compiler_req = true;
         }
     }
-    
+
+    // Mesh Shader
+    bool        has_blob_ms = !config.ms_dxbc.empty();
+    bool        has_src_ms  = !config.ms_entry_point.empty();
+    bool        has_any_ms  = has_blob_ms || has_src_ms;
+    if (input_files.source_file_path_ms.empty() && has_blob_ms)
+    {
+        input_files.source_file_path_ms = BeDx12Utils::GetAbsoluteFileName(KcUtils::Quote(config.ms_dxbc));
+    }
+    if (has_src_ms)
+    {
+        if (has_blob_ms)
+        {
+            status = BeDx12AutoGenStatus::kNotRequired;
+        }
+        std::string ms_shader_source_path;
+        bool        is_ok = BeDx12Utils::GetShaderStageSourceFileName(config, BePipelineStage::kMesh, ms_shader_source_path);
+        if (input_files.source_file_path_ms.empty() && is_ok)
+        {
+            input_files.source_file_path_ms = ms_shader_source_path;
+        }
+        if (!is_dxc_compiler_req)
+        {
+            is_dxc_compiler_req = true;
+        }
+    }
+
+    // Amplification Shader
+    bool        has_blob_as = !config.as_dxbc.empty();
+    bool        has_src_as  = !config.as_entry_point.empty();
+    bool        has_any_as  = has_blob_as || has_src_as;
+    if (input_files.source_file_path_as.empty() && has_blob_as)
+    {
+        input_files.source_file_path_as = BeDx12Utils::GetAbsoluteFileName(KcUtils::Quote(config.as_dxbc));
+    }
+    if (has_src_as)
+    {
+        if (has_blob_as)
+        {
+            status = BeDx12AutoGenStatus::kNotRequired;
+        }
+        std::string as_shader_source_path;
+        bool        is_ok = BeDx12Utils::GetShaderStageSourceFileName(config, BePipelineStage::kTask, as_shader_source_path);
+        if (input_files.source_file_path_as.empty() && is_ok)
+        {
+            input_files.source_file_path_as = as_shader_source_path;
+        }
+        if (!is_dxc_compiler_req)
+        {
+            is_dxc_compiler_req = true;
+        }
+    }
+
     // PS
     bool has_blob_ps = !config.ps_dxbc.empty();
     bool has_src_ps  = !config.ps_entry_point.empty();
@@ -80,7 +132,7 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
             is_dxc_compiler_req = true;
         }
     }
-    
+
     // CS
     bool has_blob_cs = !config.cs_dxbc.empty();
     bool has_src_cs  = !config.cs_entry_point.empty();
@@ -107,7 +159,7 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
         }
     }
 
-    bool is_graphics = has_any_vs || has_any_ps;
+    bool is_graphics = has_any_vs || has_any_ms || has_any_as || has_any_ps;
     if (is_graphics && has_any_cs)
     {
         status = BeDx12AutoGenStatus::kNotRequired;
@@ -117,11 +169,11 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
     {
         input_files.is_root_signature_specified = !config.rs_bin.empty() || !config.rs_macro.empty();
         const bool is_autogenerate_req =
-            is_graphics ? 
-            (!input_files.is_root_signature_specified 
-                || !input_files.is_gpso_specified 
-                || !has_any_vs 
-                || !has_any_ps) 
+            is_graphics ?
+            (!input_files.is_root_signature_specified
+                || !input_files.is_gpso_specified
+                || !(has_any_vs || has_any_ms)
+                || !has_any_ps)
             : !input_files.is_root_signature_specified;
         if (!is_autogenerate_req)
         {
@@ -148,6 +200,36 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
             status = BeDx12AutoGenStatus::kNotRequired;
         }
 
+        // Mesh Shader
+        bool is_ok_ms =
+        compiler_->LoadSrcBlob(config,
+                                BePipelineStage::kMesh,
+                                has_blob_ms,
+                                has_src_ms,
+                                input_files.source_file_path_ms,
+                                input_files.ms_blob,
+                                input_files.is_root_signature_specified,
+                                err);
+        if (has_any_ms && !is_ok_ms)
+        {
+            status = BeDx12AutoGenStatus::kNotRequired;
+        }
+
+        // Amplification Shader
+        bool is_ok_as =
+        compiler_->LoadSrcBlob(config,
+                                BePipelineStage::kTask,
+                                has_blob_as,
+                                has_src_as,
+                                input_files.source_file_path_as,
+                                input_files.as_blob,
+                                input_files.is_root_signature_specified,
+                                err);
+        if (has_any_as && !is_ok_as)
+        {
+            status = BeDx12AutoGenStatus::kNotRequired;
+        }
+
         // PS
         bool is_ok_ps =
         compiler_->LoadSrcBlob(config,
@@ -156,7 +238,7 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
                                 has_src_ps,
                                 input_files.source_file_path_ps,
                                 input_files.ps_blob,
-                                input_files.is_root_signature_specified, 
+                                input_files.is_root_signature_specified,
                                 err);
         if (has_any_ps && !is_ok_ps)
         {
@@ -178,19 +260,19 @@ BeDx12AutoGenStatus BeDx12AutoGenerator::PopulateAutoGenInputs(const Config& con
             status = BeDx12AutoGenStatus::kNotRequired;
         }
 
-        if (!is_ok_vs && !is_ok_ps && !is_ok_cs)
+        if (!is_ok_vs && !is_ok_ms && !is_ok_as && !is_ok_ps && !is_ok_cs)
         {
             status = BeDx12AutoGenStatus::kNotRequired;
         }
 
         const bool need_to_auto_generate_any_file =
-            is_graphics ? (!input_files.is_root_signature_specified || !input_files.is_gpso_specified || !has_any_vs || !has_any_ps)
+            is_graphics ? (!input_files.is_root_signature_specified || !input_files.is_gpso_specified || !(has_any_vs || has_any_ms) || !has_any_ps)
                                                                     : !input_files.is_root_signature_specified;
         if (!need_to_auto_generate_any_file)
         {
             status = BeDx12AutoGenStatus::kNotRequired;
         }
-        
+
     }
 
     return status;
@@ -202,6 +284,7 @@ beKA::beStatus BeDx12AutoGenerator::GenerateFiles(const Config&             ,
                                                   BeDx12AutoGenFile&        root_signature,
                                                   BeDx12AutoGenFile&        gpso_file,
                                                   BeDx12AutoGenFile&        vertex_shader,
+                                                  BeDx12AutoGenFile&        mesh_shader,
                                                   BeDx12AutoGenFile&        pixel_shader,
                                                   std::stringstream&        err) const
 {
@@ -237,7 +320,7 @@ beKA::beStatus BeDx12AutoGenerator::GenerateFiles(const Config&             ,
                     }
                 }
             }
-            
+
             // Save GPSO.
             const bool has_generated_gpso = !hlsl_output.gpso.empty();
             if (has_generated_gpso)
@@ -275,6 +358,27 @@ beKA::beStatus BeDx12AutoGenerator::GenerateFiles(const Config&             ,
                     {
                         vertex_shader.status = BeDx12AutoGenStatus::kFailed;
                         rc = beKA::beStatus::kBeStatusDxcCannotAutoGenerateVertexShader;
+                    }
+                }
+            }
+
+            // Save mesh shader.
+            const bool has_generated_ms = !hlsl_output.ms.empty();
+            if (has_generated_ms)
+            {
+                mesh_shader.status =
+                    GenerateMeshShaderFileName(autogen_dir, mesh_shader.filename) ? BeDx12AutoGenStatus::kRequired : BeDx12AutoGenStatus::kFailed;
+                if (mesh_shader.status == BeDx12AutoGenStatus::kRequired)
+                {
+                    bool is_file_written = KcUtils::WriteTextFile(mesh_shader.filename, hlsl_output.ms, nullptr);
+                    if (is_file_written && KcUtils::FileNotEmpty(mesh_shader.filename))
+                    {
+                        mesh_shader.status = BeDx12AutoGenStatus::kSuccess;
+                    }
+                    else
+                    {
+                        mesh_shader.status = BeDx12AutoGenStatus::kFailed;
+                        rc = beKA::beStatus::kBeStatusDxcCannotAutoGenerateMeshShader;
                     }
                 }
             }
@@ -340,4 +444,9 @@ bool BeDx12AutoGenerator::GenerateVertexShaderFileName(const std::string& autoge
 bool BeDx12AutoGenerator::GeneratePixelShaderFileName(const std::string& autogen_dir, std::string& filename)
 {
     return GenerateFileName(autogen_dir, "ps", kTempShaderFileExtension, filename);
+}
+
+bool BeDx12AutoGenerator::GenerateMeshShaderFileName(const std::string& autogen_dir, std::string& filename)
+{
+    return GenerateFileName(autogen_dir, "ms", kTempShaderFileExtension, filename);
 }

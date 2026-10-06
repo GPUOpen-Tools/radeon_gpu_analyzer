@@ -1,5 +1,5 @@
 //=============================================================================
-/// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
+/// Copyright (c) 2020-2026 Advanced Micro Devices, Inc. All rights reserved.
 /// @author AMD Developer Tools Team
 /// @file
 /// @brief Header for class representing an Instruction in shader isa.
@@ -26,65 +26,64 @@
 // This value means no label in an instruction.
 const int kNoLabel = -1;
 
-#define GENERIC_INSTRUCTION_FIELDS_1(in,val) \
-    X_RANGE(ScalarGPRMin,ScalarGPRMax,ScalarGPR,in,val) \
-    X_RANGE(Reserved104,Reserved105,Reserved,in,val) \
-    X(VccLo,in) \
-    X(VccHi,in) \
-    X(TbaLo,in) \
-    X(TbaHi,in) \
-    X(TmaLo,in) \
-    X(TmaHi,in) \
-    X_RANGE(TtmpMin,TtmpMax,Ttmp,in,val) \
-    X(M0,in) \
-    X_RANGE(Reserved125,Reserved125,Reserved,in,val) \
-    X(ExecLo,in) \
-    X(ExecHi,in) \
+#define GENERIC_INSTRUCTION_FIELDS_1(in, val)               \
+    X_RANGE(ScalarGPRMin, ScalarGPRMax, ScalarGPR, in, val) \
+    X_RANGE(Reserved104, Reserved105, Reserved, in, val)    \
+    X(VccLo, in)                                            \
+    X(VccHi, in)                                            \
+    X(TbaLo, in)                                            \
+    X(TbaHi, in)                                            \
+    X(TmaLo, in)                                            \
+    X(TmaHi, in)                                            \
+    X_RANGE(TtmpMin, TtmpMax, Ttmp, in, val)                \
+    X(M0, in)                                               \
+    X_RANGE(Reserved125, Reserved125, Reserved, in, val)    \
+    X(ExecLo, in)                                           \
+    X(ExecHi, in)
 
-#define GENERIC_INSTRUCTION_FIELDS_2(in) \
-    X_RANGE(Reserved209,Reserved239,Reserved,in) \
-    X_RANGE(Reserved248,Reserved250,Reserved,in) \
-    X(VCCZ,in)\
-    X(EXECZ,in)\
-    X(SCC,in) \
-    X_RANGE(Reserved254,Reserved254,Reserved,in) \
+#define GENERIC_INSTRUCTION_FIELDS_2(in)            \
+    X_RANGE(Reserved209, Reserved239, Reserved, in) \
+    X_RANGE(Reserved248, Reserved250, Reserved, in) \
+    X(VCCZ, in)                                     \
+    X(EXECZ, in)                                    \
+    X(SCC, in)                                      \
+    X_RANGE(Reserved254, Reserved254, Reserved, in)
 
-#define SCALAR_INSTRUCTION_FIELDS(in) \
-    X(ConstZero,in) \
-    X_RANGE(SignedConstIntPosMin,SignedConstIntPosMax,SignedConstIntPos,in) \
-    X_RANGE(SignedConstIntNegMin,SignedConstIntNegMax,SignedConstIntNeg,in) \
-    X(ConstFloatPos_0_5,in) \
-    X(ConstFloatNeg_0_5,in) \
-    X(ConstFloatPos_1_0,in) \
-    X(ConstFloatNeg_1_0,in) \
-    X(ConstFloatPos_2_0,in) \
-    X(ConstFloatNeg_2_0,in) \
-    X(ConstFloatPos_4_0,in) \
-    X(ConstFloatNeg_4_0,in) \
-    X(LiteralConst,in)
+#define SCALAR_INSTRUCTION_FIELDS(in)                                          \
+    X(ConstZero, in)                                                           \
+    X_RANGE(SignedConstIntPosMin, SignedConstIntPosMax, SignedConstIntPos, in) \
+    X_RANGE(SignedConstIntNegMin, SignedConstIntNegMax, SignedConstIntNeg, in) \
+    X(ConstFloatPos_0_5, in)                                                   \
+    X(ConstFloatNeg_0_5, in)                                                   \
+    X(ConstFloatPos_1_0, in)                                                   \
+    X(ConstFloatNeg_1_0, in)                                                   \
+    X(ConstFloatPos_2_0, in)                                                   \
+    X(ConstFloatNeg_2_0, in)                                                   \
+    X(ConstFloatPos_4_0, in)                                                   \
+    X(ConstFloatNeg_4_0, in)                                                   \
+    X(LiteralConst, in)
 
-#define INSTRUCTION_FIELD(hexInstruction, insName, fieldName, fieldOffset) \
-            ((hexInstruction & insName##Mask_##fieldName) >> fieldOffset)
+#define INSTRUCTION_FIELD(hexInstruction, insName, fieldName, fieldOffset) ((hexInstruction & insName##Mask_##fieldName) >> fieldOffset)
 
 #define INSTRUCTION32_FIELD(hexInstruction, insName, fieldName, fieldOffset) \
-            ((hexInstruction & static_cast<Instruction::Instruction32Bit>(insName##Mask_##fieldName)) >> fieldOffset)
+    ((hexInstruction & static_cast<Instruction::Instruction32Bit>(insName##Mask_##fieldName)) >> fieldOffset)
 
 #define INSTRUCTION64_FIELD(hexInstruction, insName, fieldName, fieldOffset) \
-            ((hexInstruction & (static_cast<Instruction::Instruction64Bit>(insName##Mask_##fieldName) << 32)) >> fieldOffset)
+    ((hexInstruction & (static_cast<Instruction::Instruction64Bit>(insName##Mask_##fieldName) << 32)) >> fieldOffset)
 
-#define EXTRACT_INSTRUCTION32_FIELD(hexInstruction,genName,insName,fieldVar,fieldName,fieldOffset) \
-    genName##insName##Instruction::fieldName fieldVar = static_cast<genName##insName##Instruction::fieldName>(INSTRUCTION32_FIELD(hexInstruction, insName, fieldName, fieldOffset));
+#define EXTRACT_INSTRUCTION32_FIELD(hexInstruction, genName, insName, fieldVar, fieldName, fieldOffset) \
+    genName##insName##Instruction::fieldName fieldVar =                                                 \
+        static_cast<genName##insName##Instruction::fieldName>(INSTRUCTION32_FIELD(hexInstruction, insName, fieldName, fieldOffset));
 
-#define EXTRACT_INSTRUCTION64_FIELD(hexInstruction,insName,fieldVar,fieldName,fieldOffset) \
-    insName##Instruction::fieldName fieldVar = static_cast<insName##Instruction::fieldName>(INSTRUCTION64_FIELD(hexInstruction, insName, fieldName, fieldOffset));
+#define EXTRACT_INSTRUCTION64_FIELD(hexInstruction, insName, fieldVar, fieldName, fieldOffset) \
+    insName##Instruction::fieldName fieldVar =                                                 \
+        static_cast<insName##Instruction::fieldName>(INSTRUCTION64_FIELD(hexInstruction, insName, fieldName, fieldOffset));
 
-#define RETURN_EXTRACT_INSTRUCTION(fieldVar) \
-    return fieldVar
+#define RETURN_EXTRACT_INSTRUCTION(fieldVar) return fieldVar
 
 class Instruction
 {
 public:
-
     // SI instruction microcode formats.
     enum InstructionSet
     {
@@ -98,14 +97,14 @@ public:
         InstructionSet_VOP1,
         InstructionSet_VOPC,
         InstructionSet_VOP3,
-        kInstructionSetSmrd, //SI+CI Only
+        kInstructionSetSmrd,  //SI+CI Only
         kInstructionSetVintrp,
         kInstructionSetDs,
         kInstructionSetMubuf,
         kInstructionSetMtbuf,
         kInstructionSetMimg,
         kInstructionSetExp,
-        InstructionSet_SMEM, // VI Only, was SMRD
+        InstructionSet_SMEM,  // VI Only, was SMRD
         kInstructionSetFlat
     };
 
@@ -162,7 +161,24 @@ public:
     // 64 bit instruction.
     typedef uint64_t Instruction64Bit;
 
-    Instruction(unsigned int instructionWidth, InstructionCategory instructionFormatKind, InstructionSet instructionFormat, int label_ = kNoLabel, int iGotoLabel = kNoLabel);
+    // Source code info corresponding the instruction.
+    struct SrcLineInfo
+    {
+        // Source file path.
+        std::string path_;
+
+        // Source line.
+        std::string line_;
+
+        // Source line number.
+        int line_number_;
+    };
+
+    Instruction(unsigned int        instructionWidth,
+                InstructionCategory instructionFormatKind,
+                InstructionSet      instructionFormat,
+                int                 label_     = kNoLabel,
+                int                 iGotoLabel = kNoLabel);
 
     // ctor for label instruction
     explicit Instruction(const std::string& labelString);
@@ -171,75 +187,136 @@ public:
 
     // Get an instruction`s width in bits.
     // Returns the instruction`s width in bits.
-    unsigned int GetInstructionWidth() const { return m_instructionWidth; }
+    unsigned int GetInstructionWidth() const
+    {
+        return m_instructionWidth;
+    }
 
-    InstructionCategory GetInstructionCategory() const { return Instruction_category_; }
+    InstructionCategory GetInstructionCategory() const
+    {
+        return Instruction_category_;
+    }
 
-    InstructionSet GetInstructionFormat() const { return instruction_format_; }
+    InstructionSet GetInstructionFormat() const
+    {
+        return instruction_format_;
+    }
 
-    int GetLabel() const { return label_; }
+    int GetLabel() const
+    {
+        return label_;
+    }
 
     // Get instruction line number in disassembly.
-    int GetLineNumber() const { return line_number_; }
+    int GetLineNumber() const
+    {
+        return line_number_;
+    }
 
     // Set instruction line number in disassembly.
-    void SetLineNumber(int iLineNumber) { line_number_ = iLineNumber; }
+    void SetLineNumber(int iLineNumber)
+    {
+        line_number_ = iLineNumber;
+    }
 
     // Get the source line (and its number) that was translated to this instructions.
-    std::pair<int, std::string>  GetSrcLineInfo() const { return { src_line_number_, src_line_ }; }
+    const SrcLineInfo& GetSrcLineInfo() const
+    {
+        return src_line_info_;
+    }
 
     // Set the source line (and its number) that was translated to this instructions.
-    void SetSrcLineInfo(int lineNum, const std::string& line) { src_line_number_ = lineNum; src_line_ = line; }
+    void SetSrcLineInfo(const SrcLineInfo& src_ine_info)
+    {
+        src_line_info_ = src_ine_info;
+    }
 
     // Get the label if any where instruction is a branch.
-    int GetGotoLabel() const { return goto_label_; }
+    int GetGotoLabel() const
+    {
+        return goto_label_;
+    }
 
     // Set the label if any where instruction is a branch.
-    void SetGotoLabel(int iGotoLabel) { goto_label_ = iGotoLabel; }
+    void SetGotoLabel(int iGotoLabel)
+    {
+        goto_label_ = iGotoLabel;
+    }
 
     // Get instruction cycle count for a given target.
     int GetInstructionClockCount(const std::string& deviceName) const;
 
     // The Instruction Asic HW generation. default is SI
-    GDT_HW_GENERATION GetHwGen() const { return hw_gen_; }
-    void SetHwGen(GDT_HW_GENERATION HwGen) { hw_gen_ = HwGen; }
+    GDT_HW_GENERATION GetHwGen() const
+    {
+        return hw_gen_;
+    }
+    void SetHwGen(GDT_HW_GENERATION HwGen)
+    {
+        hw_gen_ = HwGen;
+    }
 
     // String representation of the instruction's opcode.
-    const std::string& GetInstructionOpCode() const { return instruction_opcode_; }
+    const std::string& GetInstructionOpCode() const
+    {
+        return instruction_opcode_;
+    }
 
     // String representation of the instruction's parameters.
-    const std::string& GetInstructionParameters() const { return parameters_; }
+    const std::string& GetInstructionParameters() const
+    {
+        return parameters_;
+    }
 
     // String representation of the instruction's binary representation.
-    const std::string& GetInstructionBinaryRep() const { return binary_representation_; }
+    const std::string& GetInstructionBinaryRep() const
+    {
+        return binary_representation_;
+    }
 
     // String representation of the instruction's offset within the program.
-    const std::string& GetInstructionOffset() const { return offset_in_bytes_; }
+    const std::string& GetInstructionOffset() const
+    {
+        return offset_in_bytes_;
+    }
 
     // Sets the string representation of the instruction's opcode.
-    void SetInstructionOpCode(const std::string& opCode) { instruction_opcode_ = opCode; }
+    void SetInstructionOpCode(const std::string& opCode)
+    {
+        instruction_opcode_ = opCode;
+    }
 
     // Sets the string representation of the instruction's parameters.
-    void SetInstructionParameters(const std::string& params) { parameters_ = params; }
+    void SetInstructionParameters(const std::string& params)
+    {
+        parameters_ = params;
+    }
 
     // Sets the string representation of the instruction's binary representation.
-    void SetInstructionBinaryRep(const std::string& binaryRep) { binary_representation_ = binaryRep; }
+    void SetInstructionBinaryRep(const std::string& binaryRep)
+    {
+        binary_representation_ = binaryRep;
+    }
 
     // Sets the string representation of the instruction's offset within the program.
-    void SetInstructionOffset(const std::string& offset) { offset_in_bytes_ = offset; }
+    void SetInstructionOffset(const std::string& offset)
+    {
+        offset_in_bytes_ = offset;
+    }
 
     // Sets the string representation of the instruction: opcode, parameters, binary representation and offset within the program.
-    void SetInstructionStringRepresentation(const std::string& opCode,
-        const std::string& params, const std::string& binaryRep, const std::string& offset);
+    void SetInstructionStringRepresentation(const std::string& opCode, const std::string& params, const std::string& binaryRep, const std::string& offset);
 
     // Returns pointing label string
-    const std::string& GetPointingLabelString() const { return pointing_label_string_; }
+    const std::string& GetPointingLabelString() const
+    {
+        return pointing_label_string_;
+    }
 
     // Generates a comma separated string representation of the instruction.
-    void GetCsvString(const std::string& deviceName, bool srcLineInfo, std::string& commaSeparatedString)const;
+    void GetCsvString(const std::string& deviceName, bool srcLineInfo, std::string& commaSeparatedString) const;
 
 protected:
-
     // Instruction format kind.
     InstructionCategory Instruction_category_;
 
@@ -265,7 +342,6 @@ protected:
     std::string instruction_opcode_;
 
 private:
-
     // Initializes the performance tables.
     static void SetUpPerfTables();
 
@@ -294,11 +370,8 @@ private:
     // If this instruction is being pointed by a label, this member will hold the label.
     std::string pointing_label_string_;
 
-    // Corresponding source line.
-    std::string src_line_;
-
-    // Corresponding source line number.
-    int src_line_number_;
+    // Corresponding source code info.
+    SrcLineInfo src_line_info_;
 
     // Indicates whether the performance tables were initialized or not.
     static bool is_perf_tables_initialized_;
@@ -316,4 +389,4 @@ private:
     static std::unordered_map<std::string, int> scalar_device_perf_table_;
 };
 
-#endif //RGA_RADEONGPUANALYZERBACKEND_SRC_EMULATOR_PARSER_BE_INSTRUCTION_H_
+#endif  //RGA_RADEONGPUANALYZERBACKEND_SRC_EMULATOR_PARSER_BE_INSTRUCTION_H_

@@ -166,10 +166,15 @@ RgMenuFileItem* RgMenu::GetFileItemFromPath(const std::string& source_file_path)
 {
     RgMenuFileItem* result_item = nullptr;
 
+    std::string standardized_input = source_file_path;
+    RgUtils::StandardizePathSeparator(standardized_input);
+
     // Step through each file item and find the one that matches the given path.
     for (size_t file_item_index = 0; file_item_index < menu_items_.size(); file_item_index++)
     {
-        if (menu_items_[file_item_index]->GetFilename() == source_file_path)
+        std::string item_path = menu_items_[file_item_index]->GetFilename();
+        RgUtils::StandardizePathSeparator(item_path);
+        if (item_path == standardized_input)
         {
             result_item = menu_items_[file_item_index];
             break;

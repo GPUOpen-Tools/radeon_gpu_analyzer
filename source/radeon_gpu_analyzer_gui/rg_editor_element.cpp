@@ -62,7 +62,7 @@ RgEditorElement::RgEditorElement(QWidget* parent, const std::string& member_name
 void RgEditorElement::AppendChildItem(RgEditorElement* item)
 {
     item->parent_item_ = this;
-    child_items_.push_back(std::shared_ptr<RgEditorElement>(item));
+    child_items_.push_back(item);
 
     // Ensure that the expand button is visible when appending children.
     ui_.expandPushButton->setVisible(true);
@@ -80,7 +80,8 @@ void RgEditorElement::ClearChildren()
     for (auto child : child_items_)
     {
         // Remove the child element from the children list layout.
-        ui_.childRowsLayout->removeWidget(child.get());
+        ui_.childRowsLayout->removeWidget(child);
+        child->deleteLater();
     }
 
     // Clear the current selection in the tree.
@@ -241,7 +242,7 @@ void RgEditorElement::SetParentStateTree(RgPipelineStateTree* parent_tree)
 
 RgEditorElement* RgEditorElement::GetChild(int row_index) const
 {
-    return child_items_[row_index].get();
+    return child_items_[row_index];
 }
 
 bool RgEditorElement::GetIsEditable() const
@@ -330,8 +331,8 @@ int RgEditorElement::GetRowIndex() const
     if (parent_item_ != nullptr)
     {
         // Find this item within the parent's children.
-        auto child_iter = std::find_if(parent_item_->child_items_.begin(), parent_item_->child_items_.end(), [this](std::shared_ptr<RgEditorElement> child) {
-            return child.get() == this;
+        auto child_iter = std::find_if(parent_item_->child_items_.begin(), parent_item_->child_items_.end(), [this](RgEditorElement* child) {
+            return child == this;
         });
         if (child_iter != parent_item_->child_items_.end())
         {
@@ -378,7 +379,7 @@ void RgEditorElement::SetExpansionState(RgRowExpansionState state, bool update_c
     int num_children = ChildCount();
     for (int child_index = 0; child_index < num_children; ++child_index)
     {
-        RgEditorElement* child_element = child_items_[child_index].get();
+        RgEditorElement* child_element = child_items_[child_index];
         assert(child_element != nullptr);
         if (child_element != nullptr)
         {
